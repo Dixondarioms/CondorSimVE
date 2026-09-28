@@ -1,0 +1,143 @@
+{
+ "type": "FeatureCollection",
+ "name": "bases_aereas_venezuela",
+ "fuente": "Wikipedia (CC BY-SA), OurAirports (dominio público)",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -67.56111,
+     10.18056
+    ]
+   },
+   "properties": {
+    "icao": "SVBL",
+    "nombre": "Base Aérea El Libertador",
+    "ciudad": "Maracay (Palo Negro)",
+    "estado": "Aragua",
+    "elevacion_m": 442
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -67.64944,
+     10.24972
+    ]
+   },
+   "properties": {
+    "icao": "SVBS",
+    "nombre": "Base Aérea Mariscal Sucre",
+    "ciudad": "Maracay (Boca del Río)",
+    "estado": "Aragua",
+    "elevacion_m": 408
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -66.84361,
+     10.485
+    ]
+   },
+   "properties": {
+    "icao": "SVFM",
+    "nombre": "Base Aérea Generalísimo Francisco de Miranda (La Carlota)",
+    "ciudad": "Caracas",
+    "estado": "Distrito Capital",
+    "elevacion_m": 835
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -71.72778,
+     10.55833
+    ]
+   },
+   "properties": {
+    "icao": "SVMC",
+    "nombre": "Base Aérea General en Jefe Rafael Urdaneta",
+    "ciudad": "Maracaibo",
+    "estado": "Zulia",
+    "elevacion_m": 73
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -64.68917,
+     10.10722
+    ]
+   },
+   "properties": {
+    "icao": "SVBC",
+    "nombre": "Base Aérea Teniente Luis del Valle García",
+    "ciudad": "Barcelona",
+    "estado": "Anzoátegui",
+    "elevacion_m": 9
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -69.36889,
+     10.04667
+    ]
+   },
+   "properties": {
+    "icao": "SVBM",
+    "nombre": "Base Aérea Teniente Vicente Landaeta Gil",
+    "ciudad": "Barquisimeto",
+    "estado": "Lara",
+    "elevacion_m": 622
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -62.76389,
+     8.28472
+    ]
+   },
+   "properties": {
+    "icao": "SVPR",
+    "nombre": "Base Aérea Teniente Coronel Teófilo Luis Méndez",
+    "ciudad": "Ciudad Guayana",
+    "estado": "Bolívar",
+    "elevacion_m": 144
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -67.60611,
+     5.62
+    ]
+   },
+   "properties": {
+    "icao": "SVPA",
+    "nombre": "Base Aérea General en Jefe José Antonio Páez",
+    "ciudad": "Puerto Ayacucho",
+    "estado": "Amazonas",
+    "elevacion_m": 75
+   }
+  }
+ ]
+}

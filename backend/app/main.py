@@ -1,0 +1,86 @@
+import asyncio
+import logging
+import os
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+from app import respaldo, turnos
+from app.db import SessionLocal, init_db
+from app.models.usuario import Usuario
+from app.routers import auth, catalogo, escenarios, graficos, ordenes, terreno, unidades, usuarios, ws
+from app.terreno import get_terreno
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
+log = logging.getLogger("uvicorn.error")
+
+# Todo se sirve desde el mismo origen (sin CDN): la CSP bloquea cualquier recurso externo.
+CSP = (
+    "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
+    "script-src 'self'; connect-src 'self' ws: wss:; frame-ancestors 'none'; "
+    "base-uri 'none'; form-action 'self'"
+)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    init_db()
+    with SessionLocal() as db:
+        if db.query(Usuario).count() == 0:
+            log.warning(
+                "No hay usuarios. Cree el primer instructor con: "
+                "python -m app.crear_usuario <usuario> --rol instructor"
+            )
+    if not get_terreno().disponible:
+        log.warning("Sin datos de terreno: ejecute tools/preparar_terreno.py (todo sera 'llano').")
+
+    tareas = [asyncio.create_task(turnos.vigilar_plazos())]
+    horas = float(os.environ.get("SIMULADOR_RESPALDO_HORAS", "6"))
+    if horas > 0:
+        await asyncio.to_thread(respaldo.hacer_respaldo_configurado)
+        tareas.append(asyncio.create_task(respaldo.respaldar_periodicamente(horas)))
+    try:
+        yield
+    finally:
+        for t in tareas:
+            t.cancel()
+        await asyncio.gather(*tareas, return_exceptions=True)
+
+
+# La aplicacion se sirve desde el mismo origen que el frontend: no se habilita CORS.
+app = FastAPI(title="Simulador de Conduccion Militar (estilo Fenix)", lifespan=lifespan)
+
+
+@app.middleware("http")
+async def cabeceras_de_seguridad(request: Request, call_next):
+    respuesta = await call_next(request)
+    respuesta.headers["Content-Security-Policy"] = CSP
+    respuesta.headers["X-Content-Type-Options"] = "nosniff"
+    respuesta.headers["X-Frame-Options"] = "DENY"
+    respuesta.headers["Referrer-Policy"] = "no-referrer"
+    if request.url.path.startswith("/api/"):
+        respuesta.headers["Cache-Control"] = "no-store"
+    if request.url.scheme == "https":
+        respuesta.headers["Strict-Transport-Security"] = "max-age=31536000"
+    return respuesta
+
+
+app.include_router(auth.router)
+app.include_router(usuarios.router)
+app.include_router(escenarios.router)
+app.include_router(unidades.router)
+app.include_router(ordenes.router)
+app.include_router(terreno.router)
+app.include_router(graficos.router)
+app.include_router(catalogo.router)
+app.include_router(ws.router)
+
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR / "static"), name="static")
+
+
+@app.get("/")
+def index():
+    return FileResponse(FRONTEND_DIR / "index.html")

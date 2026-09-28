@@ -1,0 +1,84 @@
+"""Despegue de grupos aereos desde una base aerea.
+
+Un alumno emite la orden `despegar` sobre una base aerea propia eligiendo el modelo (F-16, Su-30...), el numero
+de aeronaves y un indicativo. Al resolverse el turno nace una unidad aerea junto a la base, con el combustible
+y la municion llenos; puede recibir ordenes desde el turno siguiente. El instructor puede ubicar grupos
+directamente (POST /unidades con `modelo`) sin pasar por este limite.
+"""
+
+import json
+
+from sqlalchemy.orm import Session
+
+from app.engine import catalogo
+from app.models.orden import Orden
+from app.models.unidad import Unidad
+
+FUERZA_MINIMA_BASE = 25.0  # una base muy danada no puede lanzar grupos (ni reabastecer)
+DESPLAZAMIENTO_GRADOS = 0.018  # el grupo aparece ~2 km al noreste de la base para poder seleccionarlo
+
+
+def codificar(modelo: str, aeronaves: int, indicativo: str) -> str:
+    return json.dumps({"modelo": modelo, "aeronaves": aeronaves, "indicativo": indicativo}, ensure_ascii=False)
+
+
+def decodificar(detalle: str) -> dict:
+    try:
+        d = json.loads(detalle or "{}")
+    except ValueError:
+        return {}
+    return d if isinstance(d, dict) else {}
+
+
+def aeronaves_en_servicio(unidades) -> int:
+    """Aeronaves de combate activas (las bases y unidades de otros tipos no cuentan)."""
+    return sum(max(1, u.aeronaves or 1) for u in unidades if u.tipo == "aerea" and u.estado == "activa")
+
+
+def aeronaves_comprometidas(db: Session, escenario_id: int, bando: str, excluir_orden_id: int | None = None) -> int:
+    """Aeronaves activas del bando mas las de los despegues pendientes (para respetar el tope al emitir)."""
+    unidades = db.query(Unidad).filter(Unidad.escenario_id == escenario_id, Unidad.bando == bando).all()
+    total = aeronaves_en_servicio(unidades)
+    por_id = {u.id: u for u in unidades}
+    pendientes = db.query(Orden).filter(
+        Orden.escenario_id == escenario_id, Orden.tipo == "despegar", Orden.estado == "pendiente"
+    )
+    for o in pendientes:
+        if o.id != excluir_orden_id and o.unidad_id in por_id:
+            total += int(decodificar(o.detalle).get("aeronaves", 0) or 0)
+    return total
+
+
+def error_de_despegue(base: Unidad, modelo_id: str | None, aeronaves: int | None, en_servicio: int) -> str | None:
+    """Motivo por el que la base no puede lanzar ese grupo (None si puede)."""
+    if base.tipo != "base" or base.clase != "base_aerea":
+        return "Solo una base aerea puede lanzar grupos de caza."
+    if base.estado != "activa":
+        return "La base aerea ya no esta activa."
+    if base.fuerza < FUERZA_MINIMA_BASE:
+        return f"La base esta muy danada ({base.fuerza:.0f}%): no puede lanzar grupos."
+    modelo = catalogo.MODELOS.get(modelo_id or "")
+    if modelo is None:
+        return "Elija un modelo de aeronave del catalogo."
+    if not aeronaves or not 1 <= aeronaves <= catalogo.MAX_AERONAVES_GRUPO:
+        return f"Un grupo tiene entre 1 y {catalogo.MAX_AERONAVES_GRUPO} aeronaves."
+    if en_servicio + aeronaves > catalogo.MAX_AERONAVES_BANDO:
+        return (f"Tope de {catalogo.MAX_AERONAVES_BANDO} aeronaves por bando "
+                f"({en_servicio} ya en servicio o comprometidas).")
+    return None
+
+
+def crear_grupo(base: Unidad, modelo_id: str, aeronaves: int, indicativo: str, ya_lanzados_en_base: int = 0) -> Unidad:
+    """Unidad aerea nueva junto a la base (sin agregarla a la sesion: lo hace quien llama)."""
+    m = catalogo.MODELOS[modelo_id]
+    clase = catalogo.CLASES[m.clase]
+    escalon = catalogo.escalon_grupo(aeronaves)
+    nombre = (indicativo or "").strip() or f"{m.corto} de {base.nombre}"
+    return Unidad(
+        escenario_id=base.escenario_id, nombre=nombre[:120], bando=base.bando, tipo="aerea", clase=clase.id,
+        modelo=m.id, aeronaves=aeronaves, echelon=escalon,
+        lat=base.lat + DESPLAZAMIENTO_GRADOS, lon=base.lon + DESPLAZAMIENTO_GRADOS * (1 + ya_lanzados_en_base),
+        fuerza=100.0, velocidad_kmh=m.velocidad_kmh, alcance_km=m.alcance_km, deteccion_km=m.deteccion_km,
+        combustible=100.0, municion=100.0, autonomia_km=m.autonomia_km,
+        sidc=catalogo.generar_sidc(base.bando, clase, escalon), estado="activa",
+    )

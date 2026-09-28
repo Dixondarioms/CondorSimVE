@@ -1,0 +1,45 @@
+# PostgreSQL para el Simulador Fenix.
+#
+#   1) cp .env.example .env   (y cambie POSTGRES_PASSWORD)
+#   2) docker compose up -d db                 # solo la base de datos
+#   3) copie los datos existentes (opcional):
+#        cd backend && python -m app.migrar_a_postgres --destino postgresql://simulador:<clave>@localhost:5432/simulador
+#   4) arranque el servidor apuntando a la base:
+#        SIMULADOR_DATABASE_URL=postgresql://simulador:<clave>@localhost:5432/simulador python -m app.servidor --host 0.0.0.0
+#
+# Tambien se puede levantar la aplicacion completa en contenedor:  docker compose --profile app up -d --build
+name: simulador-fenix
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-simulador}
+      POSTGRES_USER: ${POSTGRES_USER:-simulador}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en el archivo .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"  # solo accesible desde este equipo
+    volumes:
+      - datos_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-simulador} -d ${POSTGRES_DB:-simulador}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    profiles: ["app"]
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SIMULADOR_DATABASE_URL: postgresql://${POSTGRES_USER:-simulador}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-simulador}
+      SIMULADOR_RESPALDO_HORAS: "0"  # con PostgreSQL los respaldos se hacen con pg_dump
+    ports:
+      - "8000:8000"
+
+volumes:
+  datos_pg:

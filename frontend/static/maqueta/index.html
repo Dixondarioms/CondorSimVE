@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador Fénix - Maqueta de interfaz</title>
+  <link rel="stylesheet" href="../vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="maqueta.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- 1. BARRA SUPERIOR -->
+  <header id="cabecera">
+    <div class="cab-izq">
+      <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4Zm0 4.2 4.6 2.3v3.6c0 2.9-1.9 5.2-4.6 6.3-2.7-1.1-4.6-3.4-4.6-6.3V8.5L12 6.2Z"/></svg>
+      <h1>SIMULADOR FÉNIX - ADIESTRAMIENTO TÁCTICO</h1>
+      <span class="sep">|</span>
+      <span class="dato">TURNO: <b>3</b> <small>(1h Simulada)</small></span>
+      <span class="sep">|</span>
+      <span class="dato">HORA SIMULADA: <b>14:00h</b></span>
+      <span class="sep">|</span>
+      <span class="dato">BANDO: <b class="azul">AZUL</b> <small>(ALUMNO)</small></span>
+    </div>
+    <div class="cab-der">
+      <div id="reloj" class="reloj" role="timer" aria-live="off">
+        <span class="etiqueta">TIEMPO RESTANTE PLANIFICACIÓN:</span>
+        <b id="reloj-valor">18:32</b>
+      </div>
+      <button class="perfil" type="button" aria-label="Perfil de usuario" title="Cdte. Alumno - Bando Azul">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8H4Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="principal">
+
+    <!-- 2. PANEL IZQUIERDO -->
+    <aside id="panel-izq" aria-label="Órdenes y estado de fuerzas">
+      <section class="bloque">
+        <h2>Orden de batalla · Bando Azul</h2>
+        <div id="oob"></div>
+      </section>
+
+      <section class="bloque" id="detalle" aria-live="polite">
+        <h2>Unidad seleccionada</h2>
+        <div id="detalle-contenido"></div>
+      </section>
+
+      <section class="bloque cola">
+        <h2>Cola de órdenes <span id="cola-contador" class="contador"></span></h2>
+        <ol id="cola"></ol>
+      </section>
+    </aside>
+
+    <!-- 3. MAPA TÁCTICO -->
+    <div id="zona-mapa">
+      <div id="map" aria-label="Mapa táctico de La Guaira y Caracas"></div>
+
+      <div id="escala-info" class="etiqueta-mapa">La Guaira · Litoral central · z<span id="zoom-valor">11</span></div>
+      <div id="leyenda-mapa" class="etiqueta-mapa" aria-label="Leyenda">
+        <span><i class="ley-amigo"></i>Unidad propia</span>
+        <span><i class="ley-enemigo"></i>Unidad enemiga</span>
+        <span><i class="ley-ruta"></i>Ruta</span>
+        <span><i class="ley-ataque"></i>Ataque</span>
+      </div>
+
+      <!-- 4. PANEL DERECHO (flotante) -->
+      <aside id="panel-der" aria-label="Entorno e inteligencia">
+        <section class="tarjeta">
+          <h2>Estado del escenario</h2>
+          <div class="clima">
+            <svg class="icono-clima" viewBox="0 0 48 48" aria-hidden="true">
+              <circle cx="24" cy="24" r="9"/>
+              <g class="rayos"><path d="M24 4v7M24 37v7M4 24h7M37 24h7M9.9 9.9l5 5M33.1 33.1l5 5M9.9 38.1l5-5M33.1 14.9l5-5"/></g>
+            </svg>
+            <div>
+              <b class="clima-nombre">Despejado</b>
+              <span class="sec">Visibilidad 100 %</span>
+            </div>
+          </div>
+          <dl class="datos">
+            <div><dt>Viento</dt><dd><b>12 km/h</b> NE</dd></div>
+            <div><dt>Temperatura</dt><dd><b>29 °C</b></dd></div>
+            <div><dt>Mar</dt><dd><b>Calma</b></dd></div>
+          </dl>
+        </section>
+
+        <section class="tarjeta">
+          <h2>Capas</h2>
+          <div class="capas">
+            <label><input type="checkbox" data-capa="terreno" checked><span>Terreno</span></label>
+            <label><input type="checkbox" data-capa="cobertura"><span>Cobertura (detección)</span></label>
+            <label><input type="checkbox" data-capa="niebla" checked><span>Niebla de guerra</span></label>
+            <label><input type="checkbox" data-capa="unidades" checked><span>Unidades</span></label>
+          </div>
+        </section>
+
+        <section class="tarjeta tarjeta-alertas">
+          <h2>Alertas <span id="alertas-nuevas" class="contador">4</span></h2>
+          <ul id="alertas"></ul>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <!-- 5. BARRA INFERIOR -->
+  <footer id="control-turno">
+    <div class="centro">
+      <button id="btn-listo" type="button" class="btn-tactico">
+        <span class="btn-icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></svg>
+        </span>
+        <span id="btn-listo-texto">ESTOY LISTO - CONFIRMAR ÓRDENES</span>
+      </button>
+      <div class="estado-bandos" aria-live="polite">
+        <span class="estado" id="estado-azul"><i class="punto azul"></i>BANDO AZUL: <b>PLANIFICANDO</b></span>
+        <span class="estado" id="estado-rojo"><i class="punto rojo pulso"></i>BANDO ROJO: <b>PENDIENTE</b></span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script src="../vendor/leaflet/leaflet.js"></script>
+<script src="maqueta.js"></script>
+</body>
+</html>

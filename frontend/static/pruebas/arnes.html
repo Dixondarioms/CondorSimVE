@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador Fénix - ARNÉS DE PRUEBAS (datos simulados)</title>
+  <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="/static/vendor/leaflet-draw/leaflet.draw.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/fase2.css">
+</head>
+<body>
+  <!-- ============ acceso ============ -->
+  <div id="login" hidden>
+    <form id="login-form" autocomplete="on">
+      <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4Zm0 4.2 4.6 2.3v3.6c0 2.9-1.9 5.2-4.6 6.3-2.7-1.1-4.6-3.4-4.6-6.3V8.5L12 6.2Z"/></svg>
+      <h2>SIMULADOR FÉNIX</h2>
+      <p class="sec">Adiestramiento táctico. Ingrese con la cuenta asignada por el instructor.</p>
+      <input id="l-user" name="username" placeholder="Usuario" autocomplete="username" required>
+      <input id="l-pass" name="password" type="password" placeholder="Contraseña" autocomplete="current-password" required>
+      <button type="submit" class="primario">Ingresar</button>
+      <p id="l-error" class="error" role="alert"></p>
+    </form>
+  </div>
+
+  <div id="app" hidden>
+    <!-- ============ 1. barra superior ============ -->
+    <header id="cabecera">
+      <div class="cab-izq">
+        <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4Zm0 4.2 4.6 2.3v3.6c0 2.9-1.9 5.2-4.6 6.3-2.7-1.1-4.6-3.4-4.6-6.3V8.5L12 6.2Z"/></svg>
+        <h1>SIMULADOR FÉNIX - ADIESTRAMIENTO TÁCTICO</h1>
+        <span class="sep">|</span>
+        <span class="dato">TURNO: <b id="h-turno">-</b> <small>(1h Simulada)</small></span>
+        <span class="sep">|</span>
+        <span class="dato">HORA SIMULADA: <b id="h-hora">--:--h</b></span>
+        <span class="sep">|</span>
+        <span class="dato">BANDO: <b id="h-bando" class="">-</b></span>
+      </div>
+      <div class="cab-der">
+        <label class="sel-escenario" title="Escenario">
+          <span class="sec">ESCENARIO</span>
+          <select id="escenario"></select>
+        </label>
+        <label class="chk solo-instructor"><input type="checkbox" id="ver-archivados"><span>archivados</span></label>
+        <button id="btn-nuevo-escenario" class="solo-instructor secundario" type="button">Nuevo</button>
+        <span id="estado-conexion" class="conexion off" title="desconectado"></span>
+        <div id="reloj" class="reloj" role="timer" aria-live="off">
+          <span class="etiqueta" id="reloj-etiqueta">TIEMPO RESTANTE PLANIFICACIÓN:</span>
+          <b id="reloj-valor">--:--</b>
+        </div>
+        <button id="btn-videowall" class="solo-control secundario" type="button" title="Centro de operaciones: mapa a pantalla completa sin paneles (tecla V)">Videowall</button>
+        <button id="btn-informe" class="secundario" type="button">Informe</button>
+        <div class="perfil-wrap">
+          <button id="btn-perfil" class="perfil" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Perfil de usuario">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8H4Z"/></svg>
+          </button>
+          <div id="menu-perfil" class="menu" hidden>
+            <b id="mp-nombre"></b>
+            <span id="mp-rol" class="sec"></span>
+            <button id="btn-logout" type="button" class="secundario">Cerrar sesión</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="principal">
+      <!-- ============ 2. panel lateral izquierdo ============ -->
+      <aside id="panel-izq" aria-label="Órdenes y estado de fuerzas">
+        <div class="pestanas solo-instructor" role="tablist">
+          <button type="button" role="tab" class="activa" data-pestana="fuerzas">FUERZAS</button>
+          <button type="button" role="tab" data-pestana="consola">CONSOLA</button>
+        </div>
+
+        <div id="pest-fuerzas" class="pestana">
+          <section class="bloque">
+            <h2 id="oob-titulo">Orden de batalla</h2>
+            <div id="oob"></div>
+          </section>
+
+          <section class="bloque" aria-live="polite">
+            <h2>Unidad seleccionada</h2>
+            <div id="detalle-contenido"><p class="vacio">Seleccione una unidad en la lista o en el mapa.</p></div>
+          </section>
+
+          <section class="bloque solo-alumno" id="sec-aviacion">
+            <h2>Aviación <span id="aviacion-tope" class="contador azul-suave"></span></h2>
+            <button id="btn-enviar-caza" class="primario" type="button">✈ Enviar grupo de caza…</button>
+            <p class="ayuda" id="aviacion-ayuda">Elija F-16 o Su-30 (con foto y datos) y la base de la que despegan.</p>
+          </section>
+
+          <section class="bloque solo-alumno" id="sec-orden">
+            <h2>Nueva orden <span id="orden-unidad" class="contador azul-suave"></span></h2>
+            <div class="modos" role="tablist">
+              <button type="button" data-modo="mover" class="activo">Mover</button>
+              <button type="button" data-modo="atacar">Atacar</button>
+              <button type="button" data-modo="apoyar">Apoyar</button>
+              <button type="button" data-modo="construir" id="modo-construir" hidden title="Solo ingenieros">Construir</button>
+            </div>
+            <div id="o-mover">
+              <p class="ayuda">Haga clic en el mapa para marcar waypoints. El terreno, el clima y el combustible limitan el avance.</p>
+              <div id="o-waypoints" class="ayuda"></div>
+              <p id="o-preview" class="ayuda preview"></p>
+              <button id="btn-limpiar-wp" class="secundario" type="button">Limpiar waypoints</button>
+            </div>
+            <div id="o-construir" hidden>
+              <select id="o-obra" aria-label="Obra">
+                <option value="vado">Vado (rápido y precario: 4 turnos, 30 % de material)</option>
+                <option value="puente">Puente (12 turnos, 60 % de material)</option>
+              </select>
+              <p class="ayuda">Haga clic en el mapa sobre un río a menos de 5 km de los ingenieros. Los vehículos pesados solo cruzan los ríos por una obra.</p>
+              <p id="o-sitio" class="ayuda preview"></p>
+            </div>
+            <div id="o-objetivo-box" hidden>
+              <select id="o-objetivo" aria-label="Objetivo"></select>
+              <p id="o-objetivo-ayuda" class="ayuda"></p>
+            </div>
+            <button id="btn-emitir" class="primario" type="button">Emitir orden</button>
+            <p class="ayuda">Una unidad tiene una sola orden por turno: la nueva reemplaza a la pendiente.</p>
+          </section>
+
+          <section class="bloque cola">
+            <h2>Cola de órdenes <span id="cola-contador" class="contador"></span></h2>
+            <ol id="cola"></ol>
+          </section>
+        </div>
+
+        <!-- consola del instructor -->
+        <div id="pest-consola" class="pestana solo-instructor" hidden>
+          <details open>
+            <summary>Turno y configuración</summary>
+            <div class="fila">
+              <button id="btn-pausar" type="button">Pausar</button>
+              <button id="btn-reanudar" type="button">Reanudar</button>
+              <button id="btn-finalizar" type="button" class="peligro">Finalizar</button>
+            </div>
+            <div class="grid">
+              <label class="mini">Clima
+                <select id="cfg-clima">
+                  <option value="despejado">Despejado</option>
+                  <option value="nublado">Nublado</option>
+                  <option value="lluvia">Lluvia</option>
+                  <option value="tormenta">Tormenta</option>
+                </select>
+              </label>
+              <label class="mini">Hora simulada inicial
+                <input id="cfg-hora" type="time" value="06:00">
+              </label>
+              <label class="mini">Límite de decisión (s, 0 = sin límite)
+                <input id="cfg-limite" type="number" min="0" max="86400" value="0">
+              </label>
+            </div>
+            <label class="chk"><input type="checkbox" id="cfg-azar"><span>Azar en los combates (reproducible)</span></label>
+            <label class="chk"><input type="checkbox" id="cfg-auto"><span>Resolver solo cuando ambos bandos estén listos</span></label>
+            <button id="btn-config" type="button">Aplicar configuración</button>
+            <label class="mini">Ver como
+              <select id="cfg-vista">
+                <option value="completa">Vista completa (instructor)</option>
+                <option value="azul">Bando Azul</option>
+                <option value="rojo">Bando Rojo</option>
+              </select>
+            </label>
+          </details>
+
+          <details>
+            <summary>Comunicaciones simuladas</summary>
+            <p class="ayuda">Interferencia electrónica del chat: cada mensaje demora y puede perderse. El instructor lo ve todo al instante.</p>
+            <div class="grid">
+              <label class="mini">Latencia base (ms)<input id="cfg-com-latencia" type="number" min="0" max="60000" value="0"></label>
+              <label class="mini">Variación (ms)<input id="cfg-com-jitter" type="number" min="0" max="60000" value="0"></label>
+              <label class="mini">Pérdida de mensajes (%)<input id="cfg-com-perdida" type="number" min="0" max="100" value="0"></label>
+            </div>
+            <button id="btn-config-com" type="button">Aplicar comunicaciones</button>
+          </details>
+
+          <details>
+            <summary>Agregar unidad</summary>
+            <p class="ayuda">Elija la clase, complete los datos y haga clic en el mapa para ubicarla.</p>
+            <div class="grid">
+              <input id="u-nombre" placeholder="Nombre (ej. Cía A)" maxlength="120">
+              <select id="u-bando"><option value="azul">Azul</option><option value="rojo">Rojo</option></select>
+              <select id="u-clase"></select>
+              <select id="u-escalon"></select>
+              <label class="mini">Velocidad km/h<input id="u-velocidad" type="number" min="0"></label>
+              <label class="mini">Alcance km<input id="u-alcance" type="number" min="0"></label>
+              <label class="mini">Detección km<input id="u-deteccion" type="number" min="0"></label>
+              <label class="mini">Autonomía km<input id="u-autonomia" type="number" min="1"></label>
+              <label class="mini">Fuerza %<input id="u-fuerza" type="number" value="100" min="1" max="100"></label>
+            </div>
+            <div id="u-aeronave-fila" class="aeronave-elegida" hidden>
+              <img id="u-modelo-foto" alt="" width="72" height="52" hidden>
+              <div><b id="u-modelo-nombre">Caza genérico</b><small id="u-modelo-grupo"></small></div>
+              <button id="btn-elegir-modelo" type="button" class="secundario mini">Elegir aeronave…</button>
+            </div>
+            <button id="btn-modo-agregar" type="button">Ubicar en mapa</button>
+          </details>
+
+          <details>
+            <summary>Eventos y ajustes</summary>
+            <input id="ev-desc" placeholder="Descripción del evento" maxlength="1000">
+            <select id="ev-bando">
+              <option value="todos">Para todos</option>
+              <option value="azul">Solo Azul</option>
+              <option value="rojo">Solo Rojo</option>
+            </select>
+            <button id="btn-evento" type="button">Inyectar evento</button>
+            <h4>Ajuste manual (queda en el informe)</h4>
+            <div class="grid">
+              <select id="adj-unidad"></select>
+              <input id="adj-fuerza" type="number" placeholder="Fuerza 0-100" min="0" max="100">
+              <input id="adj-combustible" type="number" placeholder="Combustible 0-100" min="0" max="100">
+              <input id="adj-municion" type="number" placeholder="Munición 0-100" min="0" max="100">
+            </div>
+            <button id="btn-ajustar" type="button">Aplicar ajuste</button>
+          </details>
+
+          <details>
+            <summary>Escenario</summary>
+            <div class="fila">
+              <button id="btn-duplicar" class="secundario" type="button">Duplicar</button>
+              <button id="btn-archivar" class="secundario" type="button">Archivar</button>
+              <a id="lnk-exportar" class="enlace-boton" download>Exportar JSON</a>
+            </div>
+            <h4>Usuarios con acceso a este escenario</h4>
+            <ul id="lista-asignados"></ul>
+          </details>
+
+          <details>
+            <summary>Usuarios</summary>
+            <ul id="lista-usuarios"></ul>
+            <div class="grid">
+              <input id="nu-user" placeholder="usuario" maxlength="50" autocomplete="off">
+              <input id="nu-pass" type="password" placeholder="contraseña (mín. 8)" autocomplete="new-password">
+              <select id="nu-rol">
+                <option value="azul">Alumno Azul</option>
+                <option value="rojo">Alumno Rojo</option>
+                <option value="observador">Observador</option>
+                <option value="instructor">Instructor</option>
+              </select>
+              <button id="btn-crear-usuario" type="button">Crear usuario</button>
+            </div>
+          </details>
+        </div>
+      </aside>
+
+      <!-- ============ 3. mapa táctico ============ -->
+      <div id="zona-mapa">
+        <div id="map" aria-label="Mapa táctico"></div>
+
+        <div id="coords" class="etiqueta-mapa">Mueva el cursor sobre el mapa</div>
+
+        <div id="barra-graficos" class="etiqueta-mapa solo-dibuja" aria-label="Gráficos tácticos">
+          <b>Gráficos tácticos</b>
+          <div class="herramientas">
+            <button type="button" data-grafico="linea_fase" title="Línea de fase (línea punteada)">Línea de fase</button>
+            <button type="button" data-grafico="eje_avance" title="Eje de avance (flecha)">Eje de avance</button>
+            <button type="button" data-grafico="zona_reunion" title="Zona de reunión (polígono)">Zona de reunión</button>
+            <button type="button" data-grafico="punto_control" title="Punto de control">Punto de control</button>
+          </div>
+          <input id="graf-etiqueta" placeholder="Etiqueta (ej. LF ALFA)" maxlength="60">
+          <select id="graf-bando" class="solo-instructor" aria-label="Destino del gráfico">
+            <option value="todos">Visible para todos</option>
+            <option value="azul">Solo Azul</option>
+            <option value="rojo">Solo Rojo</option>
+          </select>
+          <p id="graf-ayuda" class="ayuda">Elija una herramienta y trace sobre el mapa (doble clic o clic en el último punto para terminar). Lo verá todo su bando.</p>
+          <button type="button" id="graf-cancelar" class="secundario" hidden>Cancelar trazado</button>
+        </div>
+
+        <div id="hud-vw" aria-live="off">
+          <div class="hud-titulo"><b id="hud-escenario">-</b></div>
+          <div class="hud-datos">
+            <span>TURNO <b id="hud-turno">-</b></span>
+            <span>HORA <b id="hud-hora">-</b></span>
+            <span id="hud-clima">-</span>
+          </div>
+          <div id="hud-reloj" class="hud-reloj">--:--</div>
+          <div class="hud-bandos"><span id="hud-azul" class="azul">AZUL</span><span id="hud-rojo" class="rojo">ROJO</span></div>
+          <ul id="hud-alertas"></ul>
+        </div>
+        <button id="btn-vw-salir" type="button" class="secundario" title="Salir del centro de operaciones (Esc)">Salir del videowall</button>
+        <div id="leyenda-mapa" class="etiqueta-mapa" aria-label="Leyenda">
+          <span><i class="ley-amigo"></i>Unidad propia</span>
+          <span><i class="ley-enemigo"></i>Unidad enemiga</span>
+          <span><i class="ley-ruta"></i>Ruta</span>
+          <span><i class="ley-ataque"></i>Ataque</span>
+        </div>
+
+        <div id="replay" hidden>
+          <div class="fila-replay">
+            <strong>Repetición</strong>
+            <button id="rp-ant" class="mini secundario" type="button" title="Turno anterior">&lt;</button>
+            <input id="rp-slider" type="range" min="0" max="0" value="0" aria-label="Turno">
+            <button id="rp-sig" class="mini secundario" type="button" title="Turno siguiente">&gt;</button>
+            <button id="rp-play" class="mini" type="button">Reproducir</button>
+            <span id="rp-turno" class="contador"></span>
+            <button id="rp-resumen" class="mini secundario" type="button">Resumen</button>
+            <button id="rp-timeline" class="mini" type="button">Línea de tiempo</button>
+            <a id="rp-imprimible" class="enlace-boton" target="_blank" rel="noopener">Imprimible</a>
+            <a id="rp-csv" class="enlace-boton">CSV</a>
+            <button id="rp-cerrar" class="mini secundario" type="button">Cerrar</button>
+          </div>
+          <ul id="rp-combates"></ul>
+        </div>
+
+        <!-- ============ 4. panel lateral derecho ============ -->
+        <aside id="panel-der" aria-label="Entorno e inteligencia">
+          <section class="tarjeta">
+            <h2>Estado del escenario</h2>
+            <div class="clima">
+              <svg id="icono-clima" class="icono-clima" viewBox="0 0 48 48" aria-hidden="true"></svg>
+              <div>
+                <b id="clima-nombre" class="clima-nombre">-</b>
+                <span id="clima-vis" class="sec"></span>
+              </div>
+            </div>
+            <dl class="datos">
+              <div><dt>Movimiento terrestre</dt><dd id="clima-mov">-</dd></div>
+              <div><dt>Ataques aéreos</dt><dd id="clima-aire">-</dd></div>
+              <div><dt>Fase</dt><dd id="esc-fase">-</dd></div>
+              <div><dt>Modo</dt><dd id="esc-modo">-</dd></div>
+            </dl>
+          </section>
+
+          <section class="tarjeta">
+            <h2>Capas</h2>
+            <div class="capas">
+              <label><input type="checkbox" data-capa="terreno" checked><span>Terreno</span></label>
+              <label><input type="checkbox" data-capa="cobertura"><span>Cobertura (detección)</span></label>
+              <label><input type="checkbox" data-capa="niebla"><span>Niebla de guerra</span></label>
+              <label><input type="checkbox" data-capa="unidades" checked><span>Unidades</span></label>
+              <label><input type="checkbox" data-capa="contactos" checked><span>Últimos contactos</span></label>
+              <label><input type="checkbox" data-capa="graficos" checked><span>Gráficos tácticos</span></label>
+              <label><input type="checkbox" data-capa="referencias" checked><span>Límites y poblaciones</span></label>
+              <label><input type="checkbox" data-capa="bases_ven" checked><span>Bases aéreas de Venezuela</span></label>
+            </div>
+          </section>
+
+          <section class="tarjeta" id="tarjeta-chat">
+            <h2>Comunicaciones <span id="chat-nuevos" class="contador" hidden>0</span></h2>
+            <ul id="chat-lista" aria-live="polite"></ul>
+            <form id="chat-form" autocomplete="off">
+              <select id="chat-canal" aria-label="Canal"></select>
+              <div class="chat-fila">
+                <input id="chat-texto" placeholder="Mensaje…" maxlength="500" aria-label="Mensaje">
+                <button type="submit" class="primario">Enviar</button>
+              </div>
+            </form>
+            <p id="chat-enlace" class="ayuda"></p>
+          </section>
+
+          <section class="tarjeta tarjeta-alertas" id="tarjeta-alertas">
+            <h2>Alertas <span id="alertas-nuevas" class="contador" hidden>0</span></h2>
+            <ul id="alertas"></ul>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <!-- ============ 5. barra inferior ============ -->
+    <footer id="control-turno">
+      <div class="centro">
+        <button id="btn-listo" type="button" class="btn-tactico solo-alumno">
+          <span class="btn-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></svg></span>
+          <span id="btn-listo-texto">ESTOY LISTO - CONFIRMAR ÓRDENES</span>
+        </button>
+        <div class="solo-instructor fila-instructor">
+          <button id="btn-avanzar" type="button" class="btn-tactico">
+            <span class="btn-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 5l7 7-7 7M13 5l7 7-7 7"/></svg></span>
+            <span>RESOLVER Y AVANZAR TURNO</span>
+          </button>
+        </div>
+        <div class="estado-bandos" aria-live="polite">
+          <span class="estado" id="estado-azul"><i class="punto azul"></i>BANDO AZUL: <b>-</b></span>
+          <span class="estado" id="estado-rojo"><i class="punto rojo"></i>BANDO ROJO: <b>-</b></span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <dialog id="dlg-resumen">
+    <form method="dialog">
+      <h3 id="dlg-titulo">Resumen del ejercicio</h3>
+      <div id="dlg-contenido"></div>
+      <button>Cerrar</button>
+    </form>
+  </dialog>
+  <dialog id="dlg-timeline" class="ancho">
+    <form method="dialog">
+      <h3>Línea de tiempo: logística y combates</h3>
+      <p id="tl-resumen" class="ayuda"></p>
+      <div class="tl-filtros">
+        <label class="chk"><input type="checkbox" data-tl-filtro="combates" checked><span><i class="marca-leyenda combate"></i>Combates</span></label>
+        <label class="chk"><input type="checkbox" data-tl-filtro="logistica" checked><span><i class="marca-leyenda logistica"></i>Logística</span></label>
+        <label class="chk"><input type="checkbox" data-tl-filtro="eventos" checked><span><i class="marca-leyenda evento"></i>Eventos</span></label>
+        <select id="tl-bando" aria-label="Bando">
+          <option value="todos">Ambos bandos</option>
+          <option value="azul">Solo Azul</option>
+          <option value="rojo">Solo Rojo</option>
+        </select>
+        <span class="ayuda"><span class="linea-leyenda verde"></span>combustible <span class="linea-leyenda ambar"></span>munición · ▼ caída abrupta · ● nivel crítico · ▲ reabastecimiento · ◆ combate</span>
+      </div>
+      <div id="tl-svg-wrap"><svg id="tl-svg" role="img" aria-label="Línea de tiempo de logística y combates"></svg><div id="tl-tip" hidden></div></div>
+      <h4>Cronología</h4>
+      <ul id="tl-lista"></ul>
+      <button>Cerrar</button>
+    </form>
+  </dialog>
+  <dialog id="dlg-aeronaves" class="ancho">
+    <form id="aer-form" method="dialog">
+      <h3 id="aer-titulo">Enviar grupo de caza</h3>
+      <p id="aer-ayuda" class="ayuda"></p>
+      <div id="aer-tarjetas" class="tarjetas-modelo" role="radiogroup" aria-label="Modelo de aeronave"></div>
+      <div class="aer-campos">
+        <label class="mini" id="aer-base-fila">Base de origen<select id="aer-base"></select></label>
+        <label class="mini">Aeronaves en el grupo<select id="aer-cantidad"></select></label>
+        <label class="mini" id="aer-indicativo-fila">Indicativo (opcional)<input id="aer-indicativo" maxlength="40" placeholder="Ej. Halcón 1"></label>
+      </div>
+      <p id="aer-resumen" class="ayuda preview"></p>
+      <div class="fila">
+        <button type="button" id="aer-cancelar" class="secundario">Cancelar</button>
+        <button type="submit" id="aer-confirmar" class="primario">Enviar a despegar</button>
+      </div>
+    </form>
+  </dialog>
+  <div id="toast" hidden></div>
+
+  <script src="/static/vendor/leaflet/leaflet.js"></script>
+  <script src="/static/vendor/leaflet-draw/leaflet.draw.js"></script>
+  <script src="/static/vendor/milsymbol.js"></script>
+  <script src="/static/js/logica.js"></script>
+  <script src="/static/js/graficos.js"></script>
+  <script src="/static/js/chat.js"></script>
+  <script src="/static/js/videowall.js"></script>
+  <script src="/static/js/aviacion.js"></script>
+  <script src="/static/js/timeline.js"></script>
+  <script src="/static/js/informe.js"></script>
+  <script src="/static/pruebas/arnes.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

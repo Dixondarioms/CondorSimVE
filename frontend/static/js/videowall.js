@@ -1,0 +1,108 @@
+/* Modo "Centro de operaciones" (videowall): los paneles colapsan por completo y el mapa ocupa el 100 % del
+ * viewport, con un HUD grande (turno, hora, reloj, estado de los bandos y ultimas alertas). Se activa con el
+ * boton del instructor, la tecla V o el parametro de URL ?modo=videowall (opcional: &escenario=ID&vista=azul). */
+(function (raiz) {
+  "use strict";
+  const { textoHora, horaSimulada, etiquetaClima, formatoTiempo, segundosRestantes } = Logica;
+
+  function parametrosDeUrl() {
+    const p = new URLSearchParams(location.search);
+    const vista = p.get("vista");
+    return {
+      videowall: p.get("modo") === "videowall" || location.hash === "#videowall",
+      escenario: p.get("escenario") ? parseInt(p.get("escenario"), 10) || null : null,
+      vista: ["azul", "rojo", "completa"].includes(vista) ? vista : null,
+    };
+  }
+
+  /** ctx: { map(), alCambiar(activo) } */
+  function crear(ctx) {
+    const $ = (id) => document.getElementById(id);
+    let activo = false;
+    let temporizadorSalida = null;
+    let ultimo = null; // ultimo estado recibido: el HUD se pinta al activar sin esperar al siguiente
+
+    function redimensionar() {
+      const m = ctx.map();
+      if (m) m.invalidateSize({ animate: false });
+    }
+
+    async function alternar(encender, { pantallaCompleta = true } = {}) {
+      if (encender === activo) return;
+      activo = encender;
+      document.body.classList.toggle("videowall", activo);
+      if (activo && ultimo) actualizarHud(ultimo.data, ultimo.alertas);
+      if (activo && pantallaCompleta && document.documentElement.requestFullscreen) {
+        try { await document.documentElement.requestFullscreen(); } catch (_) { /* el navegador lo puede negar; el modo sigue */ }
+      } else if (!activo && document.fullscreenElement) {
+        try { await document.exitFullscreen(); } catch (_) { /* ya salio */ }
+      }
+      ctx.alCambiar(activo);
+      // el mapa se ajusta mientras se anima el colapso de los paneles y al terminar
+      [50, 200, 420].forEach((ms) => setTimeout(redimensionar, ms));
+      if (activo) mostrarSalida();
+    }
+
+    function mostrarSalida() {
+      document.body.classList.add("mostrar-salida");
+      clearTimeout(temporizadorSalida);
+      temporizadorSalida = setTimeout(() => document.body.classList.remove("mostrar-salida"), 3500);
+    }
+
+    /** Actualiza el HUD con el ultimo estado y las alertas mas recientes. */
+    function actualizarHud(data, alertas) {
+      if (data) ultimo = { data, alertas };
+      if (!activo || !data) return;
+      const esc = data.escenario;
+      $("hud-escenario").textContent = esc.nombre;
+      $("hud-turno").textContent = String(esc.turno_actual);
+      $("hud-hora").textContent = textoHora(horaSimulada(esc.hora_inicio_min, esc.turno_actual));
+      $("hud-clima").textContent = etiquetaClima(esc.clima).toUpperCase();
+      $("hud-azul").classList.toggle("listo", esc.listo_azul);
+      $("hud-rojo").classList.toggle("listo", esc.listo_rojo);
+      $("hud-azul").textContent = esc.listo_azul ? "AZUL LISTO" : "AZUL";
+      $("hud-rojo").textContent = esc.listo_rojo ? "ROJO LISTO" : "ROJO";
+      const ul = $("hud-alertas");
+      while (ul.firstChild) ul.removeChild(ul.firstChild);
+      for (const a of alertas.slice(0, 3)) {
+        const li = document.createElement("li");
+        li.className = a.nivel;
+        li.textContent = a.texto;
+        ul.appendChild(li);
+      }
+      actualizarReloj(data);
+    }
+
+    function actualizarReloj(data, recibidoEn) {
+      if (!activo || !data) return;
+      const esc = data.escenario;
+      const r = $("hud-reloj");
+      r.classList.remove("urgente", "inactivo");
+      if (esc.estado === "finalizado") { r.textContent = "FINALIZADO"; r.classList.add("inactivo"); return; }
+      if (esc.estado === "pausado") { r.textContent = "PAUSADO"; r.classList.add("inactivo"); return; }
+      if (!esc.decision_termina_en) { r.textContent = "SIN LÍMITE"; r.classList.add("inactivo"); return; }
+      const seg = segundosRestantes(esc.decision_termina_en, data.ahora, recibidoEn);
+      r.textContent = formatoTiempo(seg);
+      r.classList.toggle("urgente", seg !== null && seg <= 15);
+    }
+
+    function conectar() {
+      $("btn-videowall").addEventListener("click", () => alternar(!activo));
+      $("btn-vw-salir").addEventListener("click", () => alternar(false));
+      document.addEventListener("mousemove", () => { if (activo) mostrarSalida(); });
+      document.addEventListener("keydown", (e) => {
+        const escribiendo = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || ""));
+        if (e.key === "Escape" && activo) alternar(false);
+        else if ((e.key === "v" || e.key === "V") && !escribiendo && !e.ctrlKey && !e.metaKey && !e.altKey && !$("btn-videowall").hidden) alternar(!activo);
+      });
+      // si el usuario sale de pantalla completa con Esc del navegador, el modo se mantiene (solo cambia el tamano)
+      document.addEventListener("fullscreenchange", () => setTimeout(redimensionar, 100));
+      window.addEventListener("resize", redimensionar);
+      if (typeof ResizeObserver !== "undefined") new ResizeObserver(redimensionar).observe($("zona-mapa"));
+    }
+
+    return { conectar, alternar, actualizarHud, actualizarReloj, activo: () => activo };
+  }
+
+  raiz.Videowall = { crear, parametrosDeUrl };
+})(window);

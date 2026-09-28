@@ -1,0 +1,11 @@
+**/venv
+**/__pycache__
+**/*.pyc
+**/*.db
+backend/respaldos
+backend/certs
+backend/pgdata
+tools/cache
+.env
+.git
+node_modules

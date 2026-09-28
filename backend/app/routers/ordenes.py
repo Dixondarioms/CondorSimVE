@@ -1,0 +1,199 @@
+import json
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app import auth, schemas, state
+from app.db import get_db
+from app.engine import aeronaves as aeronaves_mod
+from app.engine import catalogo, geo, movimiento
+from app.engine.orders import COSTO_OBRA, tipo_efectivo
+from app.models.escenario import Escenario
+from app.models.orden import Orden
+from app.models.unidad import Unidad
+from app.models.usuario import Usuario
+from app.terreno import get_terreno
+from app.ws_manager import manager
+
+router = APIRouter(prefix="/api/escenarios/{escenario_id}/ordenes", tags=["ordenes"])
+solo_alumnos = auth.requiere_roles("azul", "rojo")
+
+
+def _en_decision(esc: Escenario) -> Escenario:
+    if esc.estado != "activo":
+        raise HTTPException(status_code=400, detail=f"El escenario esta {esc.estado}")
+    if esc.fase != "decision":
+        raise HTTPException(status_code=400, detail="El escenario no esta en fase de decision")
+    return esc
+
+
+def _unidad_propia(db: Session, esc: Escenario, unidad_id: int, usuario: Usuario) -> Unidad:
+    unidad = db.get(Unidad, unidad_id)
+    if unidad is None or unidad.escenario_id != esc.id or unidad.bando != usuario.rol:
+        # Mismo mensaje para "no existe" y "es del otro bando": no revela unidades ocultas.
+        raise HTTPException(status_code=404, detail="Unidad no encontrada")
+    if unidad.estado != "activa":
+        raise HTTPException(status_code=400, detail="La unidad ya no esta activa")
+    return unidad
+
+
+def _validar_waypoints(waypoints) -> None:
+    if not waypoints:
+        raise HTTPException(status_code=400, detail="Indique al menos un waypoint")
+    for lat, lon in waypoints:
+        if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+            raise HTTPException(status_code=400, detail="Waypoint fuera de rango")
+
+
+@router.post("", response_model=schemas.OrdenOut)
+async def emitir_orden(
+    payload: schemas.OrdenCreate,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(solo_alumnos),
+):
+    _en_decision(esc)
+    unidad = _unidad_propia(db, esc, payload.unidad_id, usuario)
+    if unidad.tipo == "base" and payload.tipo not in ("mover", "despegar"):
+        raise HTTPException(status_code=400, detail="Una base no puede combatir ni apoyar")
+
+    clase = catalogo.perfil(unidad)
+    if payload.tipo == "despegar":
+        # el despegue pendiente de esta misma base sera reemplazado: no cuenta para el tope
+        previa = db.query(Orden).filter(
+            Orden.escenario_id == esc.id, Orden.unidad_id == unidad.id, Orden.estado == "pendiente"
+        ).first()
+        motivo = aeronaves_mod.error_de_despegue(
+            unidad, payload.modelo, payload.aeronaves,
+            aeronaves_mod.aeronaves_comprometidas(db, esc.id, usuario.rol, previa.id if previa else None),
+        )
+        if motivo:
+            raise HTTPException(status_code=400, detail=motivo)
+    elif payload.tipo == "construir":
+        if not clase.construye:
+            raise HTTPException(status_code=400, detail="Solo los ingenieros pueden construir puentes y vados")
+        if payload.detalle is None:
+            raise HTTPException(status_code=400, detail="Indique si construye un puente o un vado")
+        if len(payload.waypoints) != 1:
+            raise HTTPException(status_code=400, detail="Indique un unico punto de construccion")
+        _validar_waypoints(payload.waypoints)
+        lat, lon = payload.waypoints[0]
+        if geo.distancia_km(unidad.lat, unidad.lon, lat, lon) > unidad.alcance_km:
+            raise HTTPException(
+                status_code=400,
+                detail=f"El punto esta fuera del alcance de trabajo ({unidad.alcance_km:.0f} km): acerque primero a los ingenieros",
+            )
+        if not get_terreno().hay_rio_cerca(lat, lon, 1.0):
+            raise HTTPException(status_code=400, detail="El punto no esta sobre un rio")
+        if unidad.municion < COSTO_OBRA[payload.detalle]:
+            raise HTTPException(status_code=400, detail="Material insuficiente para esa obra")
+    elif payload.tipo == "mover":
+        if unidad.tipo == "base" or unidad.velocidad_kmh <= 0:
+            raise HTTPException(status_code=400, detail="Esta unidad no puede moverse")
+        if unidad.combustible <= 0:
+            raise HTTPException(status_code=400, detail="La unidad no tiene combustible")
+        _validar_waypoints(payload.waypoints)
+    else:  # atacar / apoyar
+        if payload.objetivo_unidad_id is None:
+            raise HTTPException(status_code=400, detail="Indique la unidad objetivo")
+        if unidad.municion <= 0:
+            raise HTTPException(status_code=400, detail="La unidad no tiene municion")
+        visibles = {u.id: u for u in state.unidades_visibles_para(db, esc, usuario.rol)}
+        objetivo = visibles.get(payload.objetivo_unidad_id)
+        if objetivo is None or objetivo.estado != "activa":
+            raise HTTPException(status_code=404, detail="Objetivo no visible o inexistente")
+        if payload.tipo == "atacar" and objetivo.bando == usuario.rol:
+            raise HTTPException(status_code=400, detail="No puede atacar una unidad propia")
+        if payload.tipo == "atacar" and clase.ataque_vs.get(tipo_efectivo(objetivo), 0.0) <= 0:
+            raise HTTPException(
+                status_code=400, detail=f"{clase.nombre} no puede atacar objetivos de tipo {tipo_efectivo(objetivo)}"
+            )
+        if payload.tipo == "apoyar" and (objetivo.bando != usuario.rol or objetivo.id == unidad.id):
+            raise HTTPException(status_code=400, detail="Solo puede apoyar a otra unidad propia")
+
+    # Una unidad tiene una sola orden por turno: la nueva reemplaza a la pendiente.
+    db.query(Orden).filter(
+        Orden.escenario_id == esc.id, Orden.unidad_id == unidad.id, Orden.estado == "pendiente",
+    ).delete()
+
+    orden = Orden(
+        escenario_id=esc.id,
+        unidad_id=unidad.id,
+        tipo=payload.tipo,
+        waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir") else []),
+        objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar") else None,
+        detalle=(
+            aeronaves_mod.codificar(payload.modelo, payload.aeronaves, (payload.indicativo or "").strip())
+            if payload.tipo == "despegar"
+            else payload.detalle or "" if payload.tipo == "construir" else ""
+        ),
+        turno_emitida=esc.turno_actual,
+    )
+    db.add(orden)
+    # Emitir una orden nueva invalida el "listo" del bando: debe confirmarlo otra vez.
+    setattr(esc, f"listo_{usuario.rol}", False)
+    db.commit()
+    db.refresh(orden)
+
+    await manager.difundir_estado(db, esc)
+    return orden
+
+
+@router.post("/previsualizar")
+def previsualizar(
+    payload: schemas.PrevisualizarIn,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(solo_alumnos),
+):
+    """Donde terminaria la unidad este turno con esos waypoints (terreno, clima y
+    combustible incluidos), sin emitir la orden."""
+    unidad = _unidad_propia(db, esc, payload.unidad_id, usuario)
+    _validar_waypoints(payload.waypoints)
+    mov = movimiento.simular(unidad, [list(w) for w in payload.waypoints], get_terreno(), esc.clima)
+    return {
+        "ruta": mov.ruta,
+        "destino": [mov.lat, mov.lon],
+        "km": round(mov.km_reales, 1),
+        "combustible_restante": round(max(0.0, unidad.combustible - mov.combustible_gastado), 1),
+        "llega": bool(payload.waypoints) and [round(mov.lat, 5), round(mov.lon, 5)]
+        == [round(payload.waypoints[-1][0], 5), round(payload.waypoints[-1][1], 5)],
+        "nota": mov.nota,
+    }
+
+
+@router.delete("/{orden_id}")
+async def cancelar_orden(
+    orden_id: int,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(solo_alumnos),
+):
+    _en_decision(esc)
+    orden = db.get(Orden, orden_id)
+    unidad = db.get(Unidad, orden.unidad_id) if orden else None
+    if orden is None or orden.escenario_id != esc.id or unidad.bando != usuario.rol:
+        raise HTTPException(status_code=404, detail="Orden no encontrada")
+    if orden.estado != "pendiente":
+        raise HTTPException(status_code=400, detail="Solo se pueden cancelar ordenes pendientes")
+    db.delete(orden)
+    setattr(esc, f"listo_{usuario.rol}", False)
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return {"ok": True}
+
+
+@router.get("", response_model=list[schemas.OrdenOut])
+def listar_ordenes(
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.usuario_actual),
+):
+    q = db.query(Orden).filter(Orden.escenario_id == esc.id)
+    if state.es_bando(usuario.rol):
+        propias = [
+            u.id
+            for u in db.query(Unidad).filter(Unidad.escenario_id == esc.id, Unidad.bando == usuario.rol)
+        ]
+        q = q.filter(Orden.unidad_id.in_(propias))
+    return q.order_by(Orden.id).all()
