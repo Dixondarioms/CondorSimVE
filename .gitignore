@@ -10,3 +10,8 @@ backend/certs/
 node_modules/
 .env
 backend/pgdata/
+
+# modelos 3D originales (licencia Sketchfab Standard: no se redistribuyen) y salida del renderizador de sprites
+*.glb
+*.gltf
+tools/sprites3d/salida/

@@ -70,3 +70,33 @@ def test_las_bases_se_pueden_colocar_como_unidad_en_su_posicion(api):
     r = prof.post(f"{base}/unidades", json=dict(nombre="BA Libertador", bando="azul", clase="base_aerea", lat=lat, lon=lon))
     assert r.status_code == 200, r.text
     assert (r.json()["clase"], r.json()["tipo"], r.json()["lat"], r.json()["lon"]) == ("base_aerea", "base", lat, lon)
+
+
+def test_estan_las_48_imagenes_de_los_modelos_3d_y_ningun_glb_en_el_proyecto():
+    from PIL import Image
+
+    raiz = FRONTEND.parent
+    carpeta = FRONTEND / "static" / "aeronaves"
+    for modelo in ("f16", "su30"):
+        for rumbo in range(0, 360, 15):
+            ruta = carpeta / f"{modelo}_{rumbo:03d}.png"
+            assert ruta.is_file(), f"falta {ruta.name}"
+            with Image.open(ruta) as im:
+                assert im.size == (160, 160) and im.mode == "RGBA"
+                assert im.getchannel("A").getextrema()[0] == 0, f"{ruta.name} debe tener fondo transparente"
+                assert im.getbbox() is not None, f"{ruta.name} esta vacia"
+    assert (carpeta / "CREDITOS.md").is_file()
+    # licencia Sketchfab Standard: los modelos originales no se redistribuyen con el proyecto
+    ignorados = ("node_modules", "venv", "tools/cache", ".git")
+    encontrados = [str(p.relative_to(raiz)) for p in raiz.rglob("*.glb") if not any(i in p.as_posix() for i in ignorados)]
+    assert encontrados == [], f"no incluya los .glb en el proyecto: {encontrados}"
+
+
+def test_las_dos_orientaciones_extremas_de_un_sprite_son_distintas():
+    """Rumbo 0 (proa al norte) y 180 (proa al sur) no pueden ser la misma imagen."""
+    from PIL import Image, ImageChops
+
+    carpeta = FRONTEND / "static" / "aeronaves"
+    for modelo in ("f16", "su30"):
+        a, b = Image.open(carpeta / f"{modelo}_000.png"), Image.open(carpeta / f"{modelo}_180.png")
+        assert ImageChops.difference(a, b).getbbox() is not None

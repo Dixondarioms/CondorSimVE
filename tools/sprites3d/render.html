@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Renderizador de sprites 3D</title>
+  <style>
+    body { margin: 8px; background: #2a2f3a; color: #ddd; font: 12px system-ui, sans-serif; }
+    #estado { margin: 6px 0; white-space: pre-wrap; }
+    canvas { background: #566148; margin: 2px; }
+    #vistas { display: flex; flex-wrap: wrap; }
+  </style>
+  <script type="importmap">
+    { "imports": { "three": "/node_modules/three/build/three.module.js", "three/addons/": "/node_modules/three/examples/jsm/" } }
+  </script>
+</head>
+<body>
+  <div id="estado">Cargando…</div>
+  <div id="vistas"></div>
+  <script type="module" src="/render.mjs"></script>
+</body>
+</html>

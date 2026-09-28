@@ -1,0 +1,6 @@
+{
+  "name": "sprites3d",
+  "private": true,
+  "description": "Renderiza los modelos 3D de aeronaves a imagenes para el mapa (solo se usa al preparar los sprites)",
+  "dependencies": { "three": "0.170.0" }
+}

@@ -19,6 +19,7 @@
     tamSimbolo: 26, obraSitio: null, dibujando: false, urlInicial: Videowall.parametrosDeUrl(),
     graficos: null, chat: null, videowall: null, aviacion: null,
     modeloUnidad: null, baseSeleccionada: null,
+    rumbos: new Map(), posPrevia: new Map(), // hacia donde apunta cada aeronave (imagen 3D)
   };
 
   // ---------- utilidades ----------
@@ -294,7 +295,10 @@
       }, 250);
     });
     map.on("click", alClickMapa);
-    map.on("zoomend", () => app.flechas.forEach((f) => f.actualizar()));
+    map.on("zoomend", () => {
+      app.flechas.forEach((f) => f.actualizar());
+      if (app.data && !(app.informe && app.informe.activo())) dibujarUnidades(app.data.unidades); // el tamaño de los aviones depende del zoom
+    });
   }
 
   // capas alternables desde la tarjeta "Capas"
@@ -380,17 +384,50 @@
 
   const rotuloModelo = (u) => Logica.rotuloModelo(u, app.catalogo && app.catalogo.modelos);
 
-  function iconoUnidad(u, clases = "") {
+  /** Hacia donde apunta la aeronave: su ultimo desplazamiento; si no se movio, su orden pendiente; si no, el ultimo rumbo. */
+  function rumboDe(u) {
+    const previa = app.posPrevia.get(u.id);
+    let r = app.rumbos.get(u.id);
+    if (previa && Logica.distanciaKm(previa[0], previa[1], u.lat, u.lon) > 0.1) {
+      r = Modelo3d.rumbo(previa[0], previa[1], u.lat, u.lon);
+    } else {
+      const orden = pendientes().find((o) => o.unidad_id === u.id && (o.tipo === "mover" ? o.waypoints.length : o.tipo === "atacar"));
+      const objetivo = orden && orden.tipo === "atacar" ? app.porId.get(orden.objetivo_unidad_id) : null;
+      const destino = orden ? (orden.tipo === "mover" ? orden.waypoints[0] : objetivo ? [objetivo.lat, objetivo.lon] : null) : null;
+      if (destino) r = Modelo3d.rumbo(u.lat, u.lon, destino[0], destino[1]);
+    }
+    if (r === undefined) r = u.bando === "rojo" ? 225 : 45;
+    app.posPrevia.set(u.id, [u.lat, u.lon]);
+    app.rumbos.set(u.id, r);
+    return r;
+  }
+
+  /** Lado (px) del cuadro de un Su-30 solo: crece al acercar el mapa para que se distingan los aviones. */
+  function baseAvion() {
+    const zoom = app.map ? app.map.getZoom() : 8;
+    return Math.round(app.tamSimbolo * 2.2 * Math.max(0.75, Math.min(1.5, 0.8 + 0.22 * (zoom - 7.5))));
+  }
+
+  function iconoUnidad(u, clases = "", rumbo = u.bando === "rojo" ? 225 : 45) {
     const sym = new ms.Symbol((u.sidc || "SUGP").padEnd(15, "-"), { size: app.tamSimbolo });
     const tam = sym.getSize();
     const anc = sym.getAnchor();
     const sub = rotuloModelo(u);
+    // imagen 3D del avion (su modelo, o un caza generico si no se conoce) sobre el simbolo APP-6
+    const av = Modelo3d.mallaPara(u)
+      ? Modelo3d.marcador({ modelo: u.modelo, clase: u.clase, rumbo, bando: u.bando, n: u.aeronaves || 1, base: baseAvion() })
+      : null;
+    const solape = av ? Math.round(av.alto * 0.24) : 0; // el cuadro del avion tiene margen vacio: el simbolo sube hacia el
+    const avion = av ? `<div class="avion3d" style="height:${av.alto}px;margin-bottom:-${solape}px">${av.html}</div>` : "";
+    const ancho = Math.max(110, (av ? av.ancho : 0) + 10);
+    const alto = av ? av.alto - solape : 0;
     return L.divIcon({
       className: `marca ${clases}`,
-      html: `<div class="cuerpo">${sym.asSVG()}<div class="rotulo">${escapar(u.nombre || "")}</div>`
+      html: `<div class="cuerpo">${avion}${sym.asSVG()}<div class="rotulo">${escapar(u.nombre || "")}</div>`
         + (sub ? `<div class="rotulo modelo">${escapar(sub)}</div>` : "") + "</div>",
-      iconSize: [110, tam.height + (sub ? 30 : 16)],
-      iconAnchor: [55 + (anc.x - tam.width / 2), anc.y],
+      iconSize: [ancho, alto + tam.height + (sub ? 30 : 16)],
+      // con imagen del avion, la posicion es el centro de la imagen y el simbolo APP-6 queda debajo como etiqueta
+      iconAnchor: av ? [ancho / 2, av.alto / 2] : [ancho / 2 + (anc.x - tam.width / 2), anc.y],
     });
   }
 
@@ -435,10 +472,11 @@
       const enemiga = vista ? u.bando !== vista : u.bando === "rojo";
       const clases = enemiga ? "enemigo" : "amigo";
       let m = app.markers.get(u.id);
-      const firma = `${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}`;
+      const rumbo = Modelo3d.mallaPara(u) ? Math.round(rumboDe(u) / 5) * 5 : 0;
+      const firma = `${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.modelo || ""}|${u.aeronaves || ""}|${rumbo}|${Modelo3d.mallaPara(u) ? baseAvion() : ""}`;
       if (m && m._firma !== firma) { app.capas.unidades.removeLayer(m); m = null; }
       if (!m) {
-        m = L.marker([u.lat, u.lon], { icon: iconoUnidad(u, clases), keyboard: false }).addTo(app.capas.unidades);
+        m = L.marker([u.lat, u.lon], { icon: iconoUnidad(u, clases, rumbo), keyboard: false }).addTo(app.capas.unidades);
         m._firma = firma;
         m.on("click", () => seleccionar(u.id, "mapa"));
         app.markers.set(u.id, m);
@@ -1139,6 +1177,8 @@
     app.escenarioId = v ? parseInt(v, 10) : null;
     app.encuadrado = false;
     app.seleccion = null;
+    app.rumbos.clear();
+    app.posPrevia.clear();
     app.unidadOrden = null;
     app.data = null;
     app.vista = "completa";

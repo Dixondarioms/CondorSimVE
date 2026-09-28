@@ -186,6 +186,13 @@ correlaciones (`consumo_en_combate`, `coincide_con_combate`, `combate_con_logist
   (SVPA). Al tocar una, se ve su nombre, ubicación y elevación; el instructor puede **colocarla como base azul o
   roja** del ejercicio con un botón. Datos en `frontend/static/geo/bases_aereas.geojson`
   (`python tools/generar_bases_aereas.py` lo regenera; fuentes: Wikipedia y OurAirports).
+- **Imagen 3D en el mapa:** cada F-16 y Su-30 se dibuja sobre su posición como una imagen renderizada de un modelo 3D
+  real (24 rumbos), orientada hacia donde va (su último desplazamiento o su orden pendiente), con un contorno del
+  color de su bando y el símbolo APP-6 debajo como etiqueta. Un grupo se dibuja como varios aviones en formación
+  (hasta 4) y el tamaño crece al acercar el mapa. Las aeronaves sin modelo o no identificadas (enemigos) usan un
+  caza genérico procedural. Los modelos y su licencia (Sketchfab Standard) están en
+  `frontend/static/aeronaves/CREDITOS.md`; `tools/sprites3d/` regenera las imágenes. El «Su-30» usa un modelo de
+  Su-33 (variante naval), con su librea. `frontend/static/pruebas/modelos3d.html` muestra todos los modelos.
 - **Fotos:** de Wikimedia Commons, bajo CC BY-SA (créditos en `frontend/static/fotos/CREDITOS.md` y en la
   interfaz). Quien redistribuya el proyecto debe mantener esos créditos.
 
