@@ -1,0 +1,5 @@
+# Saltos de linea consistentes en el repositorio (LF), aunque se edite en Windows.
+* text=auto eol=lf
+*.bin.z binary
+*.jpg binary
+*.png binary
