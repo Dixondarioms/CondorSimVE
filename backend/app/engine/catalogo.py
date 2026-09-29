@@ -56,6 +56,10 @@ class Clase:
     dron: bool = False  # aeronave no tripulada: pierde el enlace dentro de una interferencia enemiga
     se_consume: bool = False  # municion merodeadora: se destruye al atacar
     celula: str = ""  # "ge": radares y guerra electronica, que conduce el puesto A2
+    defensa_aerea: bool = False  # dispara sola contra aeronaves enemigas detectadas a su alcance (si su fuego esta libre)
+    # ---- bases: existencias (ver engine/logistica.py) ----
+    stock_max: float = 0.0  # existencias maximas de combustible y de municion (puntos; 100 = llenar una unidad)
+    reposicion_turno: float = 0.0  # puntos que repone cada turno (depositos: la linea de abastecimiento)
 
 
 def _atk(t=1.0, a=1.0, n=1.0):
@@ -73,11 +77,12 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
     Clase("reconocimiento", "Reconocimiento", "terrestre", "G", "UCR---", 60, 6, 16, 350, _atk(0.6, 0.2, 0.3), 0.8,
           "seccion", movilidad="ligera"),
     Clase("antiaerea", "Defensa antiaerea", "terrestre", "G", "UCD---", 30, 20, 20, 250, _atk(0.4, 2.0, 0.2), 0.9,
-          "batallon", emisor=True,
-          armamento="Misiles y canones guiados por radar: la guerra electronica enemiga la localiza y la degrada"),
+          "batallon", emisor=True, defensa_aerea=True,
+          armamento="Misiles y canones guiados por radar: dispara sola contra aviones enemigos a su alcance si su radar "
+                    "emite; la guerra electronica enemiga la localiza y la degrada"),
     Clase("antiaerea_portatil", "Antiaerea portatil (tipo IGLA-S)", "terrestre", "G", "UCDM--", 20, 5, 10, 200,
           _atk(0.0, 2.6, 0.0), 0.6, "equipo", movilidad="ligera", municion_por_ataque=50.0,
-          despliegue_turnos=1, recarga_turnos=1,
+          despliegue_turnos=1, recarga_turnos=1, defensa_aerea=True,
           armamento="Sistema portatil antiaereo: debe desplegarse (1 turno quieto) y recargar (1 turno) entre disparos"),
     Clase("ingenieros", "Ingenieros", "terrestre", "G", "UCEC--", 25, 5, 8, 250, _atk(0.5, 0.1, 0.2), 0.9,
           "compania", movilidad="ligera", construye=True,
@@ -124,11 +129,11 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
           movilidad="naval"),
     # ---- bases ----
     Clase("base_aerea", "Base aerea", "base", "G", "IBA---", 0, 25, 6, 0, _atk(0.0, 0.0, 0.0), 1.0, "",
-          ("aerea",), movilidad="fija"),
+          ("aerea",), movilidad="fija", stock_max=2000.0),
     Clase("deposito", "Deposito logistico", "base", "G", "UUS---", 0, 20, 5, 0, _atk(0.0, 0.0, 0.0), 1.0, "",
-          ("terrestre",), movilidad="fija"),
+          ("terrestre",), movilidad="fija", stock_max=3000.0, reposicion_turno=150.0),
     Clase("puerto", "Puerto / base naval", "base", "G", "IBN---", 0, 25, 6, 0, _atk(0.0, 0.0, 0.0), 1.0, "",
-          ("naval",), movilidad="fija"),
+          ("naval",), movilidad="fija", stock_max=2000.0),
 ]}
 
 # Clase por defecto de cada tipo (compatibilidad con unidades creadas sin clase).
@@ -289,5 +294,6 @@ def como_dict(c: Clase) -> dict:
         "vulnerable_emboscada": c.vulnerable_emboscada, "nodo_movil_km": c.nodo_movil_km,
         "carga_max": c.carga_max, "construye": c.construye, "firma": c.firma, "solo_aereo": c.solo_aereo,
         "emisor": c.emisor, "escucha_km": c.escucha_km, "interferencia_km": c.interferencia_km, "dron": c.dron,
-        "se_consume": c.se_consume, "celula": c.celula,
+        "se_consume": c.se_consume, "celula": c.celula, "defensa_aerea": c.defensa_aerea, "stock_max": c.stock_max,
+        "reposicion_turno": c.reposicion_turno,
     }

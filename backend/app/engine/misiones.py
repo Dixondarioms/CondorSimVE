@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 
 from app.engine import aeronaves as aeronaves_mod
-from app.engine import catalogo, geo, movimiento, vision
+from app.engine import catalogo, geo, logistica, movimiento, vision
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.models.evento import Evento
@@ -257,7 +257,7 @@ def _blanco_automatico(u, rol_id: str, lista, terreno, clima, ge):
         and _visible(x, u.bando, lista, terreno, clima, ge)
     ]
     if rol_id == "SEAD":
-        emisores = [x for x in candidatos if catalogo.obtener(x.clase, x.tipo).emisor or (ge is not None and ge.emite(x))]
+        emisores = [x for x in candidatos if ge_mod.emite_radar(x) or (ge is not None and ge.emite(x))]
         candidatos = emisores or candidatos
     return min(candidatos, key=lambda x: geo.distancia_km(u.lat, u.lon, x.lat, x.lon), default=None)
 
@@ -280,6 +280,7 @@ def activar(db, escenario, unidades: dict, lista: list, turno: int, lanzados_en_
                 continue
             grupo = aeronaves_mod.crear_grupo(base, m.modelo, m.aeronaves, m.nombre, lanzados_en_base[base.id])
             lanzados_en_base[base.id] += 1
+            logistica.descontar_despegue(base, m.aeronaves)
             db.add(grupo)
             db.flush()
             unidades[grupo.id] = grupo

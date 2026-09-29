@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import azar as azar_mod
-from app.engine import catalogo, combat, geo, movimiento, vision
+from app.engine import catalogo, combat, geo, logistica, movimiento, vision
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import misiones as misiones_mod
@@ -118,11 +118,13 @@ class _Bitacora:
 
 
 def _reabastecer(unidades: list[Unidad], bit: _Bitacora) -> None:
-    """Bases (+50 %) y despues convoyes con carga (+40 %); los convoyes se rellenan en los depositos."""
+    """Las bases reabastecen (+50 %) desde sus existencias; los convoyes reabastecen en marcha (+40 %), se recargan
+    en los depositos y descargan en las bases aereas y puertos; los depositos reponen existencias cada turno."""
     bases = [
         u for u in unidades
         if u.tipo == "base" and u.estado == "activa" and u.fuerza >= BASE_FUERZA_MINIMA
     ]
+    antes = {b.id: {v: logistica.stock(b, v) for v in logistica.VARIABLES} for b in bases}
     for u in unidades:
         if u.tipo == "base" or u.estado != "activa":
             continue
@@ -132,10 +134,17 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora) -> None:
             if b.bando != u.bando or u.tipo not in catalogo.obtener(b.clase, "base").suministra:
                 continue
             if geo.distancia_km(b.lat, b.lon, u.lat, u.lon) <= b.alcance_km:
-                bit.poner(u, "combustible", u.combustible + REABASTECIMIENTO_POR_TURNO, "reabastecimiento")
-                bit.poner(u, "municion", u.municion + REABASTECIMIENTO_POR_TURNO, "reabastecimiento")
-                if catalogo.obtener(u.clase, u.tipo).carga_max:
-                    bit.poner(u, "carga", u.carga + RECARGA_CONVOY_EN_DEPOSITO, "reabastecimiento")
+                for variable in logistica.VARIABLES:
+                    dar = min(REABASTECIMIENTO_POR_TURNO, 100.0 - getattr(u, variable), logistica.stock(b, variable))
+                    if dar > 0.05:
+                        bit.poner(u, variable, getattr(u, variable) + dar, "reabastecimiento")
+                        logistica.cambiar_stock(b, variable, -dar)
+                clase_u = catalogo.obtener(u.clase, u.tipo)
+                if clase_u.carga_max:
+                    carga = logistica.carga_disponible(b, min(RECARGA_CONVOY_EN_DEPOSITO, clase_u.carga_max - u.carga))
+                    if carga > 0.05:
+                        bit.poner(u, "carga", u.carga + carga, "reabastecimiento")
+                        logistica.retirar_carga(b, carga)
                 break
 
     for conv in unidades:
@@ -153,6 +162,32 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora) -> None:
                 bit.poner(r, "combustible", r.combustible + REABASTECIMIENTO_CONVOY, "convoy")
                 bit.poner(r, "municion", r.municion + REABASTECIMIENTO_CONVOY, "convoy")
                 bit.poner(conv, "carga", conv.carga - CARGA_POR_UNIDAD_CONVOY, "convoy")
+
+    # los convoyes descargan sus suministros en las bases que no los recargan (bases aereas y puertos)
+    for conv in unidades:
+        clase = catalogo.obtener(conv.clase, conv.tipo)
+        if conv.estado != "activa" or not clase.nodo_movil_km or conv.carga <= 0.05:
+            continue
+        for b in bases:
+            if b.bando != conv.bando or conv.tipo in catalogo.obtener(b.clase, "base").suministra:
+                continue
+            if geo.distancia_km(conv.lat, conv.lon, b.lat, b.lon) <= clase.nodo_movil_km:
+                entrega = logistica.carga_que_admite(b, min(logistica.ENTREGA_CONVOY_POR_TURNO, conv.carga))
+                if entrega > 0.05:
+                    bit.poner(conv, "carga", conv.carga - entrega, "entrega a base")
+                    logistica.depositar_carga(b, entrega)
+                break
+
+    for b in bases:
+        logistica.reponer(b)
+        for variable in logistica.VARIABLES:
+            if antes[b.id][variable] > 0 and logistica.stock(b, variable) <= 0:
+                bit.db.add(Evento(
+                    escenario_id=bit.escenario.id, turno=bit.escenario.turno_actual, tipo="logistica",
+                    bando_destino=b.bando,
+                    descripcion=f"{b.nombre} se quedo sin {variable} en deposito: no puede reabastecer ni lanzar "
+                                "aeronaves hasta recibir suministros.",
+                ))
 
 
 def procesar_ordenes(
@@ -197,6 +232,7 @@ def procesar_ordenes(
             continue
         grupo = aeronaves_mod.crear_grupo(base, modelo_id, n, datos.get("indicativo", ""), lanzados_en_base[base.id])
         lanzados_en_base[base.id] += 1
+        logistica.descontar_despegue(base, n)
         db.add(grupo)
         db.flush()  # asigna el id: el grupo participa en la logistica de este turno
         unidades[grupo.id] = grupo
@@ -411,6 +447,38 @@ def procesar_ordenes(
         ordenes.append(intercepcion)
         atacan.add(u.id)
 
+    # ---- Fase 2c: defensa antiaerea automatica. Cada pieza con fuego libre y sin orden de ataque dispara contra la
+    # aeronave enemiga en vuelo mas cercana a su alcance que su bando detecte; la guiada por radar necesita el radar
+    # encendido. Se registra como una orden de ataque "defensa aerea".
+    for u in lista_unidades:
+        clase_aa = catalogo.obtener(u.clase, u.tipo)
+        if not clase_aa.defensa_aerea or u.estado != "activa" or u.fuego_libre is False or u.id in atacan:
+            continue
+        if u.municion <= 0 or u.recarga_restante > 0:
+            continue
+        if clase_aa.emisor and not ge_mod.emite_radar(u):
+            continue  # con el radar apagado no dispara sola (a ojo solo por orden)
+        if clase_aa.despliegue_turnos and (u.id in movidas or u.despliegue_restante > 0):
+            continue
+        aliados = [x for x in lista_unidades if x.bando == u.bando and x.estado == "activa" and x.deteccion_km]
+        amenazas = [
+            x for x in lista_unidades
+            if x.bando != u.bando and aeronaves_mod.en_vuelo(x)
+            and geo.distancia_km(u.lat, u.lon, x.lat, x.lon) <= u.alcance_km
+            and any(vision.detecta(d, x, terreno, clima, ge) for d in aliados)
+        ]
+        if not amenazas:
+            continue
+        blanco = min(amenazas, key=lambda x: geo.distancia_km(u.lat, u.lon, x.lat, x.lon))
+        disparo = Orden(
+            escenario_id=escenario.id, unidad_id=u.id, tipo="atacar", objetivo_unidad_id=blanco.id,
+            detalle="defensa aerea", turno_emitida=turno, estado="pendiente",
+        )
+        db.add(disparo)
+        db.flush()
+        ordenes.append(disparo)
+        atacan.add(u.id)
+
     # ---- Fase 3: combates simultaneos ----
     fuerza_inicial = {uid: u.fuerza for uid, u in unidades.items()}
     perdidas: dict[int, float] = defaultdict(float)
@@ -431,8 +499,10 @@ def procesar_ordenes(
             continue
         t_a, t_d = tipo_efectivo(a), tipo_efectivo(d)
         clase_a, clase_d = catalogo.perfil(a), catalogo.perfil(d)
-        # la antiaerea guiada por radar (emisora) pierde efecto contra aeronaves si esta interferida
-        aaa_interferida = clase_a.emisor and t_d == "aerea" and ge.interferido(a)
+        # la antiaerea guiada por radar pierde efecto contra aeronaves si esta interferida, y mas aun si tira a ojo
+        # con el radar apagado (solo por orden: sola no dispara)
+        aaa_optica = clase_a.emisor and t_d == "aerea" and a.emitiendo is False
+        aaa_interferida = clase_a.emisor and t_d == "aerea" and not aaa_optica and ge.interferido(a)
         if clase_a.ataque_vs.get(t_d, 0.0) <= 0:
             rechazar(orden, f"{clase_a.nombre} no puede atacar objetivos de tipo {t_d}.")
             continue
@@ -463,7 +533,7 @@ def procesar_ordenes(
             bono_atacante=_bono_apoyo(a, apoyos, unidades),
             bono_defensor=_bono_apoyo(d, apoyos, unidades),
             factor_ataque=clase_a.ataque_vs.get(t_d, 1.0) * catalogo.factor_grupo(a)
-            * (ge_mod.FACTOR_ANTIAEREA if aaa_interferida else 1.0),
+            * (ge_mod.FACTOR_ANTIAEREA if aaa_interferida else 1.0) * (ge_mod.FACTOR_TIRO_OPTICO if aaa_optica else 1.0),
             factor_defensa=clase_d.defensa * catalogo.factor_grupo(d),
             factor_clima=clima_mod.factor_ataque_aereo(clima) if a.tipo == "aerea" else 1.0,
             factor_municion=min(1.0, a.municion / consumo),
@@ -481,7 +551,7 @@ def procesar_ordenes(
         orden.estado = "resuelta"
         orden.resultado = f"Ataque a {d.nombre}. {res.resumen}" + (
             f" Antiaerea interferida por guerra electronica enemiga (x{ge_mod.FACTOR_ANTIAEREA:.2f})." if aaa_interferida else ""
-        )
+        ) + (f" Tiro optico con el radar apagado (x{ge_mod.FACTOR_TIRO_OPTICO:.2f})." if aaa_optica else "")
         db.add(Combate(
             escenario_id=escenario.id, turno=turno, orden_id=orden.id,
             atacante_id=a.id, defensor_id=d.id, atacante_nombre=a.nombre, defensor_nombre=d.nombre,

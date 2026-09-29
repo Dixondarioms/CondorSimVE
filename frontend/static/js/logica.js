@@ -152,7 +152,10 @@
       }[orden.tipo];
       if (t) return { texto: t[0], clase: t[1] };
     }
-    if (u.tipo === "base") return { texto: "Base operativa", clase: "ok" };
+    if (u.tipo === "base") {
+      if (u.stock_combustible === 0 || u.stock_municion === 0) return { texto: "Base sin existencias", clase: "fuego" };
+      return { texto: "Base operativa", clase: "ok" };
+    }
     if (u.en_tierra) {
       return u.espera_restante > 0
         ? { texto: `En base · ${u.espera_restante} t`, clase: "mov" }
@@ -161,6 +164,8 @@
     if (u.mision === "patrulla") return { texto: "Patrullando", clase: "mov" };
     if (u.combustible !== null && u.combustible <= 0) return { texto: "Sin combustible", clase: "fuego" };
     if (u.municion !== null && u.municion <= 0) return { texto: "Sin munición", clase: "fuego" };
+    if (u.emitiendo === false) return { texto: "Radar apagado", clase: "mov" };
+    if (u.fuego_libre === false) return { texto: "Fuego retenido", clase: "mov" };
     return { texto: "Operativa", clase: "ok" };
   }
 
@@ -358,6 +363,15 @@
       .reduce((s, o) => s + (detalleDespegue(o).aeronaves || 0), 0);
     return activas + pendientes;
   }
+
+  // ---------------------------------------------------------------- radares, defensa aerea y existencias de las bases
+  const RADIO_SIN_EMISION_KM = 5;
+  /** Radio de deteccion real: un radar apagado (silencio de emisiones) solo ve a ojo. */
+  const deteccionEfectiva = (u, clase) => (clase && clase.emisor && u.emitiendo === false
+    ? Math.min(u.deteccion_km || 0, RADIO_SIN_EMISION_KM) : u.deteccion_km);
+  /** Porcentaje de las existencias de una base respecto de su maximo (null si no se conoce). */
+  const pctStock = (valor, clase) => (valor === null || valor === undefined || !clase || !clase.stock_max
+    ? null : Math.max(0, Math.min(100, (valor / clase.stock_max) * 100)));
 
   // ---------------------------------------------------------------- misiones aereas
   const ESTADOS_MISION = { programada: "Programada", en_curso: "En curso", cumplida: "Cumplida", abortada: "Abortada", fallida: "Fallida", cancelada: "Cancelada" };
@@ -567,6 +581,7 @@
     PUESTOS, puestoDe, puestoPuede, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,
     ESTADOS_MISION, TIPOS_PUNTO_MISION, misionActiva, horaEstimada, textoMision, tramosCronograma,
+    RADIO_SIN_EMISION_KM, deteccionEfectiva, pctStock,
     nacionDe, etiquetaBandoNacion, filtrarUnidades, textoObjetivo, avanceObjetivo, ETIQUETA_OBJETIVO, CAPACIDAD_BASE, RADIO_ATERRIZAJE_KM, estacionadasEn, plazasLibres, opcionesDeAterrizaje, situacionDeVuelo,
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,
     aeronavesComprometidas, baseEnEscenario, nombreCortoBase, FUERZA_MINIMA_BASE,

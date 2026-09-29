@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Float, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Float, ForeignKey, Integer, String, true
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -49,6 +49,13 @@ class Unidad(Base):
     mision: Mapped[str] = mapped_column(String(20), default="")
     mision_lat: Mapped[float | None] = mapped_column(Float, nullable=True)
     mision_lon: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # sensores y defensa aerea: radar emitiendo (control de emisiones) y fuego automatico de la antiaerea
+    emitiendo: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+    fuego_libre: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+    # bases: existencias de combustible y municion (puntos: 100 = llenar una unidad; ver engine/logistica.py)
+    stock_combustible: Mapped[float] = mapped_column(Float, default=1000.0, server_default="1000")
+    stock_municion: Mapped[float] = mapped_column(Float, default=1000.0, server_default="1000")
 
     # codigo de simbolo (SIDC) para milsymbol.js
     sidc: Mapped[str] = mapped_column(String(20), default="")

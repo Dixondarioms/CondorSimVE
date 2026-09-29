@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app import auth, schemas, state
 from app.db import get_db
-from app.engine import aar, catalogo
+from app.engine import aar, catalogo, puestos
 from app.models.aar import Combate, RegistroLogistico
 from app.models.contacto import Contacto
 from app.models.obra import Obra
@@ -137,6 +137,40 @@ def listar_unidades(
 ):
     # Mismo filtro de niebla de guerra que el estado en vivo.
     return state.estado_para(db, esc, usuario.rol)["unidades"]
+
+
+@router.post("/{unidad_id}/defensa", response_model=schemas.UnidadOut)
+async def configurar_defensa(
+    unidad_id: int,
+    payload: schemas.DefensaIn,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.requiere_roles("azul", "rojo", "instructor")),
+):
+    """Encender o apagar el radar (control de emisiones) y liberar o retener el fuego automatico de la antiaerea.
+    Rige de inmediato: un radar que se enciende empieza a ver (y a ser escuchado) ya en esta planificacion."""
+    unidad = db.get(Unidad, unidad_id)
+    if unidad is None or unidad.escenario_id != esc.id or (usuario.rol != "instructor" and unidad.bando != usuario.rol):
+        raise HTTPException(status_code=404, detail="Unidad no encontrada")
+    clase = catalogo.obtener(unidad.clase, unidad.tipo)
+    if payload.emitiendo is not None and not clase.emisor:
+        raise HTTPException(status_code=400, detail="Esta unidad no tiene radar")
+    if payload.fuego_libre is not None and not clase.defensa_aerea:
+        raise HTTPException(status_code=400, detail="Solo la defensa antiaerea tiene fuego automatico")
+    if unidad.estado != "activa":
+        raise HTTPException(status_code=400, detail="La unidad ya no esta activa")
+    if usuario.rol != "instructor":
+        if esc.estado != "activo":
+            raise HTTPException(status_code=400, detail=f"El escenario esta {esc.estado}")
+        auth.exigir_funcion(usuario, puestos.funcion_de_orden(unidad, "defensa", clase))
+    if payload.emitiendo is not None:
+        unidad.emitiendo = payload.emitiendo
+    if payload.fuego_libre is not None:
+        unidad.fuego_libre = payload.fuego_libre
+    db.commit()
+    db.refresh(unidad)
+    await manager.difundir_estado(db, esc)
+    return unidad
 
 
 @router.patch("/{unidad_id}", response_model=schemas.UnidadOut)

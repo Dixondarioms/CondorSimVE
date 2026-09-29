@@ -585,15 +585,16 @@
     app.capas.niebla.clearLayers();
     const vista = bandoVista();
     const factor = Logica.efectosClima(clima).deteccion;
-    const detectores = unidades.filter((u) => u.estado === "activa" && u.deteccion_km && (!vista || u.bando === vista));
+    const det = (u) => Logica.deteccionEfectiva(u, claseDe(u)); // un radar apagado solo ve a ojo
+    const detectores = unidades.filter((u) => u.estado === "activa" && det(u) && (!vista || u.bando === vista));
     for (const u of detectores) {
-      L.polygon(anillo(u.lat, u.lon, u.deteccion_km * factor), {
+      L.polygon(anillo(u.lat, u.lon, det(u) * factor), {
         color: COLOR[u.bando], weight: 1, dashArray: "4 4", fillColor: COLOR[u.bando], fillOpacity: 0.07, interactive: false,
       }).addTo(app.capas.cobertura);
     }
     if (vista) {
       const exterior = [[0.6, -73.4], [12.4, -73.4], [12.4, -59.6], [0.6, -59.6]];
-      L.polygon([exterior, ...detectores.map((u) => anillo(u.lat, u.lon, u.deteccion_km * factor))], {
+      L.polygon([exterior, ...detectores.map((u) => anillo(u.lat, u.lon, det(u) * factor))], {
         stroke: false, fillColor: "#0b1020", fillOpacity: 0.38, interactive: false,
       }).addTo(app.capas.niebla);
     }
@@ -866,6 +867,11 @@
       if (cl.despliegue_turnos) extra.push(dato("Despliegue", oculto ? "?" : turnosTxt(u.despliegue_restante)));
       if (cl.penalizacion_movilidad) extra.push(dato("Peso / carga", `-${Math.round(cl.penalizacion_movilidad * 100)} % vel.`));
       if (cl.cadencia_fuego !== 1) extra.push(dato("Cadencia", `×${cl.cadencia_fuego}`));
+      if (cl.emisor && !oculto) extra.push(dato("Radar", u.emitiendo === false ? "Apagado (silencio)" : "Emitiendo"));
+      if (cl.defensa_aerea && !oculto) extra.push(dato("Fuego automático", u.fuego_libre === false ? "Retenido" : "Libre"));
+      if (cl.stock_max && !oculto && u.stock_combustible !== null && u.stock_combustible !== undefined) {
+        extra.push(dato("Existencias", `${Math.round(u.stock_combustible)} comb. · ${Math.round(u.stock_municion)} mun. (máx. ${cl.stock_max})`));
+      }
     }
     const modelo = Logica.modeloDe(u, app.catalogo && app.catalogo.modelos);
     const vuelo = app.data ? Logica.situacionDeVuelo(u, app.data.unidades) : null;
@@ -892,11 +898,22 @@
       + `<span class="insignia ${est.clase}">${escapar(est.texto)}</span>`
       + barra("Fuerza", u.fuerza) + barra("Combustible", u.combustible) + barra("Munición", u.municion)
       + (cl && cl.carga_max ? barra("Suministros del convoy", u.carga) : "")
+      + (cl && cl.stock_max && !oculto && u.stock_combustible !== null && u.stock_combustible !== undefined
+        ? barra("Combustible en depósito", Logica.pctStock(u.stock_combustible, cl)) + barra("Munición en depósito", Logica.pctStock(u.stock_municion, cl))
+        : "")
       + `<dl class="det-datos">${dato("Clase", u.clase || u.tipo)}${dato("Terreno", u.terreno || "?")}`
       + `${dato("Velocidad", u.velocidad_kmh === null ? "?" : u.velocidad_kmh + " km/h")}${dato("Alcance", km(u.alcance_km))}`
       + `${dato("Detección", km(u.deteccion_km))}${dato("Autonomía", km(u.autonomia_km))}${extra.join("")}</dl>`
       + notas.map((n) => `<p class="nota">${escapar(n)}</p>`).join("")
+      + (!oculto && app.porId.get(app.seleccion) && cl && u.estado === "activa" && puedeDefensa(u)
+        ? (cl.emisor ? `<button id="btn-emision" class="mini ${u.emitiendo === false ? "primario" : "secundario"}" type="button">${u.emitiendo === false ? "Encender radar" : "Apagar radar (silencio de emisiones)"}</button>` : "")
+          + (cl.defensa_aerea ? `<button id="btn-fuego" class="mini secundario" type="button">${u.fuego_libre === false ? "Liberar el fuego automático" : "Retener el fuego automático"}</button>` : "")
+        : "")
       + (esInstructor() && app.porId.get(app.seleccion) ? '<button id="btn-eliminar-unidad" class="peligro mini" type="button">Eliminar unidad del escenario</button>' : "");
+    const emision = $("btn-emision");
+    if (emision) emision.addEventListener("click", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { emitiendo: u.emitiendo === false })));
+    const fuego = $("btn-fuego");
+    if (fuego) fuego.addEventListener("click", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { fuego_libre: u.fuego_libre === false })));
     const eliminar = $("btn-eliminar-unidad");
     if (eliminar) {
       eliminar.addEventListener("click", async () => {
@@ -904,6 +921,12 @@
         try { await api("DELETE", rutaEsc(`/unidades/${u.id}`)); toast("Unidad eliminada", true); } catch (_) { /* el toast ya explica el motivo */ }
       });
     }
+  }
+
+  /** Puede encender/apagar el radar o liberar/retener el fuego de esta unidad (instructor, o el puesto que la conduce). */
+  function puedeDefensa(u) {
+    if (esInstructor()) return true;
+    return esAlumno() && u.bando === app.usuario.rol && Logica.puestoPuede(puestoActual(), Logica.funcionDeOrden(u, "defensa", claseDe(u)));
   }
 
   // ---------- aviacion: envio de grupos de caza ----------
@@ -1741,13 +1764,15 @@
   $("btn-ajustar").addEventListener("click", async () => {
     const id = $("adj-unidad").value;
     const cuerpo = {};
-    for (const [campo, el] of [["fuerza", "adj-fuerza"], ["combustible", "adj-combustible"], ["municion", "adj-municion"]]) {
+    const campos = [["fuerza", "adj-fuerza"], ["combustible", "adj-combustible"], ["municion", "adj-municion"],
+      ["stock_combustible", "adj-stock-comb"], ["stock_municion", "adj-stock-mun"]];
+    for (const [campo, el] of campos) {
       const v = parseFloat($(el).value);
       if (!Number.isNaN(v)) cuerpo[campo] = v;
     }
     if (!id || !Object.keys(cuerpo).length) return toast("Indique al menos un valor a ajustar.");
     await enSilencio(api("PATCH", rutaEsc(`/unidades/${id}`), cuerpo));
-    ["adj-fuerza", "adj-combustible", "adj-municion"].forEach((el) => { $(el).value = ""; });
+    campos.forEach(([, el]) => { $(el).value = ""; });
   });
 
   $("btn-archivar").addEventListener("click", async () => {

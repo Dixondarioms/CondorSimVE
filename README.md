@@ -259,6 +259,23 @@ mapa (capa "Guerra electrónica") y el detalle de una unidad afectada lo explica
 **Puestos**: los radares y la GE terrestre los conduce **A2 Inteligencia**; el avión de GE y los drones, como toda
 aeronave, **A3 Operaciones**; el envío desde la base, **A5 Planificación**.
 
+## Radares, defensa antiaérea y logística de base
+
+- **Control de emisiones:** radares y antiaérea guiada por radar se encienden o apagan desde el detalle de la unidad
+  (rige de inmediato). Apagado, el radar solo ve a ojo (5 km), pero la escucha enemiga ya no lo localiza y la SEAD
+  no lo elige como blanco: encender es ver y ser visto. Los radares los conduce A2; la antiaérea, A5.
+- **Antiaérea automática:** cada pieza con el **fuego libre** dispara sola, cada turno, contra la aeronave enemiga
+  en vuelo más cercana a su alcance que su bando detecte (aparece como "defensa aérea" en la cola de órdenes). La
+  guiada por radar necesita el radar encendido; con el radar apagado solo tira **por orden y a ojo** (×0,3). La
+  portátil infrarroja no necesita radar, pero sí estar desplegada. Se puede **retener el fuego** para no delatarse.
+- **Existencias de las bases:** cada base guarda combustible y munición (100 puntos = llenar una unidad; bases
+  aéreas y puertos hasta 2000, depósitos hasta 3000). El reabastecimiento (+50 % por turno) sale de ahí; cada
+  aeronave que despega consume 25 de cada uno y, sin existencias, la base no lanza el grupo (**sin logística**).
+  Los **depósitos reponen 150** por turno; los **convoyes** se recargan en los depósitos y **descargan en las bases
+  aéreas y puertos** a su lado (25 de carga por turno = 50 de cada existencia). Cuando una base se queda sin
+  combustible o munición, el bando recibe un aviso. El enemigo no ve las existencias ni el estado de los radares;
+  el instructor las ajusta desde "Ajuste manual".
+
 ## Misiones aéreas: roles, navegación y cronograma
 
 Además de las órdenes turno a turno, un grupo aéreo puede recibir una **misión**: un **rol** y una **ruta** que

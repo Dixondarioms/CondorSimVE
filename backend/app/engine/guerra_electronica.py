@@ -19,6 +19,13 @@ FACTOR_SENSOR = 0.3
 FACTOR_RADAR = 0.2
 RADIO_VISUAL_KM = 3.0
 FACTOR_ANTIAEREA = 0.4
+RADIO_SIN_EMISION_KM = 5.0  # un radar apagado (silencio de emisiones) solo ve lo que se ve a ojo
+FACTOR_TIRO_OPTICO = 0.3  # antiaerea guiada por radar que dispara con el radar apagado (por orden, a ojo)
+
+
+def emite_radar(u) -> bool:
+    """La unidad tiene radar y lo tiene encendido (un valor sin definir cuenta como encendido)."""
+    return catalogo.obtener(getattr(u, "clase", None), u.tipo).emisor and getattr(u, "emitiendo", True) is not False
 MOTIVO_SIN_ENLACE = (
     "Sin enlace de datos: el dron esta dentro de una zona de interferencia enemiga y no recibe ordenes."
 )

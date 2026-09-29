@@ -36,7 +36,8 @@
   const base = (id, nombre, bando, clase, lat, lon, x = {}) => ({
     id, escenario_id: 1, nombre, bando, clase, lat, lon, fuerza: 100, combustible: 100, municion: 100,
     carga: 0, recarga_restante: 0, despliegue_restante: 0, estado: "activa", echelon: "", terreno: "llano",
-    modelo: "", aeronaves: 1, en_tierra: false, base_id: null, espera_restante: 0, mision: "", mision_lat: null, mision_lon: null, ...x,
+    modelo: "", aeronaves: 1, en_tierra: false, base_id: null, espera_restante: 0, mision: "", mision_lat: null, mision_lon: null,
+    emitiendo: true, fuego_libre: true, stock_combustible: 1000, stock_municion: 1000, ...x,
   });
   const UNIDADES = [
     base(1, "1ra Bda Infantería", "azul", "infanteria", 8.590, -70.620, { fuerza: 92, municion: 15 }),
@@ -49,7 +50,8 @@
     base(8, "Halcón 1", "azul", "caza", 8.650, -70.500, { modelo: "f16", aeronaves: 4, echelon: "escuadra" }),
     base(10, "Flecha 1", "azul", "caza", 8.560, -70.520, { modelo: "su30", aeronaves: 2, echelon: "equipo", fuerza: 60, mision: "patrulla", mision_lat: 8.75, mision_lon: -70.3 }),
     base(15, "Cobra 1", "azul", "caza", 8.556, -70.494, { modelo: "f16", aeronaves: 2, echelon: "equipo", en_tierra: true, base_id: 9, espera_restante: 1 }),
-    base(9, "Base Aérea Barinas", "azul", "base_aerea", 8.550, -70.500),
+    base(9, "Base Aérea Barinas", "azul", "base_aerea", 8.550, -70.500, { stock_combustible: 180, stock_municion: 900 }),
+    base(19, "AA Pesada 1", "azul", "antiaerea", 8.575, -70.565),
     base(11, "Infantería Roja", "rojo", "infanteria", 8.660, -70.600, { fuerza: 70 }),
     base(12, "Depósito R", "rojo", "deposito", 8.700, -70.620),
     base(13, "Caza R", "rojo", "caza", 8.750, -70.500, { modelo: "su30", aeronaves: 2 }),
@@ -144,7 +146,7 @@
 
   // ------------------------------------------------------------------ vista por rol (como el servidor)
   const FACTOR_DET = { despejado: 1, nublado: 0.9, lluvia: 0.7, tormenta: 0.5 };
-  const OCULTOS = ["fuerza", "velocidad_kmh", "alcance_km", "deteccion_km", "combustible", "municion", "autonomia_km", "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves", "base_id", "espera_restante", "mision", "mision_lat", "mision_lon"];
+  const OCULTOS = ["fuerza", "velocidad_kmh", "alcance_km", "deteccion_km", "combustible", "municion", "autonomia_km", "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves", "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "emitiendo", "fuego_libre", "stock_combustible", "stock_municion"];
   const km = (a, b) => Logica.distanciaKm(a.lat, a.lon, b.lat, b.lon);
 
   function completar(u) {
@@ -336,6 +338,18 @@
       ordenes = ordenes.filter((o) => o.id !== parseInt(m[1], 10));
       enviarEstado();
       return json({ ok: true });
+    }
+    if ((m = path.match(/^\/api\/escenarios\/1\/unidades\/(\d+)\/defensa$/)) && metodo === "POST") {
+      await cargaCatalogo;
+      const u = UNIDADES.find((x) => x.id === parseInt(m[1], 10));
+      if (!u || (ROL !== "instructor" && u.bando !== ROL)) return error("Unidad no encontrada", 404);
+      const cl = CAT.clases.find((c) => c.id === u.clase) || {};
+      if (cuerpo.emitiendo !== undefined && !cl.emisor) return error("Esta unidad no tiene radar");
+      if (cuerpo.fuego_libre !== undefined && !cl.defensa_aerea) return error("Solo la defensa antiaerea tiene fuego automatico");
+      if (cuerpo.emitiendo !== undefined) u.emitiendo = cuerpo.emitiendo;
+      if (cuerpo.fuego_libre !== undefined) u.fuego_libre = cuerpo.fuego_libre;
+      enviarEstado();
+      return json(completar(u));
     }
     if (path === "/api/escenarios/1/misiones/previsualizar" && metodo === "POST") { await cargaCatalogo; return json(previsualizarMision(cuerpo)); }
     if (path === "/api/escenarios/1/misiones" && metodo === "POST") {

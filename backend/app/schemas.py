@@ -130,6 +130,18 @@ class UnidadAjuste(BaseModel):
     estado: Literal["activa", "destruida", "replegada"] | None = None
     combustible: float | None = Field(default=None, ge=0, le=100)
     municion: float | None = Field(default=None, ge=0, le=100)
+    emitiendo: bool | None = None
+    fuego_libre: bool | None = None
+    # existencias de una base (puntos; 100 = llenar una unidad)
+    stock_combustible: float | None = Field(default=None, ge=0, le=100000)
+    stock_municion: float | None = Field(default=None, ge=0, le=100000)
+
+
+class DefensaIn(BaseModel):
+    """Control de emisiones (radar) y fuego automatico (antiaerea) de una unidad propia."""
+
+    emitiendo: bool | None = None
+    fuego_libre: bool | None = None
 
 
 class UnidadOut(BaseModel):
@@ -165,6 +177,10 @@ class UnidadOut(BaseModel):
     sidc: str
     estado: str
     terreno: str = ""
+    emitiendo: bool | None = True
+    fuego_libre: bool | None = True
+    stock_combustible: float | None = None
+    stock_municion: float | None = None
 
 
 class OrdenCreate(BaseModel):

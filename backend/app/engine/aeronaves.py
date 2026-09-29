@@ -10,7 +10,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from app.engine import catalogo, geo
+from app.engine import catalogo, geo, logistica
 from app.models.orden import Orden
 from app.models.unidad import Unidad
 
@@ -73,6 +73,9 @@ def error_de_despegue(base: Unidad, modelo_id: str | None, aeronaves: int | None
         return "Elija un modelo de aeronave del catalogo."
     if not aeronaves or not 1 <= aeronaves <= catalogo.MAX_AERONAVES_GRUPO:
         return f"Un grupo tiene entre 1 y {catalogo.MAX_AERONAVES_GRUPO} aeronaves."
+    falta = logistica.falta_para_despegue(base, aeronaves)
+    if falta:
+        return falta
     if es_dron_modelo(modelo.id):
         if en_servicio + aeronaves > catalogo.MAX_DRONES_BANDO:
             return (f"Tope de {catalogo.MAX_DRONES_BANDO} drones por bando "
