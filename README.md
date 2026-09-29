@@ -259,6 +259,30 @@ mapa (capa "Guerra electrónica") y el detalle de una unidad afectada lo explica
 **Puestos**: los radares y la GE terrestre los conduce **A2 Inteligencia**; el avión de GE y los drones, como toda
 aeronave, **A3 Operaciones**; el envío desde la base, **A5 Planificación**.
 
+## Misiones aéreas: roles, navegación y cronograma
+
+Además de las órdenes turno a turno, un grupo aéreo puede recibir una **misión**: un **rol** y una **ruta** que
+el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel *Misiones aéreas*).
+
+- **Quién vuela:** un grupo que ya existe (lo decide **A3 Operaciones**) o un grupo que **despegará de una base
+  en un turno programado**, hasta 24 turnos después (lo decide **A5 Planificación**): así se arma con anticipación
+  el plan aéreo del día. Los despegues programados cuentan para el tope de aeronaves/drones del bando.
+- **Ruta:** clic en el mapa para cada punto y elegir su tipo: **paso** (se sobrevuela), **órbita** (se mantiene
+  N turnos, sin contar el de llegada) o **blanco** (clic sobre el símbolo enemigo, o "el enemigo detectado más
+  cercano"); termina con el **aterrizaje** en una base propia (la munición merodeadora termina en el blanco).
+- **Roles:** CAP (en la órbita intercepta aviones enemigos), interdicción (ataca el blanco; si se movió y se lo
+  sigue viendo, lo persigue), CAS (en la órbita ataca cada turno al enemigo de superficie más cercano), SEAD
+  (prioriza radares y antiaérea), reconocimiento (no ataca), guerra electrónica (interfiere desde la órbita) y
+  traslado a otra base. Cada rol exige la capacidad adecuada (no se puede hacer CAP con un dron de reconocimiento).
+- **Estimación:** mientras se traza la ruta, el servidor calcula la **hora de llegada y el combustible en cada
+  punto** con las mismas reglas con que después resuelve los turnos, y avisa si no alcanza el combustible.
+- **Durante la ejecución:** una orden directa al grupo reemplaza la misión (redireccionamiento); con combustible
+  crítico abandona la ruta y regresa a la base más cercana; si la base de aterrizaje está fuera de servicio se
+  desvía a otra; los drones sin enlace (interferencia) mantienen posición. Cancelar una misión programada la
+  anula; abortar una en curso hace regresar al grupo.
+- **Cronograma (flow sheet):** botón *Cronograma*: una fila por misión con vuelo, órbitas, ataques y aterrizajes
+  sobre la línea de tiempo, y el turno actual marcado. Cada bando ve solo sus misiones; el instructor, todas.
+
 ## Ejercicios con o contra los países vecinos
 
 - **Identidad nacional** (*Consola → Identidad nacional*; catálogo en `engine/naciones.py`, endpoint

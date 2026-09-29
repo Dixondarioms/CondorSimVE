@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from app import auth, state
-from app.engine import catalogo, clima
+from app.engine import catalogo, clima, misiones
 from app.models.usuario import Usuario
 
 router = APIRouter(prefix="/api", tags=["catalogo"])
@@ -16,4 +16,5 @@ def obtener_catalogo(_: Usuario = Depends(auth.usuario_actual)):
                       "max_drones": catalogo.MAX_DRONES_BANDO},
         "escalones": [e for e in catalogo.ESCALONES if e],
         "climas": list(clima.CLIMAS),
+        "misiones": misiones.roles_publicos(),
     }

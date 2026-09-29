@@ -8,6 +8,7 @@ from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import catalogo, geo, movimiento, puestos
 from app.engine import guerra_electronica as ge_mod
+from app.engine import misiones as misiones_mod
 from app.engine.orders import COSTO_OBRA, tipo_efectivo
 from app.models.escenario import Escenario
 from app.models.orden import Orden
@@ -144,6 +145,9 @@ async def emitir_orden(
         if payload.tipo == "apoyar" and (objetivo.bando != usuario.rol or objetivo.id == unidad.id):
             raise HTTPException(status_code=400, detail="Solo puede apoyar a otra unidad propia")
 
+    # Una orden directa a un grupo aereo reemplaza su mision (redireccionamiento).
+    if unidad.tipo == "aerea":
+        misiones_mod.cancelar_por_orden(db, unidad, payload.tipo)
     # Una unidad tiene una sola orden por turno: la nueva reemplaza a la pendiente.
     db.query(Orden).filter(
         Orden.escenario_id == esc.id, Orden.unidad_id == unidad.id, Orden.estado == "pendiente",

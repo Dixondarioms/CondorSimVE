@@ -24,6 +24,7 @@ from app.engine import azar as azar_mod
 from app.engine import catalogo, combat, geo, movimiento, vision
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
+from app.engine import misiones as misiones_mod
 from app.engine.movimiento import TURNO_DURACION_HORAS  # noqa: F401  (reexportado)
 from app.models.aar import Combate, RegistroLogistico
 from app.models.escenario import Escenario
@@ -85,6 +86,16 @@ def _sorpresa(atacante: Unidad, defensor: Unidad, unidades, terreno: Terreno, cl
             if vision.detecta(x, atacante, terreno, clima, ge):
                 return 1.0
     return SORPRESA_EMBOSCADA if catalogo.obtener(defensor.clase, defensor.tipo).vulnerable_emboscada else SORPRESA_GENERAL
+
+
+def _aviso_interferencia(db: Session, escenario: Escenario, turno: int, bando: str, lat: float, lon: float,
+                         radio: float) -> None:
+    db.add(Evento(
+        escenario_id=escenario.id, turno=turno, tipo="guerra_electronica",
+        bando_destino="rojo" if bando == "azul" else "azul",
+        descripcion=(f"Interferencia electronica enemiga sobre ({lat:.2f}, {lon:.2f}), radio {radio:.0f} km: "
+                     "sensores, antiaerea y enlaces de drones degradados en la zona. El emisor fue localizado."),
+    ))
 
 
 class _Bitacora:
@@ -197,6 +208,8 @@ def procesar_ordenes(
             escenario_id=escenario.id, turno=turno, tipo="despegue", bando_destino=base.bando,
             descripcion=f"Despego {grupo.nombre} ({modelo.corto} x{n}) desde {base.nombre}.",
         ))
+    # misiones aereas programadas para este turno: despegan de su base o se ponen en ruta
+    misiones_mod.activar(db, escenario, unidades, lista_unidades, turno, lanzados_en_base)
 
     # ---- Fase 0b: guerra electronica. Cada interferencia rige este turno y la planificacion del siguiente ----
     zonas: list[Interferencia] = []
@@ -220,12 +233,15 @@ def procesar_ordenes(
             f"Interfiere en un radio de {radio:.0f} km sobre ({punto[0]:.3f}, {punto[1]:.3f}) durante este turno y la "
             "planificacion del siguiente. Al emitir, el enemigo localiza al interferidor."
         )
-        db.add(Evento(
-            escenario_id=escenario.id, turno=turno, tipo="guerra_electronica",
-            bando_destino="rojo" if u.bando == "azul" else "azul",
-            descripcion=(f"Interferencia electronica enemiga sobre ({punto[0]:.2f}, {punto[1]:.2f}), radio {radio:.0f} km: "
-                         "sensores, antiaerea y enlaces de drones degradados en la zona. El emisor fue localizado."),
-        ))
+        _aviso_interferencia(db, escenario, turno, u.bando, punto[0], punto[1], radio)
+    # las misiones de guerra electronica que estan orbitando interfieren solas (su combustible lo descuenta la mision)
+    for u, lat, lon in misiones_mod.interferencias(db, escenario, unidades):
+        radio = catalogo.obtener(u.clase, u.tipo).interferencia_km
+        zona = Interferencia(escenario_id=escenario.id, unidad_id=u.id, bando=u.bando, lat=lat, lon=lon,
+                             radio_km=radio, turno=turno)
+        db.add(zona)
+        zonas.append(zona)
+        _aviso_interferencia(db, escenario, turno, u.bando, lat, lon, radio)
     ge = ge_mod.Contexto(zonas)
 
     # ---- Fase 1: movimiento, vuelo, patrulla y aterrizaje ----
@@ -288,6 +304,11 @@ def procesar_ordenes(
                     f"Unidad en ({u.lat:.4f}, {u.lon:.4f}); recorrio {mov.km_reales:.1f} km, "
                     f"combustible {u.combustible:.0f}%. {mov.nota}"
                 ).strip()
+
+    # misiones aereas en curso: cada grupo sin orden directa avanza solo por su ruta
+    ataques_mision, bajo_mision = misiones_mod.avanzar(
+        db, escenario, unidades, lista_unidades, con_orden_de_vuelo, terreno, clima, obras, ge, bit, turno)
+    con_orden_de_vuelo |= bajo_mision
 
     # patrullas en curso (sin orden de vuelo este turno): siguen hacia su zona o la mantienen gastando combustible
     for u in lista_unidades:
@@ -354,6 +375,18 @@ def procesar_ordenes(
     # ---- Fase 2b: interceptacion. Cada patrulla sin orden de ataque combate al avion enemigo detectado mas cercano
     # dentro de su alcance; se registra como una orden de ataque "intercepcion" (aparece en la cola y el informe).
     atacan = {o.unidad_id for o in ordenes if o.tipo == "atacar" and o.estado == "pendiente"}
+    # los ataques que piden las misiones (blanco, CAS, SEAD) se registran como ordenes de ataque "mision"
+    for atacante_id, blanco_id in ataques_mision:
+        if atacante_id in atacan:
+            continue
+        ataque = Orden(
+            escenario_id=escenario.id, unidad_id=atacante_id, tipo="atacar", objetivo_unidad_id=blanco_id,
+            detalle="mision", turno_emitida=turno, estado="pendiente",
+        )
+        db.add(ataque)
+        db.flush()
+        ordenes.append(ataque)
+        atacan.add(atacante_id)
     for u in lista_unidades:
         if u.mision != "patrulla" or not aeronaves_mod.en_vuelo(u) or u.id in atacan:
             continue
@@ -523,7 +556,8 @@ def procesar_ordenes(
             ))
 
     for u in lista_unidades:
-        if u.mision == "patrulla" and aeronaves_mod.en_vuelo(u) and u.combustible <= aeronaves_mod.COMBUSTIBLE_CRITICO:
+        if (u.mision == "patrulla" and aeronaves_mod.en_vuelo(u) and u.combustible <= aeronaves_mod.COMBUSTIBLE_CRITICO
+                and u.id not in bajo_mision):  # las misiones resuelven su propio regreso
             base = aeronaves_mod.base_mas_cercana(u, lista_unidades)
             u.mision, u.mision_lat, u.mision_lon = "", None, None
             if base is not None:
@@ -548,6 +582,8 @@ def procesar_ordenes(
             u.despliegue_restante = clase.despliegue_turnos
         else:
             u.despliegue_restante = max(0, u.despliegue_restante - 1)
+
+    misiones_mod.cerrar(db, escenario, unidades, turno)
 
     for o in obras:
         if o.expira_turno <= turno:

@@ -17,7 +17,7 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ / "backend"))
 
-from app.engine import catalogo  # noqa: E402
+from app.engine import catalogo, misiones  # noqa: E402
 
 DESTINO = RAIZ / "frontend" / "static" / "pruebas"
 
@@ -33,6 +33,7 @@ def main() -> None:
     (DESTINO / "catalogo.json").write_text(
         json.dumps({"clases": clases, "escalones": [e for e in catalogo.ESCALONES if e],
                     "climas": ["despejado", "nublado", "lluvia", "tormenta"],
+                    "misiones": misiones.roles_publicos(),
                     "modelos": [catalogo.modelo_dict(m) for m in catalogo.MODELOS.values()],
                     "aeronaves": {"max_grupo": catalogo.MAX_AERONAVES_GRUPO, "max_bando": catalogo.MAX_AERONAVES_BANDO,
                                   "max_drones": catalogo.MAX_DRONES_BANDO}},

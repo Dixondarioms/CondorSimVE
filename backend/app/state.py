@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.engine import catalogo, geo
 from app.engine import guerra_electronica as ge_mod
+from app.engine import misiones as misiones_mod
 from app.engine import objetivos as objetivos_mod
 from app.engine.vision import unidades_visibles
 from app.models.contacto import Contacto
@@ -149,6 +150,8 @@ def estado_para(
         "obras": [ObraOut.model_validate(o).model_dump() for o in obras],
         # la interferencia no es secreta: el interferido la sufre y el emisor queda localizado
         "interferencias": [ge_mod.serializar(z) for z in ge_mod.contexto(db, escenario).zonas],
+        # misiones aereas: cada bando solo las suyas (el instructor y el observador, todas)
+        "misiones": [misiones_mod.serializar(m) for m in misiones_mod.visibles_para(db, escenario, rol)],
         "graficos": [serializar_grafico(g) for g in graficos],
         "objetivos": objetivos_para(db, escenario, rol),
         "marcador": objetivos_mod.marcador(db, escenario),

@@ -320,7 +320,8 @@
     c.obras = L.layerGroup().addTo(map);
     c.objetivos = L.layerGroup().addTo(map);
     c.ge = L.layerGroup().addTo(map);
-    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, contactos: true, referencias: true, graficos: true, bases_ven: true, objetivos: true, ge: true };
+    c.misiones = L.layerGroup().addTo(map);
+    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, contactos: true, referencias: true, graficos: true, bases_ven: true, objetivos: true, ge: true, misiones: true };
     if (app.capaActiva.niebla) c.niebla.addTo(map);
 
     let pendiente = null;
@@ -357,6 +358,7 @@
   async function alClickMapa(e) {
     if (app.dibujando || (app.informe && app.informe.activo())) return;
     const { lat, lng } = e.latlng;
+    if (app.misiones && app.misiones.alClickMapa(lat, lng)) return; // planificando una mision: el clic agrega un punto
     if (esInstructor() && app.modoAgregar) {
       const nombre = $("u-nombre").value.trim();
       if (!nombre) return toast("Ingrese un nombre para la unidad.");
@@ -508,7 +510,7 @@
   function limpiarCapasVivas() {
     for (const m of app.markers.values()) app.capas.unidades.removeLayer(m);
     app.markers.clear();
-    for (const g of ["contactos", "cobertura", "niebla", "ordenes", "seleccion", "preview", "obras", "objetivos"]) app.capas[g].clearLayers();
+    for (const g of ["contactos", "cobertura", "niebla", "ordenes", "seleccion", "preview", "obras", "objetivos", "ge", "misiones"]) app.capas[g].clearLayers();
     app.flechas = [];
   }
 
@@ -544,7 +546,7 @@
             if (v) m.setLatLng([v.lat, v.lon]); // el servidor lo rechazo (p. ej. terreno invalido): vuelve a su sitio
           }
         });
-        m.on("click", () => seleccionar(u.id, "mapa"));
+        m.on("click", () => { if (!(app.misiones && app.misiones.alClickUnidad(app.porId.get(u.id)))) seleccionar(u.id, "mapa"); });
         app.markers.set(u.id, m);
       } else {
         m.setLatLng([u.lat, u.lon]);
@@ -1224,6 +1226,7 @@
     renderObjetivos(data);
     actualizarNuevaOrden(data);
     actualizarAviacion(data);
+    if (app.misiones) app.misiones.render(data);
     llenarSelect($("adj-unidad"), data.unidades.map((u) => [u.id, `${u.nombre} (${u.bando})`]));
     if (app.informe && app.informe.activo()) return; // durante la repeticion no se pisa el mapa
 
@@ -1321,6 +1324,14 @@
       datos: () => app.data, escenarioId: () => app.escenarioId, capa: app.capas.bases_ven,
     });
     app.aviacion.conectar();
+    app.misiones = Misiones.crear({
+      api, toast, rutaEsc, usuario: () => app.usuario, datos: () => app.data, catalogo: () => app.catalogo,
+      capaBorrador: app.capas.preview, capaRutas: app.capas.misiones, puede: puedeFuncion, claseDe,
+      horaDeTurno: horaDelTurno, seleccion: () => app.seleccion, seleccionar: (id) => seleccionar(id, "lista"),
+      mapaLibre: () => !(app.informe && app.informe.activo()),
+      alPlanificar: (activo) => { document.body.classList.toggle("planificando-mision", activo); },
+    });
+    app.misiones.conectar();
     app.herramientas = Herramientas.crear({ map: () => app.map, alMedir: (b) => { app.dibujando = b; } });
     app.herramientas.conectar();
     $("btn-regla").addEventListener("click", () => { if (app.herramientas.activa()) app.graficos.cancelar(); });

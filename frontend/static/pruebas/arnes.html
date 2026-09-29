@@ -95,6 +95,15 @@
             <p class="ayuda" id="aviacion-ayuda">Elija el caza, el dron o el avión de guerra electrónica y la base de la que despegan.</p>
           </section>
 
+          <section class="bloque" id="sec-misiones">
+            <h2>Misiones aéreas <span id="misiones-contador" class="contador"></span></h2>
+            <div class="fila">
+              <button id="btn-planificar-mision" class="primario" type="button" hidden>✈ Planificar misión…</button>
+              <button id="btn-cronograma" class="secundario" type="button" title="Flow sheet: horario de todas las misiones">Cronograma</button>
+            </div>
+            <ol id="lista-misiones" class="lista-misiones"></ol>
+          </section>
+
           <section class="bloque solo-alumno" id="sec-orden">
             <h2>Nueva orden <span id="orden-unidad" class="contador azul-suave"></span></h2>
             <div class="modos" role="tablist">
@@ -321,6 +330,33 @@
 
         <div id="coords" class="etiqueta-mapa">Mueva el cursor sobre el mapa</div>
 
+        <section id="panel-mision" class="etiqueta-mapa" hidden aria-label="Planificar misión aérea">
+          <div class="pm-cabecera"><b>Planificar misión aérea</b><button type="button" id="pm-cerrar" class="mini secundario" aria-label="Cerrar el planificador">×</button></div>
+          <div class="pm-origen" role="radiogroup" aria-label="Quién vuela la misión">
+            <label class="chk"><input type="radio" name="pm-origen" value="grupo" id="pm-origen-grupo"><span>Un grupo existente</span></label>
+            <label class="chk"><input type="radio" name="pm-origen" value="base" id="pm-origen-base"><span>Despegue desde una base</span></label>
+          </div>
+          <label class="mini" id="pm-grupo-fila">Grupo aéreo<select id="pm-grupo"></select></label>
+          <div id="pm-base-fila" class="pm-grid">
+            <label class="mini">Base<select id="pm-base"></select></label>
+            <label class="mini">Aeronave<select id="pm-modelo"></select></label>
+            <label class="mini">Cantidad<select id="pm-cantidad"></select></label>
+            <label class="mini">Despegue<select id="pm-turno"></select></label>
+            <label class="mini pm-ancho">Indicativo (opcional)<input id="pm-nombre" maxlength="40" placeholder="Ej. Águila 1"></label>
+          </div>
+          <label class="mini">Rol<select id="pm-rol"></select></label>
+          <p id="pm-rol-desc" class="ayuda"></p>
+          <p class="ayuda">Haga clic en el mapa para agregar los puntos de la ruta y elija el tipo de cada uno: <b>paso</b>, <b>órbita</b> (N turnos) o <b>blanco</b>.</p>
+          <ol id="pm-puntos" class="pm-puntos"></ol>
+          <label class="mini" id="pm-aterrizaje-fila">Aterrizaje final en<select id="pm-aterrizaje"></select></label>
+          <div id="pm-estimacion"></div>
+          <ul id="pm-avisos" class="pm-avisos"></ul>
+          <div class="fila">
+            <button type="button" id="pm-limpiar" class="secundario">Borrar ruta</button>
+            <button type="button" id="pm-crear" class="primario" disabled>Crear misión</button>
+          </div>
+        </section>
+
         <div id="barra-graficos" class="etiqueta-mapa solo-dibuja" aria-label="Gráficos tácticos">
           <b>Gráficos tácticos</b>
           <div class="herramientas">
@@ -431,6 +467,7 @@
               <label><input type="checkbox" data-capa="bases_ven" checked><span>Bases aéreas de Venezuela</span></label>
               <label><input type="checkbox" data-capa="objetivos" checked><span>Objetivos</span></label>
               <label><input type="checkbox" data-capa="ge" checked><span>Guerra electrónica</span></label>
+              <label><input type="checkbox" data-capa="misiones" checked><span>Misiones aéreas</span></label>
             </div>
           </section>
 
@@ -529,6 +566,14 @@
       </div>
     </form>
   </dialog>
+  <dialog id="dlg-cronograma" class="ancho">
+    <form method="dialog">
+      <h3>Cronograma de misiones (flow sheet)</h3>
+      <p class="ayuda">Cada fila es una misión según su plan: vuelo (línea), órbita (barra), ataque (◆) y aterrizaje (▼). La línea roja marca el turno actual.</p>
+      <div id="fs-wrap"><svg id="fs-svg" role="img" aria-label="Cronograma de misiones aéreas"></svg></div>
+      <button>Cerrar</button>
+    </form>
+  </dialog>
   <div id="toast" hidden></div>
 
   <script src="/static/vendor/leaflet/leaflet.js"></script>
@@ -540,6 +585,7 @@
   <script src="/static/js/videowall.js"></script>
   <script src="/static/js/modelo3d.js"></script>
   <script src="/static/js/aviacion.js"></script>
+  <script src="/static/js/misiones.js"></script>
   <script src="/static/js/herramientas.js"></script>
   <script src="/static/js/timeline.js"></script>
   <script src="/static/js/informe.js"></script>

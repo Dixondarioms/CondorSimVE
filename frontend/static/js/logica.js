@@ -359,6 +359,58 @@
     return activas + pendientes;
   }
 
+  // ---------------------------------------------------------------- misiones aereas
+  const ESTADOS_MISION = { programada: "Programada", en_curso: "En curso", cumplida: "Cumplida", abortada: "Abortada", fallida: "Fallida", cancelada: "Cancelada" };
+  const TIPOS_PUNTO_MISION = { paso: "Paso", orbita: "Órbita", blanco: "Blanco", aterrizaje: "Aterrizaje" };
+  const misionActiva = (m) => m.estado === "programada" || m.estado === "en_curso";
+
+  /** "HH:MM" (y "+Nd" si pasa de dia) del instante que esta `horas` despues del inicio del turno `turno`. */
+  function horaEstimada(inicioMin, turno, horas) {
+    const total = (inicioMin ?? 360) + Math.max(0, (turno || 1) - 1) * 60 + Math.round((horas || 0) * 60);
+    const dia = Math.floor(total / 1440);
+    const hh = String(Math.floor((total % 1440) / 60)).padStart(2, "0");
+    const mm = String(total % 60).padStart(2, "0");
+    return `${hh}:${mm}${dia > 0 ? ` (+${dia}d)` : ""}`;
+  }
+
+  /** Situacion de una mision en una frase (para la lista y los tooltips). */
+  function textoMision(m) {
+    if (m.estado === "programada") return m.unidad_id ? "Se inicia al resolver el turno" : `Despega en el turno ${m.turno_despegue}`;
+    if (m.estado === "en_curso") {
+      const p = (m.puntos || [])[m.indice];
+      if (!p) return "En ruta";
+      return `Punto ${m.indice + 1}/${m.puntos.length}: ${TIPOS_PUNTO_MISION[p.tipo] || p.tipo}`
+        + (m.espera > 0 ? ` (en órbita, ${m.espera} turno${m.espera === 1 ? "" : "s"} más)` : "");
+    }
+    return m.resultado || ESTADOS_MISION[m.estado] || m.estado;
+  }
+
+  /** Tramos del cronograma (flow sheet) de una mision segun su plan: horas desde el inicio del turno 1.
+   *  segmentos: vuelo u orbita; marcas: ataque (blanco) o aterrizaje. */
+  function tramosCronograma(m) {
+    const filas = (m.plan && m.plan.puntos) || [];
+    const t0 = Math.max(0, (m.turno_despegue || 1) - 1);
+    const segmentos = [];
+    const marcas = [];
+    let desde = 0;
+    filas.forEach((f, i) => {
+      const tipo = f.tipo || ((m.puntos || [])[i] || {}).tipo;
+      if (f.llegada_h > desde) segmentos.push({ desde: t0 + desde, hasta: t0 + f.llegada_h, tipo: "vuelo" });
+      if (tipo === "orbita") {
+        const salida = f.salida_h ?? f.llegada_h;
+        segmentos.push({ desde: t0 + f.llegada_h, hasta: t0 + salida, tipo: "orbita" });
+        desde = salida;
+      } else if (tipo === "blanco") {
+        marcas.push({ h: t0 + f.llegada_h, tipo: "blanco" });
+        desde = f.salida_h ?? f.llegada_h;
+      } else {
+        if (tipo === "aterrizaje") marcas.push({ h: t0 + f.llegada_h, tipo: "aterrizaje" });
+        desde = f.llegada_h;
+      }
+    });
+    return { inicio: t0, fin: t0 + desde, segmentos, marcas };
+  }
+
   // ---------------------------------------------------------------- guerra electronica
   /** Zonas de interferencia del bando contrario que cubren a la unidad. */
   function interferenciasSobre(u, zonas) {
@@ -514,6 +566,7 @@
   const api = {
     PUESTOS, puestoDe, puestoPuede, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,
+    ESTADOS_MISION, TIPOS_PUNTO_MISION, misionActiva, horaEstimada, textoMision, tramosCronograma,
     nacionDe, etiquetaBandoNacion, filtrarUnidades, textoObjetivo, avanceObjetivo, ETIQUETA_OBJETIVO, CAPACIDAD_BASE, RADIO_ATERRIZAJE_KM, estacionadasEn, plazasLibres, opcionesDeAterrizaje, situacionDeVuelo,
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,
     aeronavesComprometidas, baseEnEscenario, nombreCortoBase, FUERZA_MINIMA_BASE,

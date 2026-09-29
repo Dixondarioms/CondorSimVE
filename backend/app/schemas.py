@@ -195,6 +195,29 @@ class OrdenOut(BaseModel):
     resultado: str
 
 
+class PuntoMisionIn(BaseModel):
+    tipo: Literal["paso", "orbita", "blanco", "aterrizaje"]
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
+    turnos: int = Field(default=1, ge=1, le=12)  # solo orbita
+    objetivo_unidad_id: int | None = None  # solo blanco (opcional: sin el, ataca al enemigo detectado mas cercano)
+    base_id: int | None = None  # solo aterrizaje
+    centro: tuple[float, float] | None = None  # orbita de guerra electronica: punto que interfiere
+
+
+class MisionIn(BaseModel):
+    """Mision aerea: para un grupo existente (unidad_id) o para uno que despegara de una base (base_id + modelo)."""
+
+    rol: str = Field(max_length=20)
+    nombre: str = Field(default="", max_length=40)
+    puntos: list[PuntoMisionIn] = Field(min_length=1, max_length=12)
+    unidad_id: int | None = None
+    base_id: int | None = None
+    modelo: str | None = Field(default=None, max_length=30)
+    aeronaves: int | None = Field(default=None, ge=1, le=12)
+    turno_despegue: int | None = None
+
+
 class EventoCreate(BaseModel):
     tipo: str = Field(default="general", max_length=40)
     descripcion: str = Field(min_length=1, max_length=1000)

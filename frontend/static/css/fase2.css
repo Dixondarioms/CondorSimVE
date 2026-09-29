@@ -274,3 +274,53 @@ body.videowall #barra-herramientas { opacity: 0; pointer-events: none; }
 .fila-base-mapa { display: flex; gap: 6px; margin-bottom: 8px; }
 .fila-base-mapa button { flex: 1; margin: 0; padding: 5px 4px; font-size: 12px; background: transparent; }
 .fila-base-mapa button.activa { background: var(--azul); border-color: var(--azul); color: #fff; font-weight: 700; }
+
+/* ---- misiones aereas: planificador sobre el mapa, lista y cronograma ---- */
+body.planificando-mision #barra-graficos { display: none; }
+#panel-mision {
+  left: 12px; top: 56px; width: 330px; max-height: calc(100% - 90px); overflow: auto; z-index: 1000;
+  display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; letter-spacing: 0; font-size: 12px; color: var(--texto);
+}
+#panel-mision[hidden] { display: none; }
+#panel-mision .pm-cabecera { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+#panel-mision label.mini { display: flex; flex-direction: column; gap: 2px; }
+#panel-mision .pm-origen { display: flex; flex-direction: column; gap: 2px; }
+#panel-mision .pm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#panel-mision .pm-grid[hidden], #panel-mision label[hidden] { display: none; }
+#panel-mision .pm-ancho { grid-column: 1 / -1; }
+.pm-puntos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.pm-puntos li { display: flex; align-items: center; gap: 6px; }
+.pm-puntos li b { width: 18px; text-align: center; }
+.pm-puntos li select { flex: 1; min-width: 0; margin: 0; }
+.pm-puntos li .sec { flex: 1; }
+.pm-puntos li.vacio { color: var(--texto-sec); font-style: italic; }
+.pm-tabla { width: 100%; border-collapse: collapse; font-size: 11px; }
+.pm-tabla th, .pm-tabla td { padding: 2px 4px; border-bottom: 1px solid var(--borde); text-align: left; }
+.pm-tabla td.bajo { color: #ffd166; }
+.pm-tabla td.critico { color: #ef476f; font-weight: 700; }
+.pm-avisos { list-style: none; margin: 0; padding: 0; font-size: 11px; display: flex; flex-direction: column; gap: 3px; }
+.pm-avisos li.error { color: #ef476f; }
+.pm-avisos li.aviso { color: #ffd166; }
+.pm-avisos li.ok { color: #2ec4b6; }
+.pm-punto span {
+  display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(20, 22, 35, .88); border: 2px solid; font: 700 11px system-ui; box-sizing: border-box;
+}
+.pm-punto.orbita span { border-radius: 4px; }
+.lista-misiones { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow: auto; }
+.lista-misiones li { display: flex; align-items: center; gap: 6px; padding: 4px 6px; background: var(--panel-2); border-radius: var(--radio); border-left: 4px solid #888; cursor: pointer; }
+.lista-misiones li .texto { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.lista-misiones li .texto span { color: var(--texto-sec); font-size: 11px; }
+.lista-misiones li.cumplida, .lista-misiones li.cancelada, .lista-misiones li.abortada, .lista-misiones li.fallida { opacity: .6; }
+.lista-misiones li.fallida b { text-decoration: line-through; }
+.lista-misiones li.vacio { border-left-color: transparent; color: var(--texto-sec); cursor: default; }
+.lista-misiones li button { margin: 0; padding: 0 7px; }
+#fs-wrap { overflow: auto; max-height: 65vh; background: var(--panel-2); border-radius: var(--radio); }
+#fs-svg .fs-grilla { stroke: rgba(255, 255, 255, .08); }
+#fs-svg .fs-hora { fill: var(--texto-sec); font-size: 10px; }
+#fs-svg .fs-etiqueta { fill: var(--texto); font-size: 11px; }
+#fs-svg .fs-estado { fill: var(--texto-sec); font-size: 10px; }
+#fs-svg .fs-marca { font-size: 13px; }
+#fs-svg .fs-ahora { stroke: #ef476f; stroke-width: 2; }
+#fs-svg .fs-vacio { fill: var(--texto-sec); font-size: 13px; }
+@media (max-width: 900px) { #panel-mision { right: 8px; left: 8px; width: auto; top: 46px; max-height: 55%; z-index: 1300; } }

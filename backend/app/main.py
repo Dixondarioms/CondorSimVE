@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from app import respaldo, turnos
 from app.db import SessionLocal, init_db
 from app.models.usuario import Usuario
-from app.routers import auth, catalogo, escenarios, graficos, naciones, objetivos, ordenes, plantillas, terreno, unidades, usuarios, ws
+from app.routers import auth, catalogo, escenarios, graficos, misiones, naciones, objetivos, ordenes, plantillas, terreno, unidades, usuarios, ws
 from app.terreno import get_terreno
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
@@ -78,6 +78,7 @@ app.include_router(usuarios.router)
 app.include_router(escenarios.router)
 app.include_router(unidades.router)
 app.include_router(ordenes.router)
+app.include_router(misiones.router)
 app.include_router(terreno.router)
 app.include_router(graficos.router)
 app.include_router(objetivos.router)

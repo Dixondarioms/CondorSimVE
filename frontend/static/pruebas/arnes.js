@@ -60,6 +60,53 @@
   ];
   // zona de interferencia roja vigente (la emitio el turno anterior) sobre parte del despliegue azul
   const INTERFERENCIAS = [{ id: 1, bando: "rojo", unidad_id: 13, lat: 8.63, lon: -70.49, radio_km: 12, turno: 2 }];
+  // misiones aereas: una CAP en orbita, una interdiccion programada (azul) y una SEAD roja que azul no debe ver
+  let misiones = [
+    { id: 1, bando: "azul", rol: "CAP", rol_nombre: "Patrulla aerea de combate (CAP)", nombre: "Flecha", estado: "en_curso", unidad_id: 10, base_id: null, modelo: "su30", aeronaves: 2, turno_despegue: 2, creada_turno: 2,
+      puntos: [{ tipo: "orbita", lat: 8.75, lon: -70.3, turnos: 3 }, { tipo: "aterrizaje", lat: 8.55, lon: -70.5, base_id: 9 }],
+      plan: { puntos: [{ tipo: "orbita", km: 32, llegada_h: 0.03, combustible_llegada: 99, salida_h: 4, combustible_salida: 75 }, { tipo: "aterrizaje", km: 31, llegada_h: 4.03, combustible_llegada: 74 }], duracion_h: 4.03, combustible_final: 74, advertencias: [] },
+      indice: 0, espera: 2, resultado: "En orbita: 2 turno(s) mas." },
+    { id: 2, bando: "azul", rol: "INTERDICCION", rol_nombre: "Interdiccion (ataque a un blanco)", nombre: "Rayo", estado: "programada", unidad_id: null, base_id: 9, modelo: "f16", aeronaves: 2, turno_despegue: 5, creada_turno: 3,
+      puntos: [{ tipo: "paso", lat: 8.60, lon: -70.66 }, { tipo: "blanco", lat: 8.66, lon: -70.60, objetivo_unidad_id: 11 }, { tipo: "aterrizaje", lat: 8.55, lon: -70.5, base_id: 9 }],
+      plan: { puntos: [{ tipo: "paso", km: 18, llegada_h: 0.02, combustible_llegada: 99 }, { tipo: "blanco", km: 9, llegada_h: 0.03, combustible_llegada: 98.6, salida_h: 1 }, { tipo: "aterrizaje", km: 16, llegada_h: 1.02, combustible_llegada: 97.7 }], duracion_h: 1.02, combustible_final: 97.7, advertencias: [] },
+      indice: 0, espera: -1, resultado: "Programada." },
+    { id: 3, bando: "rojo", rol: "SEAD", rol_nombre: "Supresion de defensas aereas (SEAD)", nombre: "Víbora", estado: "programada", unidad_id: null, base_id: 12, modelo: "su30", aeronaves: 2, turno_despegue: 4, creada_turno: 3,
+      puntos: [{ tipo: "blanco", lat: 8.588, lon: -70.55 }, { tipo: "aterrizaje", lat: 8.7, lon: -70.62, base_id: 12 }],
+      plan: { puntos: [{ tipo: "blanco", km: 13, llegada_h: 0.01, combustible_llegada: 99.6, salida_h: 1 }, { tipo: "aterrizaje", km: 13, llegada_h: 1.01, combustible_llegada: 99.1 }], duracion_h: 1.01, combustible_final: 99.1, advertencias: [] },
+      indice: 0, espera: -1, resultado: "Programada." },
+  ];
+  let proximaMision = 4;
+
+  /** Estimacion simplificada (misma idea que engine/misiones.py) para el planificador del arnes. */
+  function previsualizarMision(c) {
+    const origen = UNIDADES.find((x) => x.id === (c.unidad_id ?? c.base_id));
+    const modelo = CAT.modelos.find((x) => x.id === (c.modelo || (origen && origen.modelo)));
+    const clase = CAT.clases.find((x) => x.id === (modelo ? modelo.clase : origen && origen.clase)) || {};
+    const vel = (modelo || clase).velocidad_kmh || 800;
+    const aut = (modelo || clase).autonomia_km || 1500;
+    let horas = 0;
+    let comb = c.unidad_id ? (origen.combustible ?? 100) : 100;
+    let prev = [origen.lat, origen.lon];
+    const filas = [];
+    for (const p of c.puntos) {
+      const d = Logica.distanciaKm(prev[0], prev[1], p.lat, p.lon);
+      horas += d / vel;
+      comb -= (d / aut) * 100;
+      const f = { tipo: p.tipo, km: +d.toFixed(1), llegada_h: +horas.toFixed(2), combustible_llegada: +comb.toFixed(1) };
+      if (p.tipo === "orbita") { horas = Math.floor(horas) + 1 + (p.turnos || 1); comb -= 8 * (p.turnos || 1); f.salida_h = horas; f.combustible_salida = +comb.toFixed(1); }
+      else if (p.tipo === "blanco") { horas = Math.floor(horas) + 1; f.salida_h = horas; }
+      filas.push(f);
+      prev = [p.lat, p.lon];
+    }
+    const rol = CAT.misiones.roles.find((r) => r.id === c.rol);
+    const tipos = c.puntos.map((p) => p.tipo);
+    const errores = [];
+    if (!rol) errores.push("Rol de mision desconocido.");
+    else for (const t of rol.requiere) if (!tipos.includes(t)) errores.push(`El rol ${rol.nombre} necesita al menos un punto de tipo ${t}.`);
+    if (!clase.se_consume && tipos[tipos.length - 1] !== "aterrizaje") errores.push("La ruta debe terminar con el aterrizaje en una base propia.");
+    const advertencias = comb < 0 ? ["No alcanza el combustible: se quedaria sin combustible antes del final."] : [];
+    return { plan: { puntos: filas, duracion_h: +horas.toFixed(2), combustible_final: +comb.toFixed(1), advertencias }, errores, turno_despegue: c.turno_despegue ?? ESC.turno_actual, puntos: c.puntos };
+  }
   const CONTACTO_FANTASMA = { unidad_id: 14, nombre: "Recon Roja", tipo: "terrestre", clase: "reconocimiento", lat: 9.6, lon: -69.8, turno_visto: 2 };
   let ordenes = [
     { id: 1, escenario_id: 1, unidad_id: 2, tipo: "mover", objetivo_unidad_id: null, waypoints: [[8.600, -70.570], [8.620, -70.550]], detalle: "", turno_emitida: 3, estado: "pendiente", resultado: "" },
@@ -134,6 +181,7 @@
       tipo: "estado", ahora: iso(), vista: esBando ? rol : "completa", escenario: esc, unidades, contactos,
       obras: OBRAS.filter((o) => !esBando || o.bando === rol || unidades.some((u) => u.bando === rol && km(u, o) <= 15)),
       interferencias: INTERFERENCIAS,
+      misiones: misiones.filter((mi) => !esBando || mi.bando === rol),
       graficos: graficos.filter((g) => g.bando === "todos" || !esBando || g.bando === rol),
       objetivos: objetivos.filter((o) => !esBando || o.bando === rol),
       marcador: { azul: { objetivos: 30, bajas: 4, total: 34 }, rojo: { objetivos: 0, bajas: 3, total: 3 } },
@@ -288,6 +336,27 @@
       ordenes = ordenes.filter((o) => o.id !== parseInt(m[1], 10));
       enviarEstado();
       return json({ ok: true });
+    }
+    if (path === "/api/escenarios/1/misiones/previsualizar" && metodo === "POST") { await cargaCatalogo; return json(previsualizarMision(cuerpo)); }
+    if (path === "/api/escenarios/1/misiones" && metodo === "POST") {
+      await cargaCatalogo;
+      const r = previsualizarMision(cuerpo);
+      if (r.errores.length) return error(r.errores.join(" "));
+      const rol = CAT.misiones.roles.find((x) => x.id === cuerpo.rol);
+      const mi = { id: proximaMision++, bando: ROL, rol: cuerpo.rol, rol_nombre: rol ? rol.nombre : cuerpo.rol, nombre: cuerpo.nombre || "", estado: "programada",
+        unidad_id: cuerpo.unidad_id ?? null, base_id: cuerpo.base_id ?? null, modelo: cuerpo.modelo || "", aeronaves: cuerpo.aeronaves || 0,
+        turno_despegue: r.turno_despegue, creada_turno: ESC.turno_actual, puntos: r.puntos, plan: r.plan, indice: 0, espera: -1, resultado: "Programada." };
+      misiones.push(mi);
+      ESC[`listo_${ROL}`] = false;
+      enviarEstado();
+      return json(mi);
+    }
+    if ((m = path.match(/^\/api\/escenarios\/1\/misiones\/(\d+)$/)) && metodo === "DELETE") {
+      const mi = misiones.find((x) => x.id === parseInt(m[1], 10));
+      if (!mi) return error("Mision no encontrada", 404);
+      if (mi.estado === "en_curso") { mi.resultado = "Abortada: regresa a Base Aérea Barinas."; } else { mi.estado = "cancelada"; mi.resultado = "Cancelada antes de iniciarse."; }
+      enviarEstado();
+      return json(mi);
     }
     if (path === "/api/escenarios/1/listo") { ESC[`listo_${ROL}`] = cuerpo.listo; enviarEstado(); return json(estadoPara()); }
     if (path === "/api/escenarios/1/avanzar_turno") {
