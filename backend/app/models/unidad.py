@@ -1,4 +1,4 @@
-from sqlalchemy import Float, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -40,6 +40,15 @@ class Unidad(Base):
     carga: Mapped[float] = mapped_column(Float, default=0.0)
     recarga_restante: Mapped[int] = mapped_column(Integer, default=0)  # turnos sin poder disparar
     despliegue_restante: Mapped[int] = mapped_column(Integer, default=0)  # turnos quieta para poder disparar
+
+    # ciclo de vuelo: aeronave estacionada en una base (con turnos de espera para reabastecer y rearmar) y
+    # mision persistente ("patrulla" sobre un punto)
+    en_tierra: Mapped[bool] = mapped_column(Boolean, default=False)
+    base_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    espera_restante: Mapped[int] = mapped_column(Integer, default=0)
+    mision: Mapped[str] = mapped_column(String(20), default="")
+    mision_lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    mision_lon: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     # codigo de simbolo (SIDC) para milsymbol.js
     sidc: Mapped[str] = mapped_column(String(20), default="")

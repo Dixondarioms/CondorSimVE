@@ -60,8 +60,14 @@
       $("hud-clima").textContent = etiquetaClima(esc.clima).toUpperCase();
       $("hud-azul").classList.toggle("listo", esc.listo_azul);
       $("hud-rojo").classList.toggle("listo", esc.listo_rojo);
-      $("hud-azul").textContent = esc.listo_azul ? "AZUL LISTO" : "AZUL";
-      $("hud-rojo").textContent = esc.listo_rojo ? "ROJO LISTO" : "ROJO";
+      if (data.marcador) {
+        $("hud-marcador-azul").textContent = String(data.marcador.azul.total);
+        $("hud-marcador-rojo").textContent = String(data.marcador.rojo.total);
+      }
+      const eAzul = Logica.etiquetaBandoNacion("azul", esc, ctx.naciones()).toUpperCase();
+      const eRojo = Logica.etiquetaBandoNacion("rojo", esc, ctx.naciones()).toUpperCase();
+      $("hud-azul").textContent = esc.listo_azul ? `${eAzul} LISTO` : eAzul;
+      $("hud-rojo").textContent = esc.listo_rojo ? `${eRojo} LISTO` : eRojo;
       const ul = $("hud-alertas");
       while (ul.firstChild) ul.removeChild(ul.firstChild);
       for (const a of alertas.slice(0, 3)) {

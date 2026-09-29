@@ -74,6 +74,7 @@
         <div id="pest-fuerzas" class="pestana">
           <section class="bloque">
             <h2 id="oob-titulo">Orden de batalla</h2>
+            <input id="oob-buscar" type="search" placeholder="Buscar unidad (nombre, clase, modelo)…" aria-label="Buscar unidad" autocomplete="off">
             <div id="oob"></div>
           </section>
 
@@ -95,7 +96,10 @@
               <button type="button" data-modo="atacar">Atacar</button>
               <button type="button" data-modo="apoyar">Apoyar</button>
               <button type="button" data-modo="construir" id="modo-construir" hidden title="Solo ingenieros">Construir</button>
+              <button type="button" data-modo="patrullar" id="modo-patrullar" hidden title="Solo aeronaves">Patrullar</button>
+              <button type="button" data-modo="aterrizar" id="modo-aterrizar" hidden title="Solo aeronaves en vuelo">Aterrizar</button>
             </div>
+            <p id="o-espera" class="ayuda advertencia" hidden></p>
             <div id="o-mover">
               <p class="ayuda">Haga clic en el mapa para marcar waypoints. El terreno, el clima y el combustible limitan el avance.</p>
               <div id="o-waypoints" class="ayuda"></div>
@@ -109,6 +113,15 @@
               </select>
               <p class="ayuda">Haga clic en el mapa sobre un río a menos de 5 km de los ingenieros. Los vehículos pesados solo cruzan los ríos por una obra.</p>
               <p id="o-sitio" class="ayuda preview"></p>
+            </div>
+            <div id="o-patrullar" hidden>
+              <p class="ayuda">Haga clic en el mapa donde quiere la patrulla. La aeronave vuela hasta allí, se mantiene en la zona (gasta 8 % de combustible por turno) e intercepta a los aviones enemigos que detecte a su alcance. Con combustible crítico regresa sola a la base más cercana.</p>
+              <p id="o-patrulla-punto" class="ayuda preview"></p>
+            </div>
+            <div id="o-aterrizar" hidden>
+              <label class="mini">Base de destino<select id="o-base"></select></label>
+              <p id="o-aterrizaje-info" class="ayuda preview"></p>
+              <p class="ayuda">En tierra la aeronave tarda 2 turnos en reabastecer y rearmar; después, cualquier orden de vuelo es el despegue. Una base guarda hasta 12 aeronaves.</p>
             </div>
             <div id="o-objetivo-box" hidden>
               <select id="o-objetivo" aria-label="Objetivo"></select>
@@ -162,6 +175,16 @@
           </details>
 
           <details>
+            <summary>Identidad nacional</summary>
+            <p class="ayuda">Para ambientar el ejercicio con o contra un país vecino: qué país representa cada bando. Es solo un nombre y un color para la interfaz y el informe; no cambia el catálogo de unidades ni sus valores.</p>
+            <div class="grid">
+              <label class="mini">Bando Azul<select id="cfg-nacion-azul"></select></label>
+              <label class="mini">Bando Rojo<select id="cfg-nacion-rojo"></select></label>
+            </div>
+            <button id="btn-config-nacion" type="button">Aplicar identidad nacional</button>
+          </details>
+
+          <details>
             <summary>Comunicaciones simuladas</summary>
             <p class="ayuda">Interferencia electrónica del chat: cada mensaje demora y puede perderse. El instructor lo ve todo al instante.</p>
             <div class="grid">
@@ -192,6 +215,37 @@
               <button id="btn-elegir-modelo" type="button" class="secundario mini">Elegir aeronave…</button>
             </div>
             <button id="btn-modo-agregar" type="button">Ubicar en mapa</button>
+          </details>
+
+          <details>
+            <summary>Objetivos y puntaje</summary>
+            <p class="ayuda">Cada bando ve solo los suyos. Ocupar: mantener la zona (sin enemigos) varios turnos seguidos. Destruir: unidad enemiga. Proteger: unidad propia viva hasta un turno. Además, cada 10 de fuerza que un bando inflige al enemigo vale 1 punto.</p>
+            <div class="grid">
+              <select id="ob-tipo" aria-label="Tipo de objetivo">
+                <option value="ocupar">Ocupar una zona</option>
+                <option value="destruir">Destruir una unidad</option>
+                <option value="proteger">Proteger una unidad</option>
+              </select>
+              <select id="ob-bando" aria-label="Bando"><option value="azul">Para Azul</option><option value="rojo">Para Rojo</option></select>
+              <input id="ob-nombre" placeholder="Nombre (ej. Tomar el puente)" maxlength="120">
+              <label class="mini">Puntos<input id="ob-puntos" type="number" min="0" max="1000" value="20"></label>
+              <label class="mini ob-ocupar">Radio (km)<input id="ob-radio" type="number" min="0.5" max="200" step="0.5" value="5"></label>
+              <label class="mini ob-ocupar">Turnos seguidos<input id="ob-turnos" type="number" min="1" max="48" value="1"></label>
+              <label class="mini ob-unidad" hidden>Unidad<select id="ob-unidad"></select></label>
+              <label class="mini ob-proteger" hidden>Hasta el turno<input id="ob-hasta" type="number" min="1" max="999" value="6"></label>
+            </div>
+            <div class="ob-ocupar">
+              <button id="btn-ob-ubicar" type="button" class="secundario">Ubicar la zona en el mapa</button>
+              <p id="ob-centro" class="ayuda preview"></p>
+            </div>
+            <button id="btn-ob-crear" type="button">Crear objetivo</button>
+            <ul id="ob-lista" class="lista-objetivos"></ul>
+          </details>
+
+          <details>
+            <summary>Editar el escenario</summary>
+            <label class="chk"><input type="checkbox" id="chk-editar"><span>Arrastrar unidades en el mapa para reubicarlas</span></label>
+            <p class="ayuda">Con la edición activa, las unidades se mueven arrastrándolas (queda registrado como ajuste manual). Para quitar una unidad, selecciónela y use «Eliminar unidad» en su ficha; si ya combatió solo puede marcarse como destruida.</p>
           </details>
 
           <details>
@@ -266,6 +320,16 @@
           <button type="button" id="graf-cancelar" class="secundario" hidden>Cancelar trazado</button>
         </div>
 
+        <div id="botones-movil" aria-label="Paneles del mapa">
+          <button id="btn-panel-graficos" type="button" class="mini secundario" aria-expanded="false">Dibujar</button>
+          <button id="btn-panel-der" type="button" class="mini secundario" aria-expanded="false">Panel</button>
+        </div>
+        <div id="barra-herramientas" class="etiqueta-mapa">
+          <button id="btn-regla" type="button" class="mini secundario" title="Medir distancias y rumbos: clic para cada punto; doble clic o Esc para terminar">Regla</button>
+          <button id="btn-regla-limpiar" type="button" class="mini secundario" hidden>Limpiar</button>
+          <span id="regla-info" class="regla-info"></span>
+        </div>
+
         <div id="hud-vw" aria-live="off">
           <div class="hud-titulo"><b id="hud-escenario">-</b></div>
           <div class="hud-datos">
@@ -275,6 +339,7 @@
           </div>
           <div id="hud-reloj" class="hud-reloj">--:--</div>
           <div class="hud-bandos"><span id="hud-azul" class="azul">AZUL</span><span id="hud-rojo" class="rojo">ROJO</span></div>
+          <div class="hud-marcador"><span class="azul">AZUL <b id="hud-marcador-azul">0</b></span><span class="rojo">ROJO <b id="hud-marcador-rojo">0</b></span></div>
           <ul id="hud-alertas"></ul>
         </div>
         <button id="btn-vw-salir" type="button" class="secundario" title="Salir del centro de operaciones (Esc)">Salir del videowall</button>
@@ -321,6 +386,15 @@
             </dl>
           </section>
 
+          <section class="tarjeta" id="tarjeta-objetivos">
+            <h2>Objetivos y puntaje</h2>
+            <div class="marcador" aria-live="polite">
+              <span class="azul">AZUL <b id="marcador-azul">0</b><small id="marcador-azul-det"></small></span>
+              <span class="rojo">ROJO <b id="marcador-rojo">0</b><small id="marcador-rojo-det"></small></span>
+            </div>
+            <ul id="objetivos-lista"></ul>
+          </section>
+
           <section class="tarjeta">
             <h2>Capas</h2>
             <div class="capas">
@@ -332,6 +406,7 @@
               <label><input type="checkbox" data-capa="graficos" checked><span>Gráficos tácticos</span></label>
               <label><input type="checkbox" data-capa="referencias" checked><span>Límites y poblaciones</span></label>
               <label><input type="checkbox" data-capa="bases_ven" checked><span>Bases aéreas de Venezuela</span></label>
+              <label><input type="checkbox" data-capa="objetivos" checked><span>Objetivos</span></label>
             </div>
           </section>
 
@@ -370,8 +445,8 @@
           </button>
         </div>
         <div class="estado-bandos" aria-live="polite">
-          <span class="estado" id="estado-azul"><i class="punto azul"></i>BANDO AZUL: <b>-</b></span>
-          <span class="estado" id="estado-rojo"><i class="punto rojo"></i>BANDO ROJO: <b>-</b></span>
+          <span class="estado" id="estado-azul"><i class="punto azul"></i><span class="rotulo-bando">BANDO AZUL</span>: <b>-</b></span>
+          <span class="estado" id="estado-rojo"><i class="punto rojo"></i><span class="rotulo-bando">BANDO ROJO</span>: <b>-</b></span>
         </div>
       </div>
     </footer>
@@ -433,6 +508,7 @@
   <script src="/static/js/videowall.js"></script>
   <script src="/static/js/modelo3d.js"></script>
   <script src="/static/js/aviacion.js"></script>
+  <script src="/static/js/herramientas.js"></script>
   <script src="/static/js/timeline.js"></script>
   <script src="/static/js/informe.js"></script>
   <script src="/static/pruebas/arnes.js"></script>

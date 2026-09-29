@@ -1,14 +1,15 @@
 """Resolucion de ordenes de un turno, en fases:
 
 0. Despegues: los grupos aereos pedidos a una base aerea nacen junto a ella (ver engine/aeronaves.py).
-1. Movimiento (terreno, rios/obras, clima, peso y combustible; ver engine/movimiento.py) y
-   construccion de puentes y vados por los ingenieros.
-2. Apoyos: se registra que unidades apoyan a cuales.
+1. Movimiento (terreno, rios/obras, clima, peso y combustible; ver engine/movimiento.py), vuelo de las
+   aeronaves (despegue desde la base, patrulla persistente, aterrizaje) y construccion de puentes y vados.
+2. Apoyos: se registra que unidades apoyan a cuales. Las patrullas interceptan aviones enemigos al alcance.
 3. Combates simultaneos: todos se calculan con las fuerzas de inicio de fase y las perdidas se
    aplican juntas, de modo que el resultado no depende del orden en que se emitieron las ordenes.
    Cuentan la sorpresa, la cadencia de fuego, el despliegue y la recarga de cada plataforma.
-4. Logistica: consumo de municion, reabastecimiento junto a bases y por convoyes, perdida de
-   aeronaves sin combustible, contadores de despliegue/recarga y caducidad de las obras.
+4. Logistica: consumo de municion, reabastecimiento (aviones solo en tierra, en su base) y por convoyes,
+   aterrizaje de emergencia y regreso automatico por combustible critico, perdida de aeronaves sin
+   combustible, contadores de despliegue/recarga/espera en tierra y caducidad de las obras.
 
 Cada cambio de combustible, municion o carga queda en `registro_logistico` con su causa.
 """
@@ -48,8 +49,8 @@ DURACION_OBRA = {"vado": 4, "puente": 12}  # turnos que sigue en pie
 
 
 def tipo_efectivo(unidad: Unidad) -> str:
-    """Tipo que se usa en el combate: las bases cuentan como objetivos terrestres."""
-    return "terrestre" if unidad.tipo == "base" else unidad.tipo
+    """Tipo que se usa en el combate: las bases y los aviones estacionados cuentan como objetivos terrestres."""
+    return "terrestre" if unidad.tipo == "base" or getattr(unidad, "en_tierra", False) else unidad.tipo
 
 
 def _tiene_cobertura_aerea(bando: str, lat: float, lon: float, unidades) -> bool:
@@ -57,6 +58,7 @@ def _tiene_cobertura_aerea(bando: str, lat: float, lon: float, unidades) -> bool
         u.bando == bando
         and u.tipo == "aerea"
         and u.estado == "activa"
+        and not u.en_tierra
         and geo.distancia_km(u.lat, u.lon, lat, lon) <= COBERTURA_AEREA_KM
         for u in unidades
     )
@@ -111,6 +113,8 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora) -> None:
     for u in unidades:
         if u.tipo == "base" or u.estado != "activa":
             continue
+        if u.tipo == "aerea" and not u.en_tierra:
+            continue  # un avion en vuelo no se reabastece: debe aterrizar
         for b in bases:
             if b.bando != u.bando or u.tipo not in catalogo.obtener(b.clase, "base").suministra:
                 continue
@@ -191,27 +195,76 @@ def procesar_ordenes(
             descripcion=f"Despego {grupo.nombre} ({modelo.corto} x{n}) desde {base.nombre}.",
         ))
 
-    # ---- Fase 1: movimiento ----
-    for orden in [o for o in ordenes if o.tipo == "mover"]:
+    # ---- Fase 1: movimiento, vuelo, patrulla y aterrizaje ----
+    con_orden_de_vuelo: set[int] = set()
+    aterrizajes_del_turno: dict[int, int] = defaultdict(int)
+    for orden in [o for o in ordenes if o.tipo in ("mover", "patrullar", "aterrizar")]:
         u = unidades.get(orden.unidad_id)
         waypoints = json.loads(orden.waypoints_json or "[]")
+        base_destino = unidades.get(orden.objetivo_unidad_id) if orden.tipo == "aterrizar" and orden.objetivo_unidad_id else None
         if u is None or u.estado != "activa":
             rechazar(orden, "La unidad no esta activa.")
-        elif not waypoints:
-            rechazar(orden, "Orden de movimiento sin waypoints.")
         elif u.tipo == "base" or u.velocidad_kmh <= 0:
             rechazar(orden, "La unidad no puede moverse.")
+        elif u.en_tierra and u.espera_restante > 0:
+            rechazar(orden, f"En tierra: faltan {u.espera_restante} turno(s) para reabastecer y rearmar.")
+        elif orden.tipo in ("mover", "patrullar") and not waypoints:
+            rechazar(orden, "Orden de movimiento sin waypoints.")
+        elif orden.tipo == "patrullar" and u.tipo != "aerea":
+            rechazar(orden, "Solo las aeronaves pueden patrullar.")
+        elif orden.tipo == "aterrizar" and (motivo := aeronaves_mod.error_de_aterrizaje(u, base_destino, lista_unidades)):
+            rechazar(orden, motivo)
         else:
+            if orden.tipo == "aterrizar":
+                waypoints = [[base_destino.lat, base_destino.lon]]
+            if u.en_tierra:
+                aeronaves_mod.despegar_unidad(u)  # una orden de vuelo a una aeronave lista en tierra es el despegue
+            if orden.tipo != "patrullar":
+                u.mision, u.mision_lat, u.mision_lon = "", None, None
             mov = movimiento.simular(u, waypoints, terreno, clima, obras)
             if mov.km_reales > 0:
                 movidas.add(u.id)
+            con_orden_de_vuelo.add(u.id)
             u.lat, u.lon = mov.lat, mov.lon
             bit.poner(u, "combustible", u.combustible - mov.combustible_gastado, "movimiento", orden.id)
             orden.estado = "resuelta"
-            orden.resultado = (
-                f"Unidad en ({u.lat:.4f}, {u.lon:.4f}); recorrio {mov.km_reales:.1f} km, "
-                f"combustible {u.combustible:.0f}%. {mov.nota}"
-            ).strip()
+            if orden.tipo == "patrullar":
+                u.mision, u.mision_lat, u.mision_lon = "patrulla", waypoints[-1][0], waypoints[-1][1]
+                orden.resultado = (
+                    f"Patrulla sobre ({u.mision_lat:.3f}, {u.mision_lon:.3f}); recorrio {mov.km_reales:.1f} km, "
+                    f"combustible {u.combustible:.0f}%. Se mantiene en la zona e intercepta aviones enemigos."
+                )
+            elif orden.tipo == "aterrizar":
+                faltan = geo.distancia_km(u.lat, u.lon, base_destino.lat, base_destino.lon)
+                if faltan <= aeronaves_mod.RADIO_ATERRIZAJE_KM:
+                    aeronaves_mod.aterrizar(u, base_destino, aterrizajes_del_turno[base_destino.id])
+                    aterrizajes_del_turno[base_destino.id] += 1
+                    orden.resultado = (
+                        f"Aterrizo en {base_destino.nombre}; combustible {u.combustible:.0f}%. "
+                        f"Quedara lista para despegar en {u.espera_restante} turnos."
+                    )
+                else:
+                    orden.resultado = (
+                        f"Vuela hacia {base_destino.nombre}: faltan {faltan:.0f} km, combustible {u.combustible:.0f}%. "
+                        f"{mov.nota}"
+                    ).strip()
+            else:
+                orden.resultado = (
+                    f"Unidad en ({u.lat:.4f}, {u.lon:.4f}); recorrio {mov.km_reales:.1f} km, "
+                    f"combustible {u.combustible:.0f}%. {mov.nota}"
+                ).strip()
+
+    # patrullas en curso (sin orden de vuelo este turno): siguen hacia su zona o la mantienen gastando combustible
+    for u in lista_unidades:
+        if u.mision != "patrulla" or not aeronaves_mod.en_vuelo(u) or u.id in con_orden_de_vuelo:
+            continue
+        restante = geo.distancia_km(u.lat, u.lon, u.mision_lat, u.mision_lon)
+        if restante > 1.0:
+            mov = movimiento.simular(u, [[u.mision_lat, u.mision_lon]], terreno, clima, obras)
+            u.lat, u.lon = mov.lat, mov.lon
+            bit.poner(u, "combustible", u.combustible - mov.combustible_gastado, "movimiento")
+        else:
+            bit.poner(u, "combustible", u.combustible - aeronaves_mod.COMBUSTIBLE_LOITER, "patrulla")
 
     # ---- Fase 1b: construccion de puentes y vados ----
     for orden in [o for o in ordenes if o.tipo == "construir"]:
@@ -262,6 +315,33 @@ def procesar_ordenes(
         else:
             apoyos[obj.id].append(a.id)
             ordenes_apoyo.append((orden, a, obj))
+
+    # ---- Fase 2b: interceptacion. Cada patrulla sin orden de ataque combate al avion enemigo detectado mas cercano
+    # dentro de su alcance; se registra como una orden de ataque "intercepcion" (aparece en la cola y el informe).
+    atacan = {o.unidad_id for o in ordenes if o.tipo == "atacar" and o.estado == "pendiente"}
+    for u in lista_unidades:
+        if u.mision != "patrulla" or not aeronaves_mod.en_vuelo(u) or u.id in atacan:
+            continue
+        if u.municion <= 0 or u.recarga_restante > 0 or catalogo.perfil(u).ataque_vs.get("aerea", 0.0) <= 0:
+            continue
+        aliados = [x for x in lista_unidades if x.bando == u.bando and x.estado == "activa" and x.deteccion_km]
+        amenazas = [
+            x for x in lista_unidades
+            if x.bando != u.bando and aeronaves_mod.en_vuelo(x)
+            and geo.distancia_km(u.lat, u.lon, x.lat, x.lon) <= u.alcance_km
+            and any(vision.detecta(d, x, terreno, clima) for d in aliados)
+        ]
+        if not amenazas:
+            continue
+        blanco = min(amenazas, key=lambda x: geo.distancia_km(u.lat, u.lon, x.lat, x.lon))
+        intercepcion = Orden(
+            escenario_id=escenario.id, unidad_id=u.id, tipo="atacar", objetivo_unidad_id=blanco.id,
+            detalle="intercepcion", turno_emitida=turno, estado="pendiente",
+        )
+        db.add(intercepcion)
+        db.flush()
+        ordenes.append(intercepcion)
+        atacan.add(u.id)
 
     # ---- Fase 3: combates simultaneos ----
     fuerza_inicial = {uid: u.fuerza for uid, u in unidades.items()}
@@ -341,6 +421,19 @@ def procesar_ordenes(
             u.estado = "destruida"
     for uid, gasto in gasto_municion.items():
         bit.poner(unidades[uid], "municion", unidades[uid].municion - gasto, "combate", orden_de_ataque.get(uid))
+    # los aviones estacionados sufren parte del dano que recibe su base (ataques al aerodromo)
+    for uid, perdida in list(perdidas.items()):
+        base = unidades[uid]
+        if base.tipo != "base" or perdida <= 0:
+            continue
+        for x in aeronaves_mod.estacionadas(base, lista_unidades):
+            x.fuerza = max(0.0, x.fuerza - perdida * aeronaves_mod.PERDIDA_EN_TIERRA)
+            if x.fuerza <= 0:
+                x.estado = "destruida"
+                db.add(Evento(
+                    escenario_id=escenario.id, turno=turno, tipo="combate", bando_destino=x.bando,
+                    descripcion=f"{x.nombre} fue destruido en tierra durante el ataque a {base.nombre}.",
+                ))
 
     for orden, a, obj in ordenes_apoyo:
         bono = _bono_apoyo(obj, apoyos, unidades)
@@ -355,9 +448,19 @@ def procesar_ordenes(
             rechazar(orden, f"Tipo de orden desconocido: {orden.tipo}")
 
     # ---- Fase 4: logistica, contadores de plataforma y caducidad de obras ----
+    # aterrizaje de emergencia: sin combustible pero junto a una base propia con plazas, la aeronave aterriza
+    for u in lista_unidades:
+        if aeronaves_mod.en_vuelo(u) and u.combustible <= 0:
+            base = aeronaves_mod.base_mas_cercana(u, lista_unidades)
+            if base is not None and geo.distancia_km(u.lat, u.lon, base.lat, base.lon) <= base.alcance_km:
+                aeronaves_mod.aterrizar(u, base, len(aeronaves_mod.estacionadas(base, lista_unidades)))
+                db.add(Evento(
+                    escenario_id=escenario.id, turno=turno, tipo="logistica", bando_destino=u.bando,
+                    descripcion=f"{u.nombre} aterrizo de emergencia en {base.nombre} sin combustible.",
+                ))
     _reabastecer(lista_unidades, bit)
     for u in lista_unidades:
-        if u.tipo == "aerea" and u.estado == "activa" and u.combustible <= 0:
+        if u.tipo == "aerea" and u.estado == "activa" and not u.en_tierra and u.combustible <= 0:
             u.estado = "destruida"
             u.fuerza = 0.0
             db.add(Evento(
@@ -366,7 +469,23 @@ def procesar_ordenes(
             ))
 
     for u in lista_unidades:
+        if u.mision == "patrulla" and aeronaves_mod.en_vuelo(u) and u.combustible <= aeronaves_mod.COMBUSTIBLE_CRITICO:
+            base = aeronaves_mod.base_mas_cercana(u, lista_unidades)
+            u.mision, u.mision_lat, u.mision_lon = "", None, None
+            if base is not None:
+                db.add(Orden(
+                    escenario_id=escenario.id, unidad_id=u.id, tipo="aterrizar", objetivo_unidad_id=base.id,
+                    detalle="combustible critico", turno_emitida=turno + 1, estado="pendiente",
+                ))
+                texto = f"{u.nombre} deja la patrulla con combustible critico ({u.combustible:.0f}%) y regresa a {base.nombre}."
+            else:
+                texto = f"{u.nombre} deja la patrulla con combustible critico ({u.combustible:.0f}%) y no hay base disponible."
+            db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="logistica", bando_destino=u.bando, descripcion=texto))
+
+    for u in lista_unidades:
         clase = catalogo.obtener(u.clase, u.tipo)
+        if u.en_tierra:
+            u.espera_restante = max(0, u.espera_restante - 1)
         if u.id in dispararon:
             u.recarga_restante = clase.recarga_turnos
         else:

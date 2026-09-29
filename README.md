@@ -186,6 +186,20 @@ correlaciones (`consumo_en_combate`, `coincide_con_combate`, `combate_con_logist
   (SVPA). Al tocar una, se ve su nombre, ubicación y elevación; el instructor puede **colocarla como base azul o
   roja** del ejercicio con un botón. Datos en `frontend/static/geo/bases_aereas.geojson`
   (`python tools/generar_bases_aereas.py` lo regenera; fuentes: Wikipedia y OurAirports).
+- **Ciclo de vuelo** (motor: `engine/aeronaves.py` y `engine/orders.py`):
+  - **Aterrizar:** orden `aterrizar` hacia una base aérea propia en servicio y con plazas (caben 12 aeronaves por
+    base). Si no llega en el turno, sigue volando hacia ella. Ya no basta pasar cerca de una base: **un avión solo se
+    reabastece en tierra**.
+  - **En tierra:** el grupo se estaciona junto a la base y tarda **2 turnos** en reabastecer y rearmar (+50 % de
+    combustible y munición por turno). Hasta entonces rechaza órdenes de vuelo; después, cualquier orden de
+    mover, atacar o patrullar es el despegue. Los aviones estacionados cuentan como blancos terrestres, no dan
+    cobertura aérea y **sufren el 60 % del daño que recibe su base**.
+  - **Patrullar:** misión persistente sobre un punto: la aeronave vuela hasta allí, se mantiene en la zona (8 % de
+    combustible por turno) y **intercepta** al avión enemigo detectado más cercano dentro de su alcance (se
+    registra como una orden de ataque «interceptar» y aparece en el informe).
+  - **Combustible crítico:** una patrulla con ≤ 25 % deja la misión y se le ordena regresar a la base más cercana
+    (orden de aterrizaje pendiente para el turno siguiente, con aviso). Sin combustible: aterrizaje de emergencia si
+    hay una base al alcance, y si no, se pierde.
 - **Imagen 3D en el mapa:** cada F-16 y Su-30 se dibuja sobre su posición como una imagen renderizada de un modelo 3D
   real (24 rumbos), orientada hacia donde va (su último desplazamiento o su orden pendiente), con un contorno del
   color de su bando y el símbolo APP-6 debajo como etiqueta. Un grupo se dibuja como varios aviones en formación
@@ -195,6 +209,47 @@ correlaciones (`consumo_en_combate`, `coincide_con_combate`, `combate_con_logist
   Su-33 (variante naval), con su librea. `frontend/static/pruebas/modelos3d.html` muestra todos los modelos.
 - **Fotos:** de Wikimedia Commons, bajo CC BY-SA (créditos en `frontend/static/fotos/CREDITOS.md` y en la
   interfaz). Quien redistribuya el proyecto debe mantener esos créditos.
+
+## Ejercicios con o contra los países vecinos
+
+- **Identidad nacional** (*Consola → Identidad nacional*; catálogo en `engine/naciones.py`, endpoint
+  `GET /api/naciones`): a cada bando (azul/rojo) se le puede asignar un país — Venezuela, Colombia, Brasil,
+  Guyana o Trinidad y Tobago — o dejarlo sin especificar. Es solo un nombre para la interfaz (cabecera, orden
+  de batalla, pie, HUD del videowall, informe y exportación): el bando "azul"/"rojo" sigue siendo el mecanismo
+  real del motor (símbolos, niebla de guerra, combate), y el catálogo de unidades no cambia según el país — el
+  simulador no modela el orden de batalla real de cada vecino. No hace falta que Venezuela participe: los dos
+  bandos pueden representar al mismo país o a dos vecinos distintos, según lo que se quiera ensayar. La
+  identidad nacional no es secreta: la ven ambos bandos (a diferencia de la configuración de comunicaciones).
+- **Terreno de referencia de los vecinos:** las fronteras, los departamentos/estados y las ciudades principales
+  de Colombia, Brasil, Guyana y Trinidad y Tobago que entran en el área del mapa ya están en las capas
+  `fronteras.geojson`, `estados.geojson` y `lugares.geojson` (recortadas a esa área, no el contorno completo de
+  cada país) — se ven igual que las de Venezuela, sin activar nada aparte. El relieve y la cobertura terrestre
+  (montaña, bosque, río, urbano…) ya cubrían esa misma zona porque se generaron por coordenadas, no por país.
+  `python tools/preparar_terreno.py --solo-vectores` regenera solo estas capas (rápido, sin tocar el relieve).
+- **Límite:** no hay bases ni unidades reales de esos países cargadas de fábrica (a diferencia de las bases
+  aéreas venezolanas, verificadas una por una); el instructor las ubica como cualquier otra unidad o base.
+
+## Objetivos, puntaje y editor del escenario
+
+- **Objetivos** (*Consola → Objetivos y puntaje*; motor en `engine/objetivos.py`), cada uno para un bando y con
+  sus puntos; cada bando solo ve los suyos:
+  - **Ocupar** una zona circular: al menos una unidad terrestre propia dentro y ninguna enemiga, durante N turnos
+    seguidos (si la pierde, el conteo vuelve a cero).
+  - **Destruir** una unidad del bando contrario.
+  - **Proteger** una unidad propia: falla si cae; se cumple al llegar al turno indicado con la unidad viva.
+- **Marcador:** puntos de los objetivos cumplidos más 1 punto por cada 10 de fuerza que el bando inflige al enemigo
+  (atacando o defendiendo). Se muestra en la tarjeta «Objetivos y puntaje», en el HUD del videowall, en el informe
+  (`marcador` y `objetivos` en `/aar` y en la exportación) y llega como aviso a cada bando al cumplirse o fallar.
+  Las zonas y las unidades objetivo se dibujan en el mapa (capa «Objetivos»).
+- **Editor:** *Consola → Editar el escenario* permite arrastrar las unidades para reubicarlas (queda como ajuste
+  manual) y, desde la ficha de una unidad, **eliminarla**. Una unidad que ya combatió no se puede borrar sin falsear
+  el informe (`409`): hay que marcarla como destruida. «Duplicar escenario» copia también los objetivos, y los modelos
+  y grupos de aeronave.
+- **Herramientas de mapa:** **Regla** (clic para cada punto, doble clic o `Esc` para terminar: distancia y rumbo de
+  cada tramo y total), anillos de alcance, detección y avance de la unidad seleccionada, y **búsqueda** de unidades
+  por nombre, clase o modelo (sin acentos) sobre la orden de batalla.
+- **Pantallas estrechas** (< 760 px): el panel derecho (estado, objetivos, chat, alertas) y la barra de dibujo pasan
+  a paneles que se abren con los botones «Panel» y «Dibujar» sobre el mapa.
 
 ## Trabajo en equipo: gráficos, comunicaciones y videowall
 
@@ -255,5 +310,7 @@ del proyecto centrado en La Guaira/Caracas.
 - Los modelos de aeronave son solo F-16 y Su-30; los aviones no gastan inventario de las bases (solo hay un tope
   por bando) y el estado real de cada aparato en la flota venezolana no se modela.
 - Las comunicaciones simuladas solo afectan al chat, no a las órdenes ni a la niebla de guerra.
+- No hay selección múltiple de unidades ni órdenes de grupo: cada orden se da a una unidad.
+- La identidad nacional es solo un nombre para la interfaz: no se modela el orden de batalla real de Colombia, Brasil, Guyana ni Trinidad y Tobago, y el terreno detallado de esos países se limita a lo que entra en el área del mapa (recortado alrededor de Venezuela).
 - El bloqueo de inicio de sesión es por usuario (un atacante puede bloquear una cuenta 5 min).
 - Un solo servidor: WebSocket y temporizador viven en el proceso.

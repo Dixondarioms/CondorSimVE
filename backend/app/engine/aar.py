@@ -3,9 +3,12 @@
 import json
 from sqlalchemy.orm import Session
 
+from app import state
+from app.engine import objetivos as objetivos_mod
 from app.models.aar import Combate, Instantanea
 from app.models.escenario import Escenario
 from app.models.evento import Evento
+from app.models.objetivo import Objetivo
 from app.models.orden import Orden
 from app.models.unidad import Unidad
 
@@ -145,4 +148,9 @@ def construir_informe(db: Session, escenario: Escenario) -> dict:
         },
         "turnos": [turnos[k] for k in sorted(turnos)],
         "resumen": resumen,
+        "marcador": objetivos_mod.marcador(db, escenario),
+        "objetivos": [
+            state.serializar_objetivo(o, unidades)
+            for o in db.query(Objetivo).filter(Objetivo.escenario_id == escenario.id).order_by(Objetivo.id)
+        ],
     }

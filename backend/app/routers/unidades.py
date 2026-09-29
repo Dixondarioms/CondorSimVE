@@ -4,7 +4,11 @@ from sqlalchemy.orm import Session
 from app import auth, schemas, state
 from app.db import get_db
 from app.engine import aar, catalogo
-from app.models.aar import RegistroLogistico
+from app.models.aar import Combate, RegistroLogistico
+from app.models.contacto import Contacto
+from app.models.obra import Obra
+from app.models.objetivo import Objetivo
+from app.models.orden import Orden
 from app.models.escenario import Escenario
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
@@ -91,6 +95,38 @@ async def crear_unidad(
 
     await manager.difundir_estado(db, esc)
     return unidad
+
+
+@router.delete("/{unidad_id}")
+async def eliminar_unidad(
+    unidad_id: int,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    _: Usuario = Depends(solo_instructor),
+):
+    """Quita una unidad del escenario (editor). Si ya combatio no se puede borrar sin falsear el informe:
+    en ese caso hay que marcarla como destruida."""
+    unidad = db.get(Unidad, unidad_id)
+    if unidad is None or unidad.escenario_id != esc.id:
+        raise HTTPException(status_code=404, detail="Unidad no encontrada")
+    if db.query(Combate).filter((Combate.atacante_id == unidad.id) | (Combate.defensor_id == unidad.id)).count():
+        raise HTTPException(
+            status_code=409,
+            detail="Esta unidad ya participo en combates y consta en el informe: marquela como destruida en lugar de borrarla",
+        )
+    db.query(Orden).filter((Orden.unidad_id == unidad.id) | (Orden.objetivo_unidad_id == unidad.id)).delete(synchronize_session=False)
+    db.query(Contacto).filter(Contacto.unidad_id == unidad.id).delete(synchronize_session=False)
+    db.query(Objetivo).filter(Objetivo.unidad_id == unidad.id).delete(synchronize_session=False)
+    db.query(RegistroLogistico).filter(RegistroLogistico.unidad_id == unidad.id).delete(synchronize_session=False)
+    db.query(Obra).filter(Obra.unidad_id == unidad.id).update({Obra.unidad_id: None}, synchronize_session=False)
+    # las aeronaves estacionadas en una base que se borra quedan en el aire junto a ella
+    db.query(Unidad).filter(Unidad.escenario_id == esc.id, Unidad.base_id == unidad.id).update(
+        {Unidad.en_tierra: False, Unidad.base_id: None, Unidad.espera_restante: 0}, synchronize_session=False)
+    aar.registrar_ajuste(db, esc, f"Unidad eliminada del escenario: {unidad.nombre} ({unidad.bando})")
+    db.delete(unidad)
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return {"ok": True}
 
 
 @router.get("")

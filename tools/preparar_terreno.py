@@ -130,6 +130,90 @@ def en_bbox(pt):
     return BBOX[0] <= pt[0] <= BBOX[2] and BBOX[1] <= pt[1] <= BBOX[3]
 
 
+# Vecinos de Venezuela que entran (aunque sea en parte) en el area del mapa (BBOX), para que los ejercicios
+# se puedan ambientar con o contra ellos: sus fronteras, estados/departamentos y ciudades quedan disponibles
+# como capa de referencia igual que las de Venezuela (no se modela su orden de batalla real: ver engine/naciones.py).
+PAIS_ES = {
+    "VEN": "Venezuela", "COL": "Colombia", "BRA": "Brasil", "GUY": "Guyana", "TTO": "Trinidad y Tobago",
+}
+
+
+def _anillos(geometry):
+    if geometry is None:
+        return []
+    if geometry["type"] == "Polygon":
+        return [geometry["coordinates"]]
+    if geometry["type"] == "MultiPolygon":
+        return geometry["coordinates"]
+    return []
+
+
+def _bbox_de(geometry):
+    """Rectangulo envolvente [lon_min, lat_min, lon_max, lat_max] de una geometria, o None si esta vacia."""
+    lons, lats = [], []
+    for poly in _anillos(geometry):
+        for anillo in poly:
+            lons += [p[0] for p in anillo]
+            lats += [p[1] for p in anillo]
+    return (min(lons), min(lats), max(lons), max(lats)) if lons else None
+
+
+def _solapa_bbox(geometry):
+    b = _bbox_de(geometry)
+    return b is not None and not (b[2] < BBOX[0] or b[0] > BBOX[2] or b[3] < BBOX[1] or b[1] > BBOX[3])
+
+
+def _recorta_semiplano(anillo, dentro, interseccion):
+    """Sutherland-Hodgman contra un semiplano: `anillo` puede ser concavo, el semiplano es convexo."""
+    if not anillo:
+        return anillo
+    salida = []
+    prev = anillo[-1]
+    prev_in = dentro(prev)
+    for cur in anillo:
+        cur_in = dentro(cur)
+        if cur_in != prev_in:
+            salida.append(interseccion(prev, cur))
+        if cur_in:
+            salida.append(cur)
+        prev, prev_in = cur, cur_in
+    return salida
+
+
+def _recorta_anillo_a_bbox(anillo):
+    """Recorta un anillo (poligono, posiblemente concavo) al rectangulo BBOX."""
+    x0, y0, x1, y1 = BBOX
+
+    def cruce_x(a, b, x):
+        t = (x - a[0]) / (b[0] - a[0])
+        return [x, a[1] + t * (b[1] - a[1])]
+
+    def cruce_y(a, b, y):
+        t = (y - a[1]) / (b[1] - a[1])
+        return [a[0] + t * (b[0] - a[0]), y]
+
+    anillo = _recorta_semiplano(anillo, lambda p: p[0] >= x0, lambda a, b: cruce_x(a, b, x0))
+    anillo = _recorta_semiplano(anillo, lambda p: p[0] <= x1, lambda a, b: cruce_x(a, b, x1))
+    anillo = _recorta_semiplano(anillo, lambda p: p[1] >= y0, lambda a, b: cruce_y(a, b, y0))
+    anillo = _recorta_semiplano(anillo, lambda p: p[1] <= y1, lambda a, b: cruce_y(a, b, y1))
+    return anillo
+
+
+def recorta_geometria_a_bbox(geometry):
+    """Poligono o multipoligono recortado al area del mapa (BBOX), para no arrastrar en el GeoJSON el contorno
+    entero de un pais vecino (p. ej. Brasil) cuando solo un borde entra en el mapa. None si no queda nada."""
+    polis_out = []
+    for poli in _anillos(geometry):
+        anillos_out = [_recorta_anillo_a_bbox(anillo) for anillo in poli]
+        if len(anillos_out[0]) >= 3:  # el anillo exterior sobrevivio
+            polis_out.append([a for a in anillos_out if len(a) >= 3])
+    if not polis_out:
+        return None
+    if geometry["type"] == "Polygon" and len(polis_out) == 1:
+        return {"type": "Polygon", "coordinates": polis_out[0]}
+    return {"type": "MultiPolygon", "coordinates": polis_out}
+
+
 def redondear(obj, nd=3):
     if isinstance(obj, float):
         return round(obj, nd)
@@ -141,17 +225,28 @@ def redondear(obj, nd=3):
 def vectores(cache):
     GEO_OUT.mkdir(parents=True, exist_ok=True)
 
-    paises = cargar_ne("ne_10m_admin_0_countries", cache)
-    ven = [f for f in paises if f["properties"].get("ADM0_A3") == "VEN"]
-    fronteras = [{"type": "Feature", "properties": {"name": "Venezuela"},
-                  "geometry": {"type": f["geometry"]["type"], "coordinates": redondear(f["geometry"]["coordinates"])}}
-                 for f in ven]
+    paises_ne = cargar_ne("ne_10m_admin_0_countries", cache)
+    fronteras = []
+    for iso, nombre in PAIS_ES.items():
+        for f in paises_ne:
+            if f["properties"].get("ADM0_A3") != iso:
+                continue
+            recortada = recorta_geometria_a_bbox(f["geometry"])
+            if recortada is None:
+                continue
+            fronteras.append({"type": "Feature", "properties": {"name": nombre, "pais": iso},
+                              "geometry": {"type": recortada["type"], "coordinates": redondear(recortada["coordinates"])}})
 
-    estados = [f for f in cargar_ne("ne_10m_admin_1_states_provinces", cache)
-               if f["properties"].get("adm0_a3") == "VEN"]
-    estados = [{"type": "Feature", "properties": {"name": f["properties"].get("name")},
-                "geometry": {"type": f["geometry"]["type"], "coordinates": redondear(f["geometry"]["coordinates"])}}
-               for f in estados]
+    estados = []
+    for f in cargar_ne("ne_10m_admin_1_states_provinces", cache):
+        iso = f["properties"].get("adm0_a3")
+        if iso not in PAIS_ES:
+            continue
+        recortada = recorta_geometria_a_bbox(f["geometry"])
+        if recortada is None:
+            continue
+        estados.append({"type": "Feature", "properties": {"name": f["properties"].get("name"), "pais": iso},
+                        "geometry": {"type": recortada["type"], "coordinates": redondear(recortada["coordinates"])}})
 
     rios = []
     for f in cargar_ne("ne_10m_rivers_lake_centerlines", cache):
@@ -181,8 +276,14 @@ def vectores(cache):
         if not en_bbox((lon, lat)):
             continue
         pop = p.get("pop_max") or 0
+        iso = p.get("adm0_a3")
+        # Ciudades de otros paises (aunque no esten en PAIS_ES, p. ej. Curazao) igual sirven de referencia en el mapa.
+        pais_nombre = PAIS_ES.get(iso, p.get("adm0name") or "") if iso != "VEN" else None
         if pop >= 30000 or p.get("adm0cap"):
-            lugares.append({"type": "Feature", "properties": {"name": p.get("name"), "pop": pop},
+            props = {"name": p.get("name"), "pop": pop}
+            if pais_nombre:
+                props["pais"] = pais_nombre
+            lugares.append({"type": "Feature", "properties": props,
                             "geometry": {"type": "Point", "coordinates": [round(lon, 4), round(lat, 4)]}})
         if pop >= 50000:
             ciudades.append((lon, lat, pop))
@@ -359,8 +460,15 @@ def cortar_tiles(rgb, xa, ya):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", default=str(RAIZ / "tools" / "cache"))
+    ap.add_argument("--solo-vectores", action="store_true",
+                     help="regenerar solo fronteras/estados/rios/lagos/lugares (rapido, no toca las teselas ni la grilla)")
     args = ap.parse_args()
     cache = Path(args.cache)
+
+    if args.solo_vectores:
+        print("Vectores Natural Earth...")
+        vectores(cache)
+        return
 
     elev, xa, ya = construir_mosaico(cache)
     print(f"Mosaico {elev.shape[1]}x{elev.shape[0]} px, elevacion {elev.min():.0f}..{elev.max():.0f} m")

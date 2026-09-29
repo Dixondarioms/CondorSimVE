@@ -45,3 +45,7 @@ class Escenario(Base):
 
     # hora simulada del turno 1, en minutos desde medianoche (cada turno dura 1 h)
     hora_inicio_min: Mapped[int] = mapped_column(Integer, default=360)
+
+    # identidad nacional de cada bando (ver engine/naciones.py); "" = sin especificar (se muestra "Azul"/"Rojo")
+    nacion_azul: Mapped[str] = mapped_column(String(20), default="venezuela")
+    nacion_rojo: Mapped[str] = mapped_column(String(20), default="")

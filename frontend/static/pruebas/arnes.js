@@ -21,12 +21,20 @@
     azar: true, auto_resolver: false, limite_decision_seg: 1200, decision_termina_en: iso(18 * 60000 + 32000),
     listo_azul: false, listo_rojo: true, archivado: false, hora_inicio_min: 360,
     com_latencia_ms: 1500, com_jitter_ms: 500, com_perdida_pct: 30,
+    nacion_azul: "venezuela", nacion_rojo: "colombia",
   };
+  const NACIONES = [
+    { id: "venezuela", nombre: "Venezuela", gentilicio: "venezolano", capital: "Caracas", colores: ["#FFCC00", "#00247D", "#CF142B"] },
+    { id: "colombia", nombre: "Colombia", gentilicio: "colombiano", capital: "Bogotá", colores: ["#FCD116", "#003893", "#CE1126"] },
+    { id: "brasil", nombre: "Brasil", gentilicio: "brasileño", capital: "Brasilia", colores: ["#009C3B", "#FFDF00", "#002776"] },
+    { id: "guyana", nombre: "Guyana", gentilicio: "guyanés", capital: "Georgetown", colores: ["#009E49", "#FCD116", "#CE1126"] },
+    { id: "trinidad_tobago", nombre: "Trinidad y Tobago", gentilicio: "trinitense", capital: "Puerto España", colores: ["#CE1126", "#000000", "#FFFFFF"] },
+  ];
   const base_ = (...a) => base(...a);
   const base = (id, nombre, bando, clase, lat, lon, x = {}) => ({
     id, escenario_id: 1, nombre, bando, clase, lat, lon, fuerza: 100, combustible: 100, municion: 100,
     carga: 0, recarga_restante: 0, despliegue_restante: 0, estado: "activa", echelon: "", terreno: "llano",
-    modelo: "", aeronaves: 1, ...x,
+    modelo: "", aeronaves: 1, en_tierra: false, base_id: null, espera_restante: 0, mision: "", mision_lat: null, mision_lon: null, ...x,
   });
   const UNIDADES = [
     base(1, "1ra Bda Infantería", "azul", "infanteria", 8.590, -70.620, { fuerza: 92, municion: 15 }),
@@ -37,7 +45,8 @@
     base(6, "AA Portátil 1", "azul", "antiaerea_portatil", 8.588, -70.550, { recarga_restante: 1 }),
     base(7, "Helo Artillado", "azul", "helicoptero_artillado", 8.600, -70.660, { municion: 38, combustible: 22 }),
     base(8, "Halcón 1", "azul", "caza", 8.650, -70.500, { modelo: "f16", aeronaves: 4, echelon: "escuadra" }),
-    base(10, "Flecha 1", "azul", "caza", 8.560, -70.520, { modelo: "su30", aeronaves: 2, echelon: "equipo", fuerza: 60 }),
+    base(10, "Flecha 1", "azul", "caza", 8.560, -70.520, { modelo: "su30", aeronaves: 2, echelon: "equipo", fuerza: 60, mision: "patrulla", mision_lat: 8.75, mision_lon: -70.3 }),
+    base(15, "Cobra 1", "azul", "caza", 8.556, -70.494, { modelo: "f16", aeronaves: 2, echelon: "equipo", en_tierra: true, base_id: 9, espera_restante: 1 }),
     base(9, "Base Aérea Barinas", "azul", "base_aerea", 8.550, -70.500),
     base(11, "Infantería Roja", "rojo", "infanteria", 8.660, -70.600, { fuerza: 70 }),
     base(12, "Depósito R", "rojo", "deposito", 8.700, -70.620),
@@ -52,6 +61,13 @@
     { id: 4, escenario_id: 1, unidad_id: 1, tipo: "atacar", objetivo_unidad_id: 11, waypoints: [], detalle: "", turno_emitida: 2, estado: "resuelta", resultado: "Ataque a Infantería Roja. Ratio 1.32: defensor pierde 19.0%, atacante pierde 12.0%. Efectos: clima x0.80 al ataque; sorpresa (atacante no detectado) x1.20." },
   ];
   let proximaOrden = 5;
+  let objetivos = [
+    { id: 1, bando: "azul", tipo: "ocupar", nombre: "Tomar el puente", puntos: 40, lat: 8.63, lon: -70.52, radio_km: 4, turnos_requeridos: 3, progreso: 1, unidad_id: null, unidad_nombre: "", hasta_turno: null, estado: "pendiente", turno_resuelto: null },
+    { id: 2, bando: "azul", tipo: "destruir", nombre: "Neutralizar la infantería enemiga", puntos: 50, lat: null, lon: null, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: 11, unidad_nombre: "Infantería Roja", hasta_turno: null, estado: "pendiente", turno_resuelto: null },
+    { id: 3, bando: "azul", tipo: "proteger", nombre: "Mantener la base", puntos: 30, lat: null, lon: null, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: 9, unidad_nombre: "Base Aérea Barinas", hasta_turno: 8, estado: "cumplido", turno_resuelto: 2 },
+    { id: 4, bando: "rojo", tipo: "ocupar", nombre: "Cruzar el río", puntos: 25, lat: 8.7, lon: -70.7, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: null, unidad_nombre: "", hasta_turno: null, estado: "pendiente", turno_resuelto: null },
+  ];
+  let proximoObjetivo = 5;
   const OBRAS = [
     { id: 1, bando: "azul", tipo: "puente", lat: 8.605, lon: -70.560, radio_km: 0.8, creada_turno: 2, expira_turno: 14 },
     { id: 2, bando: "rojo", tipo: "vado", lat: 8.605, lon: -70.700, radio_km: 0.8, creada_turno: 3, expira_turno: 7 },
@@ -74,7 +90,7 @@
 
   // ------------------------------------------------------------------ vista por rol (como el servidor)
   const FACTOR_DET = { despejado: 1, nublado: 0.9, lluvia: 0.7, tormenta: 0.5 };
-  const OCULTOS = ["fuerza", "velocidad_kmh", "alcance_km", "deteccion_km", "combustible", "municion", "autonomia_km", "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves"];
+  const OCULTOS = ["fuerza", "velocidad_kmh", "alcance_km", "deteccion_km", "combustible", "municion", "autonomia_km", "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves", "base_id", "espera_restante", "mision", "mision_lat", "mision_lon"];
   const km = (a, b) => Logica.distanciaKm(a.lat, a.lon, b.lat, b.lon);
 
   function completar(u) {
@@ -111,6 +127,8 @@
       tipo: "estado", ahora: iso(), vista: esBando ? rol : "completa", escenario: esc, unidades, contactos,
       obras: OBRAS.filter((o) => !esBando || o.bando === rol || unidades.some((u) => u.bando === rol && km(u, o) <= 15)),
       graficos: graficos.filter((g) => g.bando === "todos" || !esBando || g.bando === rol),
+      objetivos: objetivos.filter((o) => !esBando || o.bando === rol),
+      marcador: { azul: { objetivos: 30, bajas: 4, total: 34 }, rojo: { objetivos: 0, bajas: 3, total: 3 } },
       ordenes: ordenes.filter((o) => propiasIds.has(o.unidad_id) && ids.has(o.unidad_id)),
       eventos: eventos.filter((e) => !esBando || e.bando_destino === "todos" || e.bando_destino === rol),
     };
@@ -213,6 +231,7 @@
     if (path === "/api/auth/yo") return json(YO);
     if (path === "/api/auth/logout") return json({ ok: true });
     if (path === "/api/catalogo") { await cargaCatalogo; return json(CAT); }
+    if (path === "/api/naciones") return json({ naciones: NACIONES });
     if (path === "/api/escenarios" && metodo === "GET") return json([ESC]);
     if (path === "/api/usuarios") return json([[1, "prof", "instructor"], [2, "alfa", "azul"], [3, "bravo", "rojo"], [4, "obs", "observador"]].map(([id, username, rol]) => ({ id, username, rol, activo: true })));
     if (path === "/api/terreno/clase") return json({ clase: claseTerreno(parseFloat(q.get("lat"))) });
@@ -266,6 +285,10 @@
     if (path === "/api/escenarios/1/finalizar") { ESC.estado = "finalizado"; enviarEstado(); return json(estadoPara()); }
     if (path === "/api/escenarios/1/config" && metodo === "PATCH") {
       Object.assign(ESC, Object.fromEntries(Object.entries(cuerpo).filter(([k]) => k !== "hora_inicio")));
+      if ("nacion_azul" in cuerpo || "nacion_rojo" in cuerpo) {
+        eventos.unshift({ id: eventos.length + 10, escenario_id: 1, turno: ESC.turno_actual, tipo: "ajuste",
+          descripcion: `Configuracion: bando Azul representa a ${cuerpo.nacion_azul || "(nadie)"}, bando Rojo a ${cuerpo.nacion_rojo || "(nadie)"}` });
+      }
       if (cuerpo.hora_inicio) { const [h, mm] = cuerpo.hora_inicio.split(":"); ESC.hora_inicio_min = +h * 60 + +mm; }
       enviarEstado();
       return json(estadoPara());
@@ -287,6 +310,32 @@
       graficos = graficos.filter((x) => x.id !== id);
       difundirGrafico({ tipo: "grafico", accion: "borrar", id }, g);
       return json({ ok: true });
+    }
+    if (path === "/api/escenarios/1/objetivos" && metodo === "POST") {
+      if (ROL !== "instructor") return error("No autorizado para esta accion", 403);
+      const o = { id: proximoObjetivo++, unidad_nombre: (UNIDADES.find((u) => u.id === cuerpo.unidad_id) || {}).nombre || "", progreso: 0, estado: "pendiente", turno_resuelto: null, lat: null, lon: null, unidad_id: null, hasta_turno: null, radio_km: 5, turnos_requeridos: 1, ...cuerpo };
+      objetivos.push(o);
+      enviarEstado();
+      return json(o);
+    }
+    if ((m = path.match(/^\/api\/escenarios\/1\/objetivos\/(\d+)$/)) && metodo === "DELETE") {
+      objetivos = objetivos.filter((o) => o.id !== parseInt(m[1], 10));
+      enviarEstado();
+      return json({ ok: true });
+    }
+    if ((m = path.match(/^\/api\/escenarios\/1\/unidades\/(\d+)$/)) && metodo === "DELETE") {
+      const id = parseInt(m[1], 10);
+      if (id === 11) return error("Esta unidad ya participo en combates y consta en el informe: marquela como destruida en lugar de borrarla", 409);
+      UNIDADES.splice(UNIDADES.findIndex((u) => u.id === id), 1);
+      enviarEstado();
+      return json({ ok: true });
+    }
+    if ((m = path.match(/^\/api\/escenarios\/1\/unidades\/(\d+)$/)) && metodo === "PATCH") {
+      const u = UNIDADES.find((x) => x.id === parseInt(m[1], 10));
+      if (cuerpo.lat > 12) return error("Esta unidad no puede ubicarse en el agua");
+      Object.assign(u, cuerpo);
+      enviarEstado();
+      return json(u);
     }
     if (path.startsWith("/api/escenarios/1/unidades")) return json({});
     return error(`El arnes no simula ${metodo} ${path}`, 404);

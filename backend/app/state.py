@@ -15,15 +15,17 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.engine import catalogo, geo
+from app.engine import objetivos as objetivos_mod
 from app.engine.vision import unidades_visibles
 from app.models.contacto import Contacto
 from app.models.escenario import Escenario
 from app.models.evento import Evento
 from app.models.grafico import Grafico
 from app.models.obra import Obra
+from app.models.objetivo import Objetivo
 from app.models.orden import Orden
 from app.models.unidad import Unidad
-from app.schemas import EscenarioOut, EventoOut, GraficoOut, ObraOut, OrdenOut, UnidadOut
+from app.schemas import EscenarioOut, EventoOut, GraficoOut, ObjetivoOut, ObraOut, OrdenOut, UnidadOut
 from app.terreno import Terreno, get_terreno
 
 BANDOS = ("azul", "rojo")
@@ -31,6 +33,7 @@ BANDOS = ("azul", "rojo")
 CAMPOS_OCULTOS = (
     "fuerza", "velocidad_kmh", "alcance_km", "deteccion_km", "combustible", "municion", "autonomia_km",
     "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves",
+    "base_id", "espera_restante", "mision", "mision_lat", "mision_lon",
 )
 CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct")
 
@@ -59,6 +62,22 @@ def serializar_grafico(g: Grafico) -> dict:
         id=g.id, bando=g.bando, tipo=g.tipo, etiqueta=g.etiqueta, geometria=json.loads(g.geojson),
         autor=g.autor_nombre, turno=g.turno,
     ).model_dump()
+
+
+def serializar_objetivo(o: Objetivo, unidades: dict) -> dict:
+    u = unidades.get(o.unidad_id) if o.unidad_id else None
+    return ObjetivoOut(
+        id=o.id, bando=o.bando, tipo=o.tipo, nombre=o.nombre, puntos=o.puntos, lat=o.lat, lon=o.lon,
+        radio_km=o.radio_km, turnos_requeridos=o.turnos_requeridos, progreso=o.progreso, unidad_id=o.unidad_id,
+        unidad_nombre=u.nombre if u else "", hasta_turno=o.hasta_turno, estado=o.estado, turno_resuelto=o.turno_resuelto,
+    ).model_dump()
+
+
+def objetivos_para(db: Session, escenario: Escenario, rol: str) -> list[dict]:
+    """Cada bando ve solo sus objetivos; instructor y observador, todos."""
+    por_id = {u.id: u for u in db.query(Unidad).filter(Unidad.escenario_id == escenario.id)}
+    lista = db.query(Objetivo).filter(Objetivo.escenario_id == escenario.id).order_by(Objetivo.id)
+    return [serializar_objetivo(o, por_id) for o in lista if not es_bando(rol) or o.bando == rol]
 
 
 def _obras_visibles(db: Session, escenario: Escenario, rol: str, unidades: list[Unidad]) -> list[Obra]:
@@ -128,6 +147,8 @@ def estado_para(
         "contactos": contactos,
         "obras": [ObraOut.model_validate(o).model_dump() for o in obras],
         "graficos": [serializar_grafico(g) for g in graficos],
+        "objetivos": objetivos_para(db, escenario, rol),
+        "marcador": objetivos_mod.marcador(db, escenario),
         "ordenes": [OrdenOut.model_validate(o).model_dump() for o in ordenes],
         "eventos": [EventoOut.model_validate(e).model_dump() for e in eventos],
     }

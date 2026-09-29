@@ -18,7 +18,8 @@
     memoria: Logica.memoriaVacia(), alertas: [], alertasSinLeer: 0,
     tamSimbolo: 26, obraSitio: null, dibujando: false, urlInicial: Videowall.parametrosDeUrl(),
     graficos: null, chat: null, videowall: null, aviacion: null,
-    modeloUnidad: null, baseSeleccionada: null,
+    modeloUnidad: null, baseSeleccionada: null, patrullaPunto: null, naciones: [],
+    modoObjetivo: false, objetivoCentro: null, editando: false, filtroOOB: "", herramientas: null,
     rumbos: new Map(), posPrevia: new Map(), // hacia donde apunta cada aeronave (imagen 3D)
   };
 
@@ -125,6 +126,7 @@
       alDesactivar: () => { if (app.data) render(app.data); },
     });
     try { app.catalogo = await api("GET", "/api/catalogo"); prepararCatalogo(); } catch (_) { /* sin catalogo */ }
+    try { app.naciones = (await api("GET", "/api/naciones")).naciones; prepararNaciones(); } catch (_) { /* sin naciones */ }
     clearInterval(app.relojTimer);
     app.relojTimer = setInterval(actualizarReloj, 1000);
     await cargarEscenarios();
@@ -184,6 +186,18 @@
     $("pest-consola").hidden = nombre !== "consola" || !esInstructor();
   }
   document.querySelectorAll(".pestanas button").forEach((b) => b.addEventListener("click", () => activarPestana(b.dataset.pestana)));
+
+  // ---------- identidad nacional de cada bando ----------
+  function prepararNaciones() {
+    for (const id of ["cfg-nacion-azul", "cfg-nacion-rojo"]) {
+      llenarSelect($(id), [["", "(sin especificar)"], ...app.naciones.map((n) => [n.id, n.nombre])]);
+    }
+  }
+  $("btn-config-nacion").addEventListener("click", () => enSilencio(api("PATCH", rutaEsc("/config"), {
+    nacion_azul: $("cfg-nacion-azul").value, nacion_rojo: $("cfg-nacion-rojo").value,
+  })));
+
+  const nombreDeBando = (bando) => Logica.etiquetaBandoNacion(bando, app.data && app.data.escenario, app.naciones);
 
   // ---------- catalogo de unidades ----------
   function prepararCatalogo() {
@@ -279,7 +293,8 @@
     c.preview = L.layerGroup().addTo(map);
     c.waypoints = L.layerGroup().addTo(map);
     c.obras = L.layerGroup().addTo(map);
-    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, contactos: true, referencias: true, graficos: true, bases_ven: true };
+    c.objetivos = L.layerGroup().addTo(map);
+    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, contactos: true, referencias: true, graficos: true, bases_ven: true, objetivos: true };
     if (app.capaActiva.niebla) c.niebla.addTo(map);
 
     let pendiente = null;
@@ -333,9 +348,21 @@
       } catch (_) { /* toast ya mostrado */ }
       return;
     }
+    if (esInstructor() && app.modoObjetivo) {
+      app.objetivoCentro = [lat, lng];
+      app.modoObjetivo = false;
+      $("btn-ob-ubicar").textContent = "Ubicar la zona en el mapa";
+      $("ob-centro").textContent = `Zona en ${lat.toFixed(4)}, ${lng.toFixed(4)}.`;
+      return;
+    }
     if (esAlumno() && app.modoOrden === "construir" && app.unidadOrden) {
       app.obraSitio = [lat, lng];
       dibujarSitioObra();
+      return;
+    }
+    if (esAlumno() && app.modoOrden === "patrullar" && app.unidadOrden) {
+      app.patrullaPunto = [lat, lng];
+      dibujarPatrulla();
       return;
     }
     if (esAlumno() && app.modoOrden === "mover" && app.unidadOrden) {
@@ -412,7 +439,7 @@
     const sym = new ms.Symbol((u.sidc || "SUGP").padEnd(15, "-"), { size: app.tamSimbolo });
     const tam = sym.getSize();
     const anc = sym.getAnchor();
-    const sub = rotuloModelo(u);
+    const sub = [rotuloModelo(u), u.en_tierra ? "en base" : u.mision === "patrulla" ? "patrulla" : ""].filter(Boolean).join(" · ");
     // imagen 3D del avion (su modelo, o un caza generico si no se conoce) sobre el simbolo APP-6
     const av = Modelo3d.mallaPara(u)
       ? Modelo3d.marcador({ modelo: u.modelo, clase: u.clase, rumbo, bando: u.bando, n: u.aeronaves || 1, base: baseAvion() })
@@ -450,7 +477,7 @@
   function limpiarCapasVivas() {
     for (const m of app.markers.values()) app.capas.unidades.removeLayer(m);
     app.markers.clear();
-    for (const g of ["contactos", "cobertura", "niebla", "ordenes", "seleccion", "preview", "obras"]) app.capas[g].clearLayers();
+    for (const g of ["contactos", "cobertura", "niebla", "ordenes", "seleccion", "preview", "obras", "objetivos"]) app.capas[g].clearLayers();
     app.flechas = [];
   }
 
@@ -473,11 +500,19 @@
       const clases = enemiga ? "enemigo" : "amigo";
       let m = app.markers.get(u.id);
       const rumbo = Modelo3d.mallaPara(u) ? Math.round(rumboDe(u) / 5) * 5 : 0;
-      const firma = `${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.modelo || ""}|${u.aeronaves || ""}|${rumbo}|${Modelo3d.mallaPara(u) ? baseAvion() : ""}`;
+      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${rumbo}|${Modelo3d.mallaPara(u) ? baseAvion() : ""}`;
       if (m && m._firma !== firma) { app.capas.unidades.removeLayer(m); m = null; }
       if (!m) {
-        m = L.marker([u.lat, u.lon], { icon: iconoUnidad(u, clases, rumbo), keyboard: false }).addTo(app.capas.unidades);
+        m = L.marker([u.lat, u.lon], { icon: iconoUnidad(u, clases, rumbo), keyboard: false, draggable: esInstructor() && app.editando }).addTo(app.capas.unidades);
         m._firma = firma;
+        m._uid = u.id;
+        m.on("dragend", async () => {
+          const p = m.getLatLng();
+          try { await api("PATCH", rutaEsc(`/unidades/${m._uid}`), { lat: p.lat, lon: p.lng }); } catch (_) {
+            const v = app.porId.get(m._uid);
+            if (v) m.setLatLng([v.lat, v.lon]); // el servidor lo rechazo (p. ej. terreno invalido): vuelve a su sitio
+          }
+        });
         m.on("click", () => seleccionar(u.id, "mapa"));
         app.markers.set(u.id, m);
       } else {
@@ -580,8 +615,40 @@
       } else if (o.tipo === "apoyar") {
         const destino = posicion(o.objetivo_unidad_id);
         if (destino) L.polyline([origen, destino], { color: "#2EC4B6", weight: 3, dashArray: "2 7", opacity: 0.95, lineCap: "round" }).bindTooltip(`Apoyo · ${u.nombre}`).addTo(app.capas.ordenes);
+      } else if (o.tipo === "patrullar" && o.waypoints.length) {
+        const [p] = o.waypoints;
+        L.polyline([origen, p], { color: "#ffd166", weight: 3, dashArray: "9 7", opacity: 0.95 }).addTo(app.capas.ordenes);
+        L.circle(p, { radius: (u.alcance_km || 80) * 1000, color: "#ffd166", weight: 1, dashArray: "6 6", fillOpacity: 0.04, interactive: false })
+          .bindTooltip(`Patrulla · ${u.nombre}`).addTo(app.capas.ordenes);
+      } else if (o.tipo === "aterrizar") {
+        const destino = posicion(o.objetivo_unidad_id);
+        if (destino) L.polyline([origen, destino], { color: "#2EC4B6", weight: 3, dashArray: "9 7", opacity: 0.95 }).bindTooltip(`Aterrizar · ${u.nombre}`).addTo(app.capas.ordenes);
       }
     }
+    // patrullas en curso: zona que vigilan (solo las conocidas: propias, o todas para el instructor)
+    for (const u of data.unidades) {
+      if (u.mision !== "patrulla" || u.mision_lat === null || u.mision_lat === undefined || u.estado !== "activa") continue;
+      const color = COLOR[u.bando] || "#fff";
+      L.circle([u.mision_lat, u.mision_lon], { radius: (u.alcance_km || 80) * 1000, color, weight: 1.5, dashArray: "4 8", fillColor: color, fillOpacity: 0.05, interactive: false })
+        .bindTooltip(`Zona de patrulla · ${u.nombre}`, { sticky: true }).addTo(app.capas.ordenes);
+    }
+  }
+
+  /** Vista previa de la patrulla: punto elegido, zona que vigilaria y distancia desde la aeronave. */
+  function dibujarPatrulla() {
+    const g = app.capas.preview;
+    g.clearLayers();
+    const u = app.porId.get(app.unidadOrden);
+    if (!u || app.modoOrden !== "patrullar") return;
+    if (!app.patrullaPunto) { $("o-patrulla-punto").textContent = "Aún no eligió el punto de patrulla."; return; }
+    const [lat, lon] = app.patrullaPunto;
+    const d = Logica.distanciaKm(u.lat, u.lon, lat, lon);
+    L.polyline([[u.lat, u.lon], app.patrullaPunto], { color: "#ffd166", weight: 3, dashArray: "9 7", interactive: false }).addTo(g);
+    L.circle(app.patrullaPunto, { radius: (u.alcance_km || 80) * 1000, color: "#ffd166", weight: 1.5, dashArray: "6 6", fillOpacity: 0.06, interactive: false }).addTo(g);
+    L.circleMarker(app.patrullaPunto, { radius: 6, color: "#ffd166", fillColor: "#4a3a10", fillOpacity: 0.9 }).bindTooltip("Punto de patrulla").addTo(g);
+    const horas = u.velocidad_kmh ? Math.max(1, Math.ceil(d / u.velocidad_kmh)) : null;
+    $("o-patrulla-punto").textContent = `Punto: ${lat.toFixed(3)}, ${lon.toFixed(3)} · a ${d.toFixed(0)} km`
+      + (horas ? ` (${horas === 1 ? "llega este turno" : `llega en ${horas} turnos`})` : "") + `. Vigila un radio de ${u.alcance_km} km.`;
   }
 
   function dibujarSeleccion() {
@@ -592,6 +659,10 @@
     if (u.alcance_km > 0) {
       L.circle([u.lat, u.lon], { radius: u.alcance_km * 1000, color: "#ffd54f", weight: 1.5, dashArray: "6 4", fill: false, interactive: false })
         .bindTooltip(u.tipo === "base" ? "Radio de reabastecimiento" : "Alcance de fuego / apoyo").addTo(g);
+    }
+    if (u.deteccion_km > 0) {
+      L.circle([u.lat, u.lon], { radius: u.deteccion_km * 1000, color: "#2EC4B6", weight: 1, dashArray: "1 6", fill: false, interactive: false })
+        .bindTooltip("Radio de detección (sin clima ni terreno)").addTo(g);
     }
     if (u.velocidad_kmh > 0) {
       L.circle([u.lat, u.lon], { radius: u.velocidad_kmh * 1000, color: "#81d4fa", weight: 1, dashArray: "2 5", fill: false, interactive: false })
@@ -615,7 +686,7 @@
       } else if (propia && u.clase === "base_aerea") {
         app.baseSeleccionada = id;
       } else if (propia && u.estado === "activa" && u.tipo !== "base") {
-        if (app.unidadOrden !== id) { app.unidadOrden = id; app.waypoints = []; app.obraSitio = null; dibujarWaypoints(); if (app.modoOrden === "construir") dibujarSitioObra(); }
+        if (app.unidadOrden !== id) { app.unidadOrden = id; app.waypoints = []; app.obraSitio = null; app.patrullaPunto = null; dibujarWaypoints(); if (app.modoOrden === "construir") dibujarSitioObra(); }
       }
     } else if (esInstructor() && u) {
       $("adj-unidad").value = String(id);
@@ -666,16 +737,17 @@
     const abiertas = new Set([...cont.querySelectorAll("details[open] > summary")].map((s) => s.firstChild.textContent));
     limpiar(cont);
     const vista = bandoVista();
-    $("oob-titulo").textContent = vista ? `Orden de batalla · Bando ${vista === "azul" ? "Azul" : "Rojo"}` : "Orden de batalla · Ambos bandos";
+    $("oob-titulo").textContent = vista ? `Orden de batalla · ${nombreDeBando(vista)}` : "Orden de batalla · Ambos bandos";
     const bandos = vista ? [vista] : ["azul", "rojo"];
+    const filtrar = (lista) => Logica.filtrarUnidades(lista, app.filtroOOB);
     for (const b of bandos) {
-      const propias = data.unidades.filter((u) => u.bando === b);
+      const propias = filtrar(data.unidades.filter((u) => u.bando === b));
       if (vista) { cont.appendChild(ramas(propias)); continue; }
       const det = document.createElement("details");
       det.open = true;
       const sum = document.createElement("summary");
       sum.className = b;
-      sum.append(`Bando ${b === "azul" ? "Azul" : "Rojo"}`);
+      sum.append(nombreDeBando(b));
       const n = document.createElement("span");
       n.className = "n";
       n.textContent = `${propias.length} un.`;
@@ -685,8 +757,8 @@
       cont.appendChild(det);
     }
     if (vista) {
-      const enemigas = data.unidades.filter((u) => u.bando !== vista);
-      const contactos = data.contactos || [];
+      const enemigas = filtrar(data.unidades.filter((u) => u.bando !== vista));
+      const contactos = filtrar(data.contactos || []);
       const det = document.createElement("details");
       det.open = true;
       const sum = document.createElement("summary");
@@ -745,6 +817,8 @@
       if (cl.cadencia_fuego !== 1) extra.push(dato("Cadencia", `×${cl.cadencia_fuego}`));
     }
     const modelo = Logica.modeloDe(u, app.catalogo && app.catalogo.modelos);
+    const vuelo = app.data ? Logica.situacionDeVuelo(u, app.data.unidades) : null;
+    if (vuelo) extra.push(`<div class="ancho-completo"><dt>Situación</dt><dd>${escapar(vuelo)}</dd></div>`);
     if (modelo) {
       const op = Logica.aeronavesOperativas(u);
       extra.push(dato("Modelo", modelo.nombre));
@@ -768,7 +842,15 @@
       + `<dl class="det-datos">${dato("Clase", u.clase || u.tipo)}${dato("Terreno", u.terreno || "?")}`
       + `${dato("Velocidad", u.velocidad_kmh === null ? "?" : u.velocidad_kmh + " km/h")}${dato("Alcance", km(u.alcance_km))}`
       + `${dato("Detección", km(u.deteccion_km))}${dato("Autonomía", km(u.autonomia_km))}${extra.join("")}</dl>`
-      + notas.map((n) => `<p class="nota">${escapar(n)}</p>`).join("");
+      + notas.map((n) => `<p class="nota">${escapar(n)}</p>`).join("")
+      + (esInstructor() && app.porId.get(app.seleccion) ? '<button id="btn-eliminar-unidad" class="peligro mini" type="button">Eliminar unidad del escenario</button>' : "");
+    const eliminar = $("btn-eliminar-unidad");
+    if (eliminar) {
+      eliminar.addEventListener("click", async () => {
+        if (!window.confirm(`¿Eliminar «${u.nombre}» del escenario? Esta acción no se puede deshacer.`)) return;
+        try { await api("DELETE", rutaEsc(`/unidades/${u.id}`)); toast("Unidad eliminada", true); } catch (_) { /* el toast ya explica el motivo */ }
+      });
+    }
   }
 
   // ---------- aviacion: envio de grupos de caza ----------
@@ -797,12 +879,34 @@
     const puedeConstruir = !!(cl && cl.construye);
     $("modo-construir").hidden = !puedeConstruir;
     if (app.modoOrden === "construir" && !puedeConstruir) app.modoOrden = "mover";
+    const aerea = !!(u && u.tipo === "aerea");
+    const puedeAterrizar = aerea && !u.en_tierra;
+    $("modo-patrullar").hidden = !aerea;
+    $("modo-aterrizar").hidden = !puedeAterrizar;
+    if (app.modoOrden === "patrullar" && !aerea) app.modoOrden = "mover";
+    if (app.modoOrden === "aterrizar" && !puedeAterrizar) app.modoOrden = "mover";
+    const espera = u && u.en_tierra && u.espera_restante > 0;
+    $("o-espera").hidden = !espera;
+    if (espera) $("o-espera").textContent = `En tierra: podrá despegar en ${u.espera_restante} turno${u.espera_restante === 1 ? "" : "s"}; hasta entonces no acepta órdenes de vuelo.`;
     $("orden-unidad").textContent = u ? u.nombre : "elija una unidad";
     $("btn-emitir").disabled = !u || data.escenario.estado !== "activo" || data.escenario.fase !== "decision";
     document.querySelectorAll(".modos button").forEach((b) => b.classList.toggle("activo", b.dataset.modo === app.modoOrden));
     $("o-mover").hidden = app.modoOrden !== "mover";
     $("o-construir").hidden = app.modoOrden !== "construir";
-    $("o-objetivo-box").hidden = app.modoOrden === "mover" || app.modoOrden === "construir";
+    $("o-patrullar").hidden = app.modoOrden !== "patrullar";
+    $("o-aterrizar").hidden = app.modoOrden !== "aterrizar";
+    if (app.modoOrden === "aterrizar" && u) {
+      const opciones = Logica.opcionesDeAterrizaje(u, data.unidades);
+      llenarSelect($("o-base"), opciones.map((o) => [o.base.id, `${o.base.nombre} · ${Math.round(o.km)} km`]));
+      const elegida = opciones.find((o) => String(o.base.id) === $("o-base").value);
+      $("o-aterrizaje-info").textContent = !opciones.length
+        ? "No hay una base propia con plazas libres para este grupo."
+        : elegida.llegaEsteTurno
+          ? `Llega y aterriza este turno (${Math.round(elegida.km)} km).`
+          : `A ${Math.round(elegida.km)} km: tardará ${elegida.turnos} turnos en llegar.`
+            + (elegida.alcanzaCombustible ? "" : ` Necesita ~${Math.round(elegida.combustibleNecesario)} % de combustible y tiene ${Math.round(u.combustible)} %.`);
+    }
+    $("o-objetivo-box").hidden = ["mover", "construir", "patrullar", "aterrizar"].includes(app.modoOrden);
     if (app.modoOrden === "atacar" || app.modoOrden === "apoyar") {
       const lista = Logica.objetivosDisponibles(data.unidades, app.usuario.rol, app.modoOrden, app.unidadOrden);
       llenarSelect($("o-objetivo"), lista.map((x) => [x.id, x.nombre]));
@@ -817,6 +921,7 @@
     app.capas.preview.clearLayers();
     if (app.modoOrden === "mover") pedirPreview();
     else if (app.modoOrden === "construir") dibujarSitioObra();
+    else if (app.modoOrden === "patrullar") dibujarPatrulla();
     if (app.data) actualizarNuevaOrden(app.data);
   }));
   $("btn-limpiar-wp").addEventListener("click", () => { app.waypoints = []; dibujarWaypoints(); });
@@ -828,6 +933,13 @@
     if (app.modoOrden === "mover") {
       if (!app.waypoints.length) return toast("Marque al menos un waypoint en el mapa.");
       cuerpo.waypoints = app.waypoints;
+    } else if (app.modoOrden === "patrullar") {
+      if (!app.patrullaPunto) return toast("Haga clic en el mapa donde quiere que patrulle.");
+      cuerpo.waypoints = [app.patrullaPunto];
+    } else if (app.modoOrden === "aterrizar") {
+      const base = parseInt($("o-base").value, 10);
+      if (!base) return toast("Elija una base propia con plazas libres.");
+      cuerpo.objetivo_unidad_id = base;
     } else if (app.modoOrden === "construir") {
       if (!app.obraSitio) return toast("Haga clic en el mapa, sobre el río, donde quiere construir.");
       cuerpo.detalle = $("o-obra").value;
@@ -842,9 +954,11 @@
       toast("Orden emitida", true);
       app.waypoints = [];
       app.obraSitio = null;
+      app.patrullaPunto = null;
       dibujarWaypoints();
       app.capas.preview.clearLayers();
       $("o-sitio").textContent = "";
+      $("o-patrulla-punto").textContent = "";
     } catch (_) { /* toast ya mostrado */ }
   });
 
@@ -855,6 +969,12 @@
     if (o.tipo === "mover") return `Mover (${o.waypoints.length} waypoint${o.waypoints.length === 1 ? "" : "s"})`;
     if (o.tipo === "construir") return `Construir ${o.detalle || "obra"}`;
     if (o.tipo === "despegar") return Logica.textoDespegue(o, app.catalogo && app.catalogo.modelos);
+    if (o.tipo === "patrullar") return `Patrullar (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;
+    if (o.tipo === "aterrizar") {
+      const b = app.porId.get(o.objetivo_unidad_id);
+      return `Aterrizar en ${b ? b.nombre : "la base"}${o.detalle === "combustible critico" ? " (combustible crítico)" : ""}`;
+    }
+    if (o.tipo === "atacar" && o.detalle === "intercepcion") return `Interceptar a ${nombreObj}`;
     return `${o.tipo === "atacar" ? "Atacar" : "Apoyar a"} ${nombreObj}`;
   }
 
@@ -928,6 +1048,8 @@
       set("cfg-clima", (e) => { e.value = esc.clima; });
       set("cfg-limite", (e) => { e.value = esc.limite_decision_seg || 0; });
       set("cfg-hora", (e) => { e.value = `${String(Math.floor(esc.hora_inicio_min / 60)).padStart(2, "0")}:${String(esc.hora_inicio_min % 60).padStart(2, "0")}`; });
+      set("cfg-nacion-azul", (e) => { e.value = esc.nacion_azul || ""; });
+      set("cfg-nacion-rojo", (e) => { e.value = esc.nacion_rojo || ""; });
       set("cfg-azar", (e) => { e.checked = esc.azar; });
       set("cfg-auto", (e) => { e.checked = esc.auto_resolver; });
       if (esc.com_perdida_pct !== undefined) {
@@ -949,6 +1071,7 @@
       el.classList.toggle("listo", listo);
       el.querySelector("b").textContent = listo ? "LISTO" : rol === bando ? "PLANIFICANDO" : "PENDIENTE";
       el.querySelector("i").classList.toggle("pulso", !listo);
+      el.querySelector(".rotulo-bando").textContent = nombreDeBando(bando).toUpperCase();
     }
     if (esAlumno()) {
       const listo = esc[`listo_${rol}`];
@@ -1030,6 +1153,7 @@
     renderOOB(data);
     renderDetalle();
     renderCola(data);
+    renderObjetivos(data);
     actualizarNuevaOrden(data);
     actualizarAviacion(data);
     llenarSelect($("adj-unidad"), data.unidades.map((u) => [u.id, `${u.nombre} (${u.bando})`]));
@@ -1038,6 +1162,7 @@
     dibujarUnidades(data.unidades);
     dibujarContactos(data.contactos || []);
     dibujarObras(data.obras || []);
+    dibujarObjetivos(data.objetivos || []);
     dibujarCoberturaYNiebla(data.unidades, data.escenario.clima);
     dibujarOrdenes(data);
     dibujarSeleccion();
@@ -1096,7 +1221,7 @@
     app.chat.conectar();
     app.chat.configurarRol();
     app.videowall = Videowall.crear({
-      map: () => app.map,
+      map: () => app.map, naciones: () => app.naciones,
       alCambiar: (activo) => {
         app.tamSimbolo = activo ? 36 : 26; // simbolos mas grandes para verlos desde lejos
         if (app.data && !(app.informe && app.informe.activo())) { limpiarCapasVivas(); render(app.data); }
@@ -1108,6 +1233,142 @@
       datos: () => app.data, escenarioId: () => app.escenarioId, capa: app.capas.bases_ven,
     });
     app.aviacion.conectar();
+    app.herramientas = Herramientas.crear({ map: () => app.map, alMedir: (b) => { app.dibujando = b; } });
+    app.herramientas.conectar();
+    $("btn-regla").addEventListener("click", () => { if (app.herramientas.activa()) app.graficos.cancelar(); });
+  }
+
+  // ---------- objetivos y puntaje ----------
+  function renderObjetivos(data) {
+    const m = data.marcador || { azul: { total: 0, objetivos: 0, bajas: 0 }, rojo: { total: 0, objetivos: 0, bajas: 0 } };
+    for (const b of ["azul", "rojo"]) {
+      $(`marcador-${b}`).textContent = String(m[b].total);
+      $(`marcador-${b}-det`).textContent = ` (${m[b].objetivos} obj. + ${m[b].bajas} bajas)`;
+    }
+    const lista = $("objetivos-lista");
+    limpiar(lista);
+    const objetivos = data.objetivos || [];
+    if (!objetivos.length) {
+      const li = document.createElement("li");
+      li.className = "vacio";
+      li.textContent = "Sin objetivos definidos.";
+      lista.appendChild(li);
+    }
+    for (const o of objetivos) {
+      const av = Logica.avanceObjetivo(o);
+      const li = document.createElement("li");
+      li.className = `objetivo ${o.estado} ${o.bando}`;
+      const t = document.createElement("div");
+      t.append(Object.assign(document.createElement("b"), { textContent: o.nombre }), Object.assign(document.createElement("span"), { textContent: Logica.textoObjetivo(o) }));
+      const chip = Object.assign(document.createElement("span"), { className: `chip ${av.clase}`, textContent: av.texto });
+      li.append(t, chip);
+      li.addEventListener("click", () => {
+        if (o.tipo === "ocupar") app.map.panTo([o.lat, o.lon]);
+        else if (o.unidad_id && app.porId.has(o.unidad_id)) seleccionar(o.unidad_id, "lista");
+      });
+      lista.appendChild(li);
+    }
+    // consola del instructor: lista con boton de borrar y unidades elegibles
+    if (esInstructor()) {
+      const ul = $("ob-lista");
+      limpiar(ul);
+      for (const o of objetivos) {
+        const li = document.createElement("li");
+        li.append(Object.assign(document.createElement("span"), { textContent: `${o.bando === "azul" ? "Azul" : "Rojo"} · ${o.nombre} (${Logica.avanceObjetivo(o).texto})` }));
+        li.appendChild(boton("×", () => enSilencio(api("DELETE", rutaEsc(`/objetivos/${o.id}`))), "mini peligro"));
+        ul.appendChild(li);
+      }
+      llenarUnidadesObjetivo(data.unidades);
+    }
+  }
+
+  function llenarUnidadesObjetivo(unidades) {
+    const tipo = $("ob-tipo").value;
+    const bando = $("ob-bando").value;
+    const candidatas = unidades.filter((u) => u.estado === "activa" && (tipo === "destruir" ? u.bando !== bando : u.bando === bando));
+    llenarSelect($("ob-unidad"), candidatas.map((u) => [u.id, `${u.nombre} (${u.bando})`]));
+  }
+
+  function actualizarFormularioObjetivo() {
+    const tipo = $("ob-tipo").value;
+    document.querySelectorAll(".ob-ocupar").forEach((e) => { e.hidden = tipo !== "ocupar"; });
+    document.querySelectorAll(".ob-unidad").forEach((e) => { e.hidden = tipo === "ocupar"; });
+    document.querySelectorAll(".ob-proteger").forEach((e) => { e.hidden = tipo !== "proteger"; });
+    if (app.data) llenarUnidadesObjetivo(app.data.unidades);
+  }
+  $("ob-tipo").addEventListener("change", actualizarFormularioObjetivo);
+  $("ob-bando").addEventListener("change", actualizarFormularioObjetivo);
+  $("btn-ob-ubicar").addEventListener("click", () => {
+    app.modoObjetivo = !app.modoObjetivo;
+    $("btn-ob-ubicar").textContent = app.modoObjetivo ? "Haga clic en el mapa… (cancelar)" : "Ubicar la zona en el mapa";
+  });
+  $("btn-ob-crear").addEventListener("click", async () => {
+    if (!app.escenarioId) return;
+    const tipo = $("ob-tipo").value;
+    const nombre = $("ob-nombre").value.trim();
+    if (!nombre) return toast("Escriba un nombre para el objetivo.");
+    const cuerpo = { tipo, bando: $("ob-bando").value, nombre, puntos: parseInt($("ob-puntos").value, 10) || 0 };
+    if (tipo === "ocupar") {
+      if (!app.objetivoCentro) return toast("Ubique la zona en el mapa.");
+      Object.assign(cuerpo, { lat: app.objetivoCentro[0], lon: app.objetivoCentro[1], radio_km: parseFloat($("ob-radio").value) || 5, turnos_requeridos: parseInt($("ob-turnos").value, 10) || 1 });
+    } else {
+      cuerpo.unidad_id = parseInt($("ob-unidad").value, 10) || null;
+      if (tipo === "proteger") cuerpo.hasta_turno = parseInt($("ob-hasta").value, 10) || null;
+    }
+    try {
+      await api("POST", rutaEsc("/objetivos"), cuerpo);
+      $("ob-nombre").value = "";
+      app.objetivoCentro = null;
+      $("ob-centro").textContent = "";
+      toast("Objetivo creado", true);
+    } catch (_) { /* toast ya mostrado */ }
+  });
+  // pantallas estrechas: el panel derecho y la barra de dibujo se abren y cierran con botones
+  function alternarPanelMovil(id, boton) {
+    const abierto = $(id).classList.toggle("abierto");
+    $(boton).setAttribute("aria-expanded", String(abierto));
+    if (abierto && id === "panel-der") $("barra-graficos").classList.remove("abierto");
+    if (abierto && id === "barra-graficos") $("panel-der").classList.remove("abierto");
+    $("btn-panel-der").setAttribute("aria-expanded", String($("panel-der").classList.contains("abierto")));
+    $("btn-panel-graficos").setAttribute("aria-expanded", String($("barra-graficos").classList.contains("abierto")));
+  }
+  $("btn-panel-der").addEventListener("click", () => alternarPanelMovil("panel-der", "btn-panel-der"));
+  $("btn-panel-graficos").addEventListener("click", () => alternarPanelMovil("barra-graficos", "btn-panel-graficos"));
+
+  $("chk-editar").addEventListener("change", () => {
+    app.editando = $("chk-editar").checked;
+    if (app.data) dibujarUnidades(app.data.unidades);
+  });
+  $("oob-buscar").addEventListener("input", () => { app.filtroOOB = $("oob-buscar").value; if (app.data) renderOOB(app.data); });
+  $("oob-buscar").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    const primero = document.querySelector("#oob .oob-item");
+    if (primero) primero.click();
+  });
+
+  function dibujarObjetivos(objetivos) {
+    const g = app.capas.objetivos;
+    g.clearLayers();
+    for (const o of objetivos) {
+      const color = o.estado === "cumplido" ? "#2EC4B6" : o.estado === "fallido" ? "#8D99AE" : (COLOR[o.bando] || "#fff");
+      const etiqueta = `${o.nombre} · ${o.puntos} pts · ${Logica.avanceObjetivo(o).texto}`;
+      let centro = null;
+      if (o.tipo === "ocupar") {
+        centro = [o.lat, o.lon];
+        L.circle(centro, { radius: o.radio_km * 1000, color, weight: 2, dashArray: o.estado === "pendiente" ? "10 6" : null, fillColor: color, fillOpacity: 0.08 })
+          .bindTooltip(etiqueta, { sticky: true }).addTo(g);
+      } else {
+        const u = app.porId.get(o.unidad_id);
+        if (!u) continue;
+        centro = [u.lat, u.lon];
+        L.circle(centro, { radius: 6000, color, weight: 2, dashArray: "3 5", fill: false })
+          .bindTooltip(`${o.tipo === "destruir" ? "Destruir" : "Proteger"}: ${etiqueta}`, { sticky: true }).addTo(g);
+      }
+      L.marker(centro, {
+        interactive: false, keyboard: false,
+        icon: L.divIcon({ className: `objetivo-marca ${o.bando} ${o.estado}`, html: `<span>${o.tipo === "ocupar" ? "◎" : o.tipo === "destruir" ? "✕" : "⛨"}</span>`, iconSize: [22, 22], iconAnchor: [11, 11] }),
+      }).addTo(g);
+    }
   }
 
   /** ?modo=videowall&escenario=ID&vista=azul|rojo|completa (se aplica una sola vez, tras iniciar sesion) */

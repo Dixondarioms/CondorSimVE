@@ -7,8 +7,9 @@ from sqlalchemy.orm import Session
 
 from app import auth, informe_html, schemas, state, turnos
 from app.db import get_db
-from app.engine import aar, clock, timeline
+from app.engine import aar, clock, naciones, timeline
 from app.models.aar import Instantanea
+from app.models.objetivo import Objetivo
 from app.models.asignacion import Asignacion
 from app.models.escenario import Escenario
 from app.models.evento import Evento
@@ -148,6 +149,14 @@ async def configurar(
         if nueva != esc.hora_inicio_min:
             esc.hora_inicio_min = nueva
             cambios.append(f"hora simulada inicial {payload.hora_inicio}")
+    for campo, etiqueta in (("nacion_azul", "Azul"), ("nacion_rojo", "Rojo")):
+        nueva_nacion = getattr(payload, campo)
+        if nueva_nacion is None or nueva_nacion == getattr(esc, campo):
+            continue
+        if nueva_nacion and naciones.obtener(nueva_nacion) is None:
+            raise HTTPException(status_code=400, detail=f"Nacion desconocida: {nueva_nacion}")
+        setattr(esc, campo, nueva_nacion)
+        cambios.append(f"bando {etiqueta} representa a {naciones.obtener(nueva_nacion).nombre}" if nueva_nacion else f"bando {etiqueta} sin identidad nacional")
     if cambios:
         aar.registrar_ajuste(db, esc, "Configuracion: " + ", ".join(cambios))
     db.commit()
@@ -217,14 +226,26 @@ def duplicar(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends
     copia = Escenario(nombre=f"{esc.nombre} (copia)", clima=esc.clima, azar=esc.azar,
                       auto_resolver=esc.auto_resolver, limite_decision_seg=esc.limite_decision_seg,
                       hora_inicio_min=esc.hora_inicio_min, com_latencia_ms=esc.com_latencia_ms,
-                      com_jitter_ms=esc.com_jitter_ms, com_perdida_pct=esc.com_perdida_pct)
+                      com_jitter_ms=esc.com_jitter_ms, com_perdida_pct=esc.com_perdida_pct,
+                      nacion_azul=esc.nacion_azul, nacion_rojo=esc.nacion_rojo)
     db.add(copia)
     db.flush()
-    campos = ("nombre", "bando", "tipo", "clase", "echelon", "velocidad_kmh", "alcance_km",
+    campos = ("nombre", "bando", "tipo", "clase", "echelon", "modelo", "aeronaves", "velocidad_kmh", "alcance_km",
               "deteccion_km", "autonomia_km", "sidc")
+    nuevas: dict[int, Unidad] = {}
     for u in db.query(Unidad).filter(Unidad.escenario_id == esc.id).order_by(Unidad.id):
         lat, lon = posiciones.get(u.id, (u.lat, u.lon))
-        db.add(Unidad(escenario_id=copia.id, lat=lat, lon=lon, **{c: getattr(u, c) for c in campos}))
+        nuevas[u.id] = Unidad(escenario_id=copia.id, lat=lat, lon=lon, **{c: getattr(u, c) for c in campos})
+        db.add(nuevas[u.id])
+    db.flush()
+    for o in db.query(Objetivo).filter(Objetivo.escenario_id == esc.id).order_by(Objetivo.id):
+        if o.unidad_id is not None and o.unidad_id not in nuevas:
+            continue
+        db.add(Objetivo(
+            escenario_id=copia.id, bando=o.bando, tipo=o.tipo, nombre=o.nombre, puntos=o.puntos, lat=o.lat, lon=o.lon,
+            radio_km=o.radio_km, turnos_requeridos=o.turnos_requeridos, hasta_turno=o.hasta_turno,
+            unidad_id=nuevas[o.unidad_id].id if o.unidad_id is not None else None,
+        ))
     for a in db.query(Asignacion).filter(Asignacion.escenario_id == esc.id):
         db.add(Asignacion(usuario_id=a.usuario_id, escenario_id=copia.id))
     db.commit()
@@ -305,8 +326,13 @@ def exportar(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends
         "escenario": {
             "nombre": esc.nombre, "clima": esc.clima, "azar": esc.azar, "semilla": esc.semilla,
             "auto_resolver": esc.auto_resolver, "limite_decision_seg": esc.limite_decision_seg,
+            "nacion_azul": esc.nacion_azul, "nacion_rojo": esc.nacion_rojo,
         },
         "unidades": unidades,
+        "objetivos": [
+            {c.name: getattr(o, c.name) for c in Objetivo.__table__.columns if c.name not in ("id", "escenario_id")}
+            for o in db.query(Objetivo).filter(Objetivo.escenario_id == esc.id).order_by(Objetivo.id)
+        ],
         "informe": aar.construir_informe(db, esc),
         "timeline": timeline.construir_timeline(db, esc),
     }

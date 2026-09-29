@@ -146,10 +146,19 @@
     if (u.fuerza === null || u.fuerza === undefined) return { texto: "Detectada", clase: "fuego" };
     const orden = ordenesPendientes.find((o) => o.unidad_id === u.id);
     if (orden) {
-      const t = { mover: ["Orden: mover", "mov"], atacar: ["Orden: atacar", "fuego"], apoyar: ["Orden: apoyar", "ok"] }[orden.tipo];
+      const t = {
+        mover: ["Orden: mover", "mov"], atacar: ["Orden: atacar", "fuego"], apoyar: ["Orden: apoyar", "ok"],
+        patrullar: ["Orden: patrullar", "mov"], aterrizar: ["Orden: aterrizar", "ok"], despegar: ["Orden: despegar", "mov"],
+      }[orden.tipo];
       if (t) return { texto: t[0], clase: t[1] };
     }
     if (u.tipo === "base") return { texto: "Base operativa", clase: "ok" };
+    if (u.en_tierra) {
+      return u.espera_restante > 0
+        ? { texto: `En base · ${u.espera_restante} t`, clase: "mov" }
+        : { texto: "En base · lista", clase: "ok" };
+    }
+    if (u.mision === "patrulla") return { texto: "Patrullando", clase: "mov" };
     if (u.combustible !== null && u.combustible <= 0) return { texto: "Sin combustible", clase: "fuego" };
     if (u.municion !== null && u.municion <= 0) return { texto: "Sin munición", clase: "fuego" };
     return { texto: "Operativa", clase: "ok" };
@@ -348,7 +357,101 @@
   /** Nombre corto de una base de la capa de referencia: sin "Base Aerea" ni el parentesis final. */
   const nombreCortoBase = (nombre) => String(nombre || "").replace(/^Base A[ée]rea\s+/i, "").replace(/\s*\([^)]*\)\s*$/, "").trim();
 
+  // ---------------------------------------------------------------- ciclo de vuelo
+  const CAPACIDAD_BASE = 12; // aeronaves que caben estacionadas en una base (igual que en el servidor)
+  const RADIO_ATERRIZAJE_KM = 3;
+
+  /** Aeronaves estacionadas en la base. */
+  const estacionadasEn = (base, unidades) => unidades.filter((u) => u.en_tierra && u.base_id === base.id && u.estado === "activa");
+
+  /** Plazas libres de una base para el grupo `u` (un numero negativo o cero significa que no cabe). */
+  function plazasLibres(base, unidades) {
+    return CAPACIDAD_BASE - estacionadasEn(base, unidades).reduce((s, x) => s + Math.max(1, x.aeronaves || 1), 0);
+  }
+
+  /** Bases aereas propias donde `u` cabe, con la distancia y si llega este turno con su combustible. */
+  function opcionesDeAterrizaje(u, unidades) {
+    const km = (b) => distanciaKm(u.lat, u.lon, b.lat, b.lon);
+    return basesAereasPropias(unidades, u.bando)
+      .filter((b) => plazasLibres(b, unidades) >= Math.max(1, u.aeronaves || 1))
+      .map((b) => {
+        const d = km(b);
+        const alcanceTurno = (u.velocidad_kmh || 0) * 1; // un turno = 1 h
+        const combustibleNecesario = u.autonomia_km ? (d / u.autonomia_km) * 100 : null;
+        return {
+          base: b, km: d, llegaEsteTurno: d <= alcanceTurno + RADIO_ATERRIZAJE_KM,
+          turnos: alcanceTurno > 0 ? Math.max(1, Math.ceil((d - RADIO_ATERRIZAJE_KM) / alcanceTurno)) : null,
+          combustibleNecesario,
+          alcanzaCombustible: combustibleNecesario === null || u.combustible === null || combustibleNecesario <= u.combustible,
+        };
+      })
+      .sort((a, b) => a.km - b.km);
+  }
+
+  /** Texto de la situacion de vuelo de una aeronave (en el detalle de la unidad). */
+  function situacionDeVuelo(u, unidades) {
+    if (u.tipo !== "aerea" || u.estado !== "activa") return null;
+    if (u.en_tierra) {
+      const base = unidades.find((b) => b.id === u.base_id);
+      const donde = base ? ` en ${base.nombre}` : "";
+      if (u.espera_restante === null || u.espera_restante === undefined) return `En tierra${donde}`;
+      return u.espera_restante > 0
+        ? `En tierra${donde}: reabasteciendo y rearmando, lista en ${u.espera_restante} turno${u.espera_restante === 1 ? "" : "s"}`
+        : `En tierra${donde}: lista para despegar`;
+    }
+    if (u.mision === "patrulla" && u.mision_lat !== null && u.mision_lat !== undefined) {
+      return `Patrullando sobre ${u.mision_lat.toFixed(2)}, ${u.mision_lon.toFixed(2)}`;
+    }
+    return "En vuelo";
+  }
+
+  // ---------------------------------------------------------------- objetivos, marcador y busqueda
+  const sinAcentos = (t) => String(t ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+  /** Unidades cuyo nombre, clase o modelo contienen el texto (sin distinguir mayusculas ni acentos). */
+  function filtrarUnidades(unidades, texto) {
+    const q = sinAcentos(texto).trim();
+    if (!q) return unidades;
+    return unidades.filter((u) => [u.nombre, u.clase, u.modelo, u.tipo].some((c) => sinAcentos(c).includes(q)));
+  }
+
+  const ETIQUETA_OBJETIVO = { ocupar: "Ocupar", destruir: "Destruir", proteger: "Proteger" };
+
+  /** Linea de resumen de un objetivo: que hay que hacer, cuanto vale y como va. */
+  function textoObjetivo(o) {
+    const que = {
+      ocupar: `Ocupar la zona (radio ${o.radio_km} km)${o.turnos_requeridos > 1 ? ` durante ${o.turnos_requeridos} turnos seguidos` : ""}`,
+      destruir: `Destruir ${o.unidad_nombre || "la unidad"}`,
+      proteger: `Proteger ${o.unidad_nombre || "la unidad"}${o.hasta_turno ? ` hasta el turno ${o.hasta_turno}` : ""}`,
+    }[o.tipo] || o.tipo;
+    return `${que} · ${o.puntos} pts`;
+  }
+
+  /** {texto, clase} del avance de un objetivo. */
+  function avanceObjetivo(o) {
+    if (o.estado === "cumplido") return { texto: `Cumplido (turno ${o.turno_resuelto})`, clase: "ok" };
+    if (o.estado === "fallido") return { texto: `Fallido (turno ${o.turno_resuelto})`, clase: "fuego" };
+    if (o.tipo === "ocupar") return { texto: `${o.progreso}/${o.turnos_requeridos} turnos`, clase: o.progreso > 0 ? "mov" : "" };
+    return { texto: "En curso", clase: "" };
+  }
+
+  // ---------------------------------------------------------------- identidad nacional del bando
+  /** Nacion (del catalogo /api/naciones) asignada a un bando en este escenario, o null si no tiene. */
+  function nacionDe(bando, esc, naciones) {
+    if (!esc || !naciones) return null;
+    const id = bando === "azul" ? esc.nacion_azul : bando === "rojo" ? esc.nacion_rojo : "";
+    return (id && naciones.find((n) => n.id === id)) || null;
+  }
+
+  /** "Azul" o "Azul (Colombia)" segun tenga o no identidad nacional asignada. */
+  function etiquetaBandoNacion(bando, esc, naciones) {
+    const base = bando === "azul" ? "Azul" : "Rojo";
+    const n = nacionDe(bando, esc, naciones);
+    return n ? `${base} (${n.nombre})` : base;
+  }
+
   const api = {
+    nacionDe, etiquetaBandoNacion, filtrarUnidades, textoObjetivo, avanceObjetivo, ETIQUETA_OBJETIVO, CAPACIDAD_BASE, RADIO_ATERRIZAJE_KM, estacionadasEn, plazasLibres, opcionesDeAterrizaje, situacionDeVuelo,
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,
     aeronavesComprometidas, baseEnEscenario, nombreCortoBase, FUERZA_MINIMA_BASE,
     distanciaKm, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,

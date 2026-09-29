@@ -10,7 +10,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from app.engine import catalogo
+from app.engine import catalogo, geo
 from app.models.orden import Orden
 from app.models.unidad import Unidad
 
@@ -82,3 +82,68 @@ def crear_grupo(base: Unidad, modelo_id: str, aeronaves: int, indicativo: str, y
         combustible=100.0, municion=100.0, autonomia_km=m.autonomia_km,
         sidc=catalogo.generar_sidc(base.bando, clase, escalon), estado="activa",
     )
+
+
+# ---------------------------------------------------------------------------------------------------------
+# Ciclo de vuelo: aterrizar en una base propia, esperar el reabastecimiento, despegar, patrullar
+# ---------------------------------------------------------------------------------------------------------
+TIEMPO_REARME_TURNOS = 2  # turnos en tierra antes de poder despegar (reabastecer y rearmar)
+CAPACIDAD_BASE = 12  # aeronaves que caben estacionadas en una base
+RADIO_ATERRIZAJE_KM = 3.0  # distancia a la base para considerar que aterrizo
+COMBUSTIBLE_LOITER = 8.0  # puntos de combustible por turno que gasta una patrulla sobre su punto
+COMBUSTIBLE_CRITICO = 25.0  # una patrulla con menos regresa sola a la base mas cercana
+PERDIDA_EN_TIERRA = 0.6  # fraccion del dano a la base que sufren los aviones estacionados en ella
+DESPLAZAMIENTO_ESTACIONADO = 0.006  # grados: los aviones estacionados no se dibujan encima de la base
+
+
+def en_vuelo(u) -> bool:
+    return u.tipo == "aerea" and u.estado == "activa" and not u.en_tierra
+
+
+def estacionadas(base, unidades) -> list:
+    return [u for u in unidades if u.en_tierra and u.base_id == base.id and u.estado == "activa"]
+
+
+def plazas_libres(base, unidades) -> int:
+    return CAPACIDAD_BASE - sum(max(1, u.aeronaves or 1) for u in estacionadas(base, unidades))
+
+
+def error_de_aterrizaje(u, base, unidades) -> str | None:
+    """Motivo por el que `u` no puede aterrizar en `base` (None si puede)."""
+    if u.tipo != "aerea" or u.estado != "activa":
+        return "Solo una aeronave activa puede aterrizar."
+    if u.en_tierra:
+        return "La aeronave ya esta en tierra."
+    if base is None or base.bando != u.bando or base.clase != "base_aerea":
+        return "Elija una base aerea propia."
+    if base.estado != "activa" or base.fuerza < FUERZA_MINIMA_BASE:
+        return f"{base.nombre} esta fuera de servicio o muy danada."
+    if plazas_libres(base, unidades) < max(1, u.aeronaves or 1):
+        return f"{base.nombre} no tiene plazas libres (capacidad {CAPACIDAD_BASE} aeronaves)."
+    return None
+
+
+def base_mas_cercana(u, unidades):
+    """Base aerea propia en servicio y con plazas, la mas cercana (None si no hay ninguna)."""
+    candidatas = [
+        b for b in unidades
+        if b.bando == u.bando and b.clase == "base_aerea" and b.estado == "activa" and b.fuerza >= FUERZA_MINIMA_BASE
+        and plazas_libres(b, unidades) >= max(1, u.aeronaves or 1)
+    ]
+    return min(candidatas, key=lambda b: geo.distancia_km(u.lat, u.lon, b.lat, b.lon), default=None)
+
+
+def aterrizar(u, base, estacionados_antes: int = 0) -> None:
+    """La aeronave queda estacionada junto a la base y empieza el reabastecimiento."""
+    u.en_tierra = True
+    u.base_id = base.id
+    u.espera_restante = TIEMPO_REARME_TURNOS
+    u.mision, u.mision_lat, u.mision_lon = "", None, None
+    u.lat = base.lat + DESPLAZAMIENTO_ESTACIONADO * (1 + estacionados_antes)
+    u.lon = base.lon + DESPLAZAMIENTO_ESTACIONADO
+
+
+def despegar_unidad(u) -> None:
+    u.en_tierra = False
+    u.base_id = None
+    u.espera_restante = 0

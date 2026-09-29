@@ -20,7 +20,7 @@ def deteccion_por_defecto(tipo: str) -> float:
 def radio_efectivo(detector, objetivo, terreno: Terreno, clima: str = "despejado") -> float:
     ocultamiento = (
         OCULTAMIENTO.get(terreno.clase(objetivo.lat, objetivo.lon), 1.0)
-        if objetivo.tipo in ("terrestre", "base")
+        if objetivo.tipo in ("terrestre", "base") or getattr(objetivo, "en_tierra", False)
         else 1.0
     )
     return detector.deteccion_km * ocultamiento * clima_mod.factor_deteccion(clima)

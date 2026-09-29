@@ -56,6 +56,8 @@ class EscenarioOut(BaseModel):
     listo_rojo: bool = False
     archivado: bool = False
     hora_inicio_min: int = 360
+    nacion_azul: str = ""
+    nacion_rojo: str = ""
     # comunicaciones simuladas: solo las ve el instructor (state.estado_para las quita al resto)
     com_latencia_ms: int = 0
     com_jitter_ms: int = 0
@@ -76,6 +78,9 @@ class EscenarioConfig(BaseModel):
     com_perdida_pct: int | None = Field(default=None, ge=0, le=100)
     # hora simulada del turno 1, "HH:MM"
     hora_inicio: str | None = Field(default=None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
+    # identidad nacional de cada bando (ver /api/naciones); "" quita la identidad y deja "Azul"/"Rojo"
+    nacion_azul: str | None = None
+    nacion_rojo: str | None = None
 
 
 class ListoIn(BaseModel):
@@ -133,6 +138,12 @@ class UnidadOut(BaseModel):
     clase: str = ""
     modelo: str = ""
     aeronaves: int = 1
+    en_tierra: bool = False
+    base_id: int | None = None
+    espera_restante: int = 0
+    mision: str = ""
+    mision_lat: float | None = None
+    mision_lon: float | None = None
     echelon: str
     lat: float
     lon: float
@@ -153,7 +164,7 @@ class UnidadOut(BaseModel):
 
 class OrdenCreate(BaseModel):
     unidad_id: int
-    tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar"]
+    tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar"]
     waypoints: list[tuple[float, float]] = Field(default_factory=list, max_length=30)
     objetivo_unidad_id: int | None = None
     # solo para "construir": obra que se tiende en el punto indicado
@@ -207,6 +218,39 @@ class ObraOut(BaseModel):
     radio_km: float
     creada_turno: int
     expira_turno: int
+
+
+class ObjetivoIn(BaseModel):
+    tipo: Literal["ocupar", "destruir", "proteger"]
+    bando: Bando
+    nombre: str = Field(min_length=1, max_length=120)
+    puntos: int = Field(default=10, ge=0, le=1000)
+    # ocupar
+    lat: float | None = Field(default=None, ge=-90, le=90)
+    lon: float | None = Field(default=None, ge=-180, le=180)
+    radio_km: float = Field(default=5.0, gt=0, le=200)
+    turnos_requeridos: int = Field(default=1, ge=1, le=48)
+    # destruir / proteger
+    unidad_id: int | None = None
+    hasta_turno: int | None = Field(default=None, ge=1, le=999)
+
+
+class ObjetivoOut(BaseModel):
+    id: int
+    bando: str
+    tipo: str
+    nombre: str
+    puntos: int
+    lat: float | None = None
+    lon: float | None = None
+    radio_km: float
+    turnos_requeridos: int
+    progreso: int
+    unidad_id: int | None = None
+    unidad_nombre: str = ""
+    hasta_turno: int | None = None
+    estado: str
+    turno_resuelto: int | None = None
 
 
 TipoGrafico = Literal["linea_fase", "eje_avance", "zona_reunion", "punto_control"]

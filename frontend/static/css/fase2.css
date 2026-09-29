@@ -207,3 +207,57 @@ body.videowall .base-ven svg { width: 34px; height: 34px; }
   filter: drop-shadow(1.5px 0 0 #EF233C) drop-shadow(-1.5px 0 0 #EF233C) drop-shadow(0 1.5px 0 #EF233C) drop-shadow(0 -1.5px 0 #EF233C) drop-shadow(0 4px 3px rgba(0, 0, 0, .5));
 }
 .marca.sel .avion3d-grupo img { filter: drop-shadow(0 0 7px #fff) drop-shadow(0 0 2px #fff); }
+
+/* ---- objetivos, marcador, herramientas de mapa y editor ---- */
+.marcador { display: flex; justify-content: space-around; font-size: 12px; letter-spacing: .05em; margin: 4px 0 8px; }
+.marcador b { font-size: 20px; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.marcador small { display: block; font-size: 10px; color: var(--texto-sec); letter-spacing: 0; }
+.marcador .azul { color: #9cc2ff; } .marcador .rojo { color: #ff8c9a; }
+#objetivos-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; max-height: 190px; overflow: auto; }
+#objetivos-lista li.objetivo { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 5px 8px; background: var(--panel-2); border: 1px solid var(--borde); border-left-width: 3px; border-radius: var(--radio); cursor: pointer; font-size: 12px; }
+#objetivos-lista li.objetivo.azul { border-left-color: var(--azul); } #objetivos-lista li.objetivo.rojo { border-left-color: var(--rojo); }
+#objetivos-lista li.objetivo.cumplido { opacity: .75; } #objetivos-lista li.objetivo.fallido { opacity: .55; text-decoration: line-through; }
+#objetivos-lista li.objetivo div { min-width: 0; } #objetivos-lista li.objetivo b, #objetivos-lista li.objetivo span { display: block; overflow-wrap: anywhere; }
+#objetivos-lista li.objetivo > span.chip { flex: none; white-space: nowrap; font-size: 10px; padding: 1px 6px; border-radius: 9px; background: rgba(255, 255, 255, .1); }
+#objetivos-lista li.objetivo > span.chip.ok { background: rgba(46, 196, 182, .25); color: #7ff0e2; } #objetivos-lista li.objetivo > span.chip.fuego { background: rgba(239, 35, 60, .25); color: #ff8c9a; } #objetivos-lista li.objetivo > span.chip.mov { background: rgba(255, 183, 3, .25); color: var(--ambar); }
+.lista-objetivos { list-style: none; margin: 6px 0 0; padding: 0; font-size: 12px; }
+.lista-objetivos li { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 3px 0; border-bottom: 1px solid var(--borde); }
+.objetivo-marca { background: none; border: none; }
+.objetivo-marca span { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #14213D; border: 2px solid var(--azul); color: #fff; font-size: 12px; }
+.objetivo-marca.rojo span { border-color: var(--rojo); } .objetivo-marca.cumplido span { border-color: var(--verde); background: #0d3b37; } .objetivo-marca.fallido span { border-color: var(--texto-sec); opacity: .7; }
+#barra-herramientas { left: 220px; top: 12px; display: flex; align-items: center; gap: 6px; padding: 4px 8px; }
+#barra-herramientas button.activa { background: var(--azul); border-color: var(--azul); color: #fff; font-weight: 700; }
+.regla-info { font-size: 12px; color: #ffd166; font-variant-numeric: tabular-nums; }
+.midiendo, .midiendo .leaflet-interactive { cursor: crosshair !important; }
+.tramo-regla span { display: inline-block; transform: translate(-50%, -140%); white-space: nowrap; font-size: 11px; font-weight: 700; color: #fff; background: rgba(20, 33, 61, .85); border: 1px solid #ffd166; border-radius: 3px; padding: 0 4px; }
+.etiqueta-regla { background: rgba(20, 33, 61, .85) !important; border: 1px solid #fff !important; color: #fff !important; font-size: 10px !important; padding: 0 4px !important; box-shadow: none !important; }
+.etiqueta-regla::before { display: none !important; }
+#oob-buscar { margin: 0 0 8px; }
+#btn-eliminar-unidad { margin-top: 10px; }
+.hud-marcador { display: flex; gap: 14px; font-size: 1.05em; margin-top: 4px; }
+.hud-marcador b { font-variant-numeric: tabular-nums; margin-left: 4px; }
+.hud-marcador .azul { color: #9cc2ff; } .hud-marcador .rojo { color: #ff8c9a; }
+body.videowall #barra-herramientas { opacity: 0; pointer-events: none; }
+
+/* ---- ciclo de vuelo ---- */
+.det-datos .ancho-completo { grid-column: 1 / -1; }
+.ayuda.advertencia { color: var(--ambar); border-left: 3px solid var(--ambar); padding-left: 8px; }
+.modos { grid-template-columns: repeat(3, 1fr); }
+
+/* ---- pantallas estrechas (movil / panel pequeño): el panel derecho y el dibujo pasan a paneles que se abren ---- */
+#botones-movil { display: none; }
+@media (max-width: 760px) {
+  #botones-movil { display: flex; gap: 6px; position: absolute; right: 8px; top: 8px; z-index: 1300; }
+  #botones-movil button[aria-expanded="true"] { background: var(--azul); border-color: var(--azul); color: #fff; }
+  #coords { display: none; }
+  #barra-herramientas { left: 8px; top: 8px; max-width: calc(100% - 150px); flex-wrap: wrap; }
+  #barra-graficos { display: none; top: 46px; left: 8px; width: min(300px, calc(100% - 16px)); z-index: 1200; }
+  #barra-graficos.abierto { display: flex; }
+  #panel-der {
+    display: flex; position: absolute; right: 8px; top: 46px; bottom: 8px; width: min(340px, calc(100% - 16px)); z-index: 1200;
+    transform: translateX(115%); transition: transform .25s ease; overflow: auto;
+  }
+  #panel-der.abierto { transform: none; }
+  #leyenda-mapa { display: none; }
+  body.videowall #botones-movil { display: none; }
+}

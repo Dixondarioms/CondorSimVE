@@ -58,6 +58,15 @@ async def emitir_orden(
         raise HTTPException(status_code=400, detail="Una base no puede combatir ni apoyar")
 
     clase = catalogo.perfil(unidad)
+    if payload.tipo in ("patrullar", "aterrizar") and unidad.tipo != "aerea":
+        raise HTTPException(status_code=400, detail="Solo las aeronaves pueden patrullar o aterrizar")
+    if unidad.en_tierra and unidad.espera_restante > 0 and payload.tipo in ("mover", "atacar", "patrullar"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"En tierra: faltan {unidad.espera_restante} turno(s) para reabastecer y rearmar antes de despegar",
+        )
+    if unidad.en_tierra and payload.tipo == "apoyar":
+        raise HTTPException(status_code=400, detail="Una aeronave en tierra no puede apoyar: debe despegar primero")
     if payload.tipo == "despegar":
         # el despegue pendiente de esta misma base sera reemplazado: no cuenta para el tope
         previa = db.query(Orden).filter(
@@ -69,6 +78,20 @@ async def emitir_orden(
         )
         if motivo:
             raise HTTPException(status_code=400, detail=motivo)
+    elif payload.tipo == "aterrizar":
+        base = db.get(Unidad, payload.objetivo_unidad_id) if payload.objetivo_unidad_id else None
+        if base is None or base.escenario_id != esc.id or base.bando != usuario.rol:
+            raise HTTPException(status_code=404, detail="Elija una base aerea propia")
+        todas = db.query(Unidad).filter(Unidad.escenario_id == esc.id, Unidad.bando == usuario.rol).all()
+        motivo = aeronaves_mod.error_de_aterrizaje(unidad, base, todas)
+        if motivo:
+            raise HTTPException(status_code=400, detail=motivo)
+    elif payload.tipo == "patrullar":
+        if len(payload.waypoints) != 1:
+            raise HTTPException(status_code=400, detail="Indique un unico punto de patrulla")
+        _validar_waypoints(payload.waypoints)
+        if unidad.combustible <= aeronaves_mod.COMBUSTIBLE_CRITICO:
+            raise HTTPException(status_code=400, detail="Combustible insuficiente para patrullar: aterrice y reabastezca")
     elif payload.tipo == "construir":
         if not clase.construye:
             raise HTTPException(status_code=400, detail="Solo los ingenieros pueden construir puentes y vados")
@@ -120,8 +143,8 @@ async def emitir_orden(
         escenario_id=esc.id,
         unidad_id=unidad.id,
         tipo=payload.tipo,
-        waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir") else []),
-        objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar") else None,
+        waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir", "patrullar") else []),
+        objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar", "aterrizar") else None,
         detalle=(
             aeronaves_mod.codificar(payload.modelo, payload.aeronaves, (payload.indicativo or "").strip())
             if payload.tipo == "despegar"
