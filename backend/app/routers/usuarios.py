@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app import auth, schemas
 from app.db import get_db
+from app.engine import puestos
 from app.models.usuario import Usuario
 from app.ws_manager import manager
 
@@ -26,7 +27,9 @@ def crear(
     if db.query(Usuario).filter(Usuario.username == username).first():
         raise HTTPException(status_code=409, detail="El usuario ya existe")
     usuario = Usuario(
-        username=username, password_hash=auth.hash_password(payload.password), rol=payload.rol
+        username=username, password_hash=auth.hash_password(payload.password), rol=payload.rol,
+        # el puesto solo tiene sentido dentro de un bando
+        puesto=payload.puesto if payload.rol in puestos.BANDOS else puestos.POR_DEFECTO,
     )
     db.add(usuario)
     db.commit()
@@ -53,6 +56,11 @@ async def actualizar(
     if payload.rol is not None and payload.rol != usuario.rol:
         usuario.rol = payload.rol
         pierde_acceso = True
+    if payload.puesto is not None and payload.puesto != usuario.puesto:
+        usuario.puesto = payload.puesto
+        pierde_acceso = True  # la interfaz y los permisos cambian: que vuelva a entrar
+    if usuario.rol not in puestos.BANDOS:
+        usuario.puesto = puestos.POR_DEFECTO
     if payload.activo is not None and payload.activo != usuario.activo:
         usuario.activo = payload.activo
         pierde_acceso = True

@@ -79,6 +79,27 @@ Sirve para revisar la interfaz tras un cambio. Regenérelo si cambia `index.html
 | `azul` / `rojo` | Sus unidades + enemigas detectadas + últimos contactos | Emitir/cancelar órdenes, marcar "listo"; informe solo al finalizar |
 | `observador` | Todo | Solo lectura (incluye el informe) |
 
+### Puestos por función dentro del bando (estado mayor de aula)
+
+Cada alumno de un bando ocupa un **puesto**, como las células de un centro de operaciones; así varios
+alumnos trabajan a la vez sobre el mismo bando sin pisarse. Todos los puestos comparten la misma vista
+(niebla de guerra, contactos, gráficos, red de mensajes del bando); lo que cambia es **qué órdenes puede
+emitir** cada uno. El instructor lo asigna al crear el usuario o después (panel "Usuarios"); cambiarlo
+cierra la sesión del alumno para que entre con su nueva interfaz.
+
+| Puesto | Conduce | Confirma LISTO |
+|---|---|---|
+| **EM · Estado Mayor** (por defecto) | Todo: es el comportamiento de siempre para un solo alumno por bando | Sí |
+| **A2 · Inteligencia** | Nada: sigue contactos, dibuja gráficos de blancos y usa la mensajería | No |
+| **A3 · Operaciones en curso** | Las aeronaves ya creadas: despegue desde pista, rutas, patrullas, ataques, aterrizajes | No |
+| **A4 · Logística** | Ingenieros (puentes y vados) y convoyes de abastecimiento | No |
+| **A5 · Planificación** | Unidades terrestres y navales, y el envío de grupos de caza desde las bases | Sí |
+
+El servidor rechaza (403, explicando qué puesto corresponde) cualquier orden, cancelación o "listo" fuera
+del puesto; la interfaz solo muestra las herramientas del puesto ("Mi puesto" en el panel izquierdo) y
+avisa si la unidad seleccionada la conduce otra célula. Desde la consola: `python -m app.crear_usuario
+a5azul --rol azul --puesto planificacion`; en el arnés, `arnes.html?rol=azul&puesto=operaciones`.
+
 Alumnos y observadores solo acceden a los **escenarios que el instructor les asigna** (panel "Escenario").
 Autorización en el servidor: cookie de sesión HttpOnly + SameSite=Strict, contraseñas PBKDF2-SHA256,
 bloqueo tras 5 intentos fallidos (persistente en la base), sesiones de 12 h revocables, WebSocket
@@ -228,6 +249,27 @@ correlaciones (`consumo_en_combate`, `coincide_con_combate`, `combate_con_logist
   `python tools/preparar_terreno.py --solo-vectores` regenera solo estas capas (rápido, sin tocar el relieve).
 - **Límite:** no hay bases ni unidades reales de esos países cargadas de fábrica (a diferencia de las bases
   aéreas venezolanas, verificadas una por una); el instructor las ubica como cualquier otra unidad o base.
+
+## Fondo del mapa: satélite real o relieve
+
+- **Vista satelital** (por defecto): foto real, no un relieve coloreado por clase de terreno. Es la capa
+  **"Sentinel-2 cloudless"** de EOX (https://cloudless.eox.at), un mosaico global sin nubes hecho con
+  imágenes Copernicus Sentinel-2 (ESA) — la misma fuente en la que ya se basa la cobertura terrestre
+  (ESA WorldCover). Licencia **CC BY 4.0** (libre, con atribución, que ya está en el control del mapa).
+  Resolución real ~10 m/píxel: se generó hasta el zoom 12, que es donde deja de haber información nueva (más
+  allá el propio servicio solo interpola). En *Capas* hay un botón **Satélite / Relieve** para alternar; el
+  relieve (el de siempre, con el terreno coloreado por clase) sigue disponible porque distingue mejor a
+  simple vista el bosque, el pantano o la montaña.
+- **Más zoom:** antes el mapa llegaba como máximo a la tesela nativa de zoom 9 (con estiramiento hasta 11).
+  Ahora el zoom máximo es 15, con detalle real de satélite hasta el 12 (calles y manzanas se distinguen en
+  zonas urbanas); no llega al detalle de edificio/vehículo individual de Google Maps, porque esa resolución
+  no existe como dato abierto y gratuito para toda el área del ejercicio.
+- **Cómo se generó:** `python tools/preparar_satelite.py` (independiente de `preparar_terreno.py`: no toca el
+  relieve, la cobertura ni la grilla que usa el motor, solo agrega la imagen de fondo alternativa). Es
+  reanudable y admite `--hasta-zoom` para llegar más lejos más adelante (13 agrega ~88 000 teselas más).
+  Créditos y licencia completos en `frontend/static/tiles_sat/CREDITOS.md`.
+- **Tamaño:** esta capa pesa varios cientos de MB (bastante más que el resto del proyecto), porque es imagen
+  real a buena resolución para toda el área del mapa, no datos vectoriales livianos.
 
 ## Escenarios precargados (plantillas)
 

@@ -84,6 +84,11 @@
             <div id="detalle-contenido"><p class="vacio">Seleccione una unidad en la lista o en el mapa.</p></div>
           </section>
 
+          <section class="bloque solo-alumno" id="sec-puesto">
+            <h2>Mi puesto <span id="puesto-nombre" class="contador azul-suave"></span></h2>
+            <p class="ayuda" id="puesto-desc"></p>
+          </section>
+
           <section class="bloque solo-alumno" id="sec-aviacion">
             <h2>Aviación <span id="aviacion-tope" class="contador azul-suave"></span></h2>
             <button id="btn-enviar-caza" class="primario" type="button">✈ Enviar grupo de caza…</button>
@@ -101,6 +106,7 @@
               <button type="button" data-modo="aterrizar" id="modo-aterrizar" hidden title="Solo aeronaves en vuelo">Aterrizar</button>
             </div>
             <p id="o-espera" class="ayuda advertencia" hidden></p>
+            <p id="o-puesto" class="ayuda advertencia" hidden></p>
             <div id="o-mover">
               <p class="ayuda">Haga clic en el mapa para marcar waypoints. El terreno, el clima y el combustible limitan el avance.</p>
               <div id="o-waypoints" class="ayuda"></div>
@@ -291,6 +297,13 @@
                 <option value="observador">Observador</option>
                 <option value="instructor">Instructor</option>
               </select>
+              <select id="nu-puesto" title="Puesto del alumno dentro de su bando" aria-label="Puesto dentro del bando">
+                <option value="mando">EM · Estado Mayor (todas las funciones)</option>
+                <option value="inteligencia">A2 · Inteligencia</option>
+                <option value="operaciones">A3 · Operaciones en curso</option>
+                <option value="logistica">A4 · Logística</option>
+                <option value="planificacion">A5 · Planificación</option>
+              </select>
               <button id="btn-crear-usuario" type="button">Crear usuario</button>
             </div>
           </details>
@@ -398,6 +411,10 @@
 
           <section class="tarjeta">
             <h2>Capas</h2>
+            <div class="fila-base-mapa" role="radiogroup" aria-label="Fondo del mapa">
+              <button type="button" id="base-satelite" class="mini activa" aria-pressed="true">Satélite</button>
+              <button type="button" id="base-relieve" class="mini" aria-pressed="false">Relieve</button>
+            </div>
             <div class="capas">
               <label><input type="checkbox" data-capa="terreno" checked><span>Terreno</span></label>
               <label><input type="checkbox" data-capa="cobertura"><span>Cobertura (detección)</span></label>

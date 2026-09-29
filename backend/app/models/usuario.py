@@ -19,6 +19,8 @@ class Usuario(Base):
     password_hash: Mapped[str] = mapped_column(String(300))
     # rol: "instructor" | "azul" | "rojo" | "observador"
     rol: Mapped[str] = mapped_column(String(20))
+    # puesto dentro del bando (solo alumnos): mando | inteligencia | operaciones | logistica | planificacion
+    puesto: Mapped[str] = mapped_column(String(20), default="mando", server_default="mando")
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     creado_en: Mapped[datetime] = mapped_column(DateTime, default=ahora)
 

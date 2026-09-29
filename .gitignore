@@ -15,3 +15,9 @@ backend/pgdata/
 *.glb
 *.gltf
 tools/sprites3d/salida/
+
+# Fenix 1.4 original de la Fuerza Aerea Argentina y sus respaldos SQL: material licenciado a la AMB,
+# solo referencia doctrinal. NUNCA va al repositorio.
+Version Fenix 1.4/
+BD_Fenix/
+*.FAS900

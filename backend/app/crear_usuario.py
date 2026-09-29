@@ -1,6 +1,7 @@
 """Crea un usuario o restablece su contrasena desde la consola del servidor.
 
     python -m app.crear_usuario <usuario> --rol instructor
+    python -m app.crear_usuario a5azul --rol azul --puesto planificacion
 """
 
 import argparse
@@ -9,6 +10,7 @@ import sys
 
 from app import auth
 from app.db import SessionLocal, init_db
+from app.engine import puestos
 from app.models.usuario import Usuario
 
 
@@ -16,7 +18,10 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("username")
     ap.add_argument("--rol", choices=auth.ROLES, default="instructor")
+    ap.add_argument("--puesto", choices=list(puestos.PUESTOS), default=puestos.POR_DEFECTO,
+                    help="puesto dentro del bando (solo alumnos azul/rojo)")
     args = ap.parse_args()
+    puesto = args.puesto if args.rol in puestos.BANDOS else puestos.POR_DEFECTO
 
     password = getpass.getpass("Contrasena: ")
     if password != getpass.getpass("Repita la contrasena: "):
@@ -35,13 +40,15 @@ def main() -> int:
         if usuario:
             usuario.password_hash = auth.hash_password(password)
             usuario.rol = args.rol
+            usuario.puesto = puesto
             usuario.activo = True
             accion = "actualizado"
         else:
-            db.add(Usuario(username=username, password_hash=auth.hash_password(password), rol=args.rol))
+            db.add(Usuario(username=username, password_hash=auth.hash_password(password), rol=args.rol, puesto=puesto))
             accion = "creado"
         db.commit()
-    print(f"Usuario '{username}' {accion} con rol {args.rol}.")
+    detalle = f" (puesto {puestos.obtener(puesto).nombre})" if args.rol in puestos.BANDOS else ""
+    print(f"Usuario '{username}' {accion} con rol {args.rol}{detalle}.")
     return 0
 
 

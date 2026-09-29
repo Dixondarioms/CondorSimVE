@@ -7,6 +7,7 @@ iniciar sesion ni tocar la base de datos. Hay que regenerarlo si cambia index.ht
     backend\\venv\\Scripts\\python tools/generar_arnes.py
 
 Abrir  http://localhost:8000/static/pruebas/arnes.html?rol=instructor  (rol = instructor | azul | rojo | observador)
+Para un alumno se puede agregar &puesto=mando|inteligencia|operaciones|logistica|planificacion.
 """
 
 import json

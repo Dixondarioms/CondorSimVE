@@ -7,6 +7,8 @@ Bando = Literal["azul", "rojo"]
 TipoUnidad = Literal["terrestre", "aerea", "naval", "base"]
 Clima = Literal["despejado", "nublado", "lluvia", "tormenta"]
 Rol = Literal["instructor", "azul", "rojo", "observador"]
+# puesto por funcion dentro del bando (ver engine/puestos.py); solo tiene efecto en los alumnos
+Puesto = Literal["mando", "inteligencia", "operaciones", "logistica", "planificacion"]
 
 
 class LoginIn(BaseModel):
@@ -20,6 +22,7 @@ class UsuarioOut(BaseModel):
     id: int
     username: str
     rol: str
+    puesto: str = "mando"
     activo: bool
 
 
@@ -27,11 +30,13 @@ class UsuarioCreate(BaseModel):
     username: str = Field(min_length=3, max_length=50, pattern=r"^[A-Za-z0-9_.-]+$")
     password: str = Field(min_length=1, max_length=200)
     rol: Rol
+    puesto: Puesto = "mando"
 
 
 class UsuarioUpdate(BaseModel):
     password: str | None = Field(default=None, max_length=200)
     rol: Rol | None = None
+    puesto: Puesto | None = None
     activo: bool | None = None
 
 

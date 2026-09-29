@@ -86,6 +86,9 @@
   const rutaEsc = (sufijo = "") => `/api/escenarios/${app.escenarioId}${sufijo}`;
   const esInstructor = () => !!app.usuario && app.usuario.rol === "instructor";
   const esAlumno = () => !!app.usuario && esBando(app.usuario.rol);
+  /** Puesto del alumno dentro de su bando (los demas roles no tienen restricciones por puesto). */
+  const puestoActual = () => (esAlumno() ? app.usuario.puesto || "mando" : "mando");
+  const puedeFuncion = (f) => !esAlumno() || Logica.puestoPuede(puestoActual(), f);
   /** Bando cuya perspectiva se muestra (null = vista completa). */
   const bandoVista = () => {
     const v = app.data ? app.data.vista : null;
@@ -165,11 +168,18 @@
   function aplicarRol() {
     const rol = app.usuario.rol;
     $("mp-nombre").textContent = app.usuario.username;
-    $("mp-rol").textContent = rol;
+    $("mp-rol").textContent = esBando(rol) ? `${rol} · ${Logica.etiquetaPuesto(puestoActual())}` : rol;
     document.querySelectorAll(".solo-instructor").forEach((e) => (e.hidden = rol !== "instructor"));
     document.querySelectorAll(".solo-alumno").forEach((e) => (e.hidden = !esBando(rol)));
     document.querySelectorAll(".solo-control").forEach((e) => (e.hidden = !(rol === "instructor" || rol === "observador")));
     document.querySelectorAll(".solo-dibuja").forEach((e) => (e.hidden = !(rol === "instructor" || esBando(rol))));
+    // puesto por funcion: cada celula del bando solo ve las herramientas de lo que le toca conducir
+    const puesto = Logica.puestoDe(puestoActual());
+    $("puesto-nombre").textContent = Logica.etiquetaPuesto(puesto.id);
+    $("puesto-desc").textContent = puesto.descripcion;
+    $("sec-orden").hidden = !esBando(rol) || !puesto.funciones.some((f) => f !== "listo");
+    $("sec-aviacion").hidden = !esBando(rol) || !puedeFuncion("despegar");
+    $("btn-listo").hidden = !esBando(rol) || !puedeFuncion("listo");
     if (app.chat) app.chat.configurarRol();
     activarPestana("fuerzas");
     app.waypoints = [];
@@ -255,16 +265,31 @@
   function initMapa() {
     if (app.map) return;
     const bounds = L.latLngBounds(LIMITES);
-    const map = L.map("map", { zoomControl: false, attributionControl: false, minZoom: 5, maxZoom: 11, maxBounds: bounds.pad(0.1), maxBoundsViscosity: 0.85 });
+    const map = L.map("map", { zoomControl: false, attributionControl: false, minZoom: 5, maxZoom: 15, maxBounds: bounds.pad(0.1), maxBoundsViscosity: 0.85 });
     map.fitBounds(bounds);
     app.map = map;
     L.control.zoom({ position: "bottomright" }).addTo(map);
     L.control.attribution({ position: "bottomleft", prefix: false })
-      .addAttribution("Relieve: SRTM/GMTED (AWS Terrain Tiles) · Cobertura: ESA WorldCover · Vectores: Natural Earth").addTo(map);
+      .addAttribution("Satélite: Sentinel-2 cloudless (EOX, CC BY 4.0) · Relieve: SRTM/GMTED (AWS Terrain Tiles) · Cobertura: ESA WorldCover · Vectores: Natural Earth").addTo(map);
 
-    L.tileLayer("/static/tiles/{z}/{x}/{y}.jpg", { minZoom: 5, maxNativeZoom: 9, maxZoom: 11, bounds }).addTo(map);
-
+    // dos fondos alternativos (uno solo visible a la vez): foto satelital real (mas zoom util, ~10 m/px) o el
+    // relieve coloreado por clase de terreno (mejor para distinguir a simple vista bosque/pantano/montana).
     const c = app.capas;
+    c.baseSatelite = L.tileLayer("/static/tiles_sat/{z}/{x}/{y}.jpg", { minZoom: 5, maxNativeZoom: 12, maxZoom: 15, bounds }).addTo(map);
+    c.baseRelieve = L.tileLayer("/static/tiles/{z}/{x}/{y}.jpg", { minZoom: 5, maxNativeZoom: 9, maxZoom: 15, bounds });
+
+    function elegirBaseMapa(nombre) {
+      const satelite = nombre === "satelite";
+      (satelite ? c.baseRelieve : c.baseSatelite).remove();
+      (satelite ? c.baseSatelite : c.baseRelieve).addTo(map);
+      $("base-satelite").classList.toggle("activa", satelite);
+      $("base-satelite").setAttribute("aria-pressed", String(satelite));
+      $("base-relieve").classList.toggle("activa", !satelite);
+      $("base-relieve").setAttribute("aria-pressed", String(!satelite));
+    }
+    $("base-satelite").addEventListener("click", () => elegirBaseMapa("satelite"));
+    $("base-relieve").addEventListener("click", () => elegirBaseMapa("relieve"));
+
     c.referencias = L.layerGroup().addTo(map);
     c.bases_ven = L.layerGroup().addTo(map);
     const fronteras = L.geoJSON(null, { style: { color: "#1a1a1a", weight: 2.5, fill: false } }).addTo(c.referencias);
@@ -685,7 +710,7 @@
         objetivo.value = String(id);
       } else if (propia && u.clase === "base_aerea") {
         app.baseSeleccionada = id;
-      } else if (propia && u.estado === "activa" && u.tipo !== "base") {
+      } else if (propia && u.estado === "activa" && u.tipo !== "base" && Logica.puestoPuede(puestoActual(), Logica.funcionDeOrden(u, null, claseDe(u)))) {
         if (app.unidadOrden !== id) { app.unidadOrden = id; app.waypoints = []; app.obraSitio = null; app.patrullaPunto = null; dibujarWaypoints(); if (app.modoOrden === "construir") dibujarSitioObra(); }
       }
     } else if (esInstructor() && u) {
@@ -872,8 +897,14 @@
   // ---------- nueva orden y cola de ordenes ----------
   function actualizarNuevaOrden(data) {
     if (!esAlumno()) return;
-    const propias = Logica.unidadesConOrdenes(data.unidades, bandoVista() || app.usuario.rol);
+    const bando = bandoVista() || app.usuario.rol;
+    const propias = Logica.unidadesDelPuesto(data.unidades, bando, puestoActual(), claseDe);
     if (app.unidadOrden && !propias.some((u) => u.id === app.unidadOrden)) app.unidadOrden = null;
+    const sel = app.porId.get(app.seleccion);
+    const ajena = sel && sel.bando === bando && sel.estado === "activa" && sel.tipo !== "base" && !propias.some((p) => p.id === sel.id)
+      ? Logica.textoPuestoAjeno(sel, claseDe(sel)) : "";
+    $("o-puesto").hidden = !ajena;
+    $("o-puesto").textContent = ajena;
     const u = app.porId.get(app.unidadOrden);
     const cl = u ? claseDe(u) : null;
     const puedeConstruir = !!(cl && cl.construye);
@@ -1037,7 +1068,7 @@
     $("h-hora").textContent = horaDelTurno(esc.turno_actual);
     const rol = app.usuario.rol;
     const b = $("h-bando");
-    b.textContent = Logica.etiquetaBando(rol, data.vista);
+    b.textContent = Logica.etiquetaBando(rol, data.vista, esAlumno() ? puestoActual() : null);
     const bando = bandoVista();
     b.className = bando || "";
     actualizarReloj();
@@ -1504,6 +1535,18 @@
       sel.disabled = esYo;
       sel.addEventListener("change", () => api("PATCH", `/api/usuarios/${u.id}`, { rol: sel.value }).finally(cargarUsuarios));
       item.appendChild(sel);
+      if (esBando(u.rol)) {
+        const sp = document.createElement("select");
+        sp.title = "Puesto dentro del bando";
+        sp.setAttribute("aria-label", `Puesto de ${u.username}`);
+        for (const p of Logica.PUESTOS) {
+          const o = document.createElement("option");
+          o.value = p.id; o.textContent = `${p.sigla} · ${p.nombre}`; sp.appendChild(o);
+        }
+        sp.value = u.puesto || "mando";
+        sp.addEventListener("change", () => api("PATCH", `/api/usuarios/${u.id}`, { puesto: sp.value }).finally(cargarUsuarios));
+        item.appendChild(sp);
+      }
       item.appendChild(boton("Clave", async () => {
         const clave = await pedirClave(u.username);
         if (clave) enSilencio(api("PATCH", `/api/usuarios/${u.id}`, { password: clave }).then(() => toast("Contraseña actualizada", true)));
@@ -1534,7 +1577,7 @@
         try { await api("PUT", rutaEsc("/usuarios"), { usuario_ids: ids }); } catch (_) { chk.checked = !chk.checked; }
       });
       const et = document.createElement("span");
-      et.textContent = `${u.username} (${u.rol})`;
+      et.textContent = `${u.username} (${u.rol}${esBando(u.rol) ? " · " + Logica.puestoDe(u.puesto).sigla : ""})`;
       item.append(chk, et);
       ul.appendChild(item);
     }
@@ -1657,7 +1700,7 @@
 
   $("btn-crear-usuario").addEventListener("click", async () => {
     try {
-      await api("POST", "/api/usuarios", { username: $("nu-user").value.trim(), password: $("nu-pass").value, rol: $("nu-rol").value });
+      await api("POST", "/api/usuarios", { username: $("nu-user").value.trim(), password: $("nu-pass").value, rol: $("nu-rol").value, puesto: $("nu-puesto").value });
       $("nu-user").value = ""; $("nu-pass").value = "";
       toast("Usuario creado", true);
       cargarUsuarios();

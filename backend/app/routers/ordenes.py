@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app import auth, schemas, state
 from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
-from app.engine import catalogo, geo, movimiento
+from app.engine import catalogo, geo, movimiento, puestos
 from app.engine.orders import COSTO_OBRA, tipo_efectivo
 from app.models.escenario import Escenario
 from app.models.orden import Orden
@@ -58,6 +58,7 @@ async def emitir_orden(
         raise HTTPException(status_code=400, detail="Una base no puede combatir ni apoyar")
 
     clase = catalogo.perfil(unidad)
+    auth.exigir_funcion(usuario, puestos.funcion_de_orden(unidad, payload.tipo, clase))
     if payload.tipo in ("patrullar", "aterrizar") and unidad.tipo != "aerea":
         raise HTTPException(status_code=400, detail="Solo las aeronaves pueden patrullar o aterrizar")
     if unidad.en_tierra and unidad.espera_restante > 0 and payload.tipo in ("mover", "atacar", "patrullar"):
@@ -197,6 +198,7 @@ async def cancelar_orden(
     unidad = db.get(Unidad, orden.unidad_id) if orden else None
     if orden is None or orden.escenario_id != esc.id or unidad.bando != usuario.rol:
         raise HTTPException(status_code=404, detail="Orden no encontrada")
+    auth.exigir_funcion(usuario, puestos.funcion_de_orden(unidad, orden.tipo, catalogo.perfil(unidad)))
     if orden.estado != "pendiente":
         raise HTTPException(status_code=400, detail="Solo se pueden cancelar ordenes pendientes")
     db.delete(orden)

@@ -11,6 +11,7 @@ from fastapi import Depends, HTTPException, Request, Response, WebSocket
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.engine import puestos
 from app.models.asignacion import Asignacion
 from app.models.escenario import Escenario
 from app.models.usuario import IntentoLogin, Sesion, Usuario, ahora
@@ -162,6 +163,17 @@ def requiere_roles(*roles: str):
         return usuario
 
     return dependencia
+
+
+def exigir_funcion(usuario: Usuario, funcion: str) -> None:
+    """403 si el puesto del alumno dentro de su bando no tiene esa funcion (ver engine/puestos.py)."""
+    if puestos.puede(usuario.puesto, funcion):
+        return
+    quien = " o ".join(f"{p.nombre} ({p.sigla})" for p in puestos.responsables(funcion)) or "el Estado Mayor"
+    raise HTTPException(
+        status_code=403,
+        detail=f"Esa accion corresponde al puesto {quien} de su bando; usted ocupa {puestos.obtener(usuario.puesto).nombre}",
+    )
 
 
 def usuario_ws(websocket: WebSocket, db: Session) -> Usuario | None:

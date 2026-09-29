@@ -8,7 +8,8 @@
   const params = new URLSearchParams(location.search);
   const ROL = ["instructor", "azul", "rojo", "observador"].includes(params.get("rol")) ? params.get("rol") : "instructor";
   const USUARIOS = { instructor: [1, "prof"], azul: [2, "alfa"], rojo: [3, "bravo"], observador: [4, "obs"] };
-  const YO = { id: USUARIOS[ROL][0], username: USUARIOS[ROL][1], rol: ROL, activo: true };
+  const PUESTO = ["mando", "inteligencia", "operaciones", "logistica", "planificacion"].includes(params.get("puesto")) ? params.get("puesto") : "mando";
+  const YO = { id: USUARIOS[ROL][0], username: USUARIOS[ROL][1], rol: ROL, puesto: PUESTO, activo: true };
   const iso = (ms = 0) => new Date(Date.now() + ms).toISOString().slice(0, 19);
   const BANDOS = ["azul", "rojo"];
 
@@ -245,7 +246,7 @@
       return json({ id, nombre: "Escenario de prueba (plantilla)", turno_actual: 1, fase: "decision", estado: "activo", clima: "despejado", azar: false, auto_resolver: false, hora_inicio_min: 120, nacion_azul: "venezuela", nacion_rojo: "estados_unidos", com_latencia_ms: 0, com_jitter_ms: 0, com_perdida_pct: 0 });
     }
     if (path === "/api/escenarios" && metodo === "GET") return json([ESC]);
-    if (path === "/api/usuarios") return json([[1, "prof", "instructor"], [2, "alfa", "azul"], [3, "bravo", "rojo"], [4, "obs", "observador"]].map(([id, username, rol]) => ({ id, username, rol, activo: true })));
+    if (path === "/api/usuarios") return json([[1, "prof", "instructor"], [2, "alfa", "azul"], [3, "bravo", "rojo"], [4, "obs", "observador"]].map(([id, username, rol]) => ({ id, username, rol, puesto: "mando", activo: true })));
     if (path === "/api/terreno/clase") return json({ clase: claseTerreno(parseFloat(q.get("lat"))) });
     if ((m = path.match(/^\/api\/escenarios\/1\/usuarios$/))) return json({ usuario_ids: [2, 3, 4] });
     if (path === "/api/escenarios/1/aar") return json(informe());
@@ -404,7 +405,7 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     const aviso = document.createElement("div");
-    aviso.textContent = `ARNÉS DE PRUEBAS · rol: ${ROL} · datos simulados`;
+    aviso.textContent = `ARNÉS DE PRUEBAS · rol: ${ROL}${BANDOS.includes(ROL) ? ` · puesto: ${PUESTO}` : ""} · datos simulados`;
     aviso.style.cssText = "position:fixed;left:8px;bottom:2px;z-index:9999;font:10px system-ui;color:#ffb703;background:rgba(0,0,0,.7);padding:1px 8px;border-radius:3px;pointer-events:none";
     document.body.appendChild(aviso);
   });

@@ -269,3 +269,8 @@ body.videowall #barra-herramientas { opacity: 0; pointer-events: none; }
 .lista-plantillas b { display: block; }
 .lista-plantillas p.ayuda { margin: 4px 0; }
 .lista-plantillas small { color: var(--texto-sec); }
+
+/* ---- fondo del mapa: satelite o relieve (dos capas base mutuamente excluyentes) ---- */
+.fila-base-mapa { display: flex; gap: 6px; margin-bottom: 8px; }
+.fila-base-mapa button { flex: 1; margin: 0; padding: 5px 4px; font-size: 12px; background: transparent; }
+.fila-base-mapa button.activa { background: var(--azul); border-color: var(--azul); color: #fff; font-weight: 700; }

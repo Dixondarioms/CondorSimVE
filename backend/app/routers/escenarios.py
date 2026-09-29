@@ -170,6 +170,7 @@ async def marcar_listo(
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(solo_alumnos),
 ):
+    auth.exigir_funcion(usuario, "listo")
     if esc.estado != "activo" or esc.fase != "decision":
         raise HTTPException(status_code=400, detail="El escenario no esta en fase de decision")
     ambos = clock.marcar_listo(db, esc, usuario.rol, payload.listo)
