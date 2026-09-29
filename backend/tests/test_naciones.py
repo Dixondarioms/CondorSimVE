@@ -30,7 +30,7 @@ def test_endpoint_naciones_publico_para_cualquier_rol(api):
         r = api(rol).get("/api/naciones")
         assert r.status_code == 200, rol
         ids = {n["id"] for n in r.json()["naciones"]}
-        assert {"venezuela", "colombia", "brasil", "guyana", "trinidad_tobago"} == ids
+        assert {"venezuela", "colombia", "brasil", "guyana", "trinidad_tobago", "estados_unidos"} == ids
     assert api().get("/api/naciones").status_code == 401
 
 

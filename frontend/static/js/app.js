@@ -1551,6 +1551,33 @@
     await cargarEscenarios(e.id);
   });
 
+  // ---------- escenarios precargados (plantillas) ----------
+  $("btn-plantillas").addEventListener("click", async () => {
+    const lista = $("plantilla-lista");
+    limpiar(lista);
+    let plantillas;
+    try { plantillas = (await api("GET", "/api/plantillas")).plantillas; } catch (_) { return; }
+    for (const p of plantillas) {
+      const li = document.createElement("li");
+      const info = document.createElement("div");
+      info.append(Object.assign(document.createElement("b"), { textContent: p.nombre }),
+        Object.assign(document.createElement("p"), { className: "ayuda", textContent: p.descripcion }),
+        Object.assign(document.createElement("small"), { textContent: `${p.unidades} unidades · ${p.objetivos} objetivos` }));
+      const btn = boton("Crear", async () => {
+        try {
+          const e = await api("POST", `/api/plantillas/${p.id}`);
+          $("dlg-plantillas").close();
+          toast(`Escenario «${e.nombre}» creado`, true);
+          await cargarEscenarios(e.id);
+        } catch (_) { /* toast ya mostrado */ }
+      }, "primario");
+      li.append(info, btn);
+      lista.appendChild(li);
+    }
+    $("dlg-plantillas").showModal();
+  });
+  $("plantilla-cerrar").addEventListener("click", () => $("dlg-plantillas").close());
+
   const accion = (id, ruta) => $(id).addEventListener("click", () => app.escenarioId && enSilencio(api("POST", rutaEsc(`/${ruta}`))));
   accion("btn-avanzar", "avanzar_turno");
   accion("btn-pausar", "pausar");

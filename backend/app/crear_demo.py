@@ -1,46 +1,27 @@
-"""Crea un escenario de demostracion en Venezuela (piedemonte andino / Llanos).
+"""Crea un escenario a partir de una plantilla precargada (ver engine/plantillas.py).
 
-    python -m app.crear_demo
+    python -m app.crear_demo                       # plantilla por defecto (demo generica)
+    python -m app.crear_demo defensa_3_enero_2026   # otra plantilla, por su id
 
-Ambos bandos empiezan sin verse: hay que explorar (la aviacion detecta mas lejos)
-y el terreno (montana, bosque) frena el avance y oculta a las unidades.
+Lo mismo se puede hacer desde la aplicacion (Consola -> Nuevo escenario -> "Desde una plantilla"),
+sin pasar por la linea de comandos.
 """
 
-from app.db import SessionLocal, init_db
-from app.engine import catalogo
-from app.models.escenario import Escenario
-from app.models.unidad import Unidad
+import sys
 
-UNIDADES = [
-    # nombre, bando, clase, lat, lon, escalon
-    ("1ra Brigada de Infanteria", "azul", "infanteria", 8.60, -70.60, "brigada"),
-    ("Grupo Blindado A", "azul", "blindado", 8.62, -70.45, "batallon"),
-    ("Artilleria de Campana A", "azul", "artilleria", 8.60, -70.55, "batallon"),
-    ("Ala de Caza 1", "azul", "caza", 8.70, -70.40, ""),
-    ("Base Aerea Barinas", "azul", "base_aerea", 8.62, -70.21, ""),
-    ("Batallon de Montana R", "rojo", "infanteria", 8.60, -70.85, "batallon"),
-    ("Compania de Fusileros R", "rojo", "infanteria", 8.75, -70.95, "compania"),
-    ("Escuadrilla R", "rojo", "caza", 8.80, -71.20, ""),
-    ("Deposito R Merida", "rojo", "deposito", 8.59, -71.14, ""),
-]
+from app.db import SessionLocal, init_db
+from app.engine import plantillas
 
 
 def main() -> None:
+    plantilla_id = sys.argv[1] if len(sys.argv) > 1 else "demo_llanos"
+    if plantilla_id not in plantillas.PLANTILLAS:
+        disponibles = ", ".join(plantillas.PLANTILLAS)
+        raise SystemExit(f"Plantilla desconocida: {plantilla_id!r}. Disponibles: {disponibles}")
     init_db()
     with SessionLocal() as db:
-        esc = Escenario(nombre="Demo: Piedemonte andino - Llanos")
-        db.add(esc)
-        db.flush()
-        for nombre, bando, clase_id, lat, lon, escalon in UNIDADES:
-            c = catalogo.CLASES[clase_id]
-            db.add(Unidad(
-                escenario_id=esc.id, nombre=nombre, bando=bando, tipo=c.tipo, clase=c.id,
-                echelon=escalon or c.escalon, lat=lat, lon=lon, velocidad_kmh=c.velocidad_kmh,
-                alcance_km=c.alcance_km, deteccion_km=c.deteccion_km, autonomia_km=c.autonomia_km,
-                sidc=catalogo.generar_sidc(bando, c, escalon),
-            ))
-        db.commit()
-        print(f"Escenario {esc.id} creado con {len(UNIDADES)} unidades.")
+        esc = plantillas.crear_desde_plantilla(db, plantilla_id)
+        print(f"Escenario {esc.id} ({esc.nombre!r}) creado desde la plantilla {plantilla_id!r}.")
 
 
 if __name__ == "__main__":

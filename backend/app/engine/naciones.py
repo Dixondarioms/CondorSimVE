@@ -24,6 +24,7 @@ NACIONES: dict[str, Nacion] = {n.id: n for n in [
     Nacion("brasil", "Brasil", "brasileño", "Brasilia", ("#009C3B", "#FFDF00", "#002776")),
     Nacion("guyana", "Guyana", "guyanés", "Georgetown", ("#009E49", "#FCD116", "#CE1126")),
     Nacion("trinidad_tobago", "Trinidad y Tobago", "trinitense", "Puerto España", ("#CE1126", "#000000", "#FFFFFF")),
+    Nacion("estados_unidos", "Estados Unidos", "estadounidense", "Washington D. C.", ("#B22234", "#FFFFFF", "#3C3B6E")),
 ]}
 
 

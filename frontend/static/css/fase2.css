@@ -261,3 +261,11 @@ body.videowall #barra-herramientas { opacity: 0; pointer-events: none; }
   #leyenda-mapa { display: none; }
   body.videowall #botones-movil { display: none; }
 }
+
+/* ---- escenarios precargados (plantillas) ---- */
+.lista-plantillas { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 60vh; overflow: auto; }
+.lista-plantillas li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; background: var(--panel-2); border: 1px solid var(--borde); border-radius: var(--radio); }
+.lista-plantillas li > div { min-width: 0; }
+.lista-plantillas b { display: block; }
+.lista-plantillas p.ayuda { margin: 4px 0; }
+.lista-plantillas small { color: var(--texto-sec); }

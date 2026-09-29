@@ -229,6 +229,28 @@ correlaciones (`consumo_en_combate`, `coincide_con_combate`, `combate_con_logist
 - **Límite:** no hay bases ni unidades reales de esos países cargadas de fábrica (a diferencia de las bases
   aéreas venezolanas, verificadas una por una); el instructor las ubica como cualquier otra unidad o base.
 
+## Escenarios precargados (plantillas)
+
+- **Qué son:** en lugar de armar un escenario unidad por unidad, *Nuevo escenario* → **Desde plantilla…**
+  (cabecera, junto a "Nuevo"; solo el instructor) crea uno nuevo (no reemplaza ninguno) con las unidades, los
+  objetivos, el clima y la identidad nacional ya definidos. También por línea de comandos:
+  `python -m app.crear_demo <id>` (sin argumento usa `demo_llanos`) y por la API (`GET /api/plantillas`,
+  `POST /api/plantillas/{id}`). Las plantillas están declaradas en `backend/app/engine/plantillas.py`.
+- **`demo_llanos`:** el escenario de práctica genérico de siempre (sin cambios).
+- **`defensa_3_enero_2026`** — *"3 de enero de 2026 (estudio): defensa del litoral central"*: para practicar la
+  defensa aérea y naval del litoral central en las horas previas a un ataque como el ocurrido la madrugada del
+  3 de enero de 2026, cuando fuerzas de EE. UU. bombardearon instalaciones militares en Caracas y Vargas
+  ("Operación Resolución Absoluta"). Bando azul = Venezuela, con unidades en las ubicaciones reales de La
+  Carlota, Fuerte Tiuna, el puerto de La Guaira y Charallave; bando rojo = una fuerza expedicionaria genérica
+  (sin modelo de aeronave específico, porque no se pretende representar los F-22/F-35/B-1B reales). Objetivos
+  de "proteger" para azul y de "destruir" para rojo, emparejados en esas cuatro instalaciones.
+  **Es una simplificación para el ejercicio, no una reconstrucción histórica**: la composición y el número de
+  fuerzas de ambos bandos son ficticios, las cifras de bajas varían según la fuente, y el desenlace político
+  real (la captura del jefe de Estado) queda fuera del alcance de este ejercicio táctico. Antes de usarla en
+  clase, ajuste las unidades y objetivos con lo que la institución considere pedagógicamente apropiado.
+- Para agregar una plantilla propia: una entrada más en `PLANTILLAS` (`engine/plantillas.py`), con sus
+  `UnidadPlantilla` y, si aplica, `ObjetivoPlantilla`; no hace falta tocar la base de datos ni el resto del código.
+
 ## Objetivos, puntaje y editor del escenario
 
 - **Objetivos** (*Consola → Objetivos y puntaje*; motor en `engine/objetivos.py`), cada uno para un bando y con

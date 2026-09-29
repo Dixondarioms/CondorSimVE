@@ -43,6 +43,7 @@
         </label>
         <label class="chk solo-instructor"><input type="checkbox" id="ver-archivados"><span>archivados</span></label>
         <button id="btn-nuevo-escenario" class="solo-instructor secundario" type="button">Nuevo</button>
+        <button id="btn-plantillas" class="solo-instructor secundario" type="button" title="Crear un escenario a partir de uno precargado">Desde plantilla…</button>
         <span id="estado-conexion" class="conexion off" title="desconectado"></span>
         <div id="reloj" class="reloj" role="timer" aria-live="off">
           <span class="etiqueta" id="reloj-etiqueta">TIEMPO RESTANTE PLANIFICACIÓN:</span>
@@ -478,6 +479,14 @@
       <h4>Cronología</h4>
       <ul id="tl-lista"></ul>
       <button>Cerrar</button>
+    </form>
+  </dialog>
+  <dialog id="dlg-plantillas" class="ancho">
+    <form id="plantilla-form" method="dialog">
+      <h3>Nuevo escenario desde una plantilla</h3>
+      <p class="ayuda">Crea un escenario nuevo (no reemplaza ninguno) con las unidades y los objetivos ya cargados.</p>
+      <ul id="plantilla-lista" class="lista-plantillas"></ul>
+      <button type="button" id="plantilla-cerrar" class="secundario">Cerrar</button>
     </form>
   </dialog>
   <dialog id="dlg-aeronaves" class="ancho">

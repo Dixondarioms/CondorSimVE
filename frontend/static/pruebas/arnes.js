@@ -29,6 +29,7 @@
     { id: "brasil", nombre: "Brasil", gentilicio: "brasileño", capital: "Brasilia", colores: ["#009C3B", "#FFDF00", "#002776"] },
     { id: "guyana", nombre: "Guyana", gentilicio: "guyanés", capital: "Georgetown", colores: ["#009E49", "#FCD116", "#CE1126"] },
     { id: "trinidad_tobago", nombre: "Trinidad y Tobago", gentilicio: "trinitense", capital: "Puerto España", colores: ["#CE1126", "#000000", "#FFFFFF"] },
+    { id: "estados_unidos", nombre: "Estados Unidos", gentilicio: "estadounidense", capital: "Washington D. C.", colores: ["#B22234", "#FFFFFF", "#3C3B6E"] },
   ];
   const base_ = (...a) => base(...a);
   const base = (id, nombre, bando, clase, lat, lon, x = {}) => ({
@@ -232,6 +233,17 @@
     if (path === "/api/auth/logout") return json({ ok: true });
     if (path === "/api/catalogo") { await cargaCatalogo; return json(CAT); }
     if (path === "/api/naciones") return json({ naciones: NACIONES });
+    if (path === "/api/plantillas" && metodo === "GET") {
+      return json({ plantillas: [
+        { id: "demo_llanos", nombre: "Demo: Piedemonte andino - Llanos", descripcion: "Escenario de práctica genérico.", nacion_azul: "venezuela", nacion_rojo: "", unidades: 9, objetivos: 0 },
+        { id: "defensa_3_enero_2026", nombre: "3 de enero de 2026 (estudio): defensa del litoral central", descripcion: "Ejercicio de estudio para practicar la defensa del litoral central. Simplificado; no es una reconstrucción histórica precisa.", nacion_azul: "venezuela", nacion_rojo: "estados_unidos", unidades: 9, objetivos: 8 },
+      ] });
+    }
+    if (path.match(/^\/api\/plantillas\/[^/]+$/) && metodo === "POST") {
+      if (ROL !== "instructor") return error("No autorizado para esta accion", 403);
+      const id = 100 + Math.floor(Math.random() * 900);
+      return json({ id, nombre: "Escenario de prueba (plantilla)", turno_actual: 1, fase: "decision", estado: "activo", clima: "despejado", azar: false, auto_resolver: false, hora_inicio_min: 120, nacion_azul: "venezuela", nacion_rojo: "estados_unidos", com_latencia_ms: 0, com_jitter_ms: 0, com_perdida_pct: 0 });
+    }
     if (path === "/api/escenarios" && metodo === "GET") return json([ESC]);
     if (path === "/api/usuarios") return json([[1, "prof", "instructor"], [2, "alfa", "azul"], [3, "bravo", "rojo"], [4, "obs", "observador"]].map(([id, username, rol]) => ({ id, username, rol, activo: true })));
     if (path === "/api/terreno/clase") return json({ clase: claseTerreno(parseFloat(q.get("lat"))) });
