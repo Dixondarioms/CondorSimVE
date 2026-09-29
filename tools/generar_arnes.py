@@ -34,7 +34,8 @@ def main() -> None:
         json.dumps({"clases": clases, "escalones": [e for e in catalogo.ESCALONES if e],
                     "climas": ["despejado", "nublado", "lluvia", "tormenta"],
                     "modelos": [catalogo.modelo_dict(m) for m in catalogo.MODELOS.values()],
-                    "aeronaves": {"max_grupo": catalogo.MAX_AERONAVES_GRUPO, "max_bando": catalogo.MAX_AERONAVES_BANDO}},
+                    "aeronaves": {"max_grupo": catalogo.MAX_AERONAVES_GRUPO, "max_bando": catalogo.MAX_AERONAVES_BANDO,
+                                  "max_drones": catalogo.MAX_DRONES_BANDO}},
                    ensure_ascii=False),
         encoding="utf-8")
 

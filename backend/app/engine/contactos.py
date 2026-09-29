@@ -3,6 +3,7 @@ el bando conserva donde y en que turno se la vio por ultima vez."""
 
 from sqlalchemy.orm import Session
 
+from app.engine import guerra_electronica as ge_mod
 from app.engine.vision import unidades_visibles
 from app.models.contacto import Contacto
 from app.models.escenario import Escenario
@@ -21,8 +22,9 @@ def actualizar_contactos(db: Session, escenario: Escenario, terreno: Terreno | N
         for c in db.query(Contacto).filter(Contacto.escenario_id == escenario.id)
     }
 
+    ge = ge_mod.contexto(db, escenario, en_resolucion=True)  # se llama al cerrar la resolucion del turno
     for bando in BANDOS:
-        for u in unidades_visibles(unidades, bando, terreno, escenario.clima):
+        for u in unidades_visibles(unidades, bando, terreno, escenario.clima, ge):
             if u.bando == bando or u.estado == "destruida":
                 continue
             c = existentes.get((bando, u.id))

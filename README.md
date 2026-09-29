@@ -90,7 +90,7 @@ cierra la sesión del alumno para que entre con su nueva interfaz.
 | Puesto | Conduce | Confirma LISTO |
 |---|---|---|
 | **EM · Estado Mayor** (por defecto) | Todo: es el comportamiento de siempre para un solo alumno por bando | Sí |
-| **A2 · Inteligencia** | Nada: sigue contactos, dibuja gráficos de blancos y usa la mensajería | No |
+| **A2 · Inteligencia** | Radares y unidades terrestres de guerra electrónica (escucha e interferencia); sigue contactos, dibuja gráficos de blancos | No |
 | **A3 · Operaciones en curso** | Las aeronaves ya creadas: despegue desde pista, rutas, patrullas, ataques, aterrizajes | No |
 | **A4 · Logística** | Ingenieros (puentes y vados) y convoyes de abastecimiento | No |
 | **A5 · Planificación** | Unidades terrestres y navales, y el envío de grupos de caza desde las bases | Sí |
@@ -230,6 +230,34 @@ correlaciones (`consumo_en_combate`, `coincide_con_combate`, `combate_con_logist
   Su-33 (variante naval), con su librea. `frontend/static/pruebas/modelos3d.html` muestra todos los modelos.
 - **Fotos:** de Wikimedia Commons, bajo CC BY-SA (créditos en `frontend/static/fotos/CREDITOS.md` y en la
   interfaz). Quien redistribuya el proyecto debe mantener esos créditos.
+
+## Guerra electrónica, radares y drones
+
+Abstracción didáctica (no un modelo de propagación), en la línea de los conceptos de GE de los juegos de guerra
+aérea: interferir cuesta quedar expuesto, y los drones dependen de su enlace.
+
+**Unidades** (el instructor las ubica; drones y avión de GE también se envían desde las bases aéreas con
+"✈ Enviar aeronaves o drones…", con **tope propio de 16 drones** que no descuenta del de 24 aeronaves tripuladas):
+
+| Unidad | Qué aporta |
+|---|---|
+| Radar de vigilancia aérea | Ve aeronaves en vuelo hasta 150 km, pero lo que está en tierra solo a ~8 km. Emite: la escucha enemiga lo localiza |
+| Guerra electrónica (terrestre) | **Escucha**: localiza radares, antiaérea guiada por radar e interferidores activos hasta 120 km. **Interfiere** 25 km a hasta 40 km de distancia |
+| Avión de guerra electrónica | Interfiere 40 km a hasta 60 km, en vuelo (gasta combustible como en órbita); escucha hasta 200 km. Sin armas |
+| Dron de reconocimiento | Detección 45 km, gran autonomía, sin armas; firma radar pequeña (se lo detecta a la mitad de distancia) |
+| Dron armado | Misiles ligeros contra vehículos y buques; firma radar pequeña |
+| Munición merodeadora (kamikaze) | Un solo ataque muy potente: se destruye al impactar |
+
+**Orden "Interferir"** (unidades de GE; clic en el mapa en el centro de la zona): la zona rige durante la
+resolución de ese turno y la planificación del siguiente; para sostenerla hay que volver a ordenarla. Dentro de
+ella, contra el bando contrario: sus sensores detectan al **30 %** (radares al **20 %**; a ojo siempre 3 km), su
+**antiaérea guiada por radar** pierde el **60 %** de efecto contra aeronaves (la portátil infrarroja no), y sus
+**drones pierden el enlace** y no aceptan órdenes (siguen su patrulla o mantienen posición). **Interferir delata**:
+el interferidor es visible para el enemigo mientras emite, y recibe un aviso con la zona. Las zonas se ven en el
+mapa (capa "Guerra electrónica") y el detalle de una unidad afectada lo explica.
+
+**Puestos**: los radares y la GE terrestre los conduce **A2 Inteligencia**; el avión de GE y los drones, como toda
+aeronave, **A3 Operaciones**; el envío desde la base, **A5 Planificación**.
 
 ## Ejercicios con o contra los países vecinos
 

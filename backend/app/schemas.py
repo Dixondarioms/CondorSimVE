@@ -169,7 +169,7 @@ class UnidadOut(BaseModel):
 
 class OrdenCreate(BaseModel):
     unidad_id: int
-    tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar"]
+    tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar", "interferir"]
     waypoints: list[tuple[float, float]] = Field(default_factory=list, max_length=30)
     objetivo_unidad_id: int | None = None
     # solo para "construir": obra que se tiende en el punto indicado

@@ -15,6 +15,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.engine import catalogo, geo
+from app.engine import guerra_electronica as ge_mod
 from app.engine import objetivos as objetivos_mod
 from app.engine.vision import unidades_visibles
 from app.models.contacto import Contacto
@@ -48,7 +49,7 @@ def unidades_visibles_para(
     unidades = db.query(Unidad).filter(Unidad.escenario_id == escenario.id).all()
     if not es_bando(rol):
         return unidades
-    return unidades_visibles(unidades, rol, terreno or get_terreno(), escenario.clima)
+    return unidades_visibles(unidades, rol, terreno or get_terreno(), escenario.clima, ge_mod.contexto(db, escenario))
 
 
 def grafico_visible(bando_grafico: str, rol: str) -> bool:
@@ -146,6 +147,8 @@ def estado_para(
         "unidades": unidades_out,
         "contactos": contactos,
         "obras": [ObraOut.model_validate(o).model_dump() for o in obras],
+        # la interferencia no es secreta: el interferido la sufre y el emisor queda localizado
+        "interferencias": [ge_mod.serializar(z) for z in ge_mod.contexto(db, escenario).zonas],
         "graficos": [serializar_grafico(g) for g in graficos],
         "objetivos": objetivos_para(db, escenario, rol),
         "marcador": objetivos_mod.marcador(db, escenario),

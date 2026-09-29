@@ -319,7 +319,8 @@
     c.waypoints = L.layerGroup().addTo(map);
     c.obras = L.layerGroup().addTo(map);
     c.objetivos = L.layerGroup().addTo(map);
-    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, contactos: true, referencias: true, graficos: true, bases_ven: true, objetivos: true };
+    c.ge = L.layerGroup().addTo(map);
+    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, contactos: true, referencias: true, graficos: true, bases_ven: true, objetivos: true, ge: true };
     if (app.capaActiva.niebla) c.niebla.addTo(map);
 
     let pendiente = null;
@@ -388,6 +389,11 @@
     if (esAlumno() && app.modoOrden === "patrullar" && app.unidadOrden) {
       app.patrullaPunto = [lat, lng];
       dibujarPatrulla();
+      return;
+    }
+    if (esAlumno() && app.modoOrden === "interferir" && app.unidadOrden) {
+      app.interferenciaPunto = [lat, lng];
+      dibujarInterferencia();
       return;
     }
     if (esAlumno() && app.modoOrden === "mover" && app.unidadOrden) {
@@ -676,6 +682,24 @@
       + (horas ? ` (${horas === 1 ? "llega este turno" : `llega en ${horas} turnos`})` : "") + `. Vigila un radio de ${u.alcance_km} km.`;
   }
 
+  /** Vista previa de la interferencia: alcance del interferidor y zona que cubriria sobre el punto elegido. */
+  function dibujarInterferencia() {
+    const g = app.capas.preview;
+    g.clearLayers();
+    const u = app.porId.get(app.unidadOrden);
+    const cl = u ? claseDe(u) : null;
+    if (!u || !cl || app.modoOrden !== "interferir") return;
+    L.circle([u.lat, u.lon], { radius: u.alcance_km * 1000, color: "#c77dff", weight: 1, dashArray: "6 4", fill: false, interactive: false })
+      .bindTooltip("Alcance del interferidor").addTo(g);
+    if (!app.interferenciaPunto) { $("o-interferencia-info").textContent = "Aún no eligió el centro de la zona."; return; }
+    const [lat, lon] = app.interferenciaPunto;
+    const d = Logica.distanciaKm(u.lat, u.lon, lat, lon);
+    L.circle(app.interferenciaPunto, { radius: cl.interferencia_km * 1000, color: "#c77dff", weight: 2, dashArray: "2 6", fillColor: "#c77dff", fillOpacity: 0.12, interactive: false }).addTo(g);
+    L.circleMarker(app.interferenciaPunto, { radius: 6, color: "#c77dff", fillColor: "#2a1540", fillOpacity: 0.9 }).bindTooltip("Centro de la interferencia").addTo(g);
+    $("o-interferencia-info").textContent = `Centro: ${lat.toFixed(3)}, ${lon.toFixed(3)} · a ${d.toFixed(0)} km · radio ${cl.interferencia_km} km`
+      + (d > u.alcance_km ? ` (fuera del alcance de ${u.alcance_km} km)` : "") + ".";
+  }
+
   function dibujarSeleccion() {
     const g = app.capas.seleccion;
     g.clearLayers();
@@ -711,7 +735,7 @@
       } else if (propia && u.clase === "base_aerea") {
         app.baseSeleccionada = id;
       } else if (propia && u.estado === "activa" && u.tipo !== "base" && Logica.puestoPuede(puestoActual(), Logica.funcionDeOrden(u, null, claseDe(u)))) {
-        if (app.unidadOrden !== id) { app.unidadOrden = id; app.waypoints = []; app.obraSitio = null; app.patrullaPunto = null; dibujarWaypoints(); if (app.modoOrden === "construir") dibujarSitioObra(); }
+        if (app.unidadOrden !== id) { app.unidadOrden = id; app.waypoints = []; app.obraSitio = null; app.patrullaPunto = null; app.interferenciaPunto = null; dibujarWaypoints(); if (app.modoOrden === "construir") dibujarSitioObra(); }
       }
     } else if (esInstructor() && u) {
       $("adj-unidad").value = String(id);
@@ -854,6 +878,8 @@
     else if (cl && cl.armamento) notas.push(cl.armamento);
     if (cl && cl.vulnerable_emboscada) notas.push("Vulnerable a emboscadas: recibe mucho más daño si el atacante no fue detectado.");
     if (cl && cl.nodo_movil_km) notas.push(`Nodo móvil de reabastecimiento (radio ${cl.nodo_movil_km} km). Gasta suministros por cada unidad que abastece.`);
+    const interferida = app.porId.get(app.seleccion) ? Logica.textoInterferido(u, cl, app.data && app.data.interferencias) : "";
+    if (interferida) notas.push(interferida);
     if (oculto) notas.push("Niebla de guerra: de las unidades enemigas solo se conoce su posición y clase.");
     const foto = modelo
       ? `<figure class="foto-modelo"><img src="${escapar(modelo.foto)}" alt="${escapar(modelo.nombre)}">`
@@ -884,12 +910,12 @@
     const rol = bandoVista() || app.usuario.rol;
     const bases = Logica.basesAereasPropias(data.unidades, rol);
     const tope = (app.catalogo.aeronaves || {}).max_bando || 24;
-    const usadas = Logica.aeronavesComprometidas(data.unidades, data.ordenes, rol);
+    const usadas = Logica.aeronavesComprometidas(data.unidades, data.ordenes, rol, false, app.catalogo);
     $("aviacion-tope").textContent = `${usadas}/${tope}`;
     const puede = data.escenario.estado === "activo" && data.escenario.fase === "decision" && bases.length > 0;
     $("btn-enviar-caza").disabled = !puede;
     $("aviacion-ayuda").textContent = bases.length
-      ? "Elija F-16 o Su-30 (con foto y datos) y la base de la que despegan. El grupo aparece al resolverse el turno."
+      ? "Elija el caza, el dron o el avión de guerra electrónica (con imagen y datos) y la base de la que despegan. El grupo aparece al resolverse el turno; los drones tienen su propio tope."
       : "Su bando no tiene una base aérea activa: pídale al instructor que coloque una desde la capa «Bases aéreas de Venezuela».";
   }
   $("btn-enviar-caza").addEventListener("click", () => app.aviacion && app.aviacion.abrirDespegue(app.baseSeleccionada));
@@ -914,8 +940,11 @@
     const puedeAterrizar = aerea && !u.en_tierra;
     $("modo-patrullar").hidden = !aerea;
     $("modo-aterrizar").hidden = !puedeAterrizar;
+    const interfiere = Logica.puedeInterferir(u, cl);
+    $("modo-interferir").hidden = !interfiere;
     if (app.modoOrden === "patrullar" && !aerea) app.modoOrden = "mover";
     if (app.modoOrden === "aterrizar" && !puedeAterrizar) app.modoOrden = "mover";
+    if (app.modoOrden === "interferir" && !interfiere) app.modoOrden = "mover";
     const espera = u && u.en_tierra && u.espera_restante > 0;
     $("o-espera").hidden = !espera;
     if (espera) $("o-espera").textContent = `En tierra: podrá despegar en ${u.espera_restante} turno${u.espera_restante === 1 ? "" : "s"}; hasta entonces no acepta órdenes de vuelo.`;
@@ -926,6 +955,7 @@
     $("o-construir").hidden = app.modoOrden !== "construir";
     $("o-patrullar").hidden = app.modoOrden !== "patrullar";
     $("o-aterrizar").hidden = app.modoOrden !== "aterrizar";
+    $("o-interferir").hidden = app.modoOrden !== "interferir";
     if (app.modoOrden === "aterrizar" && u) {
       const opciones = Logica.opcionesDeAterrizaje(u, data.unidades);
       llenarSelect($("o-base"), opciones.map((o) => [o.base.id, `${o.base.nombre} · ${Math.round(o.km)} km`]));
@@ -937,7 +967,7 @@
           : `A ${Math.round(elegida.km)} km: tardará ${elegida.turnos} turnos en llegar.`
             + (elegida.alcanzaCombustible ? "" : ` Necesita ~${Math.round(elegida.combustibleNecesario)} % de combustible y tiene ${Math.round(u.combustible)} %.`);
     }
-    $("o-objetivo-box").hidden = ["mover", "construir", "patrullar", "aterrizar"].includes(app.modoOrden);
+    $("o-objetivo-box").hidden = ["mover", "construir", "patrullar", "aterrizar", "interferir"].includes(app.modoOrden);
     if (app.modoOrden === "atacar" || app.modoOrden === "apoyar") {
       const lista = Logica.objetivosDisponibles(data.unidades, app.usuario.rol, app.modoOrden, app.unidadOrden);
       llenarSelect($("o-objetivo"), lista.map((x) => [x.id, x.nombre]));
@@ -953,6 +983,7 @@
     if (app.modoOrden === "mover") pedirPreview();
     else if (app.modoOrden === "construir") dibujarSitioObra();
     else if (app.modoOrden === "patrullar") dibujarPatrulla();
+    else if (app.modoOrden === "interferir") dibujarInterferencia();
     if (app.data) actualizarNuevaOrden(app.data);
   }));
   $("btn-limpiar-wp").addEventListener("click", () => { app.waypoints = []; dibujarWaypoints(); });
@@ -967,6 +998,9 @@
     } else if (app.modoOrden === "patrullar") {
       if (!app.patrullaPunto) return toast("Haga clic en el mapa donde quiere que patrulle.");
       cuerpo.waypoints = [app.patrullaPunto];
+    } else if (app.modoOrden === "interferir") {
+      if (!app.interferenciaPunto) return toast("Haga clic en el mapa en el centro de la zona a interferir.");
+      cuerpo.waypoints = [app.interferenciaPunto];
     } else if (app.modoOrden === "aterrizar") {
       const base = parseInt($("o-base").value, 10);
       if (!base) return toast("Elija una base propia con plazas libres.");
@@ -986,10 +1020,12 @@
       app.waypoints = [];
       app.obraSitio = null;
       app.patrullaPunto = null;
+      app.interferenciaPunto = null;
       dibujarWaypoints();
       app.capas.preview.clearLayers();
       $("o-sitio").textContent = "";
       $("o-patrulla-punto").textContent = "";
+      $("o-interferencia-info").textContent = "";
     } catch (_) { /* toast ya mostrado */ }
   });
 
@@ -1001,6 +1037,7 @@
     if (o.tipo === "construir") return `Construir ${o.detalle || "obra"}`;
     if (o.tipo === "despegar") return Logica.textoDespegue(o, app.catalogo && app.catalogo.modelos);
     if (o.tipo === "patrullar") return `Patrullar (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;
+    if (o.tipo === "interferir") return `Interferir sobre (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;
     if (o.tipo === "aterrizar") {
       const b = app.porId.get(o.objetivo_unidad_id);
       return `Aterrizar en ${b ? b.nombre : "la base"}${o.detalle === "combustible critico" ? " (combustible crítico)" : ""}`;
@@ -1193,6 +1230,7 @@
     dibujarUnidades(data.unidades);
     dibujarContactos(data.contactos || []);
     dibujarObras(data.obras || []);
+    dibujarInterferencias(data.interferencias || []);
     dibujarObjetivos(data.objetivos || []);
     dibujarCoberturaYNiebla(data.unidades, data.escenario.clima);
     dibujarOrdenes(data);
@@ -1217,6 +1255,25 @@
         keyboard: false,
       }).bindTooltip(`${o.tipo === "puente" ? "Puente" : "Vado"} (${o.bando}) · transitable hasta el turno ${o.expira_turno}`, { direction: "top" }).addTo(g);
       L.circle([o.lat, o.lon], { radius: o.radio_km * 1000, color: enemiga ? "#EF233C" : "#ffd166", weight: 1, dashArray: "3 4", fillOpacity: 0.05, interactive: false }).addTo(g);
+    }
+  }
+
+  // ---------- guerra electronica: zonas de interferencia vigentes ----------
+  function dibujarInterferencias(zonas) {
+    const g = app.capas.ge;
+    g.clearLayers();
+    const vista = bandoVista();
+    for (const z of zonas) {
+      const propia = !vista || z.bando === vista;
+      const quien = z.bando === "azul" ? "Azul" : "Rojo";
+      const texto = `Interferencia electrónica (${quien}) · radio ${Math.round(z.radio_km)} km · vigente hasta resolver el turno ${z.turno + 1}`
+        + (propia && vista ? "" : vista ? " · sus sensores, antiaérea y drones están degradados aquí" : "");
+      L.circle([z.lat, z.lon], { radius: z.radio_km * 1000, color: "#c77dff", weight: 2, dashArray: "2 7", fillColor: COLOR[z.bando] || "#c77dff", fillOpacity: 0.1, interactive: true })
+        .bindTooltip(texto, { sticky: true }).addTo(g);
+      L.marker([z.lat, z.lon], {
+        icon: L.divIcon({ className: "ge-zona", iconSize: [30, 18], iconAnchor: [15, 9], html: '<span style="display:block;font:700 10px system-ui;color:#fff;background:#7b2cbf;border:1px solid #e0aaff;border-radius:3px;text-align:center;line-height:16px">GE</span>' }),
+        keyboard: false, interactive: false,
+      }).addTo(g);
     }
   }
 

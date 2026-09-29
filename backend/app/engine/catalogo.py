@@ -47,6 +47,15 @@ class Clase:
     nodo_movil_km: float = 0.0  # radio de reabastecimiento de un convoy (0 = no es nodo movil)
     carga_max: float = 0.0  # suministros que transporta un convoy (%)
     construye: bool = False  # puede tender puentes y vados
+    # ---- sensores, guerra electronica y drones (ver engine/guerra_electronica.py) ----
+    firma: float = 1.0  # multiplica la distancia a la que se la detecta (drones: firma radar pequena)
+    solo_aereo: bool = False  # sensor que ve aeronaves en vuelo muy lejos, pero lo que esta en tierra solo de cerca
+    emisor: bool = False  # emite (radar): la escucha electronica enemiga lo localiza a gran distancia
+    escucha_km: float = 0.0  # radio en que localiza emisores enemigos (0 = no escucha)
+    interferencia_km: float = 0.0  # radio de la zona que puede interferir (0 = no interfiere)
+    dron: bool = False  # aeronave no tripulada: pierde el enlace dentro de una interferencia enemiga
+    se_consume: bool = False  # municion merodeadora: se destruye al atacar
+    celula: str = ""  # "ge": radares y guerra electronica, que conduce el puesto A2
 
 
 def _atk(t=1.0, a=1.0, n=1.0):
@@ -64,7 +73,8 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
     Clase("reconocimiento", "Reconocimiento", "terrestre", "G", "UCR---", 60, 6, 16, 350, _atk(0.6, 0.2, 0.3), 0.8,
           "seccion", movilidad="ligera"),
     Clase("antiaerea", "Defensa antiaerea", "terrestre", "G", "UCD---", 30, 20, 20, 250, _atk(0.4, 2.0, 0.2), 0.9,
-          "batallon"),
+          "batallon", emisor=True,
+          armamento="Misiles y canones guiados por radar: la guerra electronica enemiga la localiza y la degrada"),
     Clase("antiaerea_portatil", "Antiaerea portatil (tipo IGLA-S)", "terrestre", "G", "UCDM--", 20, 5, 10, 200,
           _atk(0.0, 2.6, 0.0), 0.6, "equipo", movilidad="ligera", municion_por_ataque=50.0,
           despliegue_turnos=1, recarga_turnos=1,
@@ -76,6 +86,16 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
           _atk(0.0, 0.0, 0.0), 0.5, "compania", suministra=("terrestre",), vulnerable_emboscada=True,
           nodo_movil_km=3.0, carga_max=100.0,
           armamento="Convoy: reabastece en marcha a las unidades terrestres a <= 3 km; muy vulnerable a emboscadas"),
+    # ---- sensores y guerra electronica terrestres (los conduce el puesto A2) ----
+    Clase("radar", "Radar de vigilancia aerea", "terrestre", "G", "ESR---", 15, 0, 150, 150, _atk(0.0, 0.0, 0.0), 0.5,
+          "", movilidad="pesada", solo_aereo=True, emisor=True, celula="ge",
+          armamento="Radar 3D: ve aeronaves en vuelo hasta 150 km, pero lo que esta en tierra solo a pocos km. "
+                    "Emite: la escucha enemiga lo localiza"),
+    Clase("guerra_electronica", "Guerra electronica (escucha e interferencia)", "terrestre", "G", "UUMSE-", 35, 40, 10,
+          300, _atk(0.0, 0.0, 0.0), 0.6, "compania", movilidad="pesada", escucha_km=120.0, interferencia_km=25.0,
+          celula="ge",
+          armamento="Escucha: localiza radares e interferidores enemigos hasta 120 km. Interferencia: degrada "
+                    "sensores, antiaerea y enlaces de drones enemigos en 25 km a hasta 40 km de la unidad; al emitir se delata"),
     # ---- aereas ----
     Clase("caza", "Caza", "aerea", "A", "MFF---", 900, 80, 60, 1800, _atk(0.7, 1.25, 0.7), 1.0, movilidad="aerea"),
     Clase("ataque", "Ataque a tierra", "aerea", "A", "MFA---", 700, 100, 30, 2000, _atk(1.3, 0.4, 1.2), 0.8,
@@ -85,6 +105,19 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
     Clase("helicoptero_artillado", "Helicoptero de transporte artillado", "aerea", "A", "MHU---", 220, 6, 15, 450,
           _atk(0.45, 0.15, 0.3), 0.7, movilidad="aerea", penalizacion_movilidad=0.15, cadencia_fuego=1.6,
           armamento="Ametralladora de 12,7 mm en afuste: alta cadencia (mas municion), -15 % de velocidad por peso"),
+    Clase("avion_ge", "Avion de guerra electronica", "aerea", "A", "MFJ---", 750, 60, 60, 2500, _atk(0.0, 0.0, 0.0),
+          0.6, movilidad="aerea", escucha_km=200.0, interferencia_km=40.0,
+          armamento="Interferidor en orbita: degrada sensores, antiaerea y enlaces de drones enemigos en 40 km a hasta "
+                    "60 km de su posicion; escucha emisores hasta 200 km. Sin armas"),
+    Clase("dron_reconocimiento", "Dron de reconocimiento", "aerea", "A", "MFQR--", 150, 0, 45, 1500,
+          _atk(0.0, 0.0, 0.0), 0.35, movilidad="aerea", firma=0.5, dron=True,
+          armamento="Camaras electroopticas e infrarrojas, sin armas. Firma radar pequena: se lo detecta a la mitad de distancia"),
+    Clase("dron_ataque", "Dron armado", "aerea", "A", "MFQA--", 200, 15, 30, 1200, _atk(0.9, 0.0, 0.6), 0.35,
+          movilidad="aerea", firma=0.6, dron=True, municion_por_ataque=50.0,
+          armamento="Misiles guiados ligeros contra vehiculos y buques (2 ataques por carga); firma radar pequena"),
+    Clase("municion_merodeadora", "Municion merodeadora (dron kamikaze)", "aerea", "A", "MFQA--", 180, 5, 15, 300,
+          _atk(1.4, 0.0, 1.0), 0.2, movilidad="aerea", firma=0.4, dron=True, se_consume=True,
+          armamento="Merodea sobre la zona y se estrella contra el blanco: un solo ataque, se destruye al impactar"),
     # ---- navales ----
     Clase("fragata", "Fragata", "naval", "S", "CLFF--", 40, 40, 30, 4000, _atk(0.6, 0.5, 1.2), 1.0, movilidad="naval"),
     Clase("patrullero", "Patrullero", "naval", "S", "CPSB--", 55, 20, 20, 1500, _atk(0.4, 0.3, 0.9), 0.7,
@@ -117,6 +150,7 @@ def obtener(clase: str | None, tipo: str) -> Clase:
 TAMANO_GRUPO_REFERENCIA = 4  # un grupo de 4 aeronaves rinde "1.0"
 MAX_AERONAVES_GRUPO = 8
 MAX_AERONAVES_BANDO = 24  # tope de aeronaves de combate en vuelo o en pista por bando (despegues de los alumnos)
+MAX_DRONES_BANDO = 16  # los drones tienen su propio tope y no cuentan para el de aeronaves tripuladas
 
 
 @dataclass(frozen=True)
@@ -140,6 +174,10 @@ class Modelo:
     credito: dict  # autor, licencia, url_licencia, pagina
 
 
+_CREDITO_PROPIO = {"autor": "Simulador Fenix (ilustracion propia)", "licencia": "CC0",
+                   "url_licencia": "https://creativecommons.org/publicdomain/zero/1.0/",
+                   "pagina": "/static/fotos/CREDITOS.md"}
+
 MODELOS: dict[str, Modelo] = {m.id: m for m in [
     Modelo(
         "f16", "caza", "F-16A/B Fighting Falcon", "F-16", "General Dynamics (hoy Lockheed Martin)", "Estados Unidos",
@@ -162,6 +200,43 @@ MODELOS: dict[str, Modelo] = {m.id: m for m in [
         "/static/fotos/su30.jpg",
         {"autor": "Carlos E. Perez S.L", "licencia": "CC BY-SA 4.0", "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
          "pagina": "https://commons.wikimedia.org/wiki/File:Sukhoi_Su-30MK2_de_Venezuela.jpg"},
+    ),
+    # ---- no tripulados y guerra electronica: modelos genericos (parametros didacticos, sin fabricante real) ----
+    Modelo(
+        "uav_reco", "dron_reconocimiento", "Dron de reconocimiento (UAV tactico)", "UAV-R", "Generico", "-",
+        "Vigilancia y reconocimiento no tripulado",
+        "Aeronave no tripulada de largo aliento: ve lejos y se la detecta tarde, pero no lleva armas y dentro de una "
+        "interferencia enemiga pierde el enlace y no acepta ordenes.",
+        "Sin armas: camaras electroopticas e infrarrojas.",
+        150, 0, 45, 1500, _atk(0.0, 0.0, 0.0), 0.35,
+        "/static/fotos/dron_reconocimiento.svg", _CREDITO_PROPIO,
+    ),
+    Modelo(
+        "uav_armado", "dron_ataque", "Dron armado (UAV de media altitud)", "UAV-A", "Generico", "-",
+        "Ataque de precision no tripulado",
+        "Dron con misiles ligeros para atacar vehiculos y buques a distancia. Lento y fragil si lo detectan; "
+        "vulnerable a la interferencia de su enlace.",
+        "Dos misiles guiados ligeros (2 ataques por carga).",
+        200, 15, 30, 1200, _atk(0.9, 0.0, 0.6), 0.35,
+        "/static/fotos/dron_armado.svg", _CREDITO_PROPIO,
+    ),
+    Modelo(
+        "merodeadora", "municion_merodeadora", "Municion merodeadora (dron kamikaze)", "Kamikaze", "Generico", "-",
+        "Ataque de un solo uso",
+        "Pequeno dron que merodea sobre la zona y se estrella contra el blanco. Muy dificil de detectar, "
+        "corto alcance; se pierde al atacar.",
+        "Carga explosiva (un solo ataque).",
+        180, 5, 15, 300, _atk(1.4, 0.0, 1.0), 0.2,
+        "/static/fotos/municion_merodeadora.svg", _CREDITO_PROPIO,
+    ),
+    Modelo(
+        "ge_aereo", "avion_ge", "Avion de guerra electronica (interferidor)", "GE", "Generico", "-",
+        "Interferencia y escucha desde el aire",
+        "Avion con interferidores y receptores: en orbita, fuera del alcance de la defensa enemiga, interfiere sus "
+        "sensores, antiaerea y drones, y localiza sus radares. Sin armas: necesita escolta.",
+        "Interferidores y receptores de escucha; sin armas.",
+        750, 60, 60, 2500, _atk(0.0, 0.0, 0.0), 0.6,
+        "/static/fotos/avion_ge.svg", _CREDITO_PROPIO,
     ),
 ]}
 
@@ -212,5 +287,7 @@ def como_dict(c: Clase) -> dict:
         "penalizacion_movilidad": c.penalizacion_movilidad, "cadencia_fuego": c.cadencia_fuego,
         "despliegue_turnos": c.despliegue_turnos, "recarga_turnos": c.recarga_turnos, "armamento": c.armamento,
         "vulnerable_emboscada": c.vulnerable_emboscada, "nodo_movil_km": c.nodo_movil_km,
-        "carga_max": c.carga_max, "construye": c.construye,
+        "carga_max": c.carga_max, "construye": c.construye, "firma": c.firma, "solo_aereo": c.solo_aereo,
+        "emisor": c.emisor, "escucha_km": c.escucha_km, "interferencia_km": c.interferencia_km, "dron": c.dron,
+        "se_consume": c.se_consume, "celula": c.celula,
     }

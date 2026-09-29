@@ -32,7 +32,11 @@ def test_cada_modelo_tiene_clase_valida_foto_en_disco_y_credito():
     for m in catalogo.MODELOS.values():
         assert m.clase in catalogo.CLASES and catalogo.CLASES[m.clase].tipo == "aerea"
         assert (FRONTEND / m.foto.lstrip("/")).is_file(), m.foto
-        assert m.credito["autor"] and m.credito["licencia"].startswith("CC BY") and m.credito["pagina"].startswith("https://")
+        assert m.credito["autor"]
+        if m.foto.endswith(".svg"):  # ilustracion propia: dominio publico, creditos en fotos/CREDITOS.md
+            assert m.credito["licencia"] == "CC0" and m.credito["pagina"] == "/static/fotos/CREDITOS.md"
+        else:  # foto de terceros: licencia con atribucion y enlace a su origen
+            assert m.credito["licencia"].startswith("CC BY") and m.credito["pagina"].startswith("https://")
         assert m.ataque_vs.keys() == {"terrestre", "aerea", "naval"}
 
 
@@ -45,7 +49,8 @@ def test_el_sukhoi_tiene_mas_alcance_y_autonomia_que_el_f16():
 def test_el_catalogo_de_la_api_incluye_modelos_y_topes(api):
     cat = api("alfa").get("/api/catalogo").json()
     assert {m["id"] for m in cat["modelos"]} >= {"f16", "su30"}
-    assert cat["aeronaves"] == {"max_grupo": catalogo.MAX_AERONAVES_GRUPO, "max_bando": catalogo.MAX_AERONAVES_BANDO}
+    assert cat["aeronaves"] == {"max_grupo": catalogo.MAX_AERONAVES_GRUPO, "max_bando": catalogo.MAX_AERONAVES_BANDO,
+                                "max_drones": catalogo.MAX_DRONES_BANDO}
     assert api("alfa").get("/static/fotos/f16.jpg").status_code == 200
 
 

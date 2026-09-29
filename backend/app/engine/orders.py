@@ -23,10 +23,12 @@ from app.engine import aeronaves as aeronaves_mod
 from app.engine import azar as azar_mod
 from app.engine import catalogo, combat, geo, movimiento, vision
 from app.engine import clima as clima_mod
+from app.engine import guerra_electronica as ge_mod
 from app.engine.movimiento import TURNO_DURACION_HORAS  # noqa: F401  (reexportado)
 from app.models.aar import Combate, RegistroLogistico
 from app.models.escenario import Escenario
 from app.models.evento import Evento
+from app.models.interferencia import Interferencia
 from app.models.obra import Obra
 from app.models.orden import Orden
 from app.models.unidad import Unidad
@@ -76,11 +78,11 @@ def _bono_apoyo(objetivo: Unidad, apoyos: dict, unidades: dict) -> float:
     return 1.0 + min(bono, BONO_APOYO_TOPE)
 
 
-def _sorpresa(atacante: Unidad, defensor: Unidad, unidades, terreno: Terreno, clima: str) -> float:
+def _sorpresa(atacante: Unidad, defensor: Unidad, unidades, terreno: Terreno, clima: str, ge=None) -> float:
     """Multiplicador de ataque si el bando defensor no detecta al atacante (emboscada)."""
     for x in unidades:
         if x.bando == defensor.bando and x.estado == "activa" and x.deteccion_km:
-            if vision.detecta(x, atacante, terreno, clima):
+            if vision.detecta(x, atacante, terreno, clima, ge):
                 return 1.0
     return SORPRESA_EMBOSCADA if catalogo.obtener(defensor.clase, defensor.tipo).vulnerable_emboscada else SORPRESA_GENERAL
 
@@ -175,7 +177,8 @@ def procesar_ordenes(
         motivo = (
             "La base no existe." if base is None
             else aeronaves_mod.error_de_despegue(
-                base, modelo_id, n, aeronaves_mod.aeronaves_en_servicio(u for u in lista_unidades if u.bando == base.bando)
+                base, modelo_id, n, aeronaves_mod.aeronaves_en_servicio(
+                    (u for u in lista_unidades if u.bando == base.bando), aeronaves_mod.es_dron_modelo(modelo_id))
             )
         )
         if motivo:
@@ -195,6 +198,36 @@ def procesar_ordenes(
             descripcion=f"Despego {grupo.nombre} ({modelo.corto} x{n}) desde {base.nombre}.",
         ))
 
+    # ---- Fase 0b: guerra electronica. Cada interferencia rige este turno y la planificacion del siguiente ----
+    zonas: list[Interferencia] = []
+    for orden in [o for o in ordenes if o.tipo == "interferir"]:
+        u = unidades.get(orden.unidad_id)
+        punto = (json.loads(orden.waypoints_json or "[]") or [None])[0]
+        motivo = "La unidad no esta activa." if u is None or u.estado != "activa" else ge_mod.error_de_interferencia(u, punto)
+        if motivo:
+            rechazar(orden, motivo)
+            continue
+        radio = catalogo.obtener(u.clase, u.tipo).interferencia_km
+        zona = Interferencia(escenario_id=escenario.id, unidad_id=u.id, bando=u.bando, lat=punto[0], lon=punto[1],
+                             radio_km=radio, turno=turno)
+        db.add(zona)
+        zonas.append(zona)
+        if aeronaves_mod.en_vuelo(u):  # el avion de GE orbita para interferir: deja la patrulla y gasta combustible
+            u.mision, u.mision_lat, u.mision_lon = "", None, None
+            bit.poner(u, "combustible", u.combustible - aeronaves_mod.COMBUSTIBLE_LOITER, "interferencia", orden.id)
+        orden.estado = "resuelta"
+        orden.resultado = (
+            f"Interfiere en un radio de {radio:.0f} km sobre ({punto[0]:.3f}, {punto[1]:.3f}) durante este turno y la "
+            "planificacion del siguiente. Al emitir, el enemigo localiza al interferidor."
+        )
+        db.add(Evento(
+            escenario_id=escenario.id, turno=turno, tipo="guerra_electronica",
+            bando_destino="rojo" if u.bando == "azul" else "azul",
+            descripcion=(f"Interferencia electronica enemiga sobre ({punto[0]:.2f}, {punto[1]:.2f}), radio {radio:.0f} km: "
+                         "sensores, antiaerea y enlaces de drones degradados en la zona. El emisor fue localizado."),
+        ))
+    ge = ge_mod.Contexto(zonas)
+
     # ---- Fase 1: movimiento, vuelo, patrulla y aterrizaje ----
     con_orden_de_vuelo: set[int] = set()
     aterrizajes_del_turno: dict[int, int] = defaultdict(int)
@@ -204,6 +237,8 @@ def procesar_ordenes(
         base_destino = unidades.get(orden.objetivo_unidad_id) if orden.tipo == "aterrizar" and orden.objetivo_unidad_id else None
         if u is None or u.estado != "activa":
             rechazar(orden, "La unidad no esta activa.")
+        elif ge_mod.enlace_perdido(u, ge):
+            rechazar(orden, ge_mod.MOTIVO_SIN_ENLACE)
         elif u.tipo == "base" or u.velocidad_kmh <= 0:
             rechazar(orden, "La unidad no puede moverse.")
         elif u.en_tierra and u.espera_restante > 0:
@@ -329,7 +364,7 @@ def procesar_ordenes(
             x for x in lista_unidades
             if x.bando != u.bando and aeronaves_mod.en_vuelo(x)
             and geo.distancia_km(u.lat, u.lon, x.lat, x.lon) <= u.alcance_km
-            and any(vision.detecta(d, x, terreno, clima) for d in aliados)
+            and any(vision.detecta(d, x, terreno, clima, ge) for d in aliados)
         ]
         if not amenazas:
             continue
@@ -358,8 +393,13 @@ def procesar_ordenes(
         if d is None or d.bando == a.bando or d.estado != "activa":
             rechazar(orden, "Objetivo invalido o ya fuera de combate.")
             continue
+        if ge_mod.enlace_perdido(a, ge):
+            rechazar(orden, ge_mod.MOTIVO_SIN_ENLACE)
+            continue
         t_a, t_d = tipo_efectivo(a), tipo_efectivo(d)
         clase_a, clase_d = catalogo.perfil(a), catalogo.perfil(d)
+        # la antiaerea guiada por radar (emisora) pierde efecto contra aeronaves si esta interferida
+        aaa_interferida = clase_a.emisor and t_d == "aerea" and ge.interferido(a)
         if clase_a.ataque_vs.get(t_d, 0.0) <= 0:
             rechazar(orden, f"{clase_a.nombre} no puede atacar objetivos de tipo {t_d}.")
             continue
@@ -389,21 +429,26 @@ def procesar_ordenes(
             cobertura_aerea_atacante=_tiene_cobertura_aerea(a.bando, a.lat, a.lon, lista_unidades),
             bono_atacante=_bono_apoyo(a, apoyos, unidades),
             bono_defensor=_bono_apoyo(d, apoyos, unidades),
-            factor_ataque=clase_a.ataque_vs.get(t_d, 1.0) * catalogo.factor_grupo(a),
+            factor_ataque=clase_a.ataque_vs.get(t_d, 1.0) * catalogo.factor_grupo(a)
+            * (ge_mod.FACTOR_ANTIAEREA if aaa_interferida else 1.0),
             factor_defensa=clase_d.defensa * catalogo.factor_grupo(d),
             factor_clima=clima_mod.factor_ataque_aereo(clima) if a.tipo == "aerea" else 1.0,
             factor_municion=min(1.0, a.municion / consumo),
             azar=azar_mod.factor_azar(escenario.semilla, turno, a.id, d.id) if escenario.azar else 1.0,
-            sorpresa=_sorpresa(a, d, lista_unidades, terreno, clima),
+            sorpresa=_sorpresa(a, d, lista_unidades, terreno, clima, ge),
             cadencia=clase_a.cadencia_fuego,
         )
+        if aaa_interferida:
+            res.efectos.append(f"antiaerea interferida por guerra electronica x{ge_mod.FACTOR_ANTIAEREA:.2f}")
         perdidas[a.id] += fuerza_inicial[a.id] - res.fuerza_atacante_resultante
         perdidas[d.id] += fuerza_inicial[d.id] - res.fuerza_defensor_resultante
         gasto_municion[a.id] += consumo
         orden_de_ataque[a.id] = orden.id
         dispararon.add(a.id)
         orden.estado = "resuelta"
-        orden.resultado = f"Ataque a {d.nombre}. {res.resumen}"
+        orden.resultado = f"Ataque a {d.nombre}. {res.resumen}" + (
+            f" Antiaerea interferida por guerra electronica enemiga (x{ge_mod.FACTOR_ANTIAEREA:.2f})." if aaa_interferida else ""
+        )
         db.add(Combate(
             escenario_id=escenario.id, turno=turno, orden_id=orden.id,
             atacante_id=a.id, defensor_id=d.id, atacante_nombre=a.nombre, defensor_nombre=d.nombre,
@@ -419,6 +464,15 @@ def procesar_ordenes(
         u.fuerza = max(0.0, u.fuerza - perdida)
         if u.fuerza <= 0:
             u.estado = "destruida"
+    # la municion merodeadora se estrella contra su blanco: se pierde al atacar
+    for uid in sorted(dispararon):
+        u = unidades[uid]
+        if catalogo.obtener(u.clase, u.tipo).se_consume and u.estado == "activa":
+            u.estado, u.fuerza = "destruida", 0.0
+            db.add(Evento(
+                escenario_id=escenario.id, turno=turno, tipo="combate", bando_destino=u.bando,
+                descripcion=f"{u.nombre} impacto contra su blanco y se destruyo (municion merodeadora).",
+            ))
     for uid, gasto in gasto_municion.items():
         bit.poner(unidades[uid], "municion", unidades[uid].municion - gasto, "combate", orden_de_ataque.get(uid))
     # los aviones estacionados sufren parte del dano que recibe su base (ataques al aerodromo)

@@ -54,7 +54,12 @@
     base(12, "Depósito R", "rojo", "deposito", 8.700, -70.620),
     base(13, "Caza R", "rojo", "caza", 8.750, -70.500, { modelo: "su30", aeronaves: 2 }),
     base(14, "Recon Roja", "rojo", "reconocimiento", 9.600, -69.800),
+    base(16, "GE Escucha 1", "azul", "guerra_electronica", 8.580, -70.640),
+    base(17, "Vigía 1", "azul", "dron_reconocimiento", 8.640, -70.470, { modelo: "uav_reco", aeronaves: 1, echelon: "equipo" }),
+    base(18, "Radar Rojo", "rojo", "radar", 8.720, -70.560),
   ];
+  // zona de interferencia roja vigente (la emitio el turno anterior) sobre parte del despliegue azul
+  const INTERFERENCIAS = [{ id: 1, bando: "rojo", unidad_id: 13, lat: 8.63, lon: -70.49, radio_km: 12, turno: 2 }];
   const CONTACTO_FANTASMA = { unidad_id: 14, nombre: "Recon Roja", tipo: "terrestre", clase: "reconocimiento", lat: 9.6, lon: -69.8, turno_visto: 2 };
   let ordenes = [
     { id: 1, escenario_id: 1, unidad_id: 2, tipo: "mover", objetivo_unidad_id: null, waypoints: [[8.600, -70.570], [8.620, -70.550]], detalle: "", turno_emitida: 3, estado: "pendiente", resultado: "" },
@@ -128,6 +133,7 @@
     return {
       tipo: "estado", ahora: iso(), vista: esBando ? rol : "completa", escenario: esc, unidades, contactos,
       obras: OBRAS.filter((o) => !esBando || o.bando === rol || unidades.some((u) => u.bando === rol && km(u, o) <= 15)),
+      interferencias: INTERFERENCIAS,
       graficos: graficos.filter((g) => g.bando === "todos" || !esBando || g.bando === rol),
       objetivos: objetivos.filter((o) => !esBando || o.bando === rol),
       marcador: { azul: { objetivos: 30, bajas: 4, total: 34 }, rojo: { objetivos: 0, bajas: 3, total: 3 } },
@@ -269,6 +275,7 @@
         if (en + cuerpo.aeronaves > CAT.aeronaves.max_bando) return error(`Tope de ${CAT.aeronaves.max_bando} aeronaves por bando (${en} ya en servicio o comprometidas).`);
       }
       if (cuerpo.tipo === "construir" && !cl.construye) return error("Solo los ingenieros pueden construir puentes y vados");
+      if (cuerpo.tipo === "interferir" && !(cl.interferencia_km > 0)) return error("Solo las unidades de guerra electronica pueden interferir.");
       ordenes = ordenes.filter((o) => !(o.unidad_id === u.id && o.estado === "pendiente"));
       const detalle = cuerpo.tipo === "despegar" ? JSON.stringify({ modelo: cuerpo.modelo, aeronaves: cuerpo.aeronaves, indicativo: cuerpo.indicativo || "" }) : cuerpo.detalle || "";
       const o = { id: proximaOrden++, escenario_id: 1, unidad_id: u.id, tipo: cuerpo.tipo, objetivo_unidad_id: cuerpo.objetivo_unidad_id, waypoints: cuerpo.waypoints || [], detalle, turno_emitida: ESC.turno_actual, estado: "pendiente", resultado: "" };

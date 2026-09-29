@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Dron de reconocimiento (ilustración)">
+  <defs>
+    <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16263b"/><stop offset="1" stop-color="#3d5a80"/></linearGradient>
+    <linearGradient id="casco" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8e99a6"/><stop offset=".5" stop-color="#e3e8ee"/><stop offset="1" stop-color="#8e99a6"/></linearGradient>
+    <linearGradient id="ala" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef2f6"/><stop offset="1" stop-color="#a3adb8"/></linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#cielo)"/>
+  <g stroke="#fff" stroke-opacity=".06"><path d="M0 60H640M0 120H640M0 180H640M0 240H640M0 300H640M80 0V360M160 0V360M240 0V360M320 0V360M400 0V360M480 0V360M560 0V360"/></g>
+  <g transform="translate(320 176)">
+    <ellipse cx="6" cy="14" rx="290" ry="20" fill="#000" opacity=".18"/>
+    <path d="M-285 -4 L-24 -16 L24 -16 L285 -4 L285 7 L24 12 L-24 12 L-285 7 Z" fill="url(#ala)" stroke="#5c6773" stroke-width="1.5"/>
+    <path d="M-285 -4 L-285 7 M285 -4 L285 7" stroke="#e63946" stroke-width="4"/>
+    <path d="M0 -122 C15 -112 17 -84 17 -44 L14 92 C12 110 6 120 0 124 C-6 120 -12 110 -14 92 L-17 -44 C-17 -84 -15 -112 0 -122 Z" fill="url(#casco)" stroke="#5c6773" stroke-width="1.5"/>
+    <circle cx="0" cy="-96" r="10" fill="#223344" stroke="#9fb3c8" stroke-width="2"/>
+    <circle cx="-3" cy="-99" r="3" fill="#7fd1ff"/>
+    <path d="M-5 104 L-74 148 L-66 157 L-2 122 Z M5 104 L74 148 L66 157 L2 122 Z" fill="url(#ala)" stroke="#5c6773" stroke-width="1.5"/>
+    <rect x="-34" y="124" width="68" height="5" rx="2" fill="#2b2d31"/>
+    <path d="M-12 -30 H12 M-10 20 H10" stroke="#5c6773" stroke-width="1"/>
+  </g>
+  <text x="20" y="340" font-family="system-ui, sans-serif" font-size="14" fill="#cfe2f3" opacity=".85">UAV de reconocimiento · ilustración genérica</text>
+</svg>

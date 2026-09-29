@@ -22,7 +22,7 @@
     let elegido = null; // id del modelo marcado en el selector
 
     const modelos = () => (ctx.catalogo() && ctx.catalogo().modelos) || [];
-    const topes = () => (ctx.catalogo() && ctx.catalogo().aeronaves) || { max_grupo: 8, max_bando: 24 };
+    const topes = () => (ctx.catalogo() && ctx.catalogo().aeronaves) || { max_grupo: 8, max_bando: 24, max_drones: 16 };
 
     // ------------------------------------------------------------------ selector de modelo con fotos
     function barraAtaque(nombre, valor) {
@@ -44,7 +44,7 @@
       b.setAttribute("aria-checked", "false");
       const foto = el("img");
       foto.src = m.foto;
-      foto.alt = `${m.nombre} de la Aviación Militar Bolivariana`;
+      foto.alt = m.nombre;
       foto.loading = "lazy";
       const cuerpo = el("div", "cuerpo");
       cuerpo.append(el("h4", "", m.nombre), el("small", "", `${m.fabricante} · ${m.pais}`), el("p", "funcion", m.funcion));
@@ -63,7 +63,7 @@
       cuerpo.append(ataque, el("p", "arma", m.armamento), el("p", "desc", m.descripcion));
       const c = m.credito;
       const credito = el("small", "credito");
-      credito.append("Foto: ");
+      credito.append(m.foto.endsWith(".svg") ? "Imagen: " : "Foto: ");
       const enlace = el("a", "", `${c.autor}, ${c.licencia}`);
       enlace.href = c.pagina;
       enlace.target = "_blank";
@@ -98,14 +98,18 @@
       }
       const rol = ctx.usuario().rol;
       const datos = ctx.datos();
-      const en = aeronavesComprometidas(datos.unidades, datos.ordenes, rol);
+      const cat = ctx.catalogo();
+      const dron = Logica.modeloEsDron(m.id, cat);
+      const tope = dron ? (topes().max_drones || 16) : topes().max_bando;
+      const en = aeronavesComprometidas(datos.unidades, datos.ordenes, rol, dron, cat);
       const base = datos.unidades.find((u) => String(u.id) === $("aer-base").value);
       const previa = datos.ordenes.find((o) => o.estado === "pendiente" && base && o.unidad_id === base.id && o.tipo === "despegar");
-      const descontar = previa ? (Logica.detalleDespegue(previa).aeronaves || 0) : 0;
+      const detPrevia = previa ? Logica.detalleDespegue(previa) : null;
+      const descontar = detPrevia && Logica.modeloEsDron(detPrevia.modelo, cat) === dron ? (detPrevia.aeronaves || 0) : 0;
       const total = en - descontar + n;
-      const excede = total > topes().max_bando;
+      const excede = total > tope;
       $("aer-resumen").textContent = `${m.corto} ×${n} saldrá de ${base ? base.nombre : "la base"} al resolverse el turno y aparecerá junto a ella; `
-        + `podrá recibir órdenes el turno siguiente. Aeronaves del bando: ${total} de ${topes().max_bando}${excede ? " (excede el tope)" : ""}.`;
+        + `podrá recibir órdenes el turno siguiente. ${dron ? "Drones" : "Aeronaves tripuladas"} del bando: ${total} de ${tope}${excede ? " (excede el tope)" : ""}.`;
       conf.disabled = excede;
     }
 
@@ -150,8 +154,8 @@
       const bases = basesAereasPropias(datos.unidades, ctx.usuario().rol);
       if (!bases.length) return ctx.toast("Su bando no tiene una base aérea activa desde la cual despegar.");
       abrirDialogo({
-        tipo: "despegue", titulo: "Enviar grupo de caza",
-        ayuda: "Elija la aeronave, cuántas salen y desde qué base. El grupo aparece al resolverse el turno.",
+        tipo: "despegue", titulo: "Enviar aeronaves o drones",
+        ayuda: "Elija el caza, el dron o el avión de guerra electrónica, cuántos salen y desde qué base. El grupo aparece al resolverse el turno.",
         textoConfirmar: "Enviar a despegar", bases,
         modeloInicial: { modelo: null, base: baseId }, cantidadInicial: 4,
         alConfirmar: async () => {

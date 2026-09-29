@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Munición merodeadora (ilustración)">
+  <defs>
+    <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#20242c"/><stop offset="1" stop-color="#55493a"/></linearGradient>
+    <linearGradient id="cuerpo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9c0a4"/><stop offset=".5" stop-color="#7d8566"/><stop offset="1" stop-color="#4d533d"/></linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#cielo)"/>
+  <path d="M40 90 C200 60 380 70 470 150 S560 280 548 300" fill="none" stroke="#ffd166" stroke-width="2.5" stroke-dasharray="8 8" opacity=".7"/>
+  <g transform="translate(548 300)" stroke="#e63946" stroke-width="3" fill="none">
+    <circle r="22"/><circle r="8"/><path d="M-34 0H-14M14 0H34M0 -34V-14M0 14V34"/>
+  </g>
+  <g transform="translate(250 118) rotate(8)">
+    <ellipse cx="4" cy="22" rx="130" ry="12" fill="#000" opacity=".22"/>
+    <path d="M-120 -12 L96 -12 C116 -12 132 -6 140 0 C132 6 116 12 96 12 L-120 12 Z" fill="url(#cuerpo)" stroke="#2d3124" stroke-width="1.5"/>
+    <path d="M110 -9 C124 -7 134 -3 140 0 C134 3 124 7 110 9 Z" fill="#e63946"/>
+    <path d="M40 -12 L-10 -70 L-26 -70 L10 -12 Z M40 12 L-10 70 L-26 70 L10 12 Z" fill="url(#cuerpo)" stroke="#2d3124" stroke-width="1.5"/>
+    <path d="M-86 -12 L-112 -46 L-124 -46 L-106 -12 Z M-86 12 L-112 46 L-124 46 L-106 12 Z" fill="url(#cuerpo)" stroke="#2d3124" stroke-width="1.5"/>
+    <rect x="-128" y="-26" width="5" height="52" rx="2" fill="#1a1c17"/>
+    <circle cx="70" cy="0" r="5" fill="#1a1c17"/>
+  </g>
+  <text x="20" y="340" font-family="system-ui, sans-serif" font-size="14" fill="#f1e9d2" opacity=".85">Munición merodeadora (dron kamikaze) · ilustración genérica</text>
+</svg>

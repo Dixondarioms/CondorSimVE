@@ -19,8 +19,8 @@ const UNIDADES = [
 
 test("la matriz de puestos coincide con la del servidor", () => {
   const f = (id) => L.puestoDe(id).funciones;
-  assert.deepEqual(f("mando"), ["superficie", "aereo", "despegar", "logistica", "listo"]);
-  assert.deepEqual(f("inteligencia"), []);
+  assert.deepEqual(f("mando"), ["superficie", "aereo", "despegar", "logistica", "guerra_electronica", "listo"]);
+  assert.deepEqual(f("inteligencia"), ["guerra_electronica"]);
   assert.deepEqual(f("operaciones"), ["aereo"]);
   assert.deepEqual(f("logistica"), ["logistica"]);
   assert.deepEqual(f("planificacion"), ["superficie", "despegar", "listo"]);

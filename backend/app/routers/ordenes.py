@@ -7,6 +7,7 @@ from app import auth, schemas, state
 from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import catalogo, geo, movimiento, puestos
+from app.engine import guerra_electronica as ge_mod
 from app.engine.orders import COSTO_OBRA, tipo_efectivo
 from app.models.escenario import Escenario
 from app.models.orden import Orden
@@ -75,7 +76,8 @@ async def emitir_orden(
         ).first()
         motivo = aeronaves_mod.error_de_despegue(
             unidad, payload.modelo, payload.aeronaves,
-            aeronaves_mod.aeronaves_comprometidas(db, esc.id, usuario.rol, previa.id if previa else None),
+            aeronaves_mod.aeronaves_comprometidas(db, esc.id, usuario.rol, previa.id if previa else None,
+                                                  aeronaves_mod.es_dron_modelo(payload.modelo)),
         )
         if motivo:
             raise HTTPException(status_code=400, detail=motivo)
@@ -111,6 +113,13 @@ async def emitir_orden(
             raise HTTPException(status_code=400, detail="El punto no esta sobre un rio")
         if unidad.municion < COSTO_OBRA[payload.detalle]:
             raise HTTPException(status_code=400, detail="Material insuficiente para esa obra")
+    elif payload.tipo == "interferir":
+        if len(payload.waypoints) != 1:
+            raise HTTPException(status_code=400, detail="Indique un unico punto: el centro de la zona a interferir")
+        _validar_waypoints(payload.waypoints)
+        motivo = ge_mod.error_de_interferencia(unidad, payload.waypoints[0])
+        if motivo:
+            raise HTTPException(status_code=400, detail=motivo)
     elif payload.tipo == "mover":
         if unidad.tipo == "base" or unidad.velocidad_kmh <= 0:
             raise HTTPException(status_code=400, detail="Esta unidad no puede moverse")
@@ -144,7 +153,7 @@ async def emitir_orden(
         escenario_id=esc.id,
         unidad_id=unidad.id,
         tipo=payload.tipo,
-        waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir", "patrullar") else []),
+        waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir", "patrullar", "interferir") else []),
         objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar", "aterrizar") else None,
         detalle=(
             aeronaves_mod.codificar(payload.modelo, payload.aeronaves, (payload.indicativo or "").strip())

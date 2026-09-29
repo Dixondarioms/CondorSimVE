@@ -61,8 +61,13 @@ async def cabeceras_de_seguridad(request: Request, call_next):
     respuesta.headers["X-Content-Type-Options"] = "nosniff"
     respuesta.headers["X-Frame-Options"] = "DENY"
     respuesta.headers["Referrer-Policy"] = "no-referrer"
-    if request.url.path.startswith("/api/"):
+    ruta = request.url.path
+    if ruta.startswith("/api/"):
         respuesta.headers["Cache-Control"] = "no-store"
+    elif ruta == "/" or ruta.endswith((".js", ".css", ".html")):
+        # el codigo de la interfaz se revalida siempre (ETag -> 304): tras actualizar el servidor nadie queda
+        # con JavaScript viejo en cache. Las teselas e imagenes mantienen la cache normal del navegador.
+        respuesta.headers["Cache-Control"] = "no-cache"
     if request.url.scheme == "https":
         respuesta.headers["Strict-Transport-Security"] = "max-age=31536000"
     return respuesta

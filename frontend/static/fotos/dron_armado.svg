@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Dron armado (ilustración)">
+  <defs>
+    <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2433"/><stop offset="1" stop-color="#4a5568"/></linearGradient>
+    <linearGradient id="casco" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6b7480"/><stop offset=".5" stop-color="#c9d0d8"/><stop offset="1" stop-color="#6b7480"/></linearGradient>
+    <linearGradient id="ala" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d5dbe2"/><stop offset="1" stop-color="#8a949f"/></linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#cielo)"/>
+  <g stroke="#fff" stroke-opacity=".05"><path d="M0 60H640M0 120H640M0 180H640M0 240H640M0 300H640M80 0V360M160 0V360M240 0V360M320 0V360M400 0V360M480 0V360M560 0V360"/></g>
+  <g transform="translate(320 172)">
+    <ellipse cx="8" cy="18" rx="295" ry="24" fill="#000" opacity=".2"/>
+    <path d="M-290 -6 L-30 -20 L30 -20 L290 -6 L290 9 L30 15 L-30 15 L-290 9 Z" fill="url(#ala)" stroke="#4a525c" stroke-width="1.5"/>
+    <g fill="#2f3640" stroke="#c9d0d8" stroke-width="1">
+      <rect x="-150" y="-2" width="12" height="46" rx="5"/><rect x="-190" y="-3" width="12" height="46" rx="5"/>
+      <rect x="138" y="-2" width="12" height="46" rx="5"/><rect x="178" y="-3" width="12" height="46" rx="5"/>
+    </g>
+    <path d="M-150 44 l6 10 l6 -10 M-190 43 l6 10 l6 -10 M138 44 l6 10 l6 -10 M178 43 l6 10 l6 -10" fill="#e63946"/>
+    <path d="M0 -132 C19 -120 21 -90 21 -46 L17 96 C14 116 7 126 0 130 C-7 126 -14 116 -17 96 L-21 -46 C-21 -90 -19 -120 0 -132 Z" fill="url(#casco)" stroke="#4a525c" stroke-width="1.5"/>
+    <circle cx="0" cy="-100" r="13" fill="#1c2530" stroke="#9fb3c8" stroke-width="2"/>
+    <circle cx="-4" cy="-104" r="4" fill="#ffb703"/>
+    <path d="M-6 106 L-86 156 L-77 166 L-2 128 Z M6 106 L86 156 L77 166 L2 128 Z" fill="url(#ala)" stroke="#4a525c" stroke-width="1.5"/>
+    <rect x="-38" y="130" width="76" height="6" rx="2" fill="#1f2125"/>
+  </g>
+  <text x="20" y="340" font-family="system-ui, sans-serif" font-size="14" fill="#e2e8f0" opacity=".85">UAV armado con misiles ligeros · ilustración genérica</text>
+</svg>

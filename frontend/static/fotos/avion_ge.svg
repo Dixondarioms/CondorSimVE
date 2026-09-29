@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Avión de guerra electrónica (ilustración)">
+  <defs>
+    <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#140f24"/><stop offset="1" stop-color="#3c2a62"/></linearGradient>
+    <linearGradient id="casco" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7d8794"/><stop offset=".5" stop-color="#dfe4ea"/><stop offset="1" stop-color="#7d8794"/></linearGradient>
+    <linearGradient id="ala" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3e8ee"/><stop offset="1" stop-color="#9aa4af"/></linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#cielo)"/>
+  <g fill="none" stroke="#c77dff" stroke-width="3" opacity=".75">
+    <path d="M110 150 a40 40 0 0 0 0 60"/><path d="M90 136 a62 62 0 0 0 0 88"/><path d="M70 122 a84 84 0 0 0 0 116" opacity=".6"/>
+    <path d="M530 150 a40 40 0 0 1 0 60"/><path d="M550 136 a62 62 0 0 1 0 88"/><path d="M570 122 a84 84 0 0 1 0 116" opacity=".6"/>
+  </g>
+  <g transform="translate(320 184)">
+    <ellipse cx="6" cy="16" rx="215" ry="26" fill="#000" opacity=".22"/>
+    <path d="M-12 -40 L-196 30 L-196 44 L-12 22 Z M12 -40 L196 30 L196 44 L12 22 Z" fill="url(#ala)" stroke="#555f6b" stroke-width="1.5"/>
+    <g fill="#3a3f47" stroke="#c9d0d8" stroke-width="1"><rect x="-120" y="4" width="16" height="36" rx="7"/><rect x="104" y="4" width="16" height="36" rx="7"/></g>
+    <g fill="#7b2cbf" stroke="#e0aaff" stroke-width="1.5"><rect x="-206" y="22" width="14" height="30" rx="6"/><rect x="192" y="22" width="14" height="30" rx="6"/></g>
+    <path d="M0 -150 C13 -140 15 -110 15 -70 L13 104 C11 124 6 132 0 136 C-6 132 -11 124 -13 104 L-15 -70 C-15 -110 -13 -140 0 -150 Z" fill="url(#casco)" stroke="#555f6b" stroke-width="1.5"/>
+    <rect x="-7" y="-92" width="14" height="80" rx="6" fill="#7b2cbf" stroke="#e0aaff" stroke-width="1.5"/>
+    <path d="M-5 104 L-62 132 L-62 142 L-2 126 Z M5 104 L62 132 L62 142 L2 126 Z" fill="url(#ala)" stroke="#555f6b" stroke-width="1.5"/>
+    <path d="M-6 -134 H6" stroke="#223" stroke-width="4"/>
+  </g>
+  <text x="20" y="340" font-family="system-ui, sans-serif" font-size="14" fill="#e9d8ff" opacity=".9">Avión de guerra electrónica (interferidor) · ilustración genérica</text>
+</svg>

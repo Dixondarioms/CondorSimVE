@@ -30,22 +30,33 @@ def decodificar(detalle: str) -> dict:
     return d if isinstance(d, dict) else {}
 
 
-def aeronaves_en_servicio(unidades) -> int:
-    """Aeronaves de combate activas (las bases y unidades de otros tipos no cuentan)."""
-    return sum(max(1, u.aeronaves or 1) for u in unidades if u.tipo == "aerea" and u.estado == "activa")
+def es_dron_modelo(modelo_id: str | None) -> bool:
+    m = catalogo.MODELOS.get(modelo_id or "")
+    return bool(m and catalogo.CLASES[m.clase].dron)
 
 
-def aeronaves_comprometidas(db: Session, escenario_id: int, bando: str, excluir_orden_id: int | None = None) -> int:
-    """Aeronaves activas del bando mas las de los despegues pendientes (para respetar el tope al emitir)."""
+def aeronaves_en_servicio(unidades, drones: bool = False) -> int:
+    """Aeronaves activas tripuladas (o, con drones=True, drones activos): cada categoria tiene su tope."""
+    return sum(
+        max(1, u.aeronaves or 1) for u in unidades
+        if u.tipo == "aerea" and u.estado == "activa" and catalogo.obtener(u.clase, u.tipo).dron == drones
+    )
+
+
+def aeronaves_comprometidas(
+    db: Session, escenario_id: int, bando: str, excluir_orden_id: int | None = None, drones: bool = False
+) -> int:
+    """Aeronaves (o drones) activas del bando mas las de los despegues pendientes, para respetar el tope al emitir."""
     unidades = db.query(Unidad).filter(Unidad.escenario_id == escenario_id, Unidad.bando == bando).all()
-    total = aeronaves_en_servicio(unidades)
+    total = aeronaves_en_servicio(unidades, drones)
     por_id = {u.id: u for u in unidades}
     pendientes = db.query(Orden).filter(
         Orden.escenario_id == escenario_id, Orden.tipo == "despegar", Orden.estado == "pendiente"
     )
     for o in pendientes:
-        if o.id != excluir_orden_id and o.unidad_id in por_id:
-            total += int(decodificar(o.detalle).get("aeronaves", 0) or 0)
+        datos = decodificar(o.detalle)
+        if o.id != excluir_orden_id and o.unidad_id in por_id and es_dron_modelo(datos.get("modelo")) == drones:
+            total += int(datos.get("aeronaves", 0) or 0)
     return total
 
 
@@ -62,7 +73,11 @@ def error_de_despegue(base: Unidad, modelo_id: str | None, aeronaves: int | None
         return "Elija un modelo de aeronave del catalogo."
     if not aeronaves or not 1 <= aeronaves <= catalogo.MAX_AERONAVES_GRUPO:
         return f"Un grupo tiene entre 1 y {catalogo.MAX_AERONAVES_GRUPO} aeronaves."
-    if en_servicio + aeronaves > catalogo.MAX_AERONAVES_BANDO:
+    if es_dron_modelo(modelo.id):
+        if en_servicio + aeronaves > catalogo.MAX_DRONES_BANDO:
+            return (f"Tope de {catalogo.MAX_DRONES_BANDO} drones por bando "
+                    f"({en_servicio} ya en servicio o comprometidos).")
+    elif en_servicio + aeronaves > catalogo.MAX_AERONAVES_BANDO:
         return (f"Tope de {catalogo.MAX_AERONAVES_BANDO} aeronaves por bando "
                 f"({en_servicio} ya en servicio o comprometidas).")
     return None

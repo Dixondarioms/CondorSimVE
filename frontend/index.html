@@ -91,8 +91,8 @@
 
           <section class="bloque solo-alumno" id="sec-aviacion">
             <h2>Aviación <span id="aviacion-tope" class="contador azul-suave"></span></h2>
-            <button id="btn-enviar-caza" class="primario" type="button">✈ Enviar grupo de caza…</button>
-            <p class="ayuda" id="aviacion-ayuda">Elija F-16 o Su-30 (con foto y datos) y la base de la que despegan.</p>
+            <button id="btn-enviar-caza" class="primario" type="button">✈ Enviar aeronaves o drones…</button>
+            <p class="ayuda" id="aviacion-ayuda">Elija el caza, el dron o el avión de guerra electrónica y la base de la que despegan.</p>
           </section>
 
           <section class="bloque solo-alumno" id="sec-orden">
@@ -104,6 +104,7 @@
               <button type="button" data-modo="construir" id="modo-construir" hidden title="Solo ingenieros">Construir</button>
               <button type="button" data-modo="patrullar" id="modo-patrullar" hidden title="Solo aeronaves">Patrullar</button>
               <button type="button" data-modo="aterrizar" id="modo-aterrizar" hidden title="Solo aeronaves en vuelo">Aterrizar</button>
+              <button type="button" data-modo="interferir" id="modo-interferir" hidden title="Solo unidades de guerra electrónica">Interferir</button>
             </div>
             <p id="o-espera" class="ayuda advertencia" hidden></p>
             <p id="o-puesto" class="ayuda advertencia" hidden></p>
@@ -129,6 +130,10 @@
               <label class="mini">Base de destino<select id="o-base"></select></label>
               <p id="o-aterrizaje-info" class="ayuda preview"></p>
               <p class="ayuda">En tierra la aeronave tarda 2 turnos en reabastecer y rearmar; después, cualquier orden de vuelo es el despegue. Una base guarda hasta 12 aeronaves.</p>
+            </div>
+            <div id="o-interferir" hidden>
+              <p class="ayuda">Haga clic en el mapa en el centro de la zona a interferir (dentro del alcance del interferidor). Durante este turno y la planificación del siguiente, en esa zona el enemigo detecta al 30 % (sus radares al 20 %), su antiaérea guiada por radar pierde efecto y sus drones pierden el enlace. Al emitir, el enemigo localiza al interferidor.</p>
+              <p id="o-interferencia-info" class="ayuda preview"></p>
             </div>
             <div id="o-objetivo-box" hidden>
               <select id="o-objetivo" aria-label="Objetivo"></select>
@@ -425,6 +430,7 @@
               <label><input type="checkbox" data-capa="referencias" checked><span>Límites y poblaciones</span></label>
               <label><input type="checkbox" data-capa="bases_ven" checked><span>Bases aéreas de Venezuela</span></label>
               <label><input type="checkbox" data-capa="objetivos" checked><span>Objetivos</span></label>
+              <label><input type="checkbox" data-capa="ge" checked><span>Guerra electrónica</span></label>
             </div>
           </section>
 

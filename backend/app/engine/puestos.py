@@ -10,7 +10,7 @@ emitir cada uno, asi varios alumnos trabajan a la vez sobre el mismo bando sin p
 from dataclasses import dataclass
 
 BANDOS = ("azul", "rojo")
-FUNCIONES = ("superficie", "aereo", "despegar", "logistica", "listo")
+FUNCIONES = ("superficie", "aereo", "despegar", "logistica", "guerra_electronica", "listo")
 POR_DEFECTO = "mando"
 
 
@@ -27,8 +27,9 @@ PUESTOS: dict[str, Puesto] = {p.id: p for p in [
     Puesto("mando", "EM", "Estado Mayor",
            "Conduce todo el bando: reune las funciones de los demas puestos.", frozenset(FUNCIONES)),
     Puesto("inteligencia", "A2", "Inteligencia",
-           "Sigue la situacion enemiga: contactos, graficos de blancos y mensajes. No emite ordenes.",
-           frozenset()),
+           "Sigue la situacion enemiga (contactos, graficos de blancos, mensajes) y conduce los radares y las "
+           "unidades terrestres de guerra electronica: escucha e interferencia.",
+           frozenset({"guerra_electronica"})),
     Puesto("operaciones", "A3", "Operaciones en curso",
            "Conduce las aeronaves: despegue desde la pista, rutas, patrullas, ataques y aterrizajes.",
            frozenset({"aereo"})),
@@ -55,6 +56,8 @@ def funcion_de_orden(unidad, tipo_orden: str | None, clase) -> str:
     Operaciones; ingenieros y convoyes, de Logistica; el resto de tierra y mar, de Planificacion."""
     if tipo_orden == "despegar" or unidad.tipo == "base":
         return "despegar"
+    if clase.celula == "ge" and unidad.tipo != "aerea":
+        return "guerra_electronica"
     if tipo_orden == "construir" or clase.construye or clase.carga_max > 0:
         return "logistica"
     if unidad.tipo == "aerea":

@@ -23,7 +23,7 @@ def test_el_estado_mayor_tiene_todas_las_funciones_y_es_el_puesto_por_defecto():
 
 
 def test_cada_celula_tiene_solo_lo_suyo():
-    assert puestos.obtener("inteligencia").funciones == frozenset()
+    assert puestos.obtener("inteligencia").funciones == {"guerra_electronica"}
     assert puestos.obtener("operaciones").funciones == {"aereo"}
     assert puestos.obtener("logistica").funciones == {"logistica"}
     assert puestos.obtener("planificacion").funciones == {"superficie", "despegar", "listo"}
@@ -47,6 +47,13 @@ def test_la_funcion_de_una_orden_depende_de_la_unidad_y_del_tipo():
     assert _f("base", "base_aerea", "despegar") == "despegar"
     assert _f("base", "deposito", "mover") == "despegar"  # las bases son de planificacion
     assert _f("terrestre", "infanteria", None) == "superficie"
+    # radares y guerra electronica terrestre: A2; los medios aereos de GE y los drones: A3
+    assert _f("terrestre", "guerra_electronica", "interferir") == "guerra_electronica"
+    assert _f("terrestre", "guerra_electronica", "mover") == "guerra_electronica"
+    assert _f("terrestre", "radar", "mover") == "guerra_electronica"
+    assert _f("aerea", "avion_ge", "interferir") == "aereo"
+    assert _f("aerea", "dron_reconocimiento", "mover") == "aereo"
+    assert _f("aerea", "municion_merodeadora", "atacar") == "aereo"
 
 
 # ---------- API ----------

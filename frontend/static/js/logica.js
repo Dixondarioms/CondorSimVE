@@ -339,14 +339,40 @@
   }
 
   /** Aeronaves de combate activas del bando mas las de sus despegues pendientes (para mostrar el tope). */
-  function aeronavesComprometidas(unidades, ordenes, bando) {
+  /** Clase del catalogo (/api/catalogo) marcada como dron. */
+  const claseEsDron = (claseId, catalogo) => !!(catalogo && (catalogo.clases || []).some((c) => c.id === claseId && c.dron));
+  /** El modelo de aeronave pertenece a una clase de dron (los drones tienen su propio tope). */
+  function modeloEsDron(modeloId, catalogo) {
+    const m = catalogo && (catalogo.modelos || []).find((x) => x.id === modeloId);
+    return !!(m && claseEsDron(m.clase, catalogo));
+  }
+
+  /** Aeronaves tripuladas (o drones, con drones=true) activas del bando mas las de despegues pendientes.
+   *  Sin catalogo no se distingue y cuenta todo (compatibilidad). */
+  function aeronavesComprometidas(unidades, ordenes, bando, drones = false, catalogo = null) {
     const activas = unidades
-      .filter((u) => u.bando === bando && u.tipo === "aerea" && u.estado === "activa")
+      .filter((u) => u.bando === bando && u.tipo === "aerea" && u.estado === "activa" && claseEsDron(u.clase, catalogo) === drones)
       .reduce((s, u) => s + (u.aeronaves || 1), 0);
     const pendientes = (ordenes || [])
-      .filter((o) => o.tipo === "despegar" && o.estado === "pendiente")
+      .filter((o) => o.tipo === "despegar" && o.estado === "pendiente" && modeloEsDron(detalleDespegue(o).modelo, catalogo) === drones)
       .reduce((s, o) => s + (detalleDespegue(o).aeronaves || 0), 0);
     return activas + pendientes;
+  }
+
+  // ---------------------------------------------------------------- guerra electronica
+  /** Zonas de interferencia del bando contrario que cubren a la unidad. */
+  function interferenciasSobre(u, zonas) {
+    return (zonas || []).filter((z) => z.bando !== u.bando && distanciaKm(u.lat, u.lon, z.lat, z.lon) <= z.radio_km);
+  }
+  /** La unidad puede recibir la orden de interferir (GE activa; si es aerea, en vuelo). */
+  const puedeInterferir = (u, clase) => !!(u && clase && clase.interferencia_km > 0 && u.estado === "activa" && !(u.tipo === "aerea" && u.en_tierra));
+  /** Aviso para el detalle de una unidad afectada por la interferencia enemiga ("" si no la afecta). */
+  function textoInterferido(u, clase, zonas) {
+    if (!u || !interferenciasSobre(u, zonas).length) return "";
+    if (clase && clase.dron) return "Sin enlace de datos: el dron está dentro de una interferencia enemiga y no acepta órdenes.";
+    if (clase && clase.solo_aereo) return "Radar interferido por guerra electrónica enemiga: ve al 20 % de su alcance.";
+    if (clase && clase.emisor) return "Interferida por guerra electrónica enemiga: detecta al 30 % y su tiro contra aeronaves pierde el 60 % de efecto.";
+    return "Sensores interferidos por guerra electrónica enemiga: detecta al 30 % de su alcance (a ojo, 3 km).";
   }
 
   /** Unidad base_aerea del escenario que ya ocupa ese punto de la capa de referencia (a <= km), o null. */
@@ -453,8 +479,8 @@
   // ---------------------------------------------------------------- puestos por funcion dentro del bando
   // Misma matriz que backend/app/engine/puestos.py: el servidor es quien decide; esto solo adapta la interfaz.
   const PUESTOS = [
-    { id: "mando", sigla: "EM", nombre: "Estado Mayor", descripcion: "Conduce todo el bando: reúne las funciones de los demás puestos.", funciones: ["superficie", "aereo", "despegar", "logistica", "listo"] },
-    { id: "inteligencia", sigla: "A2", nombre: "Inteligencia", descripcion: "Sigue la situación enemiga: contactos, gráficos de blancos y mensajes. No emite órdenes.", funciones: [] },
+    { id: "mando", sigla: "EM", nombre: "Estado Mayor", descripcion: "Conduce todo el bando: reúne las funciones de los demás puestos.", funciones: ["superficie", "aereo", "despegar", "logistica", "guerra_electronica", "listo"] },
+    { id: "inteligencia", sigla: "A2", nombre: "Inteligencia", descripcion: "Sigue la situación enemiga (contactos, gráficos de blancos, mensajes) y conduce los radares y las unidades terrestres de guerra electrónica: escucha e interferencia.", funciones: ["guerra_electronica"] },
     { id: "operaciones", sigla: "A3", nombre: "Operaciones en curso", descripcion: "Conduce las aeronaves: despegue desde la pista, rutas, patrullas, ataques y aterrizajes.", funciones: ["aereo"] },
     { id: "logistica", sigla: "A4", nombre: "Logística", descripcion: "Conduce los convoyes de abastecimiento y a los ingenieros (puentes y vados).", funciones: ["logistica"] },
     { id: "planificacion", sigla: "A5", nombre: "Planificación", descripcion: "Ordena a las unidades terrestres y navales, envía los grupos de caza desde las bases y confirma las órdenes del bando (LISTO).", funciones: ["superficie", "despegar", "listo"] },
@@ -468,6 +494,7 @@
   /** Funcion (puesto responsable) de una orden sobre una unidad; sin tipo, la de la unidad en general. */
   function funcionDeOrden(u, tipoOrden, clase) {
     if (tipoOrden === "despegar" || u.tipo === "base") return "despegar";
+    if (clase && clase.celula === "ge" && u.tipo !== "aerea") return "guerra_electronica";
     if (tipoOrden === "construir" || (clase && (clase.construye || clase.carga_max > 0))) return "logistica";
     if (u.tipo === "aerea") return "aereo";
     return "superficie";
@@ -486,6 +513,7 @@
 
   const api = {
     PUESTOS, puestoDe, puestoPuede, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
+    claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,
     nacionDe, etiquetaBandoNacion, filtrarUnidades, textoObjetivo, avanceObjetivo, ETIQUETA_OBJETIVO, CAPACIDAD_BASE, RADIO_ATERRIZAJE_KM, estacionadasEn, plazasLibres, opcionesDeAterrizaje, situacionDeVuelo,
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,
     aeronavesComprometidas, baseEnEscenario, nombreCortoBase, FUERZA_MINIMA_BASE,
