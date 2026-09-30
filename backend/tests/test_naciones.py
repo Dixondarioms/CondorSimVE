@@ -95,7 +95,7 @@ def test_exportar_incluye_la_identidad_nacional(api):
 
 # ---------- terreno de referencia de los paises vecinos ----------
 def test_las_fronteras_incluyen_venezuela_y_sus_vecinos_recortadas_al_mapa():
-    datos = json.loads((FRONTEND / "static" / "geo" / "fronteras.geojson").read_text(encoding="utf-8"))
+    datos = json.loads((FRONTEND / "static" / "geo" / "venezuela" / "fronteras.geojson").read_text(encoding="utf-8"))
     paises = {f["properties"]["pais"]: f["properties"]["name"] for f in datos["features"]}
     assert paises == {"VEN": "Venezuela", "COL": "Colombia", "BRA": "Brasil", "GUY": "Guyana", "TTO": "Trinidad y Tobago"}
     # LIMITES del mapa en app.js: recortadas ahi, no el contorno completo de cada pais
@@ -108,7 +108,7 @@ def test_las_fronteras_incluyen_venezuela_y_sus_vecinos_recortadas_al_mapa():
 
 
 def test_los_estados_de_los_vecinos_fronterizos_estan_presentes():
-    datos = json.loads((FRONTEND / "static" / "geo" / "estados.geojson").read_text(encoding="utf-8"))
+    datos = json.loads((FRONTEND / "static" / "geo" / "venezuela" / "estados.geojson").read_text(encoding="utf-8"))
     por_pais = {}
     for f in datos["features"]:
         por_pais.setdefault(f["properties"]["pais"], set()).add(f["properties"]["name"])
@@ -120,7 +120,7 @@ def test_los_estados_de_los_vecinos_fronterizos_estan_presentes():
 
 
 def test_ciudades_de_los_vecinos_marcan_su_pais_y_las_venezolanas_no(api):
-    datos = json.loads((FRONTEND / "static" / "geo" / "lugares.geojson").read_text(encoding="utf-8"))
+    datos = json.loads((FRONTEND / "static" / "geo" / "venezuela" / "lugares.geojson").read_text(encoding="utf-8"))
     por_nombre = {f["properties"]["name"]: f["properties"] for f in datos["features"]}
     assert por_nombre["Cúcuta"]["pais"] == "Colombia"
     assert por_nombre["Boa Vista"]["pais"] == "Brasil"

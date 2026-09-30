@@ -14,7 +14,7 @@
       vista: ["azul", "rojo", "completa"].includes(vista) ? vista : null,
       // ?lat=&lon=[&zoom=]: encuadre inicial del mapa (enlace directo a un lugar, p. ej. una base)
       lugar: p.get("lat") && p.get("lon") && Number.isFinite(+p.get("lat")) && Number.isFinite(+p.get("lon"))
-        ? { lat: +p.get("lat"), lon: +p.get("lon"), zoom: Math.min(17, Math.max(5, parseInt(p.get("zoom"), 10) || 12)) } : null,
+        ? { lat: +p.get("lat"), lon: +p.get("lon"), zoom: Math.min(17, Math.max(2, parseInt(p.get("zoom"), 10) || 12)) } : null,
     };
   }
 

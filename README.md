@@ -655,21 +655,53 @@ servidor. Formato:
   firma, cadencia, despliegue, recarga, plazas, topes) se consulta en cada resolución y afecta también a los
   escenarios ya creados.
 
-## Datos de terreno (offline)
+## Datos de terreno (offline): regiones del mapa
 
-`tools/preparar_terreno.py` se ejecutó una vez con internet (el resultado ya está en el repositorio):
+El mapa está formado por **regiones superpuestas**, cada una con su resolución. `tools/preparar_terreno.py` se
+ejecuta una vez con internet por región y deja, por cada `<region>`:
 
-- `frontend/static/tiles/` – mapa z5–z9 (relieve + clases de terreno).
-- `frontend/static/geo/` – fronteras, estados, ríos, lagos y poblaciones.
-- `backend/data/terreno/` – grilla de clases que usa el motor.
+- `frontend/static/tiles/<region>/` – teselas del relieve + clases de terreno, del zoom nativo al mínimo.
+- `frontend/static/geo/<region>/` – fronteras, estados, ríos, lagos y poblaciones.
+- `backend/data/terreno/<region>/` – grilla de clases que usa el motor (`meta.json` + `clases.bin.z`).
+
+Regiones incluidas en el repositorio:
+
+| Región | Recuadro | Zoom nativo | Resolución | Uso |
+|---|---|---|---|---|
+| `venezuela` (Venezuela y vecinos) | 73,5° O – 59,5° O, 0,5° N – 12,5° N | 9 | ~300 m/píxel | Área de detalle: foto satelital, planos de aeródromos, ejercicios tácticos. |
+| `america` (toda América) | 170° O – 30° O, 56° S – 72° N | 7 | ~1,2 km/píxel | Ejercicios en cualquier lugar del continente (nivel operacional/estratégico). |
+
+Opcionales, las genera el usuario:
+
+```bash
+python tools/preparar_terreno.py --region mundo
+```
+
+genera el **mundo entero** (`mundo`, zoom 6, ~2,4 km/píxel; unos 250 MB de descarga y ~270 MB de RAM en el
+servidor para la grilla), y
+
+```bash
+python tools/preparar_terreno.py --id caribe --nombre "Caribe" --bbox -90 8 -58 27 --zoom 8
+```
+
+genera un **recuadro a medida** (lon. mín., lat. mín., lon. máx., lat. máx. en grados; zoom 9 ≈ 300 m, 8 ≈ 600 m,
+7 ≈ 1,2 km). `--listar` muestra las regiones definidas y generadas; `--piramides` recompone los zooms bajos.
+
+Cómo se combinan: el servidor lista las regiones generadas en `GET /api/terreno/mapas`; el frontend dibuja las
+teselas de todas apiladas (la más detallada encima), carga los límites y poblaciones de cada una, abre la vista en la
+más detallada y ofrece un botón por región en la tarjeta **Capas** para encajar la vista. El motor
+(`backend/app/terreno.py`) consulta la clase de terreno en la región más fina que cubra el punto; fuera de todas es
+llano. La foto satelital (`tiles_sat/`) solo cubre Venezuela: fuera de ella se ve el relieve.
 
 Fuentes: elevación de *AWS Terrain Tiles* (SRTM/GMTED/ETOPO1 vía Mapzen), cobertura terrestre de
 *ESA WorldCover 2021* (10 m, CC BY 4.0) y *Natural Earth* (dominio público). Montaña sale del relieve y la
 pendiente; bosque, pantano y urbano, de WorldCover (más un radio alrededor de las ciudades); agua, del nivel
 del mar, los lagos de Natural Earth y los cuerpos grandes de WorldCover (se descartan los ríos angostos para
-que las unidades puedan cruzarlos; los tramos muy anchos del Orinoco sí son obstáculo). Resolución ≈ 300 m.
-Para regenerar: `pip install -r tools/requirements.txt` y `python tools/preparar_terreno.py`
-(`tools/cache/` guarda las descargas, unos cientos de MB, y puede borrarse).
+que las unidades puedan cruzarlos; los tramos muy anchos del Orinoco sí son obstáculo). En las regiones gruesas
+(América, mundo) el umbral de pendiente para "montaña" baja con la resolución y se usan las escalas 50m/110m de
+Natural Earth. Para regenerar: `pip install -r tools/requirements.txt` y `python tools/preparar_terreno.py
+[--region ...]` (`tools/cache/` guarda las descargas, unos cientos de MB, y puede borrarse; el proceso es
+reanudable y las regiones grandes se procesan por franjas para no agotar la memoria).
 
 ## Maqueta de interfaz (C4ISR)
 
@@ -691,6 +723,6 @@ del proyecto centrado en La Guaira/Caracas.
   por bando) y el estado real de cada aparato en la flota venezolana no se modela.
 - Las comunicaciones simuladas solo afectan al chat, no a las órdenes ni a la niebla de guerra.
 - No hay selección múltiple de unidades ni órdenes de grupo: cada orden se da a una unidad.
-- La identidad nacional es solo un nombre para la interfaz: no se modela el orden de batalla real de Colombia, Brasil, Guyana ni Trinidad y Tobago, y el terreno detallado de esos países se limita a lo que entra en el área del mapa (recortado alrededor de Venezuela).
+- La identidad nacional es solo un nombre para la interfaz: no se modela el orden de batalla real de Colombia, Brasil, Guyana ni Trinidad y Tobago. El terreno a ~300 m, la foto satelital y los planos de aeródromos se limitan a Venezuela y vecinos; el resto de América está a ~1,2 km/píxel (y el mundo, si se genera, a ~2,4 km).
 - El bloqueo de inicio de sesión es por usuario (un atacante puede bloquear una cuenta 5 min).
 - Un solo servidor: WebSocket y temporizador viven en el proceso.

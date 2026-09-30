@@ -82,7 +82,7 @@
   L.control.attribution({ position: "bottomleft", prefix: false })
     .addAttribution("Relieve: SRTM/GMTED (AWS Terrain Tiles) · Cobertura: ESA WorldCover")
     .addTo(map);
-  L.tileLayer("../tiles/{z}/{x}/{y}.jpg", { minZoom: 5, maxNativeZoom: 9, maxZoom: 11, bounds: LIMITES }).addTo(map);
+  L.tileLayer("../tiles/venezuela/{z}/{x}/{y}.jpg", { minZoom: 5, maxNativeZoom: 9, maxZoom: 11, bounds: LIMITES }).addTo(map);
 
   const capaUnidades = L.layerGroup().addTo(map);
   const capaOrdenes = L.layerGroup().addTo(map);

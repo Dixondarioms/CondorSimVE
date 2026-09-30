@@ -14,3 +14,10 @@ def clase_de_terreno(
     _: Usuario = Depends(auth.usuario_actual),
 ):
     return {"clase": get_terreno().clase(lat, lon)}
+
+
+@router.get("/mapas", name="mapas")
+def listar_mapas(_: Usuario = Depends(auth.usuario_actual)):
+    """Regiones del mapa generadas (tools/preparar_terreno.py), de la mas detallada a la mas general: el frontend
+    dibuja las teselas de cada una (/static/tiles/<id>/) y sus limites, y encaja la vista en la principal."""
+    return {"mapas": get_terreno().regiones()}

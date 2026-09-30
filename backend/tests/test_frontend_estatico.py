@@ -124,5 +124,5 @@ def test_index_usa_dos_capas_base_y_cita_ambas_fuentes():
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert "tiles_sat" in html or "tiles_sat" in (FRONTEND / "static" / "js" / "app.js").read_text(encoding="utf-8")
     app_js = (FRONTEND / "static" / "js" / "app.js").read_text(encoding="utf-8")
-    assert "/static/tiles_sat/{z}/{x}/{y}.jpg" in app_js and "/static/tiles/{z}/{x}/{y}.jpg" in app_js
+    assert "/static/tiles_sat/{z}/{x}/{y}.jpg" in app_js and "/static/tiles/${m.id}/{z}/{x}/{y}.jpg" in app_js
     assert "Sentinel-2 cloudless" in app_js and "CC BY 4.0" in app_js

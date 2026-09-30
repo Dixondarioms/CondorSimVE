@@ -655,7 +655,43 @@
     return r.length ? `Esta unidad la conduce el puesto ${r.map((p) => `${p.nombre} (${p.sigla})`).join(" o ")}.` : "";
   }
 
+  // ---------- mapas (regiones del terreno, ver tools/preparar_terreno.py) ----------
+  /** Region de detalle que siempre existe: se usa si el servidor no informa ninguna. */
+  const MAPA_VENEZUELA = { id: "venezuela", nombre: "Venezuela y vecinos", bbox: [-73.5, 0.5, -59.5, 12.5], z: 9, z_min: 5, metros_por_pixel: 304 };
+
+  /** Regiones validas ordenadas de menos a mas detallada (asi se apilan las capas: la mas fina encima). */
+  function ordenarMapas(mapas) {
+    const validos = (mapas || []).filter((m) => m && m.id && Array.isArray(m.bbox) && m.bbox.length === 4 && Number.isFinite(m.z));
+    return (validos.length ? validos : [MAPA_VENEZUELA]).slice().sort((a, b) => a.z - b.z);
+  }
+
+  /** Limites Leaflet [[latMin, lonMin], [latMax, lonMax]] de una region. */
+  function limitesDe(mapa) {
+    const [lon0, lat0, lon1, lat1] = mapa.bbox;
+    return [[lat0, lon0], [lat1, lon1]];
+  }
+
+  /** Limites que abarcan todas las regiones, zoom minimo del mapa y region principal (la mas detallada). */
+  function limitesDeMapas(mapas) {
+    const lista = ordenarMapas(mapas);
+    const lons = lista.flatMap((m) => [m.bbox[0], m.bbox[2]]);
+    const lats = lista.flatMap((m) => [m.bbox[1], m.bbox[3]]);
+    return {
+      limites: [[Math.min(...lats), Math.min(...lons)], [Math.max(...lats), Math.max(...lons)]],
+      zoomMin: Math.min(...lista.map((m) => (Number.isFinite(m.z_min) ? m.z_min : Math.max(2, m.z - 4)))),
+      principal: lista[lista.length - 1],
+    };
+  }
+
+  /** Rotulo de una region: nombre y resolucion aproximada. */
+  function textoMapa(m) {
+    const mpp = m.metros_por_pixel;
+    if (!mpp) return m.nombre || m.id;
+    return `${m.nombre || m.id} · ${mpp >= 1000 ? `${(mpp / 1000).toFixed(1).replace(".", ",")} km` : `${mpp} m`}/píxel`;
+  }
+
   const api = {
+    MAPA_VENEZUELA, ordenarMapas, limitesDe, limitesDeMapas, textoMapa,
     PUESTOS, puestoDe, puestoPuede, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,
     ESTADOS_MISION, TIPOS_PUNTO_MISION, misionActiva, horaEstimada, textoMision, tramosCronograma,

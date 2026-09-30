@@ -1,5 +1,6 @@
-"""Descarga una capa de imagenes satelitales (foto real) para el mismo area del mapa (BBOX de
-preparar_terreno.py), como alternativa al relieve coloreado por clase de terreno.
+"""Descarga una capa de imagenes satelitales (foto real) para la region de detalle (Venezuela y vecinos: BBOX de
+preparar_terreno.py), que se superpone al relieve coloreado por clase de terreno. Las demas regiones (America,
+mundo) solo tienen relieve: la foto a ~10 m de todo el continente ocuparia decenas de GB.
 
 Fuente: "Sentinel-2 cloudless" de EOX IT Services GmbH (https://cloudless.eox.at), servida por su WMTS publico
 (tiles.maps.eox.at). La version del 2016 esta bajo licencia Creative Commons Attribution 4.0 (CC BY 4.0):

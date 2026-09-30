@@ -361,6 +361,15 @@
     if (path === "/api/auth/logout") return json({ ok: true });
     if (path === "/api/catalogo") { await cargaCatalogo; return json(CAT); }
     if (path === "/api/naciones") return json({ naciones: NACIONES });
+    // regiones del mapa: las que realmente hay en el servidor de pruebas (misma carpeta que en produccion)
+    if (path === "/api/terreno/mapas") {
+      const ids = ["venezuela", "america", "mundo"];
+      const metas = await Promise.all(ids.map((id) => REAL_FETCH(`/static/geo/${id}/fronteras.geojson`, { method: "HEAD" }).then((r) => (r.ok ? id : null)).catch(() => null)));
+      const DEF = { venezuela: { nombre: "Venezuela y vecinos", bbox: [-73.5, 0.5, -59.5, 12.5], z: 9, z_min: 5, metros_por_pixel: 304 },
+        america: { nombre: "América", bbox: [-170, -56, -30, 72], z: 7, z_min: 3, metros_por_pixel: 1178 },
+        mundo: { nombre: "Mundo", bbox: [-180, -60, 180, 75], z: 6, z_min: 2, metros_por_pixel: 2366 } };
+      return json({ mapas: metas.filter(Boolean).map((id) => ({ id, ...DEF[id] })) });
+    }
     if (path === "/api/plantillas" && metodo === "GET") return json({ plantillas: PLANTILLAS });
     if ((m = path.match(/^\/api\/plantillas\/([^/]+)$/)) && metodo === "DELETE") {
       if (ROL !== "instructor") return error("No autorizado para esta accion", 403);

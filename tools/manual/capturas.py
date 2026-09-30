@@ -46,3 +46,14 @@ for ilus in ILUSTRACIONES:
     salida = AQUI / f"ilus_{ilus}.png"
     chrome(f"{BASE}/static/fotos/{ilus}.svg", salida, 640, 360, 1500)
     print(ilus, salida.stat().st_size)
+
+# mapa de America (region continental a ~1,2 km/pixel) con Venezuela en detalle encima; se toma solo si existe la region
+if (Path(__file__).resolve().parents[2] / "frontend" / "static" / "tiles" / "america" / "3").is_dir():
+    salida = AQUI / "cap_america.png"
+    chrome(f"{ARNES}?rol=instructor&lat=8&lon=-75&zoom=4", salida, 1440, 900, 9000)
+    if salida.exists():
+        im = Image.open(salida)
+        im = im.crop((0, 0, im.width, 875))
+        im.save(salida)
+        im.convert("RGB").save(AQUI / "cap_america.jpg", "JPEG", quality=85)
+        print("cap_america", salida.stat().st_size)

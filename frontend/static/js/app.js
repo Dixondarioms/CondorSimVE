@@ -3,7 +3,8 @@
   const $ = (id) => document.getElementById(id);
   const { esBando, pct } = Logica;
   const COLOR = { azul: "#3A86FF", rojo: "#EF233C" };
-  const LIMITES = [[0.6, -73.4], [12.4, -59.6]]; // area cubierta por los tiles de Venezuela
+  // regiones del mapa (GET /api/terreno/mapas): Venezuela en detalle, America y, si se genero, el mundo; se apilan
+  // de la mas general a la mas detallada (ver tools/preparar_terreno.py y Logica.limitesDeMapas)
   const NOMBRE_TIPO = { terrestre: "Terrestres", aerea: "Aéreas", naval: "Navales", base: "Bases y logística" };
   const ETIQUETA_FASE = { decision: "Decisión", resolucion: "Resolución" };
   const MAX_ALERTAS = 40;
@@ -121,6 +122,7 @@
     $("login").hidden = true;
     $("app").hidden = false;
     aplicarRol();
+    try { app.mapas = (await api("GET", "/api/terreno/mapas", undefined, true)).mapas; } catch (_) { app.mapas = null; }
     initMapa();
     iniciarModulos();
     app.map.invalidateSize();
@@ -265,24 +267,57 @@
   // ---------- mapa (100% offline) ----------
   function initMapa() {
     if (app.map) return;
-    const bounds = L.latLngBounds(LIMITES);
-    const map = L.map("map", { zoomControl: false, attributionControl: false, minZoom: 5, maxZoom: 17, maxBounds: bounds.pad(0.1), maxBoundsViscosity: 0.85 });
-    map.fitBounds(bounds);
+    const mapas = Logica.ordenarMapas(app.mapas);
+    const { limites, zoomMin, principal } = Logica.limitesDeMapas(mapas);
+    const bounds = L.latLngBounds(limites);
+    const map = L.map("map", { zoomControl: false, attributionControl: false, minZoom: zoomMin, maxZoom: 17, maxBounds: bounds.pad(0.1), maxBoundsViscosity: 0.85 });
+    map.fitBounds(L.latLngBounds(Logica.limitesDe(principal)));
     app.map = map;
     L.control.zoom({ position: "bottomright" }).addTo(map);
     L.control.attribution({ position: "bottomleft", prefix: false })
       .addAttribution("Satélite: Sentinel-2 cloudless (EOX, CC BY 4.0) · Relieve: SRTM/GMTED (AWS Terrain Tiles) · Cobertura: ESA WorldCover · Vectores: Natural Earth · Aeródromos: © colaboradores de OpenStreetMap (ODbL)").addTo(map);
 
-    // dos fondos alternativos (uno solo visible a la vez): foto satelital real (mas zoom util, ~10 m/px) o el
-    // relieve coloreado por clase de terreno (mejor para distinguir a simple vista bosque/pantano/montana).
+    // Fondo: el relieve coloreado por clase de terreno de cada region (la mas detallada encima) y, opcionalmente,
+    // la foto satelital real (mas zoom util, ~10 m/px) que solo cubre Venezuela y se superpone al relieve.
     const c = app.capas;
-    c.baseSatelite = L.tileLayer("/static/tiles_sat/{z}/{x}/{y}.jpg", { minZoom: 5, maxNativeZoom: 12, maxZoom: 17, bounds }).addTo(map);
-    c.baseRelieve = L.tileLayer("/static/tiles/{z}/{x}/{y}.jpg", { minZoom: 5, maxNativeZoom: 9, maxZoom: 17, bounds });
+    c.baseRelieve = L.layerGroup().addTo(map);
+    for (const m of mapas) {
+      L.tileLayer(`/static/tiles/${m.id}/{z}/{x}/{y}.jpg`, {
+        minZoom: zoomMin, minNativeZoom: m.z_min, maxNativeZoom: m.z, maxZoom: 17, bounds: L.latLngBounds(Logica.limitesDe(m)), zIndex: m.z,
+      }).addTo(c.baseRelieve);
+    }
+    const venezuela = mapas.find((m) => m.id === "venezuela") || Logica.MAPA_VENEZUELA;
+    const limitesSat = L.latLngBounds(Logica.limitesDe(venezuela));
+    c.baseSatelite = L.tileLayer("/static/tiles_sat/{z}/{x}/{y}.jpg", { minZoom: 5, maxNativeZoom: 12, maxZoom: 17, bounds: limitesSat, zIndex: 20 }).addTo(map);
+    // Leaflet dibuja enteras las teselas que tocan `bounds`: se recorta la capa al rectangulo exacto de Venezuela para que
+    // la foto no sobresalga con bordes rectos sobre el relieve continental
+    function recortarSatelite() {
+      const el = c.baseSatelite.getContainer();
+      if (!el) return;
+      const a = map.latLngToLayerPoint(limitesSat.getNorthWest());
+      const b = map.latLngToLayerPoint(limitesSat.getSouthEast());
+      el.style.clipPath = `polygon(${a.x}px ${a.y}px, ${b.x}px ${a.y}px, ${b.x}px ${b.y}px, ${a.x}px ${b.y}px)`;
+    }
+    map.on("viewreset zoomend moveend", recortarSatelite);
+    c.baseSatelite.on("add", () => setTimeout(recortarSatelite, 0));
+
+    // botones para encajar la vista en cada region
+    const irA = $("mapas-ir");
+    irA.replaceChildren();
+    for (const m of mapas.slice().reverse()) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "mini";
+      b.textContent = m.nombre || m.id;
+      b.title = Logica.textoMapa(m);
+      b.addEventListener("click", () => map.fitBounds(L.latLngBounds(Logica.limitesDe(m))));
+      irA.appendChild(b);
+    }
 
     function elegirBaseMapa(nombre) {
       const satelite = nombre === "satelite";
-      (satelite ? c.baseRelieve : c.baseSatelite).remove();
-      (satelite ? c.baseSatelite : c.baseRelieve).addTo(map);
+      if (satelite) c.baseSatelite.addTo(map);
+      else c.baseSatelite.remove();
       $("base-satelite").classList.toggle("activa", satelite);
       $("base-satelite").setAttribute("aria-pressed", String(satelite));
       $("base-relieve").classList.toggle("activa", !satelite);
@@ -315,8 +350,10 @@
         return m;
       },
     }).addTo(c.referencias);
-    for (const [archivo, capa] of [["fronteras", fronteras], ["estados", estados], ["rios", rios], ["lagos", lagos], ["lugares", lugares]]) {
-      fetch(`/static/geo/${archivo}.geojson`).then((r) => r.json()).then((g) => capa.addData(g)).catch(() => {});
+    for (const m of mapas) {
+      for (const [archivo, capa] of [["fronteras", fronteras], ["estados", estados], ["rios", rios], ["lagos", lagos], ["lugares", lugares]]) {
+        fetch(`/static/geo/${m.id}/${archivo}.geojson`).then((r) => (r.ok ? r.json() : null)).then((g) => { if (g) capa.addData(g); }).catch(() => {});
+      }
     }
 
     c.niebla = L.layerGroup();
