@@ -160,6 +160,8 @@ async def emitir_orden(
             )
         if payload.tipo == "apoyar" and (objetivo.bando != usuario.rol or objetivo.id == unidad.id):
             raise HTTPException(status_code=400, detail="Solo puede apoyar a otra unidad propia")
+        if payload.tipo == "atacar" and payload.parte and not catalogo.opera_aeronaves(objetivo):
+            raise HTTPException(status_code=400, detail="Solo una base aerea o un portaaviones tiene partes (pista, plataforma, combustible)")
 
     # Una orden directa a un grupo aereo reemplaza su mision (redireccionamiento).
     if unidad.tipo == "aerea":
@@ -179,6 +181,7 @@ async def emitir_orden(
             aeronaves_mod.codificar(payload.modelo, payload.aeronaves, (payload.indicativo or "").strip())
             if payload.tipo == "despegar"
             else misiles_mod.codificar(payload.misiles) if payload.tipo == "lanzar"
+            else (payload.parte or "") if payload.tipo == "atacar"
             else payload.detalle or "" if payload.tipo == "construir" else ""
         ),
         turno_emitida=esc.turno_actual,

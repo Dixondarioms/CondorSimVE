@@ -158,7 +158,7 @@ def test_los_aviones_estacionados_no_dan_cobertura_aerea_y_cuentan_como_blancos_
 
 def test_atacar_la_base_danha_a_los_aviones_estacionados(db_session):
     esc = _escenario(db_session)
-    base = _base(db_session, esc, lat=0.0)
+    base = _base(db_session, esc, lat=0.0, refugios=0)  # sin refugios reforzados (ver test_bases_partes)
     parado = _caza(db_session, esc, lat=0.006, en_tierra=True, base_id=base.id, espera_restante=1, nombre="Parado")
     volando = _caza(db_session, esc, lat=0.05, nombre="Volando")
     art = _unidad(db_session, esc, nombre="Art", bando="rojo", clase="artilleria", lat=0.1, alcance_km=30, fuerza=100)
@@ -167,7 +167,8 @@ def test_atacar_la_base_danha_a_los_aviones_estacionados(db_session):
     _refrescar(db_session, base, parado, volando)
     perdida_base = 100 - base.fuerza
     assert perdida_base > 5
-    assert 100 - parado.fuerza == pytest.approx(perdida_base * aeronaves.PERDIDA_EN_TIERRA, abs=0.01)
+    # la plataforma dañada por el ataque general expone algo mas a los aviones estacionados
+    assert 100 - parado.fuerza == pytest.approx(perdida_base * aeronaves.PERDIDA_EN_TIERRA * (1 + base.dano_plataforma / 100), abs=0.01)
     assert volando.fuerza == 100  # los que estan en el aire no se ven afectados
 
 

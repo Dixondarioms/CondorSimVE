@@ -52,6 +52,10 @@
 
   // ---------------------------------------------------------------- buques, portaaviones y misiles de crucero
   const PLAZAS_AERONAVES = { base_aerea: 12, portaaviones: 10 }; // igual que el catalogo del servidor
+  const PISTA_INOPERATIVA = 60; // % de daño de la pista (engine/bases.py)
+  const PARTES_BASE = [["", "Ataque general"], ["pista", "La pista (sin despegues ni aterrizajes al 60 % de daño)"], ["plataforma", "La plataforma (expone a los aviones estacionados)"], ["combustible", "El depósito de combustible (reduce las existencias)"]];
+  /** "Pista 40 % · Plataforma 10 % · Depósito 0 %" */
+  const textoPartesBase = (u) => `Pista ${Math.round(u.dano_pista || 0)} % · Plataforma ${Math.round(u.dano_plataforma || 0)} % · Depósito ${Math.round(u.dano_combustible || 0)} %`;
   const CLASES_EMBARCABLES = ["helicoptero", "helicoptero_artillado", "dron_reconocimiento", "dron_ataque", "municion_merodeadora"];
   const MODELOS_EMBARCABLES = ["caza_embarcado"];
   const LANZAN_MISILES = ["fragata", "destructor", "submarino", "lanzador_misiles"];
@@ -196,6 +200,7 @@
   /** Estado legible de una unidad segun sus datos y las ordenes pendientes de este turno. */
   function estadoUnidad(u, ordenesPendientes = []) {
     if (esMisil(u) && u.estado === "activa") return { texto: "Misil en vuelo", clase: "ok" };
+    if (operaAeronaves(u) && u.estado === "activa" && (u.dano_pista || 0) >= PISTA_INOPERATIVA) return { texto: "Pista inoperativa", clase: "fuego" };
     if (u.estado === "destruida") return { texto: "Destruida", clase: "fuego" };
     if (u.fuerza === null || u.fuerza === undefined) return { texto: "Detectada", clase: "fuego" };
     const orden = ordenesPendientes.find((o) => o.unidad_id === u.id);
@@ -640,7 +645,7 @@
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,
     aeronavesComprometidas, baseEnEscenario, nombreCortoBase, FUERZA_MINIMA_BASE,
     esMisil, operaAeronaves, esPortaaviones, plazasDe, esEmbarcable, puedeOperarEn, modeloDespegaDe, puedeLanzarMisiles,
-    misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL,
+    misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     distanciaKm, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, lineasCombate, describirCombate,

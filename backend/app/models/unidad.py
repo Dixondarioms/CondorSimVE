@@ -52,6 +52,15 @@ class Unidad(Base):
     # misil de crucero en vuelo: unidad a la que se dirige (mision "impacto"; mision_lat/lon = ultimo punto conocido)
     blanco_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
+    # bases aereas y portaaviones: daño por partes (0-100 %) y refugios reforzados (ver engine/bases.py)
+    dano_pista: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")
+    dano_plataforma: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")
+    dano_combustible: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")
+    refugios: Mapped[int] = mapped_column(
+        Integer, server_default="0",
+        default=lambda ctx: 4 if ctx.get_current_parameters().get("clase") == "base_aerea" else 0,
+    )
+
     # sensores y defensa aerea: radar emitiendo (control de emisiones) y fuego automatico de la antiaerea
     emitiendo: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
     fuego_libre: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())

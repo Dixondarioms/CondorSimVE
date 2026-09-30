@@ -135,6 +135,11 @@ class UnidadAjuste(BaseModel):
     # existencias de una base (puntos; 100 = llenar una unidad)
     stock_combustible: float | None = Field(default=None, ge=0, le=100000)
     stock_municion: float | None = Field(default=None, ge=0, le=100000)
+    # bases aereas: daño por partes y refugios reforzados
+    dano_pista: float | None = Field(default=None, ge=0, le=100)
+    dano_plataforma: float | None = Field(default=None, ge=0, le=100)
+    dano_combustible: float | None = Field(default=None, ge=0, le=100)
+    refugios: int | None = Field(default=None, ge=0, le=24)
 
 
 class DefensaIn(BaseModel):
@@ -162,6 +167,10 @@ class UnidadOut(BaseModel):
     mision_lat: float | None = None
     mision_lon: float | None = None
     blanco_id: int | None = None
+    dano_pista: float = 0.0
+    dano_plataforma: float = 0.0
+    dano_combustible: float = 0.0
+    refugios: int = 0
     echelon: str
     lat: float
     lon: float
@@ -197,6 +206,8 @@ class OrdenCreate(BaseModel):
     indicativo: str | None = Field(default=None, max_length=40)
     # solo para "lanzar": misiles de crucero de la salva (el blanco va en objetivo_unidad_id)
     misiles: int | None = Field(default=None, ge=1, le=4)
+    # solo para "atacar" a una base aerea o portaaviones: parte que se ataca (None = ataque general)
+    parte: Literal["pista", "plataforma", "combustible"] | None = None
 
 
 class OrdenOut(BaseModel):

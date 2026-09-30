@@ -24,7 +24,10 @@ def stock(b, variable: str) -> float:
 
 
 def maximo(b) -> float:
-    return catalogo.obtener(b.clase, b.tipo).stock_max or 2 * STOCK_INICIAL
+    """Existencias maximas; un deposito de combustible dañado (engine/bases.py) guarda menos."""
+    from app.engine import bases as bases_mod
+
+    return (catalogo.obtener(b.clase, b.tipo).stock_max or 2 * STOCK_INICIAL) * bases_mod.factor_combustible(b)
 
 
 def cambiar_stock(b, variable: str, delta: float) -> None:

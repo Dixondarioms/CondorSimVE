@@ -13,6 +13,7 @@ import json
 
 from sqlalchemy.orm import Session
 
+from app.engine import bases as bases_mod
 from app.engine import catalogo, geo, logistica
 from app.models.orden import Orden
 from app.models.unidad import Unidad
@@ -76,6 +77,8 @@ def error_de_despegue(base: Unidad, modelo_id: str | None, aeronaves: int | None
         return "La base aerea ya no esta activa." if base.tipo == "base" else f"{base.nombre} ya no esta activo."
     if base.fuerza < FUERZA_MINIMA_BASE:
         return f"La base esta muy danada ({base.fuerza:.0f}%): no puede lanzar grupos."
+    if not bases_mod.pista_operativa(base):
+        return bases_mod.motivo_pista(base)
     modelo = catalogo.MODELOS.get(modelo_id or "")
     if modelo is None:
         return "Elija un modelo de aeronave del catalogo."
@@ -165,6 +168,8 @@ def error_de_aterrizaje(u, base, unidades) -> str | None:
         return f"{u.nombre} no puede aterrizar en {base.nombre}: {MOTIVO_NO_EMBARCABLE}."
     if base.estado != "activa" or base.fuerza < FUERZA_MINIMA_BASE:
         return f"{base.nombre} esta fuera de servicio o muy danada."
+    if not bases_mod.pista_operativa(base):
+        return bases_mod.motivo_pista(base)
     if plazas_libres(base, unidades) < max(1, u.aeronaves or 1):
         return f"{base.nombre} no tiene plazas libres (capacidad {capacidad(base)} aeronaves)."
     return None
@@ -176,7 +181,7 @@ def base_mas_cercana(u, unidades):
     candidatas = [
         b for b in unidades
         if b.bando == u.bando and b.estado == "activa" and b.fuerza >= FUERZA_MINIMA_BASE and puede_operar_en(u, b)
-        and plazas_libres(b, unidades) >= max(1, u.aeronaves or 1)
+        and bases_mod.pista_operativa(b) and plazas_libres(b, unidades) >= max(1, u.aeronaves or 1)
     ]
     return min(candidatas, key=lambda b: geo.distancia_km(u.lat, u.lon, b.lat, b.lon), default=None)
 

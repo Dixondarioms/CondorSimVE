@@ -12,6 +12,7 @@
   const ZOOM_DETALLE = 14; // marcas de pista, eje de rodaje y numeracion
   const RADIO_BASE_KM = 4; // una unidad base_aerea a esta distancia de la pista "ocupa" el aerodromo
   const FUERZA_MINIMA_BASE = 25; // igual que el motor: por debajo la base no opera
+  const PISTA_INOPERATIVA = 60; // % de daño de la pista a partir del cual no hay despegues ni aterrizajes
 
   const COLORES = {
     aerodromo: { color: "#d8c690", weight: 1, dashArray: "5 4", fillColor: "#6c7a50", fillOpacity: 0.55 },
@@ -239,11 +240,14 @@
         if (!u || !b.pistas.length) continue;
         const fuerza = u.estado === "destruida" ? 0 : u.fuerza;
         if (fuerza === null || fuerza === undefined) continue; // base enemiga sin informacion de daño
-        for (const c of crateres(b.pistas, fuerza, semillaDe(u))) {
+        // el estado de la pista manda: su daño propio (partes de la base) o, si no se conoce, la fuerza general
+        const pista = u.dano_pista !== null && u.dano_pista !== undefined ? Math.max(0, 100 - u.dano_pista) : fuerza;
+        const inoperativa = u.estado === "destruida" || fuerza < FUERZA_MINIMA_BASE || (u.dano_pista || 0) >= PISTA_INOPERATIVA;
+        for (const c of crateres(b.pistas, Math.min(pista, u.estado === "destruida" ? 0 : 100), semillaDe(u))) {
           L.circle([c.lat, c.lon], { radius: c.radio_m * 1.9, stroke: false, fillColor: "#1d1712", fillOpacity: 0.35, renderer: render, interactive: false }).addTo(grupos.estado);
           L.circle([c.lat, c.lon], { radius: c.radio_m, color: "#9c7b52", weight: 1.5, fillColor: "#3a2a1c", fillOpacity: 1, renderer: render, interactive: false }).addTo(grupos.estado);
         }
-        if (fuerza < FUERZA_MINIMA_BASE) {
+        if (inoperativa) {
           for (const p of b.pistas) {
             for (const s of [p.largo_m * 0.08, p.largo_m * 0.5, p.largo_m * 0.92]) {
               const brazo = Math.min(60, p.ancho_m * 1.1);

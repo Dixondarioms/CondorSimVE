@@ -37,8 +37,13 @@
     id, escenario_id: 1, nombre, bando, clase, lat, lon, fuerza: 100, combustible: 100, municion: 100,
     carga: 0, recarga_restante: 0, despliegue_restante: 0, estado: "activa", echelon: "", terreno: "llano",
     modelo: "", aeronaves: 1, en_tierra: false, base_id: null, espera_restante: 0, mision: "", mision_lat: null, mision_lon: null,
-    emitiendo: true, fuego_libre: true, stock_combustible: 1000, stock_municion: 1000, ...x,
+    emitiendo: true, fuego_libre: true, stock_combustible: 1000, stock_municion: 1000, dano_pista: 0, dano_plataforma: 0, dano_combustible: 0, refugios: 0, ...x,
   });
+  const PLANTILLAS = [
+    { id: "demo_llanos", nombre: "Demo: Piedemonte andino - Llanos", descripcion: "Escenario de práctica genérico.", nacion_azul: "venezuela", nacion_rojo: "", unidades: 9, objetivos: 0, origen: "codigo", con_estado: false, guardada_en: "" },
+    { id: "defensa_3_enero_2026", nombre: "3 de enero de 2026 (estudio): defensa del litoral central", descripcion: "Ejercicio de estudio para practicar la defensa del litoral central. Simplificado; no es una reconstrucción histórica precisa.", nacion_azul: "venezuela", nacion_rojo: "estados_unidos", unidades: 9, objetivos: 8, origen: "codigo", con_estado: false, guardada_en: "" },
+    { id: "ataque-al-puente-turno-4", nombre: "Ataque al puente (situación al turno 4)", descripcion: "Guardada desde un ejercicio anterior por el instructor.", nacion_azul: "venezuela", nacion_rojo: "colombia", unidades: 7, objetivos: 2, origen: "usuario", con_estado: true, guardada_en: iso() },
+  ];
   const UNIDADES = [
     base(1, "1ra Bda Infantería", "azul", "infanteria", 8.590, -70.620, { fuerza: 92, municion: 15 }),
     base(2, "Blindados A", "azul", "blindado", 8.585, -70.600, { combustible: 45 }),
@@ -51,7 +56,7 @@
     base(10, "Flecha 1", "azul", "caza", 8.560, -70.520, { modelo: "su30", aeronaves: 2, echelon: "equipo", fuerza: 60, mision: "patrulla", mision_lat: 8.75, mision_lon: -70.3 }),
     base(15, "Cobra 1", "azul", "caza", 8.624, -70.209, { modelo: "f16", aeronaves: 2, echelon: "equipo", en_tierra: true, base_id: 9, espera_restante: 1 }),
     // sobre el aerodromo real de Barinas (SVBI), dañada: muestra el plano con crateres en la pista
-    base(9, "Base Aérea Barinas", "azul", "base_aerea", 8.618, -70.215, { stock_combustible: 180, stock_municion: 900, fuerza: 55 }),
+    base(9, "Base Aérea Barinas", "azul", "base_aerea", 8.618, -70.215, { stock_combustible: 180, stock_municion: 900, fuerza: 55, dano_pista: 45, dano_plataforma: 20, dano_combustible: 10, refugios: 4 }),
     base(19, "AA Pesada 1", "azul", "antiaerea", 8.575, -70.565),
     base(11, "Infantería Roja", "rojo", "infanteria", 8.660, -70.600, { fuerza: 70 }),
     base(12, "Depósito R", "rojo", "deposito", 8.700, -70.620),
@@ -159,7 +164,7 @@
 
   // ------------------------------------------------------------------ vista por rol (como el servidor)
   const FACTOR_DET = { despejado: 1, nublado: 0.9, lluvia: 0.7, tormenta: 0.5 };
-  const OCULTOS = ["fuerza", "velocidad_kmh", "alcance_km", "deteccion_km", "combustible", "municion", "autonomia_km", "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves", "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id", "emitiendo", "fuego_libre", "stock_combustible", "stock_municion"];
+  const OCULTOS = ["fuerza", "velocidad_kmh", "alcance_km", "deteccion_km", "combustible", "municion", "autonomia_km", "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves", "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id", "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios"];
   const km = (a, b) => Logica.distanciaKm(a.lat, a.lon, b.lat, b.lon);
 
   function completar(u) {
@@ -249,6 +254,51 @@
     };
   }
 
+  function rubrica() {
+    const ordenes = (e, r, x, motivos) => ({ emitidas: e, resueltas: r, rechazadas: x, pendientes: 0, motivos_rechazo: motivos, tasa_rechazo: e ? Math.round((1000 * x) / e) / 10 : 0 });
+    const puesto = (sigla, nombre, o, misiones = 0, observaciones = []) => ({ sigla, nombre, ordenes: o, misiones, observaciones });
+    const vacio = () => ordenes(0, 0, 0, []);
+    return {
+      escenario: { id: 1, nombre: ESC.nombre, estado: ESC.estado, turno_actual: 4, turnos_resueltos: 3 },
+      umbral_critico: 25,
+      nota_puestos: "Las ordenes no registran al usuario que las emitio: el desglose por puesto se deriva de la funcion de cada orden (puesto responsable: A2, A3, A4 o A5), no del alumno que la firmo.",
+      bandos: {
+        azul: {
+          ordenes: ordenes(6, 5, 1, [{ motivo: "Objetivo fuera de alcance", veces: 1 }]),
+          turnos_pasivos: { cantidad: 0, turnos: [] },
+          logistica: { unidades_criticas: [{ unidad_id: 1, unidad: "1ra Brigada de Infanteria", bando: "azul", variables: ["combustible"], turno: 3, minimo: 18 }], unidades_en_nivel_critico: 1, reabastecimientos: 0 },
+          perdidas: { infligidas: 59, sufridas: 26, unidades_destruidas: 0, enemigas_destruidas: 1 },
+          objetivos: { cumplidos: 1, fallidos: 0, pendientes: 1, puntos: 20 },
+          misiones: { planificadas: 2, cumplidas: 1, abortadas: 1, fallidas: 0, canceladas: 0, en_curso: 0 },
+          puestos: {
+            inteligencia: puesto("A2", "Inteligencia", vacio()),
+            operaciones: puesto("A3", "Operaciones en curso", ordenes(2, 2, 0, []), 2),
+            logistica: puesto("A4", "Logistica", vacio()),
+            planificacion: puesto("A5", "Planificacion", ordenes(4, 3, 1, [{ motivo: "Objetivo fuera de alcance", veces: 1 }])),
+          },
+          observaciones: [
+            "1 unidad(es) llegaron a menos del 25 % de combustible o municion (1ra Brigada de Infanteria) y no hubo ningun reabastecimiento: coordinar los convoyes y las bases (A4) antes de que la unidad quede inmovil.",
+            "Relacion de intercambio favorable: 59 pts infligidos frente a 26 sufridos.",
+            "Misiones aereas abortadas o fallidas (1) igualan o superan a las cumplidas (1): revisar el combustible, las rutas y la ventana de aterrizaje (A3).",
+          ],
+        },
+        rojo: {
+          ordenes: vacio(), turnos_pasivos: { cantidad: 3, turnos: [1, 2, 3] },
+          logistica: { unidades_criticas: [], unidades_en_nivel_critico: 0, reabastecimientos: 0 },
+          perdidas: { infligidas: 26, sufridas: 59, unidades_destruidas: 1, enemigas_destruidas: 0 },
+          objetivos: { cumplidos: 0, fallidos: 1, pendientes: 0, puntos: 0 },
+          misiones: { planificadas: 0, cumplidas: 0, abortadas: 0, fallidas: 0, canceladas: 0, en_curso: 0 },
+          puestos: { inteligencia: puesto("A2", "Inteligencia", vacio()), operaciones: puesto("A3", "Operaciones en curso", vacio()), logistica: puesto("A4", "Logistica", vacio()), planificacion: puesto("A5", "Planificacion", vacio()) },
+          observaciones: [
+            "El bando no emitio ninguna orden durante el ejercicio.",
+            "Las perdidas sufridas (59 pts) superan ampliamente a las infligidas (26 pts): revisar la relacion de fuerzas y el terreno antes de empenar.",
+            "1 objetivo(s) fallido(s): contrastar el plan con los objetivos asignados.",
+          ],
+        },
+      },
+    };
+  }
+
   function timeline() {
     const { turnos, cs } = historia();
     const series = new Map();
@@ -305,11 +355,25 @@
     if (path === "/api/auth/logout") return json({ ok: true });
     if (path === "/api/catalogo") { await cargaCatalogo; return json(CAT); }
     if (path === "/api/naciones") return json({ naciones: NACIONES });
-    if (path === "/api/plantillas" && metodo === "GET") {
-      return json({ plantillas: [
-        { id: "demo_llanos", nombre: "Demo: Piedemonte andino - Llanos", descripcion: "Escenario de práctica genérico.", nacion_azul: "venezuela", nacion_rojo: "", unidades: 9, objetivos: 0 },
-        { id: "defensa_3_enero_2026", nombre: "3 de enero de 2026 (estudio): defensa del litoral central", descripcion: "Ejercicio de estudio para practicar la defensa del litoral central. Simplificado; no es una reconstrucción histórica precisa.", nacion_azul: "venezuela", nacion_rojo: "estados_unidos", unidades: 9, objetivos: 8 },
-      ] });
+    if (path === "/api/plantillas" && metodo === "GET") return json({ plantillas: PLANTILLAS });
+    if ((m = path.match(/^\/api\/plantillas\/([^/]+)$/)) && metodo === "DELETE") {
+      if (ROL !== "instructor") return error("No autorizado para esta accion", 403);
+      const i = PLANTILLAS.findIndex((p) => p.id === decodeURIComponent(m[1]));
+      if (i < 0) return error("Plantilla desconocida", 404);
+      if (PLANTILLAS[i].origen !== "usuario") return error("Las plantillas del sistema no se pueden eliminar");
+      PLANTILLAS.splice(i, 1);
+      return json({ ok: true, id: m[1] });
+    }
+    if (path === "/api/escenarios/1/guardar_plantilla" && metodo === "POST") {
+      if (ROL !== "instructor") return error("No autorizado para esta accion", 403);
+      const nombre = (cuerpo.nombre || "").trim();
+      const id = nombre.toLowerCase().normalize("NFKD").replace(/\p{M}/gu, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
+      if (!id) return error("El nombre debe contener al menos una letra o un numero");
+      const existente = PLANTILLAS.findIndex((p) => p.id === id);
+      if (existente >= 0 && !cuerpo.reemplazar) return error(`Ya existe una plantilla con el identificador '${id}': cambie el nombre o marque 'reemplazar'`, 409);
+      const p = { id, nombre, descripcion: cuerpo.descripcion || "", nacion_azul: ESC.nacion_azul, nacion_rojo: ESC.nacion_rojo, unidades: UNIDADES.filter((u) => u.estado !== "destruida").length, objetivos: objetivos.length, origen: "usuario", con_estado: !!cuerpo.con_estado, guardada_en: iso() };
+      if (existente >= 0) PLANTILLAS[existente] = p; else PLANTILLAS.push(p);
+      return json(p);
     }
     if (path.match(/^\/api\/plantillas\/[^/]+$/) && metodo === "POST") {
       if (ROL !== "instructor") return error("No autorizado para esta accion", 403);
@@ -322,6 +386,7 @@
     if ((m = path.match(/^\/api\/escenarios\/1\/usuarios$/))) return json({ usuario_ids: [2, 3, 4] });
     if (path === "/api/escenarios/1/aar") return json(informe());
     if (path === "/api/escenarios/1/aar/timeline") return json(timeline());
+    if (path === "/api/escenarios/1/aar/rubrica") return json(rubrica());
 
     if (path === "/api/escenarios/1/ordenes/previsualizar") {
       const u = UNIDADES.find((x) => x.id === cuerpo.unidad_id);

@@ -47,6 +47,7 @@
         <label class="chk solo-instructor"><input type="checkbox" id="ver-archivados"><span>archivados</span></label>
         <button id="btn-nuevo-escenario" class="solo-instructor secundario" type="button">Nuevo</button>
         <button id="btn-plantillas" class="solo-instructor secundario" type="button" title="Crear un escenario a partir de uno precargado">Desde plantilla…</button>
+        <button id="btn-guardar-plantilla" class="solo-instructor secundario" type="button" title="Guardar las unidades, los objetivos y el clima actuales de este escenario como una plantilla reutilizable">Guardar como plantilla…</button>
         <span id="estado-conexion" class="conexion off" title="desconectado"></span>
         <div id="reloj" class="reloj" role="timer" aria-live="off">
           <span class="etiqueta" id="reloj-etiqueta">TIEMPO RESTANTE PLANIFICACIÓN:</span>
@@ -151,6 +152,7 @@
             <div id="o-objetivo-box" hidden>
               <select id="o-objetivo" aria-label="Objetivo"></select>
               <p id="o-objetivo-ayuda" class="ayuda"></p>
+              <label class="mini" id="o-parte-fila" hidden>Qué se ataca de la base<select id="o-parte"></select></label>
             </div>
             <div id="o-lanzar" hidden>
               <label class="mini">Misiles en la salva<select id="o-misiles"></select></label>
@@ -316,6 +318,10 @@
               <input id="adj-municion" type="number" placeholder="Munición 0-100" min="0" max="100">
               <input id="adj-stock-comb" type="number" placeholder="Existencias de combustible (bases)" min="0">
               <input id="adj-stock-mun" type="number" placeholder="Existencias de munición (bases)" min="0">
+              <input id="adj-dano-pista" type="number" placeholder="Daño de la pista % (bases aéreas)" min="0" max="100">
+              <input id="adj-dano-plat" type="number" placeholder="Daño de la plataforma %" min="0" max="100">
+              <input id="adj-dano-comb" type="number" placeholder="Daño del depósito de combustible %" min="0" max="100">
+              <input id="adj-refugios" type="number" placeholder="Refugios reforzados (grupos protegidos)" min="0" max="24">
             </div>
             <button id="btn-ajustar" type="button">Aplicar ajuste</button>
           </details>
@@ -447,6 +453,7 @@
             <span id="rp-turno" class="contador"></span>
             <button id="rp-resumen" class="mini secundario" type="button">Resumen</button>
             <button id="rp-timeline" class="mini" type="button">Línea de tiempo</button>
+            <button id="rp-rubrica" class="mini" type="button" title="Indicadores de conducción por bando y por puesto, con observaciones automáticas">Rúbrica</button>
             <a id="rp-imprimible" class="enlace-boton" target="_blank" rel="noopener">Imprimible</a>
             <a id="rp-csv" class="enlace-boton">CSV</a>
             <button id="rp-cerrar" class="mini secundario" type="button">Cerrar</button>
@@ -584,6 +591,30 @@
       <button type="button" id="plantilla-cerrar" class="secundario">Cerrar</button>
     </form>
   </dialog>
+  <dialog id="dlg-guardar-plantilla">
+    <form id="gp-form" method="dialog">
+      <h3>Guardar el escenario actual como plantilla</h3>
+      <p class="ayuda">Se guardan las unidades <b>tal como están ahora</b> (posiciones actuales, sin las destruidas), los objetivos, el clima y la identidad nacional. La plantilla queda en el servidor y aparece en «Desde plantilla…» para todos los instructores.</p>
+      <label class="mini">Nombre<input id="gp-nombre" maxlength="80" required placeholder="Ej. Defensa del puente, situación al turno 4"></label>
+      <label class="mini">Descripción (opcional)<textarea id="gp-descripcion" maxlength="1000" rows="3"></textarea></label>
+      <label class="chk"><input type="checkbox" id="gp-con-estado"><span>Conservar la fuerza, el combustible, la munición y las existencias actuales (si no, todo arranca al 100 %)</span></label>
+      <label class="chk" id="gp-reemplazar-fila" hidden><input type="checkbox" id="gp-reemplazar"><span>Reemplazar la plantilla que ya existe con ese nombre</span></label>
+      <p id="gp-error" class="ayuda advertencia" hidden></p>
+      <div class="fila">
+        <button type="button" id="gp-cancelar" class="secundario">Cancelar</button>
+        <button type="submit" id="gp-guardar" class="primario">Guardar plantilla</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="dlg-rubrica" class="ancho">
+    <form method="dialog">
+      <h3>Rúbrica de evaluación</h3>
+      <p id="rb-resumen" class="ayuda"></p>
+      <div id="rb-contenido"></div>
+      <p id="rb-nota" class="ayuda"></p>
+      <button>Cerrar</button>
+    </form>
+  </dialog>
   <dialog id="dlg-aeronaves" class="ancho">
     <form id="aer-form" method="dialog">
       <h3 id="aer-titulo">Enviar grupo de caza</h3>
@@ -626,7 +657,9 @@
   <script src="/static/js/misiones.js"></script>
   <script src="/static/js/herramientas.js"></script>
   <script src="/static/js/timeline.js"></script>
+  <script src="/static/js/rubrica.js"></script>
   <script src="/static/js/informe.js"></script>
+  <script src="/static/js/plantillas.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
 </html>

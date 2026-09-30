@@ -943,6 +943,8 @@
     if (cl && cl.plazas_aeronaves && !oculto && app.data) {
       const abordo = Logica.estacionadasEn(u, app.data.unidades);
       extra.push(dato("Aeronaves a bordo", `${abordo.reduce((s, x) => s + Math.max(1, x.aeronaves || 1), 0)} de ${cl.plazas_aeronaves} plazas`));
+      extra.push(`<div class="ancho-completo"><dt>Daño por partes</dt><dd>${escapar(Logica.textoPartesBase(u))}${(u.dano_pista || 0) >= Logica.PISTA_INOPERATIVA ? " · <b>pista inoperativa</b>" : ""}</dd></div>`);
+      extra.push(dato("Refugios reforzados", `${u.refugios || 0} (protegen a los primeros ${u.refugios || 0} grupos estacionados; ${abordo.length} a bordo)`));
     }
     if (cl && cl.lanza_misiles && !oculto) extra.push(dato("Misiles de crucero", `${Logica.misilesDisponibles(u)} listos (25 % de munición cada uno)`));
     if (modelo) {
@@ -1075,6 +1077,12 @@
           ? (lista.length ? "Blanco de los misiles: una unidad enemiga detectada en tierra o en el mar (a menos de 1 000 km). También puede hacer clic en el mapa." : "No hay blancos detectados.")
           : lista.length ? "Solo puede atacar unidades detectadas por su bando. También puede hacer clic en el mapa." : "No hay enemigos detectados.";
     }
+    if (app.modoOrden === "atacar") {
+      const obj = app.porId.get(parseInt($("o-objetivo").value, 10));
+      const base = !!obj && Logica.operaAeronaves(obj);
+      $("o-parte-fila").hidden = !base;
+      if (base && !$("o-parte").options.length) llenarSelect($("o-parte"), Logica.PARTES_BASE);
+    } else $("o-parte-fila").hidden = true;
     if (app.modoOrden === "lanzar" && u) {
       const max = Logica.misilesDisponibles(u);
       const actual = parseInt($("o-misiles").value, 10);
@@ -1096,6 +1104,7 @@
     if (app.data) actualizarNuevaOrden(app.data);
   }));
   $("btn-limpiar-wp").addEventListener("click", () => { app.waypoints = []; dibujarWaypoints(); });
+  $("o-objetivo").addEventListener("change", () => { if (app.data) actualizarNuevaOrden(app.data); });
 
   $("btn-emitir").addEventListener("click", async () => {
     const unidad_id = app.unidadOrden;
@@ -1129,6 +1138,7 @@
       const obj = parseInt($("o-objetivo").value, 10);
       if (!obj) return toast("Elija una unidad objetivo.");
       cuerpo.objetivo_unidad_id = obj;
+      if (app.modoOrden === "atacar" && !$("o-parte-fila").hidden && $("o-parte").value) cuerpo.parte = $("o-parte").value;
     }
     try {
       await api("POST", rutaEsc("/ordenes"), cuerpo);
@@ -1161,6 +1171,7 @@
     if (o.tipo === "atacar" && o.detalle === "intercepcion") return `Interceptar a ${nombreObj}`;
     if (o.tipo === "atacar" && o.detalle === "impacto") return `Impacto de misiles en ${nombreObj}`;
     if (o.tipo === "atacar" && o.detalle === "defensa aerea") return `Defensa aérea contra ${nombreObj}`;
+    if (o.tipo === "atacar" && ["pista", "plataforma", "combustible"].includes(o.detalle)) return `Atacar ${nombreObj} (${o.detalle === "combustible" ? "depósito de combustible" : o.detalle})`;
     if (o.tipo === "lanzar") {
       let n = 1;
       try { n = JSON.parse(o.detalle || "{}").misiles || 1; } catch (_) { /* detalle vacio */ }
@@ -1904,7 +1915,8 @@
     const id = $("adj-unidad").value;
     const cuerpo = {};
     const campos = [["fuerza", "adj-fuerza"], ["combustible", "adj-combustible"], ["municion", "adj-municion"],
-      ["stock_combustible", "adj-stock-comb"], ["stock_municion", "adj-stock-mun"]];
+      ["stock_combustible", "adj-stock-comb"], ["stock_municion", "adj-stock-mun"], ["dano_pista", "adj-dano-pista"],
+      ["dano_plataforma", "adj-dano-plat"], ["dano_combustible", "adj-dano-comb"], ["refugios", "adj-refugios"]];
     for (const [campo, el] of campos) {
       const v = parseFloat($(el).value);
       if (!Number.isNaN(v)) cuerpo[campo] = v;

@@ -243,6 +243,19 @@ salta a ese turno y lugar. Los datos salen de `GET /api/escenarios/{id}/aar/time
 la exportación JSON): series, eventos con su causa (movimiento, combate, apoyo, convoy, construcción…) y
 correlaciones (`consumo_en_combate`, `coincide_con_combate`, `combate_con_logistica_baja`).
 
+**Rúbrica de evaluación por bando y por puesto.** El botón *Rúbrica* de la repetición (y la sección
+"Rubrica de evaluacion" del informe imprimible) resume, para cada bando: órdenes emitidas / resueltas /
+rechazadas con los tres motivos de rechazo más frecuentes (agrupados sin cifras: "Objetivo fuera de alcance"),
+**turnos pasivos** (turnos resueltos en los que el bando no emitió ninguna orden ni planificó misiones),
+logística (unidades que llegaron a menos del 25 % de combustible o munición y reabastecimientos realizados),
+pérdidas infligidas vs. sufridas y unidades destruidas, objetivos cumplidos / fallidos / pendientes, misiones
+aéreas cumplidas / abortadas / fallidas, y una lista de **observaciones automáticas** en español (p. ej. "2
+orden(es) rechazada(s) por 'Objetivo fuera de alcance': revisar la apreciacion de distancias antes de emitir
+la orden."). El desglose por puesto (A2, A3, A4, A5) se deriva de la **función de cada orden** —el puesto
+responsable según la unidad y el tipo de orden—, porque las órdenes no registran qué alumno las emitió.
+Datos en `GET /api/escenarios/{id}/aar/rubrica` (mismos permisos que el informe) e incluidos en la
+exportación JSON (`rubrica`).
+
 ## Aviación: F-16, Su-30 y bases aéreas de Venezuela
 
 - **Modelos con foto** (`MODELOS` en `backend/app/engine/catalogo.py`): **F-16A/B Fighting Falcon** y
@@ -325,6 +338,23 @@ Al acercar el mapa (zoom 11 en adelante; ahora llega hasta el 17) cada base aér
   `tools/cache/osm_aerodromos.json` y se reprocesa sin internet. Datos © colaboradores de OpenStreetMap,
   **ODbL 1.0**: uso libre, también offline, citando la fuente; el crédito ya aparece en el mapa. Para agregar otra
   base, añádala a `BASES` en el script y vuelva a correrlo con `--descargar`.
+
+## Daño por partes de la base y refugios reforzados
+
+Una base aérea (o un portaaviones) tiene, además de su fuerza, tres partes con daño propio (0–100 %): **pista**,
+**plataforma** y **depósito de combustible**. Al atacar una base se puede elegir la parte («Qué se ataca de la base»
+en el panel de órdenes; las misiones y los misiles hacen ataque general):
+
+- Un ataque dirigido aplica a esa parte 1,5 veces la pérdida de fuerza de la base; uno general, la mitad a cada parte.
+- **Pista ≥ 60 %:** pista inoperativa: sin despegues ni aterrizajes (los grupos en vuelo se desvían a otra base),
+  aunque la fuerza general sea alta. En el plano del aeródromo se pintan las cruces de pista cerrada.
+- **Plataforma:** los aviones estacionados sufren más daño (hasta el doble) en cada ataque a la base.
+- **Depósito:** las existencias máximas se reducen en proporción y el excedente se pierde.
+- **Refugios reforzados** (`refugios`, 4 en cada base aérea nueva; el instructor los ajusta en *Ajuste manual*):
+  protegen a los primeros N grupos estacionados, que reciben solo un cuarto del daño.
+- **Reparación:** la pista recupera 8 % por turno con los medios de la base; con **ingenieros propios a ≤ 5 km**
+  todas las partes recuperan 25 % más por turno. Llega un aviso cuando la pista queda inoperativa y cuando vuelve
+  a operar. Motor: `engine/bases.py`; migración 0015.
 
 ## Guerra electrónica, radares y drones
 
@@ -484,6 +514,26 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   clase, ajuste las unidades y objetivos con lo que la institución considere pedagógicamente apropiado.
 - Para agregar una plantilla propia: una entrada más en `PLANTILLAS` (`engine/plantillas.py`), con sus
   `UnidadPlantilla` y, si aplica, `ObjetivoPlantilla`; no hace falta tocar la base de datos ni el resto del código.
+
+### Guardar el escenario actual como plantilla
+
+Desde la cabecera, **Guardar como plantilla…** (solo el instructor) toma el escenario elegido **tal como está
+ahora** —posiciones actuales de las unidades (sin las destruidas), objetivos, clima e identidad nacional— y lo
+guarda como una plantilla más, con nombre y descripción. La casilla *Conservar la fuerza, el combustible, la
+munición y las existencias actuales* decide si las unidades arrancan al 100 % (por defecto) o con su estado
+del momento; las aeronaves estacionadas conservan su base. La plantilla aparece de inmediato en «Desde
+plantilla…» (marcada como *Guardada por un instructor*), se instancia igual que las del código y se puede
+**Eliminar** desde esa misma lista (las del sistema no).
+
+- Se guarda como un archivo JSON por plantilla en `backend/data/plantillas_usuario/<id>.json` (sin tocar la
+  base de datos; la variable `SIMULADOR_PLANTILLAS_USUARIO` cambia la carpeta). El `id` sale del nombre
+  (minúsculas sin acentos, `a-z0-9-`, máximo 60 caracteres); un archivo corrupto se omite con un aviso en el
+  registro del servidor.
+- API: `POST /api/escenarios/{id}/guardar_plantilla` con `{nombre, descripcion, con_estado, reemplazar}`
+  (400 si el nombre no sirve o coincide con una plantilla del sistema; 409 si ya existe y no se pide
+  reemplazar), `GET /api/plantillas` (cada entrada trae `origen: "codigo" | "usuario"`),
+  `POST /api/plantillas/{id}` y `DELETE /api/plantillas/{id}` (solo las de usuario). También sirven en la
+  consola: `python -m app.crear_demo <id>`.
 
 ## Objetivos, puntaje y editor del escenario
 

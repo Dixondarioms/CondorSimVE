@@ -24,6 +24,7 @@ from collections import defaultdict
 from sqlalchemy.orm import Session
 
 from app.engine import aeronaves as aeronaves_mod
+from app.engine import bases as bases_mod
 from app.engine import azar as azar_mod
 from app.engine import catalogo, combat, geo, logistica, movimiento, vision
 from app.engine import clima as clima_mod
@@ -562,6 +563,8 @@ def procesar_ordenes(
     gasto_municion: dict[int, float] = defaultdict(float)
     orden_de_ataque: dict[int, int] = {}
     derribados: set[int] = set()
+    partes_atacadas: dict[int, str | None] = {}
+    pistas_operativas_antes = {u.id: bases_mod.pista_operativa(u) for u in lista_unidades if catalogo.opera_aeronaves(u)}
 
     def municion_en_vuelo(x) -> bool:
         """Misil o municion merodeadora en vuelo: se la puede interceptar antes de que impacte."""
@@ -630,6 +633,12 @@ def procesar_ordenes(
             res.efectos.append(f"antiaerea interferida por guerra electronica x{ge_mod.FACTOR_ANTIAEREA:.2f}")
         perdidas[a.id] += fuerza_inicial[a.id] - res.fuerza_atacante_resultante
         perdidas[d.id] += fuerza_inicial[d.id] - res.fuerza_defensor_resultante
+        if catalogo.opera_aeronaves(d):  # base aerea o portaaviones: el daño se reparte en sus partes
+            parte = orden.detalle if orden.detalle in bases_mod.PARTES else None
+            partes_atacadas[d.id] = parte
+            cambios = bases_mod.aplicar_dano(d, fuerza_inicial[d.id] - res.fuerza_defensor_resultante, parte)
+            if cambios:
+                res.efectos.append("daño a " + ", ".join(f"{p} {v:.0f} %" for p, v in cambios.items()))
         gasto_municion[a.id] += consumo
         orden_de_ataque[a.id] = orden.id
         dispararon.add(a.id)
@@ -675,6 +684,10 @@ def procesar_ordenes(
         u.fuerza = max(0.0, u.fuerza - perdida)
         if u.fuerza <= 0:
             u.estado = "destruida"
+        elif uid in partes_atacadas and not bases_mod.pista_operativa(u) and pistas_operativas_antes.get(uid, True):
+            db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="combate", bando_destino=u.bando,
+                          descripcion=f"La pista de {u.nombre} quedo inoperativa ({bases_mod.dano(u, 'pista'):.0f} % de daño): "
+                                      "sin despegues ni aterrizajes hasta repararla."))
     # la municion merodeadora se estrella contra su blanco: se pierde al atacar
     for uid in sorted(dispararon):
         u = unidades[uid]
@@ -692,11 +705,15 @@ def procesar_ordenes(
         base = unidades[uid]
         if not catalogo.opera_aeronaves(base) or perdida <= 0:
             continue
-        for x in aeronaves_mod.estacionadas(base, lista_unidades):
+        estacionados = aeronaves_mod.estacionadas(base, lista_unidades)
+        con_refugio = bases_mod.protegidos(base, estacionados)
+        for x in estacionados:
             if base.estado == "destruida" and catalogo.es_portaaviones(base):
                 x.fuerza = 0.0
             else:
-                x.fuerza = max(0.0, x.fuerza - perdida * aeronaves_mod.PERDIDA_EN_TIERRA)
+                # una plataforma dañada expone mas a los aviones; un refugio reforzado los protege
+                factor = bases_mod.factor_plataforma(base) * (bases_mod.PROTECCION_REFUGIO if x.id in con_refugio else 1.0)
+                x.fuerza = max(0.0, x.fuerza - perdida * aeronaves_mod.PERDIDA_EN_TIERRA * factor)
             if x.fuerza <= 0:
                 x.estado = "destruida"
                 donde = "se hundio con" if catalogo.es_portaaviones(base) and base.estado == "destruida" else "fue destruido en tierra durante el ataque a"
@@ -766,6 +783,15 @@ def procesar_ordenes(
             u.despliegue_restante = max(0, u.despliegue_restante - 1)
 
     misiones_mod.cerrar(db, escenario, unidades, turno)
+
+    # reparacion de las partes de las bases (sola la pista; todo con ingenieros propios al lado)
+    for u in lista_unidades:
+        if catalogo.opera_aeronaves(u) and u.estado == "activa":
+            antes_pista = bases_mod.dano(u, "pista")
+            bases_mod.reparar(u, lista_unidades)
+            if antes_pista >= bases_mod.PISTA_INOPERATIVA > bases_mod.dano(u, "pista"):
+                db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="logistica", bando_destino=u.bando,
+                              descripcion=f"La pista de {u.nombre} vuelve a estar operativa ({bases_mod.dano(u, 'pista'):.0f} % de daño)."))
 
     # las zonas meteorologicas se desplazan con su deriva y las vencidas se disipan
     for z in clima_mod.avanzar(db, escenario, turno):
