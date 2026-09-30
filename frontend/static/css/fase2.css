@@ -324,3 +324,34 @@ body.planificando-mision #barra-graficos { display: none; }
 #fs-svg .fs-ahora { stroke: #ef476f; stroke-width: 2; }
 #fs-svg .fs-vacio { fill: var(--texto-sec); font-size: 13px; }
 @media (max-width: 900px) { #panel-mision { right: 8px; left: 8px; width: auto; top: 46px; max-height: 55%; z-index: 1300; } }
+
+/* ---- miniaturas 3D de las unidades ---- */
+.marca.miniatura .avion3d svg { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .55)); }
+.marca.miniatura.sel .avion3d svg { filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 2px var(--azul)); }
+.marca.miniatura.enemigo.sel .avion3d svg { filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 2px var(--rojo)); }
+
+/* ---- plano de los aerodromos (pistas, hangares) ---- */
+.ficha-base {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto;
+  font: 800 11px/1 system-ui, sans-serif; color: #fff; letter-spacing: .02em;
+  border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+}
+.ficha-base.azul { background: #3A86FF; }
+.ficha-base.rojo { background: #EF233C; }
+.marca.sel .ficha-base { box-shadow: 0 0 0 3px #fff, 0 0 10px #fff; }
+.numero-pista { background: none; border: none; }
+.numero-pista span {
+  position: absolute; left: 0; top: 0; translate: -50% -50%; display: block;
+  font: 800 var(--tam-numero-pista, 12px)/1 "Arial Narrow", Arial, sans-serif; color: #f4f4ee; letter-spacing: -.02em;
+  text-shadow: 0 0 1px rgba(0, 0, 0, .4); white-space: nowrap; transform-origin: 50% 50%;
+}
+.rotulo-aerodromo {
+  background: none; border: none; width: auto !important; height: auto !important;
+  white-space: nowrap; translate: -50% 120%; display: inline-block;
+  font: 600 11px/1.2 system-ui, sans-serif; color: #fff; padding: 2px 6px; border-radius: 4px;
+  background-color: rgba(20, 24, 28, .72) !important; box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+}
+.rotulo-aerodromo b { color: #ffd21f; margin-right: 4px; }
+.rotulo-aerodromo.cerrada { background-color: rgba(160, 20, 30, .9) !important; font-weight: 800; translate: -50% -160%; letter-spacing: .04em; }
+.plano-aerodromos .leaflet-tooltip.nombre-base { display: none; }
+.plano-aerodromos .base-ven { opacity: .45; }

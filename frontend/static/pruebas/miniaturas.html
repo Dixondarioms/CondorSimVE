@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Galería de miniaturas</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; padding: 16px; background: #1d2a1f; color: #e8ecef; font: 13px system-ui, sans-serif; }
+    h1 { font-size: 16px; margin: 0 0 12px; }
+    .controles { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+    .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+    .tarjeta { background: rgba(0, 0, 0, .25); border-radius: 8px; padding: 8px; text-align: center; }
+    .tarjeta .fila { display: flex; justify-content: center; align-items: center; gap: 4px; min-height: 120px; }
+    .tarjeta svg { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .5)); }
+    .tarjeta b { display: block; margin-top: 4px; }
+    .tarjeta small { color: #9aa7b1; }
+    body.agua { background: #1c3550; }
+  </style>
+</head>
+<body>
+  <h1>Miniaturas del simulador</h1>
+  <div class="controles">
+    <label>Rumbo <input id="rumbo" type="range" min="0" max="345" step="15" value="45"> <span id="rumbo-v">45°</span></label>
+    <label>Tamaño <input id="px" type="range" min="40" max="220" step="10" value="110"></label>
+    <label><input id="agua" type="checkbox"> Fondo de mar</label>
+    <label>Grupo <select id="n"><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
+  </div>
+  <div class="rejilla" id="rejilla"></div>
+  <script src="/static/js/modelo3d.js"></script>
+  <script src="/static/js/miniaturas.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    function dibujar() {
+      const rumbo = +$("rumbo").value, px = +$("px").value, n = +$("n").value;
+      $("rumbo-v").textContent = `${rumbo}°`;
+      $("rejilla").innerHTML = Modelo3d.MALLAS.map((id) => {
+        const m = (bando) => Modelo3d.svg({ modelo: id, rumbo: Modelo3d.info(id).rumbo ?? rumbo, bando, n, px: Math.round(px * (Modelo3d.info(id).tam || 1) / 1.2) });
+        return `<div class="tarjeta"><div class="fila">${m("azul")}${m("rojo")}</div><b>${id}</b><small>tam ${Modelo3d.info(id).tam}${Modelo3d.info(id).suelo ? " · suelo" : ""}</small></div>`;
+      }).join("");
+    }
+    for (const id of ["rumbo", "px", "n"]) $(id).addEventListener("input", dibujar);
+    $("agua").addEventListener("change", () => document.body.classList.toggle("agua", $("agua").checked));
+    dibujar();
+  </script>
+</body>
+</html>

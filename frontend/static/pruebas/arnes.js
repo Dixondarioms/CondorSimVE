@@ -49,8 +49,9 @@
     base(7, "Helo Artillado", "azul", "helicoptero_artillado", 8.600, -70.660, { municion: 38, combustible: 22 }),
     base(8, "Halcón 1", "azul", "caza", 8.650, -70.500, { modelo: "f16", aeronaves: 4, echelon: "escuadra" }),
     base(10, "Flecha 1", "azul", "caza", 8.560, -70.520, { modelo: "su30", aeronaves: 2, echelon: "equipo", fuerza: 60, mision: "patrulla", mision_lat: 8.75, mision_lon: -70.3 }),
-    base(15, "Cobra 1", "azul", "caza", 8.556, -70.494, { modelo: "f16", aeronaves: 2, echelon: "equipo", en_tierra: true, base_id: 9, espera_restante: 1 }),
-    base(9, "Base Aérea Barinas", "azul", "base_aerea", 8.550, -70.500, { stock_combustible: 180, stock_municion: 900 }),
+    base(15, "Cobra 1", "azul", "caza", 8.624, -70.209, { modelo: "f16", aeronaves: 2, echelon: "equipo", en_tierra: true, base_id: 9, espera_restante: 1 }),
+    // sobre el aerodromo real de Barinas (SVBI), dañada: muestra el plano con crateres en la pista
+    base(9, "Base Aérea Barinas", "azul", "base_aerea", 8.618, -70.215, { stock_combustible: 180, stock_municion: 900, fuerza: 55 }),
     base(19, "AA Pesada 1", "azul", "antiaerea", 8.575, -70.565),
     base(11, "Infantería Roja", "rojo", "infanteria", 8.660, -70.600, { fuerza: 70 }),
     base(12, "Depósito R", "rojo", "deposito", 8.700, -70.620),
@@ -65,11 +66,11 @@
   // misiones aereas: una CAP en orbita, una interdiccion programada (azul) y una SEAD roja que azul no debe ver
   let misiones = [
     { id: 1, bando: "azul", rol: "CAP", rol_nombre: "Patrulla aerea de combate (CAP)", nombre: "Flecha", estado: "en_curso", unidad_id: 10, base_id: null, modelo: "su30", aeronaves: 2, turno_despegue: 2, creada_turno: 2,
-      puntos: [{ tipo: "orbita", lat: 8.75, lon: -70.3, turnos: 3 }, { tipo: "aterrizaje", lat: 8.55, lon: -70.5, base_id: 9 }],
+      puntos: [{ tipo: "orbita", lat: 8.75, lon: -70.3, turnos: 3 }, { tipo: "aterrizaje", lat: 8.618, lon: -70.215, base_id: 9 }],
       plan: { puntos: [{ tipo: "orbita", km: 32, llegada_h: 0.03, combustible_llegada: 99, salida_h: 4, combustible_salida: 75 }, { tipo: "aterrizaje", km: 31, llegada_h: 4.03, combustible_llegada: 74 }], duracion_h: 4.03, combustible_final: 74, advertencias: [] },
       indice: 0, espera: 2, resultado: "En orbita: 2 turno(s) mas." },
     { id: 2, bando: "azul", rol: "INTERDICCION", rol_nombre: "Interdiccion (ataque a un blanco)", nombre: "Rayo", estado: "programada", unidad_id: null, base_id: 9, modelo: "f16", aeronaves: 2, turno_despegue: 5, creada_turno: 3,
-      puntos: [{ tipo: "paso", lat: 8.60, lon: -70.66 }, { tipo: "blanco", lat: 8.66, lon: -70.60, objetivo_unidad_id: 11 }, { tipo: "aterrizaje", lat: 8.55, lon: -70.5, base_id: 9 }],
+      puntos: [{ tipo: "paso", lat: 8.60, lon: -70.66 }, { tipo: "blanco", lat: 8.66, lon: -70.60, objetivo_unidad_id: 11 }, { tipo: "aterrizaje", lat: 8.618, lon: -70.215, base_id: 9 }],
       plan: { puntos: [{ tipo: "paso", km: 18, llegada_h: 0.02, combustible_llegada: 99 }, { tipo: "blanco", km: 9, llegada_h: 0.03, combustible_llegada: 98.6, salida_h: 1 }, { tipo: "aterrizaje", km: 16, llegada_h: 1.02, combustible_llegada: 97.7 }], duracion_h: 1.02, combustible_final: 97.7, advertencias: [] },
       indice: 0, espera: -1, resultado: "Programada." },
     { id: 3, bando: "rojo", rol: "SEAD", rol_nombre: "Supresion de defensas aereas (SEAD)", nombre: "Víbora", estado: "programada", unidad_id: null, base_id: 12, modelo: "su30", aeronaves: 2, turno_despegue: 4, creada_turno: 3,

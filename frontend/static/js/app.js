@@ -265,18 +265,18 @@
   function initMapa() {
     if (app.map) return;
     const bounds = L.latLngBounds(LIMITES);
-    const map = L.map("map", { zoomControl: false, attributionControl: false, minZoom: 5, maxZoom: 15, maxBounds: bounds.pad(0.1), maxBoundsViscosity: 0.85 });
+    const map = L.map("map", { zoomControl: false, attributionControl: false, minZoom: 5, maxZoom: 17, maxBounds: bounds.pad(0.1), maxBoundsViscosity: 0.85 });
     map.fitBounds(bounds);
     app.map = map;
     L.control.zoom({ position: "bottomright" }).addTo(map);
     L.control.attribution({ position: "bottomleft", prefix: false })
-      .addAttribution("Satélite: Sentinel-2 cloudless (EOX, CC BY 4.0) · Relieve: SRTM/GMTED (AWS Terrain Tiles) · Cobertura: ESA WorldCover · Vectores: Natural Earth").addTo(map);
+      .addAttribution("Satélite: Sentinel-2 cloudless (EOX, CC BY 4.0) · Relieve: SRTM/GMTED (AWS Terrain Tiles) · Cobertura: ESA WorldCover · Vectores: Natural Earth · Aeródromos: © colaboradores de OpenStreetMap (ODbL)").addTo(map);
 
     // dos fondos alternativos (uno solo visible a la vez): foto satelital real (mas zoom util, ~10 m/px) o el
     // relieve coloreado por clase de terreno (mejor para distinguir a simple vista bosque/pantano/montana).
     const c = app.capas;
-    c.baseSatelite = L.tileLayer("/static/tiles_sat/{z}/{x}/{y}.jpg", { minZoom: 5, maxNativeZoom: 12, maxZoom: 15, bounds }).addTo(map);
-    c.baseRelieve = L.tileLayer("/static/tiles/{z}/{x}/{y}.jpg", { minZoom: 5, maxNativeZoom: 9, maxZoom: 15, bounds });
+    c.baseSatelite = L.tileLayer("/static/tiles_sat/{z}/{x}/{y}.jpg", { minZoom: 5, maxNativeZoom: 12, maxZoom: 17, bounds }).addTo(map);
+    c.baseRelieve = L.tileLayer("/static/tiles/{z}/{x}/{y}.jpg", { minZoom: 5, maxNativeZoom: 9, maxZoom: 17, bounds });
 
     function elegirBaseMapa(nombre) {
       const satelite = nombre === "satelite";
@@ -292,6 +292,15 @@
 
     c.referencias = L.layerGroup().addTo(map);
     c.bases_ven = L.layerGroup().addTo(map);
+    // plano real de los aerodromos (OpenStreetMap): debajo de las unidades y los graficos, encima del fondo
+    map.createPane("aerodromos").style.zIndex = 350;
+    map.createPane("aerodromos-rotulos").style.zIndex = 390;
+    map.getPane("aerodromos-rotulos").style.pointerEvents = "none";
+    c.aerodromos = L.layerGroup().addTo(map);
+    app.aerodromos = Aerodromos.crear({
+      map, capa: c.aerodromos,
+      alCargar: () => { if (app.data) { app.aerodromos.actualizar(app.data.unidades); dibujarUnidades(app.data.unidades); } },
+    });
     const fronteras = L.geoJSON(null, { style: { color: "#1a1a1a", weight: 2.5, fill: false } }).addTo(c.referencias);
     const estados = L.geoJSON(null, { style: { color: "#333", weight: 1, dashArray: "4 4", fill: false, opacity: 0.7 } }).addTo(c.referencias);
     const rios = L.geoJSON(null, { style: { color: "#2f6fb0", weight: 1.5 } }).addTo(c.referencias);
@@ -321,7 +330,7 @@
     c.objetivos = L.layerGroup().addTo(map);
     c.ge = L.layerGroup().addTo(map);
     c.misiones = L.layerGroup().addTo(map);
-    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, contactos: true, referencias: true, graficos: true, bases_ven: true, objetivos: true, ge: true, misiones: true };
+    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, ge: true, misiones: true };
     if (app.capaActiva.niebla) c.niebla.addTo(map);
 
     let pendiente = null;
@@ -354,6 +363,15 @@
     else if (g[nombre]) poner(g[nombre], encendida);
   }
   document.querySelectorAll("[data-capa]").forEach((chk) => chk.addEventListener("change", () => alternarCapa(chk.dataset.capa, chk.checked)));
+
+  // miniaturas 3D (por defecto) o simbolos militares APP-6: preferencia de cada puesto, guardada en el navegador
+  try { app.simbolosApp6 = localStorage.getItem("fenix.simbolosApp6") === "1"; } catch (_) { app.simbolosApp6 = false; }
+  $("ver-app6").checked = app.simbolosApp6;
+  $("ver-app6").addEventListener("change", () => {
+    app.simbolosApp6 = $("ver-app6").checked;
+    try { localStorage.setItem("fenix.simbolosApp6", app.simbolosApp6 ? "1" : "0"); } catch (_) { /* sin almacenamiento */ }
+    if (app.data && !(app.informe && app.informe.activo())) dibujarUnidades(app.data.unidades);
+  });
 
   async function alClickMapa(e) {
     if (app.dibujando || (app.informe && app.informe.activo())) return;
@@ -468,26 +486,49 @@
     return Math.round(app.tamSimbolo * 2.2 * Math.max(0.75, Math.min(1.5, 0.8 + 0.22 * (zoom - 7.5))));
   }
 
+  /** Si la unidad se dibuja con su miniatura 3D (y no con el simbolo APP-6). */
+  function conMiniatura(u) {
+    return !app.simbolosApp6 && (Modelo3d.tieneSprite(u.modelo) || !!Modelo3d.mallaPara(u));
+  }
+
+  /** Base aerea sobre su plano real y con el mapa cerca: una ficha pequeña que no tapa la pista. */
+  function enPlanoAerodromo(u) {
+    return !!app.aerodromos && app.capaActiva.aerodromos && app.map.getZoom() >= app.aerodromos.zoomDetalle && app.aerodromos.cubre(u);
+  }
+
   function iconoUnidad(u, clases = "", rumbo = u.bando === "rojo" ? 225 : 45) {
+    const sub = [rotuloModelo(u), u.en_tierra ? "en base" : u.mision === "patrulla" ? "patrulla" : ""].filter(Boolean).join(" · ");
+    const rotulos = `<div class="rotulo">${escapar(u.nombre || "")}</div>` + (sub ? `<div class="rotulo modelo">${escapar(sub)}</div>` : "");
+    if (conMiniatura(u) && enPlanoAerodromo(u)) {
+      return L.divIcon({
+        className: `marca ${clases}`,
+        html: `<div class="cuerpo"><div class="ficha-base ${u.bando}">BA</div>${rotulos}</div>`,
+        iconSize: [120, 58], iconAnchor: [60, 14],
+      });
+    }
+    if (conMiniatura(u)) {
+      // miniatura 3D: el punto de la unidad es el centro de la imagen (la peana, para lo que esta en tierra o agua)
+      const av = Modelo3d.marcador({
+        modelo: u.modelo, clase: u.clase, rumbo, bando: u.bando, n: u.tipo === "aerea" ? u.aeronaves || 1 : 1, base: baseAvion(),
+      });
+      const ancho = Math.max(110, av.ancho + 10);
+      return L.divIcon({
+        className: `marca miniatura ${clases}`,
+        html: `<div class="cuerpo"><div class="avion3d" style="height:${av.alto}px">${av.html}</div>${rotulos}</div>`,
+        iconSize: [ancho, av.alto + (sub ? 30 : 16)],
+        iconAnchor: [ancho / 2, av.alto / 2],
+      });
+    }
     const sym = new ms.Symbol((u.sidc || "SUGP").padEnd(15, "-"), { size: app.tamSimbolo });
     const tam = sym.getSize();
     const anc = sym.getAnchor();
-    const sub = [rotuloModelo(u), u.en_tierra ? "en base" : u.mision === "patrulla" ? "patrulla" : ""].filter(Boolean).join(" · ");
-    // imagen 3D del avion (su modelo, o un caza generico si no se conoce) sobre el simbolo APP-6
-    const av = Modelo3d.mallaPara(u)
-      ? Modelo3d.marcador({ modelo: u.modelo, clase: u.clase, rumbo, bando: u.bando, n: u.aeronaves || 1, base: baseAvion() })
-      : null;
-    const solape = av ? Math.round(av.alto * 0.24) : 0; // el cuadro del avion tiene margen vacio: el simbolo sube hacia el
-    const avion = av ? `<div class="avion3d" style="height:${av.alto}px;margin-bottom:-${solape}px">${av.html}</div>` : "";
-    const ancho = Math.max(110, (av ? av.ancho : 0) + 10);
-    const alto = av ? av.alto - solape : 0;
+    // simbolo APP-6 puro (opcion "Simbolos militares" o unidad sin miniatura)
+    const ancho = Math.max(110, tam.width + 10);
     return L.divIcon({
       className: `marca ${clases}`,
-      html: `<div class="cuerpo">${avion}${sym.asSVG()}<div class="rotulo">${escapar(u.nombre || "")}</div>`
-        + (sub ? `<div class="rotulo modelo">${escapar(sub)}</div>` : "") + "</div>",
-      iconSize: [ancho, alto + tam.height + (sub ? 30 : 16)],
-      // con imagen del avion, la posicion es el centro de la imagen y el simbolo APP-6 queda debajo como etiqueta
-      iconAnchor: av ? [ancho / 2, av.alto / 2] : [ancho / 2 + (anc.x - tam.width / 2), anc.y],
+      html: `<div class="cuerpo">${sym.asSVG()}${rotulos}</div>`,
+      iconSize: [ancho, tam.height + (sub ? 30 : 16)],
+      iconAnchor: [ancho / 2 + (anc.x - tam.width / 2), anc.y],
     });
   }
 
@@ -532,11 +573,17 @@
       const enemiga = vista ? u.bando !== vista : u.bando === "rojo";
       const clases = enemiga ? "enemigo" : "amigo";
       let m = app.markers.get(u.id);
-      const rumbo = Modelo3d.mallaPara(u) ? Math.round(rumboDe(u) / 5) * 5 : 0;
-      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${rumbo}|${Modelo3d.mallaPara(u) ? baseAvion() : ""}`;
+      const mini = conMiniatura(u);
+      const rumbo = mini && Modelo3d.gira(u) ? Math.round(rumboDe(u) / 5) * 5 : 0;
+      const plano = mini && enPlanoAerodromo(u) ? "p" : "";
+      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${rumbo}|${mini ? baseAvion() : "s"}|${plano}`;
+      // aeronaves estacionadas: sobre la plataforma real de su base cuando se ve el plano del aerodromo
+      const estacionada = mini && app.capaActiva.aerodromos && app.aerodromos && app.map.getZoom() >= app.aerodromos.zoomDetalle
+        ? app.aerodromos.posicionEstacionada(u, unidades) : null;
+      const pos = estacionada || [u.lat, u.lon];
       if (m && m._firma !== firma) { app.capas.unidades.removeLayer(m); m = null; }
       if (!m) {
-        m = L.marker([u.lat, u.lon], { icon: iconoUnidad(u, clases, rumbo), keyboard: false, draggable: esInstructor() && app.editando }).addTo(app.capas.unidades);
+        m = L.marker(pos, { icon: iconoUnidad(u, clases, rumbo), keyboard: false, draggable: esInstructor() && app.editando }).addTo(app.capas.unidades);
         m._firma = firma;
         m._uid = u.id;
         m.on("dragend", async () => {
@@ -549,7 +596,7 @@
         m.on("click", () => { if (!(app.misiones && app.misiones.alClickUnidad(app.porId.get(u.id)))) seleccionar(u.id, "mapa"); });
         app.markers.set(u.id, m);
       } else {
-        m.setLatLng([u.lat, u.lon]);
+        m.setLatLng(pos);
       }
       m.unbindTooltip();
       m.bindTooltip(tooltipUnidad(u), { direction: "top", offset: [0, -14] });
@@ -1250,6 +1297,7 @@
     actualizarNuevaOrden(data);
     actualizarAviacion(data);
     if (app.misiones) app.misiones.render(data);
+    if (app.aerodromos) app.aerodromos.actualizar(data.unidades);
     llenarSelect($("adj-unidad"), data.unidades.map((u) => [u.id, `${u.nombre} (${u.bando})`]));
     if (app.informe && app.informe.activo()) return; // durante la repeticion no se pisa el mapa
 

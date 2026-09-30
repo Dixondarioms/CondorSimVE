@@ -221,15 +221,49 @@ correlaciones (`consumo_en_combate`, `coincide_con_combate`, `combate_con_logist
   - **Combustible crítico:** una patrulla con ≤ 25 % deja la misión y se le ordena regresar a la base más cercana
     (orden de aterrizaje pendiente para el turno siguiente, con aviso). Sin combustible: aterrizaje de emergencia si
     hay una base al alcance, y si no, se pierde.
-- **Imagen 3D en el mapa:** cada F-16 y Su-30 se dibuja sobre su posición como una imagen renderizada de un modelo 3D
-  real (24 rumbos), orientada hacia donde va (su último desplazamiento o su orden pendiente), con un contorno del
-  color de su bando y el símbolo APP-6 debajo como etiqueta. Un grupo se dibuja como varios aviones en formación
-  (hasta 4) y el tamaño crece al acercar el mapa. Las aeronaves sin modelo o no identificadas (enemigos) usan un
-  caza genérico procedural. Los modelos y su licencia (Sketchfab Standard) están en
-  `frontend/static/aeronaves/CREDITOS.md`; `tools/sprites3d/` regenera las imágenes. El «Su-30» usa un modelo de
-  Su-33 (variante naval), con su librea. `frontend/static/pruebas/modelos3d.html` muestra todos los modelos.
+- **Miniaturas 3D en el mapa (todas las unidades):** cada unidad se dibuja con su miniatura en lugar del símbolo
+  militar, orientada hacia donde va (su último desplazamiento o su orden pendiente) y más grande al acercar el mapa.
+  F-16 y Su-30 son imágenes renderizadas de modelos 3D reales (24 rumbos; licencia Sketchfab Standard en
+  `frontend/static/aeronaves/CREDITOS.md`, `tools/sprites3d/` las regenera; el «Su-30» usa un modelo de Su-33).
+  El resto son miniaturas propias (`js/miniaturas.js`, sin archivos de terceros): helicópteros con su rotor, drones,
+  avión de guerra electrónica, tanques, artillería autopropulsada, blindados 8x8, antiaérea, equipos de misiles
+  portátiles, infantería, ingenieros, convoyes, radares, guerra electrónica, patrulleros, fragatas y las bases,
+  depósitos y puertos. Las aeronaves llevan las derivas del color de su bando y una sombra; lo que está en tierra o
+  en el agua, una **peana** del color de su bando. Un grupo aéreo se ve en formación (hasta 4). Un enemigo
+  detectado se ve con la miniatura genérica de su clase (el modelo sigue oculto). En *Capas* → «Símbolos militares
+  (APP-6) en lugar de miniaturas» se vuelve a la simbología (preferencia de cada puesto).
+  `frontend/static/pruebas/miniaturas.html` muestra todas las miniaturas en cualquier rumbo.
 - **Fotos:** de Wikimedia Commons, bajo CC BY-SA (créditos en `frontend/static/fotos/CREDITOS.md` y en la
   interfaz). Quien redistribuya el proyecto debe mantener esos créditos.
+
+## Bases aéreas en detalle: plano real, estacionamiento y daños
+
+Al acercar el mapa (zoom 11 en adelante; ahora llega hasta el 17) cada base aérea de Venezuela se dibuja con su
+**plano real**, tomado de OpenStreetMap, en lugar de la imagen satelital, que a 10 m/píxel no muestra una pista:
+
+- **Qué se ve:** el perímetro del aeródromo; las **pistas** con su largo, ancho y orientación reales, sus bordes,
+  umbrales, eje, zona de toma de contacto y la **numeración de cada cabecera** (rumbo magnético); las **calles de
+  rodaje** con su eje amarillo; las **plataformas**; los **helipuertos**; y los **hangares y edificios** con su
+  sombra (según su altura). Lejos (zoom 11–13) un rótulo resume la base: «SVBL 10/28 · 3,8 km».
+- **Bases incluidas:** El Libertador (SVBL), Mariscal Sucre (SVBS), La Carlota (SVFM), Rafael Urdaneta (SVMC),
+  Luis del Valle García (SVBC), Landaeta Gil (SVBM), Teófilo Luis Méndez (SVPR), José Antonio Páez (SVPA) y Barinas
+  (SVBI). El detalle depende de lo que esté cargado en OpenStreetMap: en algunas bases militares hay pocas
+  construcciones mapeadas (p. ej. El Libertador solo tiene pista, rodajes y plataforma), y no se inventan.
+- **La base del ejercicio sobre su plano:** una unidad `base_aerea` a menos de 4 km de un aeródromo lo «ocupa». Al
+  acercarse, su miniatura se reduce a una ficha «BA» del color del bando para no tapar la pista, y sus **aeronaves
+  estacionadas se dibujan repartidas sobre la plataforma real** (solo cambia el dibujo: el motor no cambia).
+- **Daños a la vista:** con la base dañada aparecen **cráteres en la pista** (uno cada ~7 % de fuerza perdida,
+  hasta 14, siempre en los mismos lugares); por debajo del 25 %, cuando la base ya no puede lanzar ni recibir
+  aviones, se pintan las **cruces amarillas de pista cerrada** y el rótulo «PISTA INOPERATIVA». El bando enemigo no
+  ve el daño de una base ajena (la niebla de guerra oculta su fuerza).
+- **Capa:** *Capas* → «Plano de los aeródromos (pistas y hangares)». Con el plano a la vista, la capa de referencia
+  de bases se atenúa para no duplicar rótulos (su popup para colocar la base sigue disponible).
+- **Datos y licencia:** `frontend/static/geo/aerodromos.geojson` (~1,8 MB), generado una vez con internet por
+  `python tools/preparar_aerodromos.py`. Consulta OpenStreetMap vía Overpass o, si no responde, con
+  `--api` directamente la API de OSM por celdas pequeñas. La respuesta cruda queda en
+  `tools/cache/osm_aerodromos.json` y se reprocesa sin internet. Datos © colaboradores de OpenStreetMap,
+  **ODbL 1.0**: uso libre, también offline, citando la fuente; el crédito ya aparece en el mapa. Para agregar otra
+  base, añádala a `BASES` en el script y vuelva a correrlo con `--descargar`.
 
 ## Guerra electrónica, radares y drones
 
