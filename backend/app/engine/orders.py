@@ -114,6 +114,9 @@ class _Bitacora:
 
     def poner(self, u: Unidad, variable: str, valor: float, causa: str, orden_id: int | None = None) -> None:
         antes = getattr(u, variable)
+        # direccion: con la logistica apagada no se consume combustible ni municion (los aumentos si se aplican)
+        if not getattr(self.escenario, "logistica", True) and variable in ("combustible", "municion") and valor < antes:
+            return
         valor = max(0.0, min(100.0, valor))
         if abs(valor - antes) < 0.05:
             return
@@ -225,7 +228,7 @@ def procesar_ordenes(
     db: Session, escenario: Escenario, terreno: Terreno | None = None
 ) -> list[Orden]:
     terreno = terreno or get_terreno()
-    clima = clima_mod.contexto(db, escenario)  # clima general + zonas meteorologicas
+    clima = clima_mod.contexto(db, escenario) if getattr(escenario, "efectos_clima", True) else clima_mod.ClimaLocal("despejado")
     turno = escenario.turno_actual
     bit = _Bitacora(db, escenario)
 
@@ -546,8 +549,9 @@ def procesar_ordenes(
         db.flush()
         ordenes.append(ataque)
         atacan.add(atacante_id)
+    fuego_auto = getattr(escenario, "fuego_automatico", True)
     for u in lista_unidades:
-        if u.mision != "patrulla" or not aeronaves_mod.en_vuelo(u) or u.id in atacan:
+        if not fuego_auto or u.mision != "patrulla" or not aeronaves_mod.en_vuelo(u) or u.id in atacan:
             continue
         if u.municion <= 0 or u.recarga_restante > 0 or catalogo.perfil(u).ataque_vs.get("aerea", 0.0) <= 0:
             continue
@@ -575,7 +579,7 @@ def procesar_ordenes(
     # encendido. Se registra como una orden de ataque "defensa aerea".
     for u in lista_unidades:
         clase_aa = catalogo.obtener(u.clase, u.tipo)
-        if not clase_aa.defensa_aerea or u.estado != "activa" or u.fuego_libre is False or u.id in atacan:
+        if not fuego_auto or not clase_aa.defensa_aerea or u.estado != "activa" or u.fuego_libre is False or u.id in atacan:
             continue
         if u.municion <= 0 or u.recarga_restante > 0:
             continue

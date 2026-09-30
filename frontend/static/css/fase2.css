@@ -357,6 +357,12 @@ body.planificando-mision #barra-graficos { display: none; }
 .plano-aerodromos .leaflet-tooltip.nombre-base { display: none; }
 .plano-aerodromos .base-ven { opacity: .45; }
 
+/* ---- informes inyectados con posicion ---- */
+.informe-marca { background: none; border: none; }
+.informe-marca .rombo { display: block; width: 16px; height: 16px; margin: 0 auto; transform: rotate(45deg); background: #ffd21f; border: 2px solid #1b1f24; box-shadow: 0 1px 4px rgba(0, 0, 0, .6); }
+.informe-marca .fuente { display: block; margin-top: 4px; font: 700 10px var(--fuente); color: #1b1f24; background: #ffd21f; border-radius: 3px; padding: 1px 5px; white-space: nowrap; text-align: center; }
+#btn-evento-posicion.activo { outline: 2px solid var(--azul); }
+
 /* ---- seleccion multiple ---- */
 .lote { background: rgba(58, 134, 255, .12); border: 1px solid var(--azul); border-radius: 6px; padding: 6px 8px; margin: 4px 0 8px; font-size: 12px; }
 .lote #o-lote-texto { font-weight: 700; color: #9cc2ff; }

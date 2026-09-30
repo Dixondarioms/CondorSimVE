@@ -106,6 +106,7 @@
       document.body.classList.add("repitiendo");
       $("rp-slider").max = String(turnos.length - 1);
       $("rp-imprimible").href = `/api/escenarios/${id}/aar.html`;
+      $("rp-diapositivas").href = `/api/escenarios/${id}/aar/diapositivas.html`;
       $("rp-csv").href = `/api/escenarios/${id}/aar.csv`;
       mostrarTurno(0);
       ctx.map.fitBounds(turnos[0].unidades.map((u) => [u.lat, u.lon]), { padding: [60, 60], maxZoom: 9 });

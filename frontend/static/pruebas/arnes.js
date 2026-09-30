@@ -23,7 +23,10 @@
     listo_azul: false, listo_rojo: true, archivado: false, hora_inicio_min: 360,
     com_latencia_ms: 1500, com_jitter_ms: 500, com_perdida_pct: 30,
     nacion_azul: "venezuela", nacion_rojo: "colombia",
+    niebla: true, logistica: true, efectos_clima: true, fuego_automatico: true,
   };
+  // informes inyectados con posicion (direccion del ejercicio)
+  const INFORMES = [{ id: 501, turno: 2, tipo: "inteligencia", descripcion: "Fuentes locales reportan una columna blindada moviéndose al sur del río.", lat: 8.70, lon: -70.58, hasta_turno: 5, fuente: "Inteligencia" }];
   const NACIONES = [
     { id: "venezuela", nombre: "Venezuela", gentilicio: "venezolano", capital: "Caracas", colores: ["#FFCC00", "#00247D", "#CF142B"] },
     { id: "colombia", nombre: "Colombia", gentilicio: "colombiano", capital: "Bogotá", colores: ["#FCD116", "#003893", "#CE1126"] },
@@ -205,6 +208,7 @@
       obras: OBRAS.filter((o) => !esBando || o.bando === rol || unidades.some((u) => u.bando === rol && km(u, o) <= 15)),
       interferencias: INTERFERENCIAS,
       clima_zonas: ZONAS_CLIMA,
+      informes: ROL === "rojo" ? [] : INFORMES,
       misiones: misiones.filter((mi) => !esBando || mi.bando === rol),
       graficos: graficos.filter((g) => g.bando === "todos" || !esBando || g.bando === rol),
       objetivos: objetivos.filter((o) => !esBando || o.bando === rol),
@@ -505,7 +509,11 @@
     if (path.startsWith("/api/escenarios/1/clima/zonas/") && metodo === "DELETE") {
       const id = parseInt(path.split("/").pop(), 10); const i = ZONAS_CLIMA.findIndex((z) => z.id === id); if (i >= 0) ZONAS_CLIMA.splice(i, 1); enviarEstado(); return json({ ok: true });
     }
-    if (path === "/api/escenarios/1/eventos") { eventos.unshift({ id: eventos.length + 10, escenario_id: 1, turno: ESC.turno_actual, tipo: "general", descripcion: cuerpo.descripcion, bando_destino: cuerpo.bando_destino }); enviarEstado(); return json({}); }
+    if (path === "/api/escenarios/1/eventos") {
+      eventos.unshift({ id: eventos.length + 10, escenario_id: 1, turno: ESC.turno_actual, tipo: cuerpo.tipo || "general", descripcion: cuerpo.descripcion, bando_destino: cuerpo.bando_destino });
+      if (cuerpo.lat !== undefined && cuerpo.lat !== null) INFORMES.push({ id: 600 + INFORMES.length, turno: ESC.turno_actual, tipo: cuerpo.tipo || "inteligencia", descripcion: cuerpo.descripcion, lat: cuerpo.lat, lon: cuerpo.lon, hasta_turno: ESC.turno_actual + (cuerpo.turnos || 3), fuente: cuerpo.fuente || "" });
+      enviarEstado(); return json({});
+    }
 
     if (path === "/api/escenarios/1/graficos" && metodo === "POST") {
       if (!["azul", "rojo", "instructor"].includes(ROL)) return error("No autorizado para esta accion", 403);

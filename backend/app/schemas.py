@@ -67,6 +67,10 @@ class EscenarioOut(BaseModel):
     com_latencia_ms: int = 0
     com_jitter_ms: int = 0
     com_perdida_pct: int = 0
+    niebla: bool = True
+    logistica: bool = True
+    efectos_clima: bool = True
+    fuego_automatico: bool = True
 
 
 class EscenarioConfig(BaseModel):
@@ -83,6 +87,11 @@ class EscenarioConfig(BaseModel):
     com_perdida_pct: int | None = Field(default=None, ge=0, le=100)
     # hora simulada del turno 1, "HH:MM"
     hora_inicio: str | None = Field(default=None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
+    # interruptores del motor (direccion del ejercicio)
+    niebla: bool | None = None
+    logistica: bool | None = None
+    efectos_clima: bool | None = None
+    fuego_automatico: bool | None = None
     # identidad nacional de cada bando (ver /api/naciones); "" quita la identidad y deja "Azul"/"Rojo"
     nacion_azul: str | None = None
     nacion_rojo: str | None = None
@@ -285,6 +294,11 @@ class EventoCreate(BaseModel):
     tipo: str = Field(default="general", max_length=40)
     descripcion: str = Field(min_length=1, max_length=1000)
     bando_destino: Literal["todos", "azul", "rojo"] = "todos"
+    # informe con posicion (inteligencia, poblacion, reconocimiento...): marca en el mapa durante `turnos` turnos
+    lat: float | None = Field(default=None, ge=-90, le=90)
+    lon: float | None = Field(default=None, ge=-180, le=180)
+    turnos: int | None = Field(default=None, ge=1, le=48)
+    fuente: str = Field(default="", max_length=60)  # "Inteligencia", "Poblacion", "Reconocimiento aereo"...
 
 
 class EventoOut(BaseModel):
@@ -296,6 +310,10 @@ class EventoOut(BaseModel):
     tipo: str
     descripcion: str
     bando_destino: str
+    lat: float | None = None
+    lon: float | None = None
+    hasta_turno: int | None = None
+    fuente: str = ""
 
 
 class ObraOut(BaseModel):

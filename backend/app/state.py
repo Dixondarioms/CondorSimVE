@@ -51,8 +51,8 @@ def unidades_visibles_para(
     db: Session, escenario: Escenario, rol: str, terreno: Terreno | None = None
 ) -> list[Unidad]:
     unidades = db.query(Unidad).filter(Unidad.escenario_id == escenario.id).all()
-    if not es_bando(rol):
-        return unidades
+    if not es_bando(rol) or not getattr(escenario, "niebla", True):
+        return [u for u in unidades if not es_bando(rol) or getattr(u, "transporte_id", None) is None or u.bando == rol]
     return unidades_visibles(unidades, rol, terreno or get_terreno(), clima_mod.contexto(db, escenario), ge_mod.contexto(db, escenario))
 
 
@@ -154,6 +154,12 @@ def estado_para(
         # la interferencia no es secreta: el interferido la sufre y el emisor queda localizado
         "interferencias": [ge_mod.serializar(z) for z in ge_mod.contexto(db, escenario).zonas],
         "clima_zonas": [clima_mod.serializar(z) for z in clima_mod.zonas_de(db, escenario)],
+        # informes inyectados con posicion todavia vigentes (se dibujan en el mapa del bando destinatario)
+        "informes": [
+            {"id": e.id, "turno": e.turno, "tipo": e.tipo, "descripcion": e.descripcion, "lat": e.lat, "lon": e.lon,
+             "hasta_turno": e.hasta_turno, "fuente": e.fuente or ""}
+            for e in q_eventos.filter(Evento.lat.isnot(None), or_(Evento.hasta_turno.is_(None), Evento.hasta_turno >= escenario.turno_actual))
+        ],
         # misiones aereas: cada bando solo las suyas (el instructor y el observador, todas)
         "misiones": [misiones_mod.serializar(m) for m in misiones_mod.visibles_para(db, escenario, rol)],
         "graficos": [serializar_grafico(g) for g in graficos],

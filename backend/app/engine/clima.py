@@ -81,6 +81,8 @@ def zonas_de(db, escenario) -> list:
 
 
 def contexto(db, escenario) -> ClimaLocal:
+    if not getattr(escenario, "efectos_clima", True):  # direccion: efectos del clima apagados
+        return ClimaLocal("despejado")
     return ClimaLocal(escenario.clima, zonas_de(db, escenario))
 
 

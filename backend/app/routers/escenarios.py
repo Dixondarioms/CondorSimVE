@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from sqlalchemy.orm import Session
 
-from app import auth, informe_html, schemas, state, turnos
+from app import auth, diapositivas_html, informe_html, schemas, state, turnos
 from app.db import get_db
 from app.engine import aar, clock, naciones, plantillas, timeline
 from app.models.aar import Instantanea
@@ -149,6 +149,14 @@ async def configurar(
         if nueva != esc.hora_inicio_min:
             esc.hora_inicio_min = nueva
             cambios.append(f"hora simulada inicial {payload.hora_inicio}")
+    for campo, etiqueta in (("niebla", "niebla de guerra"), ("logistica", "consumo y reabastecimiento"),
+                            ("efectos_clima", "efectos del clima"), ("fuego_automatico", "fuego automatico (patrullas y antiaerea)")):
+        nuevo = getattr(payload, campo)
+        if nuevo is not None and nuevo != getattr(esc, campo):
+            setattr(esc, campo, nuevo)
+            cambios.append(f"{etiqueta} {'activado' if nuevo else 'desactivado'}")
+            db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino="todos",
+                          descripcion=f"Direccion del ejercicio: {etiqueta} {'activado' if nuevo else 'desactivado'}."))
     for campo, etiqueta in (("nacion_azul", "Azul"), ("nacion_rojo", "Rojo")):
         nueva_nacion = getattr(payload, campo)
         if nueva_nacion is None or nueva_nacion == getattr(esc, campo):
@@ -188,9 +196,12 @@ async def inyectar_evento(
     db: Session = Depends(get_db),
     _: Usuario = Depends(solo_instructor),
 ):
+    con_posicion = payload.lat is not None and payload.lon is not None
     evento = Evento(
         escenario_id=esc.id, turno=esc.turno_actual, tipo=payload.tipo,
         descripcion=payload.descripcion, bando_destino=payload.bando_destino,
+        lat=payload.lat if con_posicion else None, lon=payload.lon if con_posicion else None,
+        hasta_turno=(esc.turno_actual + (payload.turnos or 3)) if con_posicion else None, fuente=payload.fuente.strip(),
     )
     db.add(evento)
     db.commit()
@@ -320,6 +331,14 @@ def informe_rubrica(esc: Escenario = Depends(auth.escenario_dep), db: Session = 
     objetivos, misiones y observaciones automaticas)."""
     _informe_permitido(esc, usuario)
     return aar.construir_rubrica(db, esc)
+
+
+@router.get("/{escenario_id}/aar/diapositivas.html", response_class=HTMLResponse)
+def informe_diapositivas(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db),
+                         usuario: Usuario = Depends(auth.usuario_actual)):
+    """Presentacion automatica para la sesion de analisis posterior (una diapositiva por turno, resumen y rubrica)."""
+    _informe_permitido(esc, usuario)
+    return HTMLResponse(diapositivas_html.render_diapositivas(aar.construir_informe(db, esc), aar.construir_rubrica(db, esc)))
 
 
 @router.get("/{escenario_id}/aar.html", response_class=HTMLResponse)

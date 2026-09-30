@@ -322,6 +322,7 @@
     c.niebla = L.layerGroup();
     c.cobertura = L.layerGroup();
     c.contactos = L.layerGroup().addTo(map);
+    c.informes = L.layerGroup().addTo(map);
     c.unidades = L.layerGroup().addTo(map);
     c.ordenes = L.layerGroup().addTo(map);
     c.seleccion = L.layerGroup().addTo(map);
@@ -362,6 +363,7 @@
     if (nombre === "terreno") $("zona-mapa").classList.toggle("sin-terreno", !encendida);
     else if (nombre === "unidades") { poner(g.unidades, encendida); poner(g.ordenes, encendida); poner(g.obras, encendida); if (encendida) app.flechas.forEach((f) => f.actualizar()); }
     else if (nombre === "graficos") poner(app.graficos.capa, encendida);
+    else if (nombre === "contactos") { poner(g.contactos, encendida); poner(g.informes, encendida); }
     else if (g[nombre]) poner(g[nombre], encendida);
   }
   document.querySelectorAll("[data-capa]").forEach((chk) => chk.addEventListener("change", () => alternarCapa(chk.dataset.capa, chk.checked)));
@@ -378,6 +380,11 @@
   async function alClickMapa(e) {
     if (app.dibujando || (app.informe && app.informe.activo())) return;
     const { lat, lng } = e.latlng;
+    if (esInstructor() && app.marcandoEvento) { // informe inyectado: el clic es su posicion
+      app.eventoPosicion = [lat, lng];
+      $("ev-posicion").textContent = `Posición: ${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+      return;
+    }
     if (esInstructor() && app.colocandoZonaClima) { // meteorologia: el clic es el centro de la zona
       app.colocandoZonaClima = false;
       $("btn-zona-clima").classList.remove("activo");
@@ -625,6 +632,19 @@
     for (const [id, m] of app.markers) {
       const el = m.getElement();
       if (el) { el.classList.toggle("sel", id === app.seleccion); el.classList.toggle("sel-lote", app.lote.has(id)); }
+    }
+  }
+
+  /** Informes inyectados con posicion (inteligencia, poblacion...): rombo amarillo con la fuente, hasta que caduquen. */
+  function dibujarInformes(informes) {
+    const g = app.capas.informes;
+    g.clearLayers();
+    for (const inf of informes) {
+      const fuente = inf.fuente || "Informe";
+      L.marker([inf.lat, inf.lon], {
+        icon: L.divIcon({ className: "informe-marca", iconSize: [90, 36], iconAnchor: [45, 8], html: `<span class="rombo"></span><span class="fuente">${escapar(fuente)}</span>` }),
+        keyboard: false,
+      }).bindTooltip(`${escapar(fuente)} (turno ${inf.turno}${inf.hasta_turno ? `, vigente hasta el ${inf.hasta_turno}` : ""}): ${escapar(inf.descripcion)}`, { direction: "top", offset: [0, -10] }).addTo(g);
     }
   }
 
@@ -1310,6 +1330,9 @@
       const enfoque = document.activeElement;
       const set = (id, fn) => { if (enfoque !== $(id)) fn($(id)); };
       set("cfg-clima", (e) => { e.value = esc.clima; });
+      for (const [id, campo] of [["dir-niebla", "niebla"], ["dir-logistica", "logistica"], ["dir-clima", "efectos_clima"], ["dir-fuego", "fuego_automatico"]]) {
+        set(id, (e) => { e.checked = esc[campo] !== false; });
+      }
       set("cfg-limite", (e) => { e.value = esc.limite_decision_seg || 0; });
       set("cfg-hora", (e) => { e.value = `${String(Math.floor(esc.hora_inicio_min / 60)).padStart(2, "0")}:${String(esc.hora_inicio_min % 60).padStart(2, "0")}`; });
       set("cfg-nacion-azul", (e) => { e.value = esc.nacion_azul || ""; });
@@ -1427,6 +1450,7 @@
 
     dibujarUnidades(data.unidades);
     dibujarContactos(data.contactos || []);
+    dibujarInformes(data.informes || []);
     dibujarObras(data.obras || []);
     dibujarInterferencias(data.interferencias || []);
     dibujarZonasClima(data.clima_zonas || []);
@@ -1928,6 +1952,20 @@
     }
   });
 
+  $("btn-direccion").addEventListener("click", () => {
+    if (!app.escenarioId) return;
+    enSilencio(api("PATCH", rutaEsc("/config"), {
+      niebla: $("dir-niebla").checked, logistica: $("dir-logistica").checked,
+      efectos_clima: $("dir-clima").checked, fuego_automatico: $("dir-fuego").checked,
+    }).then(() => toast("Interruptores aplicados", true)));
+  });
+  $("btn-evento-posicion").addEventListener("click", () => {
+    app.marcandoEvento = !app.marcandoEvento;
+    $("btn-evento-posicion").classList.toggle("activo", app.marcandoEvento);
+    if (app.marcandoEvento) toast("Haga clic en el mapa donde ubicar el informe.");
+    else { app.eventoPosicion = null; $("ev-posicion").textContent = "Sin posición: aviso de texto."; }
+  });
+
   $("btn-config").addEventListener("click", () => {
     if (!app.escenarioId) return;
     const cuerpo = {
@@ -1969,7 +2007,17 @@
   $("btn-evento").addEventListener("click", async () => {
     const descripcion = $("ev-desc").value.trim();
     if (!descripcion || !app.escenarioId) return;
-    await enSilencio(api("POST", rutaEsc("/eventos"), { descripcion, bando_destino: $("ev-bando").value }));
+    const cuerpo = { descripcion, bando_destino: $("ev-bando").value, fuente: $("ev-fuente").value.trim() };
+    if (app.eventoPosicion) {
+      [cuerpo.lat, cuerpo.lon] = app.eventoPosicion;
+      cuerpo.turnos = Math.max(1, parseInt($("ev-turnos").value, 10) || 3);
+      cuerpo.tipo = "inteligencia";
+    }
+    await enSilencio(api("POST", rutaEsc("/eventos"), cuerpo));
+    app.eventoPosicion = null;
+    app.marcandoEvento = false;
+    $("btn-evento-posicion").classList.remove("activo");
+    $("ev-posicion").textContent = "Sin posición: aviso de texto.";
     $("ev-desc").value = "";
   });
 

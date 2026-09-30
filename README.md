@@ -595,6 +595,21 @@ plantilla…» (marcada como *Guardada por un instructor*), se instancia igual q
   100 % de la pantalla (pantalla completa; se adapta a varias pantallas o cambios de tamaño) y un HUD muestra
   turno, hora, reloj, estado de los bandos y las últimas alertas. `Esc` sale.
 
+## Herramientas de dirección del ejercicio
+
+- **Interruptores del motor** (*Consola → Dirección del ejercicio*; `PATCH /config`): **niebla de guerra** (apagada,
+  ambos bandos ven todo), **consumo de combustible y munición** (apagado, nada se gasta; el reabastecimiento sigue),
+  **efectos del clima** (apagados, todo se resuelve como con cielo despejado) y **fuego automático** (apagado, las
+  patrullas, la antiaérea y los destructores solo disparan por orden). Cada cambio queda como evento y en el informe.
+- **Informes inyectados** (*Consola → Eventos e informes inyectados*): además del aviso de texto, un informe puede
+  llevar **fuente** (Inteligencia, Población, Reconocimiento…) y **posición** (clic en el mapa) con una vigencia en
+  turnos: el bando destinatario lo ve en el mapa como un rombo amarillo con la fuente, «como si viniera de
+  inteligencia», hasta que caduca (`POST /eventos` con `lat`, `lon`, `turnos`, `fuente`; `informes` en el estado).
+- **Diapositivas del AAR** (*Informe → Diapositivas*; `GET /api/escenarios/{id}/aar/diapositivas.html`): presentación
+  automática para la sesión de análisis: portada con el marcador, una diapositiva por turno (combates, novedades,
+  órdenes rechazadas), resumen por bando, evaluación de cada bando (rúbrica) y preguntas para la discusión. Se navega
+  con las flechas o con clic y se imprime (o guarda en PDF) con una diapositiva por hoja.
+
 ## Administración
 
 - **Escenario:** archivar/desarchivar, duplicar (copia el despliegue inicial con toda la fuerza y logística),

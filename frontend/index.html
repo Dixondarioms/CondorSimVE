@@ -319,14 +319,33 @@
           </details>
 
           <details>
-            <summary>Eventos y ajustes</summary>
-            <input id="ev-desc" placeholder="Descripción del evento" maxlength="1000">
-            <select id="ev-bando">
-              <option value="todos">Para todos</option>
-              <option value="azul">Solo Azul</option>
-              <option value="rojo">Solo Rojo</option>
-            </select>
-            <button id="btn-evento" type="button">Inyectar evento</button>
+            <summary>Dirección del ejercicio (interruptores del motor)</summary>
+            <p class="ayuda">Simplifican el ejercicio con fines didácticos. Cada cambio queda registrado como evento y en el informe.</p>
+            <label class="chk"><input type="checkbox" id="dir-niebla" checked><span>Niebla de guerra (apagada: ambos bandos ven todo)</span></label>
+            <label class="chk"><input type="checkbox" id="dir-logistica" checked><span>Consumo de combustible y munición</span></label>
+            <label class="chk"><input type="checkbox" id="dir-clima" checked><span>Efectos del clima y de las zonas meteorológicas</span></label>
+            <label class="chk"><input type="checkbox" id="dir-fuego" checked><span>Fuego automático (patrullas, antiaérea, destructores)</span></label>
+            <button id="btn-direccion" type="button">Aplicar interruptores</button>
+          </details>
+
+          <details>
+            <summary>Eventos e informes inyectados</summary>
+            <input id="ev-desc" placeholder="Descripción del evento o informe" maxlength="1000">
+            <div class="grid">
+              <select id="ev-bando">
+                <option value="todos">Para todos</option>
+                <option value="azul">Solo Azul</option>
+                <option value="rojo">Solo Rojo</option>
+              </select>
+              <input id="ev-fuente" placeholder="Fuente (ej. Inteligencia, Población)" maxlength="60">
+              <label class="mini">Vigencia en el mapa (turnos)<input id="ev-turnos" type="number" min="1" max="48" value="3"></label>
+            </div>
+            <div class="fila">
+              <button id="btn-evento-posicion" type="button" class="secundario">Marcar posición en el mapa</button>
+              <span id="ev-posicion" class="ayuda">Sin posición: aviso de texto.</span>
+            </div>
+            <p class="ayuda">Con posición, el informe se dibuja en el mapa del bando destinatario (rombo con la fuente) como si viniera de inteligencia, hasta que caduque.</p>
+            <button id="btn-evento" type="button">Inyectar evento / informe</button>
             <h4>Ajuste manual (queda en el informe)</h4>
             <div class="grid">
               <select id="adj-unidad"></select>
@@ -477,6 +496,7 @@
             <button id="rp-timeline" class="mini" type="button">Línea de tiempo</button>
             <button id="rp-rubrica" class="mini" type="button" title="Indicadores de conducción por bando y por puesto, con observaciones automáticas">Rúbrica</button>
             <a id="rp-imprimible" class="enlace-boton" target="_blank" rel="noopener">Imprimible</a>
+            <a id="rp-diapositivas" class="enlace-boton" target="_blank" rel="noopener" title="Presentación automática para la sesión de análisis: una diapositiva por turno, resumen y evaluación">Diapositivas</a>
             <a id="rp-csv" class="enlace-boton">CSV</a>
             <button id="rp-cerrar" class="mini secundario" type="button">Cerrar</button>
           </div>
