@@ -235,7 +235,7 @@ def construir(salida: Path, img: Path) -> None:
           Paragraph("Simulador de conducción militar para el adiestramiento táctico y estratégico", S["subtitulo"]), Spacer(1, 26),
           Paragraph("MANUAL DE USUARIO", ParagraphStyle("mu", parent=S["subtitulo"], fontName="Texto-B", fontSize=18, textColor=AZUL)),
           Spacer(1, 8), Paragraph("Qué es · cómo se hizo · instalación · cómo funciona", S["subtitulo"]), Spacer(1, 28)]
-    h += [Paragraph(f"Fuerza Armada Nacional Bolivariana · Aviación Militar Bolivariana · DIDA<br/>{fecha} · versión del manual 1.0", S["subtitulo"])]
+    h += [Paragraph(f"Fuerza Armada Nacional Bolivariana · Aviación Militar Bolivariana · DIDA<br/>{fecha} · versión del manual 1.1", S["subtitulo"])]
     h.append(PageBreak())
 
     # ---- indice
@@ -323,7 +323,14 @@ def construir(salida: Path, img: Path) -> None:
               ["Red", "Red local del aula (cableada o Wi-Fi). Sin internet. Puerto 8000 (HTTP) u 8443 (HTTPS) abierto en el cortafuegos del servidor."],
               ["Pantalla", "1366×768 como mínimo; el videowall se adapta a cualquier tamaño. Pantallas estrechas usan paneles plegables."],
           ], [3.0 * cm, ANCHO_TEXTO - 3.0 * cm]),
-          H2("3.2 Instalación paso a paso (Windows)"),
+          H2("3.2 Instalación con un clic (Windows)"),
+          P("Con Python 3.11 o superior instalado (python.org, marcando «Add python.exe to PATH»), haga doble clic en "
+            "<font face='Mono'>instalar.cmd</font> en la carpeta del proyecto: crea el entorno, instala las dependencias, pide el "
+            "usuario y la contraseña del primer instructor, y deja en el Escritorio el acceso directo <b>S.I.E.T.E.</b> que arranca el "
+            "servidor y abre el navegador. Opciones: <font face='Mono'>instalar.cmd -Demo</font> (crea el escenario de demostración), "
+            "<font face='Mono'>-Servicio</font> como administrador (arranque automático al encender el equipo) y <font face='Mono'>-Desinstalar</font>. "
+            "<font face='Mono'>iniciar.cmd</font> y <font face='Mono'>detener.cmd</font> arrancan y detienen el servidor a mano."),
+          H2("3.3 Instalación paso a paso (manual)"),
           Num([
               "Copie la carpeta del proyecto (<font face='Mono'>simulador_fenix</font>) al servidor, por ejemplo en <font face='Mono'>C:\\simulador_fenix</font>. "
               "Debe incluir <font face='Mono'>frontend/static/tiles_sat</font> (satélite), <font face='Mono'>tiles</font> (relieve) y <font face='Mono'>geo</font> (vectores y aeródromos).",
@@ -340,27 +347,27 @@ def construir(salida: Path, img: Path) -> None:
           *Img(img, "cap_login.jpg", "Figura 1. Inicio de sesión. Tras 5 intentos fallidos la cuenta se bloquea 5 minutos.", ancho=9.5 * cm),
           Nota("Deje la consola del servidor abierta mientras dure el ejercicio. Para detenerlo, Ctrl+C. Para que arranque solo al encender el "
                "equipo, cree una tarea programada de Windows que ejecute el comando de arranque."),
-          H2("3.3 Usuarios, roles y puestos"),
+          H2("3.4 Usuarios, roles y puestos"),
           P("Los usuarios se crean desde el panel <b>Usuarios</b> del instructor o por consola. Cada alumno tiene un rol (azul, rojo u "
             "observador) y, dentro del bando, un puesto (EM por defecto, o A2, A3, A4, A5):"),
           Code("venv\\Scripts\\python -m app.crear_usuario a5azul --rol azul --puesto planificacion\n"
                "venv\\Scripts\\python -m app.crear_usuario obs1 --rol observador"),
-          H2("3.4 HTTPS (opcional)"),
+          H2("3.5 HTTPS (opcional)"),
           P("Con <font face='Mono'>--https</font> en lugar de <font face='Mono'>--port 8000</font> el servidor genera un certificado "
             "autofirmado y escucha en 8443; los navegadores avisarán hasta que se instale <font face='Mono'>backend/certs/cert.pem</font> "
             "como certificado de confianza en cada estación. En una red de aula aislada, HTTP es suficiente."),
-          H2("3.5 PostgreSQL (opcional, varias aulas)"),
+          H2("3.6 PostgreSQL (opcional, varias aulas)"),
           P("Por defecto se usa SQLite (un archivo). Para varias aulas o más concurrencia, defina la variable "
             "<font face='Mono'>SIMULADOR_DATABASE_URL</font> con la conexión a PostgreSQL; el mismo código migra y respalda "
             "(<font face='Mono'>python -m app.migrar_a_postgres</font> copia los datos existentes)."),
-          H2("3.6 Respaldos y actualización"),
+          H2("3.7 Respaldos y actualización"),
           Bul(["Los respaldos automáticos quedan en <font face='Mono'>backend/respaldos/</font> (se conservan los 14 últimos). "
                "<font face='Mono'>python -m app.respaldo</font> hace uno manual. Restaurar = detener el servidor y copiar el archivo sobre "
                "<font face='Mono'>backend/simulador_fenix.db</font>.",
                "Para actualizar a una versión nueva: detenga el servidor, haga un respaldo, reemplace la carpeta del proyecto "
                "(conservando <font face='Mono'>backend/simulador_fenix.db</font>, <font face='Mono'>backend/respaldos</font> y los datos de mapa) y arranque: las migraciones se aplican solas.",
                "Para comprobar la instalación: <font face='Mono'>venv\\Scripts\\python -m pytest</font> en <font face='Mono'>backend</font> ejecuta las pruebas del motor y la API."]),
-          H2("3.7 Datos de mapa (solo si hay que regenerarlos)"),
+          H2("3.8 Datos de mapa (solo si hay que regenerarlos)"),
           P("Los datos ya vienen preparados. Si se quisiera regenerarlos o ampliarlos (por ejemplo, agregar otra base aérea al plano "
             "detallado), los scripts de <font face='Mono'>tools/</font> necesitan internet una sola vez: "
             "<font face='Mono'>preparar_terreno.py</font> (relieve, terreno, vectores), <font face='Mono'>preparar_satelite.py</font> (satélite), "
@@ -569,8 +576,35 @@ def construir(salida: Path, img: Path) -> None:
                "Cada orden se da a una unidad (no hay selección múltiple).",
                "Un solo servidor por aula: el WebSocket y el temporizador viven en el proceso."]),
           H2("Hoja de ruta prevista"),
-          Bul(["Meteorología por colores y visibilidad sobre el mapa.", "Daño por partes de la base (pista, plataforma, depósito de combustible) y refugios como blancos.",
-               "Herramientas de dirección: interruptores del motor, diapositivas para el informe e informes inyectados.", "Rol de escolta en las misiones aéreas."])]
+          Bul(["Selección de rutas por carreteras y puentes reales.", "Más plantillas de escenario por curso.",
+               "Registro del autor de cada orden para una rúbrica por alumno."])]
+
+    # ---- 14 novedades
+    h += H1("14. Novedades de la versión 1.1")
+    h += [P("Resumen de lo incorporado después de la primera edición del manual; cada punto está explicado en su capítulo."),
+          Tbl(["Novedad", "Dónde", "Qué aporta"], [
+              ["Meteorología por zonas", "Consola → Meteorología por zonas; capa Meteorología",
+               "Frentes de nublado, lluvia o tormenta con radio, deriva y duración. El clima efectivo en cada punto rige detección, movimiento y ataques aéreos."],
+              ["Aeródromos de los países vecinos", "Capa Bases aéreas y aeródromos",
+               "Bases y aeropuertos de Colombia, Brasil, Guyana y Trinidad dentro del mapa, con su plano real, colocables como base del ejercicio."],
+              ["Daño por partes de la base", "Panel de órdenes → «Qué se ataca de la base»; ficha de la base",
+               "Pista, plataforma y depósito con daño propio; pista inoperativa al 60 %; refugios reforzados; reparación con ingenieros."],
+              ["Escolta y paquetes de ataque", "Planificar misión → rol ESCOLTA o «Escolta del paquete»",
+               "Un grupo acompaña a la misión escoltada, intercepta lo que la amenace y regresa al terminar."],
+              ["Unidades anfibias y helitransportadas", "Órdenes Embarcar / Desembarcar",
+               "Tropas a bordo de un buque de desembarco (3) o helicóptero de transporte (1 ligera), ocultas, con desembarco en un punto."],
+              ["Selección múltiple y formaciones", "Ctrl+clic en el orden de batalla o el mapa",
+               "La misma orden a varias unidades; con «Mantener la formación» cada una conserva su posición relativa."],
+              ["Dirección del ejercicio", "Consola → Dirección del ejercicio; Eventos e informes inyectados; Informe → Diapositivas",
+               "Interruptores del motor (niebla, logística, clima, fuego automático), informes con posición en el mapa y diapositivas automáticas del AAR."],
+              ["Guardar como plantilla", "Cabecera → Guardar como plantilla…",
+               "El escenario actual (con o sin su estado) queda como plantilla reutilizable, junto a las del sistema."],
+              ["Rúbrica de evaluación", "Informe → Rúbrica; informe imprimible",
+               "Indicadores por bando y por puesto responsable (órdenes, rechazos, turnos pasivos, logística, pérdidas, objetivos, misiones) con observaciones automáticas."],
+              ["Instalador de un clic", "instalar.cmd, iniciar.cmd, detener.cmd", "Instalación guiada, acceso directo en el Escritorio y arranque automático opcional."],
+              ["Valores de juego editables", "backend/data/ajustes_catalogo.json",
+               "El instructor ajusta velocidades, alcances, efectividades y topes sin tocar el código (requiere reiniciar el servidor)."],
+          ], [3.6 * cm, 5.2 * cm, ANCHO_TEXTO - 8.8 * cm])]
 
     # ---- anexos
     h += H1("Anexo A. Referencia rápida")
