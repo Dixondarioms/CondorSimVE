@@ -377,7 +377,7 @@ def construir(salida: Path, img: Path) -> None:
             "<font face='Mono'>python tools/preparar_terreno.py --id caribe --nombre \"Caribe\" --bbox -90 8 -58 27 --zoom 8</font> "
             "(recuadro en grados: lon. mín., lat. mín., lon. máx., lat. máx.; zoom 9 = ~300 m, 8 = ~600 m, 7 = ~1,2 km). Al reiniciar el servidor "
             "la región nueva aparece sola. Los demás scripts de <font face='Mono'>tools/</font> también necesitan internet una sola vez: "
-            "<font face='Mono'>preparar_satelite.py</font> (satélite, solo Venezuela), "
+            "<font face='Mono'>preparar_satelite.py --region &lt;id&gt;</font> (foto satelital de una región: Venezuela hasta el zoom 12 y América hasta el 8 ya incluidas), "
             "<font face='Mono'>preparar_aerodromos.py</font> (planos de las bases) y <font face='Mono'>generar_bases_aereas.py</font>.")]
 
     # ---- 4 roles
@@ -411,8 +411,8 @@ def construir(salida: Path, img: Path) -> None:
         ["Barra inferior", "«Estoy listo» (alumnos) o «Resolver y avanzar turno» (instructor); estado de ambos bandos."],
     ], [4.2 * cm, ANCHO_TEXTO - 4.2 * cm]),
           H2("5.1 Capas y herramientas del mapa"),
-          Bul(["<b>Satélite / Relieve</b>: foto real (Sentinel-2, solo sobre Venezuela) o relieve coloreado por clase de terreno (distingue mejor bosque, pantano, montaña).",
-               "<b>Regiones del mapa</b>: botones «Venezuela y vecinos», «América» (y «Mundo» si se generó) para encajar la vista en cada una; fuera de Venezuela se ve el relieve continental.",
+          Bul(["<b>Satélite / Relieve</b>: foto real (Sentinel-2; ~10 m sobre Venezuela, ~600 m sobre el resto de América) o relieve coloreado por clase de terreno (distingue mejor bosque, pantano, montaña).",
+               "<b>Regiones del mapa</b>: botones «Venezuela y vecinos», «América» (y «Mundo» si se generó) para encajar la vista en cada una.",
                "<b>Terreno, Cobertura (detección), Niebla de guerra, Unidades, Últimos contactos, Gráficos tácticos, Límites y poblaciones, Bases aéreas de Venezuela, Plano de los aeródromos, Objetivos, Guerra electrónica, Misiones aéreas</b>.",
                "<b>Símbolos militares (APP-6) en lugar de miniaturas</b>: preferencia de cada puesto (se recuerda en el navegador).",
                "<b>Regla</b>: distancia y rumbo por tramos. <b>Búsqueda</b> de unidades por nombre, clase o modelo. Zoom hasta el nivel 17 sobre las bases aéreas.",
@@ -567,7 +567,7 @@ def construir(salida: Path, img: Path) -> None:
     # ---- 12 seguimiento
     h += H1("12. Seguimiento, videowall e informe")
     h += Img(img, "cap_videowall.jpg", "Figura 9. Modo videowall para la pantalla del centro de operaciones (tecla V o botón Videowall).")
-    h += Img(img, "cap_america.jpg", "Figura 10. Región «América» (~1,2 km por píxel) con Venezuela en detalle encima; cualquier punto del continente sirve para ambientar un ejercicio.")
+    h += Img(img, "cap_america.jpg", "Figura 10. Región «América» con foto satelital (~600 m por píxel) y Venezuela en detalle encima; cualquier punto del continente sirve para ambientar un ejercicio.")
     h += [Bul(["<b>Eventos y alertas</b>: despegues, combates, bases sin existencias, misiles derribados, objetivos cumplidos… llegan al bando correspondiente; el instructor puede inyectar eventos propios.",
                "<b>Videowall</b>: el mapa ocupa toda la pantalla con un HUD (turno, hora, reloj, estado de los bandos, marcador, últimas alertas). URL directa: <font face='Mono'>?modo=videowall&amp;escenario=ID&amp;vista=azul|rojo|completa</font>. También <font face='Mono'>?lat=&amp;lon=&amp;zoom=</font> abre el mapa sobre un lugar.",
                "<b>Gráficos tácticos</b>: líneas de fase, ejes de avance, zonas de reunión y puntos de control, compartidos con el bando (o con todos, si los traza el instructor).",
@@ -595,7 +595,7 @@ def construir(salida: Path, img: Path) -> None:
               ["Meteorología por zonas", "Consola → Meteorología por zonas; capa Meteorología",
                "Frentes de nublado, lluvia o tormenta con radio, deriva y duración. El clima efectivo en cada punto rige detección, movimiento y ataques aéreos."],
               ["Mapa de toda América (y del mundo, opcional)", "Tarjeta Capas → botones de región; tools/preparar_terreno.py",
-               "Regiones superpuestas: Venezuela en detalle (~300 m) sobre América entera (~1,2 km); el mundo o un recuadro a medida se generan con un comando."],
+               "Regiones superpuestas: Venezuela en detalle (~300 m) sobre América entera (~1,2 km), ambas con foto satelital; el mundo o un recuadro a medida se generan con un comando."],
               ["Aeródromos de los países vecinos", "Capa Bases aéreas y aeródromos",
                "Bases y aeropuertos de Colombia, Brasil, Guyana y Trinidad dentro del mapa, con su plano real, colocables como base del ejercicio."],
               ["Daño por partes de la base", "Panel de órdenes → «Qué se ataca de la base»; ficha de la base",

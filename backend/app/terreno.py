@@ -12,6 +12,8 @@ from functools import lru_cache
 from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "terreno"
+# foto satelital por region (tools/preparar_satelite.py): tiles_sat/<id>/{z}/{x}/{y}.jpg
+TILES_SAT_DIR = Path(__file__).resolve().parents[2] / "frontend" / "static" / "tiles_sat"
 
 AGUA, LLANO, BOSQUE, URBANO, MONTANA, PANTANO, RIO = 0, 1, 2, 3, 4, 5, 6
 NOMBRES = {
@@ -62,10 +64,20 @@ class Grilla:
         return yi * self.meta["ancho"] + xi
 
     def resumen(self) -> dict:
-        """Lo que necesita el frontend para dibujar la region (GET /api/mapas)."""
+        """Lo que necesita el frontend para dibujar la region (GET /api/terreno/mapas)."""
         m = self.meta
         return {"id": self.id, "nombre": m.get("nombre", self.id), "bbox": m.get("bbox"), "z": self.z,
-                "z_min": int(m.get("z_min", max(2, self.z - 4))), "metros_por_pixel": m.get("metros_por_pixel")}
+                "z_min": int(m.get("z_min", max(2, self.z - 4))), "metros_por_pixel": m.get("metros_por_pixel"),
+                "satelite": satelite_de(self.id)}
+
+
+def satelite_de(id_: str) -> dict | None:
+    """Zooms {z_min, z_max} de la foto satelital descargada para la region, o None si no tiene."""
+    carpeta = TILES_SAT_DIR / id_
+    if not carpeta.is_dir():
+        return None
+    zooms = sorted(int(p.name) for p in carpeta.iterdir() if p.is_dir() and p.name.isdigit() and any(p.iterdir()))
+    return {"z_min": zooms[0], "z_max": zooms[-1]} if zooms else None
 
 
 class Terreno:

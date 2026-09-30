@@ -58,6 +58,10 @@ def test_los_datos_reales_tienen_venezuela_y_america_en_carpetas_por_region():
         assert (RAIZ / "frontend" / "static" / "geo" / region / "fronteras.geojson").is_file()
     real = terreno_mod.cargar()
     ids = [r["id"] for r in real.regiones()]
+    # foto satelital por region: Venezuela hasta el zoom 12, America hasta el 8 (tools/preparar_satelite.py)
+    sat = {r["id"]: r["satelite"] for r in real.regiones()}
+    assert sat["venezuela"] == {"z_min": 5, "z_max": 12}
+    assert sat["america"] and sat["america"]["z_min"] == 3 and sat["america"]["z_max"] >= 8
     assert ids.index("venezuela") < ids.index("america")
     assert real.clase(10.5, -66.9) == "urbano"  # Caracas (Venezuela)
     assert real.clase(-34.6, -58.4) == "urbano"  # Buenos Aires (America)
@@ -74,5 +78,5 @@ def test_endpoint_mapas_lista_las_regiones_de_mas_a_menos_detallada(api, monkeyp
         assert r.status_code == 200
         mapas = r.json()["mapas"]
         assert [m["id"] for m in mapas] == ["detalle", "continente"]
-        assert mapas[0] == {"id": "detalle", "nombre": "Detalle", "bbox": [-70.0, 5.0, -65.0, 10.0], "z": 8, "z_min": 6, "metros_por_pixel": 100}
+        assert mapas[0] == {"id": "detalle", "nombre": "Detalle", "bbox": [-70.0, 5.0, -65.0, 10.0], "z": 8, "z_min": 6, "metros_por_pixel": 100, "satelite": None}
     assert api(None).get("/api/terreno/mapas").status_code in (401, 403)

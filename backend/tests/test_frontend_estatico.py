@@ -111,8 +111,8 @@ def test_las_dos_orientaciones_extremas_de_un_sprite_son_distintas():
 def test_hay_una_capa_satelital_real_ademas_del_relieve():
     """No exhaustivo (la descarga completa son ~30 000 teselas): solo confirma que la capa satelital
     existe, tiene creditos y cubre al menos los zooms bajos (rapidos de generar)."""
-    tiles_sat = FRONTEND / "static" / "tiles_sat"
-    creditos = tiles_sat / "CREDITOS.md"
+    tiles_sat = FRONTEND / "static" / "tiles_sat" / "venezuela"
+    creditos = tiles_sat.parent / "CREDITOS.md"
     assert creditos.is_file() and "EOxCloudless" in creditos.read_text(encoding="utf-8")
     assert "CC BY 4.0" in creditos.read_text(encoding="utf-8") or "Attribution" in creditos.read_text(encoding="utf-8")
     for z in (5, 6, 7):  # rapidos: deben estar completos incluso si la descarga a mayor zoom sigue en curso
@@ -124,5 +124,5 @@ def test_index_usa_dos_capas_base_y_cita_ambas_fuentes():
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert "tiles_sat" in html or "tiles_sat" in (FRONTEND / "static" / "js" / "app.js").read_text(encoding="utf-8")
     app_js = (FRONTEND / "static" / "js" / "app.js").read_text(encoding="utf-8")
-    assert "/static/tiles_sat/{z}/{x}/{y}.jpg" in app_js and "/static/tiles/${m.id}/{z}/{x}/{y}.jpg" in app_js
+    assert "/static/tiles_sat/${m.id}/{z}/{x}/{y}.jpg" in app_js and "/static/tiles/${m.id}/{z}/{x}/{y}.jpg" in app_js
     assert "Sentinel-2 cloudless" in app_js and "CC BY 4.0" in app_js

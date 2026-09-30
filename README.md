@@ -505,9 +505,13 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   Ahora el zoom máximo es 15, con detalle real de satélite hasta el 12 (calles y manzanas se distinguen en
   zonas urbanas); no llega al detalle de edificio/vehículo individual de Google Maps, porque esa resolución
   no existe como dato abierto y gratuito para toda el área del ejercicio.
-- **Cómo se generó:** `python tools/preparar_satelite.py` (independiente de `preparar_terreno.py`: no toca el
-  relieve, la cobertura ni la grilla que usa el motor, solo agrega la imagen de fondo alternativa). Es
-  reanudable y admite `--hasta-zoom` para llegar más lejos más adelante (13 agrega ~88 000 teselas más).
+- **Cómo se generó:** `python tools/preparar_satelite.py --region <id>` (independiente de `preparar_terreno.py`:
+  no toca el relieve, la cobertura ni la grilla que usa el motor, solo agrega la imagen de fondo alternativa).
+  Cada región tiene su foto en `frontend/static/tiles_sat/<region>/`: **Venezuela hasta el zoom 12** y
+  **América hasta el 8** (~600 m/píxel real; más allá el mapa amplía la tesela). Es reanudable y admite
+  `--hasta-zoom` para llegar más lejos más adelante (`--region america --hasta-zoom 9` agrega ~51 000 teselas,
+  ~460 MB; el 10, ~200 000). El servidor detecta solo qué zooms tiene cada región (`GET /api/terreno/mapas`)
+  y el frontend recorta la foto de cada una a su recuadro exacto, la más detallada encima.
   Créditos y licencia completos en `frontend/static/tiles_sat/CREDITOS.md`.
 - **Tamaño:** esta capa pesa varios cientos de MB (bastante más que el resto del proyecto), porque es imagen
   real a buena resolución para toda el área del mapa, no datos vectoriales livianos.
@@ -691,7 +695,8 @@ Cómo se combinan: el servidor lista las regiones generadas en `GET /api/terreno
 teselas de todas apiladas (la más detallada encima), carga los límites y poblaciones de cada una, abre la vista en la
 más detallada y ofrece un botón por región en la tarjeta **Capas** para encajar la vista. El motor
 (`backend/app/terreno.py`) consulta la clase de terreno en la región más fina que cubra el punto; fuera de todas es
-llano. La foto satelital (`tiles_sat/`) solo cubre Venezuela: fuera de ella se ve el relieve.
+llano. La foto satelital (`tiles_sat/<region>/`) existe para Venezuela (zoom 12) y América (zoom 8); una región
+nueva la obtiene con `python tools/preparar_satelite.py --region <id>`.
 
 Fuentes: elevación de *AWS Terrain Tiles* (SRTM/GMTED/ETOPO1 vía Mapzen), cobertura terrestre de
 *ESA WorldCover 2021* (10 m, CC BY 4.0) y *Natural Earth* (dominio público). Montaña sale del relieve y la
@@ -723,6 +728,6 @@ del proyecto centrado en La Guaira/Caracas.
   por bando) y el estado real de cada aparato en la flota venezolana no se modela.
 - Las comunicaciones simuladas solo afectan al chat, no a las órdenes ni a la niebla de guerra.
 - No hay selección múltiple de unidades ni órdenes de grupo: cada orden se da a una unidad.
-- La identidad nacional es solo un nombre para la interfaz: no se modela el orden de batalla real de Colombia, Brasil, Guyana ni Trinidad y Tobago. El terreno a ~300 m, la foto satelital y los planos de aeródromos se limitan a Venezuela y vecinos; el resto de América está a ~1,2 km/píxel (y el mundo, si se genera, a ~2,4 km).
+- La identidad nacional es solo un nombre para la interfaz: no se modela el orden de batalla real de Colombia, Brasil, Guyana ni Trinidad y Tobago. El terreno a ~300 m, la foto satelital a 10 m y los planos de aeródromos se limitan a Venezuela y vecinos; el resto de América está a ~1,2 km/píxel de relieve y ~600 m de foto (y el mundo, si se genera, a ~2,4 km).
 - El bloqueo de inicio de sesión es por usuario (un atacante puede bloquear una cuenta 5 min).
 - Un solo servidor: WebSocket y temporizador viven en el proceso.

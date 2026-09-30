@@ -10,6 +10,7 @@ test("ordenarMapas: de menos a mas detallada, descarta entradas invalidas y sin 
   assert.deepEqual(L.ordenarMapas([VEN, { id: "rota" }, null, { id: "sinz", bbox: [0, 0, 1, 1] }]).map((m) => m.id), ["venezuela"]);
   assert.deepEqual(L.ordenarMapas(null).map((m) => m.id), ["venezuela"]);
   assert.deepEqual(L.ordenarMapas([]), [L.MAPA_VENEZUELA]);
+  assert.deepEqual(L.MAPA_VENEZUELA.satelite, { z_min: 5, z_max: 12 }); // la foto de Venezuela existe aunque el servidor no responda
 });
 
 test("limitesDeMapas abarca todas las regiones, toma el zoom minimo y la principal es la mas detallada", () => {

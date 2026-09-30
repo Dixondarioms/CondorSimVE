@@ -657,7 +657,7 @@
 
   // ---------- mapas (regiones del terreno, ver tools/preparar_terreno.py) ----------
   /** Region de detalle que siempre existe: se usa si el servidor no informa ninguna. */
-  const MAPA_VENEZUELA = { id: "venezuela", nombre: "Venezuela y vecinos", bbox: [-73.5, 0.5, -59.5, 12.5], z: 9, z_min: 5, metros_por_pixel: 304 };
+  const MAPA_VENEZUELA = { id: "venezuela", nombre: "Venezuela y vecinos", bbox: [-73.5, 0.5, -59.5, 12.5], z: 9, z_min: 5, metros_por_pixel: 304, satelite: { z_min: 5, z_max: 12 } };
 
   /** Regiones validas ordenadas de menos a mas detallada (asi se apilan las capas: la mas fina encima). */
   function ordenarMapas(mapas) {

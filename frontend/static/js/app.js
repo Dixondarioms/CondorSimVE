@@ -277,29 +277,35 @@
     L.control.attribution({ position: "bottomleft", prefix: false })
       .addAttribution("Satélite: Sentinel-2 cloudless (EOX, CC BY 4.0) · Relieve: SRTM/GMTED (AWS Terrain Tiles) · Cobertura: ESA WorldCover · Vectores: Natural Earth · Aeródromos: © colaboradores de OpenStreetMap (ODbL)").addTo(map);
 
-    // Fondo: el relieve coloreado por clase de terreno de cada region (la mas detallada encima) y, opcionalmente,
-    // la foto satelital real (mas zoom util, ~10 m/px) que solo cubre Venezuela y se superpone al relieve.
+    // Fondo: el relieve coloreado por clase de terreno de cada region (la mas detallada encima) y, opcionalmente, la foto
+    // satelital real de cada region que la tenga descargada (tools/preparar_satelite.py: Venezuela hasta el zoom 12,
+    // America hasta el 8), superpuesta al relieve y recortada al recuadro exacto de su region.
     const c = app.capas;
     c.baseRelieve = L.layerGroup().addTo(map);
+    c.baseSatelite = L.layerGroup().addTo(map);
+    const recortes = [];
     for (const m of mapas) {
+      const limitesM = L.latLngBounds(Logica.limitesDe(m));
       L.tileLayer(`/static/tiles/${m.id}/{z}/{x}/{y}.jpg`, {
-        minZoom: zoomMin, minNativeZoom: m.z_min, maxNativeZoom: m.z, maxZoom: 17, bounds: L.latLngBounds(Logica.limitesDe(m)), zIndex: m.z,
+        minZoom: zoomMin, minNativeZoom: m.z_min, maxNativeZoom: m.z, maxZoom: 17, bounds: limitesM, zIndex: m.z,
       }).addTo(c.baseRelieve);
+      if (!m.satelite) continue;
+      const sat = L.tileLayer(`/static/tiles_sat/${m.id}/{z}/{x}/{y}.jpg`, {
+        minZoom: Math.max(zoomMin, m.satelite.z_min), maxNativeZoom: m.satelite.z_max, maxZoom: 17, bounds: limitesM, zIndex: 20 + m.z,
+      }).addTo(c.baseSatelite);
+      // Leaflet dibuja enteras las teselas que tocan `bounds`: se recorta la capa al rectangulo exacto de la region para
+      // que la foto no sobresalga con bordes rectos sobre la region de abajo
+      const recortar = () => {
+        const el = sat.getContainer();
+        if (!el) return;
+        const a = map.latLngToLayerPoint(limitesM.getNorthWest());
+        const b = map.latLngToLayerPoint(limitesM.getSouthEast());
+        el.style.clipPath = `polygon(${a.x}px ${a.y}px, ${b.x}px ${a.y}px, ${b.x}px ${b.y}px, ${a.x}px ${b.y}px)`;
+      };
+      sat.on("add", () => setTimeout(recortar, 0));
+      recortes.push(recortar);
     }
-    const venezuela = mapas.find((m) => m.id === "venezuela") || Logica.MAPA_VENEZUELA;
-    const limitesSat = L.latLngBounds(Logica.limitesDe(venezuela));
-    c.baseSatelite = L.tileLayer("/static/tiles_sat/{z}/{x}/{y}.jpg", { minZoom: 5, maxNativeZoom: 12, maxZoom: 17, bounds: limitesSat, zIndex: 20 }).addTo(map);
-    // Leaflet dibuja enteras las teselas que tocan `bounds`: se recorta la capa al rectangulo exacto de Venezuela para que
-    // la foto no sobresalga con bordes rectos sobre el relieve continental
-    function recortarSatelite() {
-      const el = c.baseSatelite.getContainer();
-      if (!el) return;
-      const a = map.latLngToLayerPoint(limitesSat.getNorthWest());
-      const b = map.latLngToLayerPoint(limitesSat.getSouthEast());
-      el.style.clipPath = `polygon(${a.x}px ${a.y}px, ${b.x}px ${a.y}px, ${b.x}px ${b.y}px, ${a.x}px ${b.y}px)`;
-    }
-    map.on("viewreset zoomend moveend", recortarSatelite);
-    c.baseSatelite.on("add", () => setTimeout(recortarSatelite, 0));
+    map.on("viewreset zoomend moveend", () => recortes.forEach((r) => r()));
 
     // botones para encajar la vista en cada region
     const irA = $("mapas-ir");
