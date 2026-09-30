@@ -24,10 +24,11 @@ def _bando(b: str) -> str:
     return f'<span class="{e(b)}">{e(b)}</span>'
 
 
-def _tabla(cabecera: list[str], filas: list[list[str]], num: tuple[int, ...] = ()) -> str:
+def _tabla(cabecera: list[str], filas: list[list[str]], num: tuple[int, ...] = (), cabecera_html: bool = False) -> str:
+    """Las celdas llegan ya escapadas (o con HTML propio); la cabecera se escapa salvo `cabecera_html`."""
     if not filas:
         return "<p class='meta'>Sin registros.</p>"
-    th = "".join(f"<th>{e(c)}</th>" for c in cabecera)
+    th = "".join(f"<th>{c if cabecera_html else e(c)}</th>" for c in cabecera)
     tr = "".join(
         "<tr>" + "".join(
             f"<td class='num'>{c}</td>" if i in num else f"<td>{c}</td>" for i, c in enumerate(fila)
@@ -52,7 +53,59 @@ def _barras(resumen: dict) -> str:
     return f'<svg viewBox="0 0 640 {20 + 34 * len(resumen)}" width="100%" role="img" aria-label="Fuerza perdida por bando">{"".join(filas)}</svg>'
 
 
-def render_html(informe: dict) -> str:
+def _rubrica_html(rubrica: dict | None) -> str:
+    """Seccion 'Rubrica de evaluacion': una tabla de indicadores por bando, el desglose por puesto responsable y
+    las observaciones automaticas."""
+    if not rubrica:
+        return ""
+    bandos = rubrica["bandos"]
+    filas = []
+    etiquetas = [
+        ("Ordenes emitidas / resueltas / rechazadas",
+         lambda x: f'{x["ordenes"]["emitidas"]} / {x["ordenes"]["resueltas"]} / {x["ordenes"]["rechazadas"]}'),
+        ("Motivos de rechazo mas frecuentes",
+         lambda x: "; ".join(f'{e(m["motivo"])} ({m["veces"]})' for m in x["ordenes"]["motivos_rechazo"]) or "-"),
+        ("Turnos pasivos (sin ninguna orden)",
+         lambda x: str(x["turnos_pasivos"]["cantidad"])
+         + (" (turnos " + ", ".join(str(t) for t in x["turnos_pasivos"]["turnos"]) + ")" if x["turnos_pasivos"]["turnos"] else "")),
+        (f'Unidades bajo el {rubrica["umbral_critico"]:.0f} % de combustible o municion',
+         lambda x: ", ".join(f'{e(c["unidad"])} ({"/".join(c["variables"])} {c["minimo"]:.0f} %, turno {c["turno"]})'
+                             for c in x["logistica"]["unidades_criticas"]) or "ninguna"),
+        ("Reabastecimientos realizados", lambda x: str(x["logistica"]["reabastecimientos"])),
+        ("Perdidas infligidas / sufridas (pts)",
+         lambda x: f'{x["perdidas"]["infligidas"]:.1f} / {x["perdidas"]["sufridas"]:.1f}'),
+        ("Unidades destruidas propias / enemigas",
+         lambda x: f'{x["perdidas"]["unidades_destruidas"]} / {x["perdidas"]["enemigas_destruidas"]}'),
+        ("Objetivos cumplidos / fallidos / pendientes",
+         lambda x: f'{x["objetivos"]["cumplidos"]} / {x["objetivos"]["fallidos"]} / {x["objetivos"]["pendientes"]}'
+         + f' ({x["objetivos"]["puntos"]} pts)'),
+        ("Misiones aereas cumplidas / abortadas / fallidas (de N planificadas)",
+         lambda x: f'{x["misiones"]["cumplidas"]} / {x["misiones"]["abortadas"]} / {x["misiones"]["fallidas"]}'
+         f' (de {x["misiones"]["planificadas"]})'),
+    ]
+    for etiqueta, f in etiquetas:
+        filas.append([e(etiqueta)] + [f(bandos[b]) for b in bandos])
+    tabla = _tabla(["Indicador"] + [_bando(b) for b in bandos], filas, cabecera_html=True)
+
+    partes = [f"<h2>Rubrica de evaluacion</h2>{tabla}"]
+    for b, x in bandos.items():
+        partes.append(f"<h3>Observaciones para {_bando(b)}</h3><ul>"
+                      + "".join(f"<li>{e(o)}</li>" for o in x["observaciones"]) + "</ul>")
+        puestos_filas = [
+            [f'{e(pu["sigla"])} · {e(pu["nombre"])}', str(pu["ordenes"]["emitidas"]), str(pu["ordenes"]["resueltas"]),
+             str(pu["ordenes"]["rechazadas"]), str(pu["misiones"]),
+             "; ".join(f'{e(m["motivo"])} ({m["veces"]})' for m in pu["ordenes"]["motivos_rechazo"]) or "-"]
+            for pu in x["puestos"].values() if pu["ordenes"]["emitidas"] or pu["misiones"]
+        ]
+        if puestos_filas:
+            partes.append(f"<h3>Por puesto responsable ({_bando(b)})</h3>" + _tabla(
+                ["Puesto", "Ordenes", "Resueltas", "Rechazadas", "Misiones", "Motivos de rechazo"], puestos_filas,
+                num=(1, 2, 3, 4)))
+    partes.append(f'<p class="meta">{e(rubrica["nota_puestos"])}</p>')
+    return "".join(partes)
+
+
+def render_html(informe: dict, rubrica: dict | None = None) -> str:
     esc = informe["escenario"]
     res = informe["resumen"]
     turnos = informe["turnos"]
@@ -113,6 +166,7 @@ def render_html(informe: dict) -> str:
 <h2>Resumen por bando</h2>{resumen_tabla}
 <h3>Fuerza perdida acumulada</h3>{_barras(res)}
 <h2>Estado final de las unidades</h2>{unidades_tabla}
+{_rubrica_html(rubrica)}
 <h2>Cronologia</h2>{"".join(secciones) or "<p class='meta'>Aun no se resolvio ningun turno.</p>"}
 </body></html>"""
 

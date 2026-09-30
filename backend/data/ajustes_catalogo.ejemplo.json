@@ -1,0 +1,36 @@
+{
+  "_comentario": "Copie este archivo como ajustes_catalogo.json (misma carpeta) y edite solo lo que quiera cambiar. Las claves que empiezan por '_' se ignoran. Reinicie el servidor para aplicar los cambios.",
+  "clases": {
+    "_comentario": "Ids de clase: ver backend/app/engine/catalogo.py (infanteria, blindado, artilleria, caza, ataque, fragata, base_aerea...). Campos: velocidad_kmh, alcance_km, deteccion_km, autonomia_km, defensa, ataque_vs, stock_max, reposicion_turno, firma, escucha_km, interferencia_km, cadencia_fuego, municion_por_ataque, despliegue_turnos, recarga_turnos, plazas_aeronaves.",
+    "caza": {
+      "velocidad_kmh": 950,
+      "ataque_vs": {"aerea": 1.4}
+    },
+    "blindado": {
+      "defensa": 1.2,
+      "autonomia_km": 300
+    },
+    "antiaerea_portatil": {
+      "recarga_turnos": 2
+    },
+    "base_aerea": {
+      "plazas_aeronaves": 16,
+      "stock_max": 2500
+    }
+  },
+  "modelos": {
+    "_comentario": "Ids de modelo: f16, su30, uav_reco, uav_armado, merodeadora, ge_aereo, caza_embarcado, helo_ataque, helo_transporte, ataque_ligero, crucero. Campos: velocidad_kmh, alcance_km, deteccion_km, autonomia_km, defensa, ataque_vs.",
+    "f16": {
+      "alcance_km": 90
+    },
+    "su30": {
+      "ataque_vs": {"naval": 1.2}
+    }
+  },
+  "topes": {
+    "_comentario": "Enteros >= 1.",
+    "MAX_AERONAVES_GRUPO": 8,
+    "MAX_AERONAVES_BANDO": 32,
+    "MAX_DRONES_BANDO": 16
+  }
+}

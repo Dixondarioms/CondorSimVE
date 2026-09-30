@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app import auth, informe_html, schemas, state, turnos
 from app.db import get_db
-from app.engine import aar, clock, naciones, timeline
+from app.engine import aar, clock, naciones, plantillas, timeline
 from app.models.aar import Instantanea
 from app.models.objetivo import Objetivo
 from app.models.asignacion import Asignacion
@@ -254,6 +254,22 @@ def duplicar(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends
     return copia
 
 
+@router.post("/{escenario_id}/guardar_plantilla")
+def guardar_plantilla(payload: schemas.PlantillaGuardarIn, esc: Escenario = Depends(auth.escenario_dep),
+                      db: Session = Depends(get_db), _: Usuario = Depends(solo_instructor)):
+    """Guarda las unidades ACTUALES del escenario (con sus objetivos, clima e identidad nacional) como una
+    plantilla del instructor, en backend/data/plantillas_usuario/<id>.json; queda en GET /api/plantillas."""
+    try:
+        p = plantillas.guardar_desde_escenario(db, esc, payload.nombre, payload.descripcion,
+                                               payload.con_estado, payload.reemplazar)
+    except plantillas.PlantillaInvalida as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except FileExistsError as exc:
+        raise HTTPException(status_code=409, detail=f"Ya existe una plantilla con el identificador '{exc}': "
+                                                    "cambie el nombre o marque 'reemplazar'")
+    return plantillas.plantilla_dict(p)
+
+
 @router.get("/{escenario_id}/usuarios")
 def usuarios_asignados(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db),
                        _: Usuario = Depends(solo_instructor)):
@@ -297,11 +313,20 @@ def informe_timeline(esc: Escenario = Depends(auth.escenario_dep), db: Session =
     return timeline.construir_timeline(db, esc)
 
 
+@router.get("/{escenario_id}/aar/rubrica")
+def informe_rubrica(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db),
+                    usuario: Usuario = Depends(auth.usuario_actual)):
+    """Rubrica de evaluacion por bando y por puesto responsable (ordenes, turnos pasivos, logistica, perdidas,
+    objetivos, misiones y observaciones automaticas)."""
+    _informe_permitido(esc, usuario)
+    return aar.construir_rubrica(db, esc)
+
+
 @router.get("/{escenario_id}/aar.html", response_class=HTMLResponse)
 def informe_html_(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db),
                   usuario: Usuario = Depends(auth.usuario_actual)):
     _informe_permitido(esc, usuario)
-    return HTMLResponse(informe_html.render_html(aar.construir_informe(db, esc)))
+    return HTMLResponse(informe_html.render_html(aar.construir_informe(db, esc), aar.construir_rubrica(db, esc)))
 
 
 @router.get("/{escenario_id}/aar.csv")
@@ -336,5 +361,6 @@ def exportar(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends
         ],
         "informe": aar.construir_informe(db, esc),
         "timeline": timeline.construir_timeline(db, esc),
+        "rubrica": aar.construir_rubrica(db, esc),
     }
     return JSONResponse(cuerpo, headers={"Content-Disposition": f'attachment; filename="escenario_{esc.id}.json"'})

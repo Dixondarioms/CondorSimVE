@@ -15,8 +15,8 @@ from app.engine import plantillas
 
 def main() -> None:
     plantilla_id = sys.argv[1] if len(sys.argv) > 1 else "demo_llanos"
-    if plantilla_id not in plantillas.PLANTILLAS:
-        disponibles = ", ".join(plantillas.PLANTILLAS)
+    if plantillas.obtener(plantilla_id) is None:
+        disponibles = ", ".join(plantillas.todas())
         raise SystemExit(f"Plantilla desconocida: {plantilla_id!r}. Disponibles: {disponibles}")
     init_db()
     with SessionLocal() as db:

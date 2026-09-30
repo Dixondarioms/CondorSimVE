@@ -407,3 +407,156 @@ def como_dict(c: Clase) -> dict:
         "reposicion_turno": c.reposicion_turno, "misil": c.misil, "lanza_misiles": c.lanza_misiles,
         "plazas_aeronaves": c.plazas_aeronaves, "embarcable": c.embarcable,
     }
+
+
+# ---------------------------------------------------------------------------------------------------------
+# Ajustes del instructor sin tocar el codigo: backend/data/ajustes_catalogo.json (opcional).
+# Sobrescribe campos numericos de clases y modelos y los topes de aeronaves. Formato:
+#   {"clases": {"caza": {"velocidad_kmh": 950, "ataque_vs": {"aerea": 1.4}}},
+#    "modelos": {"f16": {"alcance_km": 90}},
+#    "topes": {"MAX_AERONAVES_BANDO": 32}}
+# Las claves que empiezan por "_" (p. ej. "_comentario") se ignoran. Ver data/ajustes_catalogo.ejemplo.json.
+# ---------------------------------------------------------------------------------------------------------
+import json as _json
+import logging as _logging
+import os as _os
+import sys as _sys
+from pathlib import Path as _Path
+
+_log = _logging.getLogger("simulador.catalogo")
+
+RUTA_AJUSTES = _Path(__file__).resolve().parent.parent.parent / "data" / "ajustes_catalogo.json"
+VAR_AJUSTES = "SIMULADOR_AJUSTES_CATALOGO"
+
+# Campos que se pueden ajustar (nombre -> tipo esperado). Los enteros no admiten decimales; los flotantes
+# aceptan enteros. "ataque_vs" es un dict que se fusiona clave a clave (terrestre / aerea / naval).
+_CAMPOS_CLASE = {
+    "velocidad_kmh": float, "alcance_km": float, "deteccion_km": float, "autonomia_km": float,
+    "defensa": float, "ataque_vs": dict, "stock_max": float, "reposicion_turno": float, "firma": float,
+    "escucha_km": float, "interferencia_km": float, "cadencia_fuego": float, "municion_por_ataque": float,
+    "despliegue_turnos": int, "recarga_turnos": int, "plazas_aeronaves": int,
+}
+_CAMPOS_MODELO = {
+    "velocidad_kmh": float, "alcance_km": float, "deteccion_km": float, "autonomia_km": float,
+    "defensa": float, "ataque_vs": dict,
+}
+_TOPES = ("MAX_AERONAVES_GRUPO", "MAX_AERONAVES_BANDO", "MAX_DRONES_BANDO")
+
+
+def _es_numero(valor, tipo) -> bool:
+    if isinstance(valor, bool):
+        return False
+    if tipo is int:
+        return isinstance(valor, int)
+    return isinstance(valor, (int, float))
+
+
+def _valores_validos(entrada: dict, campos: dict, actual, donde: str) -> dict:
+    """Filtra los campos de una entrada del JSON: devuelve solo los validos, ya con el tipo correcto."""
+    cambios = {}
+    for campo, valor in entrada.items():
+        if campo.startswith("_"):
+            continue
+        tipo = campos.get(campo)
+        if tipo is None:
+            _log.warning("ajustes_catalogo: campo desconocido %r en %s (se ignora)", campo, donde)
+            continue
+        if tipo is dict:
+            if not isinstance(valor, dict):
+                _log.warning("ajustes_catalogo: %s.%s debe ser un objeto {tipo: factor} (se ignora)", donde, campo)
+                continue
+            fusion = dict(getattr(actual, campo))
+            for objetivo, factor in valor.items():
+                if objetivo.startswith("_"):
+                    continue
+                if objetivo not in TIPOS or objetivo == "base":
+                    _log.warning("ajustes_catalogo: %s.%s: tipo de objetivo desconocido %r (se ignora)",
+                                 donde, campo, objetivo)
+                    continue
+                if not _es_numero(factor, float) or factor < 0:
+                    _log.warning("ajustes_catalogo: %s.%s.%s debe ser un numero >= 0 (se ignora)",
+                                 donde, campo, objetivo)
+                    continue
+                fusion[objetivo] = float(factor)
+            if fusion != getattr(actual, campo):
+                cambios[campo] = fusion
+            continue
+        if not _es_numero(valor, tipo) or valor < 0:
+            _log.warning("ajustes_catalogo: %s.%s debe ser un numero %s>= 0 (se ignora)",
+                         donde, campo, "entero " if tipo is int else "")
+            continue
+        cambios[campo] = tipo(valor)
+    return cambios
+
+
+def aplicar_ajustes(ruta=None) -> dict:
+    """Aplica los ajustes del instructor a CLASES, MODELOS y los topes de aeronaves.
+
+    `ruta`: archivo JSON; si es None se usa la variable de entorno SIMULADOR_AJUSTES_CATALOGO o, en su
+    defecto, backend/data/ajustes_catalogo.json. Si el archivo no existe no se hace nada. Las entradas
+    desconocidas o con tipos incorrectos se registran como aviso y se ignoran. Devuelve un resumen
+    {"clases": {id: [campos]}, "modelos": {id: [campos]}, "topes": [nombres]} de lo aplicado.
+    """
+    modulo = _sys.modules[__name__]
+    resumen = {"clases": {}, "modelos": {}, "topes": []}
+    if ruta is None:
+        ruta = _os.environ.get(VAR_AJUSTES) or RUTA_AJUSTES
+    ruta = _Path(ruta)
+    if not ruta.is_file():
+        return resumen
+    try:
+        datos = _json.loads(ruta.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        _log.warning("ajustes_catalogo: no se pudo leer %s: %s (se ignora)", ruta, e)
+        return resumen
+    if not isinstance(datos, dict):
+        _log.warning("ajustes_catalogo: %s debe contener un objeto JSON (se ignora)", ruta)
+        return resumen
+
+    for seccion, catalogo_sec, campos in (("clases", CLASES, _CAMPOS_CLASE), ("modelos", MODELOS, _CAMPOS_MODELO)):
+        entradas = datos.get(seccion) or {}
+        if not isinstance(entradas, dict):
+            _log.warning("ajustes_catalogo: la seccion %r debe ser un objeto (se ignora)", seccion)
+            continue
+        for id_, entrada in entradas.items():
+            if id_.startswith("_"):
+                continue
+            actual = catalogo_sec.get(id_)
+            if actual is None:
+                _log.warning("ajustes_catalogo: %s desconocido %r (se ignora)", seccion[:-1], id_)
+                continue
+            if not isinstance(entrada, dict):
+                _log.warning("ajustes_catalogo: %s.%s debe ser un objeto (se ignora)", seccion, id_)
+                continue
+            cambios = _valores_validos(entrada, campos, actual, f"{seccion}.{id_}")
+            if cambios:
+                catalogo_sec[id_] = replace(actual, **cambios)
+                resumen[seccion][id_] = sorted(cambios)
+
+    topes = datos.get("topes") or {}
+    if not isinstance(topes, dict):
+        _log.warning("ajustes_catalogo: la seccion 'topes' debe ser un objeto (se ignora)")
+    else:
+        for nombre, valor in topes.items():
+            if nombre.startswith("_"):
+                continue
+            if nombre not in _TOPES:
+                _log.warning("ajustes_catalogo: tope desconocido %r (se ignora)", nombre)
+                continue
+            if not _es_numero(valor, int) or valor < 1:
+                _log.warning("ajustes_catalogo: topes.%s debe ser un entero >= 1 (se ignora)", nombre)
+                continue
+            setattr(modulo, nombre, int(valor))
+            resumen["topes"].append(nombre)
+
+    for claves in (seccion for seccion in datos if seccion not in ("clases", "modelos", "topes")
+                   and not seccion.startswith("_")):
+        _log.warning("ajustes_catalogo: seccion desconocida %r (se ignora)", claves)
+    if resumen["clases"] or resumen["modelos"] or resumen["topes"]:
+        _log.info("ajustes_catalogo: aplicado %s (clases: %s, modelos: %s, topes: %s)", ruta,
+                  ", ".join(resumen["clases"]) or "-", ", ".join(resumen["modelos"]) or "-",
+                  ", ".join(resumen["topes"]) or "-")
+    return resumen
+
+
+aplicar_ajustes()

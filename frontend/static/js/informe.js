@@ -178,6 +178,40 @@
     const linea = Timeline.crear({ api: ctx.api, escenarioId: ctx.escenarioId, alElegir: alElegirEnLinea });
     $("rp-timeline").addEventListener("click", () => linea.abrir());
 
+    // Rubrica de evaluacion: indicadores por bando y por puesto responsable, con observaciones automaticas.
+    async function rubrica() {
+      const id = ctx.escenarioId();
+      if (!id) return;
+      let datos;
+      try {
+        datos = await ctx.api("GET", `/api/escenarios/${id}/aar/rubrica`);
+      } catch (_) { return; }
+      const cont = $("rb-contenido");
+      limpiar(cont);
+      $("rb-resumen").textContent = Rubrica.resumen(datos);
+      $("rb-nota").textContent = datos.nota_puestos || "";
+      const t = tabla([], Rubrica.filasIndicadores(datos));
+      const th = t.firstChild;
+      th.appendChild(celda("th", "Indicador"));
+      for (const b of Rubrica.BANDOS) th.appendChild(celda("th", b, "tag-" + b));
+      cont.appendChild(t);
+      for (const b of Rubrica.BANDOS) {
+        const x = datos.bandos[b];
+        if (!x) continue;
+        cont.appendChild(celda("h4", `Observaciones para ${b}`, "tag-" + b));
+        const ul = document.createElement("ul");
+        for (const o of Rubrica.observaciones(x)) ul.appendChild(celda("li", o));
+        cont.appendChild(ul);
+        const filas = Rubrica.filasPuestos(x);
+        if (filas.length) {
+          cont.appendChild(celda("h4", `Por puesto responsable (${b})`));
+          cont.appendChild(tabla(["Puesto", "Órdenes", "Resueltas", "Rechazadas", "Misiones", "Motivos de rechazo"], filas, [1, 2, 3, 4]));
+        }
+      }
+      $("dlg-rubrica").showModal();
+    }
+    $("rp-rubrica").addEventListener("click", rubrica);
+
     return { abrir, cerrar, activo: () => activo };
   }
 

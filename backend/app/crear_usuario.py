@@ -2,6 +2,7 @@
 
     python -m app.crear_usuario <usuario> --rol instructor
     python -m app.crear_usuario a5azul --rol azul --puesto planificacion
+    echo <contrasena> | python -m app.crear_usuario <usuario> --password-stdin   # sin consola (instalador)
 """
 
 import argparse
@@ -20,13 +21,18 @@ def main() -> int:
     ap.add_argument("--rol", choices=auth.ROLES, default="instructor")
     ap.add_argument("--puesto", choices=list(puestos.PUESTOS), default=puestos.POR_DEFECTO,
                     help="puesto dentro del bando (solo alumnos azul/rojo)")
+    ap.add_argument("--password-stdin", action="store_true",
+                    help="leer la contrasena de la entrada estandar (una linea) en vez de pedirla por consola")
     args = ap.parse_args()
     puesto = args.puesto if args.rol in puestos.BANDOS else puestos.POR_DEFECTO
 
-    password = getpass.getpass("Contrasena: ")
-    if password != getpass.getpass("Repita la contrasena: "):
-        print("Las contrasenas no coinciden.")
-        return 1
+    if args.password_stdin:
+        password = sys.stdin.readline().rstrip("\r\n")
+    else:
+        password = getpass.getpass("Contrasena: ")
+        if password != getpass.getpass("Repita la contrasena: "):
+            print("Las contrasenas no coinciden.")
+            return 1
     try:
         auth.validar_password(password)
     except Exception as e:  # HTTPException con el detalle

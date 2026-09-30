@@ -53,6 +53,14 @@ def terreno_llano(monkeypatch):
     monkeypatch.setattr(auth, "ITERACIONES", 1000)  # hash rapido solo en tests
 
 
+@pytest.fixture(autouse=True)
+def plantillas_usuario_temporales(monkeypatch, tmp_path):
+    """Las plantillas guardadas por el instructor van a una carpeta temporal: nunca a backend/data."""
+    from app.engine import plantillas
+
+    monkeypatch.setattr(plantillas, "RUTA_PLANTILLAS_USUARIO", tmp_path / "plantillas_usuario")
+
+
 # ---------------------------------------------------------------- PostgreSQL de prueba
 @pytest.fixture(scope="session")
 def url_postgres(tmp_path_factory):
