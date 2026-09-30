@@ -94,10 +94,18 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
                 raise HTTPException(status_code=400, detail="El blanco elegido no es un enemigo detectado por su bando")
             d["objetivo_unidad_id"] = x.id
         puntos.append(d)
+    errores = misiones_mod.validar(payload.rol, puntos, clase)
+    plan = misiones_mod.estimar(*origen, puntos)
+    if payload.rol == "ESCOLTA":
+        e = db.get(Mision, payload.escolta_de) if payload.escolta_de else None
+        if e is None or e.escenario_id != esc.id or e.bando != usuario.rol or e.estado not in misiones_mod.ACTIVAS:
+            errores.append("Indique la mision propia (programada o en curso) que va a escoltar.")
+        elif e.rol == "ESCOLTA":
+            errores.append("Una escolta no puede escoltar a otra escolta.")
+        else:
+            plan["escolta_de"] = e.id
     return {
-        "puntos": puntos, "turno": turno, "modelo": modelo, "aeronaves": n,
-        "errores": misiones_mod.validar(payload.rol, puntos, clase),
-        "plan": misiones_mod.estimar(*origen, puntos),
+        "puntos": puntos, "turno": turno, "modelo": modelo, "aeronaves": n, "errores": errores, "plan": plan,
     }
 
 
@@ -132,6 +140,28 @@ async def crear(payload: schemas.MisionIn, esc: Escenario = Depends(auth.escenar
         resultado="Programada." if r["turno"] > esc.turno_actual else "Se inicia al resolverse este turno.",
     )
     db.add(m)
+    db.flush()
+    # paquete: la escolta se crea junto con la mision, con el mismo turno de despegue y aterrizaje en la misma base
+    if payload.escolta is not None and payload.rol != "ESCOLTA":
+        aterrizaje = next((p for p in reversed(r["puntos"]) if p["tipo"] == "aterrizaje"), None)
+        if aterrizaje is None:
+            raise HTTPException(status_code=400, detail="Para agregar escolta la mision debe terminar en un aterrizaje")
+        esc_payload = schemas.MisionIn(
+            rol="ESCOLTA", nombre=(payload.escolta.nombre or f"Escolta {m.nombre or m.rol}")[:40],
+            puntos=[schemas.PuntoMisionIn(tipo="aterrizaje", lat=aterrizaje["lat"], lon=aterrizaje["lon"], base_id=aterrizaje["base_id"])],
+            unidad_id=payload.escolta.unidad_id, base_id=payload.escolta.base_id, modelo=payload.escolta.modelo,
+            aeronaves=payload.escolta.aeronaves, turno_despegue=None if payload.escolta.unidad_id else r["turno"],
+            escolta_de=m.id,
+        )
+        re = _preparar(esc_payload, esc, db, usuario)
+        if re["errores"]:
+            raise HTTPException(status_code=400, detail="Escolta: " + " ".join(re["errores"]))
+        db.add(Mision(
+            escenario_id=esc.id, bando=usuario.rol, rol="ESCOLTA", nombre=esc_payload.nombre, estado="programada",
+            unidad_id=esc_payload.unidad_id, base_id=esc_payload.base_id, modelo=re["modelo"] or "", aeronaves=re["aeronaves"] or 0,
+            turno_despegue=re["turno"], creada_turno=esc.turno_actual, puntos_json=json.dumps(re["puntos"]),
+            plan_json=json.dumps(re["plan"]), autor=usuario.username, resultado="Escolta programada.",
+        ))
     setattr(esc, f"listo_{usuario.rol}", False)  # como una orden nueva: el bando debe confirmar otra vez
     db.commit()
     db.refresh(m)

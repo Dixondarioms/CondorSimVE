@@ -450,6 +450,13 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   crítico abandona la ruta y regresa a la base más cercana; si la base de aterrizaje está fuera de servicio se
   desvía a otra; los drones sin enlace (interferencia) mantienen posición. Cancelar una misión programada la
   anula; abortar una en curso hace regresar al grupo.
+- **Escolta y paquetes de ataque:** el rol **ESCOLTA** acompaña a otra misión propia («Misión que escolta»): vuela
+  junto a su grupo (a ≤ 8 km), lo espera en el aire si aún no despegó, **intercepta** a los aviones enemigos que lo
+  amenacen (actúa como una patrulla que se mueve con el grupo) y, cuando esa misión termina, regresa a la base
+  indicada. Al planificar una interdicción, CAS, SEAD, reconocimiento o GE se puede agregar la **escolta del
+  paquete** en la misma pantalla: un grupo de caza ya en vuelo o un par de cazas que despegan de la misma base en
+  el mismo turno; el servidor crea las dos misiones juntas (`escolta` en `POST /misiones`; la escolta guarda
+  `escolta_de`). Una escolta no escolta a otra escolta.
 - **Cronograma (flow sheet):** botón *Cronograma*: una fila por misión con vuelo, órbitas, ataques y aterrizajes
   sobre la línea de tiempo, y el turno actual marcado. Cada bando ve solo sus misiones; el instructor, todas.
 

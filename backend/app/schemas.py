@@ -246,6 +246,19 @@ class MisionIn(BaseModel):
     modelo: str | None = Field(default=None, max_length=30)
     aeronaves: int | None = Field(default=None, ge=1, le=12)
     turno_despegue: int | None = None
+    # rol ESCOLTA: mision que escolta; paquete: escolta que se crea junto con esta mision (mismo turno de despegue)
+    escolta_de: int | None = None
+    escolta: "EscoltaIn | None" = None
+
+
+class EscoltaIn(BaseModel):
+    """Escolta de un paquete: un grupo existente o un grupo que despega de una base con la mision escoltada."""
+
+    unidad_id: int | None = None
+    base_id: int | None = None
+    modelo: str | None = Field(default=None, max_length=30)
+    aeronaves: int | None = Field(default=None, ge=1, le=12)
+    nombre: str = Field(default="", max_length=40)
 
 
 class ZonaClimaIn(BaseModel):

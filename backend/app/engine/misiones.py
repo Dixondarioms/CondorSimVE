@@ -57,7 +57,11 @@ ROLES: dict[str, Rol] = {r.id: r for r in [
         ("orbita",), ("blanco",), "interferencia"),
     Rol("TRASLADO", "Traslado a otra base",
         "Vuela la ruta y aterriza en la base indicada.", (), ("orbita", "blanco"), ""),
+    Rol("ESCOLTA", "Escolta de otra mision",
+        "Vuela junto al grupo de la mision escoltada e intercepta a los aviones enemigos que lo amenacen; cuando esa "
+        "mision termina, regresa a la base indicada.", ("aterrizaje",), ("orbita", "blanco"), "aire"),
 ]}
+RADIO_ESCOLTA_KM = 8.0  # distancia a la que el escolta se coloca del grupo escoltado
 TIPOS_PUNTO = ("paso", "orbita", "blanco", "aterrizaje")
 MAX_PUNTOS = 12
 MAX_TURNOS_ORBITA = 12
@@ -162,6 +166,42 @@ def estimar(lat: float, lon: float, velocidad_kmh: float, autonomia_km: float, c
 # ---------------------------------------------------------------------------------------------------------------
 # Consultas y serializacion
 # ---------------------------------------------------------------------------------------------------------------
+def escolta_de(m: Mision) -> int | None:
+    """Id de la mision que escolta (rol ESCOLTA), guardado en el plan."""
+    try:
+        v = json.loads(m.plan_json or "{}").get("escolta_de")
+    except ValueError:
+        return None
+    return int(v) if v else None
+
+
+def _seguir_escoltado(db, m: Mision, u, unidades: dict, lista, terreno, clima, obras, bit, turno: int) -> bool:
+    """Escolta: se coloca junto al grupo escoltado y patrulla alli. Devuelve True si sigue escoltando; False si la
+    mision escoltada termino (o no existe) y el escolta debe seguir su propia ruta (el aterrizaje)."""
+    e = db.get(Mision, escolta_de(m) or -1)
+    escoltado = unidades.get(e.unidad_id) if e is not None and e.unidad_id else None
+    if e is None or e.escenario_id != m.escenario_id or e.estado not in ACTIVAS:
+        return False
+    if e.estado == "programada" or escoltado is None or escoltado.estado != "activa" or escoltado.en_tierra:
+        # el escoltado aun no despego (o esta en tierra): el escolta patrulla donde esta y espera
+        bit.poner(u, "combustible", u.combustible - aeronaves_mod.COMBUSTIBLE_LOITER, "mision")
+        u.mision, u.mision_lat, u.mision_lon = "patrulla", u.lat, u.lon
+        m.resultado = f"Espera en el aire al grupo de {e.nombre or e.rol}."
+        return True
+    d = geo.distancia_km(u.lat, u.lon, escoltado.lat, escoltado.lon)
+    if d > RADIO_ESCOLTA_KM:
+        mov = movimiento.simular(u, [[escoltado.lat, escoltado.lon]], terreno, clima, obras)
+        u.lat, u.lon = mov.lat, mov.lon
+        bit.poner(u, "combustible", u.combustible - mov.combustible_gastado, "mision")
+        d = geo.distancia_km(u.lat, u.lon, escoltado.lat, escoltado.lon)
+    else:
+        bit.poner(u, "combustible", u.combustible - aeronaves_mod.COMBUSTIBLE_LOITER, "mision")
+    u.mision, u.mision_lat, u.mision_lon = "patrulla", u.lat, u.lon  # intercepta lo que amenace al grupo
+    m.resultado = (f"Escolta a {escoltado.nombre} ({d:.0f} km)." if d <= RADIO_ESCOLTA_KM
+                   else f"Alcanza a {escoltado.nombre}: faltan {d:.0f} km.")
+    return True
+
+
 def puntos_de(m: Mision) -> list:
     return json.loads(m.puntos_json or "[]")
 
@@ -191,7 +231,7 @@ def serializar(m: Mision) -> dict:
         "estado": m.estado, "unidad_id": m.unidad_id, "base_id": m.base_id, "modelo": m.modelo,
         "aeronaves": m.aeronaves, "turno_despegue": m.turno_despegue, "creada_turno": m.creada_turno,
         "puntos": puntos_de(m), "plan": json.loads(m.plan_json or "{}"), "indice": m.indice, "espera": m.espera,
-        "resultado": m.resultado,
+        "resultado": m.resultado, "escolta_de": escolta_de(m),
     }
 
 
@@ -342,6 +382,13 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
             bit.poner(u, "combustible", u.combustible - aeronaves_mod.COMBUSTIBLE_LOITER, "mision")
             m.resultado = ge_mod.MOTIVO_SIN_ENLACE
             continue
+        # ---- escolta: acompaña al grupo escoltado mientras su mision siga; luego vuelve a la base ----
+        if m.rol == "ESCOLTA" and m.indice < len(pts) - 1 or (m.rol == "ESCOLTA" and m.indice == 0 and len(pts) == 1 and m.espera != -2):
+            if u.combustible > aeronaves_mod.COMBUSTIBLE_CRITICO and _seguir_escoltado(db, m, u, unidades, lista, terreno, clima, obras, bit, turno):
+                continue
+            m.espera = -2  # marca: la escolta termino, sigue su ruta al aterrizaje
+            u.mision, u.mision_lat, u.mision_lon = "", None, None
+            _evento(db, m, turno, "La mision escoltada termino: regresa a la base.")
         # combustible critico: abandona la ruta y regresa a la base propia mas cercana
         if (u.combustible <= aeronaves_mod.COMBUSTIBLE_CRITICO and pts[-1]["tipo"] == "aterrizaje"
                 and len(pts) - m.indice > 1):

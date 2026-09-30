@@ -77,6 +77,7 @@
         origen: g ? "grupo" : "base", unidadId: (elegido || grupos()[0] || {}).id ?? null,
         baseId: (bases()[0] || {}).id ?? null, modelo: ((cat().modelos || [])[0] || {}).id ?? null, aeronaves: 2,
         turno: turnoActual(), nombre: "", rol: "CAP", puntos: [], aterrizajeId: (bases()[0] || {}).id ?? null,
+        escoltaDe: null, escolta: "",
       };
       $("pm-origen-grupo").disabled = !g;
       $("pm-origen-base").disabled = !b;
@@ -109,6 +110,14 @@
       opciones($("pm-turno"), Array.from({ length: 13 }, (_, i) => [t0 + i, `T${t0 + i} · ${ctx.horaDeTurno(t0 + i)}${i === 0 ? " (al resolver este turno)" : ""}`]), borrador.turno);
       opciones($("pm-rol"), roles().map((r) => [r.id, r.nombre]), borrador.rol);
       opciones($("pm-aterrizaje"), bases().map((u) => [u.id, u.nombre]), borrador.aterrizajeId);
+      // rol ESCOLTA: que mision escolta; roles de ataque: escolta opcional del paquete (grupo existente o grupo que despega)
+      const escoltables = (datos() ? datos().misiones || [] : []).filter((m) => m.bando === bando() && ["programada", "en_curso"].includes(m.estado) && m.rol !== "ESCOLTA");
+      opciones($("pm-escolta-de"), escoltables.map((m) => [m.id, `M${m.id} · ${m.nombre || m.rol_nombre}`]), borrador.escoltaDe);
+      const cazas = grupos().filter((u) => !u.en_tierra && u.clase === "caza");
+      opciones($("pm-escolta"), [["", "Sin escolta"], ...cazas.map((u) => [`u:${u.id}`, `${u.nombre} (en vuelo)`]),
+        ...(borrador.origen === "base" ? (cat().modelos || []).filter((m) => (m.ataque_vs || {}).aerea > 0 && !m.misil).map((m) => [`m:${m.id}`, `${m.corto || m.nombre} ×2 desde la misma base`]) : [])], borrador.escolta);
+      borrador.escoltaDe = parseInt($("pm-escolta-de").value, 10) || null;
+      borrador.escolta = $("pm-escolta").value || "";
       borrador.unidadId = parseInt($("pm-grupo").value, 10) || null;
       borrador.baseId = parseInt($("pm-base").value, 10) || null;
       borrador.modelo = $("pm-modelo").value || null;
@@ -235,12 +244,17 @@
       const c = { rol: borrador.rol, nombre: borrador.nombre.trim(), puntos: puntosParaEnviar() };
       if (borrador.origen === "grupo") c.unidad_id = borrador.unidadId;
       else Object.assign(c, { base_id: borrador.baseId, modelo: borrador.modelo, aeronaves: borrador.aeronaves, turno_despegue: borrador.turno });
+      if (borrador.rol === "ESCOLTA") c.escolta_de = borrador.escoltaDe;
+      else if (borrador.escolta && borrador.escolta.startsWith("u:")) c.escolta = { unidad_id: parseInt(borrador.escolta.slice(2), 10) };
+      else if (borrador.escolta && borrador.escolta.startsWith("m:")) c.escolta = { base_id: borrador.baseId, modelo: borrador.escolta.slice(2), aeronaves: 2 };
       return c;
     }
 
     function refrescar() {
       if (!borrador) return;
       $("pm-rol-desc").textContent = (rolDe(borrador.rol) || {}).descripcion || "";
+      $("pm-escolta-de-fila").hidden = borrador.rol !== "ESCOLTA";
+      $("pm-paquete").hidden = !["INTERDICCION", "CAS", "SEAD", "RECO", "GE"].includes(borrador.rol);
       renderPuntos();
       dibujarBorrador();
       clearTimeout(temporizador);
@@ -461,6 +475,8 @@
       alCambiar("pm-turno", (v) => { borrador.turno = parseInt(v, 10); });
       alCambiar("pm-rol", (v) => { borrador.rol = v; });
       alCambiar("pm-aterrizaje", (v) => { borrador.aterrizajeId = parseInt(v, 10); });
+      alCambiar("pm-escolta-de", (v) => { borrador.escoltaDe = parseInt(v, 10) || null; });
+      alCambiar("pm-escolta", (v) => { borrador.escolta = v || ""; });
       $("pm-nombre").addEventListener("input", () => { if (borrador) borrador.nombre = $("pm-nombre").value; });
       $("pm-limpiar").addEventListener("click", () => { if (borrador) { borrador.puntos = []; refrescar(); } });
       $("pm-crear").addEventListener("click", crearMision);
