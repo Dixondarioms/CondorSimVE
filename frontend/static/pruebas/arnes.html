@@ -119,6 +119,8 @@
               <button type="button" data-modo="aterrizar" id="modo-aterrizar" hidden title="Solo aeronaves en vuelo">Aterrizar</button>
               <button type="button" data-modo="interferir" id="modo-interferir" hidden title="Solo unidades de guerra electrónica">Interferir</button>
               <button type="button" data-modo="lanzar" id="modo-lanzar" hidden title="Solo buques y baterías con misiles de crucero">Lanzar misiles</button>
+              <button type="button" data-modo="embarcar" id="modo-embarcar" hidden title="Subir a un buque de desembarco o helicóptero de transporte propio a menos de 3 km">Embarcar</button>
+              <button type="button" data-modo="desembarcar" id="modo-desembarcar" hidden title="Solo transportes con tropas a bordo">Desembarcar</button>
             </div>
             <p id="o-espera" class="ayuda advertencia" hidden></p>
             <p id="o-puesto" class="ayuda advertencia" hidden></p>
@@ -153,6 +155,15 @@
               <select id="o-objetivo" aria-label="Objetivo"></select>
               <p id="o-objetivo-ayuda" class="ayuda"></p>
               <label class="mini" id="o-parte-fila" hidden>Qué se ataca de la base<select id="o-parte"></select></label>
+            </div>
+            <div id="o-embarcar" hidden>
+              <label class="mini">Transporte<select id="o-transporte"></select></label>
+              <p id="o-embarcar-info" class="ayuda"></p>
+              <p class="ayuda">A bordo la unidad viaja con el transporte, no se la ve ni ataca por separado, no recibe órdenes y sufre la mitad del daño que reciba el transporte (se pierde si lo hunden o derriban).</p>
+            </div>
+            <div id="o-desembarcar" hidden>
+              <p class="ayuda">Marque la ruta en el mapa; el <b>último punto</b> es el lugar de desembarco, en tierra firme. Un buque se acerca por el agua y desembarca a menos de 5 km del punto; si no llega este turno, sigue en los siguientes.</p>
+              <p id="o-desembarcar-info" class="ayuda preview"></p>
             </div>
             <div id="o-lanzar" hidden>
               <label class="mini">Misiles en la salva<select id="o-misiles"></select></label>

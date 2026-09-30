@@ -428,10 +428,11 @@
       dibujarInterferencia();
       return;
     }
-    if (esAlumno() && app.modoOrden === "mover" && app.unidadOrden) {
+    if (esAlumno() && (app.modoOrden === "mover" || app.modoOrden === "desembarcar") && app.unidadOrden) {
       app.waypoints.push([lat, lng]);
       dibujarWaypoints();
-      pedirPreview();
+      if (app.modoOrden === "mover") pedirPreview();
+      else if (app.data) actualizarNuevaOrden(app.data);
     }
   }
 
@@ -579,7 +580,7 @@
   function dibujarUnidades(unidades) {
     const vivas = new Set();
     for (const u of unidades) {
-      if (u.estado === "destruida") continue;
+      if (u.estado === "destruida" || Logica.embarcada(u)) continue; // lo embarcado viaja dentro de su transporte
       vivas.add(u.id);
       const vista = bandoVista();
       const enemiga = vista ? u.bando !== vista : u.bando === "rojo";
@@ -947,6 +948,14 @@
       extra.push(dato("Refugios reforzados", `${u.refugios || 0} (protegen a los primeros ${u.refugios || 0} grupos estacionados; ${abordo.length} a bordo)`));
     }
     if (cl && cl.lanza_misiles && !oculto) extra.push(dato("Misiles de crucero", `${Logica.misilesDisponibles(u)} listos (25 % de munición cada uno)`));
+    if (Logica.embarcada(u) && app.data) {
+      const t = app.porId.get(u.transporte_id);
+      extra.push(`<div class="ancho-completo"><dt>Situación</dt><dd>A bordo de ${escapar(t ? t.nombre : "un transporte")}: viaja con él y no puede recibir órdenes hasta desembarcar.</dd></div>`);
+    }
+    if (Logica.esTransporte(u) && !oculto && app.data) {
+      const carga = Logica.aBordo(u, app.data.unidades);
+      extra.push(dato("Tropas a bordo", carga.length ? `${carga.map((x) => x.nombre).join(", ")} (${carga.length}/${Logica.CAPACIDAD_TRANSPORTE[u.clase]})` : `ninguna (capacidad ${Logica.CAPACIDAD_TRANSPORTE[u.clase]})`));
+    }
     if (modelo) {
       const op = Logica.aeronavesOperativas(u);
       extra.push(dato("Modelo", modelo.nombre));
@@ -1040,6 +1049,13 @@
     $("modo-interferir").hidden = !interfiere;
     const lanza = Logica.puedeLanzarMisiles(u, cl);
     $("modo-lanzar").hidden = !lanza;
+    const transportes = u ? Logica.transportesCercanos(u, data.unidades, claseDe) : [];
+    const puedeEmbarcar = transportes.length > 0;
+    const puedeDesembarcar = !!u && Logica.esTransporte(u) && Logica.aBordo(u, data.unidades).length > 0;
+    $("modo-embarcar").hidden = !puedeEmbarcar;
+    $("modo-desembarcar").hidden = !puedeDesembarcar;
+    if (app.modoOrden === "embarcar" && !puedeEmbarcar) app.modoOrden = "mover";
+    if (app.modoOrden === "desembarcar" && !puedeDesembarcar) app.modoOrden = "mover";
     if (app.modoOrden === "patrullar" && !aerea) app.modoOrden = "mover";
     if (app.modoOrden === "aterrizar" && !puedeAterrizar) app.modoOrden = "mover";
     if (app.modoOrden === "interferir" && !interfiere) app.modoOrden = "mover";
@@ -1050,7 +1066,7 @@
     $("orden-unidad").textContent = u ? u.nombre : "elija una unidad";
     $("btn-emitir").disabled = !u || data.escenario.estado !== "activo" || data.escenario.fase !== "decision";
     document.querySelectorAll(".modos button").forEach((b) => b.classList.toggle("activo", b.dataset.modo === app.modoOrden));
-    $("o-mover").hidden = app.modoOrden !== "mover";
+    $("o-mover").hidden = app.modoOrden !== "mover" && app.modoOrden !== "desembarcar";
     $("o-construir").hidden = app.modoOrden !== "construir";
     $("o-patrullar").hidden = app.modoOrden !== "patrullar";
     $("o-aterrizar").hidden = app.modoOrden !== "aterrizar";
@@ -1066,8 +1082,18 @@
           : `A ${Math.round(elegida.km)} km: tardará ${elegida.turnos} turnos en llegar.`
             + (elegida.alcanzaCombustible ? "" : ` Necesita ~${Math.round(elegida.combustibleNecesario)} % de combustible y tiene ${Math.round(u.combustible)} %.`);
     }
-    $("o-objetivo-box").hidden = ["mover", "construir", "patrullar", "aterrizar", "interferir"].includes(app.modoOrden);
+    $("o-objetivo-box").hidden = ["mover", "construir", "patrullar", "aterrizar", "interferir", "embarcar", "desembarcar"].includes(app.modoOrden);
     $("o-lanzar").hidden = app.modoOrden !== "lanzar";
+    $("o-embarcar").hidden = app.modoOrden !== "embarcar";
+    $("o-desembarcar").hidden = app.modoOrden !== "desembarcar";
+    if (app.modoOrden === "embarcar" && u) {
+      llenarSelect($("o-transporte"), transportes.map((x) => [x.t.id, `${x.t.nombre} · ${x.km.toFixed(1)} km · ${Logica.aBordo(x.t, data.unidades).length}/${Logica.CAPACIDAD_TRANSPORTE[x.t.clase]} a bordo`]));
+      $("o-embarcar-info").textContent = "La unidad sube al resolverse el turno.";
+    }
+    if (app.modoOrden === "desembarcar" && u) {
+      const carga = Logica.aBordo(u, data.unidades).map((x) => x.nombre).join(", ");
+      $("o-desembarcar-info").textContent = `A bordo: ${carga}. ${app.waypoints.length ? `Punto de desembarco: ${app.waypoints[app.waypoints.length - 1].map((v) => v.toFixed(3)).join(", ")}.` : "Marque la ruta y el punto de desembarco en el mapa."}`;
+    }
     if (app.modoOrden === "atacar" || app.modoOrden === "apoyar" || app.modoOrden === "lanzar") {
       const lista = Logica.objetivosDisponibles(data.unidades, app.usuario.rol, app.modoOrden, app.unidadOrden);
       llenarSelect($("o-objetivo"), lista.map((x) => [x.id, x.nombre]));
@@ -1113,6 +1139,13 @@
     if (app.modoOrden === "mover") {
       if (!app.waypoints.length) return toast("Marque al menos un waypoint en el mapa.");
       cuerpo.waypoints = app.waypoints;
+    } else if (app.modoOrden === "desembarcar") {
+      if (!app.waypoints.length) return toast("Marque en el mapa la ruta y el punto de desembarco (el último).");
+      cuerpo.waypoints = app.waypoints;
+    } else if (app.modoOrden === "embarcar") {
+      const t = parseInt($("o-transporte").value, 10);
+      if (!t) return toast("Elija el transporte.");
+      cuerpo.objetivo_unidad_id = t;
     } else if (app.modoOrden === "patrullar") {
       if (!app.patrullaPunto) return toast("Haga clic en el mapa donde quiere que patrulle.");
       cuerpo.waypoints = [app.patrullaPunto];
@@ -1160,6 +1193,8 @@
     const obj = app.porId.get(o.objetivo_unidad_id) || app.contactosPorId.get(o.objetivo_unidad_id);
     const nombreObj = obj ? obj.nombre : `#${o.objetivo_unidad_id}`;
     if (o.tipo === "mover") return `Mover (${o.waypoints.length} waypoint${o.waypoints.length === 1 ? "" : "s"})`;
+    if (o.tipo === "embarcar") return `Embarcar en ${nombreObj}`;
+    if (o.tipo === "desembarcar") return `Desembarcar en (${o.waypoints[o.waypoints.length - 1][0].toFixed(2)}, ${o.waypoints[o.waypoints.length - 1][1].toFixed(2)})`;
     if (o.tipo === "construir") return `Construir ${o.detalle || "obra"}`;
     if (o.tipo === "despegar") return Logica.textoDespegue(o, app.catalogo && app.catalogo.modelos);
     if (o.tipo === "patrullar") return `Patrullar (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;

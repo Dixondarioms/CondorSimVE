@@ -10,6 +10,7 @@ from app.engine import catalogo, geo, movimiento, puestos
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import misiles as misiles_mod
+from app.engine import transporte as transporte_mod
 from app.engine import misiones as misiones_mod
 from app.engine.orders import COSTO_OBRA, tipo_efectivo
 from app.models.escenario import Escenario
@@ -62,6 +63,8 @@ async def emitir_orden(
         raise HTTPException(status_code=400, detail="Una base no puede combatir ni apoyar")
     if catalogo.es_misil(unidad):
         raise HTTPException(status_code=400, detail=misiles_mod.MOTIVO_SIN_ORDENES)
+    if transporte_mod.embarcada(unidad):
+        raise HTTPException(status_code=400, detail="La unidad viaja a bordo de un transporte: primero debe desembarcar")
     if payload.tipo == "despegar" and not catalogo.opera_aeronaves(unidad):
         raise HTTPException(status_code=400, detail="Solo una base aerea o un portaaviones puede lanzar grupos")
 
@@ -127,6 +130,20 @@ async def emitir_orden(
         motivo = ge_mod.error_de_interferencia(unidad, payload.waypoints[0])
         if motivo:
             raise HTTPException(status_code=400, detail=motivo)
+    elif payload.tipo == "embarcar":
+        t = db.get(Unidad, payload.objetivo_unidad_id) if payload.objetivo_unidad_id else None
+        if t is None or t.escenario_id != esc.id or t.bando != usuario.rol:
+            raise HTTPException(status_code=404, detail="Elija un transporte propio")
+        todas = db.query(Unidad).filter(Unidad.escenario_id == esc.id, Unidad.bando == usuario.rol).all()
+        motivo = transporte_mod.error_de_embarque(unidad, t, todas)
+        if motivo:
+            raise HTTPException(status_code=400, detail=motivo)
+    elif payload.tipo == "desembarcar":
+        _validar_waypoints(payload.waypoints)
+        todas = db.query(Unidad).filter(Unidad.escenario_id == esc.id, Unidad.bando == usuario.rol).all()
+        motivo = transporte_mod.error_de_desembarco(unidad, list(payload.waypoints[-1]), get_terreno(), todas)
+        if motivo:
+            raise HTTPException(status_code=400, detail=motivo)
     elif payload.tipo == "lanzar":
         if payload.objetivo_unidad_id is None:
             raise HTTPException(status_code=400, detail="Indique la unidad blanco de los misiles")
@@ -175,8 +192,8 @@ async def emitir_orden(
         escenario_id=esc.id,
         unidad_id=unidad.id,
         tipo=payload.tipo,
-        waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir", "patrullar", "interferir") else []),
-        objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar", "aterrizar", "lanzar") else None,
+        waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir", "patrullar", "interferir", "desembarcar") else []),
+        objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar", "aterrizar", "lanzar", "embarcar") else None,
         detalle=(
             aeronaves_mod.codificar(payload.modelo, payload.aeronaves, (payload.indicativo or "").strip())
             if payload.tipo == "despegar"

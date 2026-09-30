@@ -31,6 +31,7 @@ from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import misiles as misiles_mod
 from app.engine import misiones as misiones_mod
+from app.engine import transporte as transporte_mod
 from app.engine.movimiento import TURNO_DURACION_HORAS  # noqa: F401  (reexportado)
 from app.models.aar import Combate, RegistroLogistico
 from app.models.escenario import Escenario
@@ -302,6 +303,18 @@ def procesar_ordenes(
             descripcion=f"{lanzador.nombre} lanzo {n} misil(es) de crucero contra {blanco.nombre}.",
         ))
 
+    # ---- Fase 0a: embarques. La unidad sube al transporte propio que tiene al lado y viaja con el ----
+    for orden in [o for o in ordenes if o.tipo == "embarcar"]:
+        u = unidades.get(orden.unidad_id)
+        t = unidades.get(orden.objetivo_unidad_id) if orden.objetivo_unidad_id else None
+        motivo = "La unidad no esta activa." if u is None or u.estado != "activa" else transporte_mod.error_de_embarque(u, t, lista_unidades)
+        if motivo:
+            rechazar(orden, motivo)
+            continue
+        transporte_mod.embarcar(u, t)
+        orden.estado = "resuelta"
+        orden.resultado = f"{u.nombre} embarco en {t.nombre}: viaja a bordo y no se la ve por separado."
+
     # ---- Fase 0b: guerra electronica. Cada interferencia rige este turno y la planificacion del siguiente ----
     zonas: list[Interferencia] = []
     for orden in [o for o in ordenes if o.tipo == "interferir"]:
@@ -338,12 +351,31 @@ def procesar_ordenes(
     # ---- Fase 1: movimiento, vuelo, patrulla y aterrizaje ----
     con_orden_de_vuelo: set[int] = set()
     aterrizajes_del_turno: dict[int, int] = defaultdict(int)
-    for orden in [o for o in ordenes if o.tipo in ("mover", "patrullar", "aterrizar")]:
+    desembarcos: dict[int, list] = {}
+    for orden in [o for o in ordenes if o.tipo in ("mover", "patrullar", "aterrizar", "desembarcar")]:
         u = unidades.get(orden.unidad_id)
         waypoints = json.loads(orden.waypoints_json or "[]")
+        if orden.tipo == "desembarcar":
+            punto = waypoints[-1] if waypoints else None
+            motivo = ("La unidad no esta activa." if u is None or u.estado != "activa"
+                      else transporte_mod.error_de_desembarco(u, punto, terreno, lista_unidades))
+            if motivo:
+                rechazar(orden, motivo)
+                continue
+            desembarcos[u.id] = (orden, punto)
+            waypoints = waypoints[:-1] if u.tipo == "naval" and len(waypoints) > 1 else waypoints
+            if u.tipo == "naval" and len(waypoints) == 1 and terreno.clase(waypoints[0][0], waypoints[0][1]) != "agua":
+                waypoints = []  # ya esta junto a la costa: no se mueve, solo desembarca
+            if not waypoints:
+                orden.estado = "resuelta"
+                orden.resultado = "Desembarca desde su posicion."
+                continue
+            # el resto del turno se trata como un movimiento (rama generica); el desembarco va despues
         base_destino = unidades.get(orden.objetivo_unidad_id) if orden.tipo == "aterrizar" and orden.objetivo_unidad_id else None
         if u is None or u.estado != "activa":
             rechazar(orden, "La unidad no esta activa.")
+        elif transporte_mod.embarcada(u):
+            rechazar(orden, "La unidad viaja a bordo de un transporte: primero debe desembarcar.")
         elif catalogo.es_misil(u):
             rechazar(orden, misiles_mod.MOTIVO_SIN_ORDENES)
         elif ge_mod.enlace_perdido(u, ge):
@@ -431,8 +463,21 @@ def procesar_ordenes(
                 descripcion=(f"{u.nombre} no encontro su blanco en el ultimo punto conocido "
                              f"({u.lat:.3f}, {u.lon:.3f}) y se perdio."),
             ))
-    # las aeronaves estacionadas en un portaaviones navegan con el
+    # las aeronaves estacionadas en un portaaviones navegan con el; las tropas embarcadas, con su transporte
     aeronaves_mod.seguir_portaaviones(lista_unidades)
+    transporte_mod.seguir_transporte(lista_unidades)
+    for uid, (orden, punto) in desembarcos.items():
+        t = unidades[uid]
+        bajadas = transporte_mod.desembarcar(t, punto, lista_unidades, terreno)
+        if bajadas:
+            nombres = ", ".join(x.nombre for x in bajadas)
+            orden.resultado = (orden.resultado or "").rstrip() + f" Desembarco en ({punto[0]:.3f}, {punto[1]:.3f}): {nombres}."
+            db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="logistica", bando_destino=t.bando,
+                          descripcion=f"{t.nombre} desembarco a {nombres} en ({punto[0]:.3f}, {punto[1]:.3f})."))
+            movidas.update(x.id for x in bajadas)
+        else:
+            faltan = geo.distancia_km(t.lat, t.lon, punto[0], punto[1])
+            orden.resultado = (orden.resultado or "").rstrip() + f" Aun a {faltan:.0f} km del punto de desembarco."
 
     # ---- Fase 1b: construccion de puentes y vados ----
     for orden in [o for o in ordenes if o.tipo == "construir"]:
@@ -579,6 +624,9 @@ def procesar_ordenes(
         if a is None or a.estado != "activa" or a.tipo == "base":
             rechazar(orden, "La unidad atacante no esta activa.")
             return
+        if transporte_mod.embarcada(a):
+            rechazar(orden, "La unidad viaja a bordo de un transporte y no puede combatir.")
+            return
         if d is None or d.bando == a.bando or d.estado != "activa":
             rechazar(orden, "Objetivo invalido o ya fuera de combate.")
             return
@@ -699,6 +747,14 @@ def procesar_ordenes(
             ))
     for uid, gasto in gasto_municion.items():
         bit.poner(unidades[uid], "municion", unidades[uid].municion - gasto, "combate", orden_de_ataque.get(uid))
+    # las tropas a bordo de un transporte sufren parte de su daño (y se pierden con el)
+    for uid, perdida in list(perdidas.items()):
+        t = unidades[uid]
+        if transporte_mod.es_transporte(t) and perdida > 0:
+            for x in transporte_mod.repartir_dano(t, perdida, lista_unidades):
+                if x.estado == "destruida":
+                    db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="combate", bando_destino=x.bando,
+                                  descripcion=f"{x.nombre} se perdio a bordo de {t.nombre}."))
     # los aviones estacionados sufren parte del dano que recibe su base o su portaaviones (ataques al aerodromo);
     # si el portaaviones se hunde, se pierden con el
     for uid, perdida in list(perdidas.items()):

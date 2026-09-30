@@ -167,6 +167,7 @@ class UnidadOut(BaseModel):
     mision_lat: float | None = None
     mision_lon: float | None = None
     blanco_id: int | None = None
+    transporte_id: int | None = None
     dano_pista: float = 0.0
     dano_plataforma: float = 0.0
     dano_combustible: float = 0.0
@@ -195,7 +196,7 @@ class UnidadOut(BaseModel):
 
 class OrdenCreate(BaseModel):
     unidad_id: int
-    tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar", "interferir", "lanzar"]
+    tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar", "interferir", "lanzar", "embarcar", "desembarcar"]
     waypoints: list[tuple[float, float]] = Field(default_factory=list, max_length=30)
     objetivo_unidad_id: int | None = None
     # solo para "construir": obra que se tiende en el punto indicado

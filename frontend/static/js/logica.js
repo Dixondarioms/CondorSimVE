@@ -47,7 +47,7 @@
 
   /** Unidades propias que pueden recibir ordenes (las bases no se mueven ni combaten; los misiles vuelan solos). */
   function unidadesConOrdenes(unidades, rol) {
-    return unidades.filter((u) => u.estado === "activa" && u.bando === rol && u.tipo !== "base" && !esMisil(u));
+    return unidades.filter((u) => u.estado === "activa" && u.bando === rol && u.tipo !== "base" && !esMisil(u) && !embarcada(u));
   }
 
   // ---------------------------------------------------------------- buques, portaaviones y misiles de crucero
@@ -63,6 +63,24 @@
   const MUNICION_POR_MISIL = 25;
 
   const esMisil = (u) => !!u && u.clase === "misil_crucero";
+
+  // transporte de tropas (engine/transporte.py): buque de desembarco (3 unidades) y helicoptero de transporte (1 ligera)
+  const CAPACIDAD_TRANSPORTE = { buque_desembarco: 3, helicoptero_artillado: 1 };
+  const RADIO_EMBARQUE_KM = 3;
+  const esTransporte = (u) => !!u && (CAPACIDAD_TRANSPORTE[u.clase] || 0) > 0;
+  const embarcada = (u) => !!u && u.transporte_id !== null && u.transporte_id !== undefined;
+  const aBordo = (t, unidades) => (unidades || []).filter((x) => x.transporte_id === t.id && x.estado === "activa");
+  /** Transportes propios a los que `u` puede subir ahora (a <= 3 km, con plaza y del tipo adecuado). */
+  function transportesCercanos(u, unidades, claseDe) {
+    if (!u || u.tipo !== "terrestre" || embarcada(u)) return [];
+    const cl = claseDe ? claseDe(u) : null;
+    const ligera = cl ? cl.movilidad === "ligera" : ["infanteria", "antiaerea_portatil", "ingenieros", "reconocimiento"].includes(u.clase);
+    return (unidades || []).filter((t) => t.bando === u.bando && t.estado === "activa" && esTransporte(t)
+      && (t.clase !== "helicoptero_artillado" || ligera)
+      && aBordo(t, unidades).length < CAPACIDAD_TRANSPORTE[t.clase]
+      && distanciaKm(u.lat, u.lon, t.lat, t.lon) <= RADIO_EMBARQUE_KM)
+      .map((t) => ({ t, km: distanciaKm(u.lat, u.lon, t.lat, t.lon) }));
+  }
   /** Base aerea o portaaviones: lanza, recibe y estaciona aeronaves. */
   const operaAeronaves = (u) => !!u && Object.prototype.hasOwnProperty.call(PLAZAS_AERONAVES, u.clase || "");
   const esPortaaviones = (u) => operaAeronaves(u) && u.tipo !== "base";
@@ -200,6 +218,7 @@
   /** Estado legible de una unidad segun sus datos y las ordenes pendientes de este turno. */
   function estadoUnidad(u, ordenesPendientes = []) {
     if (esMisil(u) && u.estado === "activa") return { texto: "Misil en vuelo", clase: "ok" };
+    if (embarcada(u) && u.estado === "activa") return { texto: "A bordo", clase: "ok" };
     if (operaAeronaves(u) && u.estado === "activa" && (u.dano_pista || 0) >= PISTA_INOPERATIVA) return { texto: "Pista inoperativa", clase: "fuego" };
     if (u.estado === "destruida") return { texto: "Destruida", clase: "fuego" };
     if (u.fuerza === null || u.fuerza === undefined) return { texto: "Detectada", clase: "fuego" };
@@ -646,6 +665,7 @@
     aeronavesComprometidas, baseEnEscenario, nombreCortoBase, FUERZA_MINIMA_BASE,
     esMisil, operaAeronaves, esPortaaviones, plazasDe, esEmbarcable, puedeOperarEn, modeloDespegaDe, puedeLanzarMisiles,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
+    esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
     distanciaKm, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, lineasCombate, describirCombate,

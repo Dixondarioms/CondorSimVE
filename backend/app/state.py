@@ -38,6 +38,7 @@ CAMPOS_OCULTOS = (
     "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves",
     "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id",
     "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios",
+    "transporte_id",
 )
 CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct")
 

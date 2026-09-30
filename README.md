@@ -412,6 +412,18 @@ aeronave, **A3 Operaciones**; el envío desde la base, **A5 Planificación**.
   de un portaaviones, las aeronaves a bordo. Motor: `engine/misiles.py`, `engine/aeronaves.py`, `engine/orders.py`;
   migración 0013 (`blanco_id`).
 
+## Unidades anfibias y helitransportadas
+
+- **Embarcar** (orden `embarcar`, unidad terrestre → transporte propio a ≤ 3 km): el **buque de desembarco** lleva
+  hasta 3 unidades terrestres de cualquier movilidad; el **helicóptero de transporte artillado**, 1 unidad ligera
+  (infantería, antiaérea portátil, ingenieros, reconocimiento). A bordo la unidad viaja con el transporte, **no se
+  la detecta ni se la ataca por separado**, no recibe órdenes y sufre la mitad del daño que reciba el transporte
+  (se pierde si lo hunden o derriban). En el orden de batalla figura «A bordo».
+- **Desembarcar** (orden `desembarcar` del transporte: ruta + último punto = lugar de desembarco, en tierra firme):
+  el buque se acerca por el agua y, a ≤ 5 km del punto, deja allí a las unidades (con su tiempo de despliegue); el
+  helicóptero vuela hasta el punto. Si no llega en el turno, sigue en los siguientes con la misma orden. Motor:
+  `engine/transporte.py`; migración 0016 (`transporte_id`).
+
 ## Radares, defensa antiaérea y logística de base
 
 - **Control de emisiones:** radares y antiaérea guiada por radar se encienden o apagan desde el detalle de la unidad

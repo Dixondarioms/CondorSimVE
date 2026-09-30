@@ -56,6 +56,8 @@ class Unidad(Base):
     dano_pista: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")
     dano_plataforma: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")
     dano_combustible: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")
+    # a bordo de un buque de desembarco o un helicoptero de transporte (ver engine/transporte.py)
+    transporte_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     refugios: Mapped[int] = mapped_column(
         Integer, server_default="0",
         default=lambda ctx: 4 if ctx.get_current_parameters().get("clase") == "base_aerea" else 0,

@@ -68,12 +68,12 @@ def detecta(detector, objetivo, terreno: Terreno, clima: str = "despejado", ge=N
 def unidades_visibles(unidades, bando: str, terreno: Terreno, clima: str = "despejado", ge=None) -> list:
     """Unidades que el bando indicado puede ver (propias + enemigas detectadas + interferidores enemigos activos)."""
     propias = [u for u in unidades if u.bando == bando]
-    detectores = [u for u in propias if u.estado == "activa"]
+    detectores = [u for u in propias if u.estado == "activa" and getattr(u, "transporte_id", None) is None]
     visibles = list(propias)
 
     for enemiga in unidades:
-        if enemiga.bando == bando or enemiga.estado == "destruida":
-            continue
+        if enemiga.bando == bando or enemiga.estado == "destruida" or getattr(enemiga, "transporte_id", None) is not None:
+            continue  # lo que viaja a bordo de un transporte no se ve por separado
         if (ge is not None and ge.emite(enemiga)) or any(detecta(d, enemiga, terreno, clima, ge) for d in detectores):
             visibles.append(enemiga)
     return visibles
