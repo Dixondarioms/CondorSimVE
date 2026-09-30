@@ -235,7 +235,7 @@ def construir(salida: Path, img: Path) -> None:
           Paragraph("Simulador de conducción militar para el adiestramiento táctico y estratégico", S["subtitulo"]), Spacer(1, 26),
           Paragraph("MANUAL DE USUARIO", ParagraphStyle("mu", parent=S["subtitulo"], fontName="Texto-B", fontSize=18, textColor=AZUL)),
           Spacer(1, 8), Paragraph("Qué es · cómo se hizo · instalación · cómo funciona", S["subtitulo"]), Spacer(1, 28)]
-    h += [Paragraph(f"Fuerza Armada Nacional Bolivariana · Aviación Militar Bolivariana · DIDA<br/>{fecha} · versión del manual 1.1", S["subtitulo"])]
+    h += [Paragraph(f"Fuerza Armada Nacional Bolivariana · Aviación Militar Bolivariana · DIDA<br/>{fecha} · versión del manual 1.2", S["subtitulo"])]
     h.append(PageBreak())
 
     # ---- indice
@@ -589,7 +589,7 @@ def construir(salida: Path, img: Path) -> None:
                "Registro del autor de cada orden para una rúbrica por alumno."])]
 
     # ---- 14 novedades
-    h += H1("14. Novedades de la versión 1.1")
+    h += H1("14. Novedades de las versiones 1.1 y 1.2")
     h += [P("Resumen de lo incorporado después de la primera edición del manual; cada punto está explicado en su capítulo."),
           Tbl(["Novedad", "Dónde", "Qué aporta"], [
               ["Meteorología por zonas", "Consola → Meteorología por zonas; capa Meteorología",
