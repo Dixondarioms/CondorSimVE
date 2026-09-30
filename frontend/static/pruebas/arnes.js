@@ -70,6 +70,11 @@
   ];
   // zona de interferencia roja vigente (la emitio el turno anterior) sobre parte del despliegue azul
   const INTERFERENCIAS = [{ id: 1, bando: "rojo", unidad_id: 13, lat: 8.63, lon: -70.49, radio_km: 12, turno: 2 }];
+  // meteorologia por zonas: una tormenta estacionaria sobre los Andes y un frente de lluvia que deriva al este
+  const ZONAS_CLIMA = [
+    { id: 1, tipo: "tormenta", lat: 8.72, lon: -70.85, radio_km: 35, deriva_rumbo: 0, deriva_kmh: 0, hasta_turno: null, nombre: "" },
+    { id: 2, tipo: "lluvia", lat: 8.45, lon: -70.35, radio_km: 60, deriva_rumbo: 90, deriva_kmh: 25, hasta_turno: 8, nombre: "Frente 1" },
+  ];
   // misiones aereas: una CAP en orbita, una interdiccion programada (azul) y una SEAD roja que azul no debe ver
   let misiones = [
     { id: 1, bando: "azul", rol: "CAP", rol_nombre: "Patrulla aerea de combate (CAP)", nombre: "Flecha", estado: "en_curso", unidad_id: 10, base_id: null, modelo: "su30", aeronaves: 2, turno_despegue: 2, creada_turno: 2,
@@ -180,6 +185,7 @@
       const f = FACTOR_DET[ESC.clima];
       const visibles = todas.filter((u) => u.bando !== rol && u.id !== 14 && propias.some((p) => p.estado === "activa" && km(p, u) <= p.deteccion_km * f));
       unidades = [...propias, ...visibles.map((u) => { const c = { ...u }; OCULTOS.forEach((k) => { c[k] = null; }); return c; })];
+      // zonas meteorologicas (las ven todos)
       if (rol === "azul") contactos = [{ ...CONTACTO_FANTASMA, sidc: completar(UNIDADES.find((u) => u.id === 14)).sidc }];
     }
     unidades = unidades.map((u) => ({ ...u, terreno: claseTerreno(u.lat) }));
@@ -191,6 +197,7 @@
       tipo: "estado", ahora: iso(), vista: esBando ? rol : "completa", escenario: esc, unidades, contactos,
       obras: OBRAS.filter((o) => !esBando || o.bando === rol || unidades.some((u) => u.bando === rol && km(u, o) <= 15)),
       interferencias: INTERFERENCIAS,
+      clima_zonas: ZONAS_CLIMA,
       misiones: misiones.filter((mi) => !esBando || mi.bando === rol),
       graficos: graficos.filter((g) => g.bando === "todos" || !esBando || g.bando === rol),
       objetivos: objetivos.filter((o) => !esBando || o.bando === rol),
@@ -412,6 +419,13 @@
       if (cuerpo.hora_inicio) { const [h, mm] = cuerpo.hora_inicio.split(":"); ESC.hora_inicio_min = +h * 60 + +mm; }
       enviarEstado();
       return json(estadoPara());
+    }
+    if (path === "/api/escenarios/1/clima/zonas" && metodo === "POST") {
+      const z = { id: ZONAS_CLIMA.length + 1, tipo: cuerpo.tipo, lat: cuerpo.lat, lon: cuerpo.lon, radio_km: cuerpo.radio_km || 60, deriva_rumbo: cuerpo.deriva_rumbo || 0, deriva_kmh: cuerpo.deriva_kmh || 0, hasta_turno: cuerpo.turnos ? ESC.turno_actual + cuerpo.turnos : null, nombre: cuerpo.nombre || "" };
+      ZONAS_CLIMA.push(z); enviarEstado(); return json(z);
+    }
+    if (path.startsWith("/api/escenarios/1/clima/zonas/") && metodo === "DELETE") {
+      const id = parseInt(path.split("/").pop(), 10); const i = ZONAS_CLIMA.findIndex((z) => z.id === id); if (i >= 0) ZONAS_CLIMA.splice(i, 1); enviarEstado(); return json({ ok: true });
     }
     if (path === "/api/escenarios/1/eventos") { eventos.unshift({ id: eventos.length + 10, escenario_id: 1, turno: ESC.turno_actual, tipo: "general", descripcion: cuerpo.descripcion, bando_destino: cuerpo.bando_destino }); enviarEstado(); return json({}); }
 

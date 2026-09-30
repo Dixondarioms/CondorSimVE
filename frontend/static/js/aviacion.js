@@ -216,10 +216,14 @@
     }
 
     // ------------------------------------------------------------------ capa: bases aereas de Venezuela
-    function iconoBase() {
+    // color del icono por pais (Venezuela como siempre; los vecinos, distinguibles a simple vista)
+    const COLOR_PAIS = { Venezuela: "#14213D", Colombia: "#8a6d00", Brasil: "#1f6b3a", Guyana: "#5b3a8a", "Trinidad y Tobago": "#8a1f2b" };
+    function iconoBase(p) {
+      const color = COLOR_PAIS[p.pais] || "#3d4a57";
+      const aeropuerto = p.tipo === "aeropuerto";
       return L.divIcon({
-        className: "base-ven", iconSize: [26, 26], iconAnchor: [13, 13],
-        html: `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="${AVION}"/></svg>`,
+        className: `base-ven${aeropuerto ? " aeropuerto" : ""}`, iconSize: [26, 26], iconAnchor: [13, 13],
+        html: `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="background:${color}"><path d="${AVION}"/></svg>`,
       });
     }
 
@@ -227,7 +231,9 @@
       const div = el("div", "popup-base");
       div.append(el("b", "", p.nombre));
       const filas = [
-        ["OACI", p.icao], ["Ubicación", `${p.ciudad}, ${p.estado}`], ["Elevación", `${p.elevacion_m} m`],
+        ["OACI", p.icao], ["País", p.pais || "Venezuela"], ["Tipo", p.tipo === "aeropuerto" ? "Aeropuerto (uso civil; utilizable como base en el ejercicio)" : "Base aérea"],
+        ["Ubicación", `${p.ciudad}, ${p.estado}`],
+        ...(p.elevacion_m !== null && p.elevacion_m !== undefined ? [["Elevación", `${p.elevacion_m} m`]] : []),
         ["Coordenadas", `${lat.toFixed(4)}, ${lon.toFixed(4)}`],
       ];
       const dl = el("dl", "specs");
@@ -265,7 +271,7 @@
         for (const f of g.features) {
           const [lon, lat] = f.geometry.coordinates;
           const p = f.properties;
-          const m = L.marker([lat, lon], { icon: iconoBase(), keyboard: false, riseOnHover: true });
+          const m = L.marker([lat, lon], { icon: iconoBase(p), keyboard: false, riseOnHover: true });
           const rotulo = el("span", "", `${p.icao} · ${p.ciudad.replace(/\s*\(.*\)$/, "")}`);
           m.bindTooltip(rotulo, { permanent: true, direction: "right", offset: [12, 0], className: "nombre-base" });
           m.bindPopup(() => popupBase(p, lat, lon), { minWidth: 230, autoPanPaddingTopLeft: [20, 60], autoPanPaddingBottomRight: [290, 20] });

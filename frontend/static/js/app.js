@@ -329,8 +329,9 @@
     c.obras = L.layerGroup().addTo(map);
     c.objetivos = L.layerGroup().addTo(map);
     c.ge = L.layerGroup().addTo(map);
+    c.meteorologia = L.layerGroup().addTo(map);
     c.misiones = L.layerGroup().addTo(map);
-    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, ge: true, misiones: true };
+    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, ge: true, meteorologia: true, misiones: true };
     if (app.capaActiva.niebla) c.niebla.addTo(map);
 
     let pendiente = null;
@@ -376,6 +377,17 @@
   async function alClickMapa(e) {
     if (app.dibujando || (app.informe && app.informe.activo())) return;
     const { lat, lng } = e.latlng;
+    if (esInstructor() && app.colocandoZonaClima) { // meteorologia: el clic es el centro de la zona
+      app.colocandoZonaClima = false;
+      $("btn-zona-clima").classList.remove("activo");
+      const turnos = parseInt($("zc-turnos").value, 10) || 0;
+      await enSilencio(api("POST", rutaEsc("/clima/zonas"), {
+        tipo: $("zc-tipo").value, lat, lon: lng, radio_km: parseFloat($("zc-radio").value) || 60,
+        deriva_rumbo: parseFloat($("zc-rumbo").value) || 0, deriva_kmh: parseFloat($("zc-kmh").value) || 0,
+        turnos: turnos > 0 ? turnos : null, nombre: $("zc-nombre").value.trim() || null,
+      }).then(() => toast("Zona meteorológica colocada", true)));
+      return;
+    }
     if (app.misiones && app.misiones.alClickMapa(lat, lng)) return; // planificando una mision: el clic agrega un punto
     if (esInstructor() && app.modoAgregar) {
       const nombre = $("u-nombre").value.trim();
@@ -921,6 +933,10 @@
       }
     }
     const modelo = Logica.modeloDe(u, app.catalogo && app.catalogo.modelos);
+    if (app.data && (app.data.clima_zonas || []).length) {
+      const local = Logica.climaEn(u.lat, u.lon, app.data.escenario.clima, app.data.clima_zonas);
+      if (local !== app.data.escenario.clima) extra.push(dato("Clima local", `${Logica.etiquetaClima(local)} (zona meteorológica)`));
+    }
     const vuelo = Logica.esMisil(u) && !oculto ? Logica.textoMisil(u, app.data ? app.data.unidades : [])
       : app.data ? Logica.situacionDeVuelo(u, app.data.unidades) : null;
     if (vuelo) extra.push(`<div class="ancho-completo"><dt>Situación</dt><dd>${escapar(vuelo)}</dd></div>`);
@@ -1340,6 +1356,7 @@
     dibujarContactos(data.contactos || []);
     dibujarObras(data.obras || []);
     dibujarInterferencias(data.interferencias || []);
+    dibujarZonasClima(data.clima_zonas || []);
     dibujarObjetivos(data.objetivos || []);
     dibujarCoberturaYNiebla(data.unidades, data.escenario.clima);
     dibujarOrdenes(data);
@@ -1385,6 +1402,37 @@
         icon: L.divIcon({ className: "ge-zona", iconSize: [30, 18], iconAnchor: [15, 9], html: '<span style="display:block;font:700 10px system-ui;color:#fff;background:#7b2cbf;border:1px solid #e0aaff;border-radius:3px;text-align:center;line-height:16px">GE</span>' }),
         keyboard: false, interactive: false,
       }).addTo(g);
+    }
+  }
+
+  const COLOR_ZONA_CLIMA = { nublado: "#9aa5b1", lluvia: "#3b7dd8", tormenta: "#7b2cbf" };
+  function dibujarZonasClima(zonas) {
+    const g = app.capas.meteorologia;
+    g.clearLayers();
+    for (const z of zonas) {
+      const color = COLOR_ZONA_CLIMA[z.tipo] || "#9aa5b1";
+      L.circle([z.lat, z.lon], { radius: z.radio_km * 1000, color, weight: 2, dashArray: "6 6", fillColor: color, fillOpacity: z.tipo === "tormenta" ? 0.28 : 0.18, interactive: true })
+        .bindTooltip(Logica.textoZonaClima(z), { sticky: true }).addTo(g);
+      if (z.deriva_kmh > 0) { // flecha de deriva: hacia donde se mueve en las proximas 3 horas
+        const r = (z.deriva_rumbo * Math.PI) / 180, km = z.deriva_kmh * 3;
+        const fin = [z.lat + (km * Math.cos(r)) / 110.574, z.lon + (km * Math.sin(r)) / (111.32 * Math.cos((z.lat * Math.PI) / 180))];
+        L.polyline([[z.lat, z.lon], fin], { color: "#fff", weight: 2, opacity: 0.9, interactive: false }).addTo(g);
+        L.circleMarker(fin, { radius: 3, color: "#fff", fillColor: color, fillOpacity: 1, interactive: false }).addTo(g);
+      }
+      L.marker([z.lat, z.lon], {
+        icon: L.divIcon({ className: "zona-clima-rotulo", iconSize: [90, 18], iconAnchor: [45, 9], html: `<span style="border-color:${color}">${escapar(Logica.etiquetaClima(z.tipo))}${z.nombre ? " " + escapar(z.nombre) : ""}</span>` }),
+        keyboard: false, interactive: false,
+      }).addTo(g);
+    }
+    if (esInstructor()) {
+      const ul = $("lista-zonas-clima");
+      ul.innerHTML = zonas.length ? "" : "<li class='sec'>Sin zonas: rige el clima general.</li>";
+      for (const z of zonas) {
+        const li = document.createElement("li");
+        li.innerHTML = `<span>${escapar(Logica.textoZonaClima(z))}</span> <button type="button" class="mini peligro" data-zona="${z.id}" title="Quitar">×</button>`;
+        li.querySelector("button").addEventListener("click", () => enSilencio(api("DELETE", rutaEsc(`/clima/zonas/${z.id}`))));
+        ul.appendChild(li);
+      }
     }
   }
 
@@ -1837,6 +1885,12 @@
   $("btn-modo-agregar").addEventListener("click", () => {
     app.modoAgregar = !app.modoAgregar;
     $("btn-modo-agregar").textContent = app.modoAgregar ? "Haga clic en el mapa… (cancelar)" : "Ubicar en mapa";
+  });
+
+  $("btn-zona-clima").addEventListener("click", () => {
+    app.colocandoZonaClima = !app.colocandoZonaClima;
+    $("btn-zona-clima").classList.toggle("activo", app.colocandoZonaClima);
+    toast(app.colocandoZonaClima ? "Haga clic en el mapa en el centro de la zona meteorológica." : "Colocación cancelada.");
   });
 
   $("btn-evento").addEventListener("click", async () => {

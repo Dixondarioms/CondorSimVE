@@ -7,6 +7,7 @@ from app import auth, schemas, state
 from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import catalogo, geo, movimiento, puestos
+from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import misiles as misiles_mod
 from app.engine import misiones as misiones_mod
@@ -203,7 +204,7 @@ def previsualizar(
     combustible incluidos), sin emitir la orden."""
     unidad = _unidad_propia(db, esc, payload.unidad_id, usuario)
     _validar_waypoints(payload.waypoints)
-    mov = movimiento.simular(unidad, [list(w) for w in payload.waypoints], get_terreno(), esc.clima)
+    mov = movimiento.simular(unidad, [list(w) for w in payload.waypoints], get_terreno(), clima_mod.contexto(db, esc))
     return {
         "ruta": mov.ruta,
         "destino": [mov.lat, mov.lon],

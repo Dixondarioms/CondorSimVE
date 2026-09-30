@@ -9,6 +9,7 @@ from app import auth, schemas, state
 from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import catalogo, puestos
+from app.engine import clima as clima_mod
 from app.engine import misiones as misiones_mod
 from app.models.escenario import Escenario
 from app.models.mision import Mision
@@ -36,7 +37,7 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
             raise HTTPException(status_code=400, detail="Un misil en vuelo no admite ordenes.")
         clase = catalogo.perfil(u)
         auth.exigir_funcion(usuario, puestos.funcion_de_orden(u, "mision", clase))
-        origen = (u.lat, u.lon, misiones_mod.velocidad_efectiva(u.velocidad_kmh, clase, esc.clima), u.autonomia_km, u.combustible)
+        origen = (u.lat, u.lon, misiones_mod.velocidad_efectiva(u.velocidad_kmh, clase, clima_mod.contexto(db, esc), u.lat, u.lon), u.autonomia_km, u.combustible)
         turno, modelo, n = esc.turno_actual, u.modelo, u.aeronaves
     else:
         base = db.get(Unidad, payload.base_id)
@@ -67,7 +68,7 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
             que = "drones" if dron else "aeronaves"
             raise HTTPException(status_code=400, detail=f"Tope de {tope} {que} por bando ({comprometidas} ya en servicio o comprometidas)")
         clase = misiones_mod.clase_de_modelo(m.id)
-        origen = (base.lat, base.lon, misiones_mod.velocidad_efectiva(m.velocidad_kmh, clase, esc.clima), m.autonomia_km, 100.0)
+        origen = (base.lat, base.lon, misiones_mod.velocidad_efectiva(m.velocidad_kmh, clase, clima_mod.contexto(db, esc), base.lat, base.lon), m.autonomia_km, 100.0)
         modelo = m.id
 
     puntos, visibles = [], None

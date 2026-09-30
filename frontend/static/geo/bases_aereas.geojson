@@ -17,7 +17,9 @@
     "nombre": "Base Aérea El Libertador",
     "ciudad": "Maracay (Palo Negro)",
     "estado": "Aragua",
-    "elevacion_m": 442
+    "elevacion_m": 442,
+    "pais": "Venezuela",
+    "tipo": "base aérea"
    }
   },
   {
@@ -34,7 +36,9 @@
     "nombre": "Base Aérea Mariscal Sucre",
     "ciudad": "Maracay (Boca del Río)",
     "estado": "Aragua",
-    "elevacion_m": 408
+    "elevacion_m": 408,
+    "pais": "Venezuela",
+    "tipo": "base aérea"
    }
   },
   {
@@ -51,7 +55,9 @@
     "nombre": "Base Aérea Generalísimo Francisco de Miranda (La Carlota)",
     "ciudad": "Caracas",
     "estado": "Distrito Capital",
-    "elevacion_m": 835
+    "elevacion_m": 835,
+    "pais": "Venezuela",
+    "tipo": "base aérea"
    }
   },
   {
@@ -68,7 +74,9 @@
     "nombre": "Base Aérea General en Jefe Rafael Urdaneta",
     "ciudad": "Maracaibo",
     "estado": "Zulia",
-    "elevacion_m": 73
+    "elevacion_m": 73,
+    "pais": "Venezuela",
+    "tipo": "base aérea"
    }
   },
   {
@@ -85,7 +93,9 @@
     "nombre": "Base Aérea Teniente Luis del Valle García",
     "ciudad": "Barcelona",
     "estado": "Anzoátegui",
-    "elevacion_m": 9
+    "elevacion_m": 9,
+    "pais": "Venezuela",
+    "tipo": "base aérea"
    }
   },
   {
@@ -102,7 +112,9 @@
     "nombre": "Base Aérea Teniente Vicente Landaeta Gil",
     "ciudad": "Barquisimeto",
     "estado": "Lara",
-    "elevacion_m": 622
+    "elevacion_m": 622,
+    "pais": "Venezuela",
+    "tipo": "base aérea"
    }
   },
   {
@@ -119,7 +131,9 @@
     "nombre": "Base Aérea Teniente Coronel Teófilo Luis Méndez",
     "ciudad": "Ciudad Guayana",
     "estado": "Bolívar",
-    "elevacion_m": 144
+    "elevacion_m": 144,
+    "pais": "Venezuela",
+    "tipo": "base aérea"
    }
   },
   {
@@ -136,7 +150,199 @@
     "nombre": "Base Aérea General en Jefe José Antonio Páez",
     "ciudad": "Puerto Ayacucho",
     "estado": "Amazonas",
-    "elevacion_m": 75
+    "elevacion_m": 75,
+    "pais": "Venezuela",
+    "tipo": "base aérea"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -68.6853,
+     5.5236
+    ]
+   },
+   "properties": {
+    "icao": "SKUA",
+    "nombre": "Base Aérea Marandúa (Grupo Aéreo del Oriente)",
+    "ciudad": "Marandúa",
+    "estado": "Vichada",
+    "elevacion_m": null,
+    "pais": "Colombia",
+    "tipo": "base aérea"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -72.384,
+     5.3191
+    ]
+   },
+   "properties": {
+    "icao": "SKYP",
+    "nombre": "Aeropuerto El Alcaraván (Grupo Aéreo del Casanare)",
+    "ciudad": "Yopal",
+    "estado": "Casanare",
+    "elevacion_m": null,
+    "pais": "Colombia",
+    "tipo": "base aérea"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -72.5115,
+     7.9276
+    ]
+   },
+   "properties": {
+    "icao": "SKCC",
+    "nombre": "Aeropuerto Internacional Camilo Daza",
+    "ciudad": "Cúcuta",
+    "estado": "Norte de Santander",
+    "elevacion_m": null,
+    "pais": "Colombia",
+    "tipo": "aeropuerto"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -70.7369,
+     7.0686
+    ]
+   },
+   "properties": {
+    "icao": "SKUC",
+    "nombre": "Aeropuerto Santiago Pérez Quiroz",
+    "ciudad": "Arauca",
+    "estado": "Arauca",
+    "elevacion_m": null,
+    "pais": "Colombia",
+    "tipo": "aeropuerto"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -67.4932,
+     6.1847
+    ]
+   },
+   "properties": {
+    "icao": "SKPC",
+    "nombre": "Aeropuerto Germán Olano",
+    "ciudad": "Puerto Carreño",
+    "estado": "Vichada",
+    "elevacion_m": null,
+    "pais": "Colombia",
+    "tipo": "aeropuerto"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -72.926,
+     11.5262
+    ]
+   },
+   "properties": {
+    "icao": "SKRH",
+    "nombre": "Aeropuerto Almirante Padilla",
+    "ciudad": "Riohacha",
+    "estado": "La Guajira",
+    "elevacion_m": null,
+    "pais": "Colombia",
+    "tipo": "aeropuerto"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -73.2495,
+     10.435
+    ]
+   },
+   "properties": {
+    "icao": "SKVP",
+    "nombre": "Aeropuerto Alfonso López Pumarejo",
+    "ciudad": "Valledupar",
+    "estado": "Cesar",
+    "elevacion_m": null,
+    "pais": "Colombia",
+    "tipo": "aeropuerto"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -60.6903,
+     2.8461
+    ]
+   },
+   "properties": {
+    "icao": "SBBV",
+    "nombre": "Base Aérea de Boa Vista (Ala 7, FAB)",
+    "ciudad": "Boa Vista",
+    "estado": "Roraima",
+    "elevacion_m": null,
+    "pais": "Brasil",
+    "tipo": "base aérea"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -59.7894,
+     3.3728
+    ]
+   },
+   "properties": {
+    "icao": "SYLT",
+    "nombre": "Aeropuerto de Lethem",
+    "ciudad": "Lethem",
+    "estado": "Upper Takutu-Upper Essequibo",
+    "elevacion_m": null,
+    "pais": "Guyana",
+    "tipo": "aeropuerto"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -61.3372,
+     10.5954
+    ]
+   },
+   "properties": {
+    "icao": "TTPP",
+    "nombre": "Aeropuerto Internacional de Piarco (Air Guard)",
+    "ciudad": "Piarco",
+    "estado": "Trinidad",
+    "elevacion_m": null,
+    "pais": "Trinidad y Tobago",
+    "tipo": "base aérea"
    }
   }
  ]

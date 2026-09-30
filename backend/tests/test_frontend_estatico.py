@@ -42,20 +42,26 @@ def test_el_arnes_de_pruebas_es_coherente_con_index():
     assert contenido.count("<script") == base.count("<script") + 1, "regenere el arnes: tools/generar_arnes.py"
 
 
-def test_las_bases_aereas_de_venezuela_son_validas():
+def test_las_bases_aereas_de_venezuela_y_vecinos_son_validas():
     import json
 
     datos = json.loads((FRONTEND / "static" / "geo" / "bases_aereas.geojson").read_text(encoding="utf-8"))
     bases = datos["features"]
-    assert len(bases) == 8
+    ven = [b for b in bases if b["properties"]["pais"] == "Venezuela"]
+    vecinos = [b for b in bases if b["properties"]["pais"] != "Venezuela"]
+    assert len(ven) == 8 and len(vecinos) >= 10
     icao = [b["properties"]["icao"] for b in bases]
-    assert len(set(icao)) == 8 and {"SVBL", "SVFM", "SVMC", "SVBC", "SVBM", "SVBS", "SVPR", "SVPA"} == set(icao)
+    assert len(set(icao)) == len(icao)
+    assert {"SVBL", "SVFM", "SVMC", "SVBC", "SVBM", "SVBS", "SVPR", "SVPA"} == {b["properties"]["icao"] for b in ven}
+    assert {b["properties"]["pais"] for b in vecinos} == {"Colombia", "Brasil", "Guyana", "Trinidad y Tobago"}
     for b in bases:
         lon, lat = b["geometry"]["coordinates"]
-        # dentro del area que cubren los tiles de Venezuela (ver LIMITES en app.js)
+        # dentro del area que cubren los tiles (ver LIMITES en app.js)
         assert 0.6 <= lat <= 12.4 and -73.4 <= lon <= -59.6, b["properties"]["nombre"]
         p = b["properties"]
-        assert p["nombre"].startswith("Base A") and p["ciudad"] and p["estado"] and p["elevacion_m"] >= 0
+        assert p["nombre"] and p["ciudad"] and p["estado"] and p["tipo"] in ("base aérea", "aeropuerto")
+        if p["pais"] == "Venezuela":
+            assert p["nombre"].startswith("Base A") and p["elevacion_m"] >= 0
 
 
 def test_las_bases_se_pueden_colocar_como_unidad_en_su_posicion(api):

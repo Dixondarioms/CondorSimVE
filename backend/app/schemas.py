@@ -237,6 +237,17 @@ class MisionIn(BaseModel):
     turno_despegue: int | None = None
 
 
+class ZonaClimaIn(BaseModel):
+    tipo: Literal["nublado", "lluvia", "tormenta"]
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
+    radio_km: float = Field(default=60.0, ge=1, le=1000)
+    deriva_rumbo: float = Field(default=0.0, ge=-360, le=720)
+    deriva_kmh: float = Field(default=0.0, ge=0, le=200)
+    turnos: int | None = Field(default=None, ge=1, le=240)  # None = hasta que el instructor la quite
+    nombre: str | None = Field(default=None, max_length=60)
+
+
 class EventoCreate(BaseModel):
     tipo: str = Field(default="general", max_length=40)
     descripcion: str = Field(min_length=1, max_length=1000)
@@ -330,3 +341,13 @@ class MensajeOut(BaseModel):
     texto: str
     turno: int
     creado_en: datetime
+
+
+class PlantillaGuardarIn(BaseModel):
+    """Guardar el escenario actual como plantilla del instructor (engine/plantillas.py)."""
+
+    nombre: str = Field(min_length=1, max_length=80)
+    descripcion: str = Field(default="", max_length=1000)
+    # True: conserva fuerza, combustible, municion y existencias actuales; False: todo al 100 %
+    con_estado: bool = False
+    reemplazar: bool = False

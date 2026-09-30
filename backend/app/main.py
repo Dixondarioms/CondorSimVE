@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from app import respaldo, turnos
 from app.db import SessionLocal, init_db
 from app.models.usuario import Usuario
-from app.routers import auth, catalogo, escenarios, graficos, misiones, naciones, objetivos, ordenes, plantillas, terreno, unidades, usuarios, ws
+from app.routers import auth, catalogo, clima, escenarios, graficos, misiones, naciones, objetivos, ordenes, plantillas, terreno, unidades, usuarios, ws
 from app.terreno import get_terreno
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
@@ -76,6 +76,7 @@ async def cabeceras_de_seguridad(request: Request, call_next):
 app.include_router(auth.router)
 app.include_router(usuarios.router)
 app.include_router(escenarios.router)
+app.include_router(clima.router)
 app.include_router(unidades.router)
 app.include_router(ordenes.router)
 app.include_router(misiones.router)

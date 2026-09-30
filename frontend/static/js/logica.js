@@ -165,6 +165,25 @@
   const efectosClima = (c) => CLIMA[c] || CLIMA.despejado;
   const visibilidadPct = (c) => Math.round(efectosClima(c).deteccion * 100);
 
+  // meteorologia por zonas: el clima efectivo en un punto es el peor entre el general y las zonas que lo cubren
+  const SEVERIDAD_CLIMA = { despejado: 0, nublado: 1, lluvia: 2, tormenta: 3 };
+  function climaEn(lat, lon, general, zonas) {
+    let peor = SEVERIDAD_CLIMA[general] !== undefined ? general : "despejado";
+    for (const z of zonas || []) {
+      if ((SEVERIDAD_CLIMA[z.tipo] || 0) > SEVERIDAD_CLIMA[peor] && distanciaKm(lat, lon, z.lat, z.lon) <= z.radio_km) peor = z.tipo;
+    }
+    return peor;
+  }
+  const NOMBRE_RUMBO = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
+  /** "Lluvia · radio 60 km · deriva 20 km/h al NE · hasta el turno 12" */
+  function textoZonaClima(z) {
+    const partes = [`${etiquetaClima(z.tipo)}${z.nombre ? " " + z.nombre : ""}`, `radio ${Math.round(z.radio_km)} km`];
+    if (z.deriva_kmh > 0) partes.push(`deriva ${Math.round(z.deriva_kmh)} km/h al ${NOMBRE_RUMBO[Math.round((((z.deriva_rumbo % 360) + 360) % 360) / 45) % 8]}`);
+    else partes.push("estacionaria");
+    partes.push(z.hasta_turno ? `hasta el turno ${z.hasta_turno}` : "sin caducidad");
+    return partes.join(" · ");
+  }
+
   function etiquetaBando(rol, vista, puesto) {
     const alumno = { azul: "AZUL (ALUMNO)", rojo: "ROJO (ALUMNO)" };
     if (alumno[rol]) return puesto ? `${rol.toUpperCase()} · ${etiquetaPuesto(puesto).toUpperCase()}` : alumno[rol];
@@ -482,7 +501,7 @@
   ) || null;
 
   /** Nombre corto de una base de la capa de referencia: sin "Base Aerea" ni el parentesis final. */
-  const nombreCortoBase = (nombre) => String(nombre || "").replace(/^Base A[ée]rea\s+/i, "").replace(/\s*\([^)]*\)\s*$/, "").trim();
+  const nombreCortoBase = (nombre) => String(nombre || "").replace(/^Base A[ée]rea\s+(de\s+)?/i, "").replace(/^Aeropuerto\s+(Internacional\s+)?(de\s+)?/i, "").replace(/\s*\([^)]*\)\s*$/, "").trim();
 
   // ---------------------------------------------------------------- ciclo de vuelo
   const CAPACIDAD_BASE = 12; // aeronaves que caben estacionadas en una base (igual que en el servidor)
@@ -626,7 +645,7 @@
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,
-    etiquetaBando, claseBarra, estadoUnidad, memoriaVacia, alertasNuevas,
+    etiquetaBando, claseBarra, estadoUnidad, memoriaVacia, alertasNuevas, climaEn, textoZonaClima,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.Logica = api;

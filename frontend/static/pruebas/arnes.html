@@ -205,6 +205,27 @@
           </details>
 
           <details>
+            <summary>Meteorología por zonas</summary>
+            <p class="ayuda">Además del clima general, frentes de nubes, lluvia o tormenta con centro, radio, deriva y duración. El clima efectivo en cada punto es el peor entre el general y las zonas que lo cubren; lo ven ambos bandos.</p>
+            <div class="grid">
+              <label class="mini">Tipo
+                <select id="zc-tipo">
+                  <option value="nublado">Nublado</option>
+                  <option value="lluvia" selected>Lluvia</option>
+                  <option value="tormenta">Tormenta</option>
+                </select>
+              </label>
+              <label class="mini">Radio (km)<input id="zc-radio" type="number" min="5" max="600" value="60"></label>
+              <label class="mini">Deriva: rumbo (°)<input id="zc-rumbo" type="number" min="0" max="359" value="90"></label>
+              <label class="mini">Deriva: velocidad (km/h)<input id="zc-kmh" type="number" min="0" max="120" value="0"></label>
+              <label class="mini">Duración (turnos, 0 = sin caducidad)<input id="zc-turnos" type="number" min="0" max="240" value="0"></label>
+              <label class="mini">Nombre (opcional)<input id="zc-nombre" maxlength="60" placeholder="Frente 1"></label>
+            </div>
+            <button id="btn-zona-clima" type="button">Colocar en el mapa (clic en el centro)</button>
+            <ul id="lista-zonas-clima" class="lista-compacta"></ul>
+          </details>
+
+          <details>
             <summary>Identidad nacional</summary>
             <p class="ayuda">Para ambientar el ejercicio con o contra un país vecino: qué país representa cada bando. Es solo un nombre y un color para la interfaz y el informe; no cambia el catálogo de unidades ni sus valores.</p>
             <div class="grid">
@@ -475,11 +496,12 @@
               <label><input type="checkbox" data-capa="contactos" checked><span>Últimos contactos</span></label>
               <label><input type="checkbox" data-capa="graficos" checked><span>Gráficos tácticos</span></label>
               <label><input type="checkbox" data-capa="referencias" checked><span>Límites y poblaciones</span></label>
-              <label><input type="checkbox" data-capa="bases_ven" checked><span>Bases aéreas de Venezuela</span></label>
+              <label><input type="checkbox" data-capa="bases_ven" checked><span>Bases aéreas y aeródromos (Venezuela y vecinos)</span></label>
               <label><input type="checkbox" data-capa="aerodromos" checked><span>Plano de los aeródromos (pistas y hangares)</span></label>
               <label><input type="checkbox" id="ver-app6"><span>Símbolos militares (APP-6) en lugar de miniaturas</span></label>
               <label><input type="checkbox" data-capa="objetivos" checked><span>Objetivos</span></label>
               <label><input type="checkbox" data-capa="ge" checked><span>Guerra electrónica</span></label>
+              <label><input type="checkbox" data-capa="meteorologia" checked><span>Meteorología (zonas)</span></label>
               <label><input type="checkbox" data-capa="misiones" checked><span>Misiones aéreas</span></label>
             </div>
           </section>

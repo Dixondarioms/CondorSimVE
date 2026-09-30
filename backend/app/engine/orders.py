@@ -223,7 +223,7 @@ def procesar_ordenes(
     db: Session, escenario: Escenario, terreno: Terreno | None = None
 ) -> list[Orden]:
     terreno = terreno or get_terreno()
-    clima = escenario.clima
+    clima = clima_mod.contexto(db, escenario)  # clima general + zonas meteorologicas
     turno = escenario.turno_actual
     bit = _Bitacora(db, escenario)
 
@@ -620,7 +620,7 @@ def procesar_ordenes(
             factor_ataque=clase_a.ataque_vs.get(t_d, 1.0) * catalogo.factor_grupo(a)
             * (ge_mod.FACTOR_ANTIAEREA if aaa_interferida else 1.0) * (ge_mod.FACTOR_TIRO_OPTICO if aaa_optica else 1.0),
             factor_defensa=clase_d.defensa * catalogo.factor_grupo(d),
-            factor_clima=clima_mod.factor_ataque_aereo(clima) if a.tipo == "aerea" else 1.0,
+            factor_clima=clima_mod.factor_ataque_aereo(clima, d.lat, d.lon) if a.tipo == "aerea" else 1.0,
             factor_municion=min(1.0, a.municion / consumo),
             azar=azar_mod.factor_azar(escenario.semilla, turno, a.id, d.id) if escenario.azar else 1.0,
             sorpresa=_sorpresa(a, d, lista_unidades, terreno, clima, ge),
@@ -766,6 +766,11 @@ def procesar_ordenes(
             u.despliegue_restante = max(0, u.despliegue_restante - 1)
 
     misiones_mod.cerrar(db, escenario, unidades, turno)
+
+    # las zonas meteorologicas se desplazan con su deriva y las vencidas se disipan
+    for z in clima_mod.avanzar(db, escenario, turno):
+        db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="clima", bando_destino="todos",
+                      descripcion=f"Se disipo la zona de {z.tipo}{' ' + z.nombre if z.nombre else ''}."))
 
     for o in obras:
         if o.expira_turno <= turno:

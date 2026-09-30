@@ -49,6 +49,17 @@ BASES = [
     ("SVPR", "Base Aérea Teófilo Luis Méndez", 8.28472, -62.76389),
     ("SVPA", "Base Aérea José Antonio Páez", 5.62000, -67.60611),
     ("SVBI", "Base Aérea Barinas", 8.61958, -70.22083),
+    # paises vecinos (ver tools/generar_bases_aereas.py, VECINOS)
+    ("SKUA", "Base Aérea Marandúa", 5.5236, -68.6853),
+    ("SKYP", "Aeropuerto El Alcaraván (Yopal)", 5.3191, -72.3840),
+    ("SKCC", "Aeropuerto Camilo Daza (Cúcuta)", 7.9276, -72.5115),
+    ("SKUC", "Aeropuerto de Arauca", 7.0686, -70.7369),
+    ("SKPC", "Aeropuerto de Puerto Carreño", 6.1847, -67.4932),
+    ("SKRH", "Aeropuerto de Riohacha", 11.5262, -72.9260),
+    ("SKVP", "Aeropuerto de Valledupar", 10.4350, -73.2495),
+    ("SBBV", "Base Aérea de Boa Vista", 2.8461, -60.6903),
+    ("SYLT", "Aeropuerto de Lethem", 3.3728, -59.7894),
+    ("TTPP", "Aeropuerto de Piarco", 10.5954, -61.3372),
 ]
 RADIO_PISTAS_M = 4500
 RADIO_EDIFICIOS_M = 3000
@@ -114,10 +125,12 @@ def celda_osm(sur, oeste, norte, este, nodos, vias, relaciones, nivel=0) -> None
     time.sleep(1.0)  # uso cortes de la API publica
 
 
-def descargar_api() -> dict:
-    """Lo mismo que Overpass ("out geom") armado desde la API de OSM, celda por celda."""
+def descargar_api(solo=None) -> dict:
+    """Lo mismo que Overpass ("out geom") armado desde la API de OSM, celda por celda. `solo`: ids a bajar."""
     nodos, vias, relaciones = {}, {}, {}
     for icao, nombre, lat, lon in BASES:
+        if solo is not None and icao not in solo:
+            continue
         print(f"  {icao} {nombre}...", flush=True)
         n = math.ceil(2 * RADIO_GRADOS / CELDA_GRADOS)
         for i in range(n):
@@ -320,6 +333,8 @@ def procesar(crudo: dict) -> dict:
         if e["type"] == "node":
             if tipo == "helipad":
                 icao, _, blat, blon = base_mas_cercana(e["lat"], e["lon"])
+                if distancia_m(e["lat"], e["lon"], blat, blon) > RADIO_PISTAS_M * 1.5:
+                    continue
                 loc = Local(blat, blon)
                 feats.append(feature("helipuerto", poly(circulo(loc.a_m(e["lat"], e["lon"]), 14, loc, 16)), base=icao))
             continue
@@ -329,6 +344,8 @@ def procesar(crudo: dict) -> dict:
         lat = sum(g["lat"] for g in geo) / len(geo)
         lon = sum(g["lon"] for g in geo) / len(geo)
         icao, nombre, blat, blon = base_mas_cercana(lat, lon)
+        if distancia_m(lat, lon, blat, blon) > RADIO_PISTAS_M * 1.5:
+            continue  # elemento de otro aerodromo que quedo en la cache
         loc = Local(blat, blon)
         pts = [loc.a_m(g["lat"], g["lon"]) for g in geo]
         cerrado = geo[0] == geo[-1] and len(geo) >= 4
@@ -416,6 +433,15 @@ def main() -> None:
             CACHE.write_text(json.dumps(crudo), encoding="utf-8")
     else:
         crudo = json.loads(CACHE.read_text(encoding="utf-8"))
+        # bases agregadas despues de la ultima descarga: se bajan solo esas y se suman a la cache
+        faltan = [b[0] for b in BASES if b[0] not in crudo.get("bases_descargadas", [b[0] for b in BASES[:9]])]
+        if faltan:
+            print(f"  bases nuevas: {', '.join(faltan)}", flush=True)
+            nuevo = descargar_api(solo=set(faltan))
+            vistos = {(e["type"], e["id"]) for e in crudo["elements"]}
+            crudo["elements"] += [e for e in nuevo["elements"] if (e["type"], e["id"]) not in vistos]
+            crudo["bases_descargadas"] = sorted(set(crudo.get("bases_descargadas", [b[0] for b in BASES[:9]])) | set(faltan))
+            CACHE.write_text(json.dumps(crudo), encoding="utf-8")
     salida = procesar(crudo)
     DESTINO.write_text(json.dumps(salida, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     cuenta: dict[str, int] = {}

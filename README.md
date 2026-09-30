@@ -40,6 +40,37 @@ avisarán hasta que se instale `cert.pem` como certificado de confianza en cada 
 inverso TLS (Caddy, nginx) use `--proxy` en lugar de `--https`; en ambos casos la cookie de sesión pasa a
 `Secure` y se envía HSTS.
 
+### Instalación con un clic (Windows)
+
+En un PC con Windows basta con **doble clic en `instalar.cmd`** (ejecuta `instalar.ps1`). El instalador:
+
+1. Comprueba que hay Python 3.11 o superior (`py -3` o `python`). Si falta, indica de dónde descargarlo
+   (python.org, marcando "Add python.exe to PATH") y se detiene: **nunca descarga programas por su cuenta**.
+2. Crea `backend\venv` e instala `requirements.txt` (se salta si ya está instalado y no cambió).
+3. Si la base no tiene usuarios, pide el nombre y la contraseña del primer instructor (la contraseña se
+   escribe oculta y no pasa por la línea de comandos) y lo crea.
+4. Crea el acceso directo **S.I.E.T.E.** en el Escritorio (icono del sistema). Al abrirlo se arranca el
+   servidor en `http://localhost:8000/`, abierto a la red local, y a los pocos segundos se abre el navegador.
+5. Abre el puerto TCP 8000 en el cortafuegos de Windows si se ejecuta como administrador; si no, muestra el
+   comando `netsh` para hacerlo.
+
+Opciones (se escriben tras el nombre: `instalar.cmd -Demo`):
+
+| Opción | Efecto |
+|---|---|
+| `-Demo` | crea además el escenario de demostración (Andes/Llanos). |
+| `-Servicio` | registra la tarea programada **"SIETE Servidor"** para que el servidor arranque solo al iniciar Windows (requiere ejecutar `instalar.cmd` con el botón derecho → *Ejecutar como administrador*). |
+| `-Desinstalar` | quita la tarea programada, el acceso directo y la regla del cortafuegos. No borra la base de datos ni el entorno de Python. |
+| `-Destino <carpeta>` | dónde crear el acceso directo (por defecto, el Escritorio). |
+| `-Usuario <nombre>` | nombre del primer instructor (si no se indica, se pregunta). Con la variable de entorno `SIETE_CONTRASENA` la instalación es desatendida. |
+| `-SinUsuario`, `-SinAccesoDirecto` | omiten esos pasos. |
+
+Archivos de la carpeta raíz: `iniciar.cmd` arranca el servidor y abre el navegador (`iniciar.cmd /sin-navegador`
+solo el servidor; si ya hay uno en marcha, solo abre el navegador); `detener.cmd` lo para. Las variables de
+entorno `SIETE_PUERTO` (8000) y `SIETE_HOST` (0.0.0.0) cambian el puerto y la interfaz; `SIMULADOR_DB`, la base.
+Cerrar la ventana del servidor también lo detiene. El instalador se puede ejecutar cuantas veces haga falta:
+no repite lo que ya está hecho.
+
 ## PostgreSQL (opcional)
 
 Por defecto se usa SQLite (un archivo, ideal para un aula). Para varias aulas o más concurrencia, el mismo
@@ -166,6 +197,28 @@ efectividad contra cada tipo de objetivo y símbolo APP-6/MIL-STD-2525 (con esca
 - **Resolución:** relación de fuerzas → pérdidas con una curva **continua** (interpolada en log₂ del ratio).
   Determinista por defecto; el **azar** opcional es reproducible (semilla del escenario + turno + unidades)
   y se informa en cada combate.
+
+## Meteorología por zonas
+
+Además del clima general del escenario, el instructor coloca **zonas meteorológicas** (*Consola → Meteorología por
+zonas*): frentes de **nublado, lluvia o tormenta** con centro (clic en el mapa), radio (5–600 km), **deriva** (rumbo y
+km/h: la zona se desplaza cada turno) y **duración** en turnos (o sin caducidad). El clima efectivo en cada punto es
+el **peor** entre el general y las zonas que lo cubren, y con él se calculan la detección (en la posición del
+blanco), la velocidad (en la posición de la unidad) y la efectividad de los ataques aéreos (sobre el blanco). Las
+zonas las ven ambos bandos (capa *Meteorología*), con su flecha de deriva; la ficha de una unidad muestra su
+«clima local» cuando difiere del general, y al disiparse una zona llega un aviso. API:
+`GET/POST /api/escenarios/{id}/clima/zonas`, `DELETE …/zonas/{zid}`, `GET …/clima/en?lat=&lon=`. Motor:
+`engine/clima.py` (`ClimaLocal`), migración 0014.
+
+## Bases aéreas y aeródromos de los países vecinos
+
+La capa de referencia (*Capas → Bases aéreas y aeródromos*) incluye, además de las 8 bases de la AMB, los aeródromos
+de los vecinos que caen dentro del área del mapa, con el icono en el color de cada país: Colombia (Marandúa, Yopal,
+Cúcuta, Arauca, Puerto Carreño, Riohacha, Valledupar), Brasil (Boa Vista), Guyana (Lethem) y Trinidad y Tobago
+(Piarco). Se distingue **base aérea** de **aeropuerto** (uso civil, utilizable como base en el ejercicio); el
+instructor los coloca como base azul o roja igual que los venezolanos, y todos tienen su **plano real** de
+OpenStreetMap al acercarse (pistas, rodajes, plataformas, edificios). Lista en `tools/generar_bases_aereas.py`
+(`VECINOS`) y `tools/preparar_aerodromos.py`; Georgetown queda fuera del área del mapa.
 
 ## Niebla de guerra
 
@@ -477,6 +530,41 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   `backend/simulador_fenix.db`.
 - **Migraciones:** `backend/migrations/` (Alembic); una base anterior a las migraciones se adopta sola.
   Una prueba comprueba que los modelos y las migraciones no divergen.
+
+### Ajustar los valores de juego
+
+Los valores del catálogo (velocidades, alcances, detección, autonomía, defensa, efectividad por tipo de
+objetivo, existencias de las bases, firma, radios de escucha e interferencia, cadencia, munición por ataque,
+turnos de despliegue y recarga, plazas de aeronaves) y los topes de aeronaves se pueden cambiar **sin tocar el
+código** con el archivo opcional `backend/data/ajustes_catalogo.json`. Copie
+`backend/data/ajustes_catalogo.ejemplo.json` con ese nombre, deje solo lo que quiera cambiar y reinicie el
+servidor. Formato:
+
+```json
+{
+  "clases":  {"caza": {"velocidad_kmh": 950, "ataque_vs": {"aerea": 1.4}}, "base_aerea": {"plazas_aeronaves": 16}},
+  "modelos": {"f16": {"alcance_km": 90}},
+  "topes":   {"MAX_AERONAVES_BANDO": 32}
+}
+```
+
+- `clases`: por id de clase (`infanteria`, `blindado`, `caza`, `fragata`, `base_aerea`…; ver `catalogo.py`).
+  Campos: `velocidad_kmh`, `alcance_km`, `deteccion_km`, `autonomia_km`, `defensa`, `ataque_vs`, `stock_max`,
+  `reposicion_turno`, `firma`, `escucha_km`, `interferencia_km`, `cadencia_fuego`, `municion_por_ataque`,
+  `despliegue_turnos`, `recarga_turnos`, `plazas_aeronaves`.
+- `modelos`: por id de modelo (`f16`, `su30`, `uav_reco`…). Campos: `velocidad_kmh`, `alcance_km`,
+  `deteccion_km`, `autonomia_km`, `defensa`, `ataque_vs`.
+- `ataque_vs` se fusiona clave a clave (`terrestre`, `aerea`, `naval`): lo que no se indica se conserva.
+- `topes`: `MAX_AERONAVES_GRUPO`, `MAX_AERONAVES_BANDO`, `MAX_DRONES_BANDO` (enteros ≥ 1).
+- Las claves que empiezan por `_` (p. ej. `"_comentario"`) se ignoran. Ids o campos desconocidos y valores de
+  tipo incorrecto (texto, negativos, decimales en un entero) se registran como aviso en el log del servidor y
+  se ignoran; el resto se aplica. Si el archivo no existe, no cambia nada.
+- La variable de entorno `SIMULADOR_AJUSTES_CATALOGO` apunta a otro archivo. Los cambios se ven en
+  `GET /api/catalogo` tras reiniciar el servidor. Ojo: cada unidad copia `velocidad_kmh`, `alcance_km`,
+  `deteccion_km` y `autonomia_km` de su clase **al crearse**, así que esos cuatro solo afectan a las unidades
+  nuevas (las existentes se editan desde la ficha de la unidad); el resto (`ataque_vs`, `defensa`, existencias,
+  firma, cadencia, despliegue, recarga, plazas, topes) se consulta en cada resolución y afecta también a los
+  escenarios ya creados.
 
 ## Datos de terreno (offline)
 

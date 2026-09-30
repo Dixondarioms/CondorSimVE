@@ -83,8 +83,8 @@ def clase_de_modelo(modelo_id: str):
     return None if m is None else catalogo.perfil(SimpleNamespace(clase=m.clase, tipo="aerea", modelo=m.id))
 
 
-def velocidad_efectiva(velocidad_kmh: float, clase, clima: str) -> float:
-    return velocidad_kmh * clima_mod.factor_movimiento(clima, "aerea") * (1.0 - clase.penalizacion_movilidad)
+def velocidad_efectiva(velocidad_kmh: float, clase, clima, lat=None, lon=None) -> float:
+    return velocidad_kmh * clima_mod.factor_movimiento(clima, "aerea", lat, lon) * (1.0 - clase.penalizacion_movilidad)
 
 
 def validar(rol_id: str, puntos: list, clase) -> list[str]:

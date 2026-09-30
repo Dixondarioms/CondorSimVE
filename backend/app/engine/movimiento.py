@@ -68,7 +68,7 @@ def simular(unidad, waypoints: list, terreno: Terreno, clima: str = "despejado",
 
     clase = catalogo.obtener(unidad.clase, unidad.tipo)
     presupuesto = (
-        unidad.velocidad_kmh * TURNO_DURACION_HORAS * clima_mod.factor_movimiento(clima, unidad.tipo)
+        unidad.velocidad_kmh * TURNO_DURACION_HORAS * clima_mod.factor_movimiento(clima, unidad.tipo, unidad.lat, unidad.lon)
         * (1.0 - clase.penalizacion_movilidad)
     )
     autonomia = max(unidad.autonomia_km, 1e-9)

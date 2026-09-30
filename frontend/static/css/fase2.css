@@ -181,6 +181,7 @@ body.videowall #replay { right: 14px; }
   font: 700 10px var(--fuente) !important; padding: 1px 5px !important; box-shadow: none !important;
 }
 .nombre-base::before { display: none !important; }
+.base-ven.aeropuerto svg { border-radius: 6px; width: 22px; height: 22px; padding: 4px; }
 .popup-base { font-family: var(--fuente); color: #1b1f24; min-width: 210px; }
 .popup-base .specs div { background: #eef1f6; }
 .popup-base .specs dt, .popup-base .ayuda, .popup-base .nota { color: #4a5568; }
@@ -355,3 +356,11 @@ body.planificando-mision #barra-graficos { display: none; }
 .rotulo-aerodromo.cerrada { background-color: rgba(160, 20, 30, .9) !important; font-weight: 800; translate: -50% -160%; letter-spacing: .04em; }
 .plano-aerodromos .leaflet-tooltip.nombre-base { display: none; }
 .plano-aerodromos .base-ven { opacity: .45; }
+
+/* ---- meteorologia por zonas ---- */
+.zona-clima-rotulo { background: none; border: none; text-align: center; }
+.zona-clima-rotulo span { display: inline-block; font: 700 10px var(--fuente); color: #fff; background: rgba(20, 24, 28, .72); border: 1px solid; border-radius: 3px; padding: 1px 6px; white-space: nowrap; }
+#btn-zona-clima.activo { outline: 2px solid var(--azul); }
+.lista-compacta { list-style: none; padding: 0; margin: 6px 0 0; font-size: 12px; }
+.lista-compacta li { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 3px 0; border-bottom: 1px solid var(--borde); }
+.lista-compacta button.mini { padding: 0 7px; line-height: 18px; }
