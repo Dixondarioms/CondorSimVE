@@ -195,7 +195,7 @@ class UnidadOut(BaseModel):
 
 
 class OrdenCreate(BaseModel):
-    unidad_id: int
+    unidad_id: int | None = None  # obligatorio salvo dentro de un lote (POST /ordenes/lote)
     tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar", "interferir", "lanzar", "embarcar", "desembarcar"]
     waypoints: list[tuple[float, float]] = Field(default_factory=list, max_length=30)
     objetivo_unidad_id: int | None = None
@@ -209,6 +209,14 @@ class OrdenCreate(BaseModel):
     misiles: int | None = Field(default=None, ge=1, le=4)
     # solo para "atacar" a una base aerea o portaaviones: parte que se ataca (None = ataque general)
     parte: Literal["pista", "plataforma", "combustible"] | None = None
+
+
+class OrdenLote(BaseModel):
+    """La misma orden para varias unidades (seleccion multiple); `formacion` conserva las posiciones relativas."""
+
+    unidad_ids: list[int] = Field(min_length=1, max_length=40)
+    orden: "OrdenCreate"
+    formacion: bool = True
 
 
 class OrdenOut(BaseModel):

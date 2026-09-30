@@ -395,6 +395,15 @@
       const ult = cuerpo.waypoints[cuerpo.waypoints.length - 1];
       return json({ ruta: [[u.lat, u.lon], ...cuerpo.waypoints], destino: ult, km: 14.2, combustible_restante: 41.3, llega: true, nota: "" });
     }
+    if (path === "/api/escenarios/1/ordenes/lote" && metodo === "POST") {
+      const resultados = [];
+      for (const id of cuerpo.unidad_ids) {
+        const r = await ruta("POST", "/api/escenarios/1/ordenes", { ...cuerpo.orden, unidad_id: id });
+        const d = await r.json();
+        resultados.push(r.ok ? { unidad_id: id, ok: true, orden_id: d.id } : { unidad_id: id, ok: false, detalle: d.detail });
+      }
+      return json({ resultados, emitidas: resultados.filter((x) => x.ok).length });
+    }
     if (path === "/api/escenarios/1/ordenes" && metodo === "POST") {
       await cargaCatalogo;
       const u = UNIDADES.find((x) => x.id === cuerpo.unidad_id);

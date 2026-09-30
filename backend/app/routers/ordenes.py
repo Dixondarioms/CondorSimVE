@@ -50,14 +50,10 @@ def _validar_waypoints(waypoints) -> None:
             raise HTTPException(status_code=400, detail="Waypoint fuera de rango")
 
 
-@router.post("", response_model=schemas.OrdenOut)
-async def emitir_orden(
-    payload: schemas.OrdenCreate,
-    esc: Escenario = Depends(auth.escenario_dep),
-    db: Session = Depends(get_db),
-    usuario: Usuario = Depends(solo_alumnos),
-):
-    _en_decision(esc)
+def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usuario: Usuario) -> Orden:
+    """Valida y agrega (sin confirmar) la orden de una unidad; lanza HTTPException con el motivo si no procede."""
+    if payload.unidad_id is None:
+        raise HTTPException(status_code=400, detail="Indique la unidad")
     unidad = _unidad_propia(db, esc, payload.unidad_id, usuario)
     if unidad.tipo == "base" and payload.tipo not in ("mover", "despegar"):
         raise HTTPException(status_code=400, detail="Una base no puede combatir ni apoyar")
@@ -204,6 +200,18 @@ async def emitir_orden(
         turno_emitida=esc.turno_actual,
     )
     db.add(orden)
+    return orden
+
+
+@router.post("", response_model=schemas.OrdenOut)
+async def emitir_orden(
+    payload: schemas.OrdenCreate,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(solo_alumnos),
+):
+    _en_decision(esc)
+    orden = _crear_orden(payload, esc, db, usuario)
     # Emitir una orden nueva invalida el "listo" del bando: debe confirmarlo otra vez.
     setattr(esc, f"listo_{usuario.rol}", False)
     db.commit()
@@ -211,6 +219,42 @@ async def emitir_orden(
 
     await manager.difundir_estado(db, esc)
     return orden
+
+
+def _desplazar(waypoints, dlat: float, dlon: float):
+    return [(w[0] + dlat, w[1] + dlon) for w in waypoints]
+
+
+@router.post("/lote")
+async def emitir_lote(
+    payload: schemas.OrdenLote,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(solo_alumnos),
+):
+    """La misma orden para varias unidades (seleccion multiple). Con `formacion`, los waypoints de cada unidad se
+    desplazan segun su posicion relativa al lider (la primera), de modo que el conjunto conserva su formacion.
+    Devuelve el resultado por unidad; las que fallan no impiden a las demas."""
+    _en_decision(esc)
+    lider = db.get(Unidad, payload.unidad_ids[0])
+    resultados = []
+    for uid in payload.unidad_ids:
+        datos = payload.orden.model_dump()
+        datos["unidad_id"] = uid
+        u = db.get(Unidad, uid)
+        if payload.formacion and payload.orden.tipo in ("mover", "desembarcar") and lider is not None and u is not None and datos.get("waypoints"):
+            datos["waypoints"] = _desplazar(datos["waypoints"], u.lat - lider.lat, u.lon - lider.lon)
+        try:
+            orden = _crear_orden(schemas.OrdenCreate(**datos), esc, db, usuario)
+            db.flush()
+            resultados.append({"unidad_id": uid, "ok": True, "orden_id": orden.id})
+        except HTTPException as e:
+            resultados.append({"unidad_id": uid, "ok": False, "detalle": e.detail})
+    if any(r["ok"] for r in resultados):
+        setattr(esc, f"listo_{usuario.rol}", False)
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return {"resultados": resultados, "emitidas": sum(1 for r in resultados if r["ok"])}
 
 
 @router.post("/previsualizar")

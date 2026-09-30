@@ -570,6 +570,11 @@ plantilla…» (marcada como *Guardada por un instructor*), se instancia igual q
   manual) y, desde la ficha de una unidad, **eliminarla**. Una unidad que ya combatió no se puede borrar sin falsear
   el informe (`409`): hay que marcarla como destruida. «Duplicar escenario» copia también los objetivos, y los modelos
   y grupos de aeronave.
+- **Selección múltiple y formaciones:** Ctrl+clic (o Shift+clic) en el orden de batalla o en el mapa suma o quita
+  unidades propias a la selección; el panel de órdenes indica «N unidades seleccionadas» y la orden se emite a todas
+  (`POST /api/escenarios/{id}/ordenes/lote`: resultado por unidad; las que fallan no impiden a las demás). Con
+  **Mantener la formación**, al mover (o desembarcar) cada unidad recibe los waypoints desplazados según su posición
+  relativa a la primera, así el conjunto conserva su formación; sin ella, todas van al mismo punto.
 - **Herramientas de mapa:** **Regla** (clic para cada punto, doble clic o `Esc` para terminar: distancia y rumbo de
   cada tramo y total), anillos de alcance, detección y avance de la unidad seleccionada, y **búsqueda** de unidades
   por nombre, clase o modelo (sin acentos) sobre la orden de batalla.

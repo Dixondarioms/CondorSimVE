@@ -17,6 +17,7 @@
     temporizadorPreview: null, relojTimer: null,
     memoria: Logica.memoriaVacia(), alertas: [], alertasSinLeer: 0,
     tamSimbolo: 26, obraSitio: null, dibujando: false, urlInicial: Videowall.parametrosDeUrl(),
+    lote: new Set(), // seleccion multiple: ids de unidades propias (ademas de la principal, app.unidadOrden)
     graficos: null, chat: null, videowall: null, aviacion: null,
     modeloUnidad: null, baseSeleccionada: null, patrullaPunto: null, naciones: [],
     modoObjetivo: false, objetivoCentro: null, editando: false, filtroOOB: "", herramientas: null,
@@ -606,7 +607,7 @@
             if (v) m.setLatLng([v.lat, v.lon]); // el servidor lo rechazo (p. ej. terreno invalido): vuelve a su sitio
           }
         });
-        m.on("click", () => { if (!(app.misiones && app.misiones.alClickUnidad(app.porId.get(u.id)))) seleccionar(u.id, "mapa"); });
+        m.on("click", (e) => { if (!(app.misiones && app.misiones.alClickUnidad(app.porId.get(u.id)))) seleccionar(u.id, "mapa", !!(e.originalEvent && (e.originalEvent.ctrlKey || e.originalEvent.shiftKey))); });
         app.markers.set(u.id, m);
       } else {
         m.setLatLng(pos);
@@ -623,7 +624,7 @@
   function marcarSeleccionEnMapa() {
     for (const [id, m] of app.markers) {
       const el = m.getElement();
-      if (el) el.classList.toggle("sel", id === app.seleccion);
+      if (el) { el.classList.toggle("sel", id === app.seleccion); el.classList.toggle("sel-lote", app.lote.has(id)); }
     }
   }
 
@@ -783,7 +784,20 @@
   }
 
   // ---------- seleccion ----------
-  function seleccionar(id, origen = "lista") {
+  /** Ctrl/Shift+clic: suma o quita la unidad de la seleccion multiple (solo propias que acepten ordenes del puesto). */
+  function alternarEnLote(id) {
+    const u = app.porId.get(id);
+    if (!u || !esAlumno() || u.bando !== app.usuario.rol || u.estado !== "activa" || u.tipo === "base") return false;
+    if (!Logica.puestoPuede(puestoActual(), Logica.funcionDeOrden(u, null, claseDe(u)))) return false;
+    if (!app.unidadOrden) { seleccionar(id, "lista"); return true; }
+    if (id === app.unidadOrden) return true;
+    if (app.lote.has(id)) app.lote.delete(id); else app.lote.add(id);
+    if (app.data) { actualizarNuevaOrden(app.data); renderOOBSeleccion(); marcarSeleccionEnMapa(); }
+    return true;
+  }
+
+  function seleccionar(id, origen = "lista", modificador = false) {
+    if (modificador && alternarEnLote(id)) return;
     const u = app.porId.get(id);
     const c = app.contactosPorId.get(id);
     if (!u && !c) return;
@@ -798,7 +812,7 @@
       } else if (propia && Logica.operaAeronaves(u)) {
         app.baseSeleccionada = id;
       } else if (propia && u.estado === "activa" && u.tipo !== "base" && Logica.puestoPuede(puestoActual(), Logica.funcionDeOrden(u, null, claseDe(u)))) {
-        if (app.unidadOrden !== id) { app.unidadOrden = id; app.waypoints = []; app.obraSitio = null; app.patrullaPunto = null; app.interferenciaPunto = null; dibujarWaypoints(); if (app.modoOrden === "construir") dibujarSitioObra(); }
+        if (app.unidadOrden !== id) { app.unidadOrden = id; app.lote.clear(); app.waypoints = []; app.obraSitio = null; app.patrullaPunto = null; app.interferenciaPunto = null; dibujarWaypoints(); if (app.modoOrden === "construir") dibujarSitioObra(); }
       }
     } else if (esInstructor() && u) {
       $("adj-unidad").value = String(id);
@@ -817,7 +831,7 @@
     const est = extra.contacto ? { texto: `contacto T${extra.turno}`, clase: "fuego" } : Logica.estadoUnidad(u, pendientes());
     b.innerHTML = `<span class="simbolo">${simboloSvg(u.sidc, 20)}</span>`
       + `<span class="nom">${escapar(u.nombre)}</span><span class="estado-mini">${escapar(est.texto)}</span><i class="punto ${est.clase}"></i>`;
-    b.addEventListener("click", () => { seleccionar(u.id, "lista"); if (u.estado !== "destruida") app.map.panTo([u.lat, u.lon]); });
+    b.addEventListener("click", (e) => { const mod = e.ctrlKey || e.shiftKey; seleccionar(u.id, "lista", mod); if (u.estado !== "destruida" && !mod) app.map.panTo([u.lat, u.lon]); });
     li.appendChild(b);
     return li;
   }
@@ -896,7 +910,10 @@
   }
 
   function renderOOBSeleccion() {
-    document.querySelectorAll(".oob-item").forEach((b) => b.classList.toggle("sel", b.dataset.id === String(app.seleccion)));
+    document.querySelectorAll(".oob-item").forEach((b) => {
+      b.classList.toggle("sel", b.dataset.id === String(app.seleccion));
+      b.classList.toggle("sel-lote", app.lote.has(parseInt(b.dataset.id, 10)));
+    });
   }
 
   function barra(nombre, valor) {
@@ -1031,6 +1048,9 @@
     const bando = bandoVista() || app.usuario.rol;
     const propias = Logica.unidadesDelPuesto(data.unidades, bando, puestoActual(), claseDe);
     if (app.unidadOrden && !propias.some((u) => u.id === app.unidadOrden)) app.unidadOrden = null;
+    for (const id of [...app.lote]) if (!propias.some((u) => u.id === id) || id === app.unidadOrden) app.lote.delete(id);
+    $("o-lote").hidden = !app.unidadOrden || app.lote.size === 0;
+    if (app.lote.size) $("o-lote-texto").textContent = `${app.lote.size + 1} unidades seleccionadas: la orden se emite a todas.`;
     const sel = app.porId.get(app.seleccion);
     const ajena = sel && sel.bando === bando && sel.estado === "activa" && sel.tipo !== "base" && !propias.some((p) => p.id === sel.id)
       ? Logica.textoPuestoAjeno(sel, claseDe(sel)) : "";
@@ -1130,6 +1150,7 @@
     if (app.data) actualizarNuevaOrden(app.data);
   }));
   $("btn-limpiar-wp").addEventListener("click", () => { app.waypoints = []; dibujarWaypoints(); });
+  $("o-lote-limpiar").addEventListener("click", () => { app.lote.clear(); if (app.data) { actualizarNuevaOrden(app.data); renderOOBSeleccion(); marcarSeleccionEnMapa(); } });
   $("o-objetivo").addEventListener("change", () => { if (app.data) actualizarNuevaOrden(app.data); });
 
   $("btn-emitir").addEventListener("click", async () => {
@@ -1174,8 +1195,14 @@
       if (app.modoOrden === "atacar" && !$("o-parte-fila").hidden && $("o-parte").value) cuerpo.parte = $("o-parte").value;
     }
     try {
-      await api("POST", rutaEsc("/ordenes"), cuerpo);
-      toast("Orden emitida", true);
+      if (app.lote.size) {
+        const r = await api("POST", rutaEsc("/ordenes/lote"), { unidad_ids: [unidad_id, ...app.lote], formacion: $("o-formacion").checked, orden: cuerpo });
+        const fallas = r.resultados.filter((x) => !x.ok);
+        toast(`Orden emitida a ${r.emitidas} de ${r.resultados.length} unidades` + (fallas.length ? `. ${fallas.map((f) => `${(app.porId.get(f.unidad_id) || {}).nombre || f.unidad_id}: ${f.detalle}`).join(" · ")}` : ""), fallas.length === 0);
+      } else {
+        await api("POST", rutaEsc("/ordenes"), cuerpo);
+        toast("Orden emitida", true);
+      }
       app.waypoints = [];
       app.obraSitio = null;
       app.patrullaPunto = null;

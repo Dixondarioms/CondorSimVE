@@ -110,6 +110,12 @@
 
           <section class="bloque solo-alumno" id="sec-orden">
             <h2>Nueva orden <span id="orden-unidad" class="contador azul-suave"></span></h2>
+            <div id="o-lote" class="lote" hidden>
+              <span id="o-lote-texto"></span>
+              <label class="chk"><input type="checkbox" id="o-formacion" checked><span>Mantener la formación</span></label>
+              <button type="button" id="o-lote-limpiar" class="mini">Dejar solo una</button>
+              <p class="ayuda">Ctrl+clic en el orden de batalla o en el mapa para sumar o quitar unidades propias. La orden se emite a todas; con formación, cada una conserva su posición relativa al moverse.</p>
+            </div>
             <div class="modos" role="tablist">
               <button type="button" data-modo="mover" class="activo">Mover</button>
               <button type="button" data-modo="atacar">Atacar</button>

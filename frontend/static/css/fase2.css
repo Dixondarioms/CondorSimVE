@@ -357,6 +357,13 @@ body.planificando-mision #barra-graficos { display: none; }
 .plano-aerodromos .leaflet-tooltip.nombre-base { display: none; }
 .plano-aerodromos .base-ven { opacity: .45; }
 
+/* ---- seleccion multiple ---- */
+.lote { background: rgba(58, 134, 255, .12); border: 1px solid var(--azul); border-radius: 6px; padding: 6px 8px; margin: 4px 0 8px; font-size: 12px; }
+.lote #o-lote-texto { font-weight: 700; color: #9cc2ff; }
+.lote .chk { margin: 4px 0; }
+.lote .ayuda { margin: 4px 0 0; }
+.oob-item.sel-lote, .marca.sel-lote .avion3d svg { outline: 2px dashed #9cc2ff; outline-offset: 1px; }
+
 /* ---- meteorologia por zonas ---- */
 .zona-clima-rotulo { background: none; border: none; text-align: center; }
 .zona-clima-rotulo span { display: inline-block; font: 700 10px var(--fuente); color: #fff; background: rgba(20, 24, 28, .72); border: 1px solid; border-radius: 3px; padding: 1px 6px; white-space: nowrap; }
