@@ -778,11 +778,11 @@
     if (esAlumno()) {
       const propia = u && u.bando === rol;
       const objetivo = $("o-objetivo");
-      if (origen === "mapa" && app.modoOrden === "atacar" && !propia && u && u.estado === "activa") {
+      if (origen === "mapa" && (app.modoOrden === "atacar" || app.modoOrden === "lanzar") && !propia && u && u.estado === "activa") {
         objetivo.value = String(id);
       } else if (origen === "mapa" && app.modoOrden === "apoyar" && propia && app.unidadOrden && id !== app.unidadOrden && u.tipo !== "base") {
         objetivo.value = String(id);
-      } else if (propia && u.clase === "base_aerea") {
+      } else if (propia && Logica.operaAeronaves(u)) {
         app.baseSeleccionada = id;
       } else if (propia && u.estado === "activa" && u.tipo !== "base" && Logica.puestoPuede(puestoActual(), Logica.funcionDeOrden(u, null, claseDe(u)))) {
         if (app.unidadOrden !== id) { app.unidadOrden = id; app.waypoints = []; app.obraSitio = null; app.patrullaPunto = null; app.interferenciaPunto = null; dibujarWaypoints(); if (app.modoOrden === "construir") dibujarSitioObra(); }
@@ -921,8 +921,14 @@
       }
     }
     const modelo = Logica.modeloDe(u, app.catalogo && app.catalogo.modelos);
-    const vuelo = app.data ? Logica.situacionDeVuelo(u, app.data.unidades) : null;
+    const vuelo = Logica.esMisil(u) && !oculto ? Logica.textoMisil(u, app.data ? app.data.unidades : [])
+      : app.data ? Logica.situacionDeVuelo(u, app.data.unidades) : null;
     if (vuelo) extra.push(`<div class="ancho-completo"><dt>Situación</dt><dd>${escapar(vuelo)}</dd></div>`);
+    if (cl && cl.plazas_aeronaves && !oculto && app.data) {
+      const abordo = Logica.estacionadasEn(u, app.data.unidades);
+      extra.push(dato("Aeronaves a bordo", `${abordo.reduce((s, x) => s + Math.max(1, x.aeronaves || 1), 0)} de ${cl.plazas_aeronaves} plazas`));
+    }
+    if (cl && cl.lanza_misiles && !oculto) extra.push(dato("Misiles de crucero", `${Logica.misilesDisponibles(u)} listos (25 % de munición cada uno)`));
     if (modelo) {
       const op = Logica.aeronavesOperativas(u);
       extra.push(dato("Modelo", modelo.nombre));
@@ -1014,9 +1020,12 @@
     $("modo-aterrizar").hidden = !puedeAterrizar;
     const interfiere = Logica.puedeInterferir(u, cl);
     $("modo-interferir").hidden = !interfiere;
+    const lanza = Logica.puedeLanzarMisiles(u, cl);
+    $("modo-lanzar").hidden = !lanza;
     if (app.modoOrden === "patrullar" && !aerea) app.modoOrden = "mover";
     if (app.modoOrden === "aterrizar" && !puedeAterrizar) app.modoOrden = "mover";
     if (app.modoOrden === "interferir" && !interfiere) app.modoOrden = "mover";
+    if (app.modoOrden === "lanzar" && !lanza) app.modoOrden = "mover";
     const espera = u && u.en_tierra && u.espera_restante > 0;
     $("o-espera").hidden = !espera;
     if (espera) $("o-espera").textContent = `En tierra: podrá despegar en ${u.espera_restante} turno${u.espera_restante === 1 ? "" : "s"}; hasta entonces no acepta órdenes de vuelo.`;
@@ -1040,12 +1049,24 @@
             + (elegida.alcanzaCombustible ? "" : ` Necesita ~${Math.round(elegida.combustibleNecesario)} % de combustible y tiene ${Math.round(u.combustible)} %.`);
     }
     $("o-objetivo-box").hidden = ["mover", "construir", "patrullar", "aterrizar", "interferir"].includes(app.modoOrden);
-    if (app.modoOrden === "atacar" || app.modoOrden === "apoyar") {
+    $("o-lanzar").hidden = app.modoOrden !== "lanzar";
+    if (app.modoOrden === "atacar" || app.modoOrden === "apoyar" || app.modoOrden === "lanzar") {
       const lista = Logica.objetivosDisponibles(data.unidades, app.usuario.rol, app.modoOrden, app.unidadOrden);
       llenarSelect($("o-objetivo"), lista.map((x) => [x.id, x.nombre]));
       $("o-objetivo-ayuda").textContent = app.modoOrden === "apoyar"
         ? "Unidad propia a apoyar (dentro de su alcance; consume 10% de munición). También puede hacer clic en el mapa."
-        : lista.length ? "Solo puede atacar unidades detectadas por su bando. También puede hacer clic en el mapa." : "No hay enemigos detectados.";
+        : app.modoOrden === "lanzar"
+          ? (lista.length ? "Blanco de los misiles: una unidad enemiga detectada en tierra o en el mar (a menos de 1 000 km). También puede hacer clic en el mapa." : "No hay blancos detectados.")
+          : lista.length ? "Solo puede atacar unidades detectadas por su bando. También puede hacer clic en el mapa." : "No hay enemigos detectados.";
+    }
+    if (app.modoOrden === "lanzar" && u) {
+      const max = Logica.misilesDisponibles(u);
+      const actual = parseInt($("o-misiles").value, 10);
+      llenarSelect($("o-misiles"), Array.from({ length: max }, (_, i) => [i + 1, `${i + 1} misil${i ? "es" : ""}`]));
+      if (actual && actual <= max) $("o-misiles").value = String(actual);
+      $("o-lanzar-info").textContent = max
+        ? `Munición ${Math.round(u.municion)} %: hasta ${max} misil${max === 1 ? "" : "es"} en esta salva.`
+        : "Sin munición suficiente para un misil (25 % cada uno): reabastezca en un puerto o depósito.";
     }
   }
 
@@ -1081,6 +1102,13 @@
       if (!app.obraSitio) return toast("Haga clic en el mapa, sobre el río, donde quiere construir.");
       cuerpo.detalle = $("o-obra").value;
       cuerpo.waypoints = [app.obraSitio];
+    } else if (app.modoOrden === "lanzar") {
+      const obj = parseInt($("o-objetivo").value, 10);
+      if (!obj) return toast("Elija el blanco de los misiles.");
+      const n = parseInt($("o-misiles").value, 10);
+      if (!n) return toast("Sin munición suficiente para lanzar.");
+      cuerpo.objetivo_unidad_id = obj;
+      cuerpo.misiles = n;
     } else {
       const obj = parseInt($("o-objetivo").value, 10);
       if (!obj) return toast("Elija una unidad objetivo.");
@@ -1115,6 +1143,13 @@
       return `Aterrizar en ${b ? b.nombre : "la base"}${o.detalle === "combustible critico" ? " (combustible crítico)" : ""}`;
     }
     if (o.tipo === "atacar" && o.detalle === "intercepcion") return `Interceptar a ${nombreObj}`;
+    if (o.tipo === "atacar" && o.detalle === "impacto") return `Impacto de misiles en ${nombreObj}`;
+    if (o.tipo === "atacar" && o.detalle === "defensa aerea") return `Defensa aérea contra ${nombreObj}`;
+    if (o.tipo === "lanzar") {
+      let n = 1;
+      try { n = JSON.parse(o.detalle || "{}").misiles || 1; } catch (_) { /* detalle vacio */ }
+      return `Lanzar ${n} misil${n === 1 ? "" : "es"} de crucero contra ${nombreObj}`;
+    }
     return `${o.tipo === "atacar" ? "Atacar" : "Apoyar a"} ${nombreObj}`;
   }
 
@@ -1310,7 +1345,9 @@
     dibujarOrdenes(data);
     dibujarSeleccion();
     if (!app.encuadrado && data.unidades.length) {
-      app.map.fitBounds(data.unidades.map((u) => [u.lat, u.lon]), { padding: [80, 80], maxZoom: 10 });
+      const lugar = app.urlInicial && app.urlInicial.lugar;
+      if (lugar) app.map.setView([lugar.lat, lugar.lon], lugar.zoom);
+      else app.map.fitBounds(data.unidades.map((u) => [u.lat, u.lon]), { padding: [80, 80], maxZoom: 10 });
       app.encuadrado = true;
     }
   }
@@ -1544,7 +1581,7 @@
   /** ?modo=videowall&escenario=ID&vista=azul|rojo|completa (se aplica una sola vez, tras iniciar sesion) */
   function aplicarParametrosUrl() {
     const u = app.urlInicial;
-    app.urlInicial = {};
+    app.urlInicial = { lugar: u.lugar }; // el encuadre se aplica al llegar el primer estado
     if (u.escenario && [...$("escenario").options].some((o) => o.value === String(u.escenario))) {
       $("escenario").value = String(u.escenario);
       cambiarEscenario();

@@ -3,7 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Simulador Fénix - ARNÉS DE PRUEBAS (datos simulados)</title>
+  <title>S.I.E.T.E. · Sistema Integral de Entrenamiento Táctico y Estratégico</title>
+  <link rel="icon" href="/static/img/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/img/siete_icono_192.png">
+  <link rel="apple-touch-icon" href="/static/img/siete_icono_192.png">
   <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="/static/vendor/leaflet-draw/leaflet.draw.css">
   <link rel="stylesheet" href="/static/css/style.css">
@@ -13,9 +16,9 @@
   <!-- ============ acceso ============ -->
   <div id="login" hidden>
     <form id="login-form" autocomplete="on">
-      <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4Zm0 4.2 4.6 2.3v3.6c0 2.9-1.9 5.2-4.6 6.3-2.7-1.1-4.6-3.4-4.6-6.3V8.5L12 6.2Z"/></svg>
-      <h2>SIMULADOR FÉNIX</h2>
-      <p class="sec">Adiestramiento táctico. Ingrese con la cuenta asignada por el instructor.</p>
+      <img class="logo-siete" src="/static/img/siete_logo_recortado.jpg" alt="S.I.E.T.E. · Fuerza Armada Nacional Bolivariana">
+      <h2>S.I.E.T.E.</h2>
+      <p class="sec">Sistema Integral de Entrenamiento Táctico y Estratégico. Ingrese con la cuenta asignada por el instructor.</p>
       <input id="l-user" name="username" placeholder="Usuario" autocomplete="username" required>
       <input id="l-pass" name="password" type="password" placeholder="Contraseña" autocomplete="current-password" required>
       <button type="submit" class="primario">Ingresar</button>
@@ -27,8 +30,8 @@
     <!-- ============ 1. barra superior ============ -->
     <header id="cabecera">
       <div class="cab-izq">
-        <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4Zm0 4.2 4.6 2.3v3.6c0 2.9-1.9 5.2-4.6 6.3-2.7-1.1-4.6-3.4-4.6-6.3V8.5L12 6.2Z"/></svg>
-        <h1>SIMULADOR FÉNIX - ADIESTRAMIENTO TÁCTICO</h1>
+        <img class="logo" src="/static/img/siete_icono_64.png" alt="" aria-hidden="true">
+        <h1 title="Sistema Integral de Entrenamiento Táctico y Estratégico">S.I.E.T.E. - ENTRENAMIENTO TÁCTICO Y ESTRATÉGICO</h1>
         <span class="sep">|</span>
         <span class="dato">TURNO: <b id="h-turno">-</b> <small>(1h Simulada)</small></span>
         <span class="sep">|</span>
@@ -114,6 +117,7 @@
               <button type="button" data-modo="patrullar" id="modo-patrullar" hidden title="Solo aeronaves">Patrullar</button>
               <button type="button" data-modo="aterrizar" id="modo-aterrizar" hidden title="Solo aeronaves en vuelo">Aterrizar</button>
               <button type="button" data-modo="interferir" id="modo-interferir" hidden title="Solo unidades de guerra electrónica">Interferir</button>
+              <button type="button" data-modo="lanzar" id="modo-lanzar" hidden title="Solo buques y baterías con misiles de crucero">Lanzar misiles</button>
             </div>
             <p id="o-espera" class="ayuda advertencia" hidden></p>
             <p id="o-puesto" class="ayuda advertencia" hidden></p>
@@ -147,6 +151,11 @@
             <div id="o-objetivo-box" hidden>
               <select id="o-objetivo" aria-label="Objetivo"></select>
               <p id="o-objetivo-ayuda" class="ayuda"></p>
+            </div>
+            <div id="o-lanzar" hidden>
+              <label class="mini">Misiles en la salva<select id="o-misiles"></select></label>
+              <p id="o-lanzar-info" class="ayuda"></p>
+              <p class="ayuda">Cada misil consume el 25 % de la munición del lanzador. La salva nace sobre el lanzador al resolverse el turno y vuela sola (850 km/h, hasta 1 000 km) hacia la posición actual del blanco; la antiaérea y las patrullas enemigas pueden derribarla antes del impacto.</p>
             </div>
             <button id="btn-emitir" class="primario" type="button">Emitir orden</button>
             <p class="ayuda">Una unidad tiene una sola orden por turno: la nueva reemplaza a la pendiente.</p>
@@ -560,6 +569,7 @@
       <div id="aer-tarjetas" class="tarjetas-modelo" role="radiogroup" aria-label="Modelo de aeronave"></div>
       <div class="aer-campos">
         <label class="mini" id="aer-base-fila">Base de origen<select id="aer-base"></select></label>
+            <p id="aer-nota-base" class="ayuda" hidden>Desde un portaaviones solo despegan helicópteros, drones y cazas embarcados.</p>
         <label class="mini">Aeronaves en el grupo<select id="aer-cantidad"></select></label>
         <label class="mini" id="aer-indicativo-fila">Indicativo (opcional)<input id="aer-indicativo" maxlength="40" placeholder="Ej. Halcón 1"></label>
       </div>

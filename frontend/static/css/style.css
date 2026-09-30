@@ -80,7 +80,7 @@ label.chk input { width: auto; margin: 0; flex: none; }
 .cab-izq, .cab-der { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .cab-izq { flex: 1 1 auto; overflow: hidden; white-space: nowrap; }
 .cab-der { flex: none; }
-.logo { width: 26px; height: 26px; fill: var(--azul); flex: none; }
+.logo { width: 30px; height: 30px; fill: var(--azul); flex: none; border-radius: 6px; object-fit: cover; }
 #cabecera h1 { font-size: 15px; font-weight: 800; letter-spacing: .06em; }
 .dato { color: var(--texto-sec); font-size: 12px; letter-spacing: .04em; }
 .dato b { color: var(--texto); font-size: 13px; }
@@ -354,10 +354,11 @@ path.ruta-anim { animation: marcha 1.2s linear infinite; }
 /* ---------- acceso ---------- */
 #login { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 30%, #1c2748, #0e1120 70%); z-index: 2000; }
 #login form {
-  width: 340px; padding: 28px; background: var(--panel); border: 1px solid var(--borde); border-radius: 6px;
+  width: 440px; max-width: 94vw; padding: 24px 28px 28px; background: var(--panel); border: 1px solid var(--borde); border-radius: 8px;
   box-shadow: var(--sombra); display: flex; flex-direction: column; gap: 8px; text-align: center;
 }
 #login .logo { width: 44px; height: 44px; margin: 0 auto; }
+#login .logo-siete { display: block; width: 100%; max-width: 360px; margin: -6px auto 4px; border-radius: 10px; }
 #login h2 { font-size: 20px; letter-spacing: .12em; }
 #login input { padding: 10px; }
 #login .primario { margin-top: 6px; padding: 10px; }

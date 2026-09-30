@@ -8,6 +8,7 @@ from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import catalogo, geo, movimiento, puestos
 from app.engine import guerra_electronica as ge_mod
+from app.engine import misiles as misiles_mod
 from app.engine import misiones as misiones_mod
 from app.engine.orders import COSTO_OBRA, tipo_efectivo
 from app.models.escenario import Escenario
@@ -58,6 +59,10 @@ async def emitir_orden(
     unidad = _unidad_propia(db, esc, payload.unidad_id, usuario)
     if unidad.tipo == "base" and payload.tipo not in ("mover", "despegar"):
         raise HTTPException(status_code=400, detail="Una base no puede combatir ni apoyar")
+    if catalogo.es_misil(unidad):
+        raise HTTPException(status_code=400, detail=misiles_mod.MOTIVO_SIN_ORDENES)
+    if payload.tipo == "despegar" and not catalogo.opera_aeronaves(unidad):
+        raise HTTPException(status_code=400, detail="Solo una base aerea o un portaaviones puede lanzar grupos")
 
     clase = catalogo.perfil(unidad)
     auth.exigir_funcion(usuario, puestos.funcion_de_orden(unidad, payload.tipo, clase))
@@ -121,6 +126,16 @@ async def emitir_orden(
         motivo = ge_mod.error_de_interferencia(unidad, payload.waypoints[0])
         if motivo:
             raise HTTPException(status_code=400, detail=motivo)
+    elif payload.tipo == "lanzar":
+        if payload.objetivo_unidad_id is None:
+            raise HTTPException(status_code=400, detail="Indique la unidad blanco de los misiles")
+        visibles = {u.id: u for u in state.unidades_visibles_para(db, esc, usuario.rol)}
+        blanco = visibles.get(payload.objetivo_unidad_id)
+        if blanco is None or blanco.estado != "activa":
+            raise HTTPException(status_code=404, detail="Blanco no visible o inexistente")
+        motivo = misiles_mod.error_de_lanzamiento(unidad, blanco, payload.misiles)
+        if motivo:
+            raise HTTPException(status_code=400, detail=motivo)
     elif payload.tipo == "mover":
         if unidad.tipo == "base" or unidad.velocidad_kmh <= 0:
             raise HTTPException(status_code=400, detail="Esta unidad no puede moverse")
@@ -158,10 +173,11 @@ async def emitir_orden(
         unidad_id=unidad.id,
         tipo=payload.tipo,
         waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir", "patrullar", "interferir") else []),
-        objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar", "aterrizar") else None,
+        objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar", "aterrizar", "lanzar") else None,
         detalle=(
             aeronaves_mod.codificar(payload.modelo, payload.aeronaves, (payload.indicativo or "").strip())
             if payload.tipo == "despegar"
+            else misiles_mod.codificar(payload.misiles) if payload.tipo == "lanzar"
             else payload.detalle or "" if payload.tipo == "construir" else ""
         ),
         turno_emitida=esc.turno_actual,

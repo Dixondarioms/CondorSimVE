@@ -76,6 +76,24 @@
       return b;
     }
 
+    /** Base elegida en el dialogo de despegue (null al elegir modelo para el instructor). */
+    function baseElegida() {
+      const datos = ctx.datos();
+      return modoActual && modoActual.tipo === "despegue" && datos
+        ? datos.unidades.find((u) => String(u.id) === $("aer-base").value) || null : null;
+    }
+
+    /** Tarjetas de los modelos que pueden salir de la base elegida (un portaaviones solo lanza embarcables). */
+    function llenarTarjetas() {
+      const tarjetas = $("aer-tarjetas");
+      limpiar(tarjetas);
+      const base = baseElegida();
+      const lista = modelos().filter((m) => (modoActual && modoActual.tipo === "despegue" ? Logica.modeloDespegaDe(m, base) : !m.misil));
+      lista.forEach((m) => tarjetas.appendChild(tarjeta(m)));
+      if (elegido && !lista.some((m) => m.id === elegido)) elegido = null;
+      $("aer-nota-base").hidden = !Logica.esPortaaviones(base);
+    }
+
     function marcar(id) {
       elegido = id;
       document.querySelectorAll("#aer-tarjetas .tarjeta-modelo").forEach((t) => {
@@ -129,9 +147,6 @@
       $("aer-titulo").textContent = titulo;
       $("aer-ayuda").textContent = ayuda;
       $("aer-confirmar").textContent = textoConfirmar;
-      const tarjetas = $("aer-tarjetas");
-      limpiar(tarjetas);
-      modelos().forEach((m) => tarjetas.appendChild(tarjeta(m)));
       llenarCantidad(cantidadInicial);
       const despegue = tipo === "despegue";
       $("aer-base-fila").hidden = !despegue;
@@ -143,6 +158,7 @@
         if (modeloInicial && bases.some((b) => b.id === modeloInicial.base)) sel.value = String(modeloInicial.base);
         $("aer-indicativo").value = "";
       }
+      llenarTarjetas();
       marcar((modeloInicial && modeloInicial.modelo) || null);
       if (!$("dlg-aeronaves").open) $("dlg-aeronaves").showModal();
     }
@@ -186,7 +202,7 @@
 
     function conectarDialogo() {
       $("aer-cantidad").addEventListener("change", actualizarResumen);
-      $("aer-base").addEventListener("change", actualizarResumen);
+      $("aer-base").addEventListener("change", () => { llenarTarjetas(); marcar(elegido); });
       $("aer-cancelar").addEventListener("click", () => $("dlg-aeronaves").close());
       $("aer-form").addEventListener("submit", async (e) => {
         e.preventDefault();

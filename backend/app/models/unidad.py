@@ -49,6 +49,8 @@ class Unidad(Base):
     mision: Mapped[str] = mapped_column(String(20), default="")
     mision_lat: Mapped[float | None] = mapped_column(Float, nullable=True)
     mision_lon: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # misil de crucero en vuelo: unidad a la que se dirige (mision "impacto"; mision_lat/lon = ultimo punto conocido)
+    blanco_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     # sensores y defensa aerea: radar emitiendo (control de emisiones) y fuego automatico de la antiaerea
     emitiendo: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())

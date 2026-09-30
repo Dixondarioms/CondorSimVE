@@ -11,9 +11,10 @@ en `backend/app/engine/catalogo.py` (`MODELOS`).
 
 Ambas se obtuvieron de Wikimedia Commons y se recortaron/redimensionaron sin otra modificación.
 
-## Ilustraciones propias (drones y guerra electrónica)
+## Ilustraciones propias (drones, guerra electrónica, aviación embarcada y misiles)
 
-Los modelos genéricos de drones y del avión de guerra electrónica no representan un producto real, así que no
+Los modelos genéricos (drones, avión de guerra electrónica, aviación embarcada, ataque ligero y misil de crucero)
+no representan un producto real, así que no
 usan fotos: son ilustraciones vectoriales hechas para este proyecto y se ceden al dominio público
 ([CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)).
 
@@ -23,3 +24,8 @@ usan fotos: son ilustraciones vectoriales hechas para este proyecto y se ceden a
 | `dron_armado.svg` | `uav_armado` · Dron armado (UAV de media altitud) |
 | `municion_merodeadora.svg` | `merodeadora` · Munición merodeadora (dron kamikaze) |
 | `avion_ge.svg` | `ge_aereo` · Avión de guerra electrónica (interferidor) |
+| `caza_embarcado.svg` | `caza_embarcado` · Caza embarcado (genérico) |
+| `helo_ataque.svg` | `helo_ataque` · Helicóptero de ataque (genérico) |
+| `helo_transporte.svg` | `helo_transporte` · Helicóptero de transporte artillado (genérico) |
+| `ataque_ligero.svg` | `ataque_ligero` · Avión de ataque ligero (genérico) |
+| `crucero.svg` | `crucero` · Misil de crucero (genérico) |

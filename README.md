@@ -1,9 +1,17 @@
-# Simulador de Conducción Militar (estilo "Fénix")
+# S.I.E.T.E. — Sistema Integral de Entrenamiento Táctico y Estratégico
+
+(Nombre de desarrollo del proyecto: "Simulador Fénix"; el código, la base de datos y el repositorio conservan ese nombre.)
 
 Wargame web multiusuario para adiestramiento en conducción (operaciones terrestres, aéreas y navales)
 sobre el terreno de Venezuela. Instructor/director de ejercicio + alumnos por bando (azul/rojo),
 sincronizados por WebSocket. **Funciona sin internet**: mapa, relieve, cobertura terrestre, librerías
 y datos se sirven desde el propio servidor (una política CSP bloquea cualquier recurso externo).
+
+## Manual de usuario
+
+`docs/Manual_SIETE.pdf` (qué es, cómo se hizo, instalación y funcionamiento, con capturas y esquemas). Se regenera con
+`python tools/generar_manual.py --imagenes <carpeta de capturas>` (las capturas se toman con Chrome headless del arnés de pruebas).
+El logotipo e iconos están en `frontend/static/img/` (imagen institucional S.I.E.T.E. de la FANB).
 
 ## Puesta en marcha
 
@@ -292,6 +300,34 @@ mapa (capa "Guerra electrónica") y el detalle de una unidad afectada lo explica
 
 **Puestos**: los radares y la GE terrestre los conduce **A2 Inteligencia**; el avión de GE y los drones, como toda
 aeronave, **A3 Operaciones**; el envío desde la base, **A5 Planificación**.
+
+## Buques, portaaviones y misiles de crucero
+
+- **Clases navales nuevas** (además de fragata y patrullero): **destructor** (radar de búsqueda aérea con control de
+  emisiones y misiles antiaéreos: dispara solo contra aeronaves y misiles enemigos a su alcance, como la antiaérea),
+  **portaaviones**, **submarino** (se lo detecta a un cuarto de la distancia; solo ataca buques) y **buque de
+  desembarco**. En tierra, el **lanzador de misiles de crucero** (batería costera, debe desplegarse un turno).
+- **Portaaviones = base aérea móvil:** lanza y recibe aeronaves como una base (*Aviación → Enviar aeronaves*,
+  orden `aterrizar`, misiones aéreas), con **10 plazas** y sus propias existencias (1500), que **repone junto a un
+  puerto propio** (100 puntos por turno). Solo operan desde él las aeronaves **embarcables**: helicópteros, drones,
+  munición merodeadora y el modelo **Caza embarcado**; el F-16, el Su-30, el avión de ataque ligero y el de guerra
+  electrónica solo desde bases terrestres. Las aeronaves a bordo navegan con él, sufren parte del daño que recibe
+  y se hunden si lo hunden. Armas propias débiles: necesita escolta.
+- **Modelos genéricos nuevos** (ilustraciones propias generadas de sus miniaturas 3D, CC0): Caza embarcado,
+  Helicóptero de ataque, Helicóptero de transporte artillado, Avión de ataque ligero y Misil de crucero. Con ellos
+  los helicópteros y los aviones de ataque también pueden despegar de una base.
+- **Misiles de crucero (orden `lanzar`):** fragatas, destructores, submarinos y baterías costeras lanzan salvas de
+  **1 a 4 misiles** (25 % de munición cada uno) contra una unidad enemiga detectada en tierra o en el mar a menos
+  de 1 000 km. Al resolverse el turno la salva nace sobre el lanzador y **vuela sola** (850 km/h) hacia la posición
+  actual del blanco: si lo alcanza, impacta (un solo ataque, se consume; rinde como un grupo aéreo); si el blanco
+  desapareció, va al último punto conocido y se pierde; sin alcance, cae. No admite órdenes, no aterriza ni cuenta
+  para los topes de aeronaves. **Intercepción antes del impacto:** la antiaérea automática, los destructores y
+  las patrullas enemigas disparan contra la salva en ese mismo turno y sus pérdidas se descuentan **antes** de que
+  impacte; si la derriban, no impacta («Derribado antes del impacto», con aviso al lanzador). Lo mismo vale ahora
+  para la munición merodeadora. La orden la conduce el puesto de superficie (A5) o el Estado Mayor.
+- En el mapa, cada buque y el misil tienen su miniatura; el detalle de un lanzador muestra los misiles listos y el
+  de un portaaviones, las aeronaves a bordo. Motor: `engine/misiles.py`, `engine/aeronaves.py`, `engine/orders.py`;
+  migración 0013 (`blanco_id`).
 
 ## Radares, defensa antiaérea y logística de base
 

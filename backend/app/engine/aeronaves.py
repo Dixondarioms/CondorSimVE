@@ -1,4 +1,7 @@
-"""Despegue de grupos aereos desde una base aerea.
+"""Despegue de grupos aereos desde una base aerea o un portaaviones.
+
+Un portaaviones es una base aerea movil: solo opera aeronaves embarcables (helicopteros, drones y cazas
+embarcados), tiene menos plazas y las aeronaves estacionadas a bordo se mueven, sufren y se hunden con el.
 
 Un alumno emite la orden `despegar` sobre una base aerea propia eligiendo el modelo (F-16, Su-30...), el numero
 de aeronaves y un indicativo. Al resolverse el turno nace una unidad aerea junto a la base, con el combustible
@@ -36,10 +39,12 @@ def es_dron_modelo(modelo_id: str | None) -> bool:
 
 
 def aeronaves_en_servicio(unidades, drones: bool = False) -> int:
-    """Aeronaves activas tripuladas (o, con drones=True, drones activos): cada categoria tiene su tope."""
+    """Aeronaves activas tripuladas (o, con drones=True, drones activos): cada categoria tiene su tope. Los misiles
+    de crucero en vuelo no cuentan para ninguno."""
     return sum(
         max(1, u.aeronaves or 1) for u in unidades
         if u.tipo == "aerea" and u.estado == "activa" and catalogo.obtener(u.clase, u.tipo).dron == drones
+        and not catalogo.es_misil(u)
     )
 
 
@@ -60,17 +65,24 @@ def aeronaves_comprometidas(
     return total
 
 
+MOTIVO_NO_EMBARCABLE = "solo helicopteros, drones y cazas embarcados operan desde un portaaviones"
+
+
 def error_de_despegue(base: Unidad, modelo_id: str | None, aeronaves: int | None, en_servicio: int) -> str | None:
-    """Motivo por el que la base no puede lanzar ese grupo (None si puede)."""
-    if base.tipo != "base" or base.clase != "base_aerea":
-        return "Solo una base aerea puede lanzar grupos de caza."
+    """Motivo por el que la base (aerea o portaaviones) no puede lanzar ese grupo (None si puede)."""
+    if not catalogo.opera_aeronaves(base):
+        return "Solo una base aerea o un portaaviones puede lanzar grupos de caza."
     if base.estado != "activa":
-        return "La base aerea ya no esta activa."
+        return "La base aerea ya no esta activa." if base.tipo == "base" else f"{base.nombre} ya no esta activo."
     if base.fuerza < FUERZA_MINIMA_BASE:
         return f"La base esta muy danada ({base.fuerza:.0f}%): no puede lanzar grupos."
     modelo = catalogo.MODELOS.get(modelo_id or "")
     if modelo is None:
         return "Elija un modelo de aeronave del catalogo."
+    if catalogo.CLASES[modelo.clase].misil:
+        return "Los misiles de crucero no despegan de una base: se lanzan con la orden lanzar."
+    if catalogo.es_portaaviones(base) and not catalogo.modelo_embarcable(modelo):
+        return f"{modelo.nombre} no puede despegar de un portaaviones: {MOTIVO_NO_EMBARCABLE}."
     if not aeronaves or not 1 <= aeronaves <= catalogo.MAX_AERONAVES_GRUPO:
         return f"Un grupo tiene entre 1 y {catalogo.MAX_AERONAVES_GRUPO} aeronaves."
     falta = logistica.falta_para_despegue(base, aeronaves)
@@ -122,30 +134,48 @@ def estacionadas(base, unidades) -> list:
     return [u for u in unidades if u.en_tierra and u.base_id == base.id and u.estado == "activa"]
 
 
+def capacidad(base) -> int:
+    """Plazas de estacionamiento de una base aerea (12) o de un portaaviones (10)."""
+    return catalogo.plazas_aeronaves(base) or CAPACIDAD_BASE
+
+
 def plazas_libres(base, unidades) -> int:
-    return CAPACIDAD_BASE - sum(max(1, u.aeronaves or 1) for u in estacionadas(base, unidades))
+    return capacidad(base) - sum(max(1, u.aeronaves or 1) for u in estacionadas(base, unidades))
+
+
+def puede_operar_en(u, base) -> bool:
+    """La aeronave `u` puede aterrizar en (y despegar de) `base`: una base aerea recibe a todas; un portaaviones,
+    solo a las embarcables. Los misiles no aterrizan."""
+    if catalogo.es_misil(u) or not catalogo.opera_aeronaves(base):
+        return False
+    return not catalogo.es_portaaviones(base) or catalogo.es_embarcable(u.clase, u.modelo)
 
 
 def error_de_aterrizaje(u, base, unidades) -> str | None:
     """Motivo por el que `u` no puede aterrizar en `base` (None si puede)."""
     if u.tipo != "aerea" or u.estado != "activa":
         return "Solo una aeronave activa puede aterrizar."
+    if catalogo.es_misil(u):
+        return "Un misil en vuelo no admite ordenes."
     if u.en_tierra:
         return "La aeronave ya esta en tierra."
-    if base is None or base.bando != u.bando or base.clase != "base_aerea":
-        return "Elija una base aerea propia."
+    if base is None or base.bando != u.bando or not catalogo.opera_aeronaves(base):
+        return "Elija una base aerea propia o un portaaviones propio."
+    if not puede_operar_en(u, base):
+        return f"{u.nombre} no puede aterrizar en {base.nombre}: {MOTIVO_NO_EMBARCABLE}."
     if base.estado != "activa" or base.fuerza < FUERZA_MINIMA_BASE:
         return f"{base.nombre} esta fuera de servicio o muy danada."
     if plazas_libres(base, unidades) < max(1, u.aeronaves or 1):
-        return f"{base.nombre} no tiene plazas libres (capacidad {CAPACIDAD_BASE} aeronaves)."
+        return f"{base.nombre} no tiene plazas libres (capacidad {capacidad(base)} aeronaves)."
     return None
 
 
 def base_mas_cercana(u, unidades):
-    """Base aerea propia en servicio y con plazas, la mas cercana (None si no hay ninguna)."""
+    """Base aerea (o portaaviones, si la aeronave es embarcable) propia en servicio y con plazas, la mas cercana
+    (None si no hay ninguna)."""
     candidatas = [
         b for b in unidades
-        if b.bando == u.bando and b.clase == "base_aerea" and b.estado == "activa" and b.fuerza >= FUERZA_MINIMA_BASE
+        if b.bando == u.bando and b.estado == "activa" and b.fuerza >= FUERZA_MINIMA_BASE and puede_operar_en(u, b)
         and plazas_libres(b, unidades) >= max(1, u.aeronaves or 1)
     ]
     return min(candidatas, key=lambda b: geo.distancia_km(u.lat, u.lon, b.lat, b.lon), default=None)
@@ -165,3 +195,13 @@ def despegar_unidad(u) -> None:
     u.en_tierra = False
     u.base_id = None
     u.espera_restante = 0
+
+
+def seguir_portaaviones(unidades) -> None:
+    """Las aeronaves estacionadas en un portaaviones se mueven con el (despues del movimiento del turno)."""
+    for pa in unidades:
+        if pa.estado != "activa" or not catalogo.es_portaaviones(pa):
+            continue
+        for i, x in enumerate(estacionadas(pa, unidades)):
+            x.lat = pa.lat + DESPLAZAMIENTO_ESTACIONADO * (1 + i)
+            x.lon = pa.lon + DESPLAZAMIENTO_ESTACIONADO

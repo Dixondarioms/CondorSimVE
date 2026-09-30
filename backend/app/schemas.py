@@ -161,6 +161,7 @@ class UnidadOut(BaseModel):
     mision: str = ""
     mision_lat: float | None = None
     mision_lon: float | None = None
+    blanco_id: int | None = None
     echelon: str
     lat: float
     lon: float
@@ -185,7 +186,7 @@ class UnidadOut(BaseModel):
 
 class OrdenCreate(BaseModel):
     unidad_id: int
-    tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar", "interferir"]
+    tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar", "interferir", "lanzar"]
     waypoints: list[tuple[float, float]] = Field(default_factory=list, max_length=30)
     objetivo_unidad_id: int | None = None
     # solo para "construir": obra que se tiende en el punto indicado
@@ -194,6 +195,8 @@ class OrdenCreate(BaseModel):
     modelo: str | None = Field(default=None, max_length=30)
     aeronaves: int | None = Field(default=None, ge=1, le=12)
     indicativo: str | None = Field(default=None, max_length=40)
+    # solo para "lanzar": misiles de crucero de la salva (el blanco va en objetivo_unidad_id)
+    misiles: int | None = Field(default=None, ge=1, le=4)
 
 
 class OrdenOut(BaseModel):

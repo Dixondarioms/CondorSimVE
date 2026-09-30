@@ -39,12 +39,44 @@
     if (tipoOrden === "apoyar") {
       return activas.filter((u) => u.bando === rol && u.tipo !== "base" && String(u.id) !== String(unidadId));
     }
+    if (tipoOrden === "lanzar") { // un misil de crucero no persigue aeronaves en vuelo
+      return activas.filter((u) => u.bando !== rol && (u.tipo !== "aerea" || u.en_tierra));
+    }
     return activas.filter((u) => u.bando !== rol);
   }
 
-  /** Unidades propias que pueden recibir ordenes (las bases no se mueven ni combaten). */
+  /** Unidades propias que pueden recibir ordenes (las bases no se mueven ni combaten; los misiles vuelan solos). */
   function unidadesConOrdenes(unidades, rol) {
-    return unidades.filter((u) => u.estado === "activa" && u.bando === rol && u.tipo !== "base");
+    return unidades.filter((u) => u.estado === "activa" && u.bando === rol && u.tipo !== "base" && !esMisil(u));
+  }
+
+  // ---------------------------------------------------------------- buques, portaaviones y misiles de crucero
+  const PLAZAS_AERONAVES = { base_aerea: 12, portaaviones: 10 }; // igual que el catalogo del servidor
+  const CLASES_EMBARCABLES = ["helicoptero", "helicoptero_artillado", "dron_reconocimiento", "dron_ataque", "municion_merodeadora"];
+  const MODELOS_EMBARCABLES = ["caza_embarcado"];
+  const LANZAN_MISILES = ["fragata", "destructor", "submarino", "lanzador_misiles"];
+  const MAX_MISILES_SALVA = 4;
+  const MUNICION_POR_MISIL = 25;
+
+  const esMisil = (u) => !!u && u.clase === "misil_crucero";
+  /** Base aerea o portaaviones: lanza, recibe y estaciona aeronaves. */
+  const operaAeronaves = (u) => !!u && Object.prototype.hasOwnProperty.call(PLAZAS_AERONAVES, u.clase || "");
+  const esPortaaviones = (u) => operaAeronaves(u) && u.tipo !== "base";
+  const plazasDe = (u) => PLAZAS_AERONAVES[u.clase] || 0;
+  /** La aeronave puede operar desde un portaaviones (por su modelo o, si no lo tiene, por su clase). */
+  const esEmbarcable = (u) => !!u && (MODELOS_EMBARCABLES.includes(u.modelo || "") || CLASES_EMBARCABLES.includes(u.clase || ""));
+  /** `u` puede aterrizar en (o despegar de) `base`. */
+  const puedeOperarEn = (u, base) => operaAeronaves(base) && !esMisil(u) && (!esPortaaviones(base) || esEmbarcable(u));
+  /** Modelo del catalogo que puede salir de esa base (un portaaviones solo lanza embarcables; nadie lanza misiles). */
+  const modeloDespegaDe = (m, base) => !!m && !m.misil && (!esPortaaviones(base) || !!m.embarcable);
+  const puedeLanzarMisiles = (u, clase) => !!u && u.estado === "activa" && (clase ? !!clase.lanza_misiles : LANZAN_MISILES.includes(u.clase || ""));
+  /** Misiles que la municion del lanzador permite en una salva (0 a 4). */
+  const misilesDisponibles = (u) => Math.max(0, Math.min(MAX_MISILES_SALVA, Math.floor(((u && u.municion) || 0) / MUNICION_POR_MISIL)));
+
+  /** Texto de la situacion de un misil en vuelo: "Salva x2 · hacia Deposito Norte". */
+  function textoMisil(u, unidades) {
+    const blanco = (unidades || []).find((x) => x.id === u.blanco_id);
+    return `${u.aeronaves || 1} misil${(u.aeronaves || 1) === 1 ? "" : "es"} en vuelo hacia ${blanco ? blanco.nombre : "su blanco"}`;
   }
 
   const ETIQUETA_CLIMA = { despejado: "Despejado", nublado: "Nublado", lluvia: "Lluvia", tormenta: "Tormenta" };
@@ -94,7 +126,9 @@
   const RAMA_DE_CLASE = {
     infanteria: "infanteria", reconocimiento: "infanteria", blindado: "blindados", artilleria: "artilleria",
     antiaerea: "artilleria", caza: "aviacion", ataque: "aviacion", helicoptero: "aviacion",
-    fragata: "naval", patrullero: "naval", base_aerea: "bases", deposito: "bases", puerto: "bases",
+    fragata: "naval", patrullero: "naval", destructor: "naval", portaaviones: "naval", submarino: "naval",
+    buque_desembarco: "naval", lanzador_misiles: "artilleria", misil_crucero: "artilleria",
+    base_aerea: "bases", deposito: "bases", puerto: "bases",
   };
   const RAMA_DE_TIPO = { terrestre: "infanteria", aerea: "aviacion", naval: "naval", base: "bases" };
   const RAMAS = [
@@ -142,6 +176,7 @@
 
   /** Estado legible de una unidad segun sus datos y las ordenes pendientes de este turno. */
   function estadoUnidad(u, ordenesPendientes = []) {
+    if (esMisil(u) && u.estado === "activa") return { texto: "Misil en vuelo", clase: "ok" };
     if (u.estado === "destruida") return { texto: "Destruida", clase: "fuego" };
     if (u.fuerza === null || u.fuerza === undefined) return { texto: "Detectada", clase: "fuego" };
     const orden = ordenesPendientes.find((o) => o.unidad_id === u.id);
@@ -322,9 +357,9 @@
     return u.fuerza > 0 ? Math.max(1, Math.round((u.aeronaves * u.fuerza) / 100)) : 0;
   }
 
-  /** Bases aereas propias en condiciones de lanzar un grupo. */
+  /** Bases aereas y portaaviones propios en condiciones de lanzar un grupo. */
   const basesAereasPropias = (unidades, rol) => unidades.filter(
-    (u) => u.bando === rol && u.clase === "base_aerea" && u.estado === "activa" && u.fuerza >= FUERZA_MINIMA_BASE,
+    (u) => u.bando === rol && operaAeronaves(u) && u.estado === "activa" && u.fuerza >= FUERZA_MINIMA_BASE,
   );
 
   /** {modelo, aeronaves, indicativo} de una orden de despegue (vacio si no se puede leer). */
@@ -458,14 +493,14 @@
 
   /** Plazas libres de una base para el grupo `u` (un numero negativo o cero significa que no cabe). */
   function plazasLibres(base, unidades) {
-    return CAPACIDAD_BASE - estacionadasEn(base, unidades).reduce((s, x) => s + Math.max(1, x.aeronaves || 1), 0);
+    return (plazasDe(base) || CAPACIDAD_BASE) - estacionadasEn(base, unidades).reduce((s, x) => s + Math.max(1, x.aeronaves || 1), 0);
   }
 
   /** Bases aereas propias donde `u` cabe, con la distancia y si llega este turno con su combustible. */
   function opcionesDeAterrizaje(u, unidades) {
     const km = (b) => distanciaKm(u.lat, u.lon, b.lat, b.lon);
     return basesAereasPropias(unidades, u.bando)
-      .filter((b) => plazasLibres(b, unidades) >= Math.max(1, u.aeronaves || 1))
+      .filter((b) => puedeOperarEn(u, b) && plazasLibres(b, unidades) >= Math.max(1, u.aeronaves || 1))
       .map((b) => {
         const d = km(b);
         const alcanceTurno = (u.velocidad_kmh || 0) * 1; // un turno = 1 h
@@ -585,6 +620,8 @@
     nacionDe, etiquetaBandoNacion, filtrarUnidades, textoObjetivo, avanceObjetivo, ETIQUETA_OBJETIVO, CAPACIDAD_BASE, RADIO_ATERRIZAJE_KM, estacionadasEn, plazasLibres, opcionesDeAterrizaje, situacionDeVuelo,
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,
     aeronavesComprometidas, baseEnEscenario, nombreCortoBase, FUERZA_MINIMA_BASE,
+    esMisil, operaAeronaves, esPortaaviones, plazasDe, esEmbarcable, puedeOperarEn, modeloDespegaDe, puedeLanzarMisiles,
+    misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL,
     distanciaKm, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, lineasCombate, describirCombate,

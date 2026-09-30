@@ -35,7 +35,7 @@ BANDOS = ("azul", "rojo")
 CAMPOS_OCULTOS = (
     "fuerza", "velocidad_kmh", "alcance_km", "deteccion_km", "combustible", "municion", "autonomia_km",
     "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves",
-    "base_id", "espera_restante", "mision", "mision_lat", "mision_lon",
+    "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id",
     "emitiendo", "fuego_libre", "stock_combustible", "stock_municion",
 )
 CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct")

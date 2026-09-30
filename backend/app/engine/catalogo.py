@@ -25,7 +25,7 @@ class Clase:
     id: str
     nombre: str
     tipo: str
-    dimension: str  # G terrestre/instalacion, A aire, S superficie
+    dimension: str  # G terrestre/instalacion, A aire, S superficie, U submarino
     funcion: str  # 6 caracteres del SIDC
     velocidad_kmh: float
     alcance_km: float
@@ -57,6 +57,11 @@ class Clase:
     se_consume: bool = False  # municion merodeadora: se destruye al atacar
     celula: str = ""  # "ge": radares y guerra electronica, que conduce el puesto A2
     defensa_aerea: bool = False  # dispara sola contra aeronaves enemigas detectadas a su alcance (si su fuego esta libre)
+    # ---- buques, portaaviones y misiles de crucero (ver engine/misiles.py y engine/aeronaves.py) ----
+    misil: bool = False  # misil de crucero en vuelo: autonomo, guiado hacia su blanco, no admite ordenes
+    lanza_misiles: bool = False  # puede lanzar salvas de misiles de crucero (orden "lanzar")
+    plazas_aeronaves: int = 0  # aeronaves que opera y estaciona (base aerea, portaaviones); 0 = ninguna
+    embarcable: bool = False  # la aeronave puede operar desde un portaaviones (helicopteros, drones)
     # ---- bases: existencias (ver engine/logistica.py) ----
     stock_max: float = 0.0  # existencias maximas de combustible y de municion (puntos; 100 = llenar una unidad)
     reposicion_turno: float = 0.0  # puntos que repone cada turno (depositos: la linea de abastecimiento)
@@ -91,6 +96,10 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
           _atk(0.0, 0.0, 0.0), 0.5, "compania", suministra=("terrestre",), vulnerable_emboscada=True,
           nodo_movil_km=3.0, carga_max=100.0,
           armamento="Convoy: reabastece en marcha a las unidades terrestres a <= 3 km; muy vulnerable a emboscadas"),
+    Clase("lanzador_misiles", "Lanzador de misiles de crucero (bateria costera)", "terrestre", "G", "UCMT--", 40, 0,
+          10, 400, _atk(0.0, 0.0, 0.0), 0.7, "compania", despliegue_turnos=1, lanza_misiles=True,
+          armamento="Sin fuego directo: lanza salvas de misiles de crucero contra blancos terrestres y navales; debe "
+                    "desplegarse (1 turno quieto) tras moverse"),
     # ---- sensores y guerra electronica terrestres (los conduce el puesto A2) ----
     Clase("radar", "Radar de vigilancia aerea", "terrestre", "G", "ESR---", 15, 0, 150, 150, _atk(0.0, 0.0, 0.0), 0.5,
           "", movilidad="pesada", solo_aereo=True, emisor=True, celula="ge",
@@ -106,30 +115,51 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
     Clase("ataque", "Ataque a tierra", "aerea", "A", "MFA---", 700, 100, 30, 2000, _atk(1.3, 0.4, 1.2), 0.8,
           movilidad="aerea"),
     Clase("helicoptero", "Helicoptero", "aerea", "A", "MH----", 250, 25, 20, 500, _atk(1.1, 0.3, 0.9), 0.8,
-          movilidad="aerea"),
+          movilidad="aerea", embarcable=True),
     Clase("helicoptero_artillado", "Helicoptero de transporte artillado", "aerea", "A", "MHU---", 220, 6, 15, 450,
-          _atk(0.45, 0.15, 0.3), 0.7, movilidad="aerea", penalizacion_movilidad=0.15, cadencia_fuego=1.6,
+          _atk(0.45, 0.15, 0.3), 0.7, movilidad="aerea", penalizacion_movilidad=0.15, cadencia_fuego=1.6, embarcable=True,
           armamento="Ametralladora de 12,7 mm en afuste: alta cadencia (mas municion), -15 % de velocidad por peso"),
     Clase("avion_ge", "Avion de guerra electronica", "aerea", "A", "MFJ---", 750, 60, 60, 2500, _atk(0.0, 0.0, 0.0),
           0.6, movilidad="aerea", escucha_km=200.0, interferencia_km=40.0,
           armamento="Interferidor en orbita: degrada sensores, antiaerea y enlaces de drones enemigos en 40 km a hasta "
                     "60 km de su posicion; escucha emisores hasta 200 km. Sin armas"),
     Clase("dron_reconocimiento", "Dron de reconocimiento", "aerea", "A", "MFQR--", 150, 0, 45, 1500,
-          _atk(0.0, 0.0, 0.0), 0.35, movilidad="aerea", firma=0.5, dron=True,
+          _atk(0.0, 0.0, 0.0), 0.35, movilidad="aerea", firma=0.5, dron=True, embarcable=True,
           armamento="Camaras electroopticas e infrarrojas, sin armas. Firma radar pequena: se lo detecta a la mitad de distancia"),
     Clase("dron_ataque", "Dron armado", "aerea", "A", "MFQA--", 200, 15, 30, 1200, _atk(0.9, 0.0, 0.6), 0.35,
-          movilidad="aerea", firma=0.6, dron=True, municion_por_ataque=50.0,
+          movilidad="aerea", firma=0.6, dron=True, municion_por_ataque=50.0, embarcable=True,
           armamento="Misiles guiados ligeros contra vehiculos y buques (2 ataques por carga); firma radar pequena"),
     Clase("municion_merodeadora", "Municion merodeadora (dron kamikaze)", "aerea", "A", "MFQA--", 180, 5, 15, 300,
-          _atk(1.4, 0.0, 1.0), 0.2, movilidad="aerea", firma=0.4, dron=True, se_consume=True,
+          _atk(1.4, 0.0, 1.0), 0.2, movilidad="aerea", firma=0.4, dron=True, se_consume=True, embarcable=True,
           armamento="Merodea sobre la zona y se estrella contra el blanco: un solo ataque, se destruye al impactar"),
+    Clase("misil_crucero", "Misil de crucero", "aerea", "A", "WMCM--", 850, 5, 0, 1000, _atk(1.5, 0.0, 1.6), 0.3,
+          movilidad="aerea", firma=0.3, se_consume=True, misil=True,
+          armamento="Salva de misiles guiados hacia su blanco: vuela sola, se estrella contra el blanco (un solo "
+                    "ataque) y puede ser derribada antes del impacto por la antiaerea o las patrullas enemigas"),
     # ---- navales ----
-    Clase("fragata", "Fragata", "naval", "S", "CLFF--", 40, 40, 30, 4000, _atk(0.6, 0.5, 1.2), 1.0, movilidad="naval"),
+    Clase("fragata", "Fragata", "naval", "S", "CLFF--", 40, 40, 30, 4000, _atk(0.6, 0.5, 1.2), 1.0, movilidad="naval",
+          lanza_misiles=True,
+          armamento="Canon y misiles antibuque y antiaereos de corto alcance; lanza misiles de crucero (orden lanzar)"),
     Clase("patrullero", "Patrullero", "naval", "S", "CPSB--", 55, 20, 20, 1500, _atk(0.4, 0.3, 0.9), 0.7,
           movilidad="naval"),
+    Clase("destructor", "Destructor", "naval", "S", "CLDD--", 55, 60, 60, 5000, _atk(0.8, 1.6, 1.4), 1.2,
+          movilidad="naval", emisor=True, defensa_aerea=True, lanza_misiles=True,
+          armamento="Radar de busqueda aerea y misiles antiaereos: derriba solo aeronaves y misiles enemigos a su "
+                    "alcance si su radar emite (la escucha enemiga lo localiza). Misiles antibuque y de crucero"),
+    Clase("portaaviones", "Portaaviones", "naval", "S", "CLCV--", 45, 15, 50, 8000, _atk(0.2, 0.5, 0.3), 1.5,
+          "", ("aerea",), movilidad="naval", plazas_aeronaves=10, stock_max=1500.0,
+          armamento="Base aerea movil: lanza y recibe helicopteros, drones y cazas embarcados (10 plazas). Repone "
+                    "sus existencias junto a un puerto propio. Armas propias debiles: necesita escolta"),
+    Clase("submarino", "Submarino", "naval", "U", "SC----", 35, 30, 25, 6000, _atk(0.0, 0.0, 1.6), 1.0,
+          movilidad="naval", firma=0.25, lanza_misiles=True,
+          armamento="Torpedos contra buques y misiles de crucero. Sumergido, se lo detecta a un cuarto de la "
+                    "distancia. No puede atacar aeronaves"),
+    Clase("buque_desembarco", "Buque de desembarco anfibio", "naval", "S", "CALS--", 35, 10, 25, 5000,
+          _atk(0.4, 0.2, 0.2), 0.9, movilidad="naval",
+          armamento="Transporte anfibio de tropas y vehiculos con armas de autodefensa debiles: necesita escolta"),
     # ---- bases ----
     Clase("base_aerea", "Base aerea", "base", "G", "IBA---", 0, 25, 6, 0, _atk(0.0, 0.0, 0.0), 1.0, "",
-          ("aerea",), movilidad="fija", stock_max=2000.0),
+          ("aerea",), movilidad="fija", stock_max=2000.0, plazas_aeronaves=12),
     Clase("deposito", "Deposito logistico", "base", "G", "UUS---", 0, 20, 5, 0, _atk(0.0, 0.0, 0.0), 1.0, "",
           ("terrestre",), movilidad="fija", stock_max=3000.0, reposicion_turno=150.0),
     Clase("puerto", "Puerto / base naval", "base", "G", "IBN---", 0, 25, 6, 0, _atk(0.0, 0.0, 0.0), 1.0, "",
@@ -146,6 +176,24 @@ def obtener(clase: str | None, tipo: str) -> Clase:
     if c is None or c.tipo != tipo:
         c = CLASES[CLASE_POR_TIPO[tipo]]
     return c
+
+
+def plazas_aeronaves(unidad) -> int:
+    """Aeronaves que la unidad puede estacionar y lanzar (base aerea, portaaviones); 0 si no opera aeronaves."""
+    return obtener(getattr(unidad, "clase", None), unidad.tipo).plazas_aeronaves
+
+
+def opera_aeronaves(unidad) -> bool:
+    return plazas_aeronaves(unidad) > 0
+
+
+def es_portaaviones(unidad) -> bool:
+    """Opera aeronaves y no es una base fija (se mueve con ellas a bordo)."""
+    return unidad.tipo != "base" and opera_aeronaves(unidad)
+
+
+def es_misil(unidad) -> bool:
+    return unidad.tipo == "aerea" and obtener(getattr(unidad, "clase", None), unidad.tipo).misil
 
 
 # ---------------------------------------------------------------------------------------------------------
@@ -177,6 +225,7 @@ class Modelo:
     defensa: float
     foto: str
     credito: dict  # autor, licencia, url_licencia, pagina
+    embarcable: bool | None = None  # opera desde un portaaviones (None = lo que diga su clase)
 
 
 _CREDITO_PROPIO = {"autor": "Simulador Fenix (ilustracion propia)", "licencia": "CC0",
@@ -243,7 +292,67 @@ MODELOS: dict[str, Modelo] = {m.id: m for m in [
         750, 60, 60, 2500, _atk(0.0, 0.0, 0.0), 0.6,
         "/static/fotos/avion_ge.svg", _CREDITO_PROPIO,
     ),
+    # ---- aviacion embarcada y de apoyo, y misil de crucero: modelos genericos (ilustraciones propias) ----
+    Modelo(
+        "caza_embarcado", "caza", "Caza embarcado (generico)", "Caza emb.", "Generico", "-",
+        "Caza multirol naval",
+        "Caza reforzado con gancho de apontaje: despega y aterriza en un portaaviones. Algo menos de autonomia que "
+        "un caza de base terrestre y buena capacidad antibuque.",
+        "Canon, misiles aire-aire y misiles antibuque.",
+        900, 70, 60, 1500, _atk(0.8, 1.2, 1.0), 0.95,
+        "/static/fotos/caza_embarcado.svg", _CREDITO_PROPIO, embarcable=True,
+    ),
+    Modelo(
+        "helo_ataque", "helicoptero", "Helicoptero de ataque (generico)", "Helo At.", "Generico", "-",
+        "Ataque a blindados y embarcaciones",
+        "Helicoptero con misiles guiados: lento pero muy eficaz contra blindados y embarcaciones. Opera desde bases "
+        "y portaaviones.",
+        "Canon de 30 mm, cohetes y misiles antitanque guiados.",
+        280, 25, 20, 550, _atk(1.2, 0.3, 1.0), 0.85,
+        "/static/fotos/helo_ataque.svg", _CREDITO_PROPIO,
+    ),
+    Modelo(
+        "helo_transporte", "helicoptero_artillado", "Helicoptero de transporte artillado (generico)", "Helo Tr.",
+        "Generico", "-",
+        "Transporte de tropas con autodefensa",
+        "Helicoptero de transporte con ametralladoras en las puertas: apoyo ligero y autodefensa. Opera desde bases "
+        "y portaaviones.",
+        "Ametralladoras de 12,7 mm en afuste (alta cadencia).",
+        230, 6, 15, 500, _atk(0.45, 0.15, 0.3), 0.7,
+        "/static/fotos/helo_transporte.svg", _CREDITO_PROPIO,
+    ),
+    Modelo(
+        "ataque_ligero", "ataque", "Avion de ataque ligero (generico)", "At. ligero", "Generico", "-",
+        "Apoyo aereo cercano",
+        "Avion ligero y economico para apoyo cercano contra blancos terrestres poco defendidos. Vulnerable a la "
+        "antiaerea y a los cazas. Solo opera desde bases terrestres.",
+        "Canon, cohetes y bombas ligeras.",
+        650, 90, 30, 1800, _atk(1.2, 0.3, 1.0), 0.75,
+        "/static/fotos/ataque_ligero.svg", _CREDITO_PROPIO,
+    ),
+    Modelo(
+        "crucero", "misil_crucero", "Misil de crucero (generico)", "Crucero", "Generico", "-",
+        "Ataque de precision a larga distancia",
+        "Misil subsonico de vuelo rasante lanzado en salvas desde buques, submarinos o baterias costeras. Vuela solo "
+        "hacia su blanco; la antiaerea enemiga puede derribarlo antes del impacto.",
+        "Cabeza explosiva (un solo impacto).",
+        850, 5, 0, 1000, _atk(1.5, 0.0, 1.6), 0.3,
+        "/static/fotos/crucero.svg", _CREDITO_PROPIO,
+    ),
 ]}
+
+
+def modelo_embarcable(m: Modelo) -> bool:
+    return CLASES[m.clase].embarcable if m.embarcable is None else m.embarcable
+
+
+def es_embarcable(clase_id: str | None, modelo_id: str | None = None) -> bool:
+    """La aeronave (su clase y, si lo tiene, su modelo) puede operar desde un portaaviones."""
+    m = MODELOS.get(modelo_id or "")
+    if m is not None and m.clase == clase_id:
+        return modelo_embarcable(m)
+    c = CLASES.get(clase_id or "")
+    return bool(c and c.embarcable)
 
 
 def perfil(unidad) -> Clase:
@@ -274,7 +383,7 @@ def modelo_dict(m: Modelo) -> dict:
         "pais": m.pais, "funcion": m.funcion, "descripcion": m.descripcion, "armamento": m.armamento,
         "velocidad_kmh": m.velocidad_kmh, "alcance_km": m.alcance_km, "deteccion_km": m.deteccion_km,
         "autonomia_km": m.autonomia_km, "ataque_vs": m.ataque_vs, "defensa": m.defensa, "foto": m.foto,
-        "credito": m.credito,
+        "credito": m.credito, "embarcable": modelo_embarcable(m), "misil": CLASES[m.clase].misil,
     }
 
 
@@ -295,5 +404,6 @@ def como_dict(c: Clase) -> dict:
         "carga_max": c.carga_max, "construye": c.construye, "firma": c.firma, "solo_aereo": c.solo_aereo,
         "emisor": c.emisor, "escucha_km": c.escucha_km, "interferencia_km": c.interferencia_km, "dron": c.dron,
         "se_consume": c.se_consume, "celula": c.celula, "defensa_aerea": c.defensa_aerea, "stock_max": c.stock_max,
-        "reposicion_turno": c.reposicion_turno,
+        "reposicion_turno": c.reposicion_turno, "misil": c.misil, "lanza_misiles": c.lanza_misiles,
+        "plazas_aeronaves": c.plazas_aeronaves, "embarcable": c.embarcable,
     }

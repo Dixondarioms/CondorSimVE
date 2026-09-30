@@ -32,6 +32,8 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
             raise HTTPException(status_code=404, detail="Grupo aereo no encontrado")
         if u.tipo != "aerea" or u.estado != "activa":
             raise HTTPException(status_code=400, detail="Solo un grupo aereo activo puede recibir una mision")
+        if catalogo.es_misil(u):
+            raise HTTPException(status_code=400, detail="Un misil en vuelo no admite ordenes.")
         clase = catalogo.perfil(u)
         auth.exigir_funcion(usuario, puestos.funcion_de_orden(u, "mision", clase))
         origen = (u.lat, u.lon, misiones_mod.velocidad_efectiva(u.velocidad_kmh, clase, esc.clima), u.autonomia_km, u.combustible)
@@ -41,11 +43,15 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
         if base is None or base.escenario_id != esc.id or base.bando != usuario.rol:
             raise HTTPException(status_code=404, detail="Base no encontrada")
         auth.exigir_funcion(usuario, "despegar")
-        if base.clase != "base_aerea" or base.estado != "activa":
+        if not catalogo.opera_aeronaves(base) or base.estado != "activa":
             raise HTTPException(status_code=400, detail="Solo una base aerea en servicio puede lanzar misiones")
         m = catalogo.MODELOS.get(payload.modelo or "")
         if m is None:
             raise HTTPException(status_code=400, detail="Elija un modelo de aeronave del catalogo")
+        if catalogo.CLASES[m.clase].misil:
+            raise HTTPException(status_code=400, detail="Los misiles de crucero se lanzan con la orden lanzar, no en una mision")
+        if catalogo.es_portaaviones(base) and not catalogo.modelo_embarcable(m):
+            raise HTTPException(status_code=400, detail=f"{m.nombre} no puede operar desde un portaaviones: {aeronaves_mod.MOTIVO_NO_EMBARCABLE}")
         n = payload.aeronaves or 2
         if n > catalogo.MAX_AERONAVES_GRUPO:
             raise HTTPException(status_code=400, detail=f"Un grupo tiene entre 1 y {catalogo.MAX_AERONAVES_GRUPO} aeronaves")
@@ -73,9 +79,11 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
                 d["centro"] = [round(p.centro[0], 5), round(p.centro[1], 5)]
         elif p.tipo == "aterrizaje":
             b = db.get(Unidad, p.base_id) if p.base_id else None
-            if (b is None or b.escenario_id != esc.id or b.bando != usuario.rol or b.clase != "base_aerea"
+            if (b is None or b.escenario_id != esc.id or b.bando != usuario.rol or not catalogo.opera_aeronaves(b)
                     or b.estado != "activa"):
-                raise HTTPException(status_code=400, detail="El aterrizaje debe ser en una base aerea propia en servicio")
+                raise HTTPException(status_code=400, detail="El aterrizaje debe ser en una base aerea propia (o un portaaviones propio) en servicio")
+            if catalogo.es_portaaviones(b) and not catalogo.es_embarcable(clase.id if clase else None, modelo):
+                raise HTTPException(status_code=400, detail=f"No puede aterrizar en un portaaviones: {aeronaves_mod.MOTIVO_NO_EMBARCABLE}")
             d.update(lat=b.lat, lon=b.lon, base_id=b.id)
         elif p.tipo == "blanco" and p.objetivo_unidad_id:
             if visibles is None:

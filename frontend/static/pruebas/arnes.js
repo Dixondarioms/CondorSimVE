@@ -60,6 +60,13 @@
     base(16, "GE Escucha 1", "azul", "guerra_electronica", 8.580, -70.640),
     base(17, "Vigía 1", "azul", "dron_reconocimiento", 8.640, -70.470, { modelo: "uav_reco", aeronaves: 1, echelon: "equipo" }),
     base(18, "Radar Rojo", "rojo", "radar", 8.720, -70.560),
+    // mar Caribe frente a Puerto Cabello: buques, portaaviones con un helicoptero a bordo y una salva en vuelo
+    base(20, "Destructor Mariscal", "azul", "destructor", 10.62, -68.05, { velocidad_kmh: 55, alcance_km: 60, deteccion_km: 60, municion: 75 }),
+    base(21, "Portaaviones Bolívar", "azul", "portaaviones", 10.66, -68.12, { velocidad_kmh: 45, alcance_km: 15, deteccion_km: 50, stock_combustible: 900, stock_municion: 1200 }),
+    base(22, "Tiburón 1", "azul", "helicoptero", 10.666, -68.114, { modelo: "helo_ataque", aeronaves: 2, echelon: "equipo", en_tierra: true, base_id: 21, espera_restante: 0 }),
+    base(23, "Fragata Roja", "rojo", "fragata", 10.80, -67.70, { velocidad_kmh: 40, alcance_km: 40, deteccion_km: 30 }),
+    base(24, "Crucero x2 de Destructor Mariscal", "azul", "misil_crucero", 10.70, -67.90, { modelo: "crucero", aeronaves: 2, velocidad_kmh: 850, alcance_km: 5, autonomia_km: 1000, mision: "impacto", blanco_id: 23, mision_lat: 10.80, mision_lon: -67.70 }),
+    base(25, "Submarino Carite", "azul", "submarino", 10.58, -67.98, { velocidad_kmh: 35, alcance_km: 30, deteccion_km: 25 }),
   ];
   // zona de interferencia roja vigente (la emitio el turno anterior) sobre parte del despliegue azul
   const INTERFERENCIAS = [{ id: 1, bando: "rojo", unidad_id: 13, lat: 8.63, lon: -70.49, radio_km: 12, turno: 2 }];
@@ -147,7 +154,7 @@
 
   // ------------------------------------------------------------------ vista por rol (como el servidor)
   const FACTOR_DET = { despejado: 1, nublado: 0.9, lluvia: 0.7, tormenta: 0.5 };
-  const OCULTOS = ["fuerza", "velocidad_kmh", "alcance_km", "deteccion_km", "combustible", "municion", "autonomia_km", "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves", "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "emitiendo", "fuego_libre", "stock_combustible", "stock_municion"];
+  const OCULTOS = ["fuerza", "velocidad_kmh", "alcance_km", "deteccion_km", "combustible", "municion", "autonomia_km", "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves", "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id", "emitiendo", "fuego_libre", "stock_combustible", "stock_municion"];
   const km = (a, b) => Logica.distanciaKm(a.lat, a.lon, b.lat, b.lon);
 
   function completar(u) {
@@ -320,15 +327,24 @@
       if (!u || u.bando !== ROL) return error("Unidad no encontrada", 404);
       const cl = CAT.clases.find((c) => c.id === u.clase);
       if (cuerpo.tipo === "despegar") {
-        if (u.clase !== "base_aerea") return error("Solo una base aerea puede lanzar grupos de caza.");
-        if (!CAT.modelos.some((m) => m.id === cuerpo.modelo)) return error("Elija un modelo de aeronave del catalogo.");
+        if (!(cl.plazas_aeronaves > 0)) return error("Solo una base aerea o un portaaviones puede lanzar grupos de caza.");
+        const m = CAT.modelos.find((x) => x.id === cuerpo.modelo);
+        if (!m) return error("Elija un modelo de aeronave del catalogo.");
+        if (u.tipo !== "base" && !m.embarcable) return error(`${m.nombre} no puede despegar de un portaaviones: solo helicopteros, drones y cazas embarcados operan desde un portaaviones.`);
         const en = UNIDADES.filter((x) => x.bando === ROL && x.tipo === "aerea" && x.estado === "activa").reduce((s, x) => s + (x.aeronaves || 1), 0);
         if (en + cuerpo.aeronaves > CAT.aeronaves.max_bando) return error(`Tope de ${CAT.aeronaves.max_bando} aeronaves por bando (${en} ya en servicio o comprometidas).`);
       }
+      if (cuerpo.tipo === "lanzar") {
+        if (!cl.lanza_misiles) return error("Esta unidad no puede lanzar misiles de crucero.");
+        if (!cuerpo.misiles || cuerpo.misiles > 4) return error("Una salva tiene entre 1 y 4 misiles.");
+        if (u.municion < 25 * cuerpo.misiles) return error(`Municion insuficiente para ${cuerpo.misiles} misil(es).`);
+      }
+      if (cl.misil) return error("Un misil en vuelo no admite ordenes.");
       if (cuerpo.tipo === "construir" && !cl.construye) return error("Solo los ingenieros pueden construir puentes y vados");
       if (cuerpo.tipo === "interferir" && !(cl.interferencia_km > 0)) return error("Solo las unidades de guerra electronica pueden interferir.");
       ordenes = ordenes.filter((o) => !(o.unidad_id === u.id && o.estado === "pendiente"));
-      const detalle = cuerpo.tipo === "despegar" ? JSON.stringify({ modelo: cuerpo.modelo, aeronaves: cuerpo.aeronaves, indicativo: cuerpo.indicativo || "" }) : cuerpo.detalle || "";
+      const detalle = cuerpo.tipo === "despegar" ? JSON.stringify({ modelo: cuerpo.modelo, aeronaves: cuerpo.aeronaves, indicativo: cuerpo.indicativo || "" })
+        : cuerpo.tipo === "lanzar" ? JSON.stringify({ misiles: cuerpo.misiles || 1 }) : cuerpo.detalle || "";
       const o = { id: proximaOrden++, escenario_id: 1, unidad_id: u.id, tipo: cuerpo.tipo, objetivo_unidad_id: cuerpo.objetivo_unidad_id, waypoints: cuerpo.waypoints || [], detalle, turno_emitida: ESC.turno_actual, estado: "pendiente", resultado: "" };
       ordenes.push(o);
       ESC[`listo_${ROL}`] = false;
