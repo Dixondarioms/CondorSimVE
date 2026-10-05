@@ -5,6 +5,9 @@ La base se elige con la variable de entorno SIMULADOR_DATABASE_URL (o DATABASE_U
 Sin ella se usa el archivo SQLite `backend/simulador_fenix.db` (o SIMULADOR_DB para otra ruta).
 PostgreSQL es lo recomendado con varios alumnos conectados: maneja bien las escrituras concurrentes
 (WebSockets, temporizador de turnos, varios procesos) y bloquea la fila del escenario al resolver un turno.
+
+Las variables tambien pueden ir en `backend/.env` (lineas CLAVE=valor; lo escribe instalar.cmd -Postgres
+o -Https). Se cargan al importar este modulo sin pisar las que ya esten definidas en el entorno.
 """
 
 import os
@@ -15,6 +18,31 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def cargar_env(ruta: Path = BASE_DIR / ".env", entorno=os.environ) -> list[str]:
+    """Carga CLAVE=valor de un archivo .env en `entorno` (solo las claves que no existan).
+    Ignora lineas vacias y comentarios; quita comillas simples o dobles alrededor del valor."""
+    cargadas = []
+    try:
+        lineas = ruta.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError):
+        return cargadas
+    for linea in lineas:
+        linea = linea.strip()
+        if not linea or linea.startswith("#") or "=" not in linea:
+            continue
+        clave, valor = linea.split("=", 1)
+        clave, valor = clave.strip(), valor.strip()
+        if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "\"'":
+            valor = valor[1:-1]
+        if clave and clave not in entorno:
+            entorno[clave] = valor
+            cargadas.append(clave)
+    return cargadas
+
+
+cargar_env()
 # SIMULADOR_DB permite apuntar a otro archivo SQLite (pruebas, copias) sin tocar el de produccion.
 DB_PATH = Path(os.environ.get("SIMULADOR_DB") or BASE_DIR / "simulador_fenix.db")
 

@@ -42,26 +42,78 @@ def test_el_arnes_de_pruebas_es_coherente_con_index():
     assert contenido.count("<script") == base.count("<script") + 1, "regenere el arnes: tools/generar_arnes.py"
 
 
-def test_las_bases_aereas_de_venezuela_y_vecinos_son_validas():
+def _bases_aereas():
     import json
 
-    datos = json.loads((FRONTEND / "static" / "geo" / "bases_aereas.geojson").read_text(encoding="utf-8"))
-    bases = datos["features"]
+    return json.loads((FRONTEND / "static" / "geo" / "bases_aereas.geojson").read_text(encoding="utf-8"))["features"]
+
+
+def test_las_bases_aereas_de_venezuela_y_vecinos_son_validas():
+    """Las 18 curadas a mano siguen intactas (mismos OACI, nombres y propiedades) dentro del area de detalle."""
+    bases = [b for b in _bases_aereas() if b["properties"]["origen"] == "curado"]
     ven = [b for b in bases if b["properties"]["pais"] == "Venezuela"]
     vecinos = [b for b in bases if b["properties"]["pais"] != "Venezuela"]
-    assert len(ven) == 8 and len(vecinos) >= 10
-    icao = [b["properties"]["icao"] for b in bases]
-    assert len(set(icao)) == len(icao)
+    assert len(ven) == 8 and len(vecinos) == 10
     assert {"SVBL", "SVFM", "SVMC", "SVBC", "SVBM", "SVBS", "SVPR", "SVPA"} == {b["properties"]["icao"] for b in ven}
+    assert {b["properties"]["icao"] for b in vecinos} == {"SKUA", "SKYP", "SKCC", "SKUC", "SKPC", "SKRH", "SKVP", "SBBV", "SYLT", "TTPP"}
     assert {b["properties"]["pais"] for b in vecinos} == {"Colombia", "Brasil", "Guyana", "Trinidad y Tobago"}
+    por_icao = {b["properties"]["icao"]: b for b in bases}
+    assert por_icao["SVBL"]["properties"] == {"icao": "SVBL", "nombre": "Base Aérea El Libertador", "ciudad": "Maracay (Palo Negro)", "estado": "Aragua",
+                                              "elevacion_m": 442, "pais": "Venezuela", "tipo": "base aérea", "origen": "curado"}
+    assert por_icao["SVBL"]["geometry"]["coordinates"] == [-67.56111, 10.18056]
+    assert por_icao["SBBV"]["properties"]["nombre"] == "Base Aérea de Boa Vista (Ala 7, FAB)" and por_icao["SBBV"]["properties"]["elevacion_m"] is None
     for b in bases:
         lon, lat = b["geometry"]["coordinates"]
-        # dentro del area que cubren los tiles (ver LIMITES en app.js)
+        # dentro del area de detalle (region "venezuela"), donde tambien tienen su plano OSM
         assert 0.6 <= lat <= 12.4 and -73.4 <= lon <= -59.6, b["properties"]["nombre"]
         p = b["properties"]
         assert p["nombre"] and p["ciudad"] and p["estado"] and p["tipo"] in ("base aérea", "aeropuerto")
         if p["pais"] == "Venezuela":
             assert p["nombre"].startswith("Base A") and p["elevacion_m"] >= 0
+
+
+def test_los_aerodromos_de_ourairports_cubren_toda_america_sin_repetir_oaci():
+    bases = _bases_aereas()
+    nuevos = [b for b in bases if b["properties"]["origen"] == "ourairports"]
+    assert 800 <= len(nuevos) <= 1500 and len(bases) == len(nuevos) + 18
+    icao = [b["properties"]["icao"] for b in bases]
+    assert len(set(icao)) == len(icao)
+    paises = {b["properties"]["pais"] for b in nuevos}
+    assert {"Estados Unidos", "Canadá", "México", "Argentina", "Chile", "Perú", "Cuba", "Panamá", "Guayana Francesa (Francia)"} <= paises
+    assert all(not (p.isupper() and len(p) == 2) for p in paises), "todo codigo ISO debe traducirse a un nombre en español"
+    militares = [b for b in nuevos if b["properties"]["tipo"] == "base aérea"]
+    assert len(militares) >= 100 and any(b["properties"]["pais"] == "Paraguay" for b in militares)
+    for b in nuevos:
+        lon, lat = b["geometry"]["coordinates"]
+        assert -56 <= lat <= 72 and -170 <= lon <= -30, b["properties"]["nombre"]  # recuadro de la region "america"
+        p = b["properties"]
+        assert set(p) == {"icao", "nombre", "ciudad", "estado", "elevacion_m", "pais", "tipo", "origen"}
+        assert p["icao"] and p["nombre"] and p["estado"] and p["tipo"] in ("base aérea", "aeropuerto")
+        assert p["elevacion_m"] is None or isinstance(p["elevacion_m"], int)
+        assert not p["nombre"].startswith("[Duplicate]")
+
+
+def test_el_criterio_de_inclusion_de_ourairports_es_el_documentado():
+    import sys
+
+    sys.path.insert(0, str(FRONTEND.parent / "tools"))
+    import generar_bases_aereas as g
+
+    fila = lambda **k: {"continent": "SA", "type": "medium_airport", "name": "Aeropuerto X", "latitude_deg": "10", "longitude_deg": "-67",
+                        "icao_code": "SVXX", "scheduled_service": "yes", "gps_code": "", "ident": "SVXX", **k}
+    assert g.incluir(fila())
+    assert not g.incluir(fila(scheduled_service="no"))  # mediano sin servicio regular
+    assert g.incluir(fila(scheduled_service="no", type="large_airport"))
+    assert not g.incluir(fila(icao_code=""))
+    assert g.incluir(fila(icao_code="", type="small_airport", name="Base Aérea Capitán Manuel Ríos"))  # militar por nombre
+    assert g.incluir(fila(type="small_airport", name="Whiteman Air Force Base", continent="NA"))
+    assert not g.incluir(fila(type="heliport", name="Base Aérea Helipuerto"))
+    assert not g.incluir(fila(continent="EU"))
+    assert not g.incluir(fila(longitude_deg="-20"))  # fuera del recuadro de America
+    assert not g.incluir(fila(name="[Duplicate] Aeropuerto X"))
+    assert g.es_militar("Naval Air Station Oceana") and g.es_militar("Base de la Fuerza Aérea Paraguaya") and not g.es_militar("Nashville International Airport")
+    assert g.identificador({"icao_code": "", "gps_code": "KNMM", "ident": "KNMM"}) == "KNMM"
+    assert g.identificador({"icao_code": "", "gps_code": "", "ident": "PY-0035"}) == "PY-0035"
 
 
 def test_las_bases_se_pueden_colocar_como_unidad_en_su_posicion(api):

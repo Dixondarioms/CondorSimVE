@@ -231,7 +231,7 @@ def serializar(m: Mision) -> dict:
         "estado": m.estado, "unidad_id": m.unidad_id, "base_id": m.base_id, "modelo": m.modelo,
         "aeronaves": m.aeronaves, "turno_despegue": m.turno_despegue, "creada_turno": m.creada_turno,
         "puntos": puntos_de(m), "plan": json.loads(m.plan_json or "{}"), "indice": m.indice, "espera": m.espera,
-        "resultado": m.resultado, "escolta_de": escolta_de(m),
+        "resultado": m.resultado, "escolta_de": escolta_de(m), "autor": m.autor or "", "autor_puesto": m.autor_puesto,
     }
 
 

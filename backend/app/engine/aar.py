@@ -1,5 +1,5 @@
 """Informe posterior al ejercicio (AAR): instantaneas por turno, combates, resumen y rubrica de evaluacion
-por bando y por puesto (`construir_rubrica`)."""
+por bando, por puesto y por alumno (`construir_rubrica`)."""
 
 import json
 import re
@@ -10,13 +10,16 @@ from sqlalchemy.orm import Session
 from app import state
 from app.engine import catalogo, puestos
 from app.engine import objetivos as objetivos_mod
+from app.engine import orders as orders_mod
 from app.models.aar import Combate, Instantanea, RegistroLogistico
+from app.models.asignacion import Asignacion
 from app.models.escenario import Escenario
 from app.models.evento import Evento
 from app.models.mision import Mision
 from app.models.objetivo import Objetivo
 from app.models.orden import Orden
 from app.models.unidad import Unidad
+from app.models.usuario import Usuario
 
 CAMPOS_UNIDAD = (
     "id", "nombre", "bando", "tipo", "clase", "sidc", "lat", "lon", "fuerza", "estado",
@@ -66,6 +69,7 @@ def _orden_dict(o: Orden, nombres: dict) -> dict:
         "unidad": nombres.get(o.unidad_id, f"#{o.unidad_id}"), "tipo": o.tipo,
         "objetivo": nombres.get(o.objetivo_unidad_id) if o.objetivo_unidad_id else None,
         "waypoints": json.loads(o.waypoints_json or "[]"), "estado": o.estado, "resultado": o.resultado,
+        "autor": o.autor, "autor_puesto": o.autor_puesto,
     }
 
 
@@ -163,15 +167,84 @@ def construir_informe(db: Session, escenario: Escenario) -> dict:
 
 
 # ---------------------------------------------------------------------------------------------------------
+# Replay animado: lo justo para animar el mapa turno a turno (posiciones, combates con su lugar, novedades y
+# marcador acumulado). Es un subconjunto de `construir_informe`, sin ordenes ni combustible/municion.
+CAMPOS_REPLAY = ("id", "nombre", "bando", "tipo", "clase", "sidc", "lat", "lon", "fuerza", "estado")
+# novedades que ven ambos bandos en la repeticion (las dirigidas a un solo bando no se muestran)
+TIPOS_NOVEDAD_PUBLICA = ("ajuste", "clima", "logistica")
+
+
+def _marcador_hasta(objetivos: list[Objetivo], combates: list[Combate], turno: int) -> dict:
+    """Marcador acumulado al terminar `turno`: puntos de objetivos cumplidos hasta ese turno mas un punto por
+    cada FUERZA_POR_PUNTO de fuerza infligida al enemigo (misma regla que engine/objetivos.marcador)."""
+    puntos = {b: 0 for b in objetivos_mod.BANDOS}
+    infligido = {b: 0.0 for b in objetivos_mod.BANDOS}
+    for o in objetivos:
+        if o.estado == "cumplido" and o.bando in puntos and (o.turno_resuelto is None or o.turno_resuelto <= turno):
+            puntos[o.bando] += o.puntos
+    for c in combates:
+        if c.turno > turno or c.atacante_bando == c.defensor_bando:
+            continue
+        if c.atacante_bando in infligido:
+            infligido[c.atacante_bando] += c.perdida_defensor
+        if c.defensor_bando in infligido:
+            infligido[c.defensor_bando] += c.perdida_atacante
+    return {
+        b: {"objetivos": puntos[b], "bajas": int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO),
+            "total": puntos[b] + int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO)}
+        for b in objetivos_mod.BANDOS
+    }
+
+
+def construir_replay(db: Session, escenario: Escenario) -> dict:
+    """Turnos con instantanea (el turno en curso no), cada uno con todas las unidades (id, nombre, bando, tipo,
+    clase, sidc, lat, lon, fuerza, estado), los combates del turno con su lugar y sus participantes, las novedades
+    publicas y el marcador acumulado. Mismos permisos que el informe: lo decide el router."""
+    instantaneas = (
+        db.query(Instantanea).filter(Instantanea.escenario_id == escenario.id).order_by(Instantanea.turno).all()
+    )
+    combates = db.query(Combate).filter(Combate.escenario_id == escenario.id).order_by(Combate.id).all()
+    eventos = db.query(Evento).filter(Evento.escenario_id == escenario.id).order_by(Evento.id).all()
+    objetivos = db.query(Objetivo).filter(Objetivo.escenario_id == escenario.id).order_by(Objetivo.id).all()
+
+    turnos = []
+    for inst in instantaneas:
+        filas = json.loads(inst.datos_json)["unidades"]
+        turnos.append({
+            "turno": inst.turno, "clima": inst.clima,
+            "unidades": [{c: u.get(c) for c in CAMPOS_REPLAY} for u in filas],
+            "combates": [_combate_dict(c) for c in combates if c.turno == inst.turno],
+            "eventos": [
+                {"id": e.id, "tipo": e.tipo, "descripcion": e.descripcion}
+                for e in eventos
+                if e.turno == inst.turno and (e.tipo in TIPOS_NOVEDAD_PUBLICA or e.bando_destino == "todos")
+            ],
+            "marcador": _marcador_hasta(objetivos, combates, inst.turno),
+        })
+    return {
+        "escenario": {
+            "id": escenario.id, "nombre": escenario.nombre, "estado": escenario.estado,
+            "turno_actual": escenario.turno_actual, "hora_inicio_min": escenario.hora_inicio_min,
+        },
+        "turnos": turnos,
+    }
+
+
+# ---------------------------------------------------------------------------------------------------------
 # Rubrica de evaluacion por bando y por puesto
 UMBRAL_CRITICO = 25.0  # % de combustible o municion por debajo del cual la unidad esta al limite
 TOP_MOTIVOS = 3
 
-# Las ordenes no guardan quien las emitio: el puesto se deriva de la FUNCION de cada orden (el puesto
-# responsable segun engine/puestos.py), no del alumno que la firmo.
+# El desglose por puesto se deriva de la FUNCION de cada orden (el puesto responsable segun engine/puestos.py),
+# no del alumno que la firmo; la evaluacion por alumno (seccion `alumnos`) si usa el autor registrado.
 NOTA_PUESTOS = (
-    "Las ordenes no registran al usuario que las emitio: el desglose por puesto se deriva de la funcion "
-    "de cada orden (puesto responsable: A2, A3, A4 o A5), no del alumno que la firmo."
+    "El desglose por puesto se deriva de la funcion de cada orden (puesto responsable: A2, A3, A4 o A5), "
+    "no del alumno que la firmo; la evaluacion por alumno usa el autor registrado en cada orden y mision."
+)
+SIN_AUTOR = "sin autor registrado"
+NOTA_ALUMNOS = (
+    "Las ordenes y misiones anteriores a la version que registra su autor figuran como 'sin autor registrado'; "
+    "las ordenes automaticas del motor (intercepciones, defensa antiaerea, ataques de mision) no se atribuyen a nadie."
 )
 
 _SUGERENCIAS = (
@@ -238,6 +311,120 @@ def _observaciones_ordenes(o: dict, quien: str = "") -> list[str]:
     return obs
 
 
+def _bloque_misiones() -> dict:
+    return {"planificadas": 0, "cumplidas": 0, "abortadas": 0, "fallidas": 0, "canceladas": 0, "en_curso": 0}
+
+
+def _contar_mision(mm: dict, m: Mision) -> None:
+    mm["planificadas"] += 1
+    clave = {"cumplida": "cumplidas", "abortada": "abortadas", "fallida": "fallidas", "cancelada": "canceladas",
+             "en_curso": "en_curso"}.get(m.estado)
+    if clave:
+        mm[clave] += 1
+
+
+def _contar_orden(bl: dict, o: Orden) -> None:
+    bl["emitidas"] += 1
+    if o.estado == "rechazada":
+        bl["rechazadas"] += 1
+        bl["_motivos"][motivo_generico(o.resultado)] += 1
+    elif o.estado == "resuelta":
+        bl["resueltas"] += 1
+    else:
+        bl["pendientes"] += 1
+
+
+def _observacion_pasivos(tp: dict) -> str:
+    lista = ", ".join(str(t) for t in tp["turnos"][:8]) + ("..." if len(tp["turnos"]) > 8 else "")
+    return (f"{tp['cantidad']} turno(s) sin emitir ninguna orden (turno(s) {lista}): "
+            "mantener la iniciativa o dejar constancia de la decision de esperar.")
+
+
+def _observacion_misiones(mi: dict) -> str | None:
+    malas = mi["abortadas"] + mi["fallidas"]
+    if malas and malas >= mi["cumplidas"]:
+        return (f"Misiones aereas abortadas o fallidas ({malas}) igualan o superan a las cumplidas "
+                f"({mi['cumplidas']}): revisar el combustible, las rutas y la ventana de aterrizaje (A3).")
+    return None
+
+
+def _alumnos(db: Session, escenario: Escenario, unidades: dict, ordenes: list, misiones: list,
+             turnos_resueltos: list[int]) -> tuple[list[dict], dict]:
+    """Evaluacion por alumno: cada usuario de un bando asignado al escenario y cada autor registrado de una orden o
+    mision. Devuelve la lista (por bando y nombre) y, por bando, cuantas ordenes y misiones de alumnos quedaron sin
+    autor registrado (anteriores a la migracion 0018); las ordenes automaticas del motor no cuentan."""
+    asignados = {a.usuario_id for a in db.query(Asignacion).filter(Asignacion.escenario_id == escenario.id)}
+    autores = {o.autor_id for o in ordenes if o.autor_id} | {m.autor_id for m in misiones if m.autor_id}
+    # misiones previas a la migracion: solo guardan el nombre de usuario
+    nombres = {m.autor for m in misiones if not m.autor_id and m.autor}
+    usuarios: dict[int, Usuario] = {}
+    if asignados | autores:
+        usuarios.update((u.id, u) for u in db.query(Usuario).filter(Usuario.id.in_(asignados | autores)))
+    if nombres:
+        usuarios.update((u.id, u) for u in db.query(Usuario).filter(Usuario.username.in_(nombres)))
+    por_nombre = {u.username: u.id for u in usuarios.values()}
+
+    fichas: dict[int, dict] = {}
+    for uid, u in usuarios.items():
+        if uid not in autores and u.username not in nombres and u.rol not in puestos.BANDOS:
+            continue  # observadores e instructores asignados que no emitieron nada no se evaluan
+        fichas[uid] = {
+            "usuario_id": uid, "username": u.username, "bando": u.rol, "asignado": uid in asignados,
+            "ordenes": _bloque_ordenes(), "misiones": _bloque_misiones(), "observaciones": [],
+            "_turnos": set(), "_puestos": Counter(),
+        }
+    sin_autor = {b: {"ordenes": 0, "misiones": 0} for b in puestos.BANDOS}
+
+    for o in ordenes:
+        f = fichas.get(o.autor_id)
+        if f is not None:
+            _contar_orden(f["ordenes"], o)
+            f["_turnos"].add(o.turno_emitida)
+            if o.autor_puesto:
+                f["_puestos"][o.autor_puesto] += 1
+        elif not orders_mod.es_automatica(o):
+            u = unidades.get(o.unidad_id)
+            if u is not None and u.bando in sin_autor:
+                sin_autor[u.bando]["ordenes"] += 1
+    for m in misiones:
+        f = fichas.get(m.autor_id or por_nombre.get(m.autor))
+        if f is not None:
+            _contar_mision(f["misiones"], m)
+            f["_turnos"].add(m.creada_turno)
+            if m.autor_puesto:
+                f["_puestos"][m.autor_puesto] += 1
+        elif m.bando in sin_autor:
+            sin_autor[m.bando]["misiones"] += 1
+
+    lista = []
+    for f in fichas.values():
+        usados = f.pop("_puestos")
+        # puesto que ocupaba al emitir (el mas frecuente); si no quedo registrado, el que tiene ahora
+        p = puestos.obtener(usados.most_common(1)[0][0] if usados else usuarios[f["usuario_id"]].puesto)
+        f["puesto"], f["sigla"], f["puesto_nombre"] = p.id, p.sigla, p.nombre
+        activos = sorted(f.pop("_turnos"))
+        pasivos = [t for t in turnos_resueltos if t not in activos]
+        f["turnos_activos"] = {"cantidad": len(activos), "turnos": activos}
+        f["turnos_pasivos"] = {"cantidad": len(pasivos), "turnos": pasivos}
+        f["ordenes"] = _cerrar_ordenes(f["ordenes"])
+        obs = f["observaciones"]
+        o, mi = f["ordenes"], f["misiones"]
+        if turnos_resueltos and o["emitidas"] == 0 and mi["planificadas"] == 0:
+            obs.append("No emitio ninguna orden ni planifico misiones durante el ejercicio.")
+        obs.extend(_observaciones_ordenes(o, f" de {f['username']}"))
+        if pasivos and o["emitidas"] + mi["planificadas"] > 0:
+            obs.append(_observacion_pasivos(f["turnos_pasivos"]))
+        aviso = _observacion_misiones(mi)
+        if aviso:
+            obs.append(aviso)
+        if not obs:
+            obs.append("Sin observaciones destacables.")
+        lista.append(f)
+    orden_bando = {b: i for i, b in enumerate(puestos.BANDOS)}
+    lista.sort(key=lambda f: (orden_bando.get(f["bando"], len(orden_bando)), f["username"]))
+    return lista, sin_autor
+
+
 def construir_rubrica(db: Session, escenario: Escenario) -> dict:
     """Indicadores de conduccion por bando (y por puesto responsable) a partir de ordenes, unidades, combates,
     registro logistico, objetivos y misiones, con observaciones automaticas en espanol."""
@@ -264,8 +451,7 @@ def construir_rubrica(db: Session, escenario: Escenario) -> dict:
             "logistica": {"unidades_criticas": [], "unidades_en_nivel_critico": 0, "reabastecimientos": 0},
             "perdidas": {"infligidas": 0.0, "sufridas": 0.0, "unidades_destruidas": 0, "enemigas_destruidas": 0},
             "objetivos": {"cumplidos": 0, "fallidos": 0, "pendientes": 0, "puntos": 0},
-            "misiones": {"planificadas": 0, "cumplidas": 0, "abortadas": 0, "fallidas": 0, "canceladas": 0,
-                         "en_curso": 0},
+            "misiones": _bloque_misiones(),
             "puestos": OrderedDict(),
             "observaciones": [],
         }
@@ -282,26 +468,14 @@ def construir_rubrica(db: Session, escenario: Escenario) -> dict:
             continue
         actividad[u.bando].add(o.turno_emitida)
         for bl in (r[u.bando]["ordenes"], r[u.bando]["puestos"][_puesto_de(u, o.tipo)]["ordenes"]):
-            bl["emitidas"] += 1
-            if o.estado == "rechazada":
-                bl["rechazadas"] += 1
-                bl["_motivos"][motivo_generico(o.resultado)] += 1
-            elif o.estado == "resuelta":
-                bl["resueltas"] += 1
-            else:
-                bl["pendientes"] += 1
+            _contar_orden(bl, o)
 
     # ---- misiones aereas ----
     for m in misiones:
         if m.bando not in r:
             continue
         actividad[m.bando].add(m.creada_turno)
-        mm = r[m.bando]["misiones"]
-        mm["planificadas"] += 1
-        clave = {"cumplida": "cumplidas", "abortada": "abortadas", "fallida": "fallidas", "cancelada": "canceladas",
-                 "en_curso": "en_curso"}.get(m.estado)
-        if clave:
-            mm[clave] += 1
+        _contar_mision(r[m.bando]["misiones"], m)
         r[m.bando]["puestos"][_puesto_de(unidades.get(m.unidad_id), "mision")]["misiones"] += 1
 
     # ---- turnos pasivos ----
@@ -380,9 +554,7 @@ def construir_rubrica(db: Session, escenario: Escenario) -> dict:
         obs.extend(_observaciones_ordenes(x["ordenes"]))
         tp = x["turnos_pasivos"]
         if tp["cantidad"] and x["ordenes"]["emitidas"] + x["misiones"]["planificadas"] > 0:
-            lista = ", ".join(str(t) for t in tp["turnos"][:8]) + ("..." if len(tp["turnos"]) > 8 else "")
-            obs.append(f"{tp['cantidad']} turno(s) sin emitir ninguna orden (turno(s) {lista}): "
-                       "mantener la iniciativa o dejar constancia de la decision de esperar.")
+            obs.append(_observacion_pasivos(tp))
         lg = x["logistica"]
         if lg["unidades_criticas"]:
             nombres = ", ".join(c["unidad"] for c in lg["unidades_criticas"][:5])
@@ -407,21 +579,24 @@ def construir_rubrica(db: Session, escenario: Escenario) -> dict:
             obs.append(f"{ob['fallidos']} objetivo(s) fallido(s): contrastar el plan con los objetivos asignados.")
         if ob["cumplidos"] and not ob["fallidos"] and not ob["pendientes"]:
             obs.append("Todos los objetivos asignados se cumplieron.")
-        mi = x["misiones"]
-        malas = mi["abortadas"] + mi["fallidas"]
-        if malas and malas >= mi["cumplidas"]:
-            obs.append(f"Misiones aereas abortadas o fallidas ({malas}) igualan o superan a las cumplidas "
-                       f"({mi['cumplidas']}): revisar el combustible, las rutas y la ventana de aterrizaje (A3).")
+        aviso = _observacion_misiones(x["misiones"])
+        if aviso:
+            obs.append(aviso)
         for pu in x["puestos"].values():
             pu["ordenes"] = _cerrar_ordenes(pu["ordenes"])
             pu["observaciones"] = _observaciones_ordenes(pu["ordenes"], f" en {pu['sigla']}")
         if not obs:
             obs.append("Sin observaciones destacables.")
 
+    alumnos, sin_autor = _alumnos(db, escenario, unidades, ordenes, misiones, turnos_resueltos)
     return {
         "escenario": {"id": escenario.id, "nombre": escenario.nombre, "estado": escenario.estado,
                       "turno_actual": escenario.turno_actual, "turnos_resueltos": len(turnos_resueltos)},
         "umbral_critico": UMBRAL_CRITICO,
         "nota_puestos": NOTA_PUESTOS,
         "bandos": r,
+        # evaluacion por alumno (autor registrado en cada orden y mision) y lo que quedo sin autor, por bando
+        "alumnos": alumnos,
+        "sin_autor": sin_autor,
+        "nota_alumnos": NOTA_ALUMNOS,
     }

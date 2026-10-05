@@ -1,5 +1,5 @@
 /* Aviacion: selector de aeronaves con fotos (F-16, Su-30), envio de grupos de caza desde una base aerea propia
- * y capa de referencia con las bases aereas de Venezuela. */
+ * y capa de referencia con las bases aereas y aeropuertos de toda America (Venezuela en detalle). */
 (function (raiz) {
   "use strict";
   const { basesAereasPropias, aeronavesComprometidas, baseEnEscenario, nombreCortoBase } = Logica;
@@ -215,26 +215,29 @@
       });
     }
 
-    // ------------------------------------------------------------------ capa: bases aereas de Venezuela
-    // color del icono por pais (Venezuela como siempre; los vecinos, distinguibles a simple vista)
+    // ------------------------------------------------------------------ capa: bases aereas y aerodromos de America
+    // color fijo del icono para Venezuela y los vecinos del area de detalle (como siempre); el resto toma el color
+    // oscuro de la bandera de su nacion (catalogo /api/naciones) o un gris neutro (territorios sin nacion)
     const COLOR_PAIS = { Venezuela: "#14213D", Colombia: "#8a6d00", Brasil: "#1f6b3a", Guyana: "#5b3a8a", "Trinidad y Tobago": "#8a1f2b" };
+    const colorPais = (p) => Logica.colorAerodromo(p.pais, ctx.naciones ? ctx.naciones() : [], COLOR_PAIS);
     function iconoBase(p) {
-      const color = COLOR_PAIS[p.pais] || "#3d4a57";
       const aeropuerto = p.tipo === "aeropuerto";
       return L.divIcon({
         className: `base-ven${aeropuerto ? " aeropuerto" : ""}`, iconSize: [26, 26], iconAnchor: [13, 13],
-        html: `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="background:${color}"><path d="${AVION}"/></svg>`,
+        html: `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="background:${colorPais(p)}"><path d="${AVION}"/></svg>`,
       });
     }
+    const ORIGEN = { curado: "Datos verificados (Wikipedia / OurAirports)", ourairports: "OurAirports (dominio público)" };
 
     function popupBase(p, lat, lon) {
       const div = el("div", "popup-base");
       div.append(el("b", "", p.nombre));
       const filas = [
         ["OACI", p.icao], ["País", p.pais || "Venezuela"], ["Tipo", p.tipo === "aeropuerto" ? "Aeropuerto (uso civil; utilizable como base en el ejercicio)" : "Base aérea"],
-        ["Ubicación", `${p.ciudad}, ${p.estado}`],
+        ["Ubicación", [p.ciudad, p.estado].filter(Boolean).join(", ")],
         ...(p.elevacion_m !== null && p.elevacion_m !== undefined ? [["Elevación", `${p.elevacion_m} m`]] : []),
         ["Coordenadas", `${lat.toFixed(4)}, ${lon.toFixed(4)}`],
+        ["Origen", ORIGEN[p.origen] || ORIGEN.curado],
       ];
       const dl = el("dl", "specs");
       for (const [k, v] of filas) { const d = el("div"); d.append(el("dt", "", k), el("dd", "", v)); dl.appendChild(d); }
@@ -266,17 +269,66 @@
       return div;
     }
 
+    const OPCIONES_POPUP = { minWidth: 230, autoPanPaddingTopLeft: [20, 60], autoPanPaddingBottomRight: [290, 20] };
+    const rotuloDe = (p) => `${p.icao} · ${(p.ciudad || p.nombre).replace(/\s*\(.*\)$/, "")}`;
+
+    /** Marcador con icono y rotulo permanente (de cerca), igual para todos los paises. */
+    function marcadorIcono(p, lat, lon) {
+      const m = L.marker([lat, lon], { icon: iconoBase(p), keyboard: false, riseOnHover: true });
+      m.bindTooltip(el("span", "", rotuloDe(p)), { permanent: true, direction: "right", offset: [12, 0], className: "nombre-base" });
+      m.bindPopup(() => popupBase(p, lat, lon), OPCIONES_POPUP);
+      return m;
+    }
+
+    /** Punto liviano en canvas (de lejos): las bases militares mas grandes que los aeropuertos; rotulo al pasar el raton. */
+    function marcadorPunto(p, lat, lon, lienzo) {
+      const militar = p.tipo !== "aeropuerto";
+      const m = L.circleMarker([lat, lon], {
+        renderer: lienzo, radius: militar ? 5 : 3.5, color: "#fff", weight: militar ? 1.5 : 1, fillColor: colorPais(p), fillOpacity: 0.95,
+        pane: "markerPane", interactive: true,
+      });
+      m.bindTooltip(rotuloDe(p), { direction: "right", offset: [8, 0], className: "nombre-base" });
+      m.bindPopup(() => popupBase(p, lat, lon), OPCIONES_POPUP);
+      return m;
+    }
+
+    /**
+     * Carga la capa y la redibuja segun el zoom y la vista (Logica.modoAerodromo): de lejos, puntos en canvas de las
+     * bases militares (y desde el zoom 6 tambien de los aeropuertos); de cerca, solo los aerodromos que caen en
+     * pantalla (mas un margen) con icono y rotulo, para que los ~1300 puntos del continente no frenen el mapa.
+     */
     function cargarBases() {
-      fetch("/static/geo/bases_aereas.geojson").then((r) => r.json()).then((g) => {
-        for (const f of g.features) {
-          const [lon, lat] = f.geometry.coordinates;
-          const p = f.properties;
-          const m = L.marker([lat, lon], { icon: iconoBase(p), keyboard: false, riseOnHover: true });
-          const rotulo = el("span", "", `${p.icao} · ${p.ciudad.replace(/\s*\(.*\)$/, "")}`);
-          m.bindTooltip(rotulo, { permanent: true, direction: "right", offset: [12, 0], className: "nombre-base" });
-          m.bindPopup(() => popupBase(p, lat, lon), { minWidth: 230, autoPanPaddingTopLeft: [20, 60], autoPanPaddingBottomRight: [290, 20] });
-          m.addTo(ctx.capa);
+      const mapa = ctx.map();
+      const lienzo = L.canvas({ padding: 0.5 });
+      let rasgos = [];
+      let modoDibujado = null; // "punto:<zoom>" | "icono:<limites>"
+      const puntos = L.layerGroup();
+      const iconos = L.layerGroup();
+
+      function redibujar() {
+        if (!rasgos.length || !mapa.hasLayer(ctx.capa)) return;
+        const zoom = mapa.getZoom();
+        const deCerca = zoom >= Logica.ZOOM_ICONOS_AERODROMO;
+        const limites = deCerca ? mapa.getBounds().pad(0.3) : null;
+        const clave = deCerca ? `icono:${limites.toBBoxString()}` : `punto:${zoom}`;
+        if (clave === modoDibujado) return;
+        modoDibujado = clave;
+        puntos.clearLayers();
+        iconos.clearLayers();
+        for (const { p, lat, lon } of rasgos) {
+          const modo = Logica.modoAerodromo(p, zoom);
+          if (modo === "icono" && limites.contains([lat, lon])) marcadorIcono(p, lat, lon).addTo(iconos);
+          else if (modo === "punto") marcadorPunto(p, lat, lon, lienzo).addTo(puntos);
         }
+      }
+
+      puntos.addTo(ctx.capa);
+      iconos.addTo(ctx.capa);
+      mapa.on("zoomend moveend", redibujar);
+      ctx.capa.on("add", () => setTimeout(redibujar, 0));
+      fetch("/static/geo/bases_aereas.geojson").then((r) => r.json()).then((g) => {
+        rasgos = g.features.map((f) => ({ p: f.properties, lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0] }));
+        redibujar();
       }).catch(() => { /* sin la capa el ejercicio sigue funcionando */ });
     }
 

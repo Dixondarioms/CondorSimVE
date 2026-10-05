@@ -1,7 +1,7 @@
 """Diapositivas automaticas del AAR: presentacion HTML (sin JavaScript externo) para la sesion de analisis posterior.
 
 Portada con el marcador, una diapositiva por turno con lo relevante (combates, novedades, ordenes rechazadas), resumen
-por bando, evaluacion (rubrica) y preguntas para la discusion. Se navega con las flechas, espacio o clic; Ctrl+P
+por bando, evaluacion (rubrica) por bando y por alumno, y preguntas para la discusion. Se navega con las flechas, espacio o clic; Ctrl+P
 imprime (o guarda en PDF) una diapositiva por hoja."""
 
 from html import escape as e
@@ -100,6 +100,17 @@ def render_diapositivas(informe: dict, rubrica: dict | None = None) -> str:
         if obs:
             cuerpo += "<h3>Observaciones</h3><ul>" + "".join(f"<li>{e(x)}</li>" for x in obs[:7]) + "</ul>"
         dias.append(f'<section class="dia"><h2>Evaluación del bando {e(b.capitalize())}</h2>{cuerpo}</section>')
+    alumnos = (rubrica or {}).get("alumnos") or []
+    if alumnos:
+        filas = "".join(
+            f'<tr><td>{e(a["username"])}</td><td class="{e(a["bando"])}">{e(a["bando"].capitalize())}</td><td>{e(a["sigla"])}</td>'
+            f'<td>{a["ordenes"]["emitidas"]}</td><td>{a["ordenes"]["rechazadas"]}</td>'
+            f'<td>{a["turnos_pasivos"]["cantidad"]}</td><td>{a["misiones"]["planificadas"]}</td></tr>'
+            for a in alumnos[:12])
+        sin_autor = sum(n["ordenes"] + n["misiones"] for n in ((rubrica or {}).get("sin_autor") or {}).values())
+        nota = f'<p class="sec">{sin_autor} orden(es) o misión(es) sin autor registrado.</p>' if sin_autor else ""
+        dias.append('<section class="dia"><h2>Evaluación por alumno</h2><table><tr><th>Alumno</th><th>Bando</th><th>Puesto</th>'
+                    f"<th>Órdenes</th><th>Rechazadas</th><th>Turnos pasivos</th><th>Misiones</th></tr>{filas}</table>{nota}</section>")
     dias.append('<section class="dia"><h2>Preguntas para la discusión</h2><ul>' + "".join(f"<li>{e(p)}</li>" for p in PREGUNTAS) + "</ul></section>")
     return (f'<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Diapositivas · {e(esc["nombre"])}</title>'
             f"<style>{_ESTILO}</style></head><body>{''.join(dias)}<div class='nav' id='nav'></div><script>{_SCRIPT}</script></body></html>")

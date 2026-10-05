@@ -572,7 +572,7 @@ def construir(salida: Path, img: Path) -> None:
                "<b>Videowall</b>: el mapa ocupa toda la pantalla con un HUD (turno, hora, reloj, estado de los bandos, marcador, últimas alertas). URL directa: <font face='Mono'>?modo=videowall&amp;escenario=ID&amp;vista=azul|rojo|completa</font>. También <font face='Mono'>?lat=&amp;lon=&amp;zoom=</font> abre el mapa sobre un lugar.",
                "<b>Gráficos tácticos</b>: líneas de fase, ejes de avance, zonas de reunión y puntos de control, compartidos con el bando (o con todos, si los traza el instructor).",
                "<b>Chat</b> del bando o «al mando», con latencia, jitter y pérdida simulados por el instructor.",
-               "<b>Informe posterior al ejercicio (AAR)</b>: botón <b>Informe</b>: repetición turno a turno sobre el mapa (trayectorias, combates, novedades), resumen por bando, marcador y objetivos, informe imprimible, CSV de combates y exportación JSON. Los alumnos lo ven al finalizar el escenario.",
+               "<b>Informe posterior al ejercicio (AAR)</b>: botón <b>Informe</b>: repetición turno a turno sobre el mapa (trayectorias, combates, novedades) y <b>replay animado</b> continuo con estelas, resumen por bando, marcador y objetivos, informe imprimible, CSV de combates y exportación JSON. Los alumnos lo ven al finalizar el escenario.",
                "<b>Línea de tiempo</b>: combustible y munición de cada unidad turno a turno, con caídas abruptas, niveles críticos y reabastecimientos cruzados con los combates."])]
 
     # ---- 13 limitaciones
@@ -585,8 +585,7 @@ def construir(salida: Path, img: Path) -> None:
                "Cada orden se da a una unidad (no hay selección múltiple).",
                "Un solo servidor por aula: el WebSocket y el temporizador viven en el proceso."]),
           H2("Hoja de ruta prevista"),
-          Bul(["Selección de rutas por carreteras y puentes reales.", "Más plantillas de escenario por curso.",
-               "Registro del autor de cada orden para una rúbrica por alumno."])]
+          Bul(["Selección de rutas por carreteras y puentes reales.", "Más plantillas de escenario por curso."])]
 
     # ---- 14 novedades
     h += H1("14. Novedades de las versiones 1.1 y 1.2")
@@ -598,6 +597,8 @@ def construir(salida: Path, img: Path) -> None:
                "Regiones superpuestas: Venezuela en detalle (~300 m) sobre América entera (~1,2 km), ambas con foto satelital; el mundo o un recuadro a medida se generan con un comando."],
               ["Aeródromos de los países vecinos", "Capa Bases aéreas y aeródromos",
                "Bases y aeropuertos de Colombia, Brasil, Guyana y Trinidad dentro del mapa, con su plano real, colocables como base del ejercicio."],
+              ["Aeródromos de toda América y catálogo de naciones", "Capa Bases aéreas y aeródromos; Consola → Identidad nacional",
+               "Unos 1 260 aeropuertos y bases militares del continente (OurAirports), por niveles de zoom, con país y origen en su ventana; los 29 estados de América como identidad de un bando."],
               ["Daño por partes de la base", "Panel de órdenes → «Qué se ataca de la base»; ficha de la base",
                "Pista, plataforma y depósito con daño propio; pista inoperativa al 60 %; refugios reforzados; reparación con ingenieros."],
               ["Escolta y paquetes de ataque", "Planificar misión → rol ESCOLTA o «Escolta del paquete»",
@@ -612,6 +613,10 @@ def construir(salida: Path, img: Path) -> None:
                "El escenario actual (con o sin su estado) queda como plantilla reutilizable, junto a las del sistema."],
               ["Rúbrica de evaluación", "Informe → Rúbrica; informe imprimible",
                "Indicadores por bando y por puesto responsable (órdenes, rechazos, turnos pasivos, logística, pérdidas, objetivos, misiones) con observaciones automáticas."],
+              ["Autor de cada orden y rúbrica por alumno", "Cola de órdenes; Informe → Rúbrica → Evaluación por alumno; CSV por alumno",
+               "Cada orden y misión registra quién la emitió y su puesto; la rúbrica evalúa a cada alumno (órdenes, rechazos, turnos activos y pasivos, misiones) con observaciones automáticas. Lo anterior a esta versión figura como «sin autor registrado»."],
+              ["Replay animado del ejercicio", "Informe → Replay",
+               "Animación continua de los turnos sobre el mapa: movimientos interpolados, destellos de combate, unidades que se desvanecen, estela por unidad, velocidad 0,5×–4×, barra arrastrable y rótulo con hora, clima, marcador y novedades."],
               ["Instalador de un clic", "instalar.cmd, iniciar.cmd, detener.cmd", "Instalación guiada, acceso directo en el Escritorio y arranque automático opcional."],
               ["Valores de juego editables", "backend/data/ajustes_catalogo.json",
                "El instructor ajusta velocidades, alcances, efectividades y topes sin tocar el código (requiere reiniciar el servidor)."],
@@ -633,7 +638,7 @@ def construir(salida: Path, img: Path) -> None:
         ["Ver como un bando", "Estado del escenario → Vista (instructor)"],
         ["Videowall", "Botón Videowall o tecla V; Esc para salir"],
         ["Regla", "Botón Regla sobre el mapa; doble clic o Esc para terminar"],
-        ["Informe", "Botón Informe; Línea de tiempo dentro de la repetición"],
+        ["Informe", "Botón Informe; Línea de tiempo y Replay animado dentro de la repetición"],
         ["Respaldo manual", "backend: venv\\Scripts\\python -m app.respaldo"],
         ["Crear usuario", "backend: venv\\Scripts\\python -m app.crear_usuario &lt;nombre&gt; --rol azul|rojo|observador|instructor [--puesto ...]"],
         ["Pruebas", "backend: venv\\Scripts\\python -m pytest · raíz: node --test \"frontend/tests/*.test.js\""],

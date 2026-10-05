@@ -22,3 +22,6 @@ Version Fenix 1.4/
 BD_Fenix/
 *.FAS900
 tools/manual/salida/
+
+# paquetes de datos de mapa (tools/empaquetar_datos.py) y descargas (tools/instalar_datos.py)
+dist/

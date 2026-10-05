@@ -324,6 +324,15 @@ def informe_timeline(esc: Escenario = Depends(auth.escenario_dep), db: Session =
     return timeline.construir_timeline(db, esc)
 
 
+@router.get("/{escenario_id}/aar/replay")
+def informe_replay(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db),
+                   usuario: Usuario = Depends(auth.usuario_actual)):
+    """Datos para el replay animado del informe: por turno, posiciones de todas las unidades, combates con su
+    lugar, novedades publicas y marcador acumulado (mismos permisos que el informe)."""
+    _informe_permitido(esc, usuario)
+    return aar.construir_replay(db, esc)
+
+
 @router.get("/{escenario_id}/aar/rubrica")
 def informe_rubrica(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db),
                     usuario: Usuario = Depends(auth.usuario_actual)):
@@ -331,6 +340,16 @@ def informe_rubrica(esc: Escenario = Depends(auth.escenario_dep), db: Session = 
     objetivos, misiones y observaciones automaticas)."""
     _informe_permitido(esc, usuario)
     return aar.construir_rubrica(db, esc)
+
+
+@router.get("/{escenario_id}/aar/rubrica.csv")
+def informe_rubrica_csv(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db),
+                        usuario: Usuario = Depends(auth.usuario_actual)):
+    """Evaluacion por alumno de la rubrica, como CSV (mismos permisos que el informe)."""
+    _informe_permitido(esc, usuario)
+    contenido = informe_html.render_rubrica_csv(aar.construir_rubrica(db, esc))
+    return Response(contenido, media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="rubrica_alumnos_{esc.id}.csv"'})
 
 
 @router.get("/{escenario_id}/aar/diapositivas.html", response_class=HTMLResponse)

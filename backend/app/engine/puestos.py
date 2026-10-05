@@ -77,3 +77,9 @@ def responsables(funcion: str) -> list[Puesto]:
 def como_dict(p: Puesto) -> dict:
     return {"id": p.id, "sigla": p.sigla, "nombre": p.nombre, "descripcion": p.descripcion,
             "funciones": sorted(p.funciones)}
+
+
+def firma(usuario) -> dict:
+    """Autor de una orden o mision: id del usuario y puesto que ocupa al emitirla (los instructores no tienen
+    puesto dentro de un bando). Se pasa tal cual al constructor de Orden / Mision."""
+    return {"autor_id": usuario.id, "autor_puesto": usuario.puesto if usuario.rol in BANDOS else None}

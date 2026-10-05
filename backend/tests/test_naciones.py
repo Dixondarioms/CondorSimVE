@@ -1,4 +1,4 @@
-"""Identidad nacional de cada bando (Venezuela y sus vecinos): catalogo, configuracion, niebla de guerra,
+"""Identidad nacional de cada bando (Venezuela, sus vecinos y el resto de America): catalogo, configuracion, niebla de guerra,
 duplicado, exportacion y datos de referencia de los paises vecinos en el terreno."""
 
 import json
@@ -18,6 +18,29 @@ def test_el_catalogo_tiene_venezuela_y_sus_tres_vecinos_terrestres():
         assert len(n.colores) in (2, 3) and all(c.startswith("#") and len(c) == 7 for c in n.colores)
 
 
+def test_el_catalogo_cubre_todos_los_estados_de_america_ordenados_con_venezuela_primero():
+    import re
+    import unicodedata
+
+    esperados = {"venezuela", "colombia", "brasil", "guyana", "trinidad_tobago", "estados_unidos", "mexico", "guatemala", "belice",
+                 "honduras", "el_salvador", "nicaragua", "costa_rica", "panama", "cuba", "republica_dominicana", "haiti", "jamaica",
+                 "bahamas", "barbados", "surinam", "ecuador", "peru", "bolivia", "paraguay", "uruguay", "argentina", "chile", "canada"}
+    assert esperados <= set(naciones.NACIONES)
+    ids = list(naciones.NACIONES)
+    assert ids[0] == "venezuela"
+    sin_tildes = lambda t: unicodedata.normalize("NFKD", t).encode("ascii", "ignore").decode().lower()
+    resto = [n.nombre for n in list(naciones.NACIONES.values())[1:]]
+    assert resto == sorted(resto, key=sin_tildes)
+    for n in naciones.NACIONES.values():
+        assert re.fullmatch(r"[a-z_]+", n.id), n.id  # snake_case sin tildes
+        assert re.fullmatch(r"[A-Z]{2}", n.iso) and naciones.PAISES_AMERICA[n.iso] == n.nombre
+    assert len({n.iso for n in naciones.NACIONES.values()}) == len(naciones.NACIONES)
+    assert naciones.NACIONES["mexico"].capital == "Ciudad de México" and naciones.NACIONES["chile"].gentilicio == "chileno"
+    # territorios sin estado propio: solo nombre en español para los datos geograficos
+    assert naciones.PAISES_AMERICA["GF"].startswith("Guayana Francesa") and naciones.PAISES_AMERICA["PR"].startswith("Puerto Rico")
+    assert "GF" not in {n.iso for n in naciones.NACIONES.values()}
+
+
 def test_obtener_devuelve_none_para_vacio_o_desconocido():
     assert naciones.obtener("venezuela").nombre == "Venezuela"
     assert naciones.obtener("") is None
@@ -29,8 +52,11 @@ def test_endpoint_naciones_publico_para_cualquier_rol(api):
     for rol in ("prof", "alfa", "bravo", "obs"):
         r = api(rol).get("/api/naciones")
         assert r.status_code == 200, rol
-        ids = {n["id"] for n in r.json()["naciones"]}
-        assert {"venezuela", "colombia", "brasil", "guyana", "trinidad_tobago", "estados_unidos"} == ids
+        lista = r.json()["naciones"]
+        ids = {n["id"] for n in lista}
+        assert {"venezuela", "colombia", "brasil", "guyana", "trinidad_tobago", "estados_unidos", "mexico", "argentina", "canada"} <= ids
+        assert lista[0]["id"] == "venezuela" and len(lista) == len(naciones.NACIONES)  # mismo orden que el catalogo
+        assert lista[0]["iso"] == "VE" and lista[0]["colores"] == ["#FFCC00", "#00247D", "#CF142B"]
     assert api().get("/api/naciones").status_code == 401
 
 

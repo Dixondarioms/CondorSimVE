@@ -213,12 +213,29 @@ zonas las ven ambos bandos (capa *Meteorología*), con su flecha de deriva; la f
 ## Bases aéreas y aeródromos de los países vecinos
 
 La capa de referencia (*Capas → Bases aéreas y aeródromos*) incluye, además de las 8 bases de la AMB, los aeródromos
-de los vecinos que caen dentro del área del mapa, con el icono en el color de cada país: Colombia (Marandúa, Yopal,
+de los vecinos que caen dentro del área de detalle, con el icono en el color de cada país: Colombia (Marandúa, Yopal,
 Cúcuta, Arauca, Puerto Carreño, Riohacha, Valledupar), Brasil (Boa Vista), Guyana (Lethem) y Trinidad y Tobago
 (Piarco). Se distingue **base aérea** de **aeropuerto** (uso civil, utilizable como base en el ejercicio); el
 instructor los coloca como base azul o roja igual que los venezolanos, y todos tienen su **plano real** de
 OpenStreetMap al acercarse (pistas, rodajes, plataformas, edificios). Lista en `tools/generar_bases_aereas.py`
-(`VECINOS`) y `tools/preparar_aerodromos.py`; Georgetown queda fuera del área del mapa.
+(`VECINOS`) y `tools/preparar_aerodromos.py`; Georgetown queda fuera del área de detalle.
+
+## Bases aéreas y aeródromos de toda América
+
+La misma capa cubre el resto del continente (recuadro de la región `america`) con unos **1 260 aeródromos** tomados
+de [OurAirports](https://ourairports.com/data/) (dominio público): los aeropuertos grandes con código OACI, los
+medianos con código OACI y servicio regular, y **toda base militar** que se reconozca por el nombre (*Air Force
+Base*, *NAS*, *Base Aérea*, *Fuerza Aérea*, *Aeronaval*, *Army Airfield*…) aunque sea pequeña; sin helipuertos ni
+hidroaeropuertos. Cada punto trae OACI (o el código GPS/identificador si no tiene), nombre, ciudad, región (código
+ISO), país en español, tipo, elevación y `origen: "ourairports"` (las 18 curadas a mano conservan `origen:
+"curado"` y sus datos verificados). Para que 1 300 puntos no frenen el mapa se dibujan por niveles
+(`Logica.modoAerodromo`): de lejos solo las bases militares y las curadas, como puntos en canvas; los aeropuertos
+civiles desde el zoom 6; y desde el zoom 8 los que caen en pantalla con el icono y el rótulo de siempre. El icono
+toma el color fijo de Venezuela y sus vecinos o, para el resto, el color oscuro de la bandera de su nación
+(`/api/naciones`); gris para territorios sin nación. La ventana emergente muestra país y origen y sigue permitiendo
+colocarlos como base azul o roja. Solo Venezuela y vecinos tienen plano OSM; los demás se comportan como cualquier
+base sin plano. Regenerar: `python tools/generar_bases_aereas.py` (descarga el CSV una vez a
+`tools/cache/ourairports_airports.csv`; en .gitignore).
 
 ## Niebla de guerra
 
@@ -252,9 +269,41 @@ pérdidas infligidas vs. sufridas y unidades destruidas, objetivos cumplidos / f
 aéreas cumplidas / abortadas / fallidas, y una lista de **observaciones automáticas** en español (p. ej. "2
 orden(es) rechazada(s) por 'Objetivo fuera de alcance': revisar la apreciacion de distancias antes de emitir
 la orden."). El desglose por puesto (A2, A3, A4, A5) se deriva de la **función de cada orden** —el puesto
-responsable según la unidad y el tipo de orden—, porque las órdenes no registran qué alumno las emitió.
+responsable según la unidad y el tipo de orden—, no del alumno que la firmó.
 Datos en `GET /api/escenarios/{id}/aar/rubrica` (mismos permisos que el informe) e incluidos en la
 exportación JSON (`rubrica`).
+
+### Replay del ejercicio
+
+El botón **Replay** de la repetición (junto a *Diapositivas*) abre un reproductor **animado y continuo** para la
+sesión de análisis posterior: recorre los turnos automáticamente mostrando el movimiento de las unidades
+(posición interpolada con suavizado entre el turno N y el N+1, ~1,5 s por turno a velocidad 1×), los combates
+(destello pulsante y línea atacante → defensor en el lugar del combate mientras dura el turno), las unidades
+destruidas (se desvanecen) y las que aparecen (se materializan), con un rótulo con el turno, la hora simulada,
+el clima, el **marcador acumulado** y las novedades del turno (combates con sus bajas y eventos públicos).
+Controles: reproducir/pausa, velocidad (0,5×, 1×, 2×, 4×), barra de progreso arrastrable (al soltar sigue
+reproduciendo si lo estaba), ir al inicio / al final y la casilla **Estela**, que deja la traza recorrida por cada
+unidad como una polilínea del color de su bando. Al abrirlo, el mapa se encuadra sobre la zona donde hubo
+movimiento o combates. Funciona para el instructor y el observador siempre, y para los alumnos cuando el informe
+ya está disponible (escenario finalizado). Datos en `GET /api/escenarios/{id}/aar/replay` (mismos permisos que
+el informe): por cada turno con instantánea, todas las unidades (`id, nombre, bando, tipo, clase, sidc, lat,
+lon, fuerza, estado`), los combates con `lat/lon`, las novedades públicas (dirigidas a todos, de clima,
+logística o ajustes del instructor) y el marcador acumulado al terminar ese turno. La lógica pura del reproductor
+(interpolación, estado por instante, estelas, progreso) está en `frontend/static/js/replay.js` y se prueba con
+Node (`frontend/tests/replay.test.js`). En el arnés, `&abrir=replay&instante=2.5` lo abre detenido en ese punto.
+
+**Autor de cada orden y rúbrica por alumno.** Cada orden y cada misión aérea guarda quién la emitió
+(`autor_id`, `autor_puesto`: el puesto que ocupaba el alumno en ese momento; migración `0018`). La cola de
+órdenes muestra el autor y su sigla de puesto junto a cada orden; las órdenes automáticas del motor
+(intercepciones, defensa antiaérea, ataques pedidos por misiones, regreso por combustible crítico) no tienen
+autor. La rúbrica añade la sección `alumnos`: por cada usuario de un bando asignado al escenario o que haya
+firmado algo, su bando y puesto, órdenes emitidas / resueltas / rechazadas con motivos, **turnos con órdenes
+vs. turnos pasivos**, misiones planificadas / cumplidas / abortadas / fallidas y observaciones automáticas
+del mismo estilo que las de bando ("No emitio ninguna orden ni planifico misiones durante el ejercicio.").
+Se muestra en el diálogo *Rúbrica*, en el informe imprimible, en las diapositivas y se descarga como CSV
+(`GET /api/escenarios/{id}/aar/rubrica.csv`, botón *CSV por alumno*). Las órdenes y misiones anteriores a
+la migración quedan sin autor y la rúbrica las cuenta aparte por bando como "sin autor registrado"
+(`sin_autor`) en vez de fallar.
 
 ## Aviación: F-16, Su-30 y bases aéreas de Venezuela
 
@@ -275,8 +324,8 @@ exportación JSON (`rubrica`).
   El enemigo detectado solo se conoce como «caza» (modelo y tamaño ocultos por la niebla de guerra).
 - **Instructor:** en *Consola → Agregar unidad*, con clase *Caza*, *Elegir aeronave…* abre el mismo selector y
   ubica el grupo (con modelo y tamaño) directamente, sin pasar por el límite de despegues.
-- **Bases aéreas de Venezuela:** capa de referencia (activable en *Capas*) con las 8 bases de la Aviación Militar
-  Bolivariana y su código OACI: El Libertador (SVBL), Mariscal Sucre (SVBS), La Carlota (SVFM), Rafael Urdaneta
+- **Bases aéreas de Venezuela:** capa de referencia (activable en *Capas*; también cubre el resto de América, ver
+  más abajo) con las 8 bases de la Aviación Militar Bolivariana y su código OACI: El Libertador (SVBL), Mariscal Sucre (SVBS), La Carlota (SVFM), Rafael Urdaneta
   (SVMC), Luis del Valle García (SVBC), Landaeta Gil (SVBM), Teófilo Luis Méndez (SVPR) y José Antonio Páez
   (SVPA). Al tocar una, se ve su nombre, ubicación y elevación; el instructor puede **colocarla como base azul o
   roja** del ejercicio con un botón. Datos en `frontend/static/geo/bases_aereas.geojson`
@@ -475,8 +524,10 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
 ## Ejercicios con o contra los países vecinos
 
 - **Identidad nacional** (*Consola → Identidad nacional*; catálogo en `engine/naciones.py`, endpoint
-  `GET /api/naciones`): a cada bando (azul/rojo) se le puede asignar un país — Venezuela, Colombia, Brasil,
-  Guyana o Trinidad y Tobago — o dejarlo sin especificar. Es solo un nombre para la interfaz (cabecera, orden
+  `GET /api/naciones`): a cada bando (azul/rojo) se le puede asignar cualquiera de los **29 estados de América**
+  (Venezuela primero y el resto en orden alfabético: de Argentina a Uruguay, con nombre, gentilicio, capital, código
+  ISO y colores de bandera) o dejarlo sin especificar. `PAISES_AMERICA` (mismo módulo) añade el nombre en español de
+  los territorios (Puerto Rico, Guayana Francesa, Groenlandia…) para rotular los datos geográficos. Es solo un nombre para la interfaz (cabecera, orden
   de batalla, pie, HUD del videowall, informe y exportación): el bando "azul"/"rojo" sigue siendo el mecanismo
   real del motor (símbolos, niebla de guerra, combate), y el catálogo de unidades no cambia según el país — el
   simulador no modela el orden de batalla real de cada vecino. No hace falta que Venezuela participe: los dos
@@ -728,6 +779,6 @@ del proyecto centrado en La Guaira/Caracas.
   por bando) y el estado real de cada aparato en la flota venezolana no se modela.
 - Las comunicaciones simuladas solo afectan al chat, no a las órdenes ni a la niebla de guerra.
 - No hay selección múltiple de unidades ni órdenes de grupo: cada orden se da a una unidad.
-- La identidad nacional es solo un nombre para la interfaz: no se modela el orden de batalla real de Colombia, Brasil, Guyana ni Trinidad y Tobago. El terreno a ~300 m, la foto satelital a 10 m y los planos de aeródromos se limitan a Venezuela y vecinos; el resto de América está a ~1,2 km/píxel de relieve y ~600 m de foto (y el mundo, si se genera, a ~2,4 km).
+- La identidad nacional es solo un nombre para la interfaz: no se modela el orden de batalla real de ningún país de América. El terreno a ~300 m, la foto satelital a 10 m y los planos de aeródromos se limitan a Venezuela y vecinos; el resto de América está a ~1,2 km/píxel de relieve y ~600 m de foto (y el mundo, si se genera, a ~2,4 km).
 - El bloqueo de inicio de sesión es por usuario (un atacante puede bloquear una cuenta 5 min).
 - Un solo servidor: WebSocket y temporizador viven en el proceso.

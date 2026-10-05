@@ -56,6 +56,14 @@ SORPRESA_GENERAL = 1.2  # el atacante no fue detectado por el defensor
 SORPRESA_EMBOSCADA = 1.5  # ... y el defensor es de los que sufren emboscadas (convoyes)
 COSTO_OBRA = {"vado": 30.0, "puente": 60.0}  # % de material (municion) del ingeniero
 DURACION_OBRA = {"vado": 4, "puente": 12}  # turnos que sigue en pie
+# `detalle` de las ordenes que crea el propio motor al resolver (sin autor): ataques pedidos por misiones, impactos
+# de misiles, intercepciones, defensa antiaerea y regreso por combustible critico
+DETALLES_AUTOMATICOS = frozenset({"mision", "impacto", "intercepcion", "defensa aerea", "combustible critico"})
+
+
+def es_automatica(orden: Orden) -> bool:
+    """Orden creada por el motor (ningun alumno la emitio)."""
+    return orden.autor_id is None and orden.detalle in DETALLES_AUTOMATICOS
 
 
 def tipo_efectivo(unidad: Unidad) -> str:

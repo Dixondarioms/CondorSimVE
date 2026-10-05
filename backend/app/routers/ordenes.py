@@ -198,6 +198,7 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
             else payload.detalle or "" if payload.tipo == "construir" else ""
         ),
         turno_emitida=esc.turno_actual,
+        **puestos.firma(usuario),
     )
     db.add(orden)
     return orden

@@ -1,10 +1,18 @@
 """Rubrica de evaluacion del informe posterior (GET /api/escenarios/{id}/aar/rubrica): ordenes, turnos pasivos,
-logistica, perdidas, objetivos, misiones y observaciones automaticas por bando y por puesto responsable."""
+logistica, perdidas, objetivos, misiones y observaciones automaticas por bando, por puesto responsable y por
+alumno (autor registrado en cada orden y mision)."""
 
+import csv
+import io
+
+from app import auth
 from app.engine import aar
 from app.models.aar import RegistroLogistico
+from app.models.asignacion import Asignacion
 from app.models.mision import Mision
 from app.models.objetivo import Objetivo
+from app.models.orden import Orden
+from app.models.usuario import Usuario
 from tests.test_api import _preparar
 from tests.test_orders import _escenario, _orden, _unidad
 
@@ -62,7 +70,20 @@ def test_la_rubrica_cuenta_ordenes_rechazos_turnos_pasivos_y_perdidas(api):
     assert az["puestos"]["planificacion"]["ordenes"]["emitidas"] == 3
     assert az["puestos"]["planificacion"]["ordenes"]["rechazadas"] == 2
     assert all(az["puestos"][p]["ordenes"]["emitidas"] == 0 for p in ("inteligencia", "operaciones", "logistica"))
-    assert "no registran al usuario" in rub["nota_puestos"]
+    assert "puesto responsable" in rub["nota_puestos"]
+
+    # por alumno: alfa (azul) firmo las 3 ordenes; bravo (rojo) solo la del turno 2; el observador no se evalua
+    alumnos = {a["username"]: a for a in rub["alumnos"]}
+    assert list(alumnos) == ["alfa", "bravo"]
+    alfa, bravo = alumnos["alfa"], alumnos["bravo"]
+    assert (alfa["bando"], alfa["puesto"], alfa["sigla"], alfa["asignado"]) == ("azul", "mando", "EM", True)
+    assert (alfa["ordenes"]["emitidas"], alfa["ordenes"]["rechazadas"], alfa["ordenes"]["tasa_rechazo"]) == (3, 2, 66.7)
+    assert alfa["turnos_activos"] == {"cantidad": 3, "turnos": [1, 2, 3]}
+    assert alfa["turnos_pasivos"] == {"cantidad": 0, "turnos": []}
+    assert "2 orden(es) rechazada(s) de alfa por 'Objetivo fuera de alcance'" in " ".join(alfa["observaciones"])
+    assert (bravo["ordenes"]["emitidas"], bravo["turnos_pasivos"]["turnos"], bravo["turnos_activos"]["turnos"]) == (1, [1, 3], [2])
+    assert "2 turno(s) sin emitir ninguna orden (turno(s) 1, 3)" in " ".join(bravo["observaciones"])
+    assert rub["sin_autor"] == {"azul": {"ordenes": 0, "misiones": 0}, "rojo": {"ordenes": 0, "misiones": 0}}
 
     obs_azul = " ".join(az["observaciones"])
     assert "2 orden(es) rechazada(s) por 'Objetivo fuera de alcance': revisar la apreciacion de distancias" in obs_azul
@@ -112,6 +133,85 @@ def test_logistica_objetivos_y_misiones_en_la_rubrica(db_session):
     assert "1 objetivo(s) fallido(s)" in " ".join(ro["observaciones"])
 
 
+def _usuario(db, nombre, rol, puesto="mando", esc=None):
+    u = Usuario(username=nombre, password_hash=auth.hash_password("clave-segura-1"), rol=rol, puesto=puesto)
+    db.add(u)
+    db.commit()
+    if esc is not None:
+        db.add(Asignacion(usuario_id=u.id, escenario_id=esc.id))
+        db.commit()
+    return u
+
+
+def test_alumnos_sin_actividad_ordenes_sin_autor_y_misiones_por_nombre(db_session):
+    """Un alumno asignado que no emitio nada aparece con su observacion; las ordenes anteriores a la migracion
+    (sin autor) se cuentan aparte por bando y las automaticas del motor no se atribuyen a nadie; una mision previa
+    que solo guardo el nombre de usuario se atribuye por ese nombre."""
+    esc = _escenario(db_session)
+    esc.turno_actual = 3
+    a = _unidad(db_session, esc, nombre="A", bando="azul")
+    r = _unidad(db_session, esc, nombre="R", bando="rojo")
+    caza = _unidad(db_session, esc, nombre="Caza", tipo="aerea", clase="caza")
+    quieto = _usuario(db_session, "quieto", "azul", "logistica", esc)
+    piloto = _usuario(db_session, "piloto", "azul", "operaciones")
+    _usuario(db_session, "mirando", "observador", esc=esc)
+    _orden(db_session, esc, a, "mover", waypoints=[[1, 1]])  # sin autor: anterior a la migracion
+    _orden(db_session, esc, r, "mover", waypoints=[[1, 1]])
+    db_session.add(Orden(escenario_id=esc.id, unidad_id=caza.id, tipo="atacar", objetivo_unidad_id=r.id,
+                         detalle="intercepcion", turno_emitida=2, waypoints_json="[]", estado="resuelta"))
+    db_session.add(Mision(escenario_id=esc.id, bando="azul", rol="cap", estado="cumplida", turno_despegue=1,
+                          creada_turno=1, autor="piloto"))
+    db_session.add(Mision(escenario_id=esc.id, bando="rojo", rol="cap", estado="cumplida", turno_despegue=1,
+                          creada_turno=1))
+    db_session.commit()
+
+    rub = aar.construir_rubrica(db_session, esc)
+    alumnos = {x["username"]: x for x in rub["alumnos"]}
+    assert list(alumnos) == ["piloto", "quieto"]  # el observador no se evalua; piloto entra por su mision
+    assert alumnos["quieto"]["sigla"] == "A4" and alumnos["quieto"]["asignado"] is True
+    assert alumnos["quieto"]["observaciones"] == ["No emitio ninguna orden ni planifico misiones durante el ejercicio."]
+    assert alumnos["quieto"]["turnos_pasivos"] == {"cantidad": 2, "turnos": [1, 2]}
+    p = alumnos["piloto"]
+    assert (p["asignado"], p["sigla"], p["misiones"]["planificadas"], p["misiones"]["cumplidas"]) == (False, "A3", 1, 1)
+    assert p["turnos_activos"]["turnos"] == [1] and p["turnos_pasivos"]["turnos"] == [2]
+    assert p["observaciones"] == ["1 turno(s) sin emitir ninguna orden (turno(s) 2): mantener la iniciativa o dejar "
+                                  "constancia de la decision de esperar."]
+    # la intercepcion automatica no cuenta como "sin autor"
+    assert rub["sin_autor"] == {"azul": {"ordenes": 1, "misiones": 0}, "rojo": {"ordenes": 1, "misiones": 1}}
+    assert "sin autor registrado" in rub["nota_alumnos"]
+    # las secciones por bando siguen contando todas las ordenes (incluidas las automaticas)
+    assert rub["bandos"]["azul"]["ordenes"]["emitidas"] == 2
+    assert quieto.id != piloto.id
+
+
+def test_el_puesto_del_alumno_es_el_que_ocupaba_al_emitir(db_session):
+    esc = _escenario(db_session)
+    a = _unidad(db_session, esc, nombre="A", bando="azul")
+    u = _usuario(db_session, "cambiante", "azul", "planificacion", esc)
+    db_session.add(Orden(escenario_id=esc.id, unidad_id=a.id, tipo="mover", waypoints_json="[[1, 1]]", turno_emitida=1,
+                         autor_id=u.id, autor_puesto="operaciones"))
+    db_session.commit()
+    u.puesto = "mando"  # el instructor lo cambio de puesto despues
+    db_session.commit()
+    alumnos = aar.construir_rubrica(db_session, esc)["alumnos"]
+    assert [(x["username"], x["puesto"], x["ordenes"]["emitidas"]) for x in alumnos] == [("cambiante", "operaciones", 1)]
+
+
+def test_las_ordenes_y_misiones_registran_su_autor(api):
+    prof, base, a, r1, r2 = _preparar(api)
+    azul = api("alfa")
+    assert azul.post(f"{base}/ordenes", json={"unidad_id": a["id"], "tipo": "mover", "waypoints": [[0.1, 0]]}).status_code == 200
+    ordenes = azul.get(f"{base}/ordenes").json()
+    assert [(o["autor"], o["autor_puesto"]) for o in ordenes] == [("alfa", "mando")]
+    estado = azul.get(base).json()
+    assert estado["ordenes"][0]["autor"] == "alfa" and estado["ordenes"][0]["autor_puesto"] == "mando"
+    lote = azul.post(f"{base}/ordenes/lote", json={"unidad_ids": [a["id"]], "orden": {"tipo": "mover", "waypoints": [[0.2, 0]]}})
+    assert lote.status_code == 200 and lote.json()["emitidas"] == 1
+    assert [o["autor"] for o in azul.get(f"{base}/ordenes").json()] == ["alfa"]
+    informe = prof.get(f"{base}/aar").json()
+    assert informe["turnos"][-1]["ordenes"][0]["autor"] == "alfa"
+
+
 def test_puesto_responsable_segun_la_unidad_y_la_orden(db_session):
     esc = _escenario(db_session)
     caza = _unidad(db_session, esc, nombre="Caza", tipo="aerea", clase="caza")
@@ -140,8 +240,18 @@ def test_la_rubrica_respeta_los_permisos_y_va_en_la_exportacion_y_el_html(api):
     assert "Rubrica de evaluacion" in html and "Objetivo fuera de alcance (2)" in html
     assert "Turnos pasivos" in html and "A5 · Planificacion" in html
     assert "revisar la apreciacion de distancias" in html
+    assert "Evaluacion por alumno" in html and "<td>alfa</td>" in html and "<td>bravo</td>" in html
+    assert "rechazada(s) de alfa" in html
+    assert "<td>alfa</td>" in prof.get(f"{base}/aar/diapositivas.html").text
+    r = prof.get(f"{base}/aar/rubrica.csv")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/csv")
+    filas = list(csv.DictReader(io.StringIO(r.text)))
+    assert [(f["alumno"], f["bando"], f["puesto"], f["ordenes_emitidas"], f["ordenes_rechazadas"], f["turnos_pasivos"])
+            for f in filas] == [("alfa", "azul", "EM", "3", "2", "0"), ("bravo", "rojo", "EM", "1", "0", "2")]
+    assert api("alfa").get(f"{base}/aar/rubrica.csv").status_code == 403
     prof.post(f"{base}/finalizar")
     assert api("alfa").get(f"{base}/aar/rubrica").status_code == 200
+    assert api("alfa").get(f"{base}/aar/rubrica.csv").status_code == 200
 
 
 def test_rubrica_html_escapa_nombres(api):

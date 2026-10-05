@@ -5,6 +5,8 @@ import csv
 import io
 from html import escape as e
 
+from app.engine.aar import SIN_AUTOR
+
 BANDO_COLOR = {"azul": "#1e5fa8", "rojo": "#a83232"}
 
 ESTILO = """
@@ -53,9 +55,29 @@ def _barras(resumen: dict) -> str:
     return f'<svg viewBox="0 0 640 {20 + 34 * len(resumen)}" width="100%" role="img" aria-label="Fuerza perdida por bando">{"".join(filas)}</svg>'
 
 
+def _motivos(o: dict) -> str:
+    return "; ".join(f'{e(m["motivo"])} ({m["veces"]})' for m in o["motivos_rechazo"]) or "-"
+
+
+def _filas_alumnos(rubrica: dict) -> list[list[str]]:
+    """Una fila por alumno (celdas ya escapadas) mas, por bando, lo que quedo sin autor registrado."""
+    filas = [
+        [e(a["username"]), _bando(a["bando"]), f'{e(a["sigla"])} · {e(a["puesto_nombre"])}',
+         str(a["ordenes"]["emitidas"]), str(a["ordenes"]["resueltas"]), str(a["ordenes"]["rechazadas"]),
+         f'{a["turnos_activos"]["cantidad"]} / {a["turnos_pasivos"]["cantidad"]}',
+         str(a["misiones"]["planificadas"]), " ".join(e(o) for o in a["observaciones"])]
+        for a in rubrica.get("alumnos") or []
+    ]
+    for b, n in (rubrica.get("sin_autor") or {}).items():
+        if n["ordenes"] or n["misiones"]:
+            filas.append([f"<i>{e(SIN_AUTOR)}</i>", _bando(b), "-", str(n["ordenes"]), "-", "-", "-",
+                          str(n["misiones"]), "Ordenes o misiones anteriores al registro del autor."])
+    return filas
+
+
 def _rubrica_html(rubrica: dict | None) -> str:
-    """Seccion 'Rubrica de evaluacion': una tabla de indicadores por bando, el desglose por puesto responsable y
-    las observaciones automaticas."""
+    """Seccion 'Rubrica de evaluacion': una tabla de indicadores por bando, el desglose por puesto responsable,
+    las observaciones automaticas y la evaluacion por alumno."""
     if not rubrica:
         return ""
     bandos = rubrica["bandos"]
@@ -93,8 +115,7 @@ def _rubrica_html(rubrica: dict | None) -> str:
                       + "".join(f"<li>{e(o)}</li>" for o in x["observaciones"]) + "</ul>")
         puestos_filas = [
             [f'{e(pu["sigla"])} · {e(pu["nombre"])}', str(pu["ordenes"]["emitidas"]), str(pu["ordenes"]["resueltas"]),
-             str(pu["ordenes"]["rechazadas"]), str(pu["misiones"]),
-             "; ".join(f'{e(m["motivo"])} ({m["veces"]})' for m in pu["ordenes"]["motivos_rechazo"]) or "-"]
+             str(pu["ordenes"]["rechazadas"]), str(pu["misiones"]), _motivos(pu["ordenes"])]
             for pu in x["puestos"].values() if pu["ordenes"]["emitidas"] or pu["misiones"]
         ]
         if puestos_filas:
@@ -102,6 +123,12 @@ def _rubrica_html(rubrica: dict | None) -> str:
                 ["Puesto", "Ordenes", "Resueltas", "Rechazadas", "Misiones", "Motivos de rechazo"], puestos_filas,
                 num=(1, 2, 3, 4)))
     partes.append(f'<p class="meta">{e(rubrica["nota_puestos"])}</p>')
+    filas_alumnos = _filas_alumnos(rubrica)
+    if filas_alumnos:
+        partes.append("<h3>Evaluacion por alumno</h3>" + _tabla(
+            ["Alumno", "Bando", "Puesto", "Ordenes", "Resueltas", "Rechazadas", "Turnos activos / pasivos",
+             "Misiones", "Observaciones"], filas_alumnos, num=(3, 4, 5, 7)))
+        partes.append(f'<p class="meta">{e(rubrica.get("nota_alumnos", ""))}</p>')
     return "".join(partes)
 
 
@@ -181,6 +208,26 @@ def render_csv(informe: dict) -> str:
             w.writerow([c["turno"], _seguro(c["atacante"]), c["atacante_bando"], _seguro(c["defensor"]),
                         c["defensor_bando"], c["ratio"], c["perdida_atacante"], c["perdida_defensor"],
                         c["terreno"], _seguro(c["efectos"]), c["lat"], c["lon"]])
+    return salida.getvalue()
+
+
+def render_rubrica_csv(rubrica: dict) -> str:
+    """Evaluacion por alumno (una fila por alumno y, si las hay, una por bando con lo que quedo sin autor)."""
+    salida = io.StringIO()
+    w = csv.writer(salida)
+    w.writerow(["alumno", "bando", "puesto", "ordenes_emitidas", "ordenes_resueltas", "ordenes_rechazadas",
+                "tasa_rechazo", "turnos_activos", "turnos_pasivos", "misiones_planificadas", "misiones_cumplidas",
+                "misiones_abortadas", "misiones_fallidas", "motivos_rechazo", "observaciones"])
+    for a in rubrica.get("alumnos") or []:
+        o, mi = a["ordenes"], a["misiones"]
+        w.writerow([_seguro(a["username"]), a["bando"], a["sigla"], o["emitidas"], o["resueltas"], o["rechazadas"],
+                    o["tasa_rechazo"], a["turnos_activos"]["cantidad"], a["turnos_pasivos"]["cantidad"],
+                    mi["planificadas"], mi["cumplidas"], mi["abortadas"], mi["fallidas"],
+                    _seguro("; ".join(f'{m["motivo"]} ({m["veces"]})' for m in o["motivos_rechazo"])),
+                    _seguro(" ".join(a["observaciones"]))])
+    for b, n in (rubrica.get("sin_autor") or {}).items():
+        if n["ordenes"] or n["misiones"]:
+            w.writerow([SIN_AUTOR, b, "", n["ordenes"], "", "", "", "", "", n["misiones"], "", "", "", "", ""])
     return salida.getvalue()
 
 

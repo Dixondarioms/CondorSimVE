@@ -524,8 +524,32 @@
     (u) => u.clase === "base_aerea" && u.estado !== "destruida" && distanciaKm(u.lat, u.lon, lat, lon) <= km,
   ) || null;
 
-  /** Nombre corto de una base de la capa de referencia: sin "Base Aerea" ni el parentesis final. */
-  const nombreCortoBase = (nombre) => String(nombre || "").replace(/^Base A[ée]rea\s+(de\s+)?/i, "").replace(/^Aeropuerto\s+(Internacional\s+)?(de\s+)?/i, "").replace(/\s*\([^)]*\)\s*$/, "").trim();
+  /** Nombre corto de una base de la capa de referencia: sin "Base Aerea"/"... Airport" ni el parentesis final. */
+  const nombreCortoBase = (nombre) => String(nombre || "").replace(/^Base A[ée]rea\s+(de\s+)?/i, "").replace(/^Aeropuerto\s+(Internacional\s+)?(de\s+)?/i, "")
+    .replace(/\s*\([^)]*\)\s*$/, "").replace(/\s+(International\s+|Regional\s+|Municipal\s+)?Airport$/i, "").replace(/\s+(Naval\s+)?Air\s+(Force\s+)?Base$/i, "").trim();
+
+  // capa de referencia de aerodromos de toda America (geo/bases_aereas.geojson): de lejos solo las bases
+  // militares y las curadas como puntos; los aeropuertos civiles desde ZOOM_AEROPUERTOS; con icono y rotulo
+  // (los que caen en pantalla) desde ZOOM_ICONOS_AERODROMO, para que 1000+ puntos no frenen el mapa
+  const ZOOM_AEROPUERTOS = 6;
+  const ZOOM_ICONOS_AERODROMO = 8;
+  /** Como se dibuja un aerodromo a este zoom: "icono" (marcador con rotulo), "punto" (circulo en canvas) o null. */
+  function modoAerodromo(p, zoom) {
+    if (zoom >= ZOOM_ICONOS_AERODROMO) return "icono";
+    if (p.tipo === "base aérea" || p.origen === "curado" || zoom >= ZOOM_AEROPUERTOS) return "punto";
+    return null;
+  }
+
+  /** Color del icono de un aerodromo por pais: el fijo si lo hay, si no el color oscuro de la bandera de la nacion, si no neutro. */
+  function colorAerodromo(pais, naciones, fijos = {}, neutro = "#3d4a57") {
+    if (fijos[pais]) return fijos[pais];
+    const n = (naciones || []).find((x) => x.nombre === pais);
+    const oscuro = (hex) => {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+      return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.55; // sobre el fondo blanco del avion, que se vea
+    };
+    return (n && (n.colores || []).find(oscuro)) || neutro;
+  }
 
   // ---------------------------------------------------------------- ciclo de vuelo
   const CAPACIDAD_BASE = 12; // aeronaves que caben estacionadas en una base (igual que en el servidor)
@@ -698,7 +722,7 @@
     RADIO_SIN_EMISION_KM, deteccionEfectiva, pctStock,
     nacionDe, etiquetaBandoNacion, filtrarUnidades, textoObjetivo, avanceObjetivo, ETIQUETA_OBJETIVO, CAPACIDAD_BASE, RADIO_ATERRIZAJE_KM, estacionadasEn, plazasLibres, opcionesDeAterrizaje, situacionDeVuelo,
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,
-    aeronavesComprometidas, baseEnEscenario, nombreCortoBase, FUERZA_MINIMA_BASE,
+    aeronavesComprometidas, baseEnEscenario, nombreCortoBase, FUERZA_MINIMA_BASE, modoAerodromo, colorAerodromo, ZOOM_AEROPUERTOS, ZOOM_ICONOS_AERODROMO,
     esMisil, operaAeronaves, esPortaaviones, plazasDe, esEmbarcable, puedeOperarEn, modeloDespegaDe, puedeLanzarMisiles,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,

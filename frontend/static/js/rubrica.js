@@ -53,7 +53,26 @@
     return `${e.nombre || ""} · ${e.turnos_resueltos ?? 0} turno(s) resuelto(s)` + (e.estado ? ` · ${e.estado}` : "");
   }
 
-  const api = { filasIndicadores, filasPuestos, observaciones, resumen, BANDOS };
+  const SIN_AUTOR = "sin autor registrado";
+  const turnos = (t) => `${t.cantidad}` + (t.turnos && t.turnos.length ? ` (${t.turnos.join(", ")})` : "");
+
+  /** Filas por alumno [alumno, bando, puesto, ordenes, resueltas, rechazadas, turnos activos / pasivos, misiones,
+   * observaciones] mas, por bando, lo que quedo sin autor registrado (ordenes anteriores a esta version). */
+  function filasAlumnos(rubrica) {
+    const filas = (rubrica.alumnos || []).map((a) => [
+      a.username, a.bando, `${a.sigla} · ${a.puesto_nombre}`,
+      a.ordenes.emitidas, a.ordenes.resueltas, a.ordenes.rechazadas,
+      `${turnos(a.turnos_activos)} / ${turnos(a.turnos_pasivos)}`,
+      `${a.misiones.planificadas}` + (a.misiones.planificadas ? ` (${a.misiones.cumplidas} cumplida(s))` : ""),
+      (a.observaciones || []).join(" "),
+    ]);
+    for (const [b, n] of Object.entries(rubrica.sin_autor || {})) {
+      if (n.ordenes || n.misiones) filas.push([SIN_AUTOR, b, "-", n.ordenes, "-", "-", "-", `${n.misiones}`, "Órdenes o misiones anteriores al registro del autor."]);
+    }
+    return filas;
+  }
+
+  const api = { filasIndicadores, filasPuestos, filasAlumnos, observaciones, resumen, BANDOS, SIN_AUTOR };
   if (typeof module !== "undefined" && module.exports) { module.exports = api; return; }
   raiz.Rubrica = api;
 })(typeof window !== "undefined" ? window : globalThis);

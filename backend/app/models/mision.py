@@ -28,4 +28,7 @@ class Mision(Base):
     indice: Mapped[int] = mapped_column(Integer, default=0)  # punto de la ruta hacia el que va
     espera: Mapped[int] = mapped_column(Integer, default=-1)  # turnos de orbita que le quedan (-1: no esta orbitando)
     resultado: Mapped[str] = mapped_column(String(300), default="")
-    autor: Mapped[str] = mapped_column(String(50), default="")
+    autor: Mapped[str] = mapped_column(String(50), default="")  # nombre de usuario de quien la planifico
+    # id del autor y puesto que ocupaba al planificarla (nulos en las misiones anteriores a la migracion 0018)
+    autor_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"), nullable=True)
+    autor_puesto: Mapped[str | None] = mapped_column(String(20), nullable=True)

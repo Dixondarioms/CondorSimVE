@@ -27,13 +27,37 @@
   };
   // informes inyectados con posicion (direccion del ejercicio)
   const INFORMES = [{ id: 501, turno: 2, tipo: "inteligencia", descripcion: "Fuentes locales reportan una columna blindada moviéndose al sur del río.", lat: 8.70, lon: -70.58, hasta_turno: 5, fuente: "Inteligencia" }];
+  // mismo catalogo que backend/app/engine/naciones.py (Venezuela primero, el resto alfabetico)
   const NACIONES = [
-    { id: "venezuela", nombre: "Venezuela", gentilicio: "venezolano", capital: "Caracas", colores: ["#FFCC00", "#00247D", "#CF142B"] },
-    { id: "colombia", nombre: "Colombia", gentilicio: "colombiano", capital: "Bogotá", colores: ["#FCD116", "#003893", "#CE1126"] },
-    { id: "brasil", nombre: "Brasil", gentilicio: "brasileño", capital: "Brasilia", colores: ["#009C3B", "#FFDF00", "#002776"] },
-    { id: "guyana", nombre: "Guyana", gentilicio: "guyanés", capital: "Georgetown", colores: ["#009E49", "#FCD116", "#CE1126"] },
-    { id: "trinidad_tobago", nombre: "Trinidad y Tobago", gentilicio: "trinitense", capital: "Puerto España", colores: ["#CE1126", "#000000", "#FFFFFF"] },
-    { id: "estados_unidos", nombre: "Estados Unidos", gentilicio: "estadounidense", capital: "Washington D. C.", colores: ["#B22234", "#FFFFFF", "#3C3B6E"] },
+    { id: "venezuela", nombre: "Venezuela", gentilicio: "venezolano", capital: "Caracas", colores: ["#FFCC00", "#00247D", "#CF142B"], iso: "VE" },
+    { id: "argentina", nombre: "Argentina", gentilicio: "argentino", capital: "Buenos Aires", colores: ["#74ACDF", "#FFFFFF", "#F6B40E"], iso: "AR" },
+    { id: "bahamas", nombre: "Bahamas", gentilicio: "bahameño", capital: "Nasáu", colores: ["#00778B", "#FFC72C", "#000000"], iso: "BS" },
+    { id: "barbados", nombre: "Barbados", gentilicio: "barbadense", capital: "Bridgetown", colores: ["#00267F", "#FFC726", "#000000"], iso: "BB" },
+    { id: "belice", nombre: "Belice", gentilicio: "beliceño", capital: "Belmopán", colores: ["#003F87", "#FFFFFF", "#CE1126"], iso: "BZ" },
+    { id: "bolivia", nombre: "Bolivia", gentilicio: "boliviano", capital: "Sucre (sede de gobierno: La Paz)", colores: ["#D52B1E", "#F9E300", "#007934"], iso: "BO" },
+    { id: "brasil", nombre: "Brasil", gentilicio: "brasileño", capital: "Brasilia", colores: ["#009C3B", "#FFDF00", "#002776"], iso: "BR" },
+    { id: "canada", nombre: "Canadá", gentilicio: "canadiense", capital: "Ottawa", colores: ["#FF0000", "#FFFFFF"], iso: "CA" },
+    { id: "chile", nombre: "Chile", gentilicio: "chileno", capital: "Santiago", colores: ["#FFFFFF", "#0039A6", "#D52B1E"], iso: "CL" },
+    { id: "colombia", nombre: "Colombia", gentilicio: "colombiano", capital: "Bogotá", colores: ["#FCD116", "#003893", "#CE1126"], iso: "CO" },
+    { id: "costa_rica", nombre: "Costa Rica", gentilicio: "costarricense", capital: "San José", colores: ["#002B7F", "#FFFFFF", "#CE1126"], iso: "CR" },
+    { id: "cuba", nombre: "Cuba", gentilicio: "cubano", capital: "La Habana", colores: ["#002A8F", "#FFFFFF", "#CB1515"], iso: "CU" },
+    { id: "ecuador", nombre: "Ecuador", gentilicio: "ecuatoriano", capital: "Quito", colores: ["#FFDD00", "#034EA2", "#ED1C24"], iso: "EC" },
+    { id: "el_salvador", nombre: "El Salvador", gentilicio: "salvadoreño", capital: "San Salvador", colores: ["#0F47AF", "#FFFFFF"], iso: "SV" },
+    { id: "estados_unidos", nombre: "Estados Unidos", gentilicio: "estadounidense", capital: "Washington D. C.", colores: ["#B22234", "#FFFFFF", "#3C3B6E"], iso: "US" },
+    { id: "guatemala", nombre: "Guatemala", gentilicio: "guatemalteco", capital: "Ciudad de Guatemala", colores: ["#4997D0", "#FFFFFF"], iso: "GT" },
+    { id: "guyana", nombre: "Guyana", gentilicio: "guyanés", capital: "Georgetown", colores: ["#009E49", "#FCD116", "#CE1126"], iso: "GY" },
+    { id: "haiti", nombre: "Haití", gentilicio: "haitiano", capital: "Puerto Príncipe", colores: ["#00209F", "#D21034"], iso: "HT" },
+    { id: "honduras", nombre: "Honduras", gentilicio: "hondureño", capital: "Tegucigalpa", colores: ["#00BCE4", "#FFFFFF"], iso: "HN" },
+    { id: "jamaica", nombre: "Jamaica", gentilicio: "jamaiquino", capital: "Kingston", colores: ["#009B3A", "#FED100", "#000000"], iso: "JM" },
+    { id: "mexico", nombre: "México", gentilicio: "mexicano", capital: "Ciudad de México", colores: ["#006847", "#FFFFFF", "#CE1126"], iso: "MX" },
+    { id: "nicaragua", nombre: "Nicaragua", gentilicio: "nicaragüense", capital: "Managua", colores: ["#0067C6", "#FFFFFF"], iso: "NI" },
+    { id: "panama", nombre: "Panamá", gentilicio: "panameño", capital: "Ciudad de Panamá", colores: ["#FFFFFF", "#005293", "#D21034"], iso: "PA" },
+    { id: "paraguay", nombre: "Paraguay", gentilicio: "paraguayo", capital: "Asunción", colores: ["#D52B1E", "#FFFFFF", "#0038A8"], iso: "PY" },
+    { id: "peru", nombre: "Perú", gentilicio: "peruano", capital: "Lima", colores: ["#D91023", "#FFFFFF"], iso: "PE" },
+    { id: "republica_dominicana", nombre: "República Dominicana", gentilicio: "dominicano", capital: "Santo Domingo", colores: ["#002D62", "#FFFFFF", "#CE1126"], iso: "DO" },
+    { id: "surinam", nombre: "Surinam", gentilicio: "surinamés", capital: "Paramaribo", colores: ["#377E3F", "#FFFFFF", "#B40A2D"], iso: "SR" },
+    { id: "trinidad_tobago", nombre: "Trinidad y Tobago", gentilicio: "trinitense", capital: "Puerto España", colores: ["#CE1126", "#000000", "#FFFFFF"], iso: "TT" },
+    { id: "uruguay", nombre: "Uruguay", gentilicio: "uruguayo", capital: "Montevideo", colores: ["#FFFFFF", "#0038A8", "#FCD116"], iso: "UY" },
   ];
   const base_ = (...a) => base(...a);
   const base = (id, nombre, bando, clase, lat, lon, x = {}) => ({
@@ -90,15 +114,15 @@
     { id: 1, bando: "azul", rol: "CAP", rol_nombre: "Patrulla aerea de combate (CAP)", nombre: "Flecha", estado: "en_curso", unidad_id: 10, base_id: null, modelo: "su30", aeronaves: 2, turno_despegue: 2, creada_turno: 2,
       puntos: [{ tipo: "orbita", lat: 8.75, lon: -70.3, turnos: 3 }, { tipo: "aterrizaje", lat: 8.618, lon: -70.215, base_id: 9 }],
       plan: { puntos: [{ tipo: "orbita", km: 32, llegada_h: 0.03, combustible_llegada: 99, salida_h: 4, combustible_salida: 75 }, { tipo: "aterrizaje", km: 31, llegada_h: 4.03, combustible_llegada: 74 }], duracion_h: 4.03, combustible_final: 74, advertencias: [] },
-      indice: 0, espera: 2, resultado: "En orbita: 2 turno(s) mas." },
+      indice: 0, espera: 2, resultado: "En orbita: 2 turno(s) mas.", autor: "alfa", autor_puesto: "operaciones" },
     { id: 2, bando: "azul", rol: "INTERDICCION", rol_nombre: "Interdiccion (ataque a un blanco)", nombre: "Rayo", estado: "programada", unidad_id: null, base_id: 9, modelo: "f16", aeronaves: 2, turno_despegue: 5, creada_turno: 3,
       puntos: [{ tipo: "paso", lat: 8.60, lon: -70.66 }, { tipo: "blanco", lat: 8.66, lon: -70.60, objetivo_unidad_id: 11 }, { tipo: "aterrizaje", lat: 8.618, lon: -70.215, base_id: 9 }],
       plan: { puntos: [{ tipo: "paso", km: 18, llegada_h: 0.02, combustible_llegada: 99 }, { tipo: "blanco", km: 9, llegada_h: 0.03, combustible_llegada: 98.6, salida_h: 1 }, { tipo: "aterrizaje", km: 16, llegada_h: 1.02, combustible_llegada: 97.7 }], duracion_h: 1.02, combustible_final: 97.7, advertencias: [] },
-      indice: 0, espera: -1, resultado: "Programada." },
+      indice: 0, espera: -1, resultado: "Programada.", autor: "alfa", autor_puesto: "operaciones" },
     { id: 3, bando: "rojo", rol: "SEAD", rol_nombre: "Supresion de defensas aereas (SEAD)", nombre: "Víbora", estado: "programada", unidad_id: null, base_id: 12, modelo: "su30", aeronaves: 2, turno_despegue: 4, creada_turno: 3,
       puntos: [{ tipo: "blanco", lat: 8.588, lon: -70.55 }, { tipo: "aterrizaje", lat: 8.7, lon: -70.62, base_id: 12 }],
       plan: { puntos: [{ tipo: "blanco", km: 13, llegada_h: 0.01, combustible_llegada: 99.6, salida_h: 1 }, { tipo: "aterrizaje", km: 13, llegada_h: 1.01, combustible_llegada: 99.1 }], duracion_h: 1.01, combustible_final: 99.1, advertencias: [] },
-      indice: 0, espera: -1, resultado: "Programada." },
+      indice: 0, espera: -1, resultado: "Programada.", autor: "bravo", autor_puesto: "mando" },
   ];
   let proximaMision = 4;
 
@@ -134,10 +158,11 @@
   }
   const CONTACTO_FANTASMA = { unidad_id: 14, nombre: "Recon Roja", tipo: "terrestre", clase: "reconocimiento", lat: 9.6, lon: -69.8, turno_visto: 2 };
   let ordenes = [
-    { id: 1, escenario_id: 1, unidad_id: 2, tipo: "mover", objetivo_unidad_id: null, waypoints: [[8.600, -70.570], [8.620, -70.550]], detalle: "", turno_emitida: 3, estado: "pendiente", resultado: "" },
-    { id: 2, escenario_id: 1, unidad_id: 3, tipo: "atacar", objetivo_unidad_id: 11, waypoints: [], detalle: "", turno_emitida: 3, estado: "pendiente", resultado: "" },
-    { id: 3, escenario_id: 1, unidad_id: 4, tipo: "construir", objetivo_unidad_id: null, waypoints: [[8.605, -70.580]], detalle: "puente", turno_emitida: 3, estado: "pendiente", resultado: "" },
-    { id: 4, escenario_id: 1, unidad_id: 1, tipo: "atacar", objetivo_unidad_id: 11, waypoints: [], detalle: "", turno_emitida: 2, estado: "resuelta", resultado: "Ataque a Infantería Roja. Ratio 1.32: defensor pierde 19.0%, atacante pierde 12.0%. Efectos: clima x0.80 al ataque; sorpresa (atacante no detectado) x1.20." },
+    // autor / autor_puesto: quien la emitio y su puesto en ese momento (vacios en las ordenes automaticas del motor)
+    { id: 1, escenario_id: 1, unidad_id: 2, tipo: "mover", objetivo_unidad_id: null, waypoints: [[8.600, -70.570], [8.620, -70.550]], detalle: "", turno_emitida: 3, estado: "pendiente", resultado: "", autor: "alfa", autor_puesto: "planificacion" },
+    { id: 2, escenario_id: 1, unidad_id: 3, tipo: "atacar", objetivo_unidad_id: 11, waypoints: [], detalle: "", turno_emitida: 3, estado: "pendiente", resultado: "", autor: "alfa", autor_puesto: "planificacion" },
+    { id: 3, escenario_id: 1, unidad_id: 4, tipo: "construir", objetivo_unidad_id: null, waypoints: [[8.605, -70.580]], detalle: "puente", turno_emitida: 3, estado: "pendiente", resultado: "", autor: "carlos", autor_puesto: "logistica" },
+    { id: 4, escenario_id: 1, unidad_id: 1, tipo: "atacar", objetivo_unidad_id: 11, waypoints: [], detalle: "", turno_emitida: 2, estado: "resuelta", resultado: "Ataque a Infantería Roja. Ratio 1.32: defensor pierde 19.0%, atacante pierde 12.0%. Efectos: clima x0.80 al ataque; sorpresa (atacante no detectado) x1.20.", autor: "alfa", autor_puesto: "mando" },
   ];
   let proximaOrden = 5;
   let objetivos = [
@@ -260,6 +285,45 @@
     };
   }
 
+  // replay animado: 5 instantaneas (despliegue + 4 turnos) coherentes con UNIDADES; Blindados A y la 1ra Bda
+  // avanzan sobre la Infanteria Roja, el helo hace un rodeo, el radar rojo se repliega, Caza R cae en el turno 3
+  // y la Infanteria Roja en el 4 (las demas unidades no se mueven)
+  function replay() {
+    const ruta = {
+      2: [[8.585, -70.600], [8.600, -70.594], [8.618, -70.590], [8.640, -70.596], [8.655, -70.600]],
+      1: [[8.590, -70.620], [8.605, -70.618], [8.622, -70.612], [8.640, -70.606], [8.650, -70.604]],
+      7: [[8.600, -70.660], [8.640, -70.690], [8.690, -70.660], [8.700, -70.610], [8.670, -70.640]],
+      13: [[8.750, -70.500], [8.720, -70.540], [8.690, -70.560], [8.690, -70.560], [8.690, -70.560]],
+      18: [[8.720, -70.560], [8.720, -70.560], [8.735, -70.585], [8.750, -70.610], [8.750, -70.610]],
+    };
+    const fuerza = { 11: [70, 51, 33, 33, 0], 13: [100, 100, 100, 0, 0], 1: [92, 87, 80, 80, 78], 2: [100, 100, 100, 94, 90] };
+    const estado = (id, t) => ((id === 11 && t >= 4) || (id === 13 && t >= 3) ? "destruida" : "activa");
+    const marcador = [[0, 0], [1, 0], [33, 2], [37, 2], [40, 3]].map(([a, r]) => ({ azul: { objetivos: a >= 30 ? 30 : 0, bajas: a >= 30 ? a - 30 : a, total: a }, rojo: { objetivos: 0, bajas: r, total: r } }));
+    const turnos = [0, 1, 2, 3, 4].map((t) => ({
+      turno: t, clima: t < 3 ? "despejado" : "lluvia", combates: [], eventos: [], marcador: marcador[t],
+      unidades: UNIDADES.map(completar).map((u) => ({
+        id: u.id, nombre: u.nombre, bando: u.bando, tipo: u.tipo, clase: u.clase, sidc: u.sidc,
+        lat: ruta[u.id] ? ruta[u.id][t][0] : u.lat, lon: ruta[u.id] ? ruta[u.id][t][1] : u.lon,
+        fuerza: (fuerza[u.id] || [100, 100, 100, 100, 100])[t], estado: estado(u.id, t),
+      })),
+    }));
+    const combate = (id, turno, a, d, pa, pd, efectos) => {
+      const ua = UNIDADES.find((u) => u.id === a);
+      const ud = UNIDADES.find((u) => u.id === d);
+      const pos = ruta[d] ? ruta[d][turno] : [ud.lat, ud.lon];
+      turnos[turno].combates.push({ id, turno, atacante_id: a, defensor_id: d, atacante: ua.nombre, defensor: ud.nombre, atacante_bando: ua.bando, defensor_bando: ud.bando, ratio: 1.2, perdida_atacante: pa, perdida_defensor: pd, terreno: "llano", efectos, lat: pos[0], lon: pos[1] });
+    };
+    combate(1, 1, 1, 11, 5, 19, "sorpresa (atacante no detectado) x1.20");
+    combate(2, 2, 1, 11, 7, 18, "apoyo al atacante x1.30");
+    combate(3, 3, 8, 13, 0, 100, "cadencia de fuego x1.26");
+    combate(4, 4, 2, 11, 4, 33, "clima x0.80 al ataque");
+    turnos[2].eventos.push({ id: 7, tipo: "objetivo", descripcion: "Azul cumple 'Mantener la base' (+30 pts)." });
+    turnos[3].eventos.push({ id: 5, tipo: "clima", descripcion: "El clima cambia a lluvia." });
+    turnos[3].eventos.push({ id: 8, tipo: "logistica", descripcion: "Caza R se quedo sin combustible y se perdio." });
+    turnos[4].eventos.push({ id: 9, tipo: "combate", descripcion: "Infanteria Roja destruida." });
+    return { escenario: { id: 1, nombre: ESC.nombre, estado: ESC.estado, turno_actual: 5, hora_inicio_min: 360 }, turnos };
+  }
+
   function rubrica() {
     const ordenes = (e, r, x, motivos) => ({ emitidas: e, resueltas: r, rechazadas: x, pendientes: 0, motivos_rechazo: motivos, tasa_rechazo: e ? Math.round((1000 * x) / e) / 10 : 0 });
     const puesto = (sigla, nombre, o, misiones = 0, observaciones = []) => ({ sigla, nombre, ordenes: o, misiones, observaciones });
@@ -267,7 +331,7 @@
     return {
       escenario: { id: 1, nombre: ESC.nombre, estado: ESC.estado, turno_actual: 4, turnos_resueltos: 3 },
       umbral_critico: 25,
-      nota_puestos: "Las ordenes no registran al usuario que las emitio: el desglose por puesto se deriva de la funcion de cada orden (puesto responsable: A2, A3, A4 o A5), no del alumno que la firmo.",
+      nota_puestos: "El desglose por puesto se deriva de la funcion de cada orden (puesto responsable: A2, A3, A4 o A5), no del alumno que la firmo; la evaluacion por alumno usa el autor registrado en cada orden y mision.",
       bandos: {
         azul: {
           ordenes: ordenes(6, 5, 1, [{ motivo: "Objetivo fuera de alcance", veces: 1 }]),
@@ -302,6 +366,24 @@
           ],
         },
       },
+      // evaluacion por alumno (autor registrado en cada orden y mision) y lo que quedo sin autor, por bando
+      alumnos: [
+        { usuario_id: 2, username: "alfa", bando: "azul", asignado: true, puesto: "mando", sigla: "EM", puesto_nombre: "Estado Mayor",
+          ordenes: ordenes(5, 4, 1, [{ motivo: "Objetivo fuera de alcance", veces: 1 }]),
+          turnos_activos: { cantidad: 3, turnos: [1, 2, 3] }, turnos_pasivos: { cantidad: 0, turnos: [] },
+          misiones: { planificadas: 2, cumplidas: 1, abortadas: 1, fallidas: 0, canceladas: 0, en_curso: 0 },
+          observaciones: ["Misiones aereas abortadas o fallidas (1) igualan o superan a las cumplidas (1): revisar el combustible, las rutas y la ventana de aterrizaje (A3)."] },
+        { usuario_id: 5, username: "carlos", bando: "azul", asignado: true, puesto: "logistica", sigla: "A4", puesto_nombre: "Logistica",
+          ordenes: ordenes(1, 1, 0, []), turnos_activos: { cantidad: 1, turnos: [3] }, turnos_pasivos: { cantidad: 2, turnos: [1, 2] },
+          misiones: { planificadas: 0, cumplidas: 0, abortadas: 0, fallidas: 0, canceladas: 0, en_curso: 0 },
+          observaciones: ["2 turno(s) sin emitir ninguna orden (turno(s) 1, 2): mantener la iniciativa o dejar constancia de la decision de esperar."] },
+        { usuario_id: 3, username: "bravo", bando: "rojo", asignado: true, puesto: "mando", sigla: "EM", puesto_nombre: "Estado Mayor",
+          ordenes: vacio(), turnos_activos: { cantidad: 0, turnos: [] }, turnos_pasivos: { cantidad: 3, turnos: [1, 2, 3] },
+          misiones: { planificadas: 1, cumplidas: 0, abortadas: 0, fallidas: 0, canceladas: 0, en_curso: 0 },
+          observaciones: ["3 turno(s) sin emitir ninguna orden (turno(s) 1, 2, 3): mantener la iniciativa o dejar constancia de la decision de esperar."] },
+      ],
+      sin_autor: { azul: { ordenes: 1, misiones: 0 }, rojo: { ordenes: 0, misiones: 0 } },
+      nota_alumnos: "Las ordenes y misiones anteriores a la version que registra su autor figuran como 'sin autor registrado'; las ordenes automaticas del motor (intercepciones, defensa antiaerea, ataques de mision) no se atribuyen a nadie.",
     };
   }
 
@@ -400,6 +482,7 @@
     if (path === "/api/terreno/clase") return json({ clase: claseTerreno(parseFloat(q.get("lat"))) });
     if ((m = path.match(/^\/api\/escenarios\/1\/usuarios$/))) return json({ usuario_ids: [2, 3, 4] });
     if (path === "/api/escenarios/1/aar") return json(informe());
+    if (path === "/api/escenarios/1/aar/replay") return json(replay());
     if (path === "/api/escenarios/1/aar/timeline") return json(timeline());
     if (path === "/api/escenarios/1/aar/rubrica") return json(rubrica());
 
@@ -443,7 +526,7 @@
       ordenes = ordenes.filter((o) => !(o.unidad_id === u.id && o.estado === "pendiente"));
       const detalle = cuerpo.tipo === "despegar" ? JSON.stringify({ modelo: cuerpo.modelo, aeronaves: cuerpo.aeronaves, indicativo: cuerpo.indicativo || "" })
         : cuerpo.tipo === "lanzar" ? JSON.stringify({ misiles: cuerpo.misiles || 1 }) : cuerpo.detalle || "";
-      const o = { id: proximaOrden++, escenario_id: 1, unidad_id: u.id, tipo: cuerpo.tipo, objetivo_unidad_id: cuerpo.objetivo_unidad_id, waypoints: cuerpo.waypoints || [], detalle, turno_emitida: ESC.turno_actual, estado: "pendiente", resultado: "" };
+      const o = { id: proximaOrden++, escenario_id: 1, unidad_id: u.id, tipo: cuerpo.tipo, objetivo_unidad_id: cuerpo.objetivo_unidad_id, waypoints: cuerpo.waypoints || [], detalle, turno_emitida: ESC.turno_actual, estado: "pendiente", resultado: "", autor: YO.username, autor_puesto: PUESTO };
       ordenes.push(o);
       ESC[`listo_${ROL}`] = false;
       enviarEstado();
@@ -474,7 +557,7 @@
       const rol = CAT.misiones.roles.find((x) => x.id === cuerpo.rol);
       const mi = { id: proximaMision++, bando: ROL, rol: cuerpo.rol, rol_nombre: rol ? rol.nombre : cuerpo.rol, nombre: cuerpo.nombre || "", estado: "programada",
         unidad_id: cuerpo.unidad_id ?? null, base_id: cuerpo.base_id ?? null, modelo: cuerpo.modelo || "", aeronaves: cuerpo.aeronaves || 0,
-        turno_despegue: r.turno_despegue, creada_turno: ESC.turno_actual, puntos: r.puntos, plan: r.plan, indice: 0, espera: -1, resultado: "Programada." };
+        turno_despegue: r.turno_despegue, creada_turno: ESC.turno_actual, puntos: r.puntos, plan: r.plan, indice: 0, espera: -1, resultado: "Programada.", autor: YO.username, autor_puesto: PUESTO };
       misiones.push(mi);
       ESC[`listo_${ROL}`] = false;
       enviarEstado();
@@ -624,5 +707,30 @@
     aviso.textContent = `ARNÉS DE PRUEBAS · rol: ${ROL}${BANDOS.includes(ROL) ? ` · puesto: ${PUESTO}` : ""} · datos simulados`;
     aviso.style.cssText = "position:fixed;left:8px;bottom:2px;z-index:9999;font:10px system-ui;color:#ffb703;background:rgba(0,0,0,.7);padding:1px 8px;border-radius:3px;pointer-events:none";
     document.body.appendChild(aviso);
+    // &abrir=informe|replay|rubrica abre el informe (y el replay animado, o el dialogo Rubrica) al cargar;
+    // &instante=1.5 deja el replay detenido en ese punto (en turnos) para capturas reproducibles
+    const abrir = params.get("abrir");
+    if (abrir === "informe" || abrir === "replay" || abrir === "rubrica") {
+      const esperar = (cond, luego, intentos = 40) => {
+        if (cond()) return luego();
+        if (intentos > 0) setTimeout(() => esperar(cond, luego, intentos - 1), 150);
+      };
+      // el boton Informe no hace nada hasta que app.js termina de arrancar: se insiste hasta que el panel aparece
+      const intentarInforme = () => { if (!document.getElementById("app").hidden) document.getElementById("btn-informe").click(); return !document.getElementById("replay").hidden; };
+      esperar(intentarInforme, () => {
+        if (abrir === "rubrica") return document.getElementById("rp-rubrica").click();
+        if (abrir !== "replay") return;
+        esperar(() => !document.getElementById("replay").hidden, () => {
+          document.getElementById("rp-replay").click();
+          const instante = parseFloat(params.get("instante"));
+          if (!Number.isFinite(instante)) return;
+          esperar(() => !document.getElementById("replay-anim").hidden, () => {
+            const barra = document.getElementById("ra-progreso");
+            barra.value = String(Math.round(instante * 1000));
+            barra.dispatchEvent(new Event("input", { bubbles: true }));
+          });
+        });
+      });
+    }
   });
 })();

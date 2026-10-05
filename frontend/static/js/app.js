@@ -1101,7 +1101,7 @@
     $("btn-enviar-caza").disabled = !puede;
     $("aviacion-ayuda").textContent = bases.length
       ? "Elija el caza, el dron o el avión de guerra electrónica (con imagen y datos) y la base de la que despegan. El grupo aparece al resolverse el turno; los drones tienen su propio tope."
-      : "Su bando no tiene una base aérea activa: pídale al instructor que coloque una desde la capa «Bases aéreas de Venezuela».";
+      : "Su bando no tiene una base aérea activa: pídale al instructor que coloque una desde la capa «Bases aéreas y aeródromos».";
   }
   $("btn-enviar-caza").addEventListener("click", () => app.aviacion && app.aviacion.abrirDespegue(app.baseSeleccionada));
 
@@ -1320,6 +1320,14 @@
       b.textContent = `Orden ${o.id}: ${textoOrden(o)}`;
       const s = document.createElement("span");
       s.textContent = `${u ? u.nombre : "#" + o.unidad_id} · turno ${o.turno_emitida}${o.resultado ? " · " + o.resultado : ""}`;
+      // autor registrado (usuario y puesto al emitirla); las ordenes automaticas del motor no lo tienen
+      if (o.autor) {
+        const a = document.createElement("span");
+        a.className = "autor";
+        a.textContent = ` · ${o.autor}${o.autor_puesto ? " (" + Logica.puestoDe(o.autor_puesto).sigla + ")" : ""}`;
+        a.title = `Emitida por ${o.autor}${o.autor_puesto ? ", puesto " + Logica.etiquetaPuesto(o.autor_puesto) : ""}`;
+        s.appendChild(a);
+      }
       t.append(b, s);
       const [claseChip, textoChip] = CHIP[o.estado] || ["pend", o.estado];
       const chip = document.createElement("span");
@@ -1617,7 +1625,7 @@
     app.videowall.conectar();
     app.aviacion = Aviacion.crear({
       map: () => app.map, api, toast, rutaEsc, usuario: () => app.usuario, catalogo: () => app.catalogo,
-      datos: () => app.data, escenarioId: () => app.escenarioId, capa: app.capas.bases_ven,
+      datos: () => app.data, escenarioId: () => app.escenarioId, capa: app.capas.bases_ven, naciones: () => app.naciones,
     });
     app.aviacion.conectar();
     app.misiones = Misiones.crear({

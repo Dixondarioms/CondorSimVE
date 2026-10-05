@@ -1,9 +1,10 @@
 import json
 
 from sqlalchemy import ForeignKey, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
+from app.models.usuario import Usuario
 
 
 class Orden(Base):
@@ -36,3 +37,15 @@ class Orden(Base):
     # estado: "pendiente" | "resuelta" | "rechazada"
     estado: Mapped[str] = mapped_column(String(20), default="pendiente")
     resultado: Mapped[str] = mapped_column(Text, default="")
+
+    # quien la emitio y el puesto que ocupaba en ese momento (mando | inteligencia | operaciones | logistica |
+    # planificacion). Vacios en las ordenes automaticas del motor (intercepciones, fuego automatico) y en las
+    # anteriores a la migracion 0018.
+    autor_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"), nullable=True)
+    autor_puesto: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    autor_usuario: Mapped[Usuario | None] = relationship(Usuario, lazy="joined")
+
+    @property
+    def autor(self) -> str:
+        """Nombre de usuario del autor ('' si no quedo registrado)."""
+        return self.autor_usuario.username if self.autor_usuario is not None else ""

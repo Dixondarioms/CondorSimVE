@@ -81,3 +81,38 @@ test("nombreCortoBase quita 'Base Aérea' y el parentesis final", () => {
   assert.equal(L.nombreCortoBase("Base Aerea Prueba"), "Prueba");
   assert.equal(L.nombreCortoBase(undefined), "");
 });
+
+test("nombreCortoBase tambien quita los sufijos en ingles de OurAirports (Airport, Air Force Base)", () => {
+  assert.equal(L.nombreCortoBase("Punta Indio Naval Air Base"), "Punta Indio");
+  assert.equal(L.nombreCortoBase("Whiteman Air Force Base"), "Whiteman");
+  assert.equal(L.nombreCortoBase("Jorge Chávez International Airport"), "Jorge Chávez");
+  assert.equal(L.nombreCortoBase("Aeropuerto Internacional Camilo Daza"), "Camilo Daza");
+});
+
+test("modoAerodromo: de lejos solo bases militares y curadas como puntos; aeropuertos desde el zoom 6; iconos desde el 8", () => {
+  const militar = { tipo: "base aérea", origen: "ourairports" };
+  const civil = { tipo: "aeropuerto", origen: "ourairports" };
+  const curado = { tipo: "aeropuerto", origen: "curado" };
+  assert.equal(L.modoAerodromo(militar, 4), "punto");
+  assert.equal(L.modoAerodromo(curado, 4), "punto");
+  assert.equal(L.modoAerodromo(civil, 4), null);
+  assert.equal(L.modoAerodromo(civil, 5), null);
+  assert.equal(L.modoAerodromo(civil, L.ZOOM_AEROPUERTOS), "punto");
+  assert.equal(L.modoAerodromo(civil, L.ZOOM_ICONOS_AERODROMO), "icono");
+  assert.equal(L.modoAerodromo(militar, 12), "icono");
+});
+
+test("colorAerodromo: color fijo del pais, si no el primer color oscuro de la bandera, si no el neutro", () => {
+  const NACIONES = [
+    { id: "peru", nombre: "Perú", colores: ["#D91023", "#FFFFFF"] },
+    { id: "argentina", nombre: "Argentina", colores: ["#74ACDF", "#FFFFFF", "#F6B40E"] },
+    { id: "colombia", nombre: "Colombia", colores: ["#FCD116", "#003893", "#CE1126"] },
+  ];
+  const FIJOS = { Venezuela: "#14213D", Colombia: "#8a6d00" };
+  assert.equal(L.colorAerodromo("Venezuela", NACIONES, FIJOS), "#14213D");
+  assert.equal(L.colorAerodromo("Colombia", NACIONES, FIJOS), "#8a6d00"); // el fijo manda sobre la bandera
+  assert.equal(L.colorAerodromo("Perú", NACIONES, FIJOS), "#D91023");
+  assert.equal(L.colorAerodromo("Argentina", NACIONES, FIJOS), "#3d4a57"); // celeste, blanco y amarillo: ninguno oscuro
+  assert.equal(L.colorAerodromo("Guayana Francesa (Francia)", NACIONES, FIJOS), "#3d4a57");
+  assert.equal(L.colorAerodromo("Perú", null, {}), "#3d4a57");
+});

@@ -241,6 +241,9 @@ class OrdenOut(BaseModel):
     turno_emitida: int
     estado: str
     resultado: str
+    # quien la emitio (nombre de usuario) y su puesto; vacios en las ordenes automaticas del motor
+    autor: str = ""
+    autor_puesto: str | None = None
 
 
 class PuntoMisionIn(BaseModel):

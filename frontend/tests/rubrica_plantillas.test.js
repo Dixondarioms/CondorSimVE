@@ -66,6 +66,33 @@ test("resumen describe el escenario", () => {
   assert.equal(R.resumen({}), " · 0 turno(s) resuelto(s)");
 });
 
+const alumno = (extra = {}) => ({
+  usuario_id: 2, username: "alfa", bando: "azul", asignado: true, puesto: "mando", sigla: "EM", puesto_nombre: "Estado Mayor",
+  ordenes: { emitidas: 3, resueltas: 1, rechazadas: 2, pendientes: 0, tasa_rechazo: 66.7, motivos_rechazo: [{ motivo: "Objetivo fuera de alcance", veces: 2 }] },
+  turnos_activos: { cantidad: 2, turnos: [1, 3] }, turnos_pasivos: { cantidad: 1, turnos: [2] },
+  misiones: { planificadas: 2, cumplidas: 1, abortadas: 1, fallidas: 0, canceladas: 0, en_curso: 0 },
+  observaciones: ["Alta proporcion de ordenes rechazadas de alfa (67 % de 3): verificar alcance, municion y estado de la unidad antes de emitir."],
+  ...extra,
+});
+
+test("filasAlumnos arma una fila por alumno y otra por bando con lo que quedo sin autor", () => {
+  const d = { ...datos(), alumnos: [alumno(), alumno({ username: "bravo", bando: "rojo", sigla: "A5", puesto_nombre: "Planificacion",
+    misiones: { planificadas: 0, cumplidas: 0 }, turnos_activos: { cantidad: 0, turnos: [] }, turnos_pasivos: { cantidad: 3, turnos: [1, 2, 3] }, observaciones: [] })],
+    sin_autor: { azul: { ordenes: 2, misiones: 1 }, rojo: { ordenes: 0, misiones: 0 } } };
+  const filas = R.filasAlumnos(d);
+  assert.equal(filas.length, 3);
+  assert.deepEqual(filas[0], ["alfa", "azul", "EM · Estado Mayor", 3, 1, 2, "2 (1, 3) / 1 (2)", "2 (1 cumplida(s))",
+    "Alta proporcion de ordenes rechazadas de alfa (67 % de 3): verificar alcance, municion y estado de la unidad antes de emitir."]);
+  assert.deepEqual(filas[1].slice(0, 8), ["bravo", "rojo", "A5 · Planificacion", 3, 1, 2, "0 / 3 (1, 2, 3)", "0"]);
+  assert.equal(filas[2][0], R.SIN_AUTOR);
+  assert.deepEqual(filas[2].slice(1, 8), ["azul", "-", 2, "-", "-", "-", "1"]);
+});
+
+test("filasAlumnos tolera una rubrica sin la seccion por alumno (respuestas antiguas)", () => {
+  assert.deepEqual(R.filasAlumnos(datos()), []);
+  assert.deepEqual(R.filasAlumnos({ alumnos: [], sin_autor: { azul: { ordenes: 0, misiones: 0 } } }), []);
+});
+
 test("etiquetaOrigen distingue plantillas del sistema y del instructor", () => {
   assert.equal(P.etiquetaOrigen({ origen: "codigo" }), "Plantilla del sistema");
   assert.equal(P.etiquetaOrigen({ origen: "usuario", guardada_en: "2026-09-30T05:31:16+00:00", con_estado: true }),

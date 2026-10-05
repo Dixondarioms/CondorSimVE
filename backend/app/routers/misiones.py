@@ -136,7 +136,7 @@ async def crear(payload: schemas.MisionIn, esc: Escenario = Depends(auth.escenar
         escenario_id=esc.id, bando=usuario.rol, rol=payload.rol, nombre=payload.nombre.strip(), estado="programada",
         unidad_id=payload.unidad_id, base_id=payload.base_id, modelo=r["modelo"] or "", aeronaves=r["aeronaves"] or 0,
         turno_despegue=r["turno"], creada_turno=esc.turno_actual, puntos_json=json.dumps(r["puntos"]),
-        plan_json=json.dumps(r["plan"]), autor=usuario.username,
+        plan_json=json.dumps(r["plan"]), autor=usuario.username, **puestos.firma(usuario),
         resultado="Programada." if r["turno"] > esc.turno_actual else "Se inicia al resolverse este turno.",
     )
     db.add(m)
@@ -161,6 +161,7 @@ async def crear(payload: schemas.MisionIn, esc: Escenario = Depends(auth.escenar
             unidad_id=esc_payload.unidad_id, base_id=esc_payload.base_id, modelo=re["modelo"] or "", aeronaves=re["aeronaves"] or 0,
             turno_despegue=re["turno"], creada_turno=esc.turno_actual, puntos_json=json.dumps(re["puntos"]),
             plan_json=json.dumps(re["plan"]), autor=usuario.username, resultado="Escolta programada.",
+            **puestos.firma(usuario),
         ))
     setattr(esc, f"listo_{usuario.rol}", False)  # como una orden nueva: el bando debe confirmar otra vez
     db.commit()

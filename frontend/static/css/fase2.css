@@ -388,3 +388,15 @@ body.planificando-mision #barra-graficos { display: none; }
 #rb-contenido h4 { margin: 14px 0 4px; }
 #rb-contenido ul { margin: 0 0 8px; padding-left: 20px; font-size: 13px; }
 #rb-contenido td:first-child { white-space: nowrap; }
+
+/* ---- replay animado del informe (replay.js) ---- */
+#replay-anim { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--borde); }
+#replay-anim select { width: auto; flex: 0 0 auto; padding: 1px 4px; font-size: 12px; height: 22px; }
+#replay-anim .chk { margin: 0; font-size: 12px; white-space: nowrap; }
+#replay-anim .chk input { margin-right: 4px; }
+#ra-progreso { flex: 2 1 200px; accent-color: #ffab00; }
+#ra-turno { font-weight: 700; color: #ffd27a; white-space: nowrap; }
+#ra-novedades { list-style: none; margin: 4px 0 0; padding: 0; max-height: 60px; overflow-y: auto; }
+#ra-novedades li { font-size: 12px; padding: 1px 0; color: #ffd27a; }
+#rp-replay.activo { outline: 2px solid #ffab00; }
+body.replay-animado #leyenda-mapa, body.replay-animado #rp-combates { display: none; }

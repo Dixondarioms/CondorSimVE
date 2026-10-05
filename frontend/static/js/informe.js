@@ -43,6 +43,13 @@
       $("rp-play").textContent = "Reproducir";
     }
 
+    // Replay animado (replay.js): mientras esta abierto, oculta las marcas fijas de la repeticion por turnos.
+    const replay = Replay.crear({
+      map: ctx.map, api: ctx.api, toast: ctx.toast, escenarioId: ctx.escenarioId, crearIcono: ctx.crearIcono,
+      alAbrir: () => { pararReproduccion(); ctx.map.removeLayer(capa); },
+      alCerrar: () => { if (activo) { capa.addTo(ctx.map); mostrarTurno(indice); } },
+    });
+
     function mostrarTurno(i) {
       indice = Math.max(0, Math.min(turnos.length - 1, i));
       const t = turnos[indice];
@@ -115,6 +122,7 @@
     function cerrar() {
       if (!activo) return;
       pararReproduccion();
+      replay.cerrar();
       activo = false;
       capa.clearLayers();
       ctx.map.removeLayer(capa);
@@ -147,11 +155,13 @@
       $("dlg-resumen").showModal();
     }
 
-    $("rp-slider").addEventListener("input", () => { pararReproduccion(); mostrarTurno(parseInt($("rp-slider").value, 10)); });
+    $("rp-slider").addEventListener("input", () => { pararReproduccion(); replay.cerrar(); mostrarTurno(parseInt($("rp-slider").value, 10)); });
     $("rp-ant").addEventListener("click", () => { pararReproduccion(); mostrarTurno(indice - 1); });
     $("rp-sig").addEventListener("click", () => { pararReproduccion(); mostrarTurno(indice + 1); });
+    $("rp-replay").addEventListener("click", () => replay.alternar());
     $("rp-play").addEventListener("click", () => {
       if (temporizador) return pararReproduccion();
+      replay.cerrar();
       if (indice >= turnos.length - 1) mostrarTurno(0);
       $("rp-play").textContent = "Pausa";
       temporizador = setInterval(() => {
@@ -167,7 +177,7 @@
       $("dlg-timeline").close();
       if (!activo) return;
       const i = turnos.findIndex((t) => t.turno === m.turno);
-      if (i >= 0) { pararReproduccion(); mostrarTurno(i); }
+      if (i >= 0) { pararReproduccion(); replay.cerrar(); mostrarTurno(i); }
       let punto = null;
       if (m.tipo === "combate") punto = [m.datos.lat, m.datos.lon];
       else if (m.unidad_id !== null && i >= 0) {
@@ -209,6 +219,14 @@
           cont.appendChild(tabla(["Puesto", "Órdenes", "Resueltas", "Rechazadas", "Misiones", "Motivos de rechazo"], filas, [1, 2, 3, 4]));
         }
       }
+      // evaluacion por alumno (autor registrado en cada orden y mision)
+      const alumnos = Rubrica.filasAlumnos(datos);
+      if (alumnos.length) {
+        cont.appendChild(celda("h4", "Evaluación por alumno"));
+        cont.appendChild(tabla(["Alumno", "Bando", "Puesto", "Órdenes", "Resueltas", "Rechazadas", "Turnos activos / pasivos", "Misiones", "Observaciones"], alumnos, [3, 4, 5]));
+        if (datos.nota_alumnos) cont.appendChild(celda("p", datos.nota_alumnos, "ayuda"));
+      }
+      $("rb-csv").href = `/api/escenarios/${id}/aar/rubrica.csv`;
       $("dlg-rubrica").showModal();
     }
     $("rp-rubrica").addEventListener("click", rubrica);

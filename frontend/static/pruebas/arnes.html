@@ -497,8 +497,26 @@
             <button id="rp-rubrica" class="mini" type="button" title="Indicadores de conducción por bando y por puesto, con observaciones automáticas">Rúbrica</button>
             <a id="rp-imprimible" class="enlace-boton" target="_blank" rel="noopener">Imprimible</a>
             <a id="rp-diapositivas" class="enlace-boton" target="_blank" rel="noopener" title="Presentación automática para la sesión de análisis: una diapositiva por turno, resumen y evaluación">Diapositivas</a>
+            <button id="rp-replay" class="mini" type="button" title="Animación continua del ejercicio: movimientos, combates, estelas y marcador turno a turno">Replay</button>
             <a id="rp-csv" class="enlace-boton">CSV</a>
             <button id="rp-cerrar" class="mini secundario" type="button">Cerrar</button>
+          </div>
+          <div id="replay-anim" hidden>
+            <div class="fila-replay">
+              <button id="ra-inicio" class="mini secundario" type="button" title="Ir al inicio">|&lt;</button>
+              <button id="ra-play" class="mini" type="button" title="Reproducir o pausar (animación continua)">Reproducir</button>
+              <button id="ra-fin" class="mini secundario" type="button" title="Ir al final">&gt;|</button>
+              <select id="ra-velocidad" aria-label="Velocidad de reproducción" title="Velocidad">
+                <option value="0.5">0,5×</option>
+                <option value="1" selected>1×</option>
+                <option value="2">2×</option>
+                <option value="4">4×</option>
+              </select>
+              <input id="ra-progreso" type="range" min="0" max="0" value="0" step="1" aria-label="Progreso del replay (arrastre para ir a un turno)">
+              <label class="chk"><input type="checkbox" id="ra-estela" checked><span>Estela</span></label>
+              <span id="ra-turno" class="contador"></span>
+            </div>
+            <ul id="ra-novedades" hidden></ul>
           </div>
           <ul id="rp-combates"></ul>
         </div>
@@ -546,7 +564,7 @@
               <label><input type="checkbox" data-capa="contactos" checked><span>Últimos contactos</span></label>
               <label><input type="checkbox" data-capa="graficos" checked><span>Gráficos tácticos</span></label>
               <label><input type="checkbox" data-capa="referencias" checked><span>Límites y poblaciones</span></label>
-              <label><input type="checkbox" data-capa="bases_ven" checked><span>Bases aéreas y aeródromos (Venezuela y vecinos)</span></label>
+              <label><input type="checkbox" data-capa="bases_ven" checked><span>Bases aéreas y aeródromos (América)</span></label>
               <label><input type="checkbox" data-capa="aerodromos" checked><span>Plano de los aeródromos (pistas y hangares)</span></label>
               <label><input type="checkbox" id="ver-app6"><span>Símbolos militares (APP-6) en lugar de miniaturas</span></label>
               <label><input type="checkbox" data-capa="objetivos" checked><span>Objetivos</span></label>
@@ -655,6 +673,7 @@
       <p id="rb-resumen" class="ayuda"></p>
       <div id="rb-contenido"></div>
       <p id="rb-nota" class="ayuda"></p>
+      <a id="rb-csv" class="enlace-boton" title="Evaluación por alumno en CSV (hoja de cálculo)">CSV por alumno</a>
       <button>Cerrar</button>
     </form>
   </dialog>
@@ -701,6 +720,7 @@
   <script src="/static/js/herramientas.js"></script>
   <script src="/static/js/timeline.js"></script>
   <script src="/static/js/rubrica.js"></script>
+  <script src="/static/js/replay.js"></script>
   <script src="/static/js/informe.js"></script>
   <script src="/static/js/plantillas.js"></script>
   <script src="/static/pruebas/arnes.js"></script>
