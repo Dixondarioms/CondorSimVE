@@ -24,6 +24,29 @@ class UsuarioOut(BaseModel):
     rol: str
     puesto: str = "mando"
     activo: bool
+    aprobado: bool = True
+    debe_cambiar_clave: bool = False
+
+
+class SolicitudCuentaIn(BaseModel):
+    """Solicitud de cuenta hecha desde la pantalla de acceso (sin sesion); la aprueba un instructor."""
+
+    username: str = Field(min_length=3, max_length=50, pattern=r"^[A-Za-z0-9_.-]+$")
+    password: str = Field(min_length=1, max_length=200)
+    rol: Rol
+    puesto: Puesto = "mando"
+
+
+class CambioClaveIn(BaseModel):
+    actual: str = Field(min_length=1, max_length=200)
+    nueva: str = Field(min_length=1, max_length=200)
+
+
+class AprobacionIn(BaseModel):
+    """Rol y puesto con que el instructor aprueba la solicitud (por defecto, los pedidos)."""
+
+    rol: Rol | None = None
+    puesto: Puesto | None = None
 
 
 class UsuarioCreate(BaseModel):

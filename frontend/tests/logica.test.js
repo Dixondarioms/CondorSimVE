@@ -87,3 +87,20 @@ test("turnosReproducibles descarta el turno en curso (sin instantanea)", () => {
   const inf = { turnos: [{ turno: 0, unidades: [U(1, "azul")] }, { turno: 1, unidades: [U(1, "azul")] }, { turno: 2, unidades: [] }] };
   assert.deepEqual(L.turnosReproducibles(inf).map((t) => t.turno), [0, 1]);
 });
+
+test("escalaUnidad: las unidades se achican de lejos y crecen de cerca, dentro de un rango legible", () => {
+  assert.equal(L.escalaUnidad(3), 0.35);
+  assert.ok(L.escalaUnidad(6) < L.escalaUnidad(8) && L.escalaUnidad(8) < L.escalaUnidad(10));
+  assert.ok(Math.abs(L.escalaUnidad(10) - 1.05) < 1e-9);
+  assert.equal(L.escalaUnidad(18), 1.5);
+  assert.ok(L.ZOOM_ROTULOS < L.ZOOM_ALCANCES);
+});
+
+test("unidadesConAlcance: solo las desplegadas con alcance (sin bases, misiles, embarcadas ni aviones en tierra)", () => {
+  const u = (id, x) => ({ id, estado: "activa", tipo: "terrestre", clase: "infanteria", alcance_km: 5, lat: 8, lon: -70, transporte_id: null, en_tierra: false, ...x });
+  const lista = [
+    u(1), u(2, { tipo: "base", clase: "base_aerea" }), u(3, { tipo: "aerea", clase: "misil_crucero" }), u(4, { transporte_id: 9 }),
+    u(5, { tipo: "aerea", clase: "caza", en_tierra: true }), u(6, { estado: "destruida" }), u(7, { alcance_km: 0 }), u(8, { tipo: "aerea", clase: "caza" }),
+  ];
+  assert.deepEqual(L.unidadesConAlcance(lista).map((x) => x.id), [1, 8]);
+});

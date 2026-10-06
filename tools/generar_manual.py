@@ -68,9 +68,10 @@ ANCHO_TEXTO = A4[0] - 4 * cm
 class Manual(BaseDocTemplate):
     """Documento con encabezado, pie y tabla de contenido automatica."""
 
-    def __init__(self, ruta, **kw):
+    def __init__(self, ruta, titulo="S.I.E.T.E. · Manual de referencia", **kw):
+        self.titulo = titulo
         super().__init__(ruta, pagesize=A4, leftMargin=2 * cm, rightMargin=2 * cm, topMargin=2.2 * cm, bottomMargin=2 * cm,
-                         title="S.I.E.T.E. · Manual de usuario", author="S.I.E.T.E. - Sistema Integral de Entrenamiento Táctico y Estratégico", **kw)
+                         title=titulo, author="S.I.E.T.E. - Sistema Integral de Entrenamiento Táctico y Estratégico", **kw)
         marco = Frame(self.leftMargin, self.bottomMargin, self.width, self.height, id="normal")
         self.addPageTemplates([PageTemplate(id="portada", frames=[marco], onPage=lambda c, d: None),
                                PageTemplate(id="normal", frames=[marco], onPage=self._decorar)])
@@ -79,7 +80,7 @@ class Manual(BaseDocTemplate):
         c.saveState()
         c.setFont("Texto", 8.5)
         c.setFillColor(GRIS)
-        c.drawString(self.leftMargin, A4[1] - 1.4 * cm, "S.I.E.T.E. · Manual de usuario")
+        c.drawString(self.leftMargin, A4[1] - 1.4 * cm, self.titulo)
         c.drawRightString(A4[0] - self.rightMargin, A4[1] - 1.4 * cm, getattr(self, "seccion_actual", ""))
         c.setStrokeColor(LINEA)
         c.line(self.leftMargin, A4[1] - 1.55 * cm, A4[0] - self.rightMargin, A4[1] - 1.55 * cm)
@@ -214,6 +215,46 @@ def tabla_modelos():
                [4.2 * cm, 3.0 * cm, 1.8 * cm, 1.1 * cm, 1.4 * cm, 1.4 * cm, 1.4 * cm, 2.1 * cm, 1.6 * cm], tam=7.6)
 
 
+# ------------------------------------------------------------------ autoria (portada y creditos de ambos manuales)
+LOGO_DIDA = RAIZ / "frontend" / "static" / "img" / "dida_logo.jpg"
+CREADOR = "Cap. Dixon Malpica"
+UNIDAD = "División de Ingeniería y Desarrollo Aeroespacial (DIDA)"
+
+
+def credito_portada() -> list:
+    """Escudo de la DIDA, unidad que creo el simulador, y el credito de su creador, para la portada."""
+    texto = Paragraph(f"Desarrollado por la <b>{UNIDAD}</b><br/>Aviación Militar Bolivariana · Fuerza Armada Nacional Bolivariana<br/>"
+                      f"Creador del simulador: <b>{CREADOR}</b>",
+                      ParagraphStyle("cred", parent=S["pc"], fontSize=10.5, leading=15, textColor=GRIS))
+    if not LOGO_DIDA.exists():
+        return [texto]
+    im = Image(str(LOGO_DIDA))
+    im.drawWidth, im.drawHeight = 3.0 * cm, 3.0 * cm * im.imageHeight / im.imageWidth
+    t = Table([[im, texto]], colWidths=[3.4 * cm, 10.6 * cm], hAlign="CENTER")
+    t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
+    return [t]
+
+
+def seccion_creditos(titulo: str) -> list:
+    """Pagina de creditos: escudo de la DIDA, el creador del simulador y la unidad."""
+    h = H1(titulo)
+    if LOGO_DIDA.exists():
+        im = Image(str(LOGO_DIDA))
+        im.drawWidth, im.drawHeight = 7.5 * cm, 7.5 * cm * im.imageHeight / im.imageWidth
+        h += [im, Spacer(1, 10)]
+    centrado = ParagraphStyle("credc", parent=S["p"], alignment=TA_CENTER, fontSize=11, leading=16)
+    h += [Paragraph(f"S.I.E.T.E. (Sistema Integral de Entrenamiento Táctico y Estratégico) fue concebido, diseñado y desarrollado por el "
+                    f"<b>{CREADOR}</b>, de la <b>{UNIDAD}</b> de la Aviación Militar Bolivariana.", centrado),
+          Spacer(1, 6), Paragraph("<i>«El infinito es el límite»</i>", centrado), Spacer(1, 14)]
+    filas = [["Creador del simulador", CREADOR], ["Unidad", UNIDAD],
+             ["Componente", "Aviación Militar Bolivariana · Fuerza Armada Nacional Bolivariana"]]
+    t = Table([[Paragraph(f"<b>{a}</b>", S["celda"]), Paragraph(b, S["celda"])] for a, b in filas],
+              colWidths=[5.0 * cm, ANCHO_TEXTO - 5.0 * cm], hAlign="CENTER")
+    t.setStyle(TableStyle([("ROWBACKGROUNDS", (0, 0), (-1, -1), [CLARO, colors.white]), ("GRID", (0, 0), (-1, -1), 0.4, LINEA),
+                           ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
+    return h + [t]
+
+
 # ------------------------------------------------------------------ el manual
 def construir(salida: Path, img: Path) -> None:
     doc = Manual(str(salida))
@@ -228,14 +269,15 @@ def construir(salida: Path, img: Path) -> None:
     logo = RAIZ / "frontend" / "static" / "img" / "siete_logo_recortado.jpg"
     if logo.exists():
         im = Image(str(logo))
-        im.drawWidth, im.drawHeight = 15 * cm, 15 * cm * im.imageHeight / im.imageWidth
-        h += [im, Spacer(1, 18)]
+        im.drawWidth, im.drawHeight = 12 * cm, 12 * cm * im.imageHeight / im.imageWidth
+        h += [im, Spacer(1, 14)]
     h += [Paragraph("S.I.E.T.E.", S["titulo"]), Spacer(1, 6),
           Paragraph("Sistema Integral de Entrenamiento Táctico y Estratégico", S["subtitulo"]),
           Paragraph("Simulador de conducción militar para el adiestramiento táctico y estratégico", S["subtitulo"]), Spacer(1, 26),
-          Paragraph("MANUAL DE USUARIO", ParagraphStyle("mu", parent=S["subtitulo"], fontName="Texto-B", fontSize=18, textColor=AZUL)),
+          Paragraph("MANUAL DE REFERENCIA", ParagraphStyle("mu", parent=S["subtitulo"], fontName="Texto-B", fontSize=18, textColor=AZUL)),
           Spacer(1, 8), Paragraph("Qué es · cómo se hizo · instalación · cómo funciona", S["subtitulo"]), Spacer(1, 28)]
-    h += [Paragraph(f"Fuerza Armada Nacional Bolivariana · Aviación Militar Bolivariana · DIDA<br/>{fecha} · versión del manual 1.2", S["subtitulo"])]
+    h += credito_portada()
+    h += [Spacer(1, 10), Paragraph(f"{fecha} · versión del manual 1.3", S["subtitulo"])]
     h.append(PageBreak())
 
     # ---- indice
@@ -292,7 +334,7 @@ def construir(salida: Path, img: Path) -> None:
         ["Base de datos", "SQLite (por defecto) o PostgreSQL; SQLAlchemy + Alembic", "Escenarios, unidades, órdenes, usuarios, instantáneas de cada turno; migraciones automáticas."],
         ["Interfaz", "HTML, CSS y JavaScript sin frameworks; Leaflet; milsymbol", "Mapa táctico, paneles, órdenes, misiones, informe, videowall. Miniaturas 3D propias."],
         ["Seguridad", "Sesiones HttpOnly, PBKDF2-SHA256, CSP", "Roles y puestos verificados en el servidor; sin recursos externos; HTTPS opcional."],
-        ["Pruebas", "pytest (motor, API, migraciones) y Node (lógica del cliente)", "Más de 440 pruebas automatizadas; arnés visual con datos simulados."],
+        ["Pruebas", "pytest (motor, API, migraciones) y Node (lógica del cliente)", "Más de 550 pruebas automatizadas; arnés visual con datos simulados."],
     ], [3.0 * cm, 5.0 * cm, ANCHO_TEXTO - 8.0 * cm])]
     h += [H2("2.2 Datos y licencias"),
           P("Todo el material geográfico proviene de fuentes abiertas y se preparó una sola vez con internet mediante scripts "
@@ -303,6 +345,7 @@ def construir(salida: Path, img: Path) -> None:
               ["Fronteras, ríos, ciudades", "Natural Earth", "Dominio público"],
               ["Planos de aeródromos", "OpenStreetMap (pistas, rodajes, plataformas, hangares)", "ODbL 1.0"],
               ["Bases aéreas de la AMB", "Wikipedia y OurAirports (coordenadas, OACI, elevación)", "CC BY-SA / dominio público"],
+              ["Aeródromos de América", "OurAirports (~1 260 aeropuertos y bases militares)", "Dominio público"],
               ["Fotos F-16 y Su-30", "Wikimedia Commons", "CC BY-SA 3.0 / 4.0"],
               ["Imágenes 3D F-16 y Su-30", "Modelos de Sketchfab renderizados a 24 rumbos", "Sketchfab Standard"],
               ["Miniaturas 3D del resto de unidades e ilustraciones", "Propias del proyecto (procedurales)", "CC0"],
@@ -325,31 +368,64 @@ def construir(salida: Path, img: Path) -> None:
           ], [3.0 * cm, ANCHO_TEXTO - 3.0 * cm]),
           H2("3.2 Instalación con un clic (Windows)"),
           P("Con Python 3.11 o superior instalado (python.org, marcando «Add python.exe to PATH»), haga doble clic en "
-            "<font face='Mono'>instalar.cmd</font> en la carpeta del proyecto: crea el entorno, instala las dependencias, pide el "
-            "usuario y la contraseña del primer instructor, y deja en el Escritorio el acceso directo <b>S.I.E.T.E.</b> que arranca el "
+            "<font face='Mono'>instalar.cmd</font> en la carpeta del proyecto: crea el entorno, instala las dependencias, crea la "
+            "cuenta del administrador (<b>admin</b>, contraseña inicial <b>siete1234</b>; ver 3.4) y deja en el Escritorio el acceso directo <b>S.I.E.T.E.</b> que arranca el "
             "servidor y abre el navegador. Opciones: <font face='Mono'>instalar.cmd -Demo</font> (crea el escenario de demostración), "
             "<font face='Mono'>-Servicio</font> como administrador (arranque automático al encender el equipo) y <font face='Mono'>-Desinstalar</font>. "
             "<font face='Mono'>iniciar.cmd</font> y <font face='Mono'>detener.cmd</font> arrancan y detienen el servidor a mano."),
+          P("Si la carpeta no trae los <b>datos de mapa</b> (unos 550 MB, la mayor parte la foto satelital), el instalador ofrece "
+            "descargarlos, previa confirmación, del paquete <font face='Mono'>siete_datos.zip</font> publicado en GitHub; en un equipo sin "
+            "internet se instalan desde un zip llevado en un pendrive. Otras opciones:"),
+          Tbl(["Opción", "Efecto"], [
+              ["-Datos &lt;zip o URL&gt;", "Instala los datos de mapa desde un zip ya descargado (siete_datos_*.zip) o desde una URL."],
+              ["-SinDatos", "No pregunta ni descarga los datos de mapa (el mapa sale vacío hasta instalarlos)."],
+              ["-Actualizar", "Actualiza una instalación existente (atajo: <font face='Mono'>actualizar.cmd</font>; ver 3.7)."],
+              ["-Postgres &lt;url&gt;", "Usa PostgreSQL: guarda la conexión en backend\\.env, la prueba y aplica las migraciones; la clave no se muestra."],
+              ["-Https", "Genera un certificado autofirmado y deja el arranque con HTTPS en el puerto 8443."],
+              ["-Usuario (con SIETE_CONTRASENA)", "Instalación desatendida: crea ese instructor con esa contraseña en lugar de la cuenta admin."],
+              ["-SinUsuario, -SinAccesoDirecto, -Destino", "No crear usuarios (el servidor crea admin al arrancar igualmente) y dónde (o si) crear el acceso directo."],
+          ], [4.6 * cm, ANCHO_TEXTO - 4.6 * cm]),
+          Code("instalar.cmd -Datos D:\\siete_datos_20260930.zip\ninstalar.cmd -Https -Servicio\nactualizar.cmd"),
+          H3("Sin instalar Python: carpeta portátil con SIETE.exe"),
+          P("Otra forma de llevar el simulador a un equipo es la <b>carpeta portátil</b> (<font face='Mono'>SIETE_portable_&lt;fecha&gt;.zip</font>): "
+            "se descomprime en el servidor (por ejemplo en <font face='Mono'>C:\\SIETE</font>) y basta un <b>doble clic en SIETE.exe</b>. No hace "
+            "falta instalar Python ni ningún otro programa: el ejecutable los lleva dentro. Se abre una ventana con las direcciones para las "
+            "estaciones del aula y, a los pocos segundos, el navegador; cerrar esa ventana detiene el servidor. Si Windows pregunta por el "
+            "cortafuegos, permita el acceso en redes privadas. La base de datos y los respaldos quedan en "
+            "<font face='Mono'>SIETE\\backend</font>; para pasar a una versión nueva basta copiar <font face='Mono'>simulador_fenix.db</font> "
+            "a la carpeta nueva. <font face='Mono'>Restablecer admin.cmd</font> recupera la cuenta del administrador. La carpeta se genera con "
+            "<font face='Mono'>python tools/construir_ejecutable.py</font>."),
           H2("3.3 Instalación paso a paso (manual)"),
           Num([
               "Copie la carpeta del proyecto (<font face='Mono'>simulador_fenix</font>) al servidor, por ejemplo en <font face='Mono'>C:\\simulador_fenix</font>. "
               "Debe incluir <font face='Mono'>frontend/static/tiles_sat</font> (satélite), <font face='Mono'>tiles</font> (relieve) y <font face='Mono'>geo</font> (vectores y aeródromos).",
               ["Abra una consola (PowerShell o cmd) en la carpeta <font face='Mono'>backend</font> y cree el entorno con sus dependencias:",
                Code("cd C:\\simulador_fenix\\backend\npython -m venv venv\nvenv\\Scripts\\python -m pip install -r requirements.txt")],
-              ["Cree el primer usuario instructor (pide la contraseña, mínimo 8 caracteres):",
-               Code("venv\\Scripts\\python -m app.crear_usuario instructor --rol instructor")],
               ["(Opcional) Cree el escenario de demostración para probar:", Code("venv\\Scripts\\python -m app.crear_demo")],
-              ["Arranque el servidor. La base de datos se crea y se migra sola, y se respalda en cada arranque y cada 6 horas:",
+              ["Arranque el servidor. La base de datos se crea y se migra sola, y se respalda en cada arranque y cada 6 horas. "
+               "La primera vez crea la cuenta <b>admin</b> con la contraseña inicial <b>siete1234</b>:",
                Code("venv\\Scripts\\python -m app.servidor --host 0.0.0.0 --port 8000")],
               "Desde cualquier estación abra <font face='Mono'>http://&lt;ip-del-servidor&gt;:8000/</font> e inicie sesión. "
               "Para conocer la IP del servidor: <font face='Mono'>ipconfig</font>.",
           ]),
-          *Img(img, "cap_login.jpg", "Figura 1. Inicio de sesión. Tras 5 intentos fallidos la cuenta se bloquea 5 minutos.", ancho=9.5 * cm),
+          *Img(img, "cap_login.jpg", "Figura 1. Inicio de sesión, con el enlace «Solicitar una cuenta». Tras 5 intentos fallidos la cuenta se bloquea 5 minutos.", ancho=9.5 * cm),
           Nota("Deje la consola del servidor abierta mientras dure el ejercicio. Para detenerlo, Ctrl+C. Para que arranque solo al encender el "
                "equipo, cree una tarea programada de Windows que ejecute el comando de arranque."),
           H2("3.4 Usuarios, roles y puestos"),
-          P("Los usuarios se crean desde el panel <b>Usuarios</b> del instructor o por consola. Cada alumno tiene un rol (azul, rojo u "
-            "observador) y, dentro del bando, un puesto (EM por defecto, o A2, A3, A4, A5):"),
+          P("<b>Primer acceso del administrador.</b> Entre con el usuario <b>admin</b> y la contraseña inicial <b>siete1234</b>. El "
+            "simulador pide de inmediato elegir una contraseña nueva (mínimo 8 caracteres) y no deja hacer nada más hasta "
+            "cambiarla. Si alguna vez se pierde, en la carpeta <font face='Mono'>backend</font> del servidor:"),
+          Code("venv\\Scripts\\python -m app.restablecer_admin"),
+          P("devuelve <b>admin</b> a la contraseña inicial (con la misma obligación de cambiarla), sin tocar a los demás usuarios."),
+          P("<b>Cuentas de los alumnos.</b> Cada alumno pide su cuenta en la pantalla de acceso con <b>Solicitar una cuenta</b>: elige "
+            "usuario y contraseña, el rol (alumno azul o rojo, observador o instructor) y su puesto. La cuenta queda <b>pendiente</b> y no "
+            "permite entrar hasta que el instructor la aprueba en <i>Consola → Usuarios → Solicitudes de cuenta pendientes</i>, con el rol "
+            "y el puesto pedidos o con los que él decida; también puede rechazarla. El título <b>Usuarios</b> muestra cuántas hay pendientes "
+            "y el simulador avisa cuando llega una nueva."),
+          P("El instructor también puede crear cuentas directamente en el panel <b>Usuarios</b>, o ponerle una contraseña nueva a quien la "
+            "olvidó (botón <b>Clave</b>): en ambos casos es <b>provisional</b> y el alumno debe cambiarla al entrar. Cualquier usuario cambia la "
+            "suya desde el menú del perfil (<i>Cambiar contraseña</i>). Cada alumno tiene un rol (azul, rojo u observador) y, dentro del "
+            "bando, un puesto (EM por defecto, o A2, A3, A4, A5). Por consola también se crean cuentas, ya aprobadas:"),
           Code("venv\\Scripts\\python -m app.crear_usuario a5azul --rol azul --puesto planificacion\n"
                "venv\\Scripts\\python -m app.crear_usuario obs1 --rol observador"),
           H2("3.5 HTTPS (opcional)"),
@@ -364,8 +440,15 @@ def construir(salida: Path, img: Path) -> None:
           Bul(["Los respaldos automáticos quedan en <font face='Mono'>backend/respaldos/</font> (se conservan los 14 últimos). "
                "<font face='Mono'>python -m app.respaldo</font> hace uno manual. Restaurar = detener el servidor y copiar el archivo sobre "
                "<font face='Mono'>backend/simulador_fenix.db</font>.",
-               "Para actualizar a una versión nueva: detenga el servidor, haga un respaldo, reemplace la carpeta del proyecto "
+               "<b>Actualizar a una versión nueva</b>: doble clic en <font face='Mono'>actualizar.cmd</font>. Respalda la base de datos en "
+               "<font face='Mono'>backend/respaldos</font>, trae el código nuevo (<font face='Mono'>git pull</font> si la carpeta es un repositorio; si no, "
+               "descarga el zip de GitHub y sobrescribe todo salvo la base de datos, los respaldos, los certificados, <font face='Mono'>.env</font> y los datos de mapa), "
+               "reinstala las dependencias, aplica las migraciones y reinicia la tarea programada si existe.",
+               "Sin internet en el servidor: detenga el servidor, haga un respaldo, reemplace la carpeta del proyecto "
                "(conservando <font face='Mono'>backend/simulador_fenix.db</font>, <font face='Mono'>backend/respaldos</font> y los datos de mapa) y arranque: las migraciones se aplican solas.",
+               "<b>Datos de mapa aparte del código</b>: <font face='Mono'>python tools/empaquetar_datos.py</font> los deja en "
+               "<font face='Mono'>dist/siete_datos_&lt;fecha&gt;.zip</font> (con su suma SHA-256; <font face='Mono'>--sin-satelite</font> hace un paquete ligero de ~60 MB) "
+               "y <font face='Mono'>python tools/instalar_datos.py</font> o <font face='Mono'>instalar.cmd -Datos</font> los instala en otro equipo.",
                "Para comprobar la instalación: <font face='Mono'>venv\\Scripts\\python -m pytest</font> en <font face='Mono'>backend</font> ejecuta las pruebas del motor y la API."]),
           H2("3.8 Datos de mapa: regiones (Venezuela, América, mundo)"),
           P("El mapa está formado por <b>regiones superpuestas</b>, cada una con su resolución: <b>Venezuela y vecinos</b> (~300 m por píxel, "
@@ -550,8 +633,12 @@ def construir(salida: Path, img: Path) -> None:
             "perímetro, las pistas con su largo, ancho y orientación reales (bordes, umbrales, eje, zona de toma de contacto y la numeración de "
             "cada cabecera), las calles de rodaje con su eje amarillo, las plataformas, los helipuertos y los hangares y edificios con su sombra. "
             "Bases incluidas: El Libertador (SVBL), Mariscal Sucre (SVBS), La Carlota (SVFM), Rafael Urdaneta (SVMC), Luis del Valle García (SVBC), "
-            "Landaeta Gil (SVBM), Teófilo Luis Méndez (SVPR), José Antonio Páez (SVPA) y Barinas (SVBI).")]
-    h += Img(img, "cap_base_plano.jpg", "Figura 6. Base Aérea Barinas al zoom 15: pistas 03/21 y 13/31, rodajes, plataforma con los F-16 estacionados y cráteres por el daño recibido.")
+            "Landaeta Gil (SVBM), Teófilo Luis Méndez (SVPR) y José Antonio Páez (SVPA)."),
+          P("Lo mismo vale para los <b>aeródromos de los países vecinos y de toda América</b> de la capa de bases: cada uno que OpenStreetMap "
+            "tiene cartografiado se ve con su plano real al acercarse y se puede ocupar con una base del ejercicio igual que una venezolana. "
+            "El simulador solo descarga del servidor el plano de los aeródromos que quedan a la vista, así que tener más de mil no hace más "
+            "lento el mapa.")]
+    h += Img(img, "cap_base_plano.jpg", "Figura 6. Aeropuerto de Barinas (SVBI, civil) al zoom 15, ocupado por una base aérea del ejercicio: pistas 03/21 y 13/31, rodajes, plataforma con los F-16 estacionados y cráteres por el daño recibido.")
     h += [Bul(["Una unidad <b>base aérea</b> del ejercicio a menos de 4 km del aeródromo lo «ocupa»: al acercarse, su miniatura se reduce a una ficha «BA» y sus aeronaves estacionadas se dibujan sobre la plataforma real.",
                "<b>Daños</b>: con la base dañada aparecen cráteres en la pista (uno cada 7 % de fuerza perdida); por debajo del 25 %, cuando ya no puede lanzar ni recibir aviones, se pintan las cruces amarillas de pista cerrada y el rótulo «PISTA INOPERATIVA». El enemigo no ve el daño de una base ajena.",
                "El detalle depende de lo mapeado en OpenStreetMap: en algunas bases militares hay pocas construcciones cargadas y el simulador no las inventa."])]
@@ -573,22 +660,37 @@ def construir(salida: Path, img: Path) -> None:
                "<b>Gráficos tácticos</b>: líneas de fase, ejes de avance, zonas de reunión y puntos de control, compartidos con el bando (o con todos, si los traza el instructor).",
                "<b>Chat</b> del bando o «al mando», con latencia, jitter y pérdida simulados por el instructor.",
                "<b>Informe posterior al ejercicio (AAR)</b>: botón <b>Informe</b>: repetición turno a turno sobre el mapa (trayectorias, combates, novedades) y <b>replay animado</b> continuo con estelas, resumen por bando, marcador y objetivos, informe imprimible, CSV de combates y exportación JSON. Los alumnos lo ven al finalizar el escenario.",
-               "<b>Línea de tiempo</b>: combustible y munición de cada unidad turno a turno, con caídas abruptas, niveles críticos y reabastecimientos cruzados con los combates."])]
+               "<b>Línea de tiempo</b>: combustible y munición de cada unidad turno a turno, con caídas abruptas, niveles críticos y reabastecimientos cruzados con los combates."]),
+          H2("12.1 Replay animado"),
+          P("El botón <b>Replay</b> de la repetición abre un reproductor continuo para la sesión de análisis: recorre los turnos con las unidades "
+            "moviéndose entre posiciones (con arranque y frenado suaves), destellos y líneas atacante → defensor en cada combate, las unidades "
+            "destruidas que se desvanecen y las nuevas que se materializan. Un rótulo muestra el turno, la hora simulada, el clima, el marcador "
+            "acumulado y las novedades del turno. Controles: reproducir y pausa, velocidad (0,5×, 1×, 2×, 4×), barra de progreso arrastrable, ir "
+            "al inicio o al final y la casilla <b>Estela</b>, que deja el recorrido de cada unidad en el color de su bando. El instructor y el "
+            "observador lo ven siempre; los alumnos, al finalizar el escenario.")]
+    h += Img(img, "cap_replay.jpg", "Figura 11. Replay animado detenido a mitad del ejercicio: estelas, combate en curso y rótulo con hora, clima, marcador y novedades.")
+    h += [H2("12.2 Rúbrica por bando, por puesto y por alumno"),
+          P("<i>Informe → Rúbrica</i> resume la actuación de cada bando y de cada puesto responsable (A2 a A5): órdenes emitidas, resueltas y "
+            "rechazadas con su motivo, turnos con órdenes frente a turnos pasivos, logística, pérdidas, objetivos y misiones, con <b>observaciones "
+            "automáticas</b>. Como cada orden y misión registra <b>quién la emitió y en qué puesto</b> (la cola de órdenes lo muestra), la sección "
+            "<b>Evaluación por alumno</b> hace lo mismo para cada usuario, y el botón <b>CSV por alumno</b> la descarga para la planilla de "
+            "calificaciones. Las órdenes automáticas del motor no se atribuyen a nadie, y las anteriores a la versión 1.3 figuran como "
+            "«sin autor registrado». La rúbrica también va en el informe imprimible y en las diapositivas.")]
+    h += Img(img, "cap_rubrica.jpg", "Figura 12. Rúbrica del ejercicio con la evaluación por bando, por puesto y por alumno.")
 
     # ---- 13 limitaciones
     h += H1("13. Limitaciones conocidas")
     h += [Bul(["El modelo de combate es una abstracción didáctica; los valores del catálogo son ajustables.",
                "El terreno no distingue cultivos ni carreteras; los ríos se detectan en una grilla de ~300 m y los puentes reales no están cargados (solo los que construyen los ingenieros).",
-               "No hay unidades anfibias ni aerotransportadas; el transporte logístico es terrestre.",
+               "El transporte logístico es terrestre (convoyes); los buques de desembarco y los helicópteros solo llevan tropas, no abastecimientos.",
                "La identidad nacional es solo un nombre: no se modela el orden de batalla real de los países vecinos.",
                "Las comunicaciones simuladas afectan al chat, no a las órdenes ni a la niebla de guerra.",
-               "Cada orden se da a una unidad (no hay selección múltiple).",
                "Un solo servidor por aula: el WebSocket y el temporizador viven en el proceso."]),
           H2("Hoja de ruta prevista"),
           Bul(["Selección de rutas por carreteras y puentes reales.", "Más plantillas de escenario por curso."])]
 
     # ---- 14 novedades
-    h += H1("14. Novedades de las versiones 1.1 y 1.2")
+    h += H1("14. Novedades de las versiones 1.1 a 1.3")
     h += [P("Resumen de lo incorporado después de la primera edición del manual; cada punto está explicado en su capítulo."),
           Tbl(["Novedad", "Dónde", "Qué aporta"], [
               ["Meteorología por zonas", "Consola → Meteorología por zonas; capa Meteorología",
@@ -618,6 +720,14 @@ def construir(salida: Path, img: Path) -> None:
               ["Replay animado del ejercicio", "Informe → Replay",
                "Animación continua de los turnos sobre el mapa: movimientos interpolados, destellos de combate, unidades que se desvanecen, estela por unidad, velocidad 0,5×–4×, barra arrastrable y rótulo con hora, clima, marcador y novedades."],
               ["Instalador de un clic", "instalar.cmd, iniciar.cmd, detener.cmd", "Instalación guiada, acceso directo en el Escritorio y arranque automático opcional."],
+              ["Actualizador y paquete de datos", "actualizar.cmd; instalar.cmd -Datos; tools/empaquetar_datos.py",
+               "Actualización con respaldo previo y migraciones automáticas; los datos de mapa (~550 MB) se distribuyen en un zip aparte del código."],
+              ["Plano real de los aeródromos de toda América", "Capa Plano de los aeródromos; tools/preparar_aerodromos.py",
+               "Pistas, rodajes, plataformas y edificios de OpenStreetMap también en los aeródromos de los demás países, cargados solo al acercarse."],
+              ["Carpeta portátil con SIETE.exe", "SIETE_portable_&lt;fecha&gt;.zip; tools/construir_ejecutable.py",
+               "El simulador funciona en cualquier PC con Windows sin instalar Python: doble clic en SIETE.exe arranca el servidor del aula y abre el navegador."],
+              ["Solicitud de cuentas y administrador inicial", "Pantalla de acceso → Solicitar una cuenta; Consola → Usuarios; menú del perfil",
+               "Los alumnos piden su cuenta y el instructor la aprueba o rechaza; la cuenta admin trae una contraseña inicial que se cambia al primer acceso; contraseñas provisionales y cambio de contraseña para todos."],
               ["Valores de juego editables", "backend/data/ajustes_catalogo.json",
                "El instructor ajusta velocidades, alcances, efectividades y topes sin tocar el código (requiere reiniciar el servidor)."],
           ], [3.6 * cm, 5.2 * cm, ANCHO_TEXTO - 8.8 * cm])]
@@ -639,8 +749,14 @@ def construir(salida: Path, img: Path) -> None:
         ["Videowall", "Botón Videowall o tecla V; Esc para salir"],
         ["Regla", "Botón Regla sobre el mapa; doble clic o Esc para terminar"],
         ["Informe", "Botón Informe; Línea de tiempo y Replay animado dentro de la repetición"],
+        ["Rúbrica y CSV por alumno", "Informe → Rúbrica → CSV por alumno"],
+        ["Actualizar el simulador", "Doble clic en actualizar.cmd (respalda la base antes)"],
         ["Respaldo manual", "backend: venv\\Scripts\\python -m app.respaldo"],
-        ["Crear usuario", "backend: venv\\Scripts\\python -m app.crear_usuario &lt;nombre&gt; --rol azul|rojo|observador|instructor [--puesto ...]"],
+        ["Primer acceso", "Usuario admin, contraseña inicial siete1234 (se cambia al entrar)"],
+        ["Pedir una cuenta", "Pantalla de acceso → Solicitar una cuenta; el instructor la aprueba en Consola → Usuarios"],
+        ["Cambiar la propia contraseña", "Menú del perfil → Cambiar contraseña"],
+        ["Recuperar la cuenta admin", "backend: venv\\Scripts\\python -m app.restablecer_admin"],
+        ["Crear usuario", "Consola → Usuarios, o backend: venv\\Scripts\\python -m app.crear_usuario &lt;nombre&gt; --rol azul|rojo|observador|instructor [--puesto ...]"],
         ["Pruebas", "backend: venv\\Scripts\\python -m pytest · raíz: node --test \"frontend/tests/*.test.js\""],
     ], [5.2 * cm, ANCHO_TEXTO - 5.2 * cm])]
     h += [H2("Anexo B. Estructura del proyecto"),
@@ -652,6 +768,8 @@ def construir(salida: Path, img: Path) -> None:
                "  tools/              scripts de preparación de datos (terreno, satélite, aeródromos, bases, arnés, manual)\n"
                "  docs/               este manual\n  README.md           documentación técnica completa"),
           H2("Anexo C. Créditos y licencias"),
+          P(f"Simulador concebido, diseñado y desarrollado por el <b>{CREADOR}</b>, {UNIDAD}, Aviación Militar Bolivariana. "
+            "Datos y componentes de terceros:"),
           P("Satélite: EOxCloudless (EOX IT Services GmbH), Copernicus Sentinel-2 (ESA), CC BY 4.0. Relieve: AWS Terrain Tiles (SRTM/GMTED/ETOPO1 "
             "vía Mapzen). Cobertura terrestre: ESA WorldCover 2021, CC BY 4.0. Vectores: Natural Earth (dominio público). Planos de aeródromos: "
             "© colaboradores de OpenStreetMap, ODbL 1.0. Bases aéreas: Wikipedia (CC BY-SA) y OurAirports (dominio público). Fotos: F-16 venezolano "
@@ -661,6 +779,7 @@ def construir(salida: Path, img: Path) -> None:
           P("Los créditos deben conservarse si el proyecto se redistribuye. Las cifras y reglas del simulador son parámetros de juego y no "
             "representan datos técnicos oficiales de ningún sistema real.")]
 
+    h += seccion_creditos("Créditos")
     doc.multiBuild(h)
 
 

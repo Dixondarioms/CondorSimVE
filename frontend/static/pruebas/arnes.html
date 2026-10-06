@@ -18,11 +18,48 @@
     <form id="login-form" autocomplete="on">
       <img class="logo-siete" src="/static/img/siete_logo_recortado.jpg" alt="S.I.E.T.E. · Fuerza Armada Nacional Bolivariana">
       <h2>S.I.E.T.E.</h2>
-      <p class="sec">Sistema Integral de Entrenamiento Táctico y Estratégico. Ingrese con la cuenta asignada por el instructor.</p>
+      <p class="sec">Sistema Integral de Entrenamiento Táctico y Estratégico. Ingrese con su cuenta; si no tiene una, solicítela y el instructor la aprobará.</p>
       <input id="l-user" name="username" placeholder="Usuario" autocomplete="username" required>
       <input id="l-pass" name="password" type="password" placeholder="Contraseña" autocomplete="current-password" required>
       <button type="submit" class="primario">Ingresar</button>
       <p id="l-error" class="error" role="alert"></p>
+      <button id="btn-ir-registro" type="button" class="enlace">Solicitar una cuenta</button>
+    </form>
+
+    <form id="registro-form" autocomplete="off" hidden>
+      <h2>SOLICITAR CUENTA</h2>
+      <p class="sec">Elija su usuario y contraseña. La cuenta quedará pendiente hasta que el instructor la apruebe (puede cambiarle el rol o el puesto).</p>
+      <input id="r-user" placeholder="Usuario (letras, números, punto, guion)" maxlength="50" autocomplete="username" required>
+      <input id="r-pass" type="password" placeholder="Contraseña (mín. 8 caracteres)" autocomplete="new-password" required>
+      <input id="r-pass2" type="password" placeholder="Repita la contraseña" autocomplete="new-password" required>
+      <select id="r-rol" aria-label="Rol solicitado">
+        <option value="azul">Alumno · bando azul</option>
+        <option value="rojo">Alumno · bando rojo</option>
+        <option value="observador">Observador</option>
+        <option value="instructor">Instructor</option>
+      </select>
+      <select id="r-puesto" aria-label="Puesto dentro del bando">
+        <option value="mando">EM · Estado Mayor (todas las funciones)</option>
+        <option value="inteligencia">A2 · Inteligencia</option>
+        <option value="operaciones">A3 · Operaciones en curso</option>
+        <option value="logistica">A4 · Logística</option>
+        <option value="planificacion">A5 · Planificación</option>
+      </select>
+      <button type="submit" class="primario">Enviar solicitud</button>
+      <p id="r-error" class="error" role="alert"></p>
+      <p id="r-ok" class="aviso-ok" role="status" hidden></p>
+      <button id="btn-volver-login" type="button" class="enlace">Volver al ingreso</button>
+    </form>
+
+    <form id="clave-form" hidden>
+      <h2>CAMBIAR CONTRASEÑA</h2>
+      <p id="c-motivo" class="sec"></p>
+      <input id="c-actual" type="password" placeholder="Contraseña actual" autocomplete="current-password" required>
+      <input id="c-nueva" type="password" placeholder="Contraseña nueva (mín. 8 caracteres)" autocomplete="new-password" required>
+      <input id="c-nueva2" type="password" placeholder="Repita la contraseña nueva" autocomplete="new-password" required>
+      <button type="submit" class="primario">Guardar contraseña</button>
+      <p id="c-error" class="error" role="alert"></p>
+      <button id="btn-clave-salir" type="button" class="enlace">Cerrar sesión</button>
     </form>
   </div>
 
@@ -62,6 +99,7 @@
           <div id="menu-perfil" class="menu" hidden>
             <b id="mp-nombre"></b>
             <span id="mp-rol" class="sec"></span>
+            <button id="btn-cambiar-clave" type="button" class="secundario">Cambiar contraseña</button>
             <button id="btn-logout" type="button" class="secundario">Cerrar sesión</button>
           </div>
         </div>
@@ -374,7 +412,11 @@
           </details>
 
           <details>
-            <summary>Usuarios</summary>
+            <summary>Usuarios <span id="badge-solicitudes" class="contador" title="Solicitudes de cuenta pendientes" hidden></span></summary>
+            <div id="bloque-solicitudes" hidden>
+              <h4>Solicitudes de cuenta pendientes</h4>
+              <ul id="lista-solicitudes"></ul>
+            </div>
             <ul id="lista-usuarios"></ul>
             <div class="grid">
               <input id="nu-user" placeholder="usuario" maxlength="50" autocomplete="off">
@@ -561,6 +603,7 @@
               <label><input type="checkbox" data-capa="cobertura"><span>Cobertura (detección)</span></label>
               <label><input type="checkbox" data-capa="niebla"><span>Niebla de guerra</span></label>
               <label><input type="checkbox" data-capa="unidades" checked><span>Unidades</span></label>
+              <label title="El anillo de alcance de cada unidad desplegada aparece al acercar el mapa (zoom 9 en adelante)"><input type="checkbox" data-capa="alcances" checked><span>Alcance de las unidades (al acercarse)</span></label>
               <label><input type="checkbox" data-capa="contactos" checked><span>Últimos contactos</span></label>
               <label><input type="checkbox" data-capa="graficos" checked><span>Gráficos tácticos</span></label>
               <label><input type="checkbox" data-capa="referencias" checked><span>Límites y poblaciones</span></label>

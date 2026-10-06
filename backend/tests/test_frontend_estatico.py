@@ -178,3 +178,33 @@ def test_index_usa_dos_capas_base_y_cita_ambas_fuentes():
     app_js = (FRONTEND / "static" / "js" / "app.js").read_text(encoding="utf-8")
     assert "/static/tiles_sat/${m.id}/{z}/{x}/{y}.jpg" in app_js and "/static/tiles/${m.id}/{z}/{x}/{y}.jpg" in app_js
     assert "Sentinel-2 cloudless" in app_js and "CC BY 4.0" in app_js
+
+
+def test_los_planos_de_aerodromos_son_coherentes_con_su_indice():
+    """Cada entrada del indice tiene su archivo (formato compacto: rodajes como ejes, sin marcas de pista) y las bases
+    de Venezuela, sus vecinos y el aeropuerto de Barinas (plantillas) conservan su plano."""
+    import json
+
+    import pytest
+
+    carpeta = FRONTEND / "static" / "geo" / "aerodromos"
+    if not (carpeta / "indice.json").exists():  # datos de mapa (paquete siete_datos o tools/preparar_aerodromos.py)
+        pytest.skip("sin planos de aerodromos instalados")
+    indice = json.loads((carpeta / "indice.json").read_text(encoding="utf-8"))
+    assert "OpenStreetMap" in indice["fuente"]
+    por_icao = {b["icao"]: b for b in indice["bases"]}
+    curadas = {b["properties"]["icao"] for b in _bases_aereas() if b["properties"]["origen"] == "curado"}
+    assert curadas | {"SVBI"} <= set(por_icao)
+    capa = {b["properties"]["icao"] for b in _bases_aereas()} | {"SVBI"}
+    for icao, b in por_icao.items():
+        assert icao in capa and (b["pistas"] or b["limite"])
+        plano = json.loads((carpeta / b["archivo"]).read_text(encoding="utf-8"))
+        assert plano["bases"][0]["icao"] == icao
+        tipos = {f["properties"]["tipo"] for f in plano["features"]}
+        assert not tipos & {"marca", "eje_rodaje"}, icao
+        for f in plano["features"]:
+            assert f["properties"]["base"] == icao
+            if f["properties"]["tipo"] == "rodaje":
+                assert f["geometry"]["type"] == "LineString" and f["properties"]["ancho_m"] > 0
+            if f["properties"]["tipo"] == "pista":
+                assert len(f["properties"]["extremos"]) == 2 and f["properties"]["largo_m"] >= 300

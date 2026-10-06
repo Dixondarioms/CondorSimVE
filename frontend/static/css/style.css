@@ -220,12 +220,21 @@ summary { cursor: pointer; font-weight: 700; padding: 7px 0; font-size: 12px; le
 .cola li button:hover { color: var(--rojo); border-color: var(--rojo); }
 
 /* consola */
+#bloque-solicitudes { margin-bottom: 8px; padding: 6px 8px; border: 1px solid rgba(255, 183, 3, .5); border-radius: 6px; background: rgba(255, 183, 3, .07); }
+#bloque-solicitudes h4 { margin: 0 0 4px; color: var(--ambar); }
+#lista-solicitudes { list-style: none; margin: 0; padding: 0; }
+#lista-solicitudes li { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--borde); font-size: 12px; }
+#lista-solicitudes li > span { flex: 1 1 100%; overflow-wrap: anywhere; }
+#lista-solicitudes select { width: auto; }
 #lista-usuarios li, #lista-asignados li {
   display: flex; gap: 6px; align-items: center; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--borde); font-size: 12px;
 }
 #lista-usuarios, #lista-asignados { list-style: none; margin: 0; padding: 0; }
 #lista-usuarios li > span, #lista-asignados li > span { flex: 1; overflow-wrap: anywhere; }
 #lista-usuarios li.inactiva > span { opacity: .5; text-decoration: line-through; }
+/* el nombre en su propia linea y los controles (rol, puesto, clave) debajo: en el panel angosto no se aprietan */
+#lista-usuarios li { flex-wrap: wrap; justify-content: flex-start; }
+#lista-usuarios li > span { flex: 1 1 100%; }
 #lista-usuarios select { width: auto; }
 #lista-asignados li { justify-content: flex-start; }
 #lista-asignados input { width: auto; margin: 0 8px 0 0; }
@@ -268,6 +277,10 @@ body.repitiendo #leyenda-mapa { bottom: 120px; }
 }
 .marca.sel svg { filter: drop-shadow(0 0 7px #fff) drop-shadow(0 0 3px var(--azul)); }
 .marca.enemigo.sel svg { filter: drop-shadow(0 0 7px #fff) drop-shadow(0 0 3px var(--rojo)); }
+/* mapa lejos: sin nombres de unidades ni etiquetas de graficos (se leen al pasar el cursor o al acercarse) */
+.z-sin-rotulos .marca .rotulo, .z-sin-rotulos .grafico-etiqueta, .z-sin-rotulos .zona-clima-rotulo,
+.z-sin-rotulos .informe-marca .fuente, .z-sin-rotulos .ge-zona { display: none; }
+.z-sin-rotulos .marca.sel .rotulo { display: block; }
 .marca.fantasma { opacity: .5; }
 .marca.fantasma .rotulo { font-style: italic; }
 .wp { background: none; border: none; }
@@ -360,8 +373,13 @@ path.ruta-anim { animation: marcha 1.2s linear infinite; }
 #login .logo { width: 44px; height: 44px; margin: 0 auto; }
 #login .logo-siete { display: block; width: 100%; max-width: 360px; margin: -6px auto 4px; border-radius: 10px; }
 #login h2 { font-size: 20px; letter-spacing: .12em; }
-#login input { padding: 10px; }
+#login input, #login select { padding: 10px; }
 #login .primario { margin-top: 6px; padding: 10px; }
+#login form[hidden] { display: none; }
+button.enlace { background: none; border: none; color: #8fb8ff; padding: 2px; font-size: 13px; text-decoration: underline; cursor: pointer; }
+button.enlace:hover { color: #fff; }
+.aviso-ok { color: var(--verde); font-size: 13px; margin: 0; }
+#menu-perfil button + button { margin-top: 4px; }
 
 /* ---------- repeticion del informe ---------- */
 #replay { position: absolute; left: 10px; right: 274px; bottom: 26px; z-index: 950; background: rgba(17, 21, 33, .94); border: 1px solid var(--borde); border-radius: 6px; padding: 8px 10px; box-shadow: var(--sombra); }

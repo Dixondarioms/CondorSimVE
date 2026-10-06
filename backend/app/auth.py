@@ -25,6 +25,14 @@ MIN_PASSWORD = 8
 MAX_FALLOS = 5
 BLOQUEO_SEGUNDOS = 300
 
+# Cuenta del administrador que se crea sola en una base sin usuarios; la contrasena inicial es conocida
+# (manual y README) y por eso se exige cambiarla al primer acceso.
+ADMIN_INICIAL = "admin"
+CLAVE_INICIAL = "siete1234"
+MAX_SOLICITUDES_PENDIENTES = 50
+# Lo unico que puede hacer quien debe cambiar la contrasena (ademas de cerrar la sesion)
+RUTAS_CON_CLAVE_VENCIDA = ("/api/auth/yo", "/api/auth/cambiar-clave")
+
 
 # ---------- Contrasenas ----------
 def hash_password(password: str) -> str:
@@ -94,7 +102,50 @@ def autenticar(db: Session, username: str, password: str) -> Usuario:
     if intento is not None:
         db.delete(intento)
         db.commit()
+    # Solo se revela que la solicitud esta pendiente a quien conoce la contrasena.
+    if not usuario.aprobado:
+        raise HTTPException(
+            status_code=403, detail="Su solicitud de cuenta aun no fue aprobada por el instructor. Intente mas tarde."
+        )
     return usuario
+
+
+def cambiar_clave(db: Session, usuario: Usuario, actual: str, nueva: str) -> None:
+    if not verificar_password(actual, usuario.password_hash):
+        raise HTTPException(status_code=400, detail="La contrasena actual no es correcta")
+    validar_password(nueva)
+    if nueva == actual:
+        raise HTTPException(status_code=400, detail="La contrasena nueva debe ser distinta de la actual")
+    usuario.password_hash = hash_password(nueva)
+    usuario.debe_cambiar_clave = False
+    db.commit()
+
+
+def restablecer_admin(db: Session) -> Usuario:
+    """Deja la cuenta `admin` como instructor activo con la contrasena inicial y obligacion de cambiarla
+    (la crea si no existe). Para la primera puesta en marcha y para recuperar el acceso desde la consola."""
+    usuario = db.query(Usuario).filter(Usuario.username == ADMIN_INICIAL).first()
+    if usuario is None:
+        usuario = Usuario(username=ADMIN_INICIAL, password_hash="", rol="instructor")
+        db.add(usuario)
+    usuario.password_hash = hash_password(CLAVE_INICIAL)
+    usuario.rol = "instructor"
+    usuario.puesto = puestos.POR_DEFECTO
+    usuario.activo = True
+    usuario.aprobado = True
+    usuario.debe_cambiar_clave = True
+    db.commit()
+    db.refresh(usuario)
+    db.query(IntentoLogin).filter(IntentoLogin.clave == ADMIN_INICIAL).delete()
+    db.query(Sesion).filter(Sesion.usuario_id == usuario.id).delete()
+    db.commit()
+    return usuario
+
+
+def crear_admin_si_no_hay_usuarios(db: Session) -> Usuario | None:
+    if db.query(Usuario).count():
+        return None
+    return restablecer_admin(db)
 
 
 # ---------- Sesiones ----------
@@ -131,8 +182,12 @@ def cerrar_sesion(db: Session, token: str | None, response: Response) -> None:
     response.delete_cookie(COOKIE, path="/")
 
 
-def revocar_sesiones(db: Session, usuario_id: int) -> None:
-    db.query(Sesion).filter(Sesion.usuario_id == usuario_id).delete()
+def revocar_sesiones(db: Session, usuario_id: int, salvo_token: str | None = None) -> None:
+    """Cierra las sesiones del usuario (todas, o todas salvo la del token indicado)."""
+    consulta = db.query(Sesion).filter(Sesion.usuario_id == usuario_id)
+    if salvo_token:
+        consulta = consulta.filter(Sesion.token_hash != _hash_token(salvo_token))
+    consulta.delete()
     db.commit()
 
 
@@ -143,7 +198,7 @@ def usuario_desde_token(db: Session, token: str | None) -> Usuario | None:
     if sesion is None or sesion.expira_en < ahora():
         return None
     usuario = db.get(Usuario, sesion.usuario_id)
-    if usuario is None or not usuario.activo:
+    if usuario is None or not usuario.activo or not usuario.aprobado:
         return None
     return usuario
 
@@ -153,6 +208,8 @@ def usuario_actual(request: Request, db: Session = Depends(get_db)) -> Usuario:
     usuario = usuario_desde_token(db, request.cookies.get(COOKIE))
     if usuario is None:
         raise HTTPException(status_code=401, detail="No autenticado")
+    if usuario.debe_cambiar_clave and request.url.path not in RUTAS_CON_CLAVE_VENCIDA:
+        raise HTTPException(status_code=403, detail="Debe cambiar su contrasena antes de continuar")
     return usuario
 
 
@@ -183,7 +240,10 @@ def usuario_ws(websocket: WebSocket, db: Session) -> Usuario | None:
         host = websocket.headers.get("host", "")
         if origen.split("://", 1)[-1] != host:
             return None
-    return usuario_desde_token(db, websocket.cookies.get(COOKIE))
+    usuario = usuario_desde_token(db, websocket.cookies.get(COOKIE))
+    if usuario is not None and usuario.debe_cambiar_clave:
+        return None
+    return usuario
 
 
 # ---------- Acceso a escenarios ----------

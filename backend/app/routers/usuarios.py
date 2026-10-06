@@ -30,6 +30,8 @@ def crear(
         username=username, password_hash=auth.hash_password(payload.password), rol=payload.rol,
         # el puesto solo tiene sentido dentro de un bando
         puesto=payload.puesto if payload.rol in puestos.BANDOS else puestos.POR_DEFECTO,
+        # la contrasena la eligio el instructor: el usuario la cambia al entrar por primera vez
+        debe_cambiar_clave=True,
     )
     db.add(usuario)
     db.commit()
@@ -52,6 +54,8 @@ async def actualizar(
     if payload.password is not None:
         auth.validar_password(payload.password)
         usuario.password_hash = auth.hash_password(payload.password)
+        # contrasena puesta por el instructor (olvido, alta): el usuario la cambia al volver a entrar
+        usuario.debe_cambiar_clave = usuario.id != actual.id
         pierde_acceso = True
     if payload.rol is not None and payload.rol != usuario.rol:
         usuario.rol = payload.rol
@@ -78,3 +82,40 @@ async def actualizar(
         await manager.expulsar(usuario.id)
     db.refresh(usuario)
     return usuario
+
+
+def _solicitud(db: Session, usuario_id: int) -> Usuario:
+    usuario = db.get(Usuario, usuario_id)
+    if usuario is None or usuario.aprobado:
+        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+    return usuario
+
+
+@router.post("/{usuario_id}/aprobar", response_model=schemas.UsuarioOut)
+def aprobar(
+    usuario_id: int,
+    payload: schemas.AprobacionIn | None = None,
+    db: Session = Depends(get_db),
+    _: Usuario = Depends(solo_instructor),
+):
+    """Aprueba una solicitud de cuenta, con el rol y el puesto pedidos o los que decida el instructor."""
+    usuario = _solicitud(db, usuario_id)
+    if payload is not None and payload.rol is not None:
+        usuario.rol = payload.rol
+    if payload is not None and payload.puesto is not None:
+        usuario.puesto = payload.puesto
+    if usuario.rol not in puestos.BANDOS:
+        usuario.puesto = puestos.POR_DEFECTO
+    usuario.aprobado = True
+    usuario.activo = True
+    db.commit()
+    db.refresh(usuario)
+    return usuario
+
+
+@router.delete("/{usuario_id}/solicitud")
+def rechazar(usuario_id: int, db: Session = Depends(get_db), _: Usuario = Depends(solo_instructor)):
+    """Rechaza (borra) una solicitud pendiente; el nombre de usuario queda libre."""
+    db.delete(_solicitud(db, usuario_id))
+    db.commit()
+    return {"ok": True}

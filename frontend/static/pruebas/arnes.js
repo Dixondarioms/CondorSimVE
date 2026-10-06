@@ -83,7 +83,7 @@
     base(10, "Flecha 1", "azul", "caza", 8.560, -70.520, { modelo: "su30", aeronaves: 2, echelon: "equipo", fuerza: 60, mision: "patrulla", mision_lat: 8.75, mision_lon: -70.3 }),
     base(15, "Cobra 1", "azul", "caza", 8.624, -70.209, { modelo: "f16", aeronaves: 2, echelon: "equipo", en_tierra: true, base_id: 9, espera_restante: 1 }),
     // sobre el aerodromo real de Barinas (SVBI), dañada: muestra el plano con crateres en la pista
-    base(9, "Base Aérea Barinas", "azul", "base_aerea", 8.618, -70.215, { stock_combustible: 180, stock_municion: 900, fuerza: 55, dano_pista: 45, dano_plataforma: 20, dano_combustible: 10, refugios: 4 }),
+    base(9, "Aeropuerto de Barinas", "azul", "base_aerea", 8.618, -70.215, { stock_combustible: 180, stock_municion: 900, fuerza: 55, dano_pista: 45, dano_plataforma: 20, dano_combustible: 10, refugios: 4 }),
     base(19, "AA Pesada 1", "azul", "antiaerea", 8.575, -70.565),
     base(11, "Infantería Roja", "rojo", "infanteria", 8.660, -70.600, { fuerza: 70 }),
     base(12, "Depósito R", "rojo", "deposito", 8.700, -70.620),
@@ -168,7 +168,7 @@
   let objetivos = [
     { id: 1, bando: "azul", tipo: "ocupar", nombre: "Tomar el puente", puntos: 40, lat: 8.63, lon: -70.52, radio_km: 4, turnos_requeridos: 3, progreso: 1, unidad_id: null, unidad_nombre: "", hasta_turno: null, estado: "pendiente", turno_resuelto: null },
     { id: 2, bando: "azul", tipo: "destruir", nombre: "Neutralizar la infantería enemiga", puntos: 50, lat: null, lon: null, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: 11, unidad_nombre: "Infantería Roja", hasta_turno: null, estado: "pendiente", turno_resuelto: null },
-    { id: 3, bando: "azul", tipo: "proteger", nombre: "Mantener la base", puntos: 30, lat: null, lon: null, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: 9, unidad_nombre: "Base Aérea Barinas", hasta_turno: 8, estado: "cumplido", turno_resuelto: 2 },
+    { id: 3, bando: "azul", tipo: "proteger", nombre: "Mantener la base", puntos: 30, lat: null, lon: null, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: 9, unidad_nombre: "Aeropuerto de Barinas", hasta_turno: 8, estado: "cumplido", turno_resuelto: 2 },
     { id: 4, bando: "rojo", tipo: "ocupar", nombre: "Cruzar el río", puntos: 25, lat: 8.7, lon: -70.7, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: null, unidad_nombre: "", hasta_turno: null, estado: "pendiente", turno_resuelto: null },
   ];
   let proximoObjetivo = 5;
@@ -478,7 +478,11 @@
       return json({ id, nombre: "Escenario de prueba (plantilla)", turno_actual: 1, fase: "decision", estado: "activo", clima: "despejado", azar: false, auto_resolver: false, hora_inicio_min: 120, nacion_azul: "venezuela", nacion_rojo: "estados_unidos", com_latencia_ms: 0, com_jitter_ms: 0, com_perdida_pct: 0 });
     }
     if (path === "/api/escenarios" && metodo === "GET") return json([ESC]);
-    if (path === "/api/usuarios") return json([[1, "prof", "instructor"], [2, "alfa", "azul"], [3, "bravo", "rojo"], [4, "obs", "observador"]].map(([id, username, rol]) => ({ id, username, rol, puesto: "mando", activo: true })));
+    if (path === "/api/usuarios") return json([[1, "prof", "instructor"], [2, "alfa", "azul"], [3, "bravo", "rojo"], [4, "obs", "observador"]]
+      .map(([id, username, rol]) => ({ id, username, rol, puesto: "mando", activo: true, aprobado: true, debe_cambiar_clave: false }))
+      // una solicitud de cuenta pendiente (pantalla de acceso) y un alumno con contrasena provisional
+      .concat([{ id: 5, username: "charlie", rol: "azul", puesto: "logistica", activo: true, aprobado: false, debe_cambiar_clave: false },
+               { id: 6, username: "delta", rol: "rojo", puesto: "mando", activo: true, aprobado: true, debe_cambiar_clave: true }]));
     if (path === "/api/terreno/clase") return json({ clase: claseTerreno(parseFloat(q.get("lat"))) });
     if ((m = path.match(/^\/api\/escenarios\/1\/usuarios$/))) return json({ usuario_ids: [2, 3, 4] });
     if (path === "/api/escenarios/1/aar") return json(informe());
@@ -566,7 +570,7 @@
     if ((m = path.match(/^\/api\/escenarios\/1\/misiones\/(\d+)$/)) && metodo === "DELETE") {
       const mi = misiones.find((x) => x.id === parseInt(m[1], 10));
       if (!mi) return error("Mision no encontrada", 404);
-      if (mi.estado === "en_curso") { mi.resultado = "Abortada: regresa a Base Aérea Barinas."; } else { mi.estado = "cancelada"; mi.resultado = "Cancelada antes de iniciarse."; }
+      if (mi.estado === "en_curso") { mi.resultado = "Abortada: regresa al Aeropuerto de Barinas."; } else { mi.estado = "cancelada"; mi.resultado = "Cancelada antes de iniciarse."; }
       enviarEstado();
       return json(mi);
     }

@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
+from sqlalchemy import false as sa_false
+from sqlalchemy import true as sa_true
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -22,6 +24,10 @@ class Usuario(Base):
     # puesto dentro del bando (solo alumnos): mando | inteligencia | operaciones | logistica | planificacion
     puesto: Mapped[str] = mapped_column(String(20), default="mando", server_default="mando")
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    # False = solicitud de cuenta hecha desde la pantalla de acceso, a la espera de que un instructor la apruebe
+    aprobado: Mapped[bool] = mapped_column(Boolean, default=True, server_default=sa_true())
+    # True = contrasena inicial o puesta por el instructor: debe cambiarla al entrar antes de usar el simulador
+    debe_cambiar_clave: Mapped[bool] = mapped_column(Boolean, default=False, server_default=sa_false())
     creado_en: Mapped[datetime] = mapped_column(DateTime, default=ahora)
 
 

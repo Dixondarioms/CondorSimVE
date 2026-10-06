@@ -145,6 +145,11 @@ def api(db_engine):
         if nombre:
             r = c.post("/api/auth/login", json={"username": nombre, "password": "clave-segura-1"})
             assert r.status_code == 200, r.text
+            if r.json().get("debe_cambiar_clave"):
+                # usuario creado desde el panel: se da por cambiada la contrasena (eso se prueba en test_cuentas.py)
+                with Session() as db:
+                    db.query(Usuario).filter(Usuario.username == nombre).update({"debe_cambiar_clave": False})
+                    db.commit()
         return c
 
     cliente.engine = db_engine

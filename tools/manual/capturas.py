@@ -20,7 +20,8 @@ CAPTURAS = [
     ("cap_carlota", f"{ARNES}?rol=instructor&lat=10.4855&lon=-66.8425&zoom=15", 1440, 900, 10000, 875),
     ("cap_naval", f"{ARNES}?rol=azul&puesto=mando&lat=10.66&lon=-68.0&zoom=11", 1440, 900, 9000, 875),
     ("cap_videowall", f"{ARNES}?rol=instructor&modo=videowall&vista=completa&lat=8.62&lon=-70.5&zoom=10", 1440, 900, 9000, 875),
-    ("cap_miniaturas", BASE + "/static/pruebas/miniaturas.html", 1400, 1500, 4000, None),
+    ("cap_replay", f"{ARNES}?rol=instructor&abrir=replay&instante=2.5", 1440, 900, 12000, 875),
+    ("cap_rubrica", f"{ARNES}?rol=instructor&abrir=rubrica", 1440, 900, 12000, 875),
     ("cap_maqueta", BASE + "/static/maqueta/index.html", 1440, 900, 6000, None),
 ]
 FOTOS = ["f16.jpg", "su30.jpg"]
@@ -37,10 +38,19 @@ def chrome(url, salida, w, h, espera):
 for nombre, url, w, h, espera, recorte in CAPTURAS:
     salida = AQUI / f"{nombre}.png"
     chrome(url, salida, w, h, espera)
+    im = Image.open(salida)
     if recorte:
-        im = Image.open(salida)
-        im.crop((0, 0, im.width, recorte)).save(salida)
+        im = im.crop((0, 0, im.width, recorte))
+        im.save(salida)
+    im.convert("RGB").save(AQUI / f"{nombre}.jpg", "JPEG", quality=85)  # el manual usa las JPG (PDF mas liviano)
     print(nombre, salida.stat().st_size)
+
+# galeria de miniaturas 3D (HTML estatico generado por galeria.js con Node; las imagenes salen del servidor)
+subprocess.run(["node", str(Path(__file__).resolve().parent / "galeria.js")], check=True)
+salida = AQUI / "cap_miniaturas.png"
+chrome((AQUI / "galeria.html").as_uri(), salida, 1400, 1060, 6000)
+Image.open(salida).convert("RGB").save(AQUI / "cap_miniaturas.jpg", "JPEG", quality=85)
+print("cap_miniaturas", salida.stat().st_size)
 
 for ilus in ILUSTRACIONES:
     salida = AQUI / f"ilus_{ilus}.png"

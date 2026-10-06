@@ -102,15 +102,38 @@
   };
 
   // ---------- sesion ----------
+  /** Muestra una de las pantallas de acceso: "login" | "registro" | "clave". */
+  function pantallaAcceso(cual) {
+    $("login-form").hidden = cual !== "login";
+    $("registro-form").hidden = cual !== "registro";
+    $("clave-form").hidden = cual !== "clave";
+    $("login").hidden = false;
+  }
+
   function mostrarLogin() {
     cerrarWs();
     clearInterval(app.relojTimer);
+    clearInterval(app.solicitudesTimer);
     if (app.informe) app.informe.cerrar();
     app.usuario = null;
     $("app").hidden = true;
-    $("login").hidden = false;
+    pantallaAcceso("login");
     $("l-pass").value = "";
     $("l-user").focus();
+  }
+
+  /** Formulario de cambio de contrasena: obligatorio (contrasena inicial o puesta por el instructor: no se
+   * puede usar el simulador hasta cambiarla) o a pedido desde el menu del perfil (se puede cancelar). */
+  function mostrarCambioClave(obligatorio) {
+    app.cambioObligatorio = obligatorio;
+    for (const id of ["c-actual", "c-nueva", "c-nueva2"]) $(id).value = "";
+    $("c-error").textContent = "";
+    $("c-motivo").textContent = obligatorio
+      ? `Hola ${app.usuario.username}: su contraseña es provisional (inicial o puesta por el instructor). Elija una nueva para continuar.`
+      : "Escriba su contraseña actual y la nueva.";
+    $("btn-clave-salir").textContent = obligatorio ? "Cerrar sesión" : "Cancelar";
+    pantallaAcceso("clave");
+    $("c-actual").focus();
   }
 
   async function arrancar() {
@@ -118,6 +141,10 @@
       app.usuario = await api("GET", "/api/auth/yo", undefined, true);
     } catch (_) {
       return mostrarLogin();
+    }
+    if (app.usuario.debe_cambiar_clave) {
+      $("app").hidden = true;
+      return mostrarCambioClave(true);
     }
     $("login").hidden = true;
     $("app").hidden = false;
@@ -136,7 +163,12 @@
     clearInterval(app.relojTimer);
     app.relojTimer = setInterval(actualizarReloj, 1000);
     await cargarEscenarios();
-    if (esInstructor()) enSilencio(cargarUsuarios());
+    clearInterval(app.solicitudesTimer);
+    if (esInstructor()) {
+      enSilencio(cargarUsuarios());
+      // las solicitudes de cuenta llegan desde la pantalla de acceso: se revisan cada 30 s
+      app.solicitudesTimer = setInterval(() => enSilencio(cargarUsuarios()), 30000);
+    }
     aplicarParametrosUrl();
   }
 
@@ -151,10 +183,72 @@
     }
   });
 
-  $("btn-logout").addEventListener("click", async () => {
+  async function cerrarSesion() {
     try { await api("POST", "/api/auth/logout", undefined, true); } catch (_) { /* ya cerrada */ }
     $("menu-perfil").hidden = true;
     mostrarLogin();
+  }
+  $("btn-logout").addEventListener("click", cerrarSesion);
+
+  $("btn-cambiar-clave").addEventListener("click", () => {
+    $("menu-perfil").hidden = true;
+    mostrarCambioClave(false);
+  });
+
+  $("btn-clave-salir").addEventListener("click", () => {
+    if (app.cambioObligatorio) return cerrarSesion();
+    $("login").hidden = true;  // cambio a pedido: se vuelve al simulador tal como estaba
+  });
+
+  $("clave-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("c-error").textContent = "";
+    const nueva = $("c-nueva").value;
+    if (nueva !== $("c-nueva2").value) { $("c-error").textContent = "Las contraseñas nuevas no coinciden."; return; }
+    if (nueva.length < 8) { $("c-error").textContent = "La contraseña nueva debe tener al menos 8 caracteres."; return; }
+    try {
+      app.usuario = await api("POST", "/api/auth/cambiar-clave", { actual: $("c-actual").value, nueva }, true);
+    } catch (err) {
+      $("c-error").textContent = err.message;
+      return;
+    }
+    toast("Contraseña cambiada", true);
+    if (app.cambioObligatorio) arrancar();
+    else $("login").hidden = true;
+  });
+
+  // ---------- solicitud de cuenta (sin sesion) ----------
+  const actualizarPuestoSolicitado = () => { $("r-puesto").hidden = !esBando($("r-rol").value); };
+  $("r-rol").addEventListener("change", actualizarPuestoSolicitado);
+
+  $("btn-ir-registro").addEventListener("click", () => {
+    for (const id of ["r-user", "r-pass", "r-pass2"]) $(id).value = "";
+    $("r-error").textContent = "";
+    $("r-ok").hidden = true;
+    actualizarPuestoSolicitado();
+    pantallaAcceso("registro");
+    $("r-user").focus();
+  });
+  $("btn-volver-login").addEventListener("click", () => { pantallaAcceso("login"); $("l-user").focus(); });
+
+  $("registro-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("r-error").textContent = "";
+    $("r-ok").hidden = true;
+    const username = $("r-user").value.trim();
+    const password = $("r-pass").value;
+    if (!/^[A-Za-z0-9_.-]{3,50}$/.test(username)) { $("r-error").textContent = "Usuario: de 3 a 50 letras, números, punto, guion o guion bajo (sin espacios)."; return; }
+    if (password !== $("r-pass2").value) { $("r-error").textContent = "Las contraseñas no coinciden."; return; }
+    if (password.length < 8) { $("r-error").textContent = "La contraseña debe tener al menos 8 caracteres."; return; }
+    try {
+      await api("POST", "/api/auth/solicitar", { username, password, rol: $("r-rol").value, puesto: $("r-puesto").value }, true);
+      $("r-ok").textContent = `Solicitud enviada. Podrá ingresar como «${username}» cuando el instructor la apruebe.`;
+      $("r-ok").hidden = false;
+      $("l-user").value = username;
+      for (const id of ["r-pass", "r-pass2"]) $(id).value = "";
+    } catch (err) {
+      $("r-error").textContent = err.message;
+    }
   });
 
   $("btn-perfil").addEventListener("click", (e) => {
@@ -368,6 +462,7 @@
     c.informes = L.layerGroup().addTo(map);
     c.unidades = L.layerGroup().addTo(map);
     c.ordenes = L.layerGroup().addTo(map);
+    c.alcances = L.layerGroup(); // se agrega al acercar el mapa (ajustarPorZoom)
     c.seleccion = L.layerGroup().addTo(map);
     c.preview = L.layerGroup().addTo(map);
     c.waypoints = L.layerGroup().addTo(map);
@@ -376,7 +471,7 @@
     c.ge = L.layerGroup().addTo(map);
     c.meteorologia = L.layerGroup().addTo(map);
     c.misiones = L.layerGroup().addTo(map);
-    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, ge: true, meteorologia: true, misiones: true };
+    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, alcances: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, ge: true, meteorologia: true, misiones: true };
     if (app.capaActiva.niebla) c.niebla.addTo(map);
 
     let pendiente = null;
@@ -394,7 +489,8 @@
     map.on("click", alClickMapa);
     map.on("zoomend", () => {
       app.flechas.forEach((f) => f.actualizar());
-      if (app.data && !(app.informe && app.informe.activo())) dibujarUnidades(app.data.unidades); // el tamaño de los aviones depende del zoom
+      ajustarPorZoom();
+      if (app.data && !(app.informe && app.informe.activo())) dibujarUnidades(app.data.unidades); // el tamaño de las unidades depende del zoom
     });
   }
 
@@ -404,7 +500,8 @@
     const g = app.capas;
     const poner = (capa, on) => (on ? capa.addTo(app.map) : app.map.removeLayer(capa));
     if (nombre === "terreno") $("zona-mapa").classList.toggle("sin-terreno", !encendida);
-    else if (nombre === "unidades") { poner(g.unidades, encendida); poner(g.ordenes, encendida); poner(g.obras, encendida); if (encendida) app.flechas.forEach((f) => f.actualizar()); }
+    else if (nombre === "unidades") { poner(g.unidades, encendida); poner(g.ordenes, encendida); poner(g.obras, encendida); ajustarPorZoom(); if (encendida) app.flechas.forEach((f) => f.actualizar()); }
+    else if (nombre === "alcances") ajustarPorZoom();
     else if (nombre === "graficos") poner(app.graficos.capa, encendida);
     else if (nombre === "contactos") { poner(g.contactos, encendida); poner(g.informes, encendida); }
     else if (g[nombre]) poner(g[nombre], encendida);
@@ -544,10 +641,38 @@
     return r;
   }
 
-  /** Lado (px) del cuadro de un Su-30 solo: crece al acercar el mapa para que se distingan los aviones. */
+  /** Lado (px) del cuadro de un Su-30 solo: chico con el mapa lejos (no tapa ni se enciman) y grande de cerca. */
   function baseAvion() {
     const zoom = app.map ? app.map.getZoom() : 8;
-    return Math.round(app.tamSimbolo * 2.2 * Math.max(0.75, Math.min(1.5, 0.8 + 0.22 * (zoom - 7.5))));
+    return Math.round(app.tamSimbolo * 2.2 * Logica.escalaUnidad(zoom));
+  }
+
+  /** Tamaño del simbolo APP-6, con la misma regla (un poco menos de reduccion: debe seguir leyendose). */
+  function tamApp6() {
+    const zoom = app.map ? app.map.getZoom() : 8;
+    return Math.round(app.tamSimbolo * Math.max(0.6, Logica.escalaUnidad(zoom)));
+  }
+
+  /** Lo que depende del zoom ademas del tamaño: sin nombres de lejos y anillos de alcance solo de cerca. */
+  function ajustarPorZoom() {
+    if (!app.map) return;
+    const z = app.map.getZoom();
+    app.map.getContainer().classList.toggle("z-sin-rotulos", z < Logica.ZOOM_ROTULOS);
+    const on = app.capaActiva.alcances && app.capaActiva.unidades && z >= Logica.ZOOM_ALCANCES;
+    if (on) app.capas.alcances.addTo(app.map);
+    else app.map.removeLayer(app.capas.alcances);
+  }
+
+  /** Anillo de alcance de cada unidad desplegada (propias y enemigas a la vista): se ve al acercar el mapa. */
+  function dibujarAlcances(unidades) {
+    const g = app.capas.alcances;
+    g.clearLayers();
+    const vista = bandoVista();
+    for (const u of Logica.unidadesConAlcance(unidades)) {
+      const enemiga = vista ? u.bando !== vista : u.bando === "rojo";
+      const color = enemiga ? "#EF233C" : "#3A86FF";
+      L.circle([u.lat, u.lon], { radius: u.alcance_km * 1000, color, weight: 1, opacity: 0.6, dashArray: "4 6", fillColor: color, fillOpacity: 0.035, interactive: false }).addTo(g);
+    }
   }
 
   /** Si la unidad se dibuja con su miniatura 3D (y no con el simbolo APP-6). */
@@ -583,7 +708,7 @@
         iconAnchor: [ancho / 2, av.alto / 2],
       });
     }
-    const sym = new ms.Symbol((u.sidc || "SUGP").padEnd(15, "-"), { size: app.tamSimbolo });
+    const sym = new ms.Symbol((u.sidc || "SUGP").padEnd(15, "-"), { size: tamApp6() });
     const tam = sym.getSize();
     const anc = sym.getAnchor();
     // simbolo APP-6 puro (opcion "Simbolos militares" o unidad sin miniatura)
@@ -615,7 +740,7 @@
   function limpiarCapasVivas() {
     for (const m of app.markers.values()) app.capas.unidades.removeLayer(m);
     app.markers.clear();
-    for (const g of ["contactos", "cobertura", "niebla", "ordenes", "seleccion", "preview", "obras", "objetivos", "ge", "misiones"]) app.capas[g].clearLayers();
+    for (const g of ["contactos", "cobertura", "niebla", "ordenes", "alcances", "seleccion", "preview", "obras", "objetivos", "ge", "misiones"]) app.capas[g].clearLayers();
     app.flechas = [];
   }
 
@@ -640,7 +765,7 @@
       const mini = conMiniatura(u);
       const rumbo = mini && Modelo3d.gira(u) ? Math.round(rumboDe(u) / 5) * 5 : 0;
       const plano = mini && enPlanoAerodromo(u) ? "p" : "";
-      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${rumbo}|${mini ? baseAvion() : "s"}|${plano}`;
+      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${rumbo}|${mini ? baseAvion() : `s${tamApp6()}`}|${plano}`;
       // aeronaves estacionadas: sobre la plataforma real de su base cuando se ve el plano del aerodromo
       const estacionada = mini && app.capaActiva.aerodromos && app.aerodromos && app.map.getZoom() >= app.aerodromos.zoomDetalle
         ? app.aerodromos.posicionEstacionada(u, unidades) : null;
@@ -1500,6 +1625,8 @@
     if (app.informe && app.informe.activo()) return; // durante la repeticion no se pisa el mapa
 
     dibujarUnidades(data.unidades);
+    dibujarAlcances(data.unidades);
+    ajustarPorZoom();
     dibujarContactos(data.contactos || []);
     dibujarInformes(data.informes || []);
     dibujarObras(data.obras || []);
@@ -1886,8 +2013,65 @@
     });
   }
 
+  function selectRol(valor, etiqueta) {
+    const sel = document.createElement("select");
+    sel.setAttribute("aria-label", etiqueta);
+    for (const r of ["instructor", "azul", "rojo", "observador"]) {
+      const o = document.createElement("option");
+      o.value = r; o.textContent = r; sel.appendChild(o);
+    }
+    sel.value = valor;
+    return sel;
+  }
+
+  function selectPuesto(valor, etiqueta) {
+    const sp = document.createElement("select");
+    sp.title = "Puesto dentro del bando";
+    sp.setAttribute("aria-label", etiqueta);
+    for (const p of Logica.PUESTOS) {
+      const o = document.createElement("option");
+      o.value = p.id; o.textContent = `${p.sigla} · ${p.nombre}`; sp.appendChild(o);
+    }
+    sp.value = valor || "mando";
+    return sp;
+  }
+
+  /** Solicitudes de cuenta hechas desde la pantalla de acceso: el instructor las aprueba (con el rol y el puesto
+   * pedidos o los que elija) o las rechaza. */
+  function pintarSolicitudes(pendientes) {
+    const previas = app.solicitudesVistas;
+    app.solicitudesVistas = new Set(pendientes.map((u) => u.id));
+    if (previas && pendientes.some((u) => !previas.has(u.id))) toast("Nueva solicitud de cuenta: revise el panel Usuarios", true);
+    $("bloque-solicitudes").hidden = !pendientes.length;
+    $("badge-solicitudes").hidden = !pendientes.length;
+    $("badge-solicitudes").textContent = pendientes.length;
+    const ul = $("lista-solicitudes");
+    limpiar(ul);
+    for (const u of pendientes) {
+      const item = document.createElement("li");
+      const et = document.createElement("span");
+      et.textContent = `${u.username} · pide ${u.rol}${esBando(u.rol) ? ` (${Logica.PUESTOS.find((p) => p.id === u.puesto)?.sigla || "EM"})` : ""}`;
+      item.appendChild(et);
+      const sel = selectRol(u.rol, `Rol con que se aprueba a ${u.username}`);
+      const sp = selectPuesto(u.puesto, `Puesto con que se aprueba a ${u.username}`);
+      const ajustarPuesto = () => { sp.hidden = !esBando(sel.value); };
+      sel.addEventListener("change", ajustarPuesto);
+      ajustarPuesto();
+      item.append(sel, sp);
+      item.appendChild(boton("Aprobar", () => api("POST", `/api/usuarios/${u.id}/aprobar`, { rol: sel.value, puesto: sp.value })
+        .then(() => toast(`Cuenta de ${u.username} aprobada`, true)).catch(() => {}).finally(cargarUsuarios), "mini"));
+      item.appendChild(boton("Rechazar", () => {
+        if (!confirm(`¿Rechazar la solicitud de ${u.username}? Se borra y el nombre queda libre.`)) return;
+        api("DELETE", `/api/usuarios/${u.id}/solicitud`).catch(() => {}).finally(cargarUsuarios);
+      }));
+      ul.appendChild(item);
+    }
+  }
+
   async function cargarUsuarios() {
-    const usuarios = await api("GET", "/api/usuarios");
+    const todos = await api("GET", "/api/usuarios", undefined, true);
+    pintarSolicitudes(todos.filter((u) => u.aprobado === false));
+    const usuarios = todos.filter((u) => u.aprobado !== false);
     app.usuariosLista = usuarios;
     const ul = $("lista-usuarios");
     limpiar(ul);
@@ -1896,32 +2080,29 @@
       if (!u.activo) item.className = "inactiva";
       const et = document.createElement("span");
       et.textContent = `${u.username}${u.activo ? "" : " (inactivo)"}`;
+      if (u.debe_cambiar_clave) {
+        et.textContent += " ·";
+        const aviso = document.createElement("small");
+        aviso.className = "sec";
+        aviso.textContent = " contraseña provisional";
+        aviso.title = "Deberá cambiarla al entrar";
+        et.appendChild(aviso);
+      }
       item.appendChild(et);
       const esYo = u.id === app.usuario.id;
-      const sel = document.createElement("select");
-      for (const r of ["instructor", "azul", "rojo", "observador"]) {
-        const o = document.createElement("option");
-        o.value = r; o.textContent = r; sel.appendChild(o);
-      }
-      sel.value = u.rol;
+      const sel = selectRol(u.rol, `Rol de ${u.username}`);
       sel.disabled = esYo;
       sel.addEventListener("change", () => api("PATCH", `/api/usuarios/${u.id}`, { rol: sel.value }).finally(cargarUsuarios));
       item.appendChild(sel);
       if (esBando(u.rol)) {
-        const sp = document.createElement("select");
-        sp.title = "Puesto dentro del bando";
-        sp.setAttribute("aria-label", `Puesto de ${u.username}`);
-        for (const p of Logica.PUESTOS) {
-          const o = document.createElement("option");
-          o.value = p.id; o.textContent = `${p.sigla} · ${p.nombre}`; sp.appendChild(o);
-        }
-        sp.value = u.puesto || "mando";
+        const sp = selectPuesto(u.puesto, `Puesto de ${u.username}`);
         sp.addEventListener("change", () => api("PATCH", `/api/usuarios/${u.id}`, { puesto: sp.value }).finally(cargarUsuarios));
         item.appendChild(sp);
       }
       item.appendChild(boton("Clave", async () => {
         const clave = await pedirClave(u.username);
-        if (clave) enSilencio(api("PATCH", `/api/usuarios/${u.id}`, { password: clave }).then(() => toast("Contraseña actualizada", true)));
+        // la contrasena puesta aqui es provisional: el usuario la cambia al entrar (salvo la propia)
+        if (clave) enSilencio(api("PATCH", `/api/usuarios/${u.id}`, { password: clave }).then(() => { toast("Contraseña actualizada", true); cargarUsuarios(); }));
       }));
       if (!esYo) {
         item.appendChild(boton(u.activo ? "Desactivar" : "Activar", () => api("PATCH", `/api/usuarios/${u.id}`, { activo: !u.activo }).finally(cargarUsuarios)));

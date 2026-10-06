@@ -1,15 +1,21 @@
-/* Plano detallado de las bases aereas: pistas, calles de rodaje, plataformas, hangares y edificios reales
- * (OpenStreetMap, ver tools/preparar_aerodromos.py y geo/aerodromos.geojson), con las marcas de pista y la
- * numeracion de cada cabecera. Aparece al acercarse (zoom 11 en adelante) en su propio panel, debajo de las
- * unidades, y muestra el estado de la base del escenario que la ocupa: crateres en la pista segun el daño y las
- * cruces de pista cerrada cuando ya no puede operar.
+/* Plano detallado de los aerodromos: pistas, calles de rodaje, plataformas, hangares y edificios reales
+ * (OpenStreetMap, ver tools/preparar_aerodromos.py), con las marcas de pista y la numeracion de cada cabecera.
+ * Aparece al acercarse (zoom 11 en adelante) en su propio panel, debajo de las unidades, y muestra el estado de la
+ * base del escenario que la ocupa: crateres en la pista segun el daño y las cruces de pista cerrada cuando ya no
+ * puede operar.
  *
- * La logica (crateres, escalas, busqueda de la base) es pura y se prueba con Node; el dibujo usa Leaflet. */
+ * Hay un archivo por aerodromo (geo/aerodromos/<OACI>.json, ~1 300 en toda America) y un indice: solo se descargan
+ * los planos de los aerodromos que quedan a la vista al acercarse. Los archivos traen lo minimo (eje y ancho de las
+ * calles de rodaje, extremos y ancho de las pistas): las marcas de pista y el ancho a escala se calculan aca.
+ *
+ * La logica (crateres, marcas, escalas, busqueda de la base) es pura y se prueba con Node; el dibujo usa Leaflet. */
 (function (raiz) {
   "use strict";
 
   const ZOOM_PLANO = 11; // desde aca se ve el contorno del aerodromo, las pistas y las plataformas
   const ZOOM_DETALLE = 14; // marcas de pista, eje de rodaje y numeracion
+  const ZOOM_CARGA = 10; // los planos de lo que esta a la vista se piden un poco antes de mostrarse
+  const MARGEN_CARGA_KM = 15; // y tambien los de los aerodromos apenas fuera de la pantalla
   const RADIO_BASE_KM = 4; // una unidad base_aerea a esta distancia de la pista "ocupa" el aerodromo
   const FUERZA_MINIMA_BASE = 25; // igual que el motor: por debajo la base no opera
   const PISTA_INOPERATIVA = 60; // % de daño de la pista a partir del cual no hay despegues ni aterrizajes
@@ -17,7 +23,7 @@
   const COLORES = {
     aerodromo: { color: "#d8c690", weight: 1, dashArray: "5 4", fillColor: "#6c7a50", fillOpacity: 0.55 },
     plataforma: { color: "#7a7e80", weight: 1, fillColor: "#a3a6a7", fillOpacity: 1 },
-    rodaje: { stroke: false, fillColor: "#6a6e72", fillOpacity: 1 },
+    rodaje: { color: "#6a6e72", opacity: 1, lineCap: "round", lineJoin: "round" },  // linea con el ancho real a escala
     helipuerto: { color: "#f2f2ec", weight: 1.5, fillColor: "#56595d", fillOpacity: 1 },
     pista: { color: "#202225", weight: 1, fillColor: "#2e3134", fillOpacity: 1 },
     marca: { stroke: false, fillColor: "#f4f4ee", fillOpacity: 0.95 },
@@ -44,6 +50,53 @@
     const ux = dx / largo, uy = dy / largo;
     const x = ux * s + uy * t, y = uy * s - ux * t;
     return [la1 + y / ky, lo1 + x / kx];
+  }
+
+  /**
+   * Marcas pintadas de una pista (anillos [[lat, lon], ...]) a partir de sus extremos y su ancho, en metros reales:
+   * bordes, umbrales tipo "piano" en ambas cabeceras (con hueco central para la numeracion), eje discontinuo y, en
+   * las pistas de mas de 1200 m, punto de visada y zona de toma de contacto.
+   */
+  function marcasPista(pista) {
+    const largo = pista.largo_m, ancho = pista.ancho_m, medio = ancho / 2;
+    const out = [];
+    const barra = (s0, s1, t, w) => out.push([
+      puntoEnPista(pista, s0, t - w / 2), puntoEnPista(pista, s1, t - w / 2),
+      puntoEnPista(pista, s1, t + w / 2), puntoEnPista(pista, s0, t + w / 2),
+    ]);
+    barra(0, largo, medio - 1.5, 1.2);
+    barra(0, largo, -medio + 1.5, 1.2);
+    const franjas = Math.max(4, Math.min(16, Math.floor(ancho / 5.5)));
+    const paso = (ancho - 6) / franjas;
+    for (const s0 of [6, largo - 36]) {
+      for (let k = 0; k < franjas; k++) {
+        const t = -medio + 3 + paso * (k + 0.5);
+        if (Math.abs(t) < paso * 0.6) continue;
+        barra(s0, s0 + 30, t, paso * 0.55);
+      }
+    }
+    for (let s = 130; s + 30 < largo - 130; s += 50) barra(s, s + 30, 0, 2.5);
+    if (largo > 1200) {
+      for (const s0 of [300, largo - 345]) for (const lado of [1, -1]) barra(s0, s0 + 45, lado * (medio - 11), 6);
+      for (const s0 of [150, 450, largo - 180, largo - 480]) for (const lado of [1, -1]) barra(s0, s0 + 22, lado * (medio - 11), 2.5);
+    }
+    return out;
+  }
+
+  /** Pixeles que ocupan `metros` en el mapa (Web Mercator) a esa latitud y ese zoom. */
+  function metrosAPixeles(metros, lat, zoom) {
+    return metros / ((156543.03392 * Math.cos(lat * R)) / 2 ** zoom);
+  }
+
+  /** Aerodromos del indice dentro del recuadro {sur, oeste, norte, este} ampliado `margenKm`, el mas central primero. */
+  function aerodromosEnVista(indice, caja, margenKm = 0) {
+    const dLat = margenKm / 110.574;
+    const latMedia = (caja.sur + caja.norte) / 2;
+    const dLon = margenKm / (111.32 * Math.max(0.2, Math.cos(latMedia * R)));
+    const centro = [latMedia, (caja.oeste + caja.este) / 2];
+    return indice
+      .filter((b) => b.lat >= caja.sur - dLat && b.lat <= caja.norte + dLat && b.lon >= caja.oeste - dLon && b.lon <= caja.este + dLon)
+      .sort((a, b) => distanciaKm(a.lat, a.lon, ...centro) - distanciaKm(b.lat, b.lon, ...centro));
   }
 
   /** Generador pseudoaleatorio reproducible (mulberry32): los crateres no "saltan" al redibujar. */
@@ -167,8 +220,10 @@
   const semillaDe = (u) => (u.id || 0) * 2654435761 + [...(u.nombre || "")].reduce((a, c) => a + c.charCodeAt(0), 0);
 
   // ---------------------------------------------------------------- dibujo (Leaflet)
-  function crear({ map, capa, alCargar } = {}) {
-    let geo = null, bases = {};
+  function crear({ map, capa, alCargar, ruta = "/static/geo/aerodromos/" } = {}) {
+    let indice = [];
+    const bases = {}; // icao -> { icao, nombre, centro, pistas, plataformas } (pistas vacias hasta cargar su plano)
+    const cargados = new Set(), pedidos = new Set();
     const cachePuestos = new Map();
     let unidades = [];
     const render = L.canvas({ pane: "aerodromos", padding: 0.3 });
@@ -177,6 +232,8 @@
       numeros: L.layerGroup(), estado: L.layerGroup(), rotulos: L.layerGroup(),
     };
     Object.values(grupos).forEach((g) => g.addTo(capa));
+    const terrenos = [];
+    const rodajes = []; // { linea, ancho_m, lat }: su grosor en pixeles se recalcula con el zoom
 
     function estilo(tipo) {
       return { ...(COLORES[tipo] || {}), renderer: render, interactive: false };
@@ -189,30 +246,34 @@
       return anillo.map(([lon, lat]) => [lat + dLat, lon + dLon]);
     }
 
-    let terrenos = [];
-    function construir() {
-      Object.values(grupos).forEach((g) => g.clearLayers());
-      terrenos = [];
+    /** Dibuja el plano de un aerodromo recien descargado (se agrega a lo ya dibujado). */
+    function construirAerodromo(geo) {
+      Object.assign(bases, indexar(geo));
       for (const f of geo.features) {
         const p = f.properties;
         const g = f.geometry;
-        if (g.type === "LineString") {
-          L.polyline(g.coordinates.map(([lon, lat]) => [lat, lon]), { color: "#e3bf2a", weight: 1.3, opacity: 0.95, renderer: render, interactive: false }).addTo(grupos.detalle);
+        if (p.tipo === "rodaje") {
+          const ll = g.coordinates.map(([lon, lat]) => [lat, lon]);
+          rodajes.push({ linea: L.polyline(ll, { ...estilo("rodaje"), weight: 1 }).addTo(grupos.plano), ancho_m: p.ancho_m || 18, lat: ll[0][0] });
+          L.polyline(ll, { color: "#e3bf2a", weight: 1.3, opacity: 0.95, renderer: render, interactive: false }).addTo(grupos.detalle);
           continue;
         }
+        if (g.type !== "Polygon") continue;
         const anillo = g.coordinates[0];
         const ll = anillo.map(([lon, lat]) => [lat, lon]);
-        if (p.tipo === "marca") L.polygon(ll, estilo("marca")).addTo(grupos.detalle);
-        else if (p.tipo === "edificio" || p.tipo === "hangar" || p.tipo === "torre") {
+        if (p.tipo === "edificio" || p.tipo === "hangar" || p.tipo === "torre") {
           L.polygon(sombra(anillo, p.alto_m || ALTO_POR_DEFECTO[p.tipo]), { stroke: false, fillColor: "#000", fillOpacity: 0.32, renderer: render, interactive: false }).addTo(grupos.sombras);
           L.polygon(ll, estilo(p.tipo)).addTo(grupos.edificios);
         } else {
           const poligono = L.polygon(ll, estilo(p.tipo)).addTo(grupos.plano);
           if (p.tipo === "aerodromo") terrenos.push(poligono);
+          if (p.tipo === "pista") for (const m of marcasPista(p)) L.polygon(m, estilo("marca")).addTo(grupos.detalle);
         }
       }
-      for (const b of Object.values(bases)) {
-        for (const p of b.pistas) {
+      for (const b of geo.bases || []) {
+        const base = bases[b.icao];
+        if (!base) continue;
+        for (const p of base.pistas) {
           for (const [txt, lat, lon, rumbo] of p.numeros || []) {
             L.marker([lat, lon], {
               pane: "aerodromos-rotulos", interactive: false, keyboard: false,
@@ -220,24 +281,41 @@
             }).addTo(grupos.numeros);
           }
         }
-        if (!b.pistas.length) continue;
-        const largo = Math.max(...b.pistas.map((x) => x.largo_m));
-        L.marker(b.centro, {
+        if (!base.pistas.length) continue;
+        const largo = Math.max(...base.pistas.map((x) => x.largo_m));
+        L.marker(base.centro, {
           pane: "aerodromos-rotulos", interactive: false, keyboard: false,
-          icon: L.divIcon({ className: "rotulo-aerodromo", html: `<b>${b.icao}</b> ${b.pistas.map((x) => x.ref).join(" · ")} · ${(largo / 1000).toFixed(1).replace(".", ",")} km`, iconSize: [0, 0] }),
+          icon: L.divIcon({ className: "rotulo-aerodromo", html: `<b>${base.icao}</b> ${base.pistas.map((x) => x.ref).join(" · ")} · ${(largo / 1000).toFixed(1).replace(".", ",")} km`, iconSize: [0, 0] }),
         }).addTo(grupos.rotulos);
       }
-      actualizarEstado();
-      ajustarZoom();
+    }
+
+    /** Pide los planos de los aerodromos a la vista (y apenas fuera de ella) que aun no se descargaron. */
+    function cargarVisibles() {
+      if (!indice.length || !map.hasLayer(capa) || map.getZoom() < ZOOM_CARGA) return;
+      const b = map.getBounds();
+      const caja = { sur: b.getSouth(), oeste: b.getWest(), norte: b.getNorth(), este: b.getEast() };
+      for (const a of aerodromosEnVista(indice, caja, MARGEN_CARGA_KM)) {
+        if (pedidos.has(a.icao)) continue;
+        pedidos.add(a.icao);
+        fetch(ruta + encodeURIComponent(a.archivo || `${a.icao}.json`)).then((r) => (r.ok ? r.json() : null)).then((geo) => {
+          if (!geo) return;
+          cargados.add(a.icao);
+          construirAerodromo(geo);
+          actualizarEstado();
+          ajustarZoom();
+          if (alCargar) alCargar();
+        }).catch(() => pedidos.delete(a.icao)); // sin conexion con el servidor: se reintenta al mover el mapa
+      }
     }
 
     /** Crateres y cruces de pista cerrada segun la base del escenario que ocupa cada aerodromo. */
     function actualizarEstado() {
       grupos.estado.clearLayers();
-      if (!geo) return;
       for (const b of Object.values(bases)) {
+        if (!b.pistas.length) continue;
         const u = baseQueOcupa(b, unidades);
-        if (!u || !b.pistas.length) continue;
+        if (!u) continue;
         const fuerza = u.estado === "destruida" ? 0 : u.fuerza;
         if (fuerza === null || fuerza === undefined) continue; // base enemiga sin informacion de daño
         // el estado de la pista manda: su daño propio (partes de la base) o, si no se conoce, la fuerza general
@@ -274,6 +352,8 @@
       poner(grupos.numeros, z >= ZOOM_DETALLE);
       poner(grupos.estado, z >= ZOOM_PLANO);
       poner(grupos.rotulos, z >= ZOOM_PLANO && z < 14);
+      // las calles de rodaje tienen su ancho real: el grosor de la linea sigue a la escala del mapa
+      if (z >= ZOOM_PLANO) for (const r of rodajes) r.linea.setStyle({ weight: Math.max(0.8, metrosAPixeles(r.ancho_m, r.lat, z)) });
       // de cerca el satelite (10 m/pixel) se ve borroso: el terreno del aerodromo lo tapa casi del todo
       const opacidad = z >= 15 ? 0.88 : z >= 13 ? 0.72 : 0.55;
       for (const t of terrenos) t.setStyle({ fillOpacity: opacidad });
@@ -284,19 +364,19 @@
     }
 
     map.on("zoomend", ajustarZoom);
-    capa.on("add remove", () => setTimeout(ajustarZoom, 0));
-    fetch("/static/geo/aerodromos.geojson").then((r) => (r.ok ? r.json() : null)).then((g) => {
-      if (!g) return;
-      geo = g;
-      bases = indexar(g);
-      construir();
-      if (alCargar) alCargar();
+    map.on("moveend", cargarVisibles);
+    capa.on("add remove", () => setTimeout(() => { ajustarZoom(); cargarVisibles(); }, 0));
+    fetch(ruta + "indice.json").then((r) => (r.ok ? r.json() : null)).then((ind) => {
+      if (!ind) return;
+      indice = ind.bases || [];
+      for (const b of indice) bases[b.icao] = bases[b.icao] || { icao: b.icao, nombre: b.nombre, centro: [b.lat, b.lon], pistas: [], plataformas: [] };
+      cargarVisibles();
     }).catch(() => {});
 
     return {
       /** Actualiza el estado (daños) con las unidades del escenario. */
       actualizar(lista) { unidades = lista || []; actualizarEstado(); },
-      /** Si hay plano detallado bajo esa unidad base_aerea (para dibujarla en pequeño al acercarse). */
+      /** Si hay plano detallado (ya descargado) bajo esa unidad base_aerea, para dibujarla en pequeño al acercarse. */
       cubre(u) { return !!u && u.clase === "base_aerea" && Object.values(bases).some((b) => b.pistas.length && baseQueOcupa(b, [u])); },
       /**
        * Posicion para dibujar una aeronave estacionada sobre la plataforma real de su base ([lat, lon]) o null.
@@ -316,10 +396,15 @@
       /** Zoom desde el que el plano se ve con detalle. */
       zoomDetalle: ZOOM_PLANO,
       bases: () => bases,
+      /** Aerodromos cuyo plano ya se descargo. */
+      cargados: () => [...cargados],
     };
   }
 
-  const api = { crear, crateres, cantidadCrateres, puntoEnPista, tamNumero, baseQueOcupa, indexar, puestos, distanciaKm, ZOOM_PLANO, ZOOM_DETALLE };
+  const api = {
+    crear, crateres, cantidadCrateres, puntoEnPista, tamNumero, baseQueOcupa, indexar, puestos, distanciaKm, marcasPista,
+    metrosAPixeles, aerodromosEnVista, ZOOM_PLANO, ZOOM_DETALLE, ZOOM_CARGA,
+  };
   raiz.Aerodromos = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -8,9 +8,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app import auth as auth_mod
 from app import respaldo, turnos
 from app.db import SessionLocal, init_db
-from app.models.usuario import Usuario
 from app.routers import auth, catalogo, clima, escenarios, graficos, misiones, naciones, objetivos, ordenes, plantillas, terreno, unidades, usuarios, ws
 from app.terreno import get_terreno
 
@@ -29,10 +29,11 @@ CSP = (
 async def lifespan(_: FastAPI):
     init_db()
     with SessionLocal() as db:
-        if db.query(Usuario).count() == 0:
+        if auth_mod.crear_admin_si_no_hay_usuarios(db):
             log.warning(
-                "No hay usuarios. Cree el primer instructor con: "
-                "python -m app.crear_usuario <usuario> --rol instructor"
+                "Base sin usuarios: se creo el administrador '%s' con la contrasena inicial '%s'. "
+                "Se pedira cambiarla al entrar por primera vez.",
+                auth_mod.ADMIN_INICIAL, auth_mod.CLAVE_INICIAL,
             )
     if not get_terreno().disponible:
         log.warning("Sin datos de terreno: ejecute tools/preparar_terreno.py (todo sera 'llano').")

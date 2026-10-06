@@ -68,3 +68,37 @@ test("puestos de estacionamiento: dentro de la plataforma, distintos y separados
   assert.deepEqual(A.puestos([plat], 4), p); // deterministico
   assert.deepEqual(A.puestos([], 3), []);
 });
+
+test("marcasPista: las marcas quedan dentro de la pista y son mas en las pistas largas", () => {
+  const marcas = A.marcasPista(pista);
+  assert.ok(marcas.length > 40);
+  const km = (la, lo) => A.distanciaKm(10.17, -67.56, la, -67.56) * 1000; // metros a lo largo (pista norte-sur)
+  for (const anillo of marcas) {
+    assert.equal(anillo.length, 4);
+    for (const [la, lo] of anillo) {
+      assert.ok(km(la, lo) >= -0.5 && km(la, lo) <= 3000 * 1.01, "a lo largo de la pista"); // 1 %: proyeccion local vs. esfera
+      assert.ok(A.distanciaKm(la, -67.56, la, lo) * 1000 <= 22.6, "dentro del ancho");
+    }
+  }
+  const corta = { ...pista, extremos: [[10.17, -67.56], [10.179, -67.56]], largo_m: 1000, ancho_m: 30 };
+  assert.ok(A.marcasPista(corta).length < marcas.length); // sin zona de toma de contacto
+});
+
+test("metrosAPixeles: el ancho a escala se duplica con cada nivel de zoom y se achica hacia los polos", () => {
+  const z14 = A.metrosAPixeles(18, 10, 14);
+  assert.ok(Math.abs(A.metrosAPixeles(18, 10, 15) / z14 - 2) < 1e-9);
+  assert.ok(z14 > 1.5 && z14 < 2.2); // ~9,4 m por pixel en el zoom 14 a 10° de latitud
+  assert.ok(A.metrosAPixeles(18, 60, 14) > z14);
+});
+
+test("aerodromosEnVista: los del recuadro (con margen) y el mas central primero", () => {
+  const indice = [
+    { icao: "LEJOS", lat: 20, lon: -60 },
+    { icao: "BORDE", lat: 10.55, lon: -67.0 },
+    { icao: "CENTRO", lat: 10.2, lon: -67.5 },
+    { icao: "FUERA", lat: 10.2, lon: -66.85 },
+  ];
+  const caja = { sur: 10, oeste: -68, norte: 10.5, este: -67 };
+  assert.deepEqual(A.aerodromosEnVista(indice, caja).map((b) => b.icao), ["CENTRO"]);
+  assert.deepEqual(A.aerodromosEnVista(indice, caja, 20).map((b) => b.icao), ["CENTRO", "BORDE", "FUERA"]);
+});

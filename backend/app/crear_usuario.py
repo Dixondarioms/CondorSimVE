@@ -48,6 +48,8 @@ def main() -> int:
             usuario.rol = args.rol
             usuario.puesto = puesto
             usuario.activo = True
+            usuario.aprobado = True  # una solicitud pendiente queda aprobada
+            usuario.debe_cambiar_clave = False  # quien la pone en la consola ya conoce la contrasena
             accion = "actualizado"
         else:
             db.add(Usuario(username=username, password_hash=auth.hash_password(password), rol=args.rol, puesto=puesto))

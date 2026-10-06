@@ -7,10 +7,18 @@ sobre el terreno de Venezuela. Instructor/director de ejercicio + alumnos por ba
 sincronizados por WebSocket. **Funciona sin internet**: mapa, relieve, cobertura terrestre, librerías
 y datos se sirven desde el propio servidor (una política CSP bloquea cualquier recurso externo).
 
-## Manual de usuario
+Creado por el **Cap. Dixon Malpica**, División de Ingeniería y Desarrollo Aeroespacial (**DIDA**), Aviación Militar
+Bolivariana (escudo de la DIDA en `frontend/static/img/dida_logo.jpg`, en la portada y los créditos de ambos manuales).
 
-`docs/Manual_SIETE.pdf` (qué es, cómo se hizo, instalación y funcionamiento, con capturas y esquemas). Se regenera con
-`python tools/generar_manual.py --imagenes <carpeta de capturas>` (las capturas se toman con Chrome headless del arnés de pruebas).
+## Manuales
+
+- **Manual de usuario** `docs/Manual_Usuario_SIETE.pdf`: guía paso a paso, con 56 capturas, de cada parte de la interfaz
+  para el instructor, los alumnos de cada puesto y el observador. Capturas: `python tools/manual/capturas_guia.py` (con
+  el servidor en marcha en el puerto 8000): maneja Chrome por su protocolo de depuración (`tools/manual/navegador.py`)
+  sobre el arnés de pruebas, hace los clics, recorta cada panel y numera las zonas. PDF: `python tools/generar_manual_usuario.py`.
+- **Manual de referencia** `docs/Manual_SIETE.pdf` (qué es, cómo se hizo, instalación, reglas del motor y catálogo). Se
+  regenera con `python tools/generar_manual.py --imagenes <carpeta de capturas>` (capturas: `tools/manual/capturas.py`).
+
 El logotipo e iconos están en `frontend/static/img/` (imagen institucional S.I.E.T.E. de la FANB).
 
 ## Puesta en marcha
@@ -20,8 +28,8 @@ cd backend
 python -m venv venv
 venv\Scripts\python -m pip install -r requirements.txt
 
-# 1) crear el primer instructor (pide la contraseña por consola, mín. 8 caracteres)
-venv\Scripts\python -m app.crear_usuario <usuario> --rol instructor
+# 1) cuenta del administrador: el servidor crea sola la cuenta `admin` (contraseña inicial `siete1234`)
+#    la primera vez que arranca con la base vacía; se pide cambiarla al entrar (ver "Cuentas y acceso")
 
 # 2) (opcional) escenario de demostración en los Andes/Llanos
 venv\Scripts\python -m app.crear_demo
@@ -47,8 +55,8 @@ En un PC con Windows basta con **doble clic en `instalar.cmd`** (ejecuta `instal
 1. Comprueba que hay Python 3.11 o superior (`py -3` o `python`). Si falta, indica de dónde descargarlo
    (python.org, marcando "Add python.exe to PATH") y se detiene: **nunca descarga programas por su cuenta**.
 2. Crea `backend\venv` e instala `requirements.txt` (se salta si ya está instalado y no cambió).
-3. Si la base no tiene usuarios, pide el nombre y la contraseña del primer instructor (la contraseña se
-   escribe oculta y no pasa por la línea de comandos) y lo crea.
+3. Si la base no tiene usuarios, crea la cuenta del administrador **`admin`** con la contraseña inicial
+   **`siete1234`**, que se pide cambiar al entrar por primera vez (ver *Cuentas y acceso*).
 4. Crea el acceso directo **S.I.E.T.E.** en el Escritorio (icono del sistema). Al abrirlo se arranca el
    servidor en `http://localhost:8000/`, abierto a la red local, y a los pocos segundos se abre el navegador.
 5. Abre el puerto TCP 8000 en el cortafuegos de Windows si se ejecuta como administrador; si no, muestra el
@@ -62,7 +70,7 @@ Opciones (se escriben tras el nombre: `instalar.cmd -Demo`):
 | `-Servicio` | registra la tarea programada **"SIETE Servidor"** para que el servidor arranque solo al iniciar Windows (requiere ejecutar `instalar.cmd` con el botón derecho → *Ejecutar como administrador*). |
 | `-Desinstalar` | quita la tarea programada, el acceso directo y la regla del cortafuegos. No borra la base de datos ni el entorno de Python. |
 | `-Destino <carpeta>` | dónde crear el acceso directo (por defecto, el Escritorio). |
-| `-Usuario <nombre>` | nombre del primer instructor (si no se indica, se pregunta). Con la variable de entorno `SIETE_CONTRASENA` la instalación es desatendida. |
+| `-Usuario <nombre>` | con la variable de entorno `SIETE_CONTRASENA`, crea ese instructor (con esa contraseña) en lugar de la cuenta `admin`: instalación desatendida. |
 | `-SinUsuario`, `-SinAccesoDirecto` | omiten esos pasos. |
 
 Archivos de la carpeta raíz: `iniciar.cmd` arranca el servidor y abre el navegador (`iniciar.cmd /sin-navegador`
@@ -70,6 +78,25 @@ solo el servidor; si ya hay uno en marcha, solo abre el navegador); `detener.cmd
 entorno `SIETE_PUERTO` (8000) y `SIETE_HOST` (0.0.0.0) cambian el puerto y la interfaz; `SIMULADOR_DB`, la base.
 Cerrar la ventana del servidor también lo detiene. El instalador se puede ejecutar cuantas veces haga falta:
 no repite lo que ya está hecho.
+
+### Carpeta portátil con SIETE.exe (sin instalar Python)
+
+`python tools/construir_ejecutable.py` (con el Python de `backend\venv` y `pip install pyinstaller`) genera
+`dist\SIETE\` y `dist\SIETE_portable_<fecha>.zip`: una carpeta que se copia a cualquier PC con Windows y funciona
+sin instalar nada. **Doble clic en `SIETE.exe`** arranca el servidor para la red del aula (puerto 8000) y abre el
+navegador; cerrar su ventana lo detiene. El primer arranque crea la cuenta `admin` (contraseña inicial
+`siete1234`). La carpeta trae `LEEME.txt`, `Restablecer admin.cmd` y el manual.
+
+- `SIETE.exe` (PyInstaller, lanzador en `tools/ejecutable/siete.py`) lleva Python y las dependencias; el código del
+  simulador va **como fuentes** en `SIETE\backend\app` con la misma estructura que el repositorio, así que las rutas no
+  cambian y la base de datos, los respaldos y los certificados quedan en `SIETE\backend\` como siempre.
+- Opciones: `--sin-navegador`, `--puerto N`, `--https`, `--solo-este-equipo`, `--demo`, `--restablecer-admin`; lee
+  `SIETE_PUERTO`, `SIETE_HOST` y `SIETE_HTTPS` de `backend\.env` como `iniciar.cmd`.
+- El constructor incluye los datos de mapa (~550 MB); `--sin-satelite` deja fuera la foto satelital y
+  `--sin-datos-mapa` todos los datos (se agregan después descomprimiendo `siete_datos.zip` dentro de la carpeta).
+  Al terminar arranca el `.exe` con una base temporal y comprueba que responde (`--sin-prueba` lo omite).
+- Para pasar a una versión nueva basta copiar `backend\simulador_fenix.db` (y `backend\respaldos`) a la carpeta
+  nueva: las migraciones se aplican solas al arrancar.
 
 ## PostgreSQL (opcional)
 
@@ -140,6 +167,29 @@ avisa si la unidad seleccionada la conduce otra célula. Desde la consola: `pyth
 a5azul --rol azul --puesto planificacion`; en el arnés, `arnes.html?rol=azul&puesto=operaciones`.
 
 Alumnos y observadores solo acceden a los **escenarios que el instructor les asigna** (panel "Escenario").
+
+### Cuentas y acceso
+
+- **Administrador inicial.** Con la base vacía, el servidor crea al arrancar la cuenta **`admin`** (instructor) con la
+  contraseña inicial **`siete1234`**. Al entrar por primera vez se muestra *Cambiar contraseña* y no se puede usar
+  el simulador (ni la API ni el WebSocket: 403) hasta elegir una nueva. Si se pierde el acceso,
+  `python -m app.restablecer_admin` (en `backend`) devuelve `admin` a la contraseña inicial con la misma obligación,
+  sin tocar a los demás usuarios.
+- **Solicitar una cuenta.** En la pantalla de acceso, *Solicitar una cuenta* pide usuario, contraseña (dos veces),
+  rol (alumno azul o rojo, observador o instructor) y puesto. La cuenta queda **pendiente**: quien intenta entrar
+  recibe "Su solicitud de cuenta aun no fue aprobada" (solo si la contraseña es correcta; si no, el error de siempre).
+  Hay un tope de 50 solicitudes pendientes.
+- **Aprobar o rechazar.** El instructor ve las solicitudes en *Consola → Usuarios* (con un contador junto al título;
+  se revisan cada 30 s y avisa de las nuevas) y las **aprueba** con el rol y el puesto pedidos o con los que elija, o
+  las **rechaza** (se borran y el nombre queda libre). API: `POST /api/auth/solicitar` (sin sesión),
+  `POST /api/usuarios/{id}/aprobar` y `DELETE /api/usuarios/{id}/solicitud`.
+- **Contraseñas provisionales.** Una cuenta creada por el instructor en el panel, o a la que él le pone una
+  contraseña nueva (botón *Clave*, para un olvido), entra con esa contraseña y debe cambiarla al primer acceso. Quien
+  la pidió desde la pantalla de acceso ya eligió la suya. Cualquiera puede cambiar la propia desde el menú del perfil
+  (*Cambiar contraseña*; `POST /api/auth/cambiar-clave`), lo que cierra sus otras sesiones abiertas.
+- Desde la consola del servidor, `python -m app.crear_usuario <nombre> --rol ...` sigue creando cuentas (o
+  restableciendo la contraseña de una existente) ya aprobadas y sin cambio obligatorio.
+
 Autorización en el servidor: cookie de sesión HttpOnly + SameSite=Strict, contraseñas PBKDF2-SHA256,
 bloqueo tras 5 intentos fallidos (persistente en la base), sesiones de 12 h revocables, WebSocket
 autenticado con verificación de origen, y cabeceras CSP / nosniff / frame-deny.
@@ -233,8 +283,8 @@ ISO), país en español, tipo, elevación y `origen: "ourairports"` (las 18 cura
 civiles desde el zoom 6; y desde el zoom 8 los que caen en pantalla con el icono y el rótulo de siempre. El icono
 toma el color fijo de Venezuela y sus vecinos o, para el resto, el color oscuro de la bandera de su nación
 (`/api/naciones`); gris para territorios sin nación. La ventana emergente muestra país y origen y sigue permitiendo
-colocarlos como base azul o roja. Solo Venezuela y vecinos tienen plano OSM; los demás se comportan como cualquier
-base sin plano. Regenerar: `python tools/generar_bases_aereas.py` (descarga el CSV una vez a
+colocarlos como base azul o roja. Todos los que OpenStreetMap tiene cartografiados muestran su **plano real** al
+acercarse, igual que los venezolanos (ver *Bases aéreas en detalle*). Regenerar: `python tools/generar_bases_aereas.py` (descarga el CSV una vez a
 `tools/cache/ourairports_airports.csv`; en .gitignore).
 
 ## Niebla de guerra
@@ -355,13 +405,21 @@ la migración quedan sin autor y la rúbrica las cuenta aparte por bando como "s
   en el agua, una **peana** del color de su bando. Un grupo aéreo se ve en formación (hasta 4). Un enemigo
   detectado se ve con la miniatura genérica de su clase (el modelo sigue oculto). En *Capas* → «Símbolos militares
   (APP-6) en lugar de miniaturas» se vuelve a la simbología (preferencia de cada puesto).
+- **Según el zoom, para que las unidades no se encimen:** miniaturas y símbolos se achican con el mapa lejos
+  (`Logica.escalaUnidad`: ×0,35 a escala de país, ×1 hacia el zoom 10, hasta ×1,5 de cerca); por debajo del zoom 8
+  no se muestran nombres de unidades, etiquetas de gráficos, rótulos de zonas meteorológicas ni fuentes de informes
+  (se leen al pasar el cursor; la unidad seleccionada conserva su nombre). Desde el zoom 9, cada unidad desplegada
+  muestra el **anillo de su alcance** (azul propio, rojo enemigo a la vista; sin bases, misiles, embarcados ni aviones
+  en tierra). Capa *Capas* → «Alcance de las unidades (al acercarse)». La unidad seleccionada sigue mostrando a
+  cualquier zoom sus anillos de alcance, detección y avance en un turno.
   `frontend/static/pruebas/miniaturas.html` muestra todas las miniaturas en cualquier rumbo.
 - **Fotos:** de Wikimedia Commons, bajo CC BY-SA (créditos en `frontend/static/fotos/CREDITOS.md` y en la
   interfaz). Quien redistribuya el proyecto debe mantener esos créditos.
 
 ## Bases aéreas en detalle: plano real, estacionamiento y daños
 
-Al acercar el mapa (zoom 11 en adelante; ahora llega hasta el 17) cada base aérea de Venezuela se dibuja con su
+Al acercar el mapa (zoom 11 en adelante; ahora llega hasta el 17) cada aeródromo de la capa (las bases de
+Venezuela, sus vecinos y los de toda América que OpenStreetMap tiene cartografiados) se dibuja con su
 **plano real**, tomado de OpenStreetMap, en lugar de la imagen satelital, que a 10 m/píxel no muestra una pista:
 
 - **Qué se ve:** el perímetro del aeródromo; las **pistas** con su largo, ancho y orientación reales, sus bordes,
@@ -369,8 +427,8 @@ Al acercar el mapa (zoom 11 en adelante; ahora llega hasta el 17) cada base aér
   rodaje** con su eje amarillo; las **plataformas**; los **helipuertos**; y los **hangares y edificios** con su
   sombra (según su altura). Lejos (zoom 11–13) un rótulo resume la base: «SVBL 10/28 · 3,8 km».
 - **Bases incluidas:** El Libertador (SVBL), Mariscal Sucre (SVBS), La Carlota (SVFM), Rafael Urdaneta (SVMC),
-  Luis del Valle García (SVBC), Landaeta Gil (SVBM), Teófilo Luis Méndez (SVPR), José Antonio Páez (SVPA) y Barinas
-  (SVBI). El detalle depende de lo que esté cargado en OpenStreetMap: en algunas bases militares hay pocas
+  Luis del Valle García (SVBC), Landaeta Gil (SVBM), Teófilo Luis Méndez (SVPR) y José Antonio Páez (SVPA), además
+  del aeropuerto de Barinas (SVBI, civil) que usa la plantilla de demostración. El detalle depende de lo que esté cargado en OpenStreetMap: en algunas bases militares hay pocas
   construcciones mapeadas (p. ej. El Libertador solo tiene pista, rodajes y plataforma), y no se inventan.
 - **La base del ejercicio sobre su plano:** una unidad `base_aerea` a menos de 4 km de un aeródromo lo «ocupa». Al
   acercarse, su miniatura se reduce a una ficha «BA» del color del bando para no tapar la pista, y sus **aeronaves
@@ -381,12 +439,21 @@ Al acercar el mapa (zoom 11 en adelante; ahora llega hasta el 17) cada base aér
   ve el daño de una base ajena (la niebla de guerra oculta su fuerza).
 - **Capa:** *Capas* → «Plano de los aeródromos (pistas y hangares)». Con el plano a la vista, la capa de referencia
   de bases se atenúa para no duplicar rótulos (su popup para colocar la base sigue disponible).
-- **Datos y licencia:** `frontend/static/geo/aerodromos.geojson` (~1,8 MB), generado una vez con internet por
-  `python tools/preparar_aerodromos.py`. Consulta OpenStreetMap vía Overpass o, si no responde, con
-  `--api` directamente la API de OSM por celdas pequeñas. La respuesta cruda queda en
-  `tools/cache/osm_aerodromos.json` y se reprocesa sin internet. Datos © colaboradores de OpenStreetMap,
-  **ODbL 1.0**: uso libre, también offline, citando la fuente; el crédito ya aparece en el mapa. Para agregar otra
-  base, añádala a `BASES` en el script y vuelva a correrlo con `--descargar`.
+- **Datos y carga:** un archivo por aeródromo en `frontend/static/geo/aerodromos/<OACI>.json` y el índice
+  `indice.json`. El navegador lee el índice y **descarga solo los planos de lo que queda a la vista** desde el
+  zoom 10 (con 15 km de margen), así que tener ~1 300 aeródromos no pesa al abrir el mapa. Los archivos traen lo
+  mínimo: el eje y el ancho de cada calle de rodaje (se dibuja con su ancho real a escala del zoom) y los extremos y
+  el ancho de cada pista; las **marcas de pista** las calcula el navegador (`Aerodromos.marcasPista`).
+- **Generar:** `python tools/preparar_aerodromos.py` (con internet) recorre todos los aeródromos de
+  `geo/bases_aereas.geojson` (más `EXTRAS`, p. ej. Barinas) y consulta OpenStreetMap vía Overpass **por lotes** de 15
+  aeródromos cercanos (si un lote falla se parte en dos; uno solo prueba con la API de OSM por celdas). Pide lo
+  aeronáutico en ~9 × 9 km alrededor de cada uno y solo los edificios dentro del límite del aeródromo. La respuesta
+  de cada aeródromo queda en `tools/cache/osm_aerodromos/<OACI>.json`: el script es **reanudable** y
+  `--sin-descargar` reprocesa sin internet; `--solo SKBO SVBL` limita a algunos y `--descargar` refresca. Los
+  aeródromos sin pistas ni límite en OSM quedan sin plano (solo el icono). Resultado actual: **1 273 de 1 281**
+  aeródromos con plano, ~55 MB (mediana 21 KB; el mayor, KSUU, ~520 KB). Como los demás datos de mapa, la carpeta
+  **no está en git**: viaja en el paquete `siete_datos` (`tools/empaquetar_datos.py`). Datos © colaboradores de OpenStreetMap,
+  **ODbL 1.0**: uso libre, también offline, citando la fuente; el crédito ya aparece en el mapa.
 
 ## Daño por partes de la base y refugios reforzados
 

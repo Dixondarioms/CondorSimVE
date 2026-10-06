@@ -28,8 +28,10 @@
                       New-SelfSignedCertificate) y deja iniciar.cmd / la tarea programada arrancando
                       con HTTPS en el puerto 8443 (SIETE_HTTPS=1 en backend\.env).
       -Destino <dir>  carpeta donde crear el acceso directo (por defecto, el Escritorio).
-      -Usuario <nombre>  nombre del primer instructor (si no se indica, se pregunta).
-      -SinUsuario     no crea el primer instructor (instalación desatendida).
+      -Usuario <nombre>  con la variable SIETE_CONTRASENA, crea ese instructor en lugar de la cuenta admin
+                      (instalación desatendida). Sin estas opciones se crea "admin" con la contraseña
+                      inicial siete1234, que se pide cambiar al entrar por primera vez.
+      -SinUsuario     no crea ningún usuario (el servidor crea "admin" igualmente al arrancar con la base vacía).
       -SinAccesoDirecto  no crea el acceso directo.
 
     El script nunca descarga instaladores de programas: si falta Python, indica de dónde bajarlo y se
@@ -426,60 +428,39 @@ with SessionLocal() as db:
     return [int]($r.Salida -split "`n" | Select-Object -Last 1)
 }
 
-function ConvertFrom-SecureStringPlano([System.Security.SecureString]$s) {
-    $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($s)
-    try { return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr) }
-    finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
-}
-
 function New-Instructor {
-    Write-Paso "Primer usuario instructor"
+    Write-Paso "Cuenta del administrador"
     $n = Get-NumeroUsuarios
     if ($n -gt 0) {
-        Write-Ok "La base ya tiene $n usuario(s); no se crea ninguno. (Para otro: venv\Scripts\python -m app.crear_usuario <nombre>)"
+        Write-Ok "La base ya tiene $n usuario(s); no se crea ninguno. (Para recuperar el acceso: cd backend && venv\Scripts\python -m app.restablecer_admin)"
         return
     }
     if ($SinUsuario) {
-        Write-Aviso "Sin usuarios en la base (-SinUsuario). Créelo con: cd backend && venv\Scripts\python -m app.crear_usuario <nombre> --rol instructor"
+        Write-Aviso "Sin usuarios en la base (-SinUsuario). Al arrancar, el servidor crea la cuenta admin con la contraseña inicial."
         return
     }
-    if (-not [Environment]::UserInteractive) {
-        Write-Aviso "No hay consola interactiva: no se puede pedir la contraseña. Cree el usuario con app.crear_usuario."
-        return
-    }
-    Write-Detalle "No hay usuarios todavía. Se creará el instructor (director del ejercicio)."
     # Instalación desatendida: -Usuario <nombre> y la contraseña en la variable de entorno SIETE_CONTRASENA.
-    $desatendida = ($Usuario -and $env:SIETE_CONTRASENA)
-    try {
-        $nombre = $Usuario
-        while (-not $nombre) {
-            $nombre = (Read-Host "    Nombre de usuario del instructor").Trim().ToLower()
-            if ($nombre -and $nombre -notmatch '^[a-z0-9._-]{2,40}$') {
-                Write-Aviso "Use solo letras, números, punto, guion o guion bajo (2 a 40 caracteres)."
-                $nombre = ''
-            }
-        }
-        for ($intento = 1; $intento -le 3; $intento++) {
-            if ($desatendida) {
-                $p1 = $env:SIETE_CONTRASENA; $p2 = $p1
-            } else {
-                $s1 = Read-Host "    Contraseña (mínimo 8 caracteres)" -AsSecureString
-                $s2 = Read-Host "    Repita la contraseña" -AsSecureString
-                $p1 = ConvertFrom-SecureStringPlano $s1
-                $p2 = ConvertFrom-SecureStringPlano $s2
-            }
-            if ($p1 -ne $p2) { Write-Aviso "Las contraseñas no coinciden."; continue }
-            if ($p1.Length -lt 8) { Write-Aviso "La contraseña debe tener al menos 8 caracteres."; if ($desatendida) { break }; continue }
-            $r = Invoke-Nativo -Exe $VenvPython -Argumentos @('-m', 'app.crear_usuario', $nombre, '--rol', 'instructor', '--password-stdin') -Directorio $Backend -Entrada $p1
-            $p1 = $null; $p2 = $null
+    if ($Usuario -and $env:SIETE_CONTRASENA) {
+        $nombre = $Usuario.Trim().ToLower()
+        if ($env:SIETE_CONTRASENA.Length -lt 8) {
+            Write-Aviso "SIETE_CONTRASENA debe tener al menos 8 caracteres: se crea la cuenta admin en su lugar."
+        } else {
+            $r = Invoke-Nativo -Exe $VenvPython -Argumentos @('-m', 'app.crear_usuario', $nombre, '--rol', 'instructor', '--password-stdin') -Directorio $Backend -Entrada $env:SIETE_CONTRASENA
             if ($r.Codigo -eq 0) { Write-Ok $r.Salida; return }
             Write-Aviso ("No se pudo crear el usuario: " + (Protect-Texto ($r.Salida + " " + $r.Errores)).Trim())
-            if ($desatendida) { break }
         }
-    } catch {
-        Write-Aviso "No se pudo pedir el usuario por consola ($($_.Exception.Message))."
     }
-    Write-Aviso "No se creó el usuario. Puede crearlo después con: cd backend && venv\Scripts\python -m app.crear_usuario <nombre> --rol instructor"
+    # Cuenta admin con la contraseña inicial: se pide cambiarla al entrar por primera vez. Los demás usuarios
+    # se solicitan desde la pantalla de acceso y el instructor los aprueba (o los crea él en el panel Usuarios).
+    $r = Invoke-Nativo -Exe $VenvPython -Argumentos @('-m', 'app.restablecer_admin', '--si-no-hay-usuarios') -Directorio $Backend
+    if ($r.Codigo -ne 0) {
+        Write-Aviso ("No se pudo crear la cuenta admin: " + (Protect-Texto $r.Errores).Trim())
+        Write-Aviso "Al arrancar, el servidor la crea igualmente si la base no tiene usuarios."
+        return
+    }
+    Write-Ok "Cuenta del administrador creada."
+    Write-Detalle "Usuario: admin    Contraseña inicial: siete1234"
+    Write-Detalle "Al entrar por primera vez se le pedirá elegir una contraseña nueva."
 }
 
 # ------------------------------------------------------------------ 7. Escenario de demostración

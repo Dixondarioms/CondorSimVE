@@ -104,7 +104,8 @@ _DEMO_LLANOS = Plantilla(
         UnidadPlantilla("Grupo Blindado A", "azul", "blindado", 8.62, -70.45, "batallon"),
         UnidadPlantilla("Artilleria de Campana A", "azul", "artilleria", 8.60, -70.55, "batallon"),
         UnidadPlantilla("Ala de Caza 1", "azul", "caza", 8.70, -70.40),
-        UnidadPlantilla("Base Aerea Barinas", "azul", "base_aerea", 8.62, -70.21),
+        # base del ejercicio que opera desde el aeropuerto civil de Barinas (SVBI): no es una base de la AMB
+        UnidadPlantilla("Aeropuerto de Barinas", "azul", "base_aerea", 8.62, -70.21),
         UnidadPlantilla("Batallon de Montana R", "rojo", "infanteria", 8.60, -70.85, "batallon"),
         UnidadPlantilla("Compania de Fusileros R", "rojo", "infanteria", 8.75, -70.95, "compania"),
         UnidadPlantilla("Escuadrilla R", "rojo", "caza", 8.80, -71.20),
