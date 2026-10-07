@@ -11,7 +11,7 @@ la resolucion de ordenes y la previsualizacion.
 
 from dataclasses import dataclass, field
 
-from app.engine import catalogo, geo
+from app.engine import catalogo, geo, relieve
 from app.engine import clima as clima_mod
 from app.terreno import FACTOR_MOVIMIENTO, Terreno
 
@@ -71,7 +71,8 @@ def simular(unidad, waypoints: list, terreno: Terreno, clima: str = "despejado",
         unidad.velocidad_kmh * TURNO_DURACION_HORAS * clima_mod.factor_movimiento(clima, unidad.tipo, unidad.lat, unidad.lon)
         * (1.0 - clase.penalizacion_movilidad)
     )
-    autonomia = max(unidad.autonomia_km, 1e-9)
+    # las aeronaves gastan segun su perfil de vuelo: a baja cota rinden menos kilometros por punto de combustible
+    autonomia = max(unidad.autonomia_km, 1e-9) / relieve.factor_consumo(unidad)
     km_max_combustible = max(0.0, unidad.combustible) / 100.0 * autonomia
     aerea = unidad.tipo == "aerea"
 

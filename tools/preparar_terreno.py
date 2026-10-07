@@ -636,6 +636,10 @@ def generar_region(reg, cache):
     (salida / "clases.bin.z").write_bytes(zlib.compress(clases_total.tobytes(), 9))
     (salida / "meta.json").write_text(json.dumps(reg.meta(), ensure_ascii=False), encoding="utf-8")
     del clases_total
+    # grilla de alturas para la linea de vista de los sensores (lee las teselas de elevacion recien bajadas)
+    from preparar_elevacion import generar as generar_elevacion
+    r = generar_elevacion(salida)
+    print(f"Alturas para la linea de vista: celdas de ~{r['metros_por_celda']} m, {r['kb']} KB")
 
     print("Piramide de zooms bajos...")
     meta = reg.meta()

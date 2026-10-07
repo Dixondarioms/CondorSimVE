@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 
 from app import auth, schemas, state
 from app.db import get_db
-from app.engine import aar, catalogo, puestos
+from app.engine import aar, catalogo, puestos, relieve, vision
+from app.engine import clima as clima_mod
+from app.engine import guerra_electronica as ge_mod
 from app.models.aar import Combate, RegistroLogistico
 from app.models.contacto import Contacto
 from app.models.obra import Obra
@@ -171,6 +173,62 @@ async def configurar_defensa(
     db.refresh(unidad)
     await manager.difundir_estado(db, esc)
     return unidad
+
+
+@router.post("/{unidad_id}/perfil", response_model=schemas.UnidadOut)
+async def cambiar_perfil(
+    unidad_id: int,
+    payload: schemas.PerfilVueloIn,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.requiere_roles("azul", "rojo", "instructor")),
+):
+    """Perfil de vuelo de una aeronave propia (alto, medio o rasante). Rige de inmediato: cambia lo que la ve y la
+    puede atacar desde ya (engine/relieve.py); el combustible se descuenta segun el perfil al resolverse el turno."""
+    unidad = db.get(Unidad, unidad_id)
+    if unidad is None or unidad.escenario_id != esc.id or (usuario.rol != "instructor" and unidad.bando != usuario.rol):
+        raise HTTPException(status_code=404, detail="Unidad no encontrada")
+    permitidos = relieve.perfiles_permitidos(unidad)
+    if not permitidos:
+        raise HTTPException(status_code=400, detail="Solo las aeronaves eligen perfil de vuelo (los misiles van siempre rasantes)")
+    if payload.perfil_vuelo not in permitidos:
+        raise HTTPException(status_code=400, detail=f"Esta aeronave no puede volar en perfil {payload.perfil_vuelo}")
+    if unidad.estado != "activa":
+        raise HTTPException(status_code=400, detail="La unidad ya no esta activa")
+    if usuario.rol != "instructor":
+        if esc.estado != "activo":
+            raise HTTPException(status_code=400, detail=f"El escenario esta {esc.estado}")
+        auth.exigir_funcion(usuario, puestos.funcion_de_orden(unidad, None, catalogo.obtener(unidad.clase, unidad.tipo)))
+    unidad.perfil_vuelo = payload.perfil_vuelo
+    db.commit()
+    db.refresh(unidad)
+    await manager.difundir_estado(db, esc)
+    return unidad
+
+
+@router.get("/{unidad_id}/cobertura")
+def cobertura_sensor(
+    unidad_id: int,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.usuario_actual),
+):
+    """Lo que ve un sensor propio segun el relieve: por perfil de vuelo, el poligono hasta donde detecta una
+    aeronave a esa cota (sombras de las montañas y horizonte). Sin grilla de alturas: disponible = False."""
+    unidad = db.get(Unidad, unidad_id)
+    if unidad is None or unidad.escenario_id != esc.id or (state.es_bando(usuario.rol) and unidad.bando != usuario.rol):
+        raise HTTPException(status_code=404, detail="Unidad no encontrada")
+    terreno = get_terreno()
+    if not terreno.tiene_elevacion or unidad.estado != "activa" or unidad.tipo == "aerea" or not unidad.deteccion_km:
+        return {"disponible": False, "perfiles": {}}
+    clima = clima_mod.contexto(db, esc)
+    ge = ge_mod.contexto(db, esc)
+    perfiles = {}
+    for perfil in relieve.PERFILES:
+        alcance = vision.radio_efectivo(unidad, relieve.blanco_de_prueba(unidad.lat, unidad.lon, perfil), terreno, clima, ge)
+        perfiles[perfil] = {"alcance_km": round(alcance, 1), "altura_m": relieve.ALTURA_PERFIL_M[perfil],
+                            "poligono": relieve.cobertura(terreno, unidad, alcance, relieve.ALTURA_PERFIL_M[perfil])}
+    return {"disponible": True, "altura_sensor_m": round(relieve.altura_msl(unidad, terreno)), "perfiles": perfiles}
 
 
 @router.patch("/{unidad_id}", response_model=schemas.UnidadOut)

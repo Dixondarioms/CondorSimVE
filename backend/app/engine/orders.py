@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import bases as bases_mod
 from app.engine import azar as azar_mod
-from app.engine import catalogo, combat, geo, logistica, movimiento, vision
+from app.engine import catalogo, combat, geo, logistica, movimiento, relieve, vision
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import misiles as misiles_mod
@@ -342,7 +342,7 @@ def procesar_ordenes(
         zonas.append(zona)
         if aeronaves_mod.en_vuelo(u):  # el avion de GE orbita para interferir: deja la patrulla y gasta combustible
             u.mision, u.mision_lat, u.mision_lon = "", None, None
-            bit.poner(u, "combustible", u.combustible - aeronaves_mod.COMBUSTIBLE_LOITER, "interferencia", orden.id)
+            bit.poner(u, "combustible", u.combustible - aeronaves_mod.combustible_loiter(u), "interferencia", orden.id)
         orden.estado = "resuelta"
         orden.resultado = (
             f"Interfiere en un radio de {radio:.0f} km sobre ({punto[0]:.3f}, {punto[1]:.3f}) durante este turno y la "
@@ -456,7 +456,7 @@ def procesar_ordenes(
             u.lat, u.lon = mov.lat, mov.lon
             bit.poner(u, "combustible", u.combustible - mov.combustible_gastado, "movimiento")
         else:
-            bit.poner(u, "combustible", u.combustible - aeronaves_mod.COMBUSTIBLE_LOITER, "patrulla")
+            bit.poner(u, "combustible", u.combustible - aeronaves_mod.combustible_loiter(u), "patrulla")
 
     # misiles de crucero: vuelan solos hacia la posicion actual de su blanco (despues de que todo se movio)
     impactos: list[tuple[int, int]] = []
@@ -600,6 +600,8 @@ def procesar_ordenes(
             x for x in lista_unidades
             if x.bando != u.bando and aeronaves_mod.en_vuelo(x)
             and geo.distancia_km(u.lat, u.lon, x.lat, x.lon) <= u.alcance_km
+            and not relieve.fuera_de_techo(u, x)  # la portatil no alcanza al perfil alto
+            and relieve.linea_de_vista(terreno, u, x)  # la pieza tiene que ver a la aeronave: el relieve la tapa
             and any(vision.detecta(d, x, terreno, clima, ge) for d in aliados)
         ]
         if not amenazas:
@@ -668,6 +670,12 @@ def procesar_ordenes(
         if distancia > a.alcance_km:
             rechazar(orden, f"Objetivo fuera de alcance ({distancia:.1f} km > {a.alcance_km:.1f} km).")
             return
+        if relieve.fuera_de_techo(a, d):
+            rechazar(orden, "Fuera del techo de la antiaerea portatil: la aeronave vuela en perfil alto.")
+            return
+        if clase_a.defensa_aerea and a.tipo != "aerea" and relieve.en_vuelo(d) and not relieve.linea_de_vista(terreno, a, d):
+            rechazar(orden, "Sin linea de vista: el relieve o el horizonte ocultan la aeronave a la antiaerea.")
+            return
 
         consumo = (clase_a.municion_por_ataque or MUNICION_POR_ATAQUE.get(a.tipo, 25.0)) * clase_a.cadencia_fuego
         res = combat.resolver_combate(
@@ -681,7 +689,8 @@ def procesar_ordenes(
             bono_atacante=_bono_apoyo(a, apoyos, unidades),
             bono_defensor=_bono_apoyo(d, apoyos, unidades),
             factor_ataque=clase_a.ataque_vs.get(t_d, 1.0) * catalogo.factor_grupo(a)
-            * (ge_mod.FACTOR_ANTIAEREA if aaa_interferida else 1.0) * (ge_mod.FACTOR_TIRO_OPTICO if aaa_optica else 1.0),
+            * (ge_mod.FACTOR_ANTIAEREA if aaa_interferida else 1.0) * (ge_mod.FACTOR_TIRO_OPTICO if aaa_optica else 1.0)
+            * relieve.factor_portatil(a, d),
             factor_defensa=clase_d.defensa * catalogo.factor_grupo(d),
             factor_clima=clima_mod.factor_ataque_aereo(clima, d.lat, d.lon) if a.tipo == "aerea" else 1.0,
             factor_municion=min(1.0, a.municion / consumo),
@@ -691,6 +700,8 @@ def procesar_ordenes(
         )
         if aaa_interferida:
             res.efectos.append(f"antiaerea interferida por guerra electronica x{ge_mod.FACTOR_ANTIAEREA:.2f}")
+        if relieve.factor_portatil(a, d) != 1.0:
+            res.efectos.append(f"aeronave a baja cota (rasante) expuesta a la antiaerea portatil x{relieve.FACTOR_PORTATIL_RASANTE:.2f}")
         perdidas[a.id] += fuerza_inicial[a.id] - res.fuerza_atacante_resultante
         perdidas[d.id] += fuerza_inicial[d.id] - res.fuerza_defensor_resultante
         if catalogo.opera_aeronaves(d):  # base aerea o portaaviones: el daño se reparte en sus partes

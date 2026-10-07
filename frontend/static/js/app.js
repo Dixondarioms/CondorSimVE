@@ -686,7 +686,9 @@
   }
 
   function iconoUnidad(u, clases = "", rumbo = u.bando === "rojo" ? 225 : 45) {
-    const sub = [rotuloModelo(u), u.en_tierra ? "en base" : u.mision === "patrulla" ? "patrulla" : ""].filter(Boolean).join(" · ");
+    // la cota solo se anota cuando no es la media: "rasante" o "alto" importan para leer el mapa
+    const cota = u.tipo === "aerea" && !u.en_tierra && u.perfil_actual && u.perfil_actual !== "medio" && u.clase !== "misil_crucero" ? u.perfil_actual : "";
+    const sub = [rotuloModelo(u), u.en_tierra ? "en base" : u.mision === "patrulla" ? "patrulla" : "", cota].filter(Boolean).join(" · ");
     const rotulos = `<div class="rotulo">${escapar(u.nombre || "")}</div>` + (sub ? `<div class="rotulo modelo">${escapar(sub)}</div>` : "");
     if (conMiniatura(u) && enPlanoAerodromo(u)) {
       return L.divIcon({
@@ -765,7 +767,7 @@
       const mini = conMiniatura(u);
       const rumbo = mini && Modelo3d.gira(u) ? Math.round(rumboDe(u) / 5) * 5 : 0;
       const plano = mini && enPlanoAerodromo(u) ? "p" : "";
-      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${rumbo}|${mini ? baseAvion() : `s${tamApp6()}`}|${plano}`;
+      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}${u.perfil_actual || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${rumbo}|${mini ? baseAvion() : `s${tamApp6()}`}|${plano}`;
       // aeronaves estacionadas: sobre la plataforma real de su base cuando se ve el plano del aerodromo
       const estacionada = mini && app.capaActiva.aerodromos && app.aerodromos && app.map.getZoom() >= app.aerodromos.zoomDetalle
         ? app.aerodromos.posicionEstacionada(u, unidades) : null;
@@ -961,14 +963,44 @@
       L.circle([u.lat, u.lon], { radius: u.alcance_km * 1000, color: "#ffd54f", weight: 1.5, dashArray: "6 4", fill: false, interactive: false })
         .bindTooltip(u.tipo === "base" ? "Radio de reabastecimiento" : "Alcance de fuego / apoyo").addTo(g);
     }
+    let circuloDeteccion = null;
     if (u.deteccion_km > 0) {
-      L.circle([u.lat, u.lon], { radius: u.deteccion_km * 1000, color: "#2EC4B6", weight: 1, dashArray: "1 6", fill: false, interactive: false })
+      circuloDeteccion = L.circle([u.lat, u.lon], { radius: u.deteccion_km * 1000, color: "#2EC4B6", weight: 1, dashArray: "1 6", fill: false, interactive: false })
         .bindTooltip("Radio de detección (sin clima ni terreno)").addTo(g);
     }
+    if (Logica.muestraCobertura(u, claseDe(u))) dibujarCobertura(u, circuloDeteccion);
     if (u.velocidad_kmh > 0) {
       L.circle([u.lat, u.lon], { radius: u.velocidad_kmh * 1000, color: "#81d4fa", weight: 1, dashArray: "2 5", fill: false, interactive: false })
         .bindTooltip("Avance máximo en 1 turno (en llano, despejado)").addTo(g);
     }
+  }
+
+  /** Cobertura del sensor seleccionado segun el relieve (GET .../cobertura): hasta donde ve una aeronave a baja cota
+   * y a cota media; las entradas del poligono son las sombras de las montañas y el horizonte. Reemplaza al circulo
+   * de deteccion (que no sabe del relieve). Se cachea por posicion, emision y turno. */
+  function dibujarCobertura(u, circuloDeteccion) {
+    const clave = `${u.id}|${u.lat}|${u.lon}|${u.emitiendo}|${app.data ? app.data.escenario.turno_actual : 0}`;
+    app.coberturas = app.coberturas || new Map();
+    const pintar = (c) => {
+      if (!c || !c.disponible || app.seleccion !== u.id) return;
+      const g = app.capas.seleccion;
+      if (circuloDeteccion) g.removeLayer(circuloDeteccion);
+      const capas = [
+        ["medio", "#2EC4B6", "6 3", 0.05, "a cota media (1 500 m)"],
+        ["rasante", "#ff9f1c", "3 4", 0.09, "a baja cota (rasante, 60 m)"],
+      ];
+      for (const [perfil, color, guiones, relleno, texto] of capas) {
+        const p = c.perfiles[perfil];
+        if (!p) continue;
+        L.polygon(p.poligono, { color, weight: 1.5, dashArray: guiones, fillColor: color, fillOpacity: relleno, interactive: true })
+          .bindTooltip(`Ve aeronaves ${texto} hasta aquí (máx. ${p.alcance_km} km). Las entradas son sombras del relieve o el horizonte.`, { sticky: true })
+          .addTo(g);
+      }
+    };
+    if (app.coberturas.has(clave)) return pintar(app.coberturas.get(clave));
+    api("GET", rutaEsc(`/unidades/${u.id}/cobertura`), undefined, true)
+      .then((c) => { app.coberturas.set(clave, c); pintar(c); })
+      .catch(() => {});
   }
 
   // ---------- seleccion ----------
@@ -1161,6 +1193,7 @@
       const carga = Logica.aBordo(u, app.data.unidades);
       extra.push(dato("Tropas a bordo", carga.length ? `${carga.map((x) => x.nombre).join(", ")} (${carga.length}/${Logica.CAPACIDAD_TRANSPORTE[u.clase]})` : `ninguna (capacidad ${Logica.CAPACIDAD_TRANSPORTE[u.clase]})`));
     }
+    if (u.perfil_actual) extra.push(dato("Perfil de vuelo", u.en_tierra ? `${Logica.textoPerfil(u.perfil_actual)} al despegar` : Logica.textoPerfil(u.perfil_actual)));
     if (modelo) {
       const op = Logica.aeronavesOperativas(u);
       extra.push(dato("Modelo", modelo.nombre));
@@ -1194,11 +1227,19 @@
         ? (cl.emisor ? `<button id="btn-emision" class="mini ${u.emitiendo === false ? "primario" : "secundario"}" type="button">${u.emitiendo === false ? "Encender radar" : "Apagar radar (silencio de emisiones)"}</button>` : "")
           + (cl.defensa_aerea ? `<button id="btn-fuego" class="mini secundario" type="button">${u.fuego_libre === false ? "Liberar el fuego automático" : "Retener el fuego automático"}</button>` : "")
         : "")
+      + (!oculto && app.porId.get(app.seleccion) && u.estado === "activa" && (u.perfiles_permitidos || []).length > 1 && puedeDefensa(u)
+        ? `<div class="perfil-vuelo" role="group" aria-label="Perfil de vuelo"><span>Perfil de vuelo</span>${u.perfiles_permitidos.map((p) =>
+          `<button type="button" class="mini ${p === u.perfil_actual ? "primario" : "secundario"}" data-perfil="${p}" title="${escapar(Logica.PERFILES_VUELO[p].ayuda)}">${escapar(Logica.PERFILES_VUELO[p].nombre)}</button>`).join("")}</div>`
+          + `<p class="ayuda">${escapar(Logica.PERFILES_VUELO[u.perfil_actual] ? Logica.PERFILES_VUELO[u.perfil_actual].ayuda : "")} Rige de inmediato.</p>`
+        : "")
       + (esInstructor() && app.porId.get(app.seleccion) ? '<button id="btn-eliminar-unidad" class="peligro mini" type="button">Eliminar unidad del escenario</button>' : "");
     const emision = $("btn-emision");
     if (emision) emision.addEventListener("click", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { emitiendo: u.emitiendo === false })));
     const fuego = $("btn-fuego");
     if (fuego) fuego.addEventListener("click", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { fuego_libre: u.fuego_libre === false })));
+    cont.querySelectorAll("[data-perfil]").forEach((b) => b.addEventListener("click", () => {
+      if (b.dataset.perfil !== u.perfil_actual) enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/perfil`), { perfil_vuelo: b.dataset.perfil }));
+    }));
     const eliminar = $("btn-eliminar-unidad");
     if (eliminar) {
       eliminar.addEventListener("click", async () => {

@@ -14,7 +14,7 @@ import json
 from sqlalchemy.orm import Session
 
 from app.engine import bases as bases_mod
-from app.engine import catalogo, geo, logistica
+from app.engine import catalogo, geo, logistica, relieve
 from app.models.orden import Orden
 from app.models.unidad import Unidad
 
@@ -125,6 +125,11 @@ CAPACIDAD_BASE = 12  # aeronaves que caben estacionadas en una base
 RADIO_ATERRIZAJE_KM = 3.0  # distancia a la base para considerar que aterrizo
 COMBUSTIBLE_LOITER = 8.0  # puntos de combustible por turno que gasta una patrulla sobre su punto
 COMBUSTIBLE_CRITICO = 25.0  # una patrulla con menos regresa sola a la base mas cercana
+
+
+def combustible_loiter(u) -> float:
+    """Combustible por turno de una aeronave que se mantiene en una zona: mas a baja cota, menos en perfil alto."""
+    return COMBUSTIBLE_LOITER * relieve.factor_consumo(u)
 PERDIDA_EN_TIERRA = 0.6  # fraccion del dano a la base que sufren los aviones estacionados en ella
 DESPLAZAMIENTO_ESTACIONADO = 0.006  # grados: los aviones estacionados no se dibujan encima de la base
 

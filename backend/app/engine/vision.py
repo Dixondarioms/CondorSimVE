@@ -6,9 +6,12 @@ mas; los drones, por su firma radar pequena, se detectan mas cerca. Los radares 
 muy lejos pero lo que esta en tierra solo de cerca. La guerra electronica (engine/guerra_electronica.py) reduce la
 deteccion de los sensores interferidos, permite a las unidades de escucha localizar emisores enemigos lejanos y
 delata a los interferidores mientras emiten.
+
+Ademas, con la grilla de alturas, nada se detecta sin linea de vista: el relieve y la curvatura de la Tierra
+ocultan (sombra de radar, horizonte), y las aeronaves se ven segun su perfil de vuelo (engine/relieve.py).
 """
 
-from app.engine import catalogo, geo
+from app.engine import catalogo, geo, relieve
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.terreno import OCULTAMIENTO, Terreno
@@ -48,21 +51,23 @@ def radio_efectivo(detector, objetivo, terreno: Terreno, clima: str = "despejado
     return radio
 
 
-def escucha(detector, objetivo, ge=None) -> bool:
-    """La escucha electronica localiza emisores enemigos (radares, interferidores activos) a gran distancia."""
+def escucha(detector, objetivo, ge=None, terreno: Terreno | None = None) -> bool:
+    """La escucha electronica localiza emisores enemigos (radares, interferidores activos) a gran distancia, si la
+    señal le llega (linea de vista: el relieve tambien la tapa)."""
     alcance = _clase(detector).escucha_km
     if not alcance or getattr(objetivo, "estado", "activa") != "activa":
         return False
     emite = ge_mod.emite_radar(objetivo) or (ge is not None and ge.emite(objetivo))  # un radar apagado no se oye
-    return emite and geo.distancia_km(detector.lat, detector.lon, objetivo.lat, objetivo.lon) <= alcance
+    return (emite and geo.distancia_km(detector.lat, detector.lon, objetivo.lat, objetivo.lon) <= alcance
+            and relieve.linea_de_vista(terreno, detector, objetivo))
 
 
 def detecta(detector, objetivo, terreno: Terreno, clima: str = "despejado", ge=None) -> bool:
-    return (
-        geo.distancia_km(detector.lat, detector.lon, objetivo.lat, objetivo.lon)
-        <= radio_efectivo(detector, objetivo, terreno, clima, ge)
-        or escucha(detector, objetivo, ge)
-    )
+    if (geo.distancia_km(detector.lat, detector.lon, objetivo.lat, objetivo.lon)
+            <= radio_efectivo(detector, objetivo, terreno, clima, ge)
+            and relieve.linea_de_vista(terreno, detector, objetivo)):
+        return True
+    return escucha(detector, objetivo, ge, terreno)
 
 
 def unidades_visibles(unidades, bando: str, terreno: Terreno, clima: str = "despejado", ge=None) -> list:

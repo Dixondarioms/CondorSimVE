@@ -1,4 +1,4 @@
-from math import asin, cos, radians, sin, sqrt
+from math import asin, atan2, cos, degrees, radians, sin, sqrt
 
 RADIO_TIERRA_KM = 6371.0
 
@@ -23,3 +23,13 @@ def avanzar_hacia(
         return lat2, lon2
     fraccion = distancia_maxima_km / total
     return lat1 + (lat2 - lat1) * fraccion, lon1 + (lon2 - lon1) * fraccion
+
+
+def destino(lat: float, lon: float, rumbo_grados: float, distancia: float) -> tuple[float, float]:
+    """Punto a `distancia` km de (lat, lon) siguiendo el rumbo verdadero `rumbo_grados` (0 = norte, 90 = este)."""
+    d = distancia / RADIO_TIERRA_KM
+    r = radians(rumbo_grados)
+    la1, lo1 = radians(lat), radians(lon)
+    la2 = asin(sin(la1) * cos(d) + cos(la1) * sin(d) * cos(r))
+    lo2 = lo1 + atan2(sin(r) * sin(d) * cos(la1), cos(d) - sin(la1) * sin(la2))
+    return degrees(la2), (degrees(lo2) + 540.0) % 360.0 - 180.0

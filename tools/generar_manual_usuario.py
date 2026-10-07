@@ -261,6 +261,15 @@ def construir(salida: Path) -> None:
             "plataforma y los daños aparecen como cráteres en la pista y, si queda inutilizada, cruces amarillas y el rótulo «PISTA INOPERATIVA»."),
           P("Al hacer clic en un aeródromo se ven sus datos; el instructor puede colocar allí una base azul o roja con un clic.")]
     h += figura("mapa_aerodromo", "Aeropuerto de Barinas al zoom 15, ocupado por una base del ejercicio: aviones en la plataforma y cráteres en la pista.", ancho=ANCHO_TEXTO * 0.82)
+    h += [H2("4.9 El relieve: lo que ven los sensores"),
+          P("Las montañas y la curvatura de la Tierra <b>ocultan</b>: un radar, un buque o un observador solo detectan lo que tienen en su "
+            "línea de vista. Una aeronave que vuela baja detrás de una sierra no aparece en el radar enemigo, y lo mismo vale para la "
+            "escucha electrónica y para la antiaérea, que no dispara a lo que no ve. Un radar en una cumbre ve mucho; uno en un valle, poco."),
+          P("Al <b>seleccionar un sensor</b> (radar, antiaérea con radar, buque) el mapa dibuja su <b>cobertura real</b>: en turquesa, hasta "
+            "dónde ve aeronaves a cota media (1 500 m); en naranja, a baja cota (rasante, 60 m). Las entradas del contorno son las sombras "
+            "de las montañas. Úsela para ubicar los radares propios y para planificar por dónde entrar sin ser visto.")]
+    h += figura("cobertura_radar", "Cobertura del «Radar Rojo», en un valle al pie de los Andes: a cota media ve lejos hacia el llano, pero la "
+                "montaña le corta la vista al norte y al oeste; a baja cota apenas ve unos kilómetros.", ancho=ANCHO_TEXTO * 0.82)
 
     # ---------------------------------------------------------------- 5 panel derecho
     h += H1("5. El panel derecho")
@@ -387,7 +396,19 @@ def construir(salida: Path) -> None:
     h += figura("orden_patrullar", "Patrulla: el grupo vuela al punto, se mantiene en la zona e intercepta a los aviones enemigos que detecte.")
     h += [Bul(["<b>Patrullar</b> (A3 o EM): clic en el punto de patrulla. Gasta combustible cada turno y, con combustible crítico, regresa sola.",
                "<b>Aterrizar</b>: elija la base o portaaviones de destino. En tierra tarda 2 turnos en reabastecer y rearmar; después cualquier orden de vuelo es el despegue."]),
-          H3("Misiones aéreas"),
+          ]
+    h += al_lado("perfil_vuelo", "Perfil de vuelo en la ficha de una aeronave.", [
+        H3("Perfil de vuelo"),
+        P("Cada aeronave vuela en un <b>perfil</b>, que se elige en su ficha con los botones <b>Alto</b>, <b>Medio</b> o <b>Rasante</b> "
+          "(A3 o EM). El cambio rige de inmediato, y el mapa anota «alto» o «rasante» bajo el avión."),
+        Tbl(["Perfil", "Ventajas", "Costos"], [
+            ["Alto (6 000 m)", "Fuera del alcance de la antiaérea portátil; gasta 15 % menos.", "Lo ven los radares desde muy lejos."],
+            ["Medio (1 500 m)", "Equilibrado; es el de siempre.", "Lo ocultan solo las montañas altas."],
+            ["Rasante (60 m)", "Se esconde tras el relieve y bajo el horizonte del radar.", "Gasta 30 % más; la antiaérea portátil le pega más."],
+        ], [2.6 * cm, 3.6 * cm, 3.6 * cm], tam=7.8),
+        P("Los helicópteros vuelan medio o rasante; los misiles de crucero, siempre rasantes. Vea la cobertura de los radares en 4.9."),
+    ], ancho_img=6.0 * cm)
+    h += [H3("Misiones aéreas"),
           P("Una <b>misión</b> es un plan que el grupo cumple solo, turno tras turno, sin que haya que darle órdenes cada vez: un rol y una ruta de puntos.")]
     h += figura("mision_planificar", "Planificador de misiones: interdicción con un grupo existente; la ruta se marca con clics en el mapa.")
     h += [pasos(f"Pulse {B('Planificar misión…')}.", "Elija quién la vuela: <b>un grupo existente</b> (A3) o un <b>despegue desde una base</b> en un turno futuro (A5), con modelo y cantidad.",

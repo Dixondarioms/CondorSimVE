@@ -66,6 +66,21 @@ class Unidad(Base):
     # sensores y defensa aerea: radar emitiendo (control de emisiones) y fuego automatico de la antiaerea
     emitiendo: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
     fuego_libre: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+    # aeronaves: perfil de vuelo "alto" | "medio" | "rasante" (None = el de su clase; ver engine/relieve.py)
+    perfil_vuelo: Mapped[str | None] = mapped_column(String(10), nullable=True)
+
+    @property
+    def perfil_actual(self) -> str | None:
+        """Perfil de vuelo efectivo (el elegido o el de su clase); None si no es una aeronave."""
+        from app.engine import relieve
+
+        return relieve.perfil_de(self)
+
+    @property
+    def perfiles_permitidos(self) -> list[str]:
+        from app.engine import relieve
+
+        return list(relieve.perfiles_permitidos(self))
     # bases: existencias de combustible y municion (puntos: 100 = llenar una unidad; ver engine/logistica.py)
     stock_combustible: Mapped[float] = mapped_column(Float, default=1000.0, server_default="1000")
     stock_municion: Mapped[float] = mapped_column(Float, default=1000.0, server_default="1000")

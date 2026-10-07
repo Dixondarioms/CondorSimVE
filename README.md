@@ -296,6 +296,31 @@ detectado. Al perder de vista a una unidad enemiga se conserva su **último cont
 Órdenes y eventos también se filtran por bando; el instructor puede dirigir un evento a uno solo, y usar
 "Ver como" para mostrar en clase lo que ve cada bando.
 
+### Relieve, línea de vista y perfil de vuelo
+
+Con la **grilla de alturas** del terreno, nada se detecta sin **línea de vista** (`engine/relieve.py`):
+
+- Cada unidad tiene una altura: la del terreno más su antena o su silueta (radar 25 m, antiaérea 12, destructor 30,
+  portaaviones 40, fragata 25, infantería 3…), o su **cota de vuelo**. Entre sensor y objetivo se recorre el perfil
+  del terreno cada ~600 m: si una montaña sobresale de la recta que los une, el objetivo queda en la **sombra de
+  radar**. Con el radio terrestre efectivo de 4/3 (refracción normal) también oculta el **horizonte**: dos buques se
+  ven a ~43 km, un avión rasante sobre el llano o el mar se pierde a ~54 km de un radar.
+- **Perfil de vuelo** de cada aeronave (ficha → *Perfil de vuelo*, rige de inmediato; lo conduce el A3 o el EM):
+  **alto** (6 000 m sobre el terreno: se ve desde muy lejos por encima del relieve, fuera del techo de la antiaérea
+  portátil, gasta 15 % menos), **medio** (1 500 m, el de siempre) o **rasante** (60 m: se esconde tras las montañas y
+  bajo el horizonte, gasta 30 % más —también en las patrullas y órbitas— y la antiaérea portátil le pega ×1,25).
+  Helicópteros: medio o rasante (por defecto rasante). Los misiles de crucero vuelan siempre rasantes (30 m).
+- Un **radar en una cumbre** ve detrás de ella; uno en un valle queda casi ciego a baja cota. La **escucha
+  electrónica** también necesita línea de vista, y la **antiaérea** no dispara (ni sola ni por orden) a lo que el
+  relieve le oculta.
+- **Cobertura del sensor:** al seleccionar un radar, una antiaérea con radar, un buque o un sensor en tierra de ≥20 km,
+  el mapa dibuja hasta dónde ve aeronaves a cota media (turquesa) y a baja cota (naranja): las entradas del polígono
+  son las sombras del relieve. `GET /api/escenarios/{id}/unidades/{uid}/cobertura` (72 rumbos, una pasada por rumbo).
+- **Datos:** `backend/data/terreno/<región>/elevacion.bin.z`, metros en enteros de 16 bits a ~600 m en Venezuela y
+  ~5 km en América (el punto más alto de cada bloque, para no perder crestas), ~13 MB en disco. Se generan sin
+  internet desde la caché de elevación con `python tools/preparar_elevacion.py` (y solos con `preparar_terreno.py`).
+  Sin esa grilla todo tiene línea de vista, como antes. API: `POST .../unidades/{uid}/perfil` `{"perfil_vuelo": "rasante"}`.
+
 ## Informe posterior al ejercicio (AAR)
 
 Se guarda una instantánea completa al terminar cada turno, más cada combate con su ratio, terreno y efectos.

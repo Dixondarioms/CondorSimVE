@@ -104,3 +104,14 @@ test("unidadesConAlcance: solo las desplegadas con alcance (sin bases, misiles, 
   ];
   assert.deepEqual(L.unidadesConAlcance(lista).map((x) => x.id), [1, 8]);
 });
+
+test("perfil de vuelo: textos y que sensores dibujan su cobertura por relieve", () => {
+  assert.equal(L.textoPerfil("rasante"), "Rasante (60 m)");
+  assert.equal(L.textoPerfil(null), "");
+  const radar = { tipo: "terrestre", estado: "activa", deteccion_km: 150 };
+  assert.ok(L.muestraCobertura(radar, { emisor: true }));
+  assert.ok(L.muestraCobertura({ tipo: "naval", estado: "activa", deteccion_km: 30 }, { emisor: false }));
+  assert.ok(!L.muestraCobertura({ tipo: "terrestre", estado: "activa", deteccion_km: 8 }, { emisor: false }));
+  assert.ok(!L.muestraCobertura({ tipo: "aerea", estado: "activa", deteccion_km: 60 }, { emisor: false }));
+  assert.ok(!L.muestraCobertura({ ...radar, estado: "destruida" }, { emisor: true }));
+});

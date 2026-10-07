@@ -400,3 +400,8 @@ body.planificando-mision #barra-graficos { display: none; }
 #ra-novedades li { font-size: 12px; padding: 1px 0; color: #ffd27a; }
 #rp-replay.activo { outline: 2px solid #ffab00; }
 body.replay-animado #leyenda-mapa, body.replay-animado #rp-combates { display: none; }
+
+/* perfil de vuelo de una aeronave (ficha): alto / medio / rasante */
+.perfil-vuelo { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 8px 0 2px; }
+.perfil-vuelo > span { font-size: 12px; color: var(--texto-sec); margin-right: 2px; }
+.perfil-vuelo button { flex: 1 1 0; }

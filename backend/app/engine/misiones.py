@@ -184,7 +184,7 @@ def _seguir_escoltado(db, m: Mision, u, unidades: dict, lista, terreno, clima, o
         return False
     if e.estado == "programada" or escoltado is None or escoltado.estado != "activa" or escoltado.en_tierra:
         # el escoltado aun no despego (o esta en tierra): el escolta patrulla donde esta y espera
-        bit.poner(u, "combustible", u.combustible - aeronaves_mod.COMBUSTIBLE_LOITER, "mision")
+        bit.poner(u, "combustible", u.combustible - aeronaves_mod.combustible_loiter(u), "mision")
         u.mision, u.mision_lat, u.mision_lon = "patrulla", u.lat, u.lon
         m.resultado = f"Espera en el aire al grupo de {e.nombre or e.rol}."
         return True
@@ -195,7 +195,7 @@ def _seguir_escoltado(db, m: Mision, u, unidades: dict, lista, terreno, clima, o
         bit.poner(u, "combustible", u.combustible - mov.combustible_gastado, "mision")
         d = geo.distancia_km(u.lat, u.lon, escoltado.lat, escoltado.lon)
     else:
-        bit.poner(u, "combustible", u.combustible - aeronaves_mod.COMBUSTIBLE_LOITER, "mision")
+        bit.poner(u, "combustible", u.combustible - aeronaves_mod.combustible_loiter(u), "mision")
     u.mision, u.mision_lat, u.mision_lon = "patrulla", u.lat, u.lon  # intercepta lo que amenace al grupo
     m.resultado = (f"Escolta a {escoltado.nombre} ({d:.0f} km)." if d <= RADIO_ESCOLTA_KM
                    else f"Alcanza a {escoltado.nombre}: faltan {d:.0f} km.")
@@ -379,7 +379,7 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
             _terminar(db, m, "cumplida", "Ruta completada.", turno)
             continue
         if ge_mod.enlace_perdido(u, ge):
-            bit.poner(u, "combustible", u.combustible - aeronaves_mod.COMBUSTIBLE_LOITER, "mision")
+            bit.poner(u, "combustible", u.combustible - aeronaves_mod.combustible_loiter(u), "mision")
             m.resultado = ge_mod.MOTIVO_SIN_ENLACE
             continue
         # ---- escolta: acompaña al grupo escoltado mientras su mision siga; luego vuelve a la base ----
@@ -402,7 +402,7 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
         p = pts[m.indice]
         # ---- en orbita: actua segun el rol ----
         if p["tipo"] == "orbita" and m.espera > 0:
-            bit.poner(u, "combustible", u.combustible - aeronaves_mod.COMBUSTIBLE_LOITER, "mision")
+            bit.poner(u, "combustible", u.combustible - aeronaves_mod.combustible_loiter(u), "mision")
             if m.rol == "CAP":
                 u.mision, u.mision_lat, u.mision_lon = "patrulla", p["lat"], p["lon"]
             elif m.rol == "CAS":

@@ -578,7 +578,21 @@ def construir(salida: Path, img: Path) -> None:
           Bul(["<b>Radar de vigilancia</b>: ve aeronaves en vuelo hasta 150 km, pero lo que está en tierra solo a 8 km. Mientras emite, la escucha enemiga lo localiza hasta 120 km (GE terrestre) o 200 km (avión de GE).",
                "<b>Interferencia</b> (orden Interferir): en la zona, el enemigo detecta al 30 % (radares al 20 %), su antiaérea guiada por radar pierde el 60 % de efecto y sus drones pierden el enlace. Rige durante ese turno y la planificación del siguiente; delata al emisor.",
                "<b>Drones</b>: firma radar pequeña (se detectan a la mitad o menos de distancia); tope propio de 16 por bando. <b>Munición merodeadora</b>: un solo ataque.",
-               "<b>Antiaérea automática</b>: con el fuego libre dispara sola cada turno contra la aeronave enemiga más cercana a su alcance que el bando detecte; la guiada por radar necesita el radar encendido (apagado, solo tira por orden y a ojo, ×0,3). La portátil infrarroja no depende del radar, pero debe desplegarse un turno y recarga otro."])]
+               "<b>Antiaérea automática</b>: con el fuego libre dispara sola cada turno contra la aeronave enemiga más cercana a su alcance que el bando detecte; la guiada por radar necesita el radar encendido (apagado, solo tira por orden y a ojo, ×0,3). La portátil infrarroja no depende del radar, pero debe desplegarse un turno y recarga otro."]),
+          H2("8.5 Relieve, línea de vista y perfil de vuelo"),
+          P("Ningún sensor detecta lo que no tiene en su <b>línea de vista</b>. El simulador conoce la altura del terreno en cada punto y la de "
+            "cada unidad (el suelo más su antena: radar 25 m, destructor 30 m, infantería 3 m…; o la cota de vuelo de las aeronaves). Si una "
+            "montaña se interpone, el objetivo queda en la <b>sombra de radar</b>; y la curvatura de la Tierra (con la refracción normal del radar) "
+            "pone un <b>horizonte</b>: dos buques se ven a unos 43 km y un avión rasante sobre el llano o el mar se pierde a unos 54 km."),
+          Tbl(["Perfil de vuelo", "Cota", "Ventajas", "Costos"], [
+              ["Alto", "6 000 m", "Fuera del techo de la antiaérea portátil; gasta 15 % menos combustible.", "Lo ven los radares desde muy lejos, por encima del relieve."],
+              ["Medio", "1 500 m", "Equilibrado (el perfil por defecto de aviones y drones).", "Lo ocultan solo las montañas altas que tenga delante."],
+              ["Rasante", "60 m", "Se esconde tras el relieve y bajo el horizonte del radar.", "Gasta 30 % más; la antiaérea portátil le hace ×1,25 de daño."],
+          ], [2.6 * cm, 1.8 * cm, 6.3 * cm, ANCHO_TEXTO - 10.7 * cm]),
+          Bul(["Los helicópteros vuelan medio o rasante (por defecto rasante); los misiles de crucero, siempre rasantes (30 m).",
+               "Un radar en una cumbre ve detrás de ella; en un valle queda casi ciego a baja cota. La escucha electrónica también necesita "
+               "línea de vista, y la antiaérea no dispara a lo que el relieve le oculta.",
+               "Al seleccionar un sensor, el mapa dibuja su <b>cobertura</b> real contra aeronaves a cota media (turquesa) y a baja cota (naranja)."])]
 
     # ---- 9 aviacion
     h += H1("9. Aviación")
@@ -722,6 +736,8 @@ def construir(salida: Path, img: Path) -> None:
               ["Instalador de un clic", "instalar.cmd, iniciar.cmd, detener.cmd", "Instalación guiada, acceso directo en el Escritorio y arranque automático opcional."],
               ["Actualizador y paquete de datos", "actualizar.cmd; instalar.cmd -Datos; tools/empaquetar_datos.py",
                "Actualización con respaldo previo y migraciones automáticas; los datos de mapa (~550 MB) se distribuyen en un zip aparte del código."],
+              ["Relieve y línea de vista; perfil de vuelo", "Ficha de las aeronaves; cobertura al seleccionar un sensor",
+               "Las montañas y el horizonte ocultan a los radares; las aeronaves vuelan alto, medio o rasante, con sus ventajas y costos."],
               ["Plano real de los aeródromos de toda América", "Capa Plano de los aeródromos; tools/preparar_aerodromos.py",
                "Pistas, rodajes, plataformas y edificios de OpenStreetMap también en los aeródromos de los demás países, cargados solo al acercarse."],
               ["Carpeta portátil con SIETE.exe", "SIETE_portable_&lt;fecha&gt;.zip; tools/construir_ejecutable.py",

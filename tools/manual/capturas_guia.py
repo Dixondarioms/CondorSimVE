@@ -281,6 +281,21 @@ def mision_planificar(n):
     guardar(n, "mision_planificar")
 
 
+def perfil_vuelo(n):
+    n.ir(arnes("azul", "operaciones"), LISTA_APP, 2)
+    seleccionar(n, 10)
+    n.js("document.querySelector('.perfil-vuelo').scrollIntoView({ block: 'center' })")
+    time.sleep(0.4)
+    guardar(n, "perfil_vuelo", n.rect("#panel-izq"), margen=0)
+
+
+def cobertura_radar(n):
+    n.ir(arnes("instructor", lat=8.72, lon=-70.56, zoom=9), LISTA_APP, 2)
+    seleccionar(n, 18)
+    n.vista(8.68, -70.56, 9, 3)
+    guardar(n, "cobertura_radar", rect_mapa(n), margen=0)
+
+
 def cronograma(n):
     n.ir(arnes("azul", "operaciones"), LISTA_APP, 2)
     n.clic("#btn-cronograma")
@@ -531,7 +546,7 @@ CAPTURAS = [
     acceso_login, acceso_registro, acceso_clave, menu_perfil,
     pantalla_general, cabecera, alumno_pantalla, alumno_secciones, oob_ficha, ficha_acciones,
     orden_mover, orden_atacar, seleccion_multiple, orden_construir, cola_y_listo,
-    aviacion_enviar, orden_patrullar, mision_planificar, cronograma, misiones_lista,
+    aviacion_enviar, orden_patrullar, perfil_vuelo, mision_planificar, cronograma, misiones_lista, cobertura_radar,
     naval_misiles, naval_desembarcar, orden_interferir,
     panel_derecho, capas, mapa_relieve, mapa_zoom, mapa_regla, mapa_graficos, mapa_ficha, mapa_aerodromo, mapa_meteo,
     consola_turno, consola_meteo, consola_identidad, consola_agregar, consola_objetivos, consola_direccion, consola_eventos,

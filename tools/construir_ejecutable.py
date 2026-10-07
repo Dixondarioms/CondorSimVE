@@ -16,6 +16,7 @@ import argparse
 import json
 import os
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -188,7 +189,9 @@ def escribir_ayudas(destino: Path, fuera: set[str]) -> None:
 
 def probar(carpeta: Path) -> None:
     """Arranca SIETE.exe con una base temporal y comprueba que sirve la interfaz y la API."""
-    puerto = 8765
+    with socket.socket() as s:  # un puerto libre: otro programa del equipo puede estar usando cualquiera fijo
+        s.bind(("127.0.0.1", 0))
+        puerto = s.getsockname()[1]
     with tempfile.TemporaryDirectory() as tmp:
         entorno = dict(os.environ, SIMULADOR_DB=str(Path(tmp) / "prueba.db"), SIMULADOR_RESPALDO_HORAS="0")
         entorno.pop("SIMULADOR_DATABASE_URL", None)

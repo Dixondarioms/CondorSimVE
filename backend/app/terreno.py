@@ -39,9 +39,28 @@ OCULTAMIENTO = {
 class Grilla:
     """Grilla de clases de una region: teselas [x0, x0+ancho/256) x [y0, y0+alto/256) del zoom z."""
 
-    def __init__(self, meta: dict, clases: bytes):
+    def __init__(self, meta: dict, clases: bytes, elevacion: memoryview | None = None):
         self.meta = meta
         self.clases = clases
+        # alturas (m, enteros de 16 bits) a 1/elev_paso de la resolucion de las clases (tools/preparar_elevacion.py)
+        self.elevacion = elevacion
+
+    def altura(self, lat: float, lon: float) -> float | None:
+        """Metros sobre el nivel del mar del punto (lo mas alto de su celda), o None si la region no tiene alturas
+        o el punto cae fuera."""
+        if self.elevacion is None:
+            return None
+        lat = max(-85.0, min(85.0, lat))
+        n = 2 ** self.z * 256
+        x = (lon + 180.0) / 360.0 * n - self.meta["x0"] * 256
+        s = math.sin(math.radians(lat))
+        y = (0.5 - math.log((1 + s) / (1 - s)) / (4 * math.pi)) * n - self.meta["y0"] * 256
+        paso = self.meta.get("elev_paso", 1)
+        xi, yi = int(x) // paso, int(y) // paso
+        ancho = self.meta.get("elev_ancho", self.meta["ancho"] // paso)
+        if x < 0 or y < 0 or not (0 <= xi < ancho and 0 <= yi < self.meta.get("elev_alto", self.meta["alto"] // paso)):
+            return None
+        return float(self.elevacion[yi * ancho + xi])
 
     @property
     def id(self) -> str:
@@ -108,6 +127,19 @@ class Terreno:
                 return NOMBRES.get(g.clases[i], "llano")
         return "llano"
 
+    @property
+    def tiene_elevacion(self) -> bool:
+        """Si hay alturas cargadas: sin ellas el motor no calcula linea de vista (todo se ve, como antes)."""
+        return any(g.elevacion is not None for g in self.grillas)
+
+    def altura(self, lat: float, lon: float) -> float | None:
+        """Metros sobre el nivel del mar en (lat, lon) segun la region mas detallada con alturas que lo cubra."""
+        for g in self.grillas:
+            h = g.altura(lat, lon)
+            if h is not None:
+                return h
+        return None
+
     def hay_rio_cerca(self, lat: float, lon: float, radio_km: float = 1.0) -> bool:
         """True si hay una celda de rio a <= radio_km (se muestrea el punto y 8 direcciones)."""
         if self.clase(lat, lon) == "rio":
@@ -127,7 +159,11 @@ def _cargar_grilla(carpeta: Path) -> Grilla | None:
         return None
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
     meta.setdefault("id", carpeta.name)
-    return Grilla(meta, zlib.decompress(datos_path.read_bytes()))
+    elevacion = None
+    elev_path = carpeta / "elevacion.bin.z"
+    if elev_path.exists() and "elev_paso" in meta:
+        elevacion = memoryview(zlib.decompress(elev_path.read_bytes())).cast("h")  # int16 little endian (Windows/Linux x86)
+    return Grilla(meta, zlib.decompress(datos_path.read_bytes()), elevacion)
 
 
 @lru_cache(maxsize=1)

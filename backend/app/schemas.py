@@ -174,6 +174,12 @@ class UnidadAjuste(BaseModel):
     refugios: int | None = Field(default=None, ge=0, le=24)
 
 
+class PerfilVueloIn(BaseModel):
+    """Perfil de vuelo de una aeronave propia: rige de inmediato (ver engine/relieve.py)."""
+
+    perfil_vuelo: Literal["alto", "medio", "rasante"]
+
+
 class DefensaIn(BaseModel):
     """Control de emisiones (radar) y fuego automatico (antiaerea) de una unidad propia."""
 
@@ -222,6 +228,10 @@ class UnidadOut(BaseModel):
     terreno: str = ""
     emitiendo: bool | None = True
     fuego_libre: bool | None = True
+    perfil_vuelo: str | None = None
+    # perfil efectivo y los que puede elegir (aeronaves; ver engine/relieve.py)
+    perfil_actual: str | None = None
+    perfiles_permitidos: list[str] = []
     stock_combustible: float | None = None
     stock_municion: float | None = None
 

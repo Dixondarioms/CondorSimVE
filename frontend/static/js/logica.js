@@ -707,6 +707,22 @@
     };
   }
 
+  // ---- perfil de vuelo (engine/relieve.py): cota de las aeronaves frente al relieve y los sensores ----
+  const PERFILES_VUELO = {
+    alto: { nombre: "Alto", altura: "6 000 m", ayuda: "Lo ve el radar desde muy lejos, por encima de las montañas; fuera del alcance de la antiaérea portátil; gasta 15 % menos." },
+    medio: { nombre: "Medio", altura: "1 500 m", ayuda: "Equilibrado: lo ocultan las montañas altas que tenga delante." },
+    rasante: { nombre: "Rasante", altura: "60 m", ayuda: "Se esconde tras el relieve y bajo el horizonte del radar; gasta 30 % más y queda expuesto a la antiaérea portátil." },
+  };
+  /** "Rasante (60 m)" o "" si no es una aeronave. */
+  function textoPerfil(perfil) {
+    const p = PERFILES_VUELO[perfil];
+    return p ? `${p.nombre} (${p.altura})` : "";
+  }
+  /** Si conviene pedir y dibujar la cobertura por relieve de esta unidad: sensores en tierra o en el mar. */
+  function muestraCobertura(u, clase) {
+    return !!u && u.tipo !== "aerea" && u.estado === "activa" && (u.deteccion_km || 0) >= 15 && !!clase && (clase.emisor || u.tipo === "naval" || (u.deteccion_km || 0) >= 20);
+  }
+
   // ---- unidades segun el zoom: de lejos no deben tapar el mapa ni encimarse; de cerca se ven con detalle ----
   const ZOOM_ROTULOS = 8; // por debajo, las unidades van sin nombre (se lee al pasar el cursor)
   const ZOOM_ALCANCES = 9; // desde aca, cada unidad desplegada muestra el anillo de su alcance
@@ -732,6 +748,7 @@
 
   const api = {
     MAPA_VENEZUELA, ordenarMapas, limitesDe, limitesDeMapas, textoMapa, ZOOM_ROTULOS, ZOOM_ALCANCES, escalaUnidad, unidadesConAlcance,
+    PERFILES_VUELO, textoPerfil, muestraCobertura,
     PUESTOS, puestoDe, puestoPuede, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,
     ESTADOS_MISION, TIPOS_PUNTO_MISION, misionActiva, horaEstimada, textoMision, tramosCronograma,
