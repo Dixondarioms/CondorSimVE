@@ -28,3 +28,4 @@ dist/
 
 # planos de los aerodromos (~55 MB, tools/preparar_aerodromos.py): viajan con los datos de mapa (siete_datos)
 frontend/static/geo/aerodromos/
+tools/video/salida/

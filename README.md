@@ -18,6 +18,8 @@ Bolivariana (escudo de la DIDA en `frontend/static/img/dida_logo.jpg`, en la por
   sobre el arnés de pruebas, hace los clics, recorta cada panel y numera las zonas. PDF: `python tools/generar_manual_usuario.py`.
 - **Manual de referencia** `docs/Manual_SIETE.pdf` (qué es, cómo se hizo, instalación, reglas del motor y catálogo). Se
   regenera con `python tools/generar_manual.py --imagenes <carpeta de capturas>` (capturas: `tools/manual/capturas.py`).
+- **Video de presentación en 4K con locución** (voces neuronales de Microsoft, español de Venezuela): doble clic en
+  `tools\video\generar_video.cmd`; detalles en `tools/video/README.md`.
 
 El logotipo e iconos están en `frontend/static/img/` (imagen institucional S.I.E.T.E. de la FANB).
 
