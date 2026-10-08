@@ -32,7 +32,7 @@ backend\venv\Scripts\python tools\video\generar_video.py         # --resolucion 
 |---|---|
 | `guion.py` | Texto de cada escena (voz y subtítulo), capítulo, capturas y movimiento de cámara; pronunciación de siglas. |
 | `capturas_video.py` | Capturas 4K del arnés de pruebas reutilizando los recorridos del manual (`tools/manual/capturas_guia.py`). |
-| `locucion.py` | Un MP3 por escena con los tiempos de cada frase (`salida/locucion/`). Solo rehace lo que cambió. |
+| `locucion.py` | Un MP3 por escena con los tiempos de cada frase (`salida/locucion/`, se versiona: con ella el montaje no necesita internet). Solo rehace lo que cambió. |
 | `generar_video.py` | Montaje: cámara, rótulos, subtítulos, música, mezcla y codificación con ffmpeg. |
 
 Opciones de `generar_video.py`: `--musica pista.mp3` (usa esa pista en lugar de la generada), `--sin-musica`,
