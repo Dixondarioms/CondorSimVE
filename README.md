@@ -763,6 +763,10 @@ plantilla…» (marcada como *Guardada por un instructor*), se instancia igual q
   escribe a un bando o a todos). Un **interceptor** en el servidor aplica, por bando destinatario, **latencia**,
   **jitter** y **probabilidad de pérdida** que fija el instructor en *Consola*; el instructor ve en cada mensaje
   qué le pasó en cada bando (`[azul: +1.8 s] [rojo: perdido]`). Límite de 6 mensajes/10 s y 500 caracteres.
+  **Órdenes que no llegan a tiempo** (*Consola → Comunicaciones simuladas*, `com_ordenes_pct`): ese porcentaje de las
+  órdenes del turno se demora y se cumple el turno siguiente (una sola vez); dentro de una interferencia enemiga, 40
+  puntos más (hasta 90 %). El bando recibe el aviso «la orden … no llegó a tiempo». Los despegues (órdenes a una base)
+  siempre llegan; el sorteo es reproducible (semilla del escenario). `engine/orders.py`, `demorar_por_comunicaciones`.
 - **Centro de operaciones (videowall):** botón *Videowall* del instructor, tecla `V` o URL
   `?modo=videowall&escenario=ID&vista=azul|rojo|completa`. Los paneles colapsan por completo, el mapa ocupa el
   100 % de la pantalla (pantalla completa; se adapta a varias pantallas o cambios de tamaño) y un HUD muestra
@@ -908,7 +912,7 @@ del proyecto centrado en La Guaira/Caracas.
 - Los modelos de aeronave venezolanos son solo F-16 y Su-30 (los de EE. UU. de la plantilla del 3 de enero tienen cifras
   didácticas, no técnicas); los aviones no gastan inventario de las bases (solo hay un tope por bando) y el estado real
   de cada aparato en la flota venezolana no se modela.
-- Las comunicaciones simuladas solo afectan al chat, no a las órdenes ni a la niebla de guerra.
+- Las comunicaciones simuladas afectan al chat y pueden demorar órdenes, pero no a la niebla de guerra.
 - No hay selección múltiple de unidades ni órdenes de grupo: cada orden se da a una unidad.
 - La identidad nacional es solo un nombre para la interfaz: no se modela el orden de batalla real de ningún país de América. El terreno a ~300 m, la foto satelital a 10 m y los planos de aeródromos se limitan a Venezuela y vecinos; el resto de América está a ~1,2 km/píxel de relieve y ~600 m de foto (y el mundo, si se genera, a ~2,4 km).
 - El bloqueo de inicio de sesión es por usuario (un atacante puede bloquear una cuenta 5 min).

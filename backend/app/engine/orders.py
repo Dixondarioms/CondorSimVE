@@ -18,7 +18,9 @@
 Cada cambio de combustible, municion o carga queda en `registro_logistico` con su causa.
 """
 
+import hashlib
 import json
+import random
 from collections import defaultdict
 
 from sqlalchemy.orm import Session
@@ -237,6 +239,47 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora) -> None:
                 ))
 
 
+DEMORA_INTERFERENCIA_PCT = 40  # puntos que suma estar dentro de una interferencia enemiga
+DEMORA_MAXIMA_PCT = 90
+
+
+def prob_demora(escenario: Escenario, unidad, ge) -> float:
+    """Probabilidad de que la orden a `unidad` no llegue a tiempo (0 si el instructor no activo la demora)."""
+    base = getattr(escenario, "com_ordenes_pct", 0) or 0
+    if base <= 0:
+        return 0.0
+    extra = DEMORA_INTERFERENCIA_PCT if unidad is not None and ge.interferido(unidad) else 0
+    return min(DEMORA_MAXIMA_PCT, base + extra) / 100.0
+
+
+def demorar_por_comunicaciones(db: Session, escenario: Escenario, ordenes: list, unidades: dict, turno: int) -> list:
+    """Aparta las ordenes que no llegan a tiempo: quedan pendientes y se cumplen el turno siguiente (una sola vez).
+
+    Solo las emitidas en este turno; los despegues (ordenes a una base, por linea fija) siempre llegan. El sorteo es
+    reproducible (semilla del escenario, turno y orden). Las zonas de interferencia que rigen son las del turno
+    anterior, vigentes mientras se transmitian las ordenes."""
+    if not (getattr(escenario, "com_ordenes_pct", 0) or 0):
+        return ordenes
+    ge = ge_mod.contexto(db, escenario)
+    quedan = []
+    for orden in ordenes:
+        u = unidades.get(orden.unidad_id)
+        if orden.turno_emitida != turno or orden.tipo == "despegar" or es_automatica(orden):
+            quedan.append(orden)
+            continue
+        h = hashlib.sha256(f"{escenario.semilla}:{turno}:orden:{orden.id}".encode()).digest()
+        if random.Random(int.from_bytes(h[:8], "big")).random() >= prob_demora(escenario, u, ge):
+            quedan.append(orden)
+            continue
+        interferida = u is not None and ge.interferido(u)
+        db.add(Evento(
+            escenario_id=escenario.id, turno=turno, tipo="comunicaciones", bando_destino=u.bando if u else "todos",
+            descripcion=(f"Comunicaciones: la orden «{orden.tipo}» a {u.nombre if u else 'una unidad'} no llego a tiempo"
+                         + (" (interferencia enemiga)" if interferida else "") + "; se cumplira el proximo turno."),
+        ))
+    return quedan
+
+
 def procesar_ordenes(
     db: Session, escenario: Escenario, terreno: Terreno | None = None
 ) -> list[Orden]:
@@ -260,6 +303,9 @@ def procesar_ordenes(
     def rechazar(orden: Orden, motivo: str) -> None:
         orden.estado = "rechazada"
         orden.resultado = motivo
+
+    # ---- Fase previa: comunicaciones. Algunas ordenes no llegan a tiempo y se cumplen el turno siguiente ----
+    ordenes = demorar_por_comunicaciones(db, escenario, ordenes, unidades, turno)
 
     # ---- Fase 0: despegue de grupos aereos ----
     lanzados_en_base: dict[int, int] = defaultdict(int)

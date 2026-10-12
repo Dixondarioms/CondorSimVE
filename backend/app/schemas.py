@@ -90,6 +90,7 @@ class EscenarioOut(BaseModel):
     com_latencia_ms: int = 0
     com_jitter_ms: int = 0
     com_perdida_pct: int = 0
+    com_ordenes_pct: int = 0
     niebla: bool = True
     logistica: bool = True
     efectos_clima: bool = True
@@ -110,6 +111,8 @@ class EscenarioConfig(BaseModel):
     com_latencia_ms: int | None = Field(default=None, ge=0, le=60000)
     com_jitter_ms: int | None = Field(default=None, ge=0, le=60000)
     com_perdida_pct: int | None = Field(default=None, ge=0, le=100)
+    # ordenes que no llegan a tiempo (se cumplen el turno siguiente)
+    com_ordenes_pct: int | None = Field(default=None, ge=0, le=100)
     # hora simulada del turno 1, "HH:MM"
     hora_inicio: str | None = Field(default=None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
     # interruptores del motor (direccion del ejercicio)

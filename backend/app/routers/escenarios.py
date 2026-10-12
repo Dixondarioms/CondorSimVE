@@ -138,7 +138,7 @@ async def configurar(
         clock.programar_limite(esc)
         cambios.append(f"limite de decision {esc.limite_decision_seg or 'sin limite'} s")
     for campo, etiqueta in (("com_latencia_ms", "latencia de radio"), ("com_jitter_ms", "variacion de latencia"),
-                            ("com_perdida_pct", "perdida de mensajes")):
+                            ("com_perdida_pct", "perdida de mensajes"), ("com_ordenes_pct", "ordenes demoradas")):
         nuevo = getattr(payload, campo)
         if nuevo is not None and nuevo != getattr(esc, campo):
             setattr(esc, campo, nuevo)
@@ -253,7 +253,7 @@ def duplicar(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends
     copia = Escenario(nombre=f"{esc.nombre} (copia)", clima=esc.clima, azar=esc.azar,
                       auto_resolver=esc.auto_resolver, limite_decision_seg=esc.limite_decision_seg,
                       hora_inicio_min=esc.hora_inicio_min, com_latencia_ms=esc.com_latencia_ms,
-                      com_jitter_ms=esc.com_jitter_ms, com_perdida_pct=esc.com_perdida_pct,
+                      com_jitter_ms=esc.com_jitter_ms, com_perdida_pct=esc.com_perdida_pct, com_ordenes_pct=esc.com_ordenes_pct,
                       nacion_azul=esc.nacion_azul, nacion_rojo=esc.nacion_rojo)
     db.add(copia)
     db.flush()

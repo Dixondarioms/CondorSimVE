@@ -40,7 +40,7 @@ CAMPOS_OCULTOS = (
     "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios",
     "transporte_id",
 )
-CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct")
+CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct", "com_ordenes_pct")
 
 
 def es_bando(rol: str) -> bool:

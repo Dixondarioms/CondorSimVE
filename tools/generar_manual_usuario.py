@@ -523,7 +523,9 @@ def construir(salida: Path) -> None:
         P("<b>Identidad nacional</b>: qué país representa cada bando (Venezuela, sus vecinos o cualquier país de América). Cambia el nombre y "
           "el color en la interfaz y el informe; no cambia las unidades ni sus valores."),
         P("<b>Comunicaciones simuladas</b>: <b>latencia</b>, <b>variación</b> y <b>pérdida</b> de mensajes del chat de los alumnos, para ejercitar "
-          "el trabajo con una red degradada. El instructor ve todo al instante y sabe qué mensaje llegó a quién."),
+          "el trabajo con una red degradada. El instructor ve todo al instante y sabe qué mensaje llegó a quién. Con "
+          "<b>Órdenes que no llegan a tiempo</b>, ese porcentaje de las órdenes se cumple un turno después (más dentro de una "
+          "interferencia enemiga) y el bando recibe el aviso."),
     ])
     h += al_lado("consola_direccion", "Consola: edición e interruptores.", [
         H2("7.8 Editar el escenario y dirección del ejercicio"),

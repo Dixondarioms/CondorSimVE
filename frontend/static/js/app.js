@@ -1569,6 +1569,7 @@
         set("cfg-com-latencia", (e) => { e.value = esc.com_latencia_ms; });
         set("cfg-com-jitter", (e) => { e.value = esc.com_jitter_ms; });
         set("cfg-com-perdida", (e) => { e.value = esc.com_perdida_pct; });
+        set("cfg-com-ordenes", (e) => { e.value = esc.com_ordenes_pct || 0; });
       }
       $("btn-archivar").textContent = esc.archivado ? "Desarchivar" : "Archivar";
       $("lnk-exportar").href = rutaEsc("/exportar");
@@ -2265,6 +2266,7 @@
     const n = (id) => Math.max(0, parseInt($(id).value, 10) || 0);
     enSilencio(api("PATCH", rutaEsc("/config"), {
       com_latencia_ms: n("cfg-com-latencia"), com_jitter_ms: n("cfg-com-jitter"), com_perdida_pct: Math.min(100, n("cfg-com-perdida")),
+      com_ordenes_pct: Math.min(100, n("cfg-com-ordenes")),
     }).then(() => toast("Comunicaciones actualizadas", true)));
   });
 

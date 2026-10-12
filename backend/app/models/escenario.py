@@ -42,6 +42,8 @@ class Escenario(Base):
     com_latencia_ms: Mapped[int] = mapped_column(Integer, default=0)
     com_jitter_ms: Mapped[int] = mapped_column(Integer, default=0)
     com_perdida_pct: Mapped[int] = mapped_column(Integer, default=0)
+    # % de ordenes que no llegan a tiempo y se cumplen el turno siguiente (+40 dentro de una interferencia enemiga)
+    com_ordenes_pct: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     # hora simulada del turno 1, en minutos desde medianoche (cada turno dura 1 h)
     hora_inicio_min: Mapped[int] = mapped_column(Integer, default=360)
