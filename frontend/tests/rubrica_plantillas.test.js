@@ -95,6 +95,8 @@ test("filasAlumnos tolera una rubrica sin la seccion por alumno (respuestas anti
 
 test("etiquetaOrigen distingue plantillas del sistema y del instructor", () => {
   assert.equal(P.etiquetaOrigen({ origen: "codigo" }), "Plantilla del sistema");
+  assert.equal(P.etiquetaIA({ ia_rojo: true, dia_noche: true }), "Contra la IA (el simulador conduce el bando Rojo) · ciclo de día y noche");
+  assert.equal(P.etiquetaIA({ ia_azul: false, ia_rojo: false }), "");
   assert.equal(P.etiquetaOrigen({ origen: "usuario", guardada_en: "2026-09-30T05:31:16+00:00", con_estado: true }),
     "Guardada por un instructor el 2026-09-30 05:31 · conserva el estado");
   assert.equal(P.etiquetaOrigen({ origen: "usuario", guardada_en: "" }), "Guardada por un instructor");

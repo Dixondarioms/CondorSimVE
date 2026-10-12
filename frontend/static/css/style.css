@@ -27,7 +27,7 @@ body {
 h1, h2, h3 { margin: 0; }
 b { font-weight: 700; }
 [hidden] { display: none !important; }
-button, input, select { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 .sec { color: var(--texto-sec); font-size: 11px; }
 .error { color: #ff8a80; min-height: 1.2em; font-size: 13px; }
 .ayuda { font-size: 12px; color: var(--texto-sec); margin: 4px 0; font-weight: normal; }
@@ -35,7 +35,7 @@ button, input, select { font: inherit; color: inherit; }
 h4 { margin: 10px 0 4px; font-size: 12px; color: var(--texto-sec); text-transform: uppercase; letter-spacing: .06em; }
 
 /* ---------- controles ---------- */
-input, select {
+input, select, textarea {
   width: 100%; padding: 6px 8px; margin: 2px 0; background: #1a1b2c; border: 1px solid var(--borde);
   border-radius: var(--radio);
 }

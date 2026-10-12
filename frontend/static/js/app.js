@@ -382,7 +382,7 @@
   function mpClase() { return app.catalogo.clases.find((x) => x.id === $("mp-clase").value); }
   function mpNuevo() {
     app.mpEditando = null;
-    for (const id of ["mp-nombre", "mp-corto", "mp-pais", "mp-desc"]) $(id).value = "";
+    for (const id of ["mp-tipo-nombre", "mp-corto", "mp-pais", "mp-desc"]) $(id).value = "";
     if (mpClase()) mpLlenarDesde(mpClase());
     $("btn-mp-guardar").textContent = "Guardar tipo";
   }
@@ -401,7 +401,7 @@
       const editar = document.createElement("button"); editar.type = "button"; editar.className = "secundario mini"; editar.textContent = "Editar";
       editar.addEventListener("click", () => {
         app.mpEditando = m.id;
-        $("mp-clase").value = m.clase; $("mp-nombre").value = m.nombre; $("mp-corto").value = m.corto;
+        $("mp-clase").value = m.clase; $("mp-tipo-nombre").value = m.nombre; $("mp-corto").value = m.corto;
         $("mp-pais").value = m.pais === "-" ? "" : m.pais; $("mp-desc").value = m.descripcion || "";
         mpLlenarDesde(m);
         $("btn-mp-guardar").textContent = "Guardar cambios";
@@ -424,7 +424,7 @@
   $("btn-mp-guardar").addEventListener("click", async () => {
     const num = (id) => parseFloat($(id).value) || 0;
     const cuerpo = {
-      nombre: $("mp-nombre").value.trim(), corto: $("mp-corto").value.trim(), clase: $("mp-clase").value,
+      nombre: $("mp-tipo-nombre").value.trim(), corto: $("mp-corto").value.trim(), clase: $("mp-clase").value,
       pais: $("mp-pais").value.trim(), descripcion: $("mp-desc").value.trim(),
       velocidad_kmh: num("mp-vel"), alcance_km: num("mp-alc"), deteccion_km: num("mp-det"), autonomia_km: num("mp-aut"),
       defensa: num("mp-def"), ataque_vs: { terrestre: num("mp-at-t"), aerea: num("mp-at-a"), naval: num("mp-at-n") },
@@ -1645,6 +1645,9 @@
     $("h-turno").textContent = String(esc.turno_actual);
     const periodo = esc.dia_noche ? (esc.periodo || "dia") : "dia";
     $("h-hora").textContent = horaDelTurno(esc.turno_actual) + (esc.dia_noche ? ` · ${{ dia: "Día", crepusculo: "Crepúsculo", noche: "Noche" }[periodo]}` : "");
+    // tambien en la tarjeta Estado del escenario: en pantallas de hasta 1450 px la cabecera oculta la hora
+    $("esc-hora").textContent = $("h-hora").textContent;
+    $("esc-hora").className = esc.dia_noche && periodo !== "dia" ? `periodo-${periodo}` : "";
     if (app.map) {
       const c = app.map.getContainer();
       c.classList.toggle("mapa-noche", periodo === "noche");

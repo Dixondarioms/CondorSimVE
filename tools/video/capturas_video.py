@@ -31,7 +31,7 @@ LIMPIAR = """(() => {
   for (const e of [...document.body.children]) if ((e.textContent || '').startsWith('ARNÉS DE PRUEBAS')) e.remove();
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   for (let t = w.nextNode(); t; t = w.nextNode())
-    if (t.nodeValue.includes('Arnés: ejercicio de prueba')) t.nodeValue = t.nodeValue.replace('Arnés: ejercicio de prueba', %s);
+    if (t.nodeValue.includes('Ejercicio de ejemplo: piedemonte andino')) t.nodeValue = t.nodeValue.replace('Ejercicio de ejemplo: piedemonte andino', %s);
 })()""" % json.dumps(NOMBRE_EJERCICIO)
 
 

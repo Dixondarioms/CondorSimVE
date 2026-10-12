@@ -422,5 +422,9 @@ table tr.fila-nota td { font-weight: 700; }
 .cmp-lista { max-height: 180px; overflow: auto; display: grid; gap: 2px; margin: 6px 0; }
 
 /* ciclo de dia y noche: el fondo del mapa se oscurece (las unidades y los graficos no) */
-.mapa-noche .leaflet-tile-pane { filter: brightness(.45) saturate(.6) hue-rotate(10deg); }
-.mapa-crepusculo .leaflet-tile-pane { filter: brightness(.72) saturate(.85) sepia(.15); }
+.mapa-noche .leaflet-tile-pane { filter: brightness(.3) saturate(.45) sepia(.25) hue-rotate(180deg); }
+.mapa-crepusculo .leaflet-tile-pane { filter: brightness(.62) saturate(.8) sepia(.35); }
+#esc-hora.periodo-noche { color: #9db4ff; }
+#esc-hora.periodo-crepusculo { color: #ffb86b; }
+/* plantillas contra la IA: etiqueta visible en la lista de Desde plantilla */
+.etiqueta-ia { display: inline-block; margin: 4px 0 0 6px; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; color: #ffd27a; background: rgba(255, 183, 3, .14); border: 1px solid rgba(255, 183, 3, .45); }

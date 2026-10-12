@@ -18,13 +18,26 @@
 
   // ------------------------------------------------------------------ datos de ejemplo
   const ESC = {
-    id: 1, nombre: "Arnés: ejercicio de prueba", turno_actual: 3, fase: "decision", estado: "activo", clima: "lluvia",
+    id: 1, nombre: "Ejercicio de ejemplo: piedemonte andino", turno_actual: 3, fase: "decision", estado: "activo", clima: "lluvia",
     azar: true, auto_resolver: false, limite_decision_seg: 1200, decision_termina_en: iso(18 * 60000 + 32000),
     listo_azul: false, listo_rojo: true, archivado: false, hora_inicio_min: 360,
     com_latencia_ms: 1500, com_jitter_ms: 500, com_perdida_pct: 30,
     nacion_azul: "venezuela", nacion_rojo: "colombia",
     niebla: true, logistica: true, efectos_clima: true, fuego_automatico: true,
+    ia_azul: params.get("ia") === "azul", ia_rojo: params.get("ia") === "rojo",
+    ia_nivel: ["prudente", "normal", "agresiva"].includes(params.get("nivel")) ? params.get("nivel") : "normal",
+    dia_noche: params.get("noche") === "1",
   };
+  if (params.get("hora")) ESC.hora_inicio_min = parseInt(params.get("hora"), 10) || 360;
+  // periodo del dia del turno en curso (mismo criterio que backend/app/engine/clima.py, periodo_del_dia)
+  Object.defineProperty(ESC, "periodo", {
+    enumerable: true,
+    get() {
+      if (!ESC.dia_noche) return "dia";
+      const hora = Math.floor((((ESC.hora_inicio_min || 0) + Math.max(0, ESC.turno_actual - 1) * 60) % 1440) / 60);
+      return hora >= 7 && hora < 18 ? "dia" : hora === 6 || hora === 18 ? "crepusculo" : "noche";
+    },
+  });
   // informes inyectados con posicion (direccion del ejercicio)
   const INFORMES = [{ id: 501, turno: 2, tipo: "inteligencia", descripcion: "Fuentes locales reportan una columna blindada moviéndose al sur del río.", lat: 8.70, lon: -70.58, hasta_turno: 5, fuente: "Inteligencia" }];
   // mismo catalogo que backend/app/engine/naciones.py (Venezuela primero, el resto alfabetico)
@@ -67,8 +80,6 @@
     emitiendo: true, fuego_libre: true, stock_combustible: 1000, stock_municion: 1000, dano_pista: 0, dano_plataforma: 0, dano_combustible: 0, refugios: 0, transporte_id: null, ...x,
   });
   const PLANTILLAS = [
-    { id: "demo_llanos", nombre: "Demo: Piedemonte andino - Llanos", descripcion: "Escenario de práctica genérico.", nacion_azul: "venezuela", nacion_rojo: "", unidades: 9, objetivos: 0, origen: "codigo", con_estado: false, guardada_en: "" },
-    { id: "defensa_3_enero_2026", nombre: "3 de enero de 2026 (estudio): defensa del litoral central", descripcion: "Ejercicio de estudio para practicar la defensa del litoral central. Simplificado; no es una reconstrucción histórica precisa.", nacion_azul: "venezuela", nacion_rojo: "estados_unidos", unidades: 9, objetivos: 8, origen: "codigo", con_estado: false, guardada_en: "" },
     { id: "ataque-al-puente-turno-4", nombre: "Ataque al puente (situación al turno 4)", descripcion: "Guardada desde un ejercicio anterior por el instructor.", nacion_azul: "venezuela", nacion_rojo: "colombia", unidades: 7, objetivos: 2, origen: "usuario", con_estado: true, guardada_en: iso() },
   ];
   const UNIDADES = [
@@ -336,6 +347,37 @@
     return { escenario: { id: 1, nombre: ESC.nombre, estado: ESC.estado, turno_actual: 5, hora_inicio_min: 360 }, turnos };
   }
 
+  // indicadores doctrinales (mismos nombres y criterios que backend/app/engine/aar.py, _doctrina)
+  const INDICADORES = [
+    ["reaccion", "Reacción ante las amenazas", "Turnos entre el primer ataque de una unidad enemiga y la primera orden propia contra ella (1 turno = 100; 2 = 75; 3 = 50; más = 25), ponderado por las amenazas respondidas."],
+    ["inteligencia", "Conocimiento del enemigo", "Porcentaje de las unidades enemigas que el bando llegó a detectar (radares, reconocimiento, guerra electrónica y contacto)."],
+    ["logistica", "Sostenimiento logístico", "100 si ninguna unidad bajó del nivel crítico; si no, reabastecimientos / (reabastecimientos + unidades críticas)."],
+    ["coordinacion", "Coordinación entre puestos", "Puestos especializados (A2, A3, A4, A5) que dieron órdenes, sobre los que tenían unidades a cargo (según quién emitió cada orden)."],
+    ["economia", "Economía de fuerzas", "Pérdidas infligidas sobre el total de pérdidas de ambos lados en los combates del bando."],
+    ["objetivos", "Cumplimiento de objetivos", "Objetivos cumplidos sobre los asignados al bando."],
+    ["iniciativa", "Iniciativa", "Turnos en los que el bando dio al menos una orden o planificó una misión."],
+  ];
+  function doctrina(valores) {
+    const indicadores = INDICADORES.map(([id, nombre, criterio]) => ({ id, nombre, criterio, valor: valores[id][0], puntaje: valores[id][1] }));
+    const p = indicadores.map((i) => i.puntaje).filter((x) => x !== null);
+    const promedio = Math.round((10 * p.reduce((a, b) => a + b, 0)) / p.length) / 10;
+    return { indicadores, promedio, nota: Math.round(1 + (19 * promedio) / 100), escala: "1 a 20 (promedio de los indicadores que aplican)" };
+  }
+  function comparacion(ids) {
+    const nombres = { 1: ESC.nombre, 2: "Interdicción en los llanos (contra la IA)", 3: "Defensa aérea de la región central (contra la IA)" };
+    const datos = {
+      1: { azul: [12, { reaccion: 75, inteligencia: 67, logistica: 0, coordinacion: 67, economia: 69, objetivos: 50, iniciativa: 100 }], rojo: [6, { reaccion: 0, inteligencia: 40, logistica: 100, coordinacion: null, economia: 31, objetivos: 0, iniciativa: 0 }] },
+      2: { azul: [10, { reaccion: 50, inteligencia: 57, logistica: 50, coordinacion: 50, economia: 45, objetivos: 25, iniciativa: 83 }], rojo: [11, { reaccion: 75, inteligencia: 60, logistica: 100, coordinacion: null, economia: 55, objetivos: 0, iniciativa: 100 }] },
+      3: { azul: [15, { reaccion: 100, inteligencia: 80, logistica: 100, coordinacion: 75, economia: 72, objetivos: 67, iniciativa: 100 }], rojo: [8, { reaccion: 50, inteligencia: 45, logistica: 100, coordinacion: null, economia: 28, objetivos: 0, iniciativa: 100 }] },
+    };
+    const lista = ids.split(",").map((x) => parseInt(x, 10)).filter((x) => datos[x]);
+    const ejercicios = lista.map((id) => ({ id, nombre: nombres[id], estado: "finalizado", turnos: 6,
+      bandos: Object.fromEntries(BANDOS.map((b) => [b, { nota: datos[id][b][0], promedio: null, indicadores: datos[id][b][1], ordenes: 20, tasa_rechazo: 5 }])) }));
+    const alumnos = [["alfa", "azul", "EM"], ["delta", "azul", "A3"]].map(([u, b, p]) => ({ username: u,
+      ejercicios: lista.map((id, i) => ({ escenario_id: id, escenario: nombres[id], bando: b, puesto: p, ordenes: 6 + 3 * i, rechazadas: Math.max(0, 2 - i), turnos_activos: 4 + i, turnos_pasivos: Math.max(0, 2 - i), misiones: p === "A3" ? 2 + i : 0, nota_bando: datos[id][b][0] })) }));
+    return { ejercicios, indicadores: Object.fromEntries(INDICADORES.map(([id, nombre]) => [id, nombre])), alumnos };
+  }
+
   function rubrica() {
     const ordenes = (e, r, x, motivos) => ({ emitidas: e, resueltas: r, rechazadas: x, pendientes: 0, motivos_rechazo: motivos, tasa_rechazo: e ? Math.round((1000 * x) / e) / 10 : 0 });
     const puesto = (sigla, nombre, o, misiones = 0, observaciones = []) => ({ sigla, nombre, ordenes: o, misiones, observaciones });
@@ -352,6 +394,9 @@
           perdidas: { infligidas: 59, sufridas: 26, unidades_destruidas: 0, enemigas_destruidas: 1 },
           objetivos: { cumplidos: 1, fallidos: 0, pendientes: 1, puntos: 20 },
           misiones: { planificadas: 2, cumplidas: 1, abortadas: 1, fallidas: 0, canceladas: 0, en_curso: 0 },
+          doctrina: doctrina({ reaccion: ["1.5 turno(s) en promedio", 75], inteligencia: ["67 % de las unidades enemigas detectadas (2 sensor(es) propio(s))", 67],
+            logistica: ["1 unidad(es) en nivel crítico; 0 reabastecimiento(s)", 0], coordinacion: ["2 de 3 puesto(s) con unidades a cargo dieron órdenes", 67],
+            economia: ["59 pts infligidos / 26 sufridos", 69], objetivos: ["1 de 2 cumplido(s)", 50], iniciativa: ["3 de 3 turno(s) con órdenes", 100] }),
           puestos: {
             inteligencia: puesto("A2", "Inteligencia", vacio()),
             operaciones: puesto("A3", "Operaciones en curso", ordenes(2, 2, 0, []), 2),
@@ -370,6 +415,9 @@
           perdidas: { infligidas: 26, sufridas: 59, unidades_destruidas: 1, enemigas_destruidas: 0 },
           objetivos: { cumplidos: 0, fallidos: 1, pendientes: 0, puntos: 0 },
           misiones: { planificadas: 0, cumplidas: 0, abortadas: 0, fallidas: 0, canceladas: 0, en_curso: 0 },
+          doctrina: doctrina({ reaccion: ["sin respuesta; 2 amenaza(s) sin respuesta", 0], inteligencia: ["40 % de las unidades enemigas detectadas (1 sensor(es) propio(s))", 40],
+            logistica: ["0 unidad(es) en nivel crítico; 0 reabastecimiento(s)", 100], coordinacion: ["un solo puesto (Estado Mayor) condujo todo", null],
+            economia: ["26 pts infligidos / 59 sufridos", 31], objetivos: ["0 de 1 cumplido(s)", 0], iniciativa: ["0 de 3 turno(s) con órdenes", 0] }),
           puestos: { inteligencia: puesto("A2", "Inteligencia", vacio()), operaciones: puesto("A3", "Operaciones en curso", vacio()), logistica: puesto("A4", "Logistica", vacio()), planificacion: puesto("A5", "Planificacion", vacio()) },
           observaciones: [
             "El bando no emitio ninguna orden durante el ejercicio.",
@@ -464,7 +512,29 @@
         mundo: { nombre: "Mundo", bbox: [-180, -60, 180, 75], z: 6, z_min: 2, metros_por_pixel: 2366, satelite: null } };
       return json({ mapas: metas.filter(Boolean).map((id) => ({ id, ...DEF[id] })) });
     }
-    if (path === "/api/plantillas" && metodo === "GET") return json({ plantillas: PLANTILLAS });
+    if (path === "/api/plantillas" && metodo === "GET") {
+      await cargaCatalogo;
+      if (!PLANTILLAS.some((p) => p.origen === "codigo")) PLANTILLAS.unshift(...(CAT.plantillas || []));
+      return json({ plantillas: PLANTILLAS });
+    }
+    // catalogo propio del instructor
+    if (path === "/api/catalogo/modelos" && metodo === "POST") {
+      await cargaCatalogo;
+      if (ROL !== "instructor") return error("No autorizado para esta accion", 403);
+      const clase = CAT.clases.find((c) => c.id === cuerpo.clase);
+      if (!clase) return error("Elija una clase de unidad (no una base ni un misil)");
+      const id = cuerpo.id || "u_" + cuerpo.nombre.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+      const m = { ...clase, ...cuerpo, id, propio: true, foto: "", credito: { autor: "Catálogo propio del instructor", licencia: "—" }, fabricante: "-", funcion: clase.nombre, firma: clase.firma };
+      CAT.modelos = CAT.modelos.filter((x) => x.id !== id).concat([m]);
+      return json(m);
+    }
+    if ((m = path.match(/^\/api\/catalogo\/modelos\/([^/]+)$/)) && metodo === "DELETE") {
+      await cargaCatalogo;
+      CAT.modelos = CAT.modelos.filter((x) => x.id !== decodeURIComponent(m[1]));
+      return json({ ok: true });
+    }
+    // comparacion de ejercicios (indicadores doctrinales y evolucion de cada alumno)
+    if (path === "/api/evaluacion/comparar") return json(comparacion(q.get("ids") || "1"));
     if ((m = path.match(/^\/api\/plantillas\/([^/]+)$/)) && metodo === "DELETE") {
       if (ROL !== "instructor") return error("No autorizado para esta accion", 403);
       const i = PLANTILLAS.findIndex((p) => p.id === decodeURIComponent(m[1]));

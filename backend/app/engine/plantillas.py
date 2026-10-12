@@ -445,7 +445,7 @@ def plantilla_dict(p: Plantilla) -> dict:
         "id": p.id, "nombre": p.nombre, "descripcion": p.descripcion, "nacion_azul": p.nacion_azul,
         "nacion_rojo": p.nacion_rojo, "unidades": len(p.unidades), "objetivos": len(p.objetivos),
         "origen": p.origen, "con_estado": p.con_estado, "guardada_en": p.guardada_en,
-        "ia_azul": p.ia_azul, "ia_rojo": p.ia_rojo,
+        "ia_azul": p.ia_azul, "ia_rojo": p.ia_rojo, "dia_noche": p.dia_noche,
     }
 
 

@@ -23,6 +23,8 @@ SALIDA = Path(__file__).resolve().parent / "salida" / "guia"
 LISTA_APP = "!document.getElementById('app').hidden && document.querySelectorAll('#oob .oob-item').length > 0 && window.__mapa"
 LLANOS = (8.6, -70.57)  # despliegue de ejemplo en el piedemonte andino
 CARIBE = (10.66, -67.98)  # grupo naval frente a Puerto Cabello
+# ejercicio contra la IA: el rojo lo conduce el adversario automatico, con el ciclo de dia y noche y de noche (23:00)
+CONTRA_IA = "&ia=rojo&nivel=prudente&noche=1&hora=1260"
 
 
 def arnes(rol="instructor", puesto=None, lat=LLANOS[0], lon=LLANOS[1], zoom=11, extra=""):
@@ -511,6 +513,75 @@ def observador(n):
     guardar(n, "observador")
 
 
+# ------------------------------------------------------------------ combate contra la IA, dia y noche
+def ia_pantalla(n):
+    n.ir(arnes("azul", "mando", extra=CONTRA_IA), LISTA_APP, 3)
+    marcas = [
+        (*centro(n.rect("#esc-hora"), -0.25, 0.5), "1"),
+        (*centro(n.rect("#map"), 0.25, 0.8), "2"),
+        (*centro(n.rect("#estado-rojo"), 1.1, 0.5), "3"),
+        (*centro(n.rect("#btn-listo"), 0.06, 0.5), "4"),
+    ]
+    guardar(n, "ia_pantalla", marcas=marcas)
+
+
+def consola_ia(n):
+    n.ir(arnes("instructor", extra=CONTRA_IA), LISTA_APP, 1.5)
+    # panel mas ancho para que los numeros queden a la derecha sin tapar los rotulos
+    n.js("document.documentElement.style.setProperty('--ancho-izq', '440px')")
+    time.sleep(0.5)
+    consola(n, "dirección del ejercicio")
+    r = n.rect("#panel-izq")
+    der = r["x"] + r["w"] - 16
+    marcas = [(der, n.rect("#dir-noche")["y"] + 10, "1"), (der, n.rect("#dir-ia-azul")["y"] + 10, "2"),
+              (der, n.rect("#dir-ia-nivel")["y"] - 10, "3"), (*centro(n.rect("#btn-demo"), 1.12, 0.5), "4")]
+    guardar(n, "consola_ia", r, marcas, margen=0)
+
+
+def plantillas_ia(n):
+    n.ir(arnes("instructor"), LISTA_APP, 1.5)
+    n.clic("#btn-plantillas")
+    n.esperar("document.getElementById('dlg-plantillas').open && document.querySelector('[data-plantilla-id=\"defensa_aerea_central\"]')")
+    n.js("document.querySelector('[data-plantilla-id=\"defensa_aerea_central\"]').scrollIntoView({ block: 'start' })")
+    time.sleep(0.6)
+    guardar(n, "plantillas_ia", n.rect("#dlg-plantillas"), margen=4)
+
+
+def barra_inferior_ia(n):
+    n.ir(arnes("azul", "mando", extra=CONTRA_IA), LISTA_APP, 2)
+    guardar(n, "barra_inferior_ia", n.rect("#control-turno"), margen=0)
+
+
+def mapa_dia_noche(n):
+    for nombre, extra in (("mapa_dia", "&noche=1&hora=480"), ("mapa_crepusculo", "&noche=1&hora=960"), ("mapa_noche", "&noche=1&hora=1260")):
+        n.ir(arnes("azul", "mando", 8.6, -70.58, 11, extra=extra), LISTA_APP, 3)
+        r = rect_mapa(n)
+        guardar(n, nombre, {"x": r["x"], "y": r["y"], "w": r["w"], "h": r["h"]}, margen=0)
+    tarjeta = n.js("(() => { const b = document.getElementById('esc-hora').closest('.tarjeta').getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; })()")
+    guardar(n, "estado_noche", tarjeta, margen=4)
+
+
+def mapa_carreteras(n):
+    n.ir(arnes("instructor", lat=8.62, lon=-70.24, zoom=12), LISTA_APP, 4)
+    guardar(n, "mapa_carreteras", rect_mapa(n), margen=0)
+
+
+def consola_catalogo(n):
+    n.ir(arnes("instructor"), LISTA_APP, 1.5)
+    consola(n, "catálogo propio")
+    n.valor("#mp-clase", "radar")
+    n.js("document.getElementById('mp-clase').dispatchEvent(new Event('change'))")
+    n.valor("#mp-tipo-nombre", "JY-27A")
+    n.valor("#mp-corto", "JY-27A")
+    n.valor("#mp-pais", "China")
+    n.js("document.activeElement.blur()")
+    time.sleep(0.3)
+    n.js("(() => { const d = document.querySelector('#pest-consola details[open]'); const p = document.getElementById('panel-izq');"
+         " p.scrollTop += d.getBoundingClientRect().top - p.getBoundingClientRect().top - 40; })()")
+    time.sleep(0.4)
+    guardar(n, "consola_catalogo", n.rect("#panel-izq"), margen=0)
+
+
 # ------------------------------------------------------------------ informe
 def informe_repeticion(n):
     n.ir(arnes("instructor", extra="&abrir=informe"), LISTA_APP + " && !document.getElementById('replay').hidden", 3)
@@ -537,6 +608,28 @@ def informe_rubrica(n):
     guardar(n, "informe_rubrica", n.rect("#dlg-rubrica"), margen=4)
 
 
+def informe_doctrina(n):
+    n.ir(arnes("instructor", extra="&abrir=rubrica"), LISTA_APP + " && document.getElementById('dlg-rubrica').open", 2)
+    n.js("(() => { const h = [...document.querySelectorAll('#dlg-rubrica h4')].find((x) => x.textContent.startsWith('Indicadores doctrinales'));"
+         " const d = document.getElementById('dlg-rubrica'); d.scrollTop = h.offsetTop - 10; })()")
+    time.sleep(0.5)
+    guardar(n, "informe_doctrina", n.rect("#dlg-rubrica"), margen=4)
+
+
+def comparar(n):
+    n.ir(arnes("instructor", extra="&abrir=rubrica"), LISTA_APP + " && document.getElementById('dlg-rubrica').open", 2)
+    n.clic("#rb-comparar")
+    n.esperar("document.getElementById('dlg-comparar').open")
+    # el arnes tiene un solo escenario: se suman dos ejercicios anteriores a la lista para mostrar la comparacion
+    n.js("(() => { const c = document.getElementById('cmp-lista'); for (const [id, t] of [[2, 'Interdicción en los llanos (contra la IA) (finalizado, turno 7)'],"
+         " [3, 'Defensa aérea de la región central (contra la IA) (finalizado, turno 7)']]) { const l = document.createElement('label');"
+         " l.className = 'chk'; const i = document.createElement('input'); i.type = 'checkbox'; i.value = id; i.checked = true;"
+         " const s = document.createElement('span'); s.textContent = id + ' · ' + t; l.append(i, s); c.appendChild(l); } })()")
+    n.clic("#cmp-ver")
+    time.sleep(1.2)
+    guardar(n, "comparar", n.rect("#dlg-comparar"), margen=4)
+
+
 def informe_replay(n):
     n.ir(arnes("instructor", extra="&abrir=replay&instante=2.5"), LISTA_APP + " && !document.getElementById('replay-anim').hidden", 4)
     guardar(n, "informe_replay")
@@ -551,7 +644,8 @@ CAPTURAS = [
     panel_derecho, capas, mapa_relieve, mapa_zoom, mapa_regla, mapa_graficos, mapa_ficha, mapa_aerodromo, mapa_meteo,
     consola_turno, consola_meteo, consola_identidad, consola_agregar, consola_objetivos, consola_direccion, consola_eventos,
     consola_escenario, consola_usuarios, plantillas, ver_como, videowall, observador,
-    informe_repeticion, informe_dialogos, informe_rubrica, informe_replay,
+    ia_pantalla, consola_ia, plantillas_ia, barra_inferior_ia, mapa_dia_noche, mapa_carreteras, consola_catalogo,
+    informe_repeticion, informe_dialogos, informe_rubrica, informe_doctrina, comparar, informe_replay,
 ]
 
 

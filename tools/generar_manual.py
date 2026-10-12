@@ -216,7 +216,10 @@ def tabla_modelos():
 
 
 # ------------------------------------------------------------------ autoria (portada y creditos de ambos manuales)
-LOGO_DIDA = RAIZ / "frontend" / "static" / "img" / "dida_logo.jpg"
+# escudo sin el fondo gris (tools/recortar_logo_dida.py); si falta, el original
+LOGO_DIDA = next((x for x in (RAIZ / "frontend" / "static" / "img" / "dida_logo_recortado.png",
+                              RAIZ / "frontend" / "static" / "img" / "dida_logo.jpg") if x.exists()),
+                 RAIZ / "frontend" / "static" / "img" / "dida_logo.jpg")
 CREADOR = "Cap. Dixon Malpica"
 UNIDAD = "División de Ingeniería y Desarrollo Aeroespacial (DIDA)"
 
@@ -257,6 +260,7 @@ def seccion_creditos(titulo: str) -> list:
 
 # ------------------------------------------------------------------ el manual
 def construir(salida: Path, img: Path) -> None:
+    S["h2"].keepWithNext = 1  # un titulo nunca queda solo al pie de una pagina
     doc = Manual(str(salida))
     hoy = date.today()
     meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
@@ -277,7 +281,7 @@ def construir(salida: Path, img: Path) -> None:
           Paragraph("MANUAL DE REFERENCIA", ParagraphStyle("mu", parent=S["subtitulo"], fontName="Texto-B", fontSize=18, textColor=AZUL)),
           Spacer(1, 8), Paragraph("Qué es · cómo se hizo · instalación · cómo funciona", S["subtitulo"]), Spacer(1, 28)]
     h += credito_portada()
-    h += [Spacer(1, 10), Paragraph(f"{fecha} · versión del manual 1.4", S["subtitulo"])]
+    h += [Spacer(1, 10), Paragraph(f"{fecha} · versión del manual 1.5", S["subtitulo"])]
     h.append(PageBreak())
 
     # ---- indice
@@ -592,7 +596,49 @@ def construir(salida: Path, img: Path) -> None:
           Bul(["Los helicópteros vuelan medio o rasante (por defecto rasante); los misiles de crucero, siempre rasantes (30 m).",
                "Un radar en una cumbre ve detrás de ella; en un valle queda casi ciego a baja cota. La escucha electrónica también necesita "
                "línea de vista, y la antiaérea no dispara a lo que el relieve le oculta.",
-               "Al seleccionar un sensor, el mapa dibuja su <b>cobertura</b> real contra aeronaves a cota media (turquesa) y a baja cota (naranja)."])]
+               "Al seleccionar un sensor, el mapa dibuja su <b>cobertura</b> real contra aeronaves a cota media (turquesa) y a baja cota (naranja)."]),
+          H2("8.6 Ciclo de día y noche"),
+          P("Con el ciclo activo (<i>Consola → Dirección del ejercicio</i>; campo <font face='Mono'>dia_noche</font>), cada turno cae en un "
+            "periodo según su hora simulada (hora de inicio + una hora por turno): <b>día</b> de 07:00 a 17:59, <b>crepúsculo</b> a las 06:00 y "
+            "a las 18:00 y <b>noche</b> el resto (Venezuela está cerca de los 10° N: el sol sale hacia las 06:00 y se pone hacia las 18:30). El "
+            "radio de detección del sensor se multiplica por:"),
+          Tbl(["Sensor", "Día", "Crepúsculo", "Noche"], [
+              ["Radares y emisores (radar de vigilancia, antiaérea guiada, destructor, alerta temprana) y escucha electrónica", "×1,0", "×1,0", "×1,0"],
+              ["Cámaras (aviones, helicópteros, drones, reconocimiento terrestre)", "×1,0", "×0,9", "×0,8"],
+              ["A simple vista (el resto: tropas, vehículos, bases, buques sin radar)", "×1,0", "×0,75", "×0,5"],
+          ], [ANCHO_TEXTO - 6.0 * cm, 2.0 * cm, 2.0 * cm, 2.0 * cm]),
+          P("El factor se aplica después del clima, el terreno y la firma radar del objetivo, y vale igual para ambos bandos y para el "
+            "adversario automático. La tarjeta <b>Estado del escenario</b> muestra la hora y el periodo, y el fondo del mapa se oscurece de "
+            "noche (las unidades y los gráficos no). Las plantillas contra la IA y la del 3 de enero traen el ciclo encendido "
+            "(<font face='Mono'>backend/app/engine/clima.py</font>, <font face='Mono'>periodo_del_dia</font> y <font face='Mono'>factor_nocturno</font>)."),
+          H2("8.7 Adversario automático (combate contra la IA)"),
+          P("El adversario automático (<font face='Mono'>backend/app/adversario.py</font>) conduce uno o los dos bandos "
+            "(<i>Consola → Dirección del ejercicio</i>; campos <font face='Mono'>ia_azul</font>, <font face='Mono'>ia_rojo</font> e "
+            "<font face='Mono'>ia_nivel</font>). Al abrirse cada turno, y en el turno en curso al encenderlo, da las órdenes de su bando y lo "
+            "marca listo; el pie de pantalla muestra «IA · LISTO». Sus órdenes pasan por la misma validación que las de los alumnos y "
+            "<b>solo usa lo que su bando sabe</b>: sus unidades, las enemigas que detecta (posición, tipo y clase; nunca su fuerza ni su "
+            "logística), los últimos contactos, sus objetivos y la ubicación de las bases enemigas."),
+          Bul(["<b>Aeronaves</b>: vuelven a una base con plazas libres con poco combustible o munición; atacan el mejor blanco a su alcance o se "
+               "acercan a uno que puedan batir y del que puedan volver. Las que no llevan armas (alerta temprana, cisterna, guerra electrónica) "
+               "se mantienen fuera del alcance de la antiaérea que ven; las de guerra electrónica interfieren.",
+               "<b>Bases y portaaviones</b>: lanzan cazas si el enemigo tiene aviación a la vista y no hay suficientes cazas propios en vuelo.",
+               "<b>Unidades terrestres</b>: se reabastecen, atacan si la relación de fuerzas es favorable, persiguen blancos cercanos y van a sus "
+               "objetivos (ocupar, destruir, proteger). Los convoyes reabastecen a las unidades necesitadas y recargan en los depósitos.",
+               "<b>Buques y baterías</b>: lanzan salvas de misiles. Radares, antiaérea e ingenieros quedan en posición."]),
+          Tbl(["Parámetro (tabla NIVELES)", "Prudente", "Normal", "Agresiva"], [
+              ["Relación mínima ataque / defensa para atacar", "0,9", "0,6", "0,35"],
+              ["Persecución de un blanco terrestre", "30 km", "60 km", "150 km"],
+              ["Distancia de aproximación (fracción de su alcance)", "0,9", "0,8", "0,7"],
+              ["Combustible para regresar (puntos sobre el umbral)", "+10", "0", "−10"],
+              ["Evita entrar en la antiaérea conocida con aeronaves armadas", "sí", "no", "no"],
+              ["Cazas propios en vuelo por avión enemigo antes de dejar de lanzar", "1", "1", "2"],
+          ], [ANCHO_TEXTO - 6.6 * cm, 2.2 * cm, 2.2 * cm, 2.2 * cm]),
+          P("<b>Modo demostración</b>: el botón de la misma sección activa la IA en los dos bandos con un límite de decisión de 15 s, de modo "
+            "que el ejercicio avanza solo. La biblioteca trae tres plantillas <b>contra la IA</b> (defensa aérea de la región central, "
+            "interdicción en los llanos y defensa de la costa oriental), con el bando rojo conducido por el simulador; la lista de "
+            "<i>Desde plantilla…</i> las distingue con una etiqueta. Es una conducta didáctica y legible, no óptima: sirve de oponente, no "
+            "reemplaza al análisis del instructor.")]
+    h += Img(img, "cap_ia_noche.jpg", "Figura 4. Un alumno del bando azul contra la IA a las 23:00: el mapa oscurecido, la hora y el periodo en Estado del escenario y el bando rojo «IA · LISTO».")
 
     # ---- 9 aviacion
     h += H1("9. Aviación")
@@ -632,14 +678,14 @@ def construir(salida: Path, img: Path) -> None:
         t = Table([[f[0] for f in fila[:3]], [f[1] for f in fila[:3]], [f[0] for f in fila[3:6]], [f[1] for f in fila[3:6]]],
                   colWidths=[5.6 * cm] * 3, hAlign="CENTER")
         t.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER"), ("VALIGN", (0, 0), (-1, -1), "MIDDLE")]))
-        h += [t, Paragraph("Figura 4. Ilustraciones de los modelos genéricos (generadas de sus miniaturas 3D). El F-16 y el Su-30 usan fotografías reales.", S["cap"])]
+        h += [t, Paragraph("Figura 5. Ilustraciones de los modelos genéricos (generadas de sus miniaturas 3D). El F-16 y el Su-30 usan fotografías reales.", S["cap"])]
     h += [H2("9.4 Portaaviones"),
           P("Un portaaviones es una <b>base aérea móvil</b>: lanza y recibe aeronaves como una base, con 10 plazas y existencias propias (1500) que "
             "repone junto a un puerto propio (100 puntos por turno). Solo operan desde él las aeronaves <b>embarcables</b>: helicópteros, drones, "
             "munición merodeadora y el modelo Caza embarcado; el F-16, el Su-30, el avión de ataque ligero y el de guerra electrónica solo desde bases "
             "terrestres. Las aeronaves a bordo navegan con él, sufren parte del daño que recibe y se hunden si lo hunden. Sus armas propias son "
             "débiles: necesita escolta.")]
-    h += Img(img, "cap_naval.jpg", "Figura 5. Grupo naval del bando azul: portaaviones con un helicóptero a bordo, destructor, submarino y una salva de misiles en vuelo.")
+    h += Img(img, "cap_naval.jpg", "Figura 6. Grupo naval del bando azul: portaaviones con un helicóptero a bordo, destructor, submarino y una salva de misiles en vuelo.")
 
     # ---- 10 bases en detalle
     h += H1("10. Las bases aéreas en detalle")
@@ -652,12 +698,12 @@ def construir(salida: Path, img: Path) -> None:
             "tiene cartografiado se ve con su plano real al acercarse y se puede ocupar con una base del ejercicio igual que una venezolana. "
             "El simulador solo descarga del servidor el plano de los aeródromos que quedan a la vista, así que tener más de mil no hace más "
             "lento el mapa.")]
-    h += Img(img, "cap_base_plano.jpg", "Figura 6. Aeropuerto de Barinas (SVBI, civil) al zoom 15, ocupado por una base aérea del ejercicio: pistas 03/21 y 13/31, rodajes, plataforma con los F-16 estacionados y cráteres por el daño recibido.")
+    h += Img(img, "cap_base_plano.jpg", "Figura 7. Aeropuerto de Barinas (SVBI, civil) al zoom 15, ocupado por una base aérea del ejercicio: pistas 03/21 y 13/31, rodajes, plataforma con los F-16 estacionados y cráteres por el daño recibido.")
     h += [Bul(["Una unidad <b>base aérea</b> del ejercicio a menos de 4 km del aeródromo lo «ocupa»: al acercarse, su miniatura se reduce a una ficha «BA» y sus aeronaves estacionadas se dibujan sobre la plataforma real.",
                "<b>Daños</b>: con la base dañada aparecen cráteres en la pista (uno cada 7 % de fuerza perdida); por debajo del 25 %, cuando ya no puede lanzar ni recibir aviones, se pintan las cruces amarillas de pista cerrada y el rótulo «PISTA INOPERATIVA». El enemigo no ve el daño de una base ajena.",
                "El detalle depende de lo mapeado en OpenStreetMap: en algunas bases militares hay pocas construcciones cargadas y el simulador no las inventa."])]
-    h += Img(img, "cap_base_cerca.jpg", "Figura 7. Zoom 17 sobre la pista: marcas, cráteres y la ficha de la base.")
-    h += Img(img, "cap_carlota.jpg", "Figura 8. Base Aérea La Carlota (Caracas) con sus edificios, rodajes y helipuertos.")
+    h += Img(img, "cap_base_cerca.jpg", "Figura 8. Zoom 17 sobre la pista: marcas, cráteres y la ficha de la base.")
+    h += Img(img, "cap_carlota.jpg", "Figura 9. Base Aérea La Carlota (Caracas) con sus edificios, rodajes y helipuertos.")
 
     # ---- 11 catalogo
     h += H1("11. Catálogo de unidades")
@@ -667,8 +713,8 @@ def construir(salida: Path, img: Path) -> None:
 
     # ---- 12 seguimiento
     h += H1("12. Seguimiento, videowall e informe")
-    h += Img(img, "cap_videowall.jpg", "Figura 9. Modo videowall para la pantalla del centro de operaciones (tecla V o botón Videowall).")
-    h += Img(img, "cap_america.jpg", "Figura 10. Región «América» con foto satelital (~600 m por píxel) y Venezuela en detalle encima; cualquier punto del continente sirve para ambientar un ejercicio.")
+    h += Img(img, "cap_videowall.jpg", "Figura 10. Modo videowall para la pantalla del centro de operaciones (tecla V o botón Videowall).")
+    h += Img(img, "cap_america.jpg", "Figura 11. Región «América» con foto satelital (~600 m por píxel) y Venezuela en detalle encima; cualquier punto del continente sirve para ambientar un ejercicio.")
     h += [Bul(["<b>Eventos y alertas</b>: despegues, combates, bases sin existencias, misiles derribados, objetivos cumplidos… llegan al bando correspondiente; el instructor puede inyectar eventos propios.",
                "<b>Videowall</b>: el mapa ocupa toda la pantalla con un HUD (turno, hora, reloj, estado de los bandos, marcador, últimas alertas). URL directa: <font face='Mono'>?modo=videowall&amp;escenario=ID&amp;vista=azul|rojo|completa</font>. También <font face='Mono'>?lat=&amp;lon=&amp;zoom=</font> abre el mapa sobre un lugar.",
                "<b>Gráficos tácticos</b>: líneas de fase, ejes de avance, zonas de reunión y puntos de control, compartidos con el bando (o con todos, si los traza el instructor).",
@@ -682,7 +728,7 @@ def construir(salida: Path, img: Path) -> None:
             "acumulado y las novedades del turno. Controles: reproducir y pausa, velocidad (0,5×, 1×, 2×, 4×), barra de progreso arrastrable, ir "
             "al inicio o al final y la casilla <b>Estela</b>, que deja el recorrido de cada unidad en el color de su bando. El instructor y el "
             "observador lo ven siempre; los alumnos, al finalizar el escenario.")]
-    h += Img(img, "cap_replay.jpg", "Figura 11. Replay animado detenido a mitad del ejercicio: estelas, combate en curso y rótulo con hora, clima, marcador y novedades.")
+    h += Img(img, "cap_replay.jpg", "Figura 12. Replay animado detenido a mitad del ejercicio: estelas, combate en curso y rótulo con hora, clima, marcador y novedades.")
     h += [H2("12.2 Rúbrica por bando, por puesto y por alumno"),
           P("<i>Informe → Rúbrica</i> resume la actuación de cada bando y de cada puesto responsable (A2 a A5): órdenes emitidas, resueltas y "
             "rechazadas con su motivo, turnos con órdenes frente a turnos pasivos, logística, pérdidas, objetivos y misiones, con <b>observaciones "
@@ -690,7 +736,7 @@ def construir(salida: Path, img: Path) -> None:
             "<b>Evaluación por alumno</b> hace lo mismo para cada usuario, y el botón <b>CSV por alumno</b> la descarga para la planilla de "
             "calificaciones. Las órdenes automáticas del motor no se atribuyen a nadie, y las anteriores a la versión 1.3 figuran como "
             "«sin autor registrado». La rúbrica también va en el informe imprimible y en las diapositivas.")]
-    h += Img(img, "cap_rubrica.jpg", "Figura 12. Rúbrica del ejercicio con la evaluación por bando, por puesto y por alumno.")
+    h += Img(img, "cap_rubrica.jpg", "Figura 13. Rúbrica del ejercicio con la evaluación por bando, por puesto y por alumno.")
 
     # ---- 13 limitaciones
     h += H1("13. Limitaciones conocidas")
@@ -699,12 +745,13 @@ def construir(salida: Path, img: Path) -> None:
                "El transporte logístico es terrestre (convoyes); los buques de desembarco y los helicópteros solo llevan tropas, no abastecimientos.",
                "La identidad nacional es solo un nombre: no se modela el orden de batalla real de los países vecinos.",
                "Las comunicaciones simuladas afectan al chat y pueden demorar órdenes, pero no a la niebla de guerra.",
+               "El adversario automático da órdenes turno a turno: no planifica misiones aéreas de varios turnos ni lee el chat o los eventos inyectados.",
                "Un solo servidor por aula: el WebSocket y el temporizador viven en el proceso."]),
           H2("Hoja de ruta prevista"),
           Bul(["Más plantillas de escenario por curso.", "Carreteras terciarias y puentes etiquetados de OpenStreetMap."])]
 
     # ---- 14 novedades
-    h += H1("14. Novedades de las versiones 1.1 a 1.4")
+    h += H1("14. Novedades de las versiones 1.1 a 1.5")
     h += [P("Resumen de lo incorporado después de la primera edición del manual; cada punto está explicado en su capítulo."),
           Tbl(["Novedad", "Dónde", "Qué aporta"], [
               ["Meteorología por zonas", "Consola → Meteorología por zonas; capa Meteorología",
@@ -754,8 +801,10 @@ def construir(salida: Path, img: Path) -> None:
                "Fotos de Wikimedia Commons de aeronaves, drones y buques (venezolanos donde existen), con el mismo encuadre y fondo, y su crédito en la ficha."],
               ["Adversario automático", "Consola → Dirección del ejercicio",
                "El simulador conduce un bando con las mismas reglas que un alumno y solo con lo que ese bando ve: ataca, se reabastece, va a sus objetivos, protege sus aviones sin armas y lanza cazas. Un solo bando de alumnos puede entrenar sin contraparte. Tres niveles (prudente, normal, agresiva) y modo demostración (la IA juega los dos bandos)."],
-              ["Ciclo de día y noche", "Consola → Dirección del ejercicio",
-               "Cada turno es una hora: de noche la detección a simple vista baja a la mitad y la de cámaras térmicas al 80 %; el radar no cambia. La cabecera muestra el periodo y el mapa se oscurece."],
+              ["Biblioteca de escenarios contra la IA", "Desde plantilla… (etiqueta «Contra la IA»)",
+               "Defensa aérea de la región central, interdicción en los llanos y defensa de la costa oriental, con el bando rojo conducido por el simulador."],
+              ["Ciclo de día y noche", "Consola → Dirección del ejercicio; tarjeta Estado del escenario",
+               "Cada turno es una hora: de noche la detección a simple vista baja a la mitad y la de cámaras térmicas al 80 %; el radar no cambia. La tarjeta Estado del escenario muestra la hora y el periodo y el mapa se oscurece."],
               ["Órdenes que no llegan a tiempo", "Consola → Comunicaciones simuladas",
                "Un porcentaje de las órdenes se demora y se cumple el turno siguiente (más dentro de una interferencia enemiga); el bando recibe el aviso."],
               ["Carreteras, puentes y rutas", "Capa de carreteras; orden Mover → Seguir carreteras",

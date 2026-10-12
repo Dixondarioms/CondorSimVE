@@ -8,12 +8,14 @@ sincronizados por WebSocket. **Funciona sin internet**: mapa, relieve, cobertura
 y datos se sirven desde el propio servidor (una política CSP bloquea cualquier recurso externo).
 
 Creado por el **Cap. Dixon Malpica**, División de Ingeniería y Desarrollo Aeroespacial (**DIDA**), Aviación Militar
-Bolivariana (escudo de la DIDA en `frontend/static/img/dida_logo.jpg`, en la portada y los créditos de ambos manuales).
+Bolivariana (escudo de la DIDA en `frontend/static/img/dida_logo.jpg`; en la portada y los créditos de ambos manuales va
+recortado, sin el fondo: `dida_logo_recortado.png`, que genera `python tools/recortar_logo_dida.py`).
 
 ## Manuales
 
-- **Manual de usuario** `docs/Manual_Usuario_SIETE.pdf`: guía paso a paso, con 56 capturas, de cada parte de la interfaz
-  para el instructor, los alumnos de cada puesto y el observador. Capturas: `python tools/manual/capturas_guia.py` (con
+- **Manual de usuario** `docs/Manual_Usuario_SIETE.pdf`: guía paso a paso, con 68 capturas, de cada parte de la interfaz
+  para el instructor, los alumnos de cada puesto y el observador, con un capítulo sobre el combate contra la IA (ejercicios
+  listos, niveles del adversario, ciclo de día y noche y modo demostración). Capturas: `python tools/manual/capturas_guia.py` (con
   el servidor en marcha en el puerto 8000): maneja Chrome por su protocolo de depuración (`tools/manual/navegador.py`)
   sobre el arnés de pruebas, hace los clics, recorta cada panel y numera las zonas. PDF: `python tools/generar_manual_usuario.py`.
 - **Manual de referencia** `docs/Manual_SIETE.pdf` (qué es, cómo se hizo, instalación, reglas del motor y catálogo). Se
