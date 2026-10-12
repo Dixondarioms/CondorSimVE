@@ -203,8 +203,8 @@ _ATAQUE_3_ENERO = Plantilla(
         UnidadPlantilla("USS Gerald R. Ford (CVN-78)", "rojo", "portaaviones", 12.80, -67.20),
         UnidadPlantilla("Destructor de escolta CSG-12 (1)", "rojo", "destructor", 12.70, -67.00),
         UnidadPlantilla("Destructor de escolta CSG-12 (2)", "rojo", "destructor", 12.95, -67.45),
-        UnidadPlantilla("USS Iwo Jima (LHD-7), 22.ª MEU", "rojo", "portaaviones", 11.75, -66.75),
-        UnidadPlantilla("USS San Antonio (LPD-17)", "rojo", "buque_desembarco", 11.82, -66.58),
+        UnidadPlantilla("USS Iwo Jima (LHD-7), 22.ª MEU", "rojo", "portaaviones", 11.45, -66.55),
+        UnidadPlantilla("USS San Antonio (LPD-17)", "rojo", "buque_desembarco", 11.40, -66.38),
         # ---- aeronaves: paquetes de ataque y escolta (desde Puerto Rico y el Ford) ----
         _av("F-22A Raptor (escolta) 1", "f22", 4, 11.68, -67.05, "alto"),
         _av("F-22A Raptor (escolta) 2", "f22", 4, 11.68, -66.40, "alto"),

@@ -1,6 +1,14 @@
 {
   "_comentario": "Generado por tools/fotos/fotos_referencia.py: fotos de referencia de Wikimedia Commons.",
   "modelos": {
+    "ah6m": {
+      "foto": "/static/fotos/ref_ah6m.jpg",
+      "obra": "2 AH-6J Little Bird de l'US Army, 31 mars 2003, Irak",
+      "autor": "Desconocido",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:2_AH-6J_Little_Bird_de_l%27US_Army,_31_mars_2003,_Irak.jpg"
+    },
     "ataque_ligero": {
       "foto": "/static/fotos/ref_ataque_ligero.jpg",
       "obra": "19334 Hongdu K-8W Karakorum Bangladesh - Air Force VGHS",
@@ -8,6 +16,14 @@
       "licencia": "CC BY-SA 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:19334_Hongdu_K-8W_Karakorum_Bangladesh_-_Air_Force_VGHS.jpg"
+    },
+    "b1b": {
+      "foto": "/static/fotos/ref_b1b.jpg",
+      "obra": "A B-1B Lancer",
+      "autor": "Master Sgt. Nicholas Priest",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:A_B-1B_Lancer.jpg"
     },
     "caza_embarcado": {
       "foto": "/static/fotos/ref_caza_embarcado.jpg",
@@ -24,6 +40,70 @@
       "licencia": "Public domain",
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
       "pagina": "https://commons.wikimedia.org/wiki/File:Tomahawk_Block_IV_cruise_missile_-crop.jpg"
+    },
+    "e2d": {
+      "foto": "/static/fotos/ref_e2d.jpg",
+      "obra": "E-2D Advanced Hawkeye aircraft conduct a test flight",
+      "autor": "US Navy",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:E-2D_Advanced_Hawkeye_aircraft_conduct_a_test_flight.jpg"
+    },
+    "e3g": {
+      "foto": "/static/fotos/ref_e3g.jpg",
+      "obra": "E-3 Sentry Airborne Warning and Control System (AWACS) conducts a mission",
+      "autor": "Senior Airman Roslyn Ward",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:E-3_Sentry_Airborne_Warning_and_Control_System_(AWACS)_conducts_a_mission.jpg"
+    },
+    "ea18g": {
+      "foto": "/static/fotos/ref_ea18g.jpg",
+      "obra": "Boeing EA-18G Growler of VAQ-141 in flight on 24 March 2012",
+      "autor": "ぽりたんく",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Boeing_EA-18G_Growler_of_VAQ-141_in_flight_on_24_March_2012.jpg"
+    },
+    "ec130h": {
+      "foto": "/static/fotos/ref_ec130h.jpg",
+      "obra": "EC-130H Compass Call 060617",
+      "autor": "Mil",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:EC-130H_Compass_Call_060617.jpg"
+    },
+    "f22": {
+      "foto": "/static/fotos/ref_f22.jpg",
+      "obra": "F-22 Raptor edit1",
+      "autor": "F-22_Raptor.JPG: Master Sgt. Andy Dunaway",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:F-22_Raptor_edit1.jpg"
+    },
+    "f35a": {
+      "foto": "/static/fotos/ref_f35a.jpg",
+      "obra": "F-35 Heritage Flight Team performs in Bell Fort Worth Alliance AirShow",
+      "autor": "Airman 1st Class Alexander Cook",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:F-35_Heritage_Flight_Team_performs_in_Bell_Fort_Worth_Alliance_AirShow.jpg"
+    },
+    "f35b": {
+      "foto": "/static/fotos/ref_f35b.jpg",
+      "obra": "Royal Air Force Lockheed Martin F-35B Lightning II ZM166 032 Royal International Air Tattoo 2025 02",
+      "autor": "Julian Herzog (Website)",
+      "licencia": "CC BY 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Royal_Air_Force_Lockheed_Martin_F-35B_Lightning_II_ZM166_032_Royal_International_Air_Tattoo_2025_02.jpg"
+    },
+    "fa18ef": {
+      "foto": "/static/fotos/ref_fa18ef.jpg",
+      "obra": "Boeing FA-18F Super Hornet at take off Danish Air Show 2014-06-22 aligned",
+      "autor": "Slaunger",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Boeing_FA-18F_Super_Hornet_at_take_off_Danish_Air_Show_2014-06-22_aligned.jpg"
     },
     "ge_aereo": {
       "foto": "/static/fotos/ref_ge_aereo.jpg",
@@ -49,6 +129,22 @@
       "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:Mil_Mi-17V5_(EV)_(30895405051).jpg"
     },
+    "kc135": {
+      "foto": "/static/fotos/ref_kc135.jpg",
+      "obra": "931st Air Refueling Group - Boeing KC-135R-BN Stratotanker 60-0336",
+      "autor": "United States Air Force",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:931st_Air_Refueling_Group_-_Boeing_KC-135R-BN_Stratotanker_60-0336.jpg"
+    },
+    "lucas": {
+      "foto": "/static/fotos/ref_lucas.jpg",
+      "obra": "LUCAS the American reverse-engineered version of the Shahed-136 one-way attack drone",
+      "autor": "Cpl. Kayla Mc Guire",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:LUCAS_the_American_reverse-engineered_version_of_the_Shahed-136_one-way_attack_drone.jpg"
+    },
     "merodeadora": {
       "foto": "/static/fotos/ref_merodeadora.jpg",
       "obra": "IAI Harop PAS 2013 02",
@@ -56,6 +152,70 @@
       "licencia": "CC BY 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by/4.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:IAI_Harop_PAS_2013_02.jpg"
+    },
+    "mh47g": {
+      "foto": "/static/fotos/ref_mh47g.jpg",
+      "obra": "Special Boat Team takes flight with Nightstalkers 140521-A-PP158-057",
+      "autor": "Sgt. Christopher Prows",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Special_Boat_Team_takes_flight_with_Nightstalkers_140521-A-PP158-057.jpg"
+    },
+    "mh60dap": {
+      "foto": "/static/fotos/ref_mh60dap.jpg",
+      "obra": "MH-60M DAP firing 2.75 inch rockets at a test ground",
+      "autor": "U.S. Army",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:MH-60M_DAP_firing_2.75_inch_rockets_at_a_test_ground.jpg"
+    },
+    "mh60m": {
+      "foto": "/static/fotos/ref_mh60m.jpg",
+      "obra": "Sikorsky UH-60 Black Hawk - 04",
+      "autor": "Oleg Yunakov",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Sikorsky_UH-60_Black_Hawk_-_04.jpg"
+    },
+    "mh6m": {
+      "foto": "/static/fotos/ref_mh6m.jpg",
+      "obra": "US Army 160th SOAR MH-6",
+      "autor": "U.S. Army",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:US_Army_160th_SOAR_MH-6.jpg"
+    },
+    "mq9": {
+      "foto": "/static/fotos/ref_mq9.jpg",
+      "obra": "MQ-9 Reaper in flight 2",
+      "autor": "Desconocido",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:MQ-9_Reaper_in_flight_2.jpg"
+    },
+    "p8a": {
+      "foto": "/static/fotos/ref_p8a.jpg",
+      "obra": "P-8A Poseidon Executes Training Flight (9341127)",
+      "autor": "U.S. Navy photo by Lt. Sara Wedemeyer",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:P-8A_Poseidon_Executes_Training_Flight_(9341127).jpg"
+    },
+    "rc135": {
+      "foto": "/static/fotos/ref_rc135.jpg",
+      "obra": "20190206 RC-135 Rivet Joint Kadena AB-25",
+      "autor": "Balon Greyjoy",
+      "licencia": "CC0",
+      "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:20190206_RC-135_Rivet_Joint_Kadena_AB-25.jpg"
+    },
+    "rq170": {
+      "foto": "/static/fotos/ref_rq170.jpg",
+      "obra": "RQ-170 Wiki contributor 3Dartist",
+      "autor": "Truthdowser",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:RQ-170_Wiki_contributor_3Dartist.png"
     },
     "uav_armado": {
       "foto": "/static/fotos/ref_uav_armado.jpg",

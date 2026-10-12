@@ -78,8 +78,8 @@ def test_el_manifiesto_del_repositorio_es_valido():
 
 def test_la_herramienta_cubre_todas_las_aeronaves_y_buques(herramienta):
     claves = {(s, c) for s, c, _, _ in herramienta.UNIDADES}
-    # los genericos (ilustracion o ya con foto de referencia); los de EE. UU. del 3 de enero conservan su ilustracion
-    sin_foto_real = {("modelos", m.id) for m in catalogo.MODELOS.values() if m.fabricante == "Generico"
+    # los que tienen ilustracion o ya la cambiaron por una foto de referencia (los del catalogo propio no van)
+    sin_foto_real = {("modelos", m.id) for m in catalogo.MODELOS.values() if not m.id.startswith("u_")
                      and (m.foto.endswith(".svg") or m.foto.startswith("/static/fotos/ref_"))}
     buques = {("clases", c.id) for c in catalogo.CLASES.values() if c.tipo == "naval"}
     assert claves == sin_foto_real | buques
