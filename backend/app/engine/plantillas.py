@@ -20,7 +20,7 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from app.engine import catalogo
+from app.engine import catalogo, relieve
 from app.models.escenario import Escenario
 from app.models.objetivo import Objetivo
 from app.models.unidad import Unidad
@@ -62,6 +62,7 @@ class UnidadPlantilla:
     # aeronave estacionada en una base de esta misma plantilla (por nombre)
     en_tierra: bool = False
     base: str | None = None
+    perfil_vuelo: str | None = None  # aeronaves: "alto" | "medio" | "rasante" (None = el de su clase)
 
 
 @dataclass(frozen=True)
@@ -151,7 +152,108 @@ _DEFENSA_3_ENERO = Plantilla(
     ),
 )
 
-PLANTILLAS: dict[str, Plantilla] = {p.id: p for p in [_DEMO_LLANOS, _DEFENSA_3_ENERO]}
+def _av(nombre, modelo, n, lat, lon, perfil=None, base=None):
+    """Grupo de aeronaves de EE. UU. de la reconstruccion del 3 de enero (bando rojo)."""
+    return UnidadPlantilla(nombre, "rojo", catalogo.MODELOS[modelo].clase, lat, lon, modelo=modelo, aeronaves=n,
+                           perfil_vuelo=perfil, en_tierra=base is not None, base=base)
+
+
+_ATAQUE_3_ENERO = Plantilla(
+    id="ataque_3_enero_2026", nombre="3 de enero de 2026: Operación Resolución Absoluta (reconstrucción)",
+    descripcion=(
+        "Reconstrucción, con fuentes abiertas, del ataque de EE. UU. de la madrugada del 3 de enero de 2026 sobre "
+        "Caracas, Miranda y La Guaira. Rojo = EE. UU., con los tipos de aeronave que se informaron: F-22A (Langley), "
+        "F-35A (Guardia Nacional de Vermont) y F-35B de la Infantería de Marina desde Roosevelt Roads, el ala aérea del "
+        "USS Gerald R. Ford (F/A-18E/F, EA-18G, E-2D), bombarderos B-1B, E-3G, RC-135V/W, EC-130H, P-8A, aviones "
+        "cisterna, RQ-170, MQ-9, drones de ataque de un solo uso y los helicópteros del 160.º SOAR (MH-47G, MH-60M, "
+        "MH-60 DAP, AH-6M y MH-6M) que operan desde el USS Iwo Jima. Azul = Venezuela: La Carlota y Charallave, los "
+        "Buk-M2E de La Carlota e Higuerote, Fuerte Tiuna con sus Igla-S, El Volcán, La Guaira y los Su-30MK2 en tierra "
+        "en El Libertador. Comienza a la 01:00; los ataques se informaron hacia las 02:00. Representa 73 "
+        "aeronaves de las más de 150 que se informaron; las posiciones de los buques, de los radares y de los grupos "
+        "aéreos son aproximadas, y las cifras de los modelos son didácticas. El desenlace político (la captura del "
+        "jefe de Estado) queda fuera del alcance de este ejercicio táctico."
+    ),
+    clima="despejado", hora_inicio_min=60, nacion_azul="venezuela", nacion_rojo="estados_unidos",
+    unidades=(
+        # ---- Venezuela (azul) ----
+        UnidadPlantilla("Base Aérea Generalísimo Francisco de Miranda (La Carlota)", "azul", "base_aerea", 10.4850, -66.8436),
+        UnidadPlantilla("Buk-M2E La Carlota", "azul", "antiaerea", 10.4812, -66.8540),
+        UnidadPlantilla("Aeropuerto de Charallave (Óscar Machado Zuloaga)", "azul", "base_aerea", 10.2869, -66.8158),
+        UnidadPlantilla("Buk-M2E Higuerote", "azul", "antiaerea", 10.4625, -66.0928),
+        UnidadPlantilla("Radar JY-27A (Barlovento, ubicación aproximada)", "azul", "radar", 10.3500, -66.2500),
+        UnidadPlantilla("Radar JYL-1 (Paraguaná, ubicación aproximada)", "azul", "radar", 11.8200, -69.9500),
+        UnidadPlantilla("Cerro El Volcán (antenas y enlaces de mando)", "azul", "radar", 10.4050, -66.8350),
+        UnidadPlantilla("Fuerte Tiuna (comandancia y guarnición)", "azul", "infanteria", 10.4408, -66.9091, "brigada"),
+        UnidadPlantilla("Igla-S Grupos 397/398 (Fuerte Tiuna)", "azul", "antiaerea_portatil", 10.4455, -66.8990),
+        UnidadPlantilla("Igla-S Batallón Ayala (Fuerte Tiuna)", "azul", "antiaerea_portatil", 10.4370, -66.9180),
+        UnidadPlantilla("Comando de la Milicia Bolivariana (ant. Observatorio Cagigal)", "azul", "infanteria",
+                        10.5047, -66.9290, "batallon"),
+        UnidadPlantilla("Puerto de La Guaira", "azul", "puerto", 10.6025, -66.9330),
+        UnidadPlantilla("Patrullero (Base Naval de Catia La Mar)", "azul", "patrullero", 10.6150, -67.0250),
+        UnidadPlantilla("Base Aérea El Libertador", "azul", "base_aerea", 10.18056, -67.56111),
+        UnidadPlantilla("Su-30MK2 (El Libertador)", "azul", "caza", 10.18056, -67.56111, modelo="su30", aeronaves=4,
+                        en_tierra=True, base="Base Aérea El Libertador"),
+        # ---- Estados Unidos (rojo): bases y buques ----
+        UnidadPlantilla("Base Naval Roosevelt Roads (Puerto Rico)", "rojo", "base_aerea", 18.2473, -65.6398),
+        UnidadPlantilla("Aeropuerto Rafael Hernández, Aguadilla (Puerto Rico)", "rojo", "base_aerea", 18.4949, -67.1294),
+        UnidadPlantilla("Base Aérea Dyess (Texas)", "rojo", "base_aerea", 32.4208, -99.8546),
+        UnidadPlantilla("USS Gerald R. Ford (CVN-78)", "rojo", "portaaviones", 12.80, -67.20),
+        UnidadPlantilla("Destructor de escolta CSG-12 (1)", "rojo", "destructor", 12.70, -67.00),
+        UnidadPlantilla("Destructor de escolta CSG-12 (2)", "rojo", "destructor", 12.95, -67.45),
+        UnidadPlantilla("USS Iwo Jima (LHD-7), 22.ª MEU", "rojo", "portaaviones", 11.75, -66.75),
+        UnidadPlantilla("USS San Antonio (LPD-17)", "rojo", "buque_desembarco", 11.82, -66.58),
+        # ---- aeronaves: paquetes de ataque y escolta (desde Puerto Rico y el Ford) ----
+        _av("F-22A Raptor (escolta) 1", "f22", 4, 11.68, -67.05, "alto"),
+        _av("F-22A Raptor (escolta) 2", "f22", 4, 11.68, -66.40, "alto"),
+        _av("F-22A Raptor (patrulla aérea) 3", "f22", 4, 12.00, -67.45, "alto"),
+        _av("F-35A Lightning II (SEAD, Vermont ANG) 1", "f35a", 4, 11.52, -67.25),
+        _av("F-35A Lightning II (SEAD, Vermont ANG) 2", "f35a", 4, 11.52, -66.10),
+        _av("F-35B Lightning II (VMFA-225)", "f35b", 4, 11.52, -66.42),
+        _av("F/A-18E/F Super Hornet (CVW-8) 1", "fa18ef", 4, 11.75, -67.35),
+        _av("F/A-18E/F Super Hornet (CVW-8) 2", "fa18ef", 4, 11.92, -66.95),
+        _av("F/A-18E/F Super Hornet (CVW-8) 3", "fa18ef", 4, 12.20, -67.60),
+        _av("EA-18G Growler 1", "ea18g", 3, 11.52, -66.95),
+        _av("EA-18G Growler 2", "ea18g", 3, 11.72, -66.10),
+        _av("B-1B Lancer", "b1b", 4, 14.20, -66.60),
+        _av("Dron de ataque de un solo uso (tipo LUCAS)", "lucas", 4, 11.25, -66.30, "rasante"),
+        # ---- vigilancia, mando y control, guerra electrónica y reabastecimiento ----
+        _av("E-2D Advanced Hawkeye 1", "e2d", 1, 12.40, -67.00),
+        _av("E-2D Advanced Hawkeye 2", "e2d", 1, 12.80, -67.20, base="USS Gerald R. Ford (CVN-78)"),
+        _av("E-3G Sentry (AWACS)", "e3g", 1, 13.30, -66.50),
+        _av("RC-135V/W Rivet Joint", "rc135", 1, 12.60, -68.20, "alto"),
+        _av("EC-130H Compass Call", "ec130h", 1, 12.20, -66.30),
+        _av("P-8A Poseidon", "p8a", 1, 12.30, -65.80),
+        _av("KC-135R Stratotanker 1", "kc135", 2, 13.00, -66.80),
+        _av("KC-135R Stratotanker 2", "kc135", 2, 13.20, -67.80),
+        _av("RQ-170 Sentinel", "rq170", 1, 10.80, -66.70, "alto"),
+        _av("MQ-9A Reaper", "mq9", 2, 12.00, -66.00),
+        # ---- 160.º SOAR: fuerza de asalto desde el USS Iwo Jima (vuelo rasante sobre el mar) ----
+        _av("MH-47G Chinook (fuerza de asalto)", "mh47g", 3, 11.32, -66.85, "rasante"),
+        _av("MH-60M Black Hawk (fuerza de asalto)", "mh60m", 2, 11.32, -66.66, "rasante"),
+        _av("MH-60M DAP (escolta armada)", "mh60dap", 2, 11.42, -67.02, "rasante"),
+        _av("AH-6M Little Bird (apoyo de fuego)", "ah6m", 2, 11.18, -66.76, "rasante"),
+        _av("MH-6M Little Bird (inserción)", "mh6m", 1, 11.18, -66.95, "rasante"),
+    ),
+    objetivos=(
+        ObjetivoPlantilla("rojo", "destruir", "Neutralizar el Buk-M2E de La Carlota", 20, unidad="Buk-M2E La Carlota"),
+        ObjetivoPlantilla("rojo", "destruir", "Neutralizar el Buk-M2E de Higuerote", 20, unidad="Buk-M2E Higuerote"),
+        ObjetivoPlantilla("rojo", "destruir", "Cortar los enlaces de El Volcán", 15,
+                          unidad="Cerro El Volcán (antenas y enlaces de mando)"),
+        ObjetivoPlantilla("rojo", "destruir", "Neutralizar la defensa antiaérea de Fuerte Tiuna", 15,
+                          unidad="Igla-S Grupos 397/398 (Fuerte Tiuna)"),
+        ObjetivoPlantilla("rojo", "proteger", "Preservar la fuerza de asalto", 30,
+                          unidad="MH-47G Chinook (fuerza de asalto)", hasta_turno=4),
+        ObjetivoPlantilla("azul", "proteger", "Mantener el Buk-M2E de La Carlota", 20, unidad="Buk-M2E La Carlota", hasta_turno=4),
+        ObjetivoPlantilla("azul", "proteger", "Mantener el Buk-M2E de Higuerote", 20, unidad="Buk-M2E Higuerote", hasta_turno=4),
+        ObjetivoPlantilla("azul", "proteger", "Mantener los enlaces de El Volcán", 15,
+                          unidad="Cerro El Volcán (antenas y enlaces de mando)", hasta_turno=4),
+        ObjetivoPlantilla("azul", "proteger", "Defender Fuerte Tiuna", 25, unidad="Fuerte Tiuna (comandancia y guarnición)",
+                          hasta_turno=4),
+        ObjetivoPlantilla("azul", "destruir", "Derribar la fuerza de asalto", 30, unidad="MH-47G Chinook (fuerza de asalto)"),
+    ),
+)
+
+PLANTILLAS: dict[str, Plantilla] = {p.id: p for p in [_DEMO_LLANOS, _DEFENSA_3_ENERO, _ATAQUE_3_ENERO]}
 
 
 def obtener(plantilla_id: str) -> Plantilla | None:
@@ -187,6 +289,8 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
             deteccion_km=ref.deteccion_km, autonomia_km=ref.autonomia_km, carga=c.carga_max,
             sidc=catalogo.generar_sidc(u.bando, c, u.escalon or (catalogo.escalon_grupo(u.aeronaves) if modelo else "")),
         )
+        if u.perfil_vuelo and u.perfil_vuelo in relieve.perfiles_permitidos(unidad):
+            unidad.perfil_vuelo = u.perfil_vuelo
         for campo in ("combustible", "municion", "stock_combustible", "stock_municion"):
             valor = getattr(u, campo)
             if valor is not None:
@@ -283,6 +387,8 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
             "escalon": u.echelon or "", "modelo": modelo.id if modelo and modelo.clase == clase.id else "",
             "aeronaves": int(u.aeronaves or 1),
         }
+        if u.tipo == "aerea" and u.perfil_vuelo:
+            d["perfil_vuelo"] = u.perfil_vuelo
         if con_estado:
             d.update({c: round(float(getattr(u, c)), 2) for c in _CAMPOS_ESTADO})
         if u.en_tierra and u.base_id in {f.id for f in filas}:
@@ -348,6 +454,7 @@ def desde_dict(datos: dict) -> Plantilla:
             combustible=pct("combustible"), municion=pct("municion"),
             stock_combustible=pct("stock_combustible"), stock_municion=pct("stock_municion"),
             en_tierra=bool(d.get("en_tierra")), base=d.get("base") or None,
+            perfil_vuelo=d.get("perfil_vuelo") if d.get("perfil_vuelo") in relieve.PERFILES else None,
         ))
     objetivos: list[ObjetivoPlantilla] = []
     for d in datos.get("objetivos") or []:

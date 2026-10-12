@@ -340,7 +340,7 @@ def construir(salida: Path, img: Path) -> None:
           P("Todo el material geográfico proviene de fuentes abiertas y se preparó una sola vez con internet mediante scripts "
             "del proyecto (carpeta <font face='Mono'>tools/</font>); después queda en el servidor para uso sin conexión."),
           Tbl(["Dato", "Fuente", "Licencia"], [
-              ["Imagen satelital", "Sentinel-2 cloudless (EOX, Copernicus/ESA), hasta zoom 12", "CC BY 4.0"],
+              ["Imagen satelital", "Sentinel-2 cloudless (EOX, Copernicus/ESA), hasta zoom 13", "CC BY 4.0"],
               ["Relieve y clases de terreno", "AWS Terrain Tiles (SRTM/GMTED), ESA WorldCover 2021", "Abierto / CC BY 4.0"],
               ["Fronteras, ríos, ciudades", "Natural Earth", "Dominio público"],
               ["Planos de aeródromos", "OpenStreetMap (pistas, rodajes, plataformas, hangares)", "ODbL 1.0"],
@@ -460,7 +460,7 @@ def construir(salida: Path, img: Path) -> None:
             "<font face='Mono'>python tools/preparar_terreno.py --id caribe --nombre \"Caribe\" --bbox -90 8 -58 27 --zoom 8</font> "
             "(recuadro en grados: lon. mín., lat. mín., lon. máx., lat. máx.; zoom 9 = ~300 m, 8 = ~600 m, 7 = ~1,2 km). Al reiniciar el servidor "
             "la región nueva aparece sola. Los demás scripts de <font face='Mono'>tools/</font> también necesitan internet una sola vez: "
-            "<font face='Mono'>preparar_satelite.py --region &lt;id&gt;</font> (foto satelital de una región: Venezuela hasta el zoom 12 y América hasta el 8 ya incluidas), "
+            "<font face='Mono'>preparar_satelite.py --region &lt;id&gt;</font> (foto satelital de una región: Venezuela hasta el zoom 13 y América hasta el 8 ya incluidas), "
             "<font face='Mono'>preparar_aerodromos.py</font> (planos de las bases) y <font face='Mono'>generar_bases_aereas.py</font>.")]
 
     # ---- 4 roles

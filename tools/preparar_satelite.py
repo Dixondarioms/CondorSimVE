@@ -5,7 +5,7 @@ Fuente: "Sentinel-2 cloudless" de EOX IT Services GmbH (https://cloudless.eox.at
 (tiles.maps.eox.at). La version del 2016 esta bajo licencia Creative Commons Attribution 4.0 (CC BY 4.0):
 uso libre, incluso comercial, con atribucion. Version original de datos: Copernicus Sentinel (ESA).
 Resolucion real 10 m/pixel (igual que ESA WorldCover, que ya se usa para la cobertura terrestre): tiene
-detalle util hasta ~zoom 12-13; mas alla el servidor solo interpola (no hay mas informacion real).
+detalle util hasta ~zoom 13-14; mas alla el servidor solo interpola (no hay mas informacion real).
 
 Cada region tiene su propio zoom maximo por defecto, porque el numero de teselas se multiplica por 4 con cada
 nivel: Venezuela hasta el 12 (~30 000 teselas, ~350 MB) y America hasta el 8 (~17 000 teselas, ~150 MB;
@@ -19,7 +19,7 @@ El servidor detecta solo que zooms tiene cada region (GET /api/terreno/mapas) y 
 cada una recortada a su recuadro, la mas detallada encima.
 
 Uso:
-    python tools/preparar_satelite.py                          # venezuela, zoom 5 a 12
+    python tools/preparar_satelite.py                          # venezuela, zoom 5 a 13
     python tools/preparar_satelite.py --region america         # zoom 3 a 8
     python tools/preparar_satelite.py --region america --hasta-zoom 9   # mas detalle (~460 MB mas)
     python tools/preparar_satelite.py --region mundo           # zoom 2 a 7
@@ -45,7 +45,7 @@ WMTS = "https://tiles.maps.eox.at/wmts/1.0.0/{capa}/default/GoogleMapsCompatible
 UA = {"User-Agent": "SimuladorFenix/1.0 (educational, offline military academy training tool)"}
 
 # zoom maximo por defecto de cada region predefinida (las regiones a medida: su zoom nativo)
-HASTA_ZOOM = {"venezuela": 12, "america": 8, "mundo": 7}
+HASTA_ZOOM = {"venezuela": 13, "america": 8, "mundo": 7}
 
 CREDITOS = """# Imágenes satelitales (capa "Satélite")
 
@@ -58,7 +58,7 @@ servido por EOX IT Services GmbH (https://eox.at) vía su WMTS público (https:/
   (Contains modified Copernicus Sentinel data {anio})" — ya incluida en el control de atribución del mapa
   (`frontend/static/js/app.js`, `initMapa()`); no la quite si cambia de capa.
 - **Resolución real:** ~10 m/píxel (igual que ESA WorldCover). Cada región se descargó hasta un zoom distinto
-  (Venezuela 12, América 8, el mundo 7 si se generó): más allá el mapa amplía la tesela más cercana.
+  (Venezuela 13, América 8, el mundo 7 si se generó): más allá el mapa amplía la tesela más cercana.
 - **Regenerar/ampliar:** `python tools/preparar_satelite.py --region <id> --hasta-zoom N` (reanuda: no vuelve a
   bajar lo que ya está). No toca `frontend/static/tiles/` (relieve) ni `backend/data/terreno/` (grilla del
   motor): esto es solo la imagen de fondo alternativa, no cambia las reglas de movimiento ni la niebla de guerra.

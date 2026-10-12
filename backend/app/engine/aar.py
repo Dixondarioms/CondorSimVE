@@ -508,7 +508,7 @@ def construir_rubrica(db: Session, escenario: Escenario) -> dict:
             r[c["bando"]]["logistica"]["unidades_criticas"].append(c)
     reabastecidos: dict[str, set] = {b: set() for b in bandos}
     for f in registros:
-        if (f.bando in r and f.causa in ("reabastecimiento", "convoy") and f.variable in ("combustible", "municion")
+        if (f.bando in r and f.causa in ("reabastecimiento", "convoy", "reabastecimiento en vuelo") and f.variable in ("combustible", "municion")
                 and f.despues > f.antes):
             reabastecidos[f.bando].add((f.turno, f.unidad_id))
     for b in bandos:

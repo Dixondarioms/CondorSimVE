@@ -182,12 +182,17 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora) -> None:
                 break
             if r is conv or r.estado != "activa" or r.bando != conv.bando or r.tipo not in clase.suministra:
                 continue
+            cisterna = conv.tipo == "aerea"  # avion cisterna: solo combustible, y a aeronaves en vuelo
+            if cisterna and (r.en_tierra or r.combustible >= 100):
+                continue
             if r.combustible >= 100 and r.municion >= 100:
                 continue
             if geo.distancia_km(conv.lat, conv.lon, r.lat, r.lon) <= clase.nodo_movil_km:
-                bit.poner(r, "combustible", r.combustible + REABASTECIMIENTO_CONVOY, "convoy")
-                bit.poner(r, "municion", r.municion + REABASTECIMIENTO_CONVOY, "convoy")
-                bit.poner(conv, "carga", conv.carga - CARGA_POR_UNIDAD_CONVOY, "convoy")
+                causa = "reabastecimiento en vuelo" if cisterna else "convoy"
+                bit.poner(r, "combustible", r.combustible + REABASTECIMIENTO_CONVOY, causa)
+                if not cisterna:
+                    bit.poner(r, "municion", r.municion + REABASTECIMIENTO_CONVOY, causa)
+                bit.poner(conv, "carga", conv.carga - CARGA_POR_UNIDAD_CONVOY, causa)
 
     # los convoyes descargan sus suministros en las bases que no los recargan (bases aereas y puertos)
     for conv in unidades:

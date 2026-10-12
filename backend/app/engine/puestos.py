@@ -58,7 +58,7 @@ def funcion_de_orden(unidad, tipo_orden: str | None, clase) -> str:
         return "despegar"
     if clase.celula == "ge" and unidad.tipo != "aerea":
         return "guerra_electronica"
-    if tipo_orden == "construir" or clase.construye or clase.carga_max > 0:
+    if tipo_orden == "construir" or clase.construye or (clase.carga_max > 0 and unidad.tipo != "aerea"):
         return "logistica"
     if unidad.tipo == "aerea":
         return "aereo"

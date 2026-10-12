@@ -372,7 +372,7 @@
       .addAttribution("Satélite: Sentinel-2 cloudless (EOX, CC BY 4.0) · Relieve: SRTM/GMTED (AWS Terrain Tiles) · Cobertura: ESA WorldCover · Vectores: Natural Earth · Aeródromos: © colaboradores de OpenStreetMap (ODbL)").addTo(map);
 
     // Fondo: el relieve coloreado por clase de terreno de cada region (la mas detallada encima) y, opcionalmente, la foto
-    // satelital real de cada region que la tenga descargada (tools/preparar_satelite.py: Venezuela hasta el zoom 12,
+    // satelital real de cada region que la tenga descargada (tools/preparar_satelite.py: Venezuela hasta el zoom 13,
     // America hasta el 8), superpuesta al relieve y recortada al recuadro exacto de su region.
     const c = app.capas;
     c.baseRelieve = L.layerGroup().addTo(map);

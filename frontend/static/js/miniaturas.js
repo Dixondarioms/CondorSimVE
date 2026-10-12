@@ -46,7 +46,7 @@
   }
 
   // ================================================================ AERONAVES
-  function cazaEmbarcado() {
+  function cazaEmbarcado({ growler = false } = {}) {
     const ala = [[0.2, 0.06], [0.82, -0.28], [0.82, -0.42], [0.2, -0.5]];
     const lerx = [[0.06, 0.62], [0.2, 0.12], [0.2, -0.02], [0.08, 0.1]];
     const estab = [[0.14, -0.66], [0.5, -0.82], [0.5, -0.94], [0.14, -0.98]];
@@ -59,6 +59,12 @@
         ...par(lerx, 0.03, 0.03, "ala"), ...par(ala, 0.035, 0, "ala"), ...par(estab, 0.03, -0.02, "ala"),
         transformar(placa(deriva, 0.035, "yz", 0.13, "deriva"), { ry: 22, pivote: [0.13, 0, 0.1] }),
         transformar(placa(deriva, 0.035, "yz", -0.13, "deriva"), { ry: -22, pivote: [-0.13, 0, 0.1] }),
+        // EA-18G: contenedores de escucha en las puntas de ala y de interferencia bajo las alas y el fuselaje
+        ...(growler ? [
+          cilindro("y", [0.84, -0.32, 0], 0.035, 0.32, "antena", 6), cilindro("y", [-0.84, -0.32, 0], 0.035, 0.32, "antena", 6),
+          cilindro("y", [0.5, -0.12, -0.08], 0.05, 0.42, "antena", 6), cilindro("y", [-0.5, -0.12, -0.08], 0.05, 0.42, "antena", 6),
+          cilindro("y", [0, 0.1, -0.2], 0.05, 0.4, "antena", 6),
+        ] : []),
       ],
     };
   }
@@ -107,7 +113,7 @@
     };
   }
 
-  function heloTransporte() {
+  function heloTransporte(armado = true) {
     const cola = [[-0.88, 0.14], [-0.98, 0.46], [-1.06, 0.46], [-1.05, 0.14]];
     return {
       piezas: [
@@ -116,8 +122,10 @@
         fuselaje([[0.5, 0.1, 0.08, 0.26], [0.3, 0.26, 0.14, 0.28], [-0.15, 0.26, 0.14, 0.28], [-0.3, 0.12, 0.08, 0.26]], "cuerpo"),
         cilindro("y", [0.22, 0.05, -0.08], 0.07, 0.4, "cuerpo", 7), cilindro("y", [-0.22, 0.05, -0.08], 0.07, 0.4, "cuerpo", 7),
         // afustes con coheteras y la ametralladora
-        ...par([[0.2, 0.12], [0.44, 0.12], [0.44, -0.02], [0.2, -0.02]], 0.025, 0.02, "ala"),
-        cilindro("y", [0.42, 0.06, -0.03], 0.045, 0.24, "negro", 6), cilindro("y", [-0.42, 0.06, -0.03], 0.045, 0.24, "negro", 6),
+        ...(armado ? [
+          ...par([[0.2, 0.12], [0.44, 0.12], [0.44, -0.02], [0.2, -0.02]], 0.025, 0.02, "ala"),
+          cilindro("y", [0.42, 0.06, -0.03], 0.045, 0.24, "negro", 6), cilindro("y", [-0.42, 0.06, -0.03], 0.045, 0.24, "negro", 6),
+        ] : []),
         placa(cola, 0.03, "yz", 0, "deriva"),
         enCapa(disco([-0.05, -1.0, 0.36], 0.16, "rotor", "yz", 12), 1),
         cilindro("z", [0, 0.12, 0.38], 0.04, 0.1, "negro", 6),
@@ -197,6 +205,176 @@
         ...par([[0.05, 0.12], [0.62, 0.04], [0.62, -0.03], [0.05, -0.06]], 0.02, 0.0, "misil"),
         ...[45, 135, 225, 315].map((g) => transformar(aleta, { ry: g, pivote: [0, 0, 0] })),
         caja([-0.05, 0.05], [-0.55, -0.3], [-0.12, -0.06], "negro"),
+      ],
+    };
+  }
+
+  // ---------------------------------------------------------------- aeronaves de EE. UU. (plantilla del 3 de enero)
+  /** Caza furtivo de ala en diamante y derivas inclinadas (F-22). */
+  function f22() {
+    const ala = [[0.18, 0.25], [0.86, -0.38], [0.86, -0.5], [0.18, -0.62]];
+    const estab = [[0.16, -0.68], [0.5, -0.8], [0.5, -0.95], [0.16, -1.0]];
+    const deriva = [[-0.42, 0.08], [-0.66, 0.42], [-0.8, 0.42], [-0.86, 0.08]];
+    return {
+      piezas: [
+        fuselaje([[1.0, 0.03, 0.03], [0.8, 0.14, 0.1], [0.5, 0.26, 0.14], [0.1, 0.42, 0.15], [-0.5, 0.42, 0.14], [-0.9, 0.32, 0.1], [-1.0, 0.28, 0.08]], "cuerpo"),
+        fuselaje([[0.74, 0.05, 0.03, 0.07], [0.58, 0.14, 0.1, 0.1], [0.32, 0.14, 0.08, 0.1], [0.18, 0.05, 0.03, 0.08]], "cabina"),
+        caja([0.14, 0.26], [0.0, 0.34], [-0.1, 0.02], "toma"), caja([-0.26, -0.14], [0.0, 0.34], [-0.1, 0.02], "toma"),
+        ...par(ala, 0.03, 0, "ala"), ...par(estab, 0.025, -0.01, "ala"),
+        transformar(placa(deriva, 0.03, "yz", 0.2, "deriva"), { ry: 28, pivote: [0.2, 0, 0.08] }),
+        transformar(placa(deriva, 0.03, "yz", -0.2, "deriva"), { ry: -28, pivote: [-0.2, 0, 0.08] }),
+      ],
+    };
+  }
+
+  /** Caza furtivo monomotor (F-35A; `stovl`: F-35B, con las puertas del ventilador de sustentacion). */
+  function f35(stovl = false) {
+    const ala = [[0.18, 0.12], [0.76, -0.34], [0.76, -0.46], [0.18, -0.56]];
+    const estab = [[0.14, -0.66], [0.46, -0.76], [0.46, -0.9], [0.14, -0.96]];
+    const deriva = [[-0.5, 0.08], [-0.7, 0.36], [-0.82, 0.36], [-0.86, 0.08]];
+    return {
+      piezas: [
+        fuselaje([[1.0, 0.03, 0.04], [0.8, 0.16, 0.13], [0.45, 0.3, 0.18], [0.05, 0.4, 0.2], [-0.5, 0.36, 0.18], [-0.85, 0.2, 0.14], [-1.0, 0.14, 0.12]], "cuerpo"),
+        fuselaje([[0.72, 0.05, 0.03, 0.09], [0.56, 0.15, 0.11, 0.12], [0.3, 0.15, 0.09, 0.12], [0.16, 0.05, 0.03, 0.1]], "cabina"),
+        caja([0.15, 0.26], [0.05, 0.36], [-0.12, 0.02], "toma"), caja([-0.26, -0.15], [0.05, 0.36], [-0.12, 0.02], "toma"),
+        ...par(ala, 0.03, -0.01, "ala"), ...par(estab, 0.025, -0.02, "ala"),
+        transformar(placa(deriva, 0.03, "yz", 0.15, "deriva"), { ry: 25, pivote: [0.15, 0, 0.08] }),
+        transformar(placa(deriva, 0.03, "yz", -0.15, "deriva"), { ry: -25, pivote: [-0.15, 0, 0.08] }),
+        ...(stovl ? [enCapa(caja([-0.1, 0.1], [0.02, 0.2], [0.19, 0.21], "negro"), 1), enCapa(caja([-0.06, 0.06], [-0.3, -0.18], [0.17, 0.19], "negro"), 1)] : []),
+      ],
+    };
+  }
+
+  /** Bombardero de ala en flecha variable con cuatro motores en dos gondolas (B-1B). */
+  function b1b() {
+    const gondola = [[-0.05, 0.12, 0.1, -0.08], [-0.15, 0.16, 0.12, -0.09], [-0.6, 0.16, 0.12, -0.09], [-0.68, 0.12, 0.1, -0.08]];
+    return {
+      piezas: [
+        fuselaje([[1.0, 0.02, 0.03, 0.0], [0.82, 0.1, 0.1, 0.02], [0.5, 0.16, 0.14, 0.03], [0.1, 0.28, 0.12, 0.03], [-0.4, 0.28, 0.12, 0.03], [-0.8, 0.14, 0.1, 0.04], [-1.0, 0.06, 0.06, 0.05]], "cuerpo"),
+        fuselaje([[0.82, 0.04, 0.02, 0.06], [0.72, 0.1, 0.06, 0.08], [0.6, 0.08, 0.04, 0.08]], "cabina"),
+        ...par([[0.0, 0.42], [0.3, 0.06], [0.3, -0.16], [0.0, -0.22]], 0.04, 0.02, "ala"),
+        ...par([[0.28, 0.04], [1.0, -0.5], [1.0, -0.58], [0.28, -0.12]], 0.03, 0.02, "ala"),
+        fuselaje(gondola, "cuerpo", 0.2), fuselaje(gondola, "cuerpo", -0.2),
+        placa([[-0.6, 0.06], [-0.88, 0.42], [-1.0, 0.42], [-1.0, 0.06]], 0.03, "yz", 0, "deriva"),
+        ...par([[0.02, -0.8], [0.36, -0.92], [0.36, -0.98], [0.02, -0.97]], 0.025, 0.22, "ala"),
+      ],
+    };
+  }
+
+  /** Reactor de cuatro (o dos) motores de ala baja en flecha: base de E-3, RC-135, KC-135 y P-8. */
+  function reactorPesado({ motores = 4, rotodomo = false, mejillas = false, pertiga = false } = {}) {
+    const ala = [[0.1, 0.12], [1.0, -0.42], [1.0, -0.5], [0.1, -0.2]];
+    const motor = (x) => {
+      const y = 0.12 - 0.6 * (Math.abs(x) - 0.1) + 0.1; // delante del borde de ataque, que va en flecha
+      return fuselaje([[y + 0.06, 0.06, 0.06, -0.06], [y, 0.08, 0.08, -0.06], [y - 0.2, 0.07, 0.07, -0.06], [y - 0.24, 0.05, 0.05, -0.06]], "cuerpo", x);
+    };
+    const xs = motores === 4 ? [0.36, 0.66] : [0.34];
+    const mejilla = [[0.78, 0.03, 0.04, 0.0], [0.7, 0.05, 0.09, 0.0], [0.4, 0.05, 0.09, 0.0], [0.34, 0.03, 0.04, 0.0]];
+    return {
+      piezas: [
+        fuselaje([[1.0, 0.03, 0.04, 0.02], [0.92, 0.1, 0.11, 0.02], [0.8, 0.13, 0.14, 0.02], [-0.6, 0.13, 0.14, 0.02], [-0.88, 0.08, 0.1, 0.06], [-1.0, 0.03, 0.05, 0.09]], "cuerpo"),
+        fuselaje([[0.93, 0.08, 0.03, 0.06], [0.86, 0.11, 0.04, 0.07]], "cabina"),
+        ...par(ala, 0.03, -0.03, "ala"),
+        ...xs.flatMap((x) => [motor(x), motor(-x)]),
+        placa([[-0.62, 0.1], [-0.9, 0.44], [-1.0, 0.44], [-0.98, 0.08]], 0.03, "yz", 0, "deriva"),
+        ...par([[0.04, -0.78], [0.36, -0.92], [0.36, -0.98], [0.04, -0.96]], 0.025, 0.06, "ala"),
+        ...(rotodomo ? [
+          caja([-0.03, 0.03], [-0.42, -0.3], [0.08, 0.28], "cuerpo"),
+          enCapa(cilindro("z", [0, -0.36, 0.3], 0.3, 0.06, "radomo", 16), 2),
+          enCapa(cilindro("z", [0, -0.36, 0.335], 0.08, 0.01, "negro", 8), 3),
+        ] : []),
+        ...(mejillas ? [fuselaje(mejilla, "antena", 0.13), fuselaje(mejilla, "antena", -0.13), esfera([0, 1.0, 0.02], 0.05, "radomo")] : []),
+        ...(pertiga ? [transformar(caja([-0.015, 0.015], [-1.3, -0.96], [-0.02, 0.01], "negro"), { rx: 22, pivote: [0, -0.96, 0] })] : []),
+      ],
+    };
+  }
+
+  /** Cuatrimotor turbohelice de ala alta (C-130); `ge`: EC-130H, con antenas entre la deriva y el estabilizador. */
+  function c130(ge = false) {
+    const motor = (x) => [
+      fuselaje([[0.42, 0.05, 0.06, 0.12], [0.36, 0.08, 0.09, 0.12], [0.1, 0.08, 0.09, 0.12], [0.0, 0.05, 0.06, 0.12]], "cuerpo", x),
+      enCapa(disco([x, 0.45, 0.12], 0.15, "rotor", "xz", 12), 1),
+    ];
+    return {
+      piezas: [
+        fuselaje([[1.0, 0.06, 0.08, 0.0], [0.9, 0.16, 0.18, 0.02], [0.75, 0.2, 0.22, 0.03], [-0.35, 0.2, 0.22, 0.03], [-0.7, 0.1, 0.12, 0.12], [-0.95, 0.05, 0.06, 0.17]], "cuerpo"),
+        fuselaje([[0.92, 0.12, 0.05, 0.1], [0.84, 0.16, 0.06, 0.12]], "cabina"),
+        ...par([[0.05, 0.28], [1.0, 0.22], [1.0, 0.1], [0.05, 0.06]], 0.03, 0.14, "ala"),
+        ...[0.32, 0.62].flatMap((x) => [...motor(x), ...motor(-x)]),
+        placa([[-0.6, 0.15], [-0.85, 0.6], [-0.98, 0.6], [-0.98, 0.12]], 0.03, "yz", 0, "deriva"),
+        ...par([[0.03, -0.82], [0.42, -0.86], [0.42, -0.96], [0.03, -0.98]], 0.025, 0.17, "ala"),
+        ...(ge ? [
+          caja([-0.006, 0.006], [-0.95, -0.6], [0.2, 0.58], "antena"),
+          caja([0.36, 0.38], [-0.9, -0.85], [0.17, 0.42], "antena"), caja([-0.38, -0.36], [-0.9, -0.85], [0.17, 0.42], "antena"),
+          cilindro("y", [0.82, 0.12, 0.08], 0.035, 0.3, "antena", 6), cilindro("y", [-0.82, 0.12, 0.08], 0.035, 0.3, "antena", 6),
+        ] : []),
+      ],
+    };
+  }
+
+  /** Alerta temprana embarcada: biturbohelice de ala alta con domo giratorio y cuatro derivas (E-2D). */
+  function e2d() {
+    const motor = (x) => [
+      fuselaje([[0.42, 0.06, 0.07, 0.1], [0.34, 0.09, 0.1, 0.1], [-0.05, 0.08, 0.09, 0.1], [-0.15, 0.05, 0.05, 0.1]], "cuerpo", x),
+      enCapa(disco([x, 0.45, 0.1], 0.22, "rotor", "xz", 12), 1),
+    ];
+    const deriva = [[-0.76, 0.1], [-0.8, 0.4], [-0.9, 0.4], [-0.94, 0.1]];
+    return {
+      piezas: [
+        fuselaje([[1.0, 0.05, 0.07, 0.0], [0.88, 0.15, 0.18, 0.02], [0.7, 0.2, 0.22, 0.03], [-0.4, 0.18, 0.2, 0.05], [-0.75, 0.1, 0.1, 0.1], [-0.88, 0.06, 0.06, 0.12]], "cuerpo"),
+        fuselaje([[0.92, 0.1, 0.05, 0.08], [0.82, 0.15, 0.06, 0.1]], "cabina"),
+        ...par([[0.05, 0.2], [1.0, 0.14], [1.0, 0.02], [0.05, -0.02]], 0.03, 0.12, "ala"),
+        ...motor(0.3), ...motor(-0.3),
+        caja([-0.03, 0.03], [-0.2, 0.0], [0.12, 0.34], "cuerpo"),
+        enCapa(cilindro("z", [0, -0.1, 0.38], 0.42, 0.07, "radomo", 18), 2),
+        enCapa(cilindro("z", [0, -0.1, 0.42], 0.1, 0.01, "negro", 8), 3),
+        ...par([[0.02, -0.78], [0.44, -0.8], [0.44, -0.92], [0.02, -0.94]], 0.025, 0.12, "ala"),
+        ...[0.44, 0.18, -0.18, -0.44].map((x) => placa(deriva, 0.025, "yz", x, "deriva")),
+      ],
+    };
+  }
+
+  /** Dron furtivo de ala volante (RQ-170): sin derivas, lleva el color del bando en un panel del lomo. */
+  function rq170() {
+    return {
+      piezas: [
+        fuselaje([[0.45, 0.05, 0.03, 0.0], [0.3, 0.3, 0.1, 0.02], [0.0, 0.42, 0.11, 0.02], [-0.25, 0.3, 0.06, 0.02], [-0.35, 0.15, 0.04, 0.02]], "cuerpo"),
+        ...par([[0.15, 0.25], [1.0, -0.35], [1.0, -0.45], [0.15, -0.16]], 0.03, 0.0, "ala"),
+        enCapa(caja([-0.08, 0.08], [-0.12, 0.05], [0.07, 0.085], "bando"), 1),
+      ],
+    };
+  }
+
+  /** Helicoptero pesado de rotores en tandem (MH-47G), con tanques laterales y pertiga de reabastecimiento. */
+  function chinook() {
+    return {
+      piezas: [
+        fuselaje([[1.0, 0.06, 0.12, 0.04], [0.9, 0.22, 0.3, 0.08], [0.75, 0.28, 0.34, 0.1], [-0.75, 0.28, 0.34, 0.1], [-0.9, 0.22, 0.3, 0.12], [-1.0, 0.12, 0.2, 0.16]], "cuerpo"),
+        fuselaje([[0.98, 0.08, 0.06, 0.12], [0.88, 0.22, 0.12, 0.16], [0.8, 0.22, 0.08, 0.18]], "cabina"),
+        cilindro("y", [0.2, 0.05, -0.02], 0.08, 0.9, "cuerpo", 8), cilindro("y", [-0.2, 0.05, -0.02], 0.08, 0.9, "cuerpo", 8),
+        caja([-0.1, 0.1], [-1.0, -0.62], [0.22, 0.46], "deriva"),
+        caja([-0.08, 0.08], [0.72, 0.95], [0.22, 0.3], "cuerpo"),
+        cilindro("y", [0.15, 1.12, 0.02], 0.015, 0.36, "negro", 6),
+        ...rotor([0, 0.82, 0.34], 0.85, 3), ...transformar(rotor([0, -0.8, 0.5], 0.85, 3), { rz: 60, pivote: [0, -0.8, 0] }),
+      ],
+    };
+  }
+
+  /** Helicoptero ligero (Little Bird): `tipo` "ah" con coheteras, "mh" con bancos exteriores para la tropa. */
+  function littleBird(tipo = "ah") {
+    const armas = tipo === "ah"
+      ? [...par([[0.14, 0.12], [0.36, 0.12], [0.36, 0.0], [0.14, 0.0]], 0.02, 0.0, "ala"),
+        cilindro("y", [0.36, 0.06, -0.04], 0.05, 0.3, "negro", 6), cilindro("y", [-0.36, 0.06, -0.04], 0.05, 0.3, "negro", 6)]
+      : [caja([0.16, 0.36], [-0.15, 0.3], [-0.04, -0.01], "metal"), caja([-0.36, -0.16], [-0.15, 0.3], [-0.04, -0.01], "metal")];
+    return {
+      piezas: [
+        fuselaje([[0.55, 0.06, 0.1, 0.0], [0.45, 0.2, 0.26, 0.02], [0.2, 0.28, 0.32, 0.04], [-0.1, 0.26, 0.3, 0.06], [-0.25, 0.12, 0.14, 0.1], [-0.3, 0.06, 0.07, 0.12]], "cuerpo"),
+        fuselaje([[0.55, 0.08, 0.1, 0.06], [0.42, 0.22, 0.18, 0.1], [0.25, 0.24, 0.14, 0.13]], "cabina"),
+        fuselaje([[-0.28, 0.06, 0.07, 0.12], [-1.0, 0.03, 0.04, 0.14]], "cuerpo"),
+        placa([[-0.86, 0.1], [-0.92, 0.34], [-1.0, 0.34], [-1.0, 0.06]], 0.025, "yz", 0, "deriva"),
+        ...par([[0.0, -0.84], [0.16, -0.84], [0.16, -0.92], [0.0, -0.92]], 0.02, 0.13, "ala"),
+        ...armas,
+        ...rotor([0, 0.05, 0.34], 0.8, 5),
       ],
     };
   }
@@ -605,15 +783,32 @@
   // ================================================================ registro
   // tam: tamaño en pantalla respecto de un caza. Los buques y las instalaciones son mas grandes; el personal, menor.
   const R = M.registrar;
-  R("caza_embarcado", cazaEmbarcado, { tam: 1, modelos: ["caza_embarcado"] });
+  R("caza_embarcado", cazaEmbarcado, { tam: 1, modelos: ["caza_embarcado", "fa18ef"] });
   R("ataque_ligero", ataqueLigero, { tam: 0.95, clases: ["ataque"], modelos: ["ataque_ligero"] });
   R("helo_ataque", heloAtaque, { tam: 1, clases: ["helicoptero"], modelos: ["helo_ataque"] });
-  R("helo_transporte", heloTransporte, { tam: 1.05, clases: ["helicoptero_artillado"], modelos: ["helo_transporte"] });
+  R("helo_transporte", heloTransporte, { tam: 1.05, clases: ["helicoptero_artillado"], modelos: ["helo_transporte", "mh60dap"] });
   R("dron_reconocimiento", dronReconocimiento, { tam: 0.8, clases: ["dron_reconocimiento"], modelos: ["uav_reco"] });
-  R("dron_armado", dronArmado, { tam: 0.9, clases: ["dron_ataque"], modelos: ["uav_armado"] });
-  R("merodeadora", merodeadora, { tam: 0.62, clases: ["municion_merodeadora"], modelos: ["merodeadora"] });
+  R("dron_armado", dronArmado, { tam: 0.9, clases: ["dron_ataque"], modelos: ["uav_armado", "mq9"] });
+  R("merodeadora", merodeadora, { tam: 0.62, clases: ["municion_merodeadora"], modelos: ["merodeadora", "lucas"] });
   R("avion_ge", avionGe, { tam: 1.1, clases: ["avion_ge"], modelos: ["ge_aereo"] });
   R("misil_crucero", misilCrucero, { tam: 0.72, clases: ["misil_crucero"], modelos: ["crucero"] });
+  // aeronaves de EE. UU. de la plantilla del 3 de enero de 2026 (tam: relativo a un caza)
+  R("f22", f22, { tam: 1.1, modelos: ["f22"] });
+  R("f35a", () => f35(false), { tam: 1, modelos: ["f35a"] });
+  R("f35b", () => f35(true), { tam: 1, modelos: ["f35b"] });
+  R("ea18g", () => cazaEmbarcado({ growler: true }), { tam: 1, modelos: ["ea18g"] });
+  R("b1b", b1b, { tam: 2.0, modelos: ["b1b"] });
+  R("p8a", () => reactorPesado({ motores: 2 }), { tam: 1.6, modelos: ["p8a"] });
+  R("e3g", () => reactorPesado({ rotodomo: true }), { tam: 1.9, modelos: ["e3g"] });
+  R("rc135", () => reactorPesado({ mejillas: true }), { tam: 1.9, modelos: ["rc135"] });
+  R("kc135", () => reactorPesado({ pertiga: true }), { tam: 1.9, clases: ["cisterna"], modelos: ["kc135"] });
+  R("ec130h", () => c130(true), { tam: 1.6, modelos: ["ec130h"] });
+  R("e2d", e2d, { tam: 1.3, clases: ["alerta_temprana"], modelos: ["e2d"] });
+  R("rq170", rq170, { tam: 1.1, modelos: ["rq170"] });
+  R("mh47g", chinook, { tam: 1.35, modelos: ["mh47g"] });
+  R("mh60m", () => heloTransporte(false), { tam: 1.05, modelos: ["mh60m"] });
+  R("ah6m", () => littleBird("ah"), { tam: 0.62, modelos: ["ah6m"] });
+  R("mh6m", () => littleBird("mh"), { tam: 0.62, modelos: ["mh6m"] });
 
   R("infanteria", infanteria, { tam: 0.72, suelo: true, clases: ["infanteria"] });
   R("antiaerea_portatil", antiaereaPortatil, { tam: 0.7, suelo: true, clases: ["antiaerea_portatil"] });

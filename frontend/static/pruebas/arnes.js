@@ -105,7 +105,7 @@
   // perfil de vuelo de las aeronaves (engine/relieve.py): helicopteros rasantes, misiles siempre rasantes, el resto
   // medio; para variar el ejemplo, Flecha 1 patrulla en perfil alto y el caza rojo entra rasante
   const SIN_ALTO = ["helicoptero", "helicoptero_artillado", "municion_merodeadora"];
-  const AEREAS = ["caza", "ataque", "helicoptero", "helicoptero_artillado", "avion_ge", "dron_reconocimiento", "dron_ataque", "municion_merodeadora", "misil_crucero"];
+  const AEREAS = ["caza", "ataque", "helicoptero", "helicoptero_artillado", "avion_ge", "alerta_temprana", "cisterna", "dron_reconocimiento", "dron_ataque", "municion_merodeadora", "misil_crucero"];
   for (const u of UNIDADES) {
     if (!AEREAS.includes(u.clase)) { u.perfil_actual = null; u.perfiles_permitidos = []; continue; }
     u.perfiles_permitidos = u.clase === "misil_crucero" ? [] : SIN_ALTO.includes(u.clase) ? ["medio", "rasante"] : ["alto", "medio", "rasante"];

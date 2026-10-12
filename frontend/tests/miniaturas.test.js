@@ -4,7 +4,7 @@ const M = require("../static/js/modelo3d.js");
 require("../static/js/miniaturas.js");
 
 const CLASES = ["infanteria", "blindado", "artilleria", "reconocimiento", "antiaerea", "antiaerea_portatil", "ingenieros",
-  "transporte", "radar", "guerra_electronica", "caza", "ataque", "helicoptero", "helicoptero_artillado", "avion_ge",
+  "transporte", "radar", "guerra_electronica", "caza", "ataque", "helicoptero", "helicoptero_artillado", "avion_ge", "alerta_temprana", "cisterna",
   "dron_reconocimiento", "dron_ataque", "municion_merodeadora", "fragata", "patrullero", "base_aerea", "deposito", "puerto"];
 
 test("todas las clases del catalogo tienen miniatura", () => {
