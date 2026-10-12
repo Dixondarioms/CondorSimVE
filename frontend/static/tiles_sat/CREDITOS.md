@@ -9,7 +9,7 @@ servido por EOX IT Services GmbH (https://eox.at) vía su WMTS público (https:/
   (Contains modified Copernicus Sentinel data 2016)" — ya incluida en el control de atribución del mapa
   (`frontend/static/js/app.js`, `initMapa()`); no la quite si cambia de capa.
 - **Resolución real:** ~10 m/píxel (igual que ESA WorldCover). Cada región se descargó hasta un zoom distinto
-  (Venezuela 12, América 8, el mundo 7 si se generó): más allá el mapa amplía la tesela más cercana.
+  (Venezuela 13, América 8, el mundo 7 si se generó): más allá el mapa amplía la tesela más cercana.
 - **Regenerar/ampliar:** `python tools/preparar_satelite.py --region <id> --hasta-zoom N` (reanuda: no vuelve a
   bajar lo que ya está). No toca `frontend/static/tiles/` (relieve) ni `backend/data/terreno/` (grilla del
   motor): esto es solo la imagen de fondo alternativa, no cambia las reglas de movimiento ni la niebla de guerra.

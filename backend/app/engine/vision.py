@@ -42,7 +42,7 @@ def radio_efectivo(detector, objetivo, terreno: Terreno, clima: str = "despejado
     radio = detector.deteccion_km
     if clase_d.solo_aereo and not _en_vuelo(objetivo):
         radio = min(radio, RADIO_LOCAL_SENSOR_KM)
-    radio *= ocultamiento * clima_mod.factor_deteccion(clima, objetivo.lat, objetivo.lon) * _clase(objetivo).firma
+    radio *= ocultamiento * clima_mod.factor_deteccion(clima, objetivo.lat, objetivo.lon) * catalogo.firma(objetivo)
     if clase_d.emisor and getattr(detector, "emitiendo", True) is False:  # radar apagado: solo a ojo
         radio = min(radio, ge_mod.RADIO_SIN_EMISION_KM)
     if ge is not None and ge.interferido(detector):

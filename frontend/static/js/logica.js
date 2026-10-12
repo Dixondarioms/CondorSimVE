@@ -57,7 +57,7 @@
   /** "Pista 40 % · Plataforma 10 % · Depósito 0 %" */
   const textoPartesBase = (u) => `Pista ${Math.round(u.dano_pista || 0)} % · Plataforma ${Math.round(u.dano_plataforma || 0)} % · Depósito ${Math.round(u.dano_combustible || 0)} %`;
   const CLASES_EMBARCABLES = ["helicoptero", "helicoptero_artillado", "dron_reconocimiento", "dron_ataque", "municion_merodeadora"];
-  const MODELOS_EMBARCABLES = ["caza_embarcado"];
+  const MODELOS_EMBARCABLES = ["caza_embarcado", "fa18ef", "ea18g", "e2d", "f35b"]; // como `embarcable` en catalogo.py
   const LANZAN_MISILES = ["fragata", "destructor", "submarino", "lanzador_misiles"];
   const MAX_MISILES_SALVA = 4;
   const MUNICION_POR_MISIL = 25;

@@ -213,7 +213,7 @@ autenticado con verificación de origen, y cabeceras CSP / nosniff / frame-deny.
 
 ## Unidades, logística y efectos
 
-Catálogo (`backend/app/engine/catalogo.py`, 17 clases): infantería, blindados, artillería, reconocimiento,
+Catálogo (`backend/app/engine/catalogo.py`, 31 clases): infantería, blindados, artillería, reconocimiento,
 defensa antiaérea, **antiaérea portátil** (tipo IGLA-S), **ingenieros**, **transporte logístico** (terrestres);
 caza (con los modelos F-16 y Su-30), ataque a tierra, helicóptero, **helicóptero de transporte artillado** (aéreas); fragata, patrullero
 (navales); base aérea, depósito y puerto (bases). Cada clase define velocidad, alcance, detección, autonomía,
@@ -647,17 +647,17 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   **"Sentinel-2 cloudless"** de EOX (https://cloudless.eox.at), un mosaico global sin nubes hecho con
   imágenes Copernicus Sentinel-2 (ESA) — la misma fuente en la que ya se basa la cobertura terrestre
   (ESA WorldCover). Licencia **CC BY 4.0** (libre, con atribución, que ya está en el control del mapa).
-  Resolución real ~10 m/píxel: se generó hasta el zoom 12, que es donde deja de haber información nueva (más
-  allá el propio servicio solo interpola). En *Capas* hay un botón **Satélite / Relieve** para alternar; el
+  Resolución real ~10 m/píxel: Venezuela se generó hasta el zoom 13 (~19 m/píxel en pantalla; el 14 rozaría el límite
+  real del satélite y cuadruplicaría el tamaño). En *Capas* hay un botón **Satélite / Relieve** para alternar; el
   relieve (el de siempre, con el terreno coloreado por clase) sigue disponible porque distingue mejor a
   simple vista el bosque, el pantano o la montaña.
 - **Más zoom:** antes el mapa llegaba como máximo a la tesela nativa de zoom 9 (con estiramiento hasta 11).
-  Ahora el zoom máximo es 15, con detalle real de satélite hasta el 12 (calles y manzanas se distinguen en
+  Ahora el zoom máximo es 15, con detalle real de satélite hasta el 13 (calles, manzanas y pistas se distinguen en
   zonas urbanas); no llega al detalle de edificio/vehículo individual de Google Maps, porque esa resolución
   no existe como dato abierto y gratuito para toda el área del ejercicio.
 - **Cómo se generó:** `python tools/preparar_satelite.py --region <id>` (independiente de `preparar_terreno.py`:
   no toca el relieve, la cobertura ni la grilla que usa el motor, solo agrega la imagen de fondo alternativa).
-  Cada región tiene su foto en `frontend/static/tiles_sat/<region>/`: **Venezuela hasta el zoom 12** y
+  Cada región tiene su foto en `frontend/static/tiles_sat/<region>/`: **Venezuela hasta el zoom 13** (~90 000 teselas más que el 12, ~1 GB) y
   **América hasta el 8** (~600 m/píxel real; más allá el mapa amplía la tesela). Es reanudable y admite
   `--hasta-zoom` para llegar más lejos más adelante (`--region america --hasta-zoom 9` agrega ~51 000 teselas,
   ~460 MB; el 10, ~200 000). El servidor detecta solo qué zooms tiene cada región (`GET /api/terreno/mapas`)
@@ -685,6 +685,25 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   fuerzas de ambos bandos son ficticios, las cifras de bajas varían según la fuente, y el desenlace político
   real (la captura del jefe de Estado) queda fuera del alcance de este ejercicio táctico. Antes de usarla en
   clase, ajuste las unidades y objetivos con lo que la institución considere pedagógicamente apropiado.
+- **`ataque_3_enero_2026`** — *"3 de enero de 2026: Operación Resolución Absoluta (reconstrucción)"*: a diferencia de la
+  anterior, **reconstruye el ataque con los tipos de aeronave que se informaron** en fuentes abiertas (rueda de prensa
+  del general Caine, Air & Space Forces Magazine, Wikipedia): bando rojo = EE. UU. con 73 aeronaves en 31 grupos —F-22A,
+  F-35A (Guardia Nacional de Vermont) y F-35B desde Roosevelt Roads; F/A-18E/F, EA-18G y E-2D del USS Gerald R. Ford;
+  B-1B, E-3G, RC-135V/W, EC-130H, P-8A, KC-135R, RQ-170, MQ-9A y drones de ataque de un solo uso (tipo LUCAS); y los
+  helicópteros del 160.º SOAR (MH-47G, MH-60M, MH-60M DAP, AH-6M, MH-6M) que salen rasantes desde el USS Iwo Jima—, el
+  Ford con dos destructores de escolta, el Iwo Jima y el USS San Antonio. Bando azul = Venezuela: La Carlota y Charallave,
+  los Buk-M2E de La Carlota e Higuerote, radares JY-27A/JYL-1, El Volcán, Fuerte Tiuna con sus Igla-S, el Comando de la
+  Milicia, La Guaira y los Su-30MK2 en tierra en El Libertador. Empieza a la 01:00 (los ataques se informaron hacia las
+  02:00), con objetivos emparejados (neutralizar/mantener los Buk, El Volcán y Fuerte Tiuna; preservar/derribar la
+  fuerza de asalto). Son 73 de las más de 150 aeronaves informadas; posiciones de buques, radares y grupos aéreos
+  aproximadas; el desenlace político queda fuera del ejercicio.
+  - Para ello el catálogo suma **20 modelos de EE. UU.** (`MODELOS`, cada uno con su miniatura 3D en `js/miniaturas.js` e
+    ilustración en `static/fotos/`, generada con `node tools/generar_fotos_miniaturas.js`), una **firma radar por modelo**
+    (F-22 ×0,3, F-35 ×0,35, RQ-170 ×0,15: los radares los ven mucho más cerca) y dos clases aéreas nuevas: **alerta
+    temprana (AEW&C)**, un radar en vuelo que ve aeronaves a 300-400 km por encima del relieve, y **avión cisterna**, que
+    da +40 % de combustible a las aeronaves propias en vuelo a ≤ 40 km (gasta su carga y la recarga en una base aérea).
+    Ambas vuelan alto por defecto y las conduce el A3. Las plantillas guardan además el **perfil de vuelo** de cada
+    aeronave.
 - Para agregar una plantilla propia: una entrada más en `PLANTILLAS` (`engine/plantillas.py`), con sus
   `UnidadPlantilla` y, si aplica, `ObjetivoPlantilla`; no hace falta tocar la base de datos ni el resto del código.
 
@@ -845,7 +864,7 @@ Cómo se combinan: el servidor lista las regiones generadas en `GET /api/terreno
 teselas de todas apiladas (la más detallada encima), carga los límites y poblaciones de cada una, abre la vista en la
 más detallada y ofrece un botón por región en la tarjeta **Capas** para encajar la vista. El motor
 (`backend/app/terreno.py`) consulta la clase de terreno en la región más fina que cubra el punto; fuera de todas es
-llano. La foto satelital (`tiles_sat/<region>/`) existe para Venezuela (zoom 12) y América (zoom 8); una región
+llano. La foto satelital (`tiles_sat/<region>/`) existe para Venezuela (zoom 13) y América (zoom 8); una región
 nueva la obtiene con `python tools/preparar_satelite.py --region <id>`.
 
 Fuentes: elevación de *AWS Terrain Tiles* (SRTM/GMTED/ETOPO1 vía Mapzen), cobertura terrestre de
@@ -874,8 +893,9 @@ del proyecto centrado en La Guaira/Caracas.
 - El terreno no distingue cultivos, cárcavas ni carreteras; los ríos se detectan en la grilla (~300 m) y
   los puentes que existen en la realidad no están cargados (solo los que construyen los ingenieros).
 - No hay unidades anfibias/aerotransportadas; el transporte logístico es terrestre.
-- Los modelos de aeronave son solo F-16 y Su-30; los aviones no gastan inventario de las bases (solo hay un tope
-  por bando) y el estado real de cada aparato en la flota venezolana no se modela.
+- Los modelos de aeronave venezolanos son solo F-16 y Su-30 (los de EE. UU. de la plantilla del 3 de enero tienen cifras
+  didácticas, no técnicas); los aviones no gastan inventario de las bases (solo hay un tope por bando) y el estado real
+  de cada aparato en la flota venezolana no se modela.
 - Las comunicaciones simuladas solo afectan al chat, no a las órdenes ni a la niebla de guerra.
 - No hay selección múltiple de unidades ni órdenes de grupo: cada orden se da a una unidad.
 - La identidad nacional es solo un nombre para la interfaz: no se modela el orden de batalla real de ningún país de América. El terreno a ~300 m, la foto satelital a 10 m y los planos de aeródromos se limitan a Venezuela y vecinos; el resto de América está a ~1,2 km/píxel de relieve y ~600 m de foto (y el mundo, si se genera, a ~2,4 km).

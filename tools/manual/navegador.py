@@ -3,7 +3,7 @@
 Usa solo la libreria `websockets` (viene con el servidor: uvicorn[standard]) y el Chrome instalado. Permite navegar,
 ejecutar JavaScript, hacer clic en elementos o en un punto del mapa (lat, lon), pasar el cursor y capturar la
 pantalla entera o el recuadro de un elemento. Las capturas se pueden anotar con numeros sobre las zonas que se
-explican (anotar()).
+explican (anotar()). Tambien graba video (grabar(): Chrome envia cada cuadro que cambia; ver video_demo.py).
 """
 
 import base64
@@ -56,9 +56,39 @@ class Navegador:
             raise RuntimeError("Chrome no abrio el puerto de depuracion")
         self.ws = connect(paginas[0]["webSocketDebuggerUrl"], max_size=None, open_timeout=20)
         self._id = 0
+        self.cuadros: list[tuple[float, bytes]] = []  # (segundos desde el inicio de la grabacion, jpeg)
+        self._t0 = None
         self.enviar("Emulation.setDeviceMetricsOverride", {"width": ancho, "height": alto, "deviceScaleFactor": escala, "mobile": False})
 
     # ---------------------------------------------------------------- protocolo
+    def _evento(self, msj: dict) -> None:
+        """Cuadros de la grabacion: se guardan y se confirman (Chrome no manda el siguiente sin confirmacion)."""
+        if msj.get("method") == "Page.screencastFrame":
+            p = msj["params"]
+            if self._t0 is not None:
+                self.cuadros.append((time.time() - self._t0, base64.b64decode(p["data"])))
+            self._id += 1
+            self.ws.send(json.dumps({"id": self._id, "method": "Page.screencastFrameAck", "params": {"sessionId": p["sessionId"]}}))
+
+    def pausa(self, segundos: float) -> None:
+        """Espera atendiendo los eventos de Chrome (durante una grabacion, sigue recibiendo cuadros)."""
+        limite = time.time() + segundos
+        while (falta := limite - time.time()) > 0:
+            try:
+                self._evento(json.loads(self.ws.recv(timeout=falta)))
+            except TimeoutError:
+                break
+
+    def grabar(self, calidad=82) -> None:
+        self.cuadros, self._t0 = [], time.time()
+        self.enviar("Page.startScreencast", {"format": "jpeg", "quality": calidad, "everyNthFrame": 1})
+
+    def detener_grabacion(self) -> float:
+        self.enviar("Page.stopScreencast")
+        duracion = time.time() - self._t0
+        self._t0 = None
+        return duracion
+
     def enviar(self, metodo: str, params: dict | None = None, espera=60):
         self._id += 1
         mio = self._id
@@ -66,6 +96,7 @@ class Navegador:
         limite = time.time() + espera
         while time.time() < limite:
             msj = json.loads(self.ws.recv(timeout=espera))
+            self._evento(msj)
             if msj.get("id") == mio:
                 if "error" in msj:
                     raise RuntimeError(f"{metodo}: {msj['error']}")
@@ -86,28 +117,28 @@ class Navegador:
                     return
             except RuntimeError:
                 pass
-            time.sleep(pausa)
+            self.pausa(pausa)
         raise TimeoutError(condicion)
 
     def ir(self, url: str, listo: str, extra=1.5):
         self.enviar("Page.navigate", {"url": url})
-        time.sleep(0.5)
+        self.pausa(0.5)
         self.esperar("document.readyState === 'complete'")
         self.esperar(listo, 30)
-        time.sleep(extra)
+        self.pausa(extra)
 
     # ---------------------------------------------------------------- acciones
     def clic(self, selector: str, ctrl=False):
         """Clic de JavaScript sobre el elemento (botones, pestañas, elementos de lista)."""
         self.js(f"(() => {{ const e = document.querySelector({json.dumps(selector)}); if (!e) throw new Error('no existe ' + {json.dumps(selector)});"
                 f" e.dispatchEvent(new MouseEvent('click', {{ bubbles: true, cancelable: true, ctrlKey: {str(ctrl).lower()} }})); }})()")
-        time.sleep(0.4)
+        self.pausa(0.4)
 
     def valor(self, selector: str, valor):
         """Fija el valor de un campo o lista y avisa con 'input' y 'change'."""
         self.js(f"(() => {{ const e = document.querySelector({json.dumps(selector)}); e.value = {json.dumps(str(valor))};"
                 f" e.dispatchEvent(new Event('input', {{ bubbles: true }})); e.dispatchEvent(new Event('change', {{ bubbles: true }})); }})()")
-        time.sleep(0.3)
+        self.pausa(0.3)
 
     def punto_mapa(self, lat: float, lon: float) -> tuple[float, float]:
         return tuple(self.js(
@@ -123,16 +154,16 @@ class Navegador:
         for n in (1, 2) if dobles else (1,):
             self.raton("mousePressed", x, y, button="left", clickCount=n)
             self.raton("mouseReleased", x, y, button="left", clickCount=n)
-        time.sleep(0.45)
+        self.pausa(0.45)
 
     def cursor_mapa(self, lat: float, lon: float):
         x, y = self.punto_mapa(lat, lon)
         self.raton("mouseMoved", x, y)
-        time.sleep(0.8)
+        self.pausa(0.8)
 
     def vista(self, lat: float, lon: float, zoom: int, espera=2.5):
         self.js(f"void __mapa.setView([{lat}, {lon}], {zoom}, {{ animate: false }})")  # sin devolver el mapa (no se serializa)
-        time.sleep(espera)
+        self.pausa(espera)
 
     def rect(self, selector: str) -> dict:
         r = self.js(f"(() => {{ const e = document.querySelector({json.dumps(selector)}); if (!e) return null;"
