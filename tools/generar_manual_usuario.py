@@ -367,6 +367,9 @@ def construir(salida: Path) -> None:
     h += [pasos("Seleccione la unidad y pulse <b>Mover</b>.", "Haga clic en el mapa para cada punto de paso (W1, W2…).",
                 "Lea la vista previa: hasta dónde llega en este turno según el terreno, los ríos, el clima y el combustible.",
                 f"Pulse {B('Emitir orden')}. {B('Limpiar waypoints')} empieza de nuevo."),
+          P(f"{B('Seguir carreteras')} toma el último punto como destino y traza solo el camino más rápido por las carreteras y sus "
+            "puentes (en la capa de carreteras, al acercar el mapa). Por carretera las unidades terrestres avanzan más y cruzan los ríos "
+            "por los puentes reales."),
           P("Si la ruta es más larga que lo que la unidad avanza en un turno, sigue en los turnos siguientes. Los vehículos pesados solo cruzan "
             "los ríos por un puente o vado.")]
     h += [H2("6.6 Atacar y apoyar")]
@@ -498,10 +501,13 @@ def construir(salida: Path) -> None:
         H2("7.4 Agregar unidades"),
         pasos("Despliegue <b>Agregar unidad</b>.", "Escriba el nombre y elija el <b>bando</b>, la <b>clase</b> y el <b>escalón</b>.",
               "Los valores (velocidad, alcance, detección, autonomía) se llenan con los de la clase; puede ajustarlos.",
-              f"Para aeronaves, {B('Elegir aeronave…')} abre las fichas de los modelos.",
+              f"Para aeronaves, {B('Elegir aeronave…')} abre las fichas de los modelos; para las demás clases, la lista "
+              "<b>Tipo</b> ofrece los del catálogo propio.",
               f"Pulse {B('Ubicar en mapa')} y haga clic en el lugar: la unidad aparece allí."),
         P("Las unidades navales solo pueden ir sobre el agua. Para colocar una <b>base aérea real</b>, haga clic en el aeródromo en el mapa "
           "(capa Bases aéreas y aeródromos) y elija «Base azul» o «Base roja»."),
+        P("<b>Catálogo propio</b> (en la Consola): cree los tipos de unidad de la AMB —por ejemplo «Buk-M2E» o «VN-16»— eligiendo una clase "
+          f"y ajustando el nombre, el país y los valores; pulse {B('Guardar tipo')} y ya aparece en la lista <b>Tipo</b> al agregar unidades."),
     ])
     h += figura("elegir_aeronave", "Elegir el modelo de aeronave: foto, prestaciones y armamento de cada uno.", ancho=ANCHO_TEXTO * 0.85)
     h += al_lado("consola_objetivos", "Consola: objetivos y puntaje.", [
@@ -598,7 +604,11 @@ def construir(salida: Path) -> None:
     h += figura("informe_rubrica", "Rúbrica: indicadores por bando y por puesto, y evaluación por alumno.")
     h += [P("La <b>rúbrica</b> resume la conducción de cada bando y de cada puesto (órdenes emitidas, resueltas y rechazadas con su motivo, "
             "turnos con órdenes y turnos pasivos, logística, pérdidas, objetivos, misiones) con <b>observaciones automáticas</b>. La "
-            f"<b>evaluación por alumno</b> hace lo mismo para cada usuario, y {B('CSV por alumno')} la descarga para la planilla de calificaciones.")]
+            f"<b>evaluación por alumno</b> hace lo mismo para cada usuario, y {B('CSV por alumno')} la descarga para la planilla de calificaciones."),
+          P("Los <b>indicadores doctrinales</b> puntúan de 0 a 100 la reacción ante las amenazas, el conocimiento del enemigo, el sostenimiento "
+            "logístico, la coordinación entre puestos, la economía de fuerzas, el cumplimiento de objetivos y la iniciativa, y dan una "
+            "<b>calificación de 1 a 20</b>; «Cómo se calcula cada indicador» explica el criterio de cada uno. "
+            f"{B('Comparar con otros ejercicios…')} pone lado a lado la nota de cada bando en varios ejercicios y la evolución de cada alumno.")]
     h += figura("informe_replay", "Replay animado a mitad del ejercicio: estelas, combate en curso y rótulo con hora, clima, marcador y novedades.")
     h += [H2("8.5 Replay animado"),
           P("Reproduce el ejercicio de forma continua: las unidades se mueven entre turnos, los combates destellan, las unidades destruidas se "

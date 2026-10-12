@@ -342,6 +342,16 @@ salta a ese turno y lugar. Los datos salen de `GET /api/escenarios/{id}/aar/time
 la exportación JSON): series, eventos con su causa (movimiento, combate, apoyo, convoy, construcción…) y
 correlaciones (`consumo_en_combate`, `coincide_con_combate`, `combate_con_logistica_baja`).
 
+**Indicadores doctrinales y calificación (1 a 20).** La rúbrica suma, por bando, siete indicadores de 0 a 100, cada
+uno con su criterio a la vista: **reacción ante las amenazas** (turnos entre el primer ataque de una unidad enemiga y la
+primera orden propia contra ella), **conocimiento del enemigo** (unidades enemigas detectadas sobre el total),
+**sostenimiento logístico**, **coordinación entre puestos** (según quién dio cada orden; no aplica si un solo alumno
+condujo todo), **economía de fuerzas** (pérdidas infligidas sobre el total), **cumplimiento de objetivos** e
+**iniciativa** (turnos con órdenes). La **calificación** es su promedio en la escala de 1 a 20 (sin turnos jugados no
+hay nota). Va en el diálogo *Rúbrica*, en el informe imprimible y en la exportación. **Comparar ejercicios**
+(*Rúbrica → Comparar con otros ejercicios…*; `GET /api/evaluacion/comparar?ids=1,2,3`, instructor y observador): la
+nota y los indicadores de cada bando en varios ejercicios y la evolución de cada alumno de uno a otro.
+
 **Rúbrica de evaluación por bando y por puesto.** El botón *Rúbrica* de la repetición (y la sección
 "Rubrica de evaluacion" del informe imprimible) resume, para cada bando: órdenes emitidas / resueltas /
 rechazadas con los tres motivos de rechazo más frecuentes (agrupados sin cifras: "Objetivo fuera de alcance"),
@@ -822,6 +832,17 @@ plantilla…» (marcada como *Guardada por un instructor*), se instancia igual q
 - **Migraciones:** `backend/migrations/` (Alembic); una base anterior a las migraciones se adopta sola.
   Una prueba comprueba que los modelos y las migraciones no divergen.
 
+### Catálogo propio (orden de batalla de la AMB)
+
+*Consola → Catálogo propio*: el instructor define sus propios tipos de unidad (por ejemplo «Buk-M2E», «VN-16»,
+«Mi-17V5») a partir de una clase del catálogo —la clase da el símbolo, la movilidad y las reglas; el tipo, el nombre,
+el país y los valores de juego (velocidad, alcance, detección, autonomía, ataque contra cada tipo y defensa)—. Quedan
+disponibles al instante en *Agregar unidad* (lista «Tipo» en las clases de tierra y mar; las aeronaves, en el selector
+con fotos), sin tocar el código ni reiniciar. Se guardan en `backend/data/modelos_usuario.json` (fuera del
+repositorio; `SIMULADOR_MODELOS_USUARIO` cambia el archivo) con ids `u_…` que nunca pisan los del sistema. API:
+`POST /api/catalogo/modelos` (crea o reemplaza) y `DELETE /api/catalogo/modelos/{id}` (instructor);
+`engine/modelos_usuario.py`.
+
 ### Ajustar los valores de juego
 
 Los valores del catálogo (velocidades, alcances, detección, autonomía, defensa, efectividad por tipo de
@@ -856,6 +877,25 @@ servidor. Formato:
   nuevas (las existentes se editan desde la ficha de la unidad); el resto (`ataque_vs`, `defensa`, existencias,
   firma, cadencia, despliegue, recarga, plazas, topes) se consulta en cada resolución y afecta también a los
   escenarios ya creados.
+
+## Carreteras, puentes y rutas
+
+- **Datos** (`python tools/preparar_vias.py`): carreteras principales y secundarias de **OpenStreetMap** en Venezuela
+  y vecinos (Overpass, por celdas de 2° con caché en `tools/cache/osm_vias/`, reanudable; si una celda no baja, se usa
+  Natural Earth en ella) y de **Natural Earth 10m roads** en el resto de América. Escribe la grilla del motor
+  `backend/data/terreno/<región>/vias.bin.z` (mismo índice que las clases de terreno; 0 ninguna, 1 secundaria, 2
+  principal, con 2 celdas de ancho para que los pasos de 1 km no la salten) y `frontend/static/geo/<región>/
+  carreteras.geojson` para el mapa.
+- **Motor** (`engine/movimiento.py`): por carretera las unidades terrestres van a ×1,25 (secundaria) o ×1,5
+  (principal), por encima del terreno que atraviesan (un bosque o una montaña con carretera ya no frenan); donde la
+  vía cruza un río o el agua hay un **puente** (×0,9, como uno de ingenieros), que también pasan los blindados. Sin
+  `vias.bin.z` todo sigue como antes.
+- **Rutas por carretera** (botón *Seguir carreteras* en la orden de mover; `POST /ordenes/ruta`): toma el último
+  waypoint como destino y traza el camino más rápido (A* sobre una grilla local según el terreno, las carreteras, los
+  puentes y las obras de ingenieros vigentes), en hasta 30 waypoints. Sin camino (destino en el agua, río sin puente),
+  propone la ruta directa y lo avisa.
+- **Mapa**: capa de carreteras desde el zoom 7 (principales en ocre, secundarias más finas) y, bajo el cursor, el tipo
+  de vía junto al terreno.
 
 ## Datos de terreno (offline): regiones del mapa
 
@@ -919,8 +959,8 @@ del proyecto centrado en La Guaira/Caracas.
 
 - El modelo de combate es una abstracción didáctica, no una simulación física; los valores del catálogo
   y de la tabla de pérdidas son ajustables en `engine/`.
-- El terreno no distingue cultivos, cárcavas ni carreteras; los ríos se detectan en la grilla (~300 m) y
-  los puentes que existen en la realidad no están cargados (solo los que construyen los ingenieros).
+- El terreno no distingue cultivos ni cárcavas; las carreteras son las principales y secundarias (OpenStreetMap en
+  Venezuela, Natural Earth en América) y sus puentes se deducen de dónde cruzan un río o el agua.
 - No hay unidades anfibias/aerotransportadas; el transporte logístico es terrestre.
 - Los modelos de aeronave venezolanos son solo F-16 y Su-30 (los de EE. UU. de la plantilla del 3 de enero tienen cifras
   didácticas, no técnicas); los aviones no gastan inventario de las bases (solo hay un tope por bando) y el estado real

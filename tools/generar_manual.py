@@ -695,14 +695,13 @@ def construir(salida: Path, img: Path) -> None:
     # ---- 13 limitaciones
     h += H1("13. Limitaciones conocidas")
     h += [Bul(["El modelo de combate es una abstracción didáctica; los valores del catálogo son ajustables.",
-               "El terreno no distingue cultivos ni carreteras; los ríos se detectan en una grilla de ~300 m y los puentes reales no están cargados (solo los que construyen los ingenieros).",
+               "El terreno no distingue cultivos; las carreteras son las principales y secundarias, y sus puentes se deducen de dónde cruzan un río o el agua.",
                "El transporte logístico es terrestre (convoyes); los buques de desembarco y los helicópteros solo llevan tropas, no abastecimientos.",
                "La identidad nacional es solo un nombre: no se modela el orden de batalla real de los países vecinos.",
                "Las comunicaciones simuladas afectan al chat y pueden demorar órdenes, pero no a la niebla de guerra.",
                "Un solo servidor por aula: el WebSocket y el temporizador viven en el proceso."]),
           H2("Hoja de ruta prevista"),
-          Bul(["Selección de rutas por carreteras y puentes reales.",
-               "Más plantillas de escenario por curso."])]
+          Bul(["Más plantillas de escenario por curso.", "Carreteras terciarias y puentes etiquetados de OpenStreetMap."])]
 
     # ---- 14 novedades
     h += H1("14. Novedades de las versiones 1.1 a 1.4")
@@ -757,6 +756,12 @@ def construir(salida: Path, img: Path) -> None:
                "El simulador conduce un bando con las mismas reglas que un alumno y solo con lo que ese bando ve: ataca, se reabastece, va a sus objetivos, protege sus aviones sin armas y lanza cazas. Un solo bando de alumnos puede entrenar sin contraparte."],
               ["Órdenes que no llegan a tiempo", "Consola → Comunicaciones simuladas",
                "Un porcentaje de las órdenes se demora y se cumple el turno siguiente (más dentro de una interferencia enemiga); el bando recibe el aviso."],
+              ["Carreteras, puentes y rutas", "Capa de carreteras; orden Mover → Seguir carreteras",
+               "Carreteras reales (OpenStreetMap y Natural Earth): las unidades terrestres van más rápido por ellas y cruzan ríos por sus puentes; el botón traza el camino más rápido."],
+              ["Catálogo propio", "Consola → Catálogo propio",
+               "El instructor define los tipos de unidad de la AMB (nombre, clase y valores de juego) y los usa al instante al agregar unidades."],
+              ["Indicadores doctrinales y calificación", "Informe → Rúbrica; Comparar con otros ejercicios",
+               "Reacción, conocimiento del enemigo, logística, coordinación, economía de fuerzas, objetivos e iniciativa, con nota de 1 a 20 y comparación entre ejercicios y por alumno."],
               ["Satélite de Venezuela a zoom 13", "Capa Satélite; tools/preparar_satelite.py",
                "El doble de nitidez al acercar el mapa (unos 19 m por píxel): calles, pistas y plataformas se distinguen mejor."],
           ], [3.6 * cm, 5.2 * cm, ANCHO_TEXTO - 8.8 * cm])]
