@@ -1,0 +1,127 @@
+{
+  "_comentario": "Generado por tools/fotos/fotos_referencia.py: fotos de referencia de Wikimedia Commons.",
+  "modelos": {
+    "ataque_ligero": {
+      "foto": "/static/fotos/ref_ataque_ligero.jpg",
+      "obra": "19334 Hongdu K-8W Karakorum Bangladesh - Air Force VGHS",
+      "autor": "Md Shaifuzzaman Ayon",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:19334_Hongdu_K-8W_Karakorum_Bangladesh_-_Air_Force_VGHS.jpg"
+    },
+    "caza_embarcado": {
+      "foto": "/static/fotos/ref_caza_embarcado.jpg",
+      "obra": "F-18F after launch from USS Abraham Lincoln (CVN-72)",
+      "autor": "U.S. Navy photo by Mass Communication Specialist 2nd Class James R. Evans",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:F-18F_after_launch_from_USS_Abraham_Lincoln_(CVN-72).jpg"
+    },
+    "crucero": {
+      "foto": "/static/fotos/ref_crucero.jpg",
+      "obra": "Tomahawk Block IV cruise missile -crop",
+      "autor": "U.S. Navy derivative work: The High Fin Sperm Whale",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Tomahawk_Block_IV_cruise_missile_-crop.jpg"
+    },
+    "ge_aereo": {
+      "foto": "/static/fotos/ref_ge_aereo.jpg",
+      "obra": "EC-130H Compass Call 060617",
+      "autor": "Mil",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:EC-130H_Compass_Call_060617.jpg"
+    },
+    "helo_ataque": {
+      "foto": "/static/fotos/ref_helo_ataque.jpg",
+      "obra": "Mil Mi-35M (51 yellow)",
+      "autor": "Yevgeny Volkov",
+      "licencia": "CC BY 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Mil_Mi-35M_(51_yellow).jpg"
+    },
+    "helo_transporte": {
+      "foto": "/static/fotos/ref_helo_transporte.jpg",
+      "obra": "Mil Mi-17V5 (EV) (30895405051)",
+      "autor": "Carlos E. Pérez S.L. from Maracay, Venezuela",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Mil_Mi-17V5_(EV)_(30895405051).jpg"
+    },
+    "merodeadora": {
+      "foto": "/static/fotos/ref_merodeadora.jpg",
+      "obra": "IAI Harop PAS 2013 02",
+      "autor": "Julian Herzog (Website)",
+      "licencia": "CC BY 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:IAI_Harop_PAS_2013_02.jpg"
+    },
+    "uav_armado": {
+      "foto": "/static/fotos/ref_uav_armado.jpg",
+      "obra": "7-(Drone Mohajer 6- Army ground force)-پهپاد مهاجر 6- نیروی زمینی ارتش",
+      "autor": "Mehr News Agency",
+      "licencia": "CC BY 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:7-(Drone_Mohajer_6-_Army_ground_force)-%D9%BE%D9%87%D9%BE%D8%A7%D8%AF_%D9%85%D9%87%D8%A7%D8%AC%D8%B1_6-_%D9%86%DB%8C%D8%B1%D9%88%DB%8C_%D8%B2%D9%85%DB%8C%D9%86%DB%8C_%D8%A7%D8%B1%D8%AA%D8%B4.jpg"
+    },
+    "uav_reco": {
+      "foto": "/static/fotos/ref_uav_reco.jpg",
+      "obra": "Insitu ScanEagle – 2017 Sola Airshow (28630372098)",
+      "autor": "Alan Wilson from Stilton, Peterborough, Cambs, UK",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Insitu_ScanEagle_%E2%80%93_2017_Sola_Airshow_(28630372098).jpg"
+    }
+  },
+  "clases": {
+    "buque_desembarco": {
+      "foto": "/static/fotos/ref_buque_desembarco.jpg",
+      "obra": "Buque de desembarque tipo LST clase Capana - T-63 Goajira",
+      "autor": "Carlos E. Perez S.L",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Buque_de_desembarque_tipo_LST_clase_Capana_-_T-63_Goajira.JPG"
+    },
+    "destructor": {
+      "foto": "/static/fotos/ref_destructor.jpg",
+      "obra": "US Navy 110930-N-QN361-146 The Arleigh Burke-class guided-missile destroyer USS Sterett (DDG 104) is underway conducting a composite training unit",
+      "autor": "U.S. Navy photo by Mass Communication Specialist 3rd Class Jerine Lee",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:US_Navy_110930-N-QN361-146_The_Arleigh_Burke-class_guided-missile_destroyer_USS_Sterett_(DDG_104)_is_underway_conducting_a_composite_training_unit.jpg"
+    },
+    "fragata": {
+      "foto": "/static/fotos/ref_fragata.jpg",
+      "obra": "ARV Mariscal Sucre (F-21) - 1987-09857",
+      "autor": "PH3 JEFFREY W. LOSHAW",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:ARV_Mariscal_Sucre_(F-21)_-_1987-09857.jpg"
+    },
+    "patrullero": {
+      "foto": "/static/fotos/ref_patrullero.jpg",
+      "obra": "ANBV Yavire (GC-22)",
+      "autor": "Luis García Curado, Cádiz",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:ANBV_Yavire_(GC-22).jpg"
+    },
+    "portaaviones": {
+      "foto": "/static/fotos/ref_portaaviones.jpg",
+      "obra": "Flickr - Official U.S. Navy Imagery - The Nimitz-class aircraft carrier USS Carl Vinson (CVN 70) is underway in the Arabian Sea.",
+      "autor": "Official Navy Page from United States of America MC2 James R. Evans/U.S. Navy",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Flickr_-_Official_U.S._Navy_Imagery_-_The_Nimitz-class_aircraft_carrier_USS_Carl_Vinson_(CVN_70)_is_underway_in_the_Arabian_Sea..jpg"
+    },
+    "submarino": {
+      "foto": "/static/fotos/ref_submarino.jpg",
+      "obra": "Submarino Oceánico Tipo U-209 S-31 Sabalo",
+      "autor": "Carlos E. Perez S.L",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Submarino_Oce%C3%A1nico_Tipo_U-209_S-31_Sabalo.JPG"
+    }
+  }
+}

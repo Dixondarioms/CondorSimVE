@@ -35,8 +35,10 @@ def test_cada_modelo_tiene_clase_valida_foto_en_disco_y_credito():
         assert m.credito["autor"]
         if m.foto.endswith(".svg"):  # ilustracion propia: dominio publico, creditos en fotos/CREDITOS.md
             assert m.credito["licencia"] == "CC0" and m.credito["pagina"] == "/static/fotos/CREDITOS.md"
-        else:  # foto de terceros: licencia con atribucion y enlace a su origen
-            assert m.credito["licencia"].startswith("CC BY") and m.credito["pagina"].startswith("https://")
+        else:  # foto de terceros (catalogo o tools/fotos): licencia libre y enlace a su origen
+            licencia = m.credito["licencia"].lower()
+            assert licencia.startswith(("cc by", "cc0", "public domain", "pd")), m.credito["licencia"]
+            assert m.credito["pagina"].startswith("https://")
         assert m.ataque_vs.keys() == {"terrestre", "aerea", "naval"}
 
 

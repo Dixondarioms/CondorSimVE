@@ -11,6 +11,12 @@ frontend/static/fotos/CREDITOS.md y deja una hoja con las fotos candidatas para 
     backend\\venv\\Scripts\\python tools/fotos/fotos_referencia.py --archivo fragata="File:Nombre.jpg"
     backend\\venv\\Scripts\\python tools/fotos/fotos_referencia.py --forzar           # vuelve a elegir todas
     backend\\venv\\Scripts\\python tools/fotos/fotos_referencia.py --quitar destructor  # vuelve al dibujo
+    backend\\venv\\Scripts\\python tools/fotos/fotos_referencia.py --uniformar         # rehace el encuadre sin red
+
+Encuadre uniforme: si esta instalado `rembg` (pip install -r tools/fotos/requirements.txt), cada foto se recorta
+(solo la aeronave o el buque, sin el resto de la escena) y se centra, a un mismo tamano, sobre el mismo fondo que
+las ilustraciones del simulador (720 x 405). El original reducido queda en tools/fotos/originales/ para rehacerlo
+con --uniformar, que tambien encuadra las fotos del catalogo (F-16 y Su-30). Sin `rembg`, se guarda la foto tal cual.
 
 La hoja tools/fotos/salida/candidatas.html muestra, por unidad, las candidatas numeradas y la elegida; con
 --elegir <clave>=<numero> se cambia por otra. Donde la FANB tiene el equipo se busca primero el venezolano; para
@@ -35,6 +41,9 @@ FOTOS = RAIZ / "frontend" / "static" / "fotos"
 MANIFIESTO = FOTOS / "referencias.json"
 CREDITOS = FOTOS / "CREDITOS.md"
 SALIDA = Path(__file__).resolve().parent / "salida"
+ORIGINALES = Path(__file__).resolve().parent / "originales"  # fotos reducidas sin encuadrar (para --uniformar)
+FOTOS_CATALOGO = ("f16.jpg", "su30.jpg")  # fotos del catalogo que tambien se encuadran
+ANCHO, ALTO = 720, 405  # 16:9, como las ilustraciones SVG (640 x 360)
 API = "https://commons.wikimedia.org/w/api.php"
 # Wikimedia pide un User-Agent que identifique la herramienta.
 AGENTE = "SIETE-simulador/1.0 (fotos de referencia; https://github.com/Dixondarioms/simulador-fenix)"
@@ -51,18 +60,18 @@ UNIDADES = [
                                                                             "Mi-17V-5"]),
     ("modelos", "uav_reco", "Dron de reconocimiento", ["ANSU-100", "Arpia UAV Venezuela", "ScanEagle UAV"]),
     ("modelos", "uav_armado", "Dron armado", ["ANSU-200", "Mohajer drone", "MQ-1 Predator"]),
-    ("modelos", "merodeadora", "Municion merodeadora", ["Switchblade loitering munition", "IAI Harop"]),
+    ("modelos", "merodeadora", "Municion merodeadora", ["IAI Harop", "Switchblade loitering munition"]),
     ("modelos", "ge_aereo", "Avion de guerra electronica", ["EC-130H Compass Call", "EA-18G Growler"]),
     ("modelos", "caza_embarcado", "Caza embarcado", ["F/A-18E Super Hornet aircraft carrier", "Rafale M carrier"]),
     ("modelos", "crucero", "Misil de crucero", ["Tomahawk cruise missile launch", "Kalibr cruise missile"]),
     ("clases", "fragata", "Fragata", ["Mariscal Sucre F-21", "Almirante Brion F-22", "fragata Venezuela Armada"]),
-    ("clases", "patrullero", "Patrullero", ["Guaicamacuto patrullero", "Armada Bolivariana patrullero",
-                                            "Guaiqueri PO-11"]),
+    ("clases", "patrullero", "Patrullero", ["GC-21 Guaicamacuto", "Guaicamacuto", "PC-22 Warao",
+                                            "Armada Bolivariana patrullero"]),
     ("clases", "destructor", "Destructor", ["Arleigh Burke class destroyer underway"]),
     ("clases", "portaaviones", "Portaaviones", ["Nimitz class aircraft carrier underway", "Charles de Gaulle R91"]),
     ("clases", "submarino", "Submarino", ["Sabalo S-31 submarino", "submarino Armada Venezuela",
                                           "Type 209 submarine"]),
-    ("clases", "buque_desembarco", "Buque de desembarco anfibio", ["Capana T-61", "Armada Bolivariana Capana",
+    ("clases", "buque_desembarco", "Buque de desembarco anfibio", ["Capana T-61", "clase Capana", "T-64 Los Llanos",
                                                                    "landing ship tank"]),
 ]
 POR_CLAVE = {clave: (seccion, que, busquedas) for seccion, clave, que, busquedas in UNIDADES}
@@ -143,11 +152,110 @@ def por_titulo(titulo: str) -> dict:
     return c
 
 
+# ---------------------------------------------------------------- encuadre uniforme
+_SESION = None
+
+
+def _rembg():
+    """Modulo y sesion de rembg, o None si no esta instalado (la foto se guarda entonces sin encuadrar)."""
+    global _SESION
+    import os
+    import tempfile
+    # numba (dependencia de rembg) guarda una cache junto al paquete; en Windows la ruta puede pasar de 260 letras
+    os.environ.setdefault("NUMBA_CACHE_DIR", str(Path(tempfile.gettempdir()) / "siete_numba"))
+    try:
+        import rembg
+    except ImportError:
+        return None
+    if _SESION is None:
+        _SESION = rembg.new_session("isnet-general-use")
+    return rembg, _SESION
+
+
+def fondo() -> Image.Image:
+    """El fondo de las ilustraciones SVG: degradado #1d2433 -> #4a5568, brillo arriba y franja de suelo."""
+    from PIL import ImageDraw, ImageFilter
+    arriba, abajo = (0x1D, 0x24, 0x33), (0x4A, 0x55, 0x68)
+    im = Image.new("RGB", (ANCHO, ALTO))
+    d = ImageDraw.Draw(im)
+    for y in range(ALTO):
+        t = y / (ALTO - 1)
+        d.line([(0, y), (ANCHO, y)], fill=tuple(round(a + (b - a) * t) for a, b in zip(arriba, abajo)))
+    brillo = Image.new("L", (ANCHO, ALTO), 0)
+    ImageDraw.Draw(brillo).ellipse([ANCHO * -0.1, ALTO * -0.25, ANCHO * 1.1, ALTO * 0.95], fill=42)
+    im = Image.composite(Image.new("RGB", im.size, "white"), im, brillo.filter(ImageFilter.GaussianBlur(120)))
+    suelo = Image.new("RGBA", (ANCHO, ALTO), (0, 0, 0, 0))
+    ImageDraw.Draw(suelo).rectangle([0, round(ALTO * 300 / 360), ANCHO, ALTO], fill=(0x3B, 0x4A, 0x3A, 140))
+    return Image.alpha_composite(im.convert("RGBA"), suelo)
+
+
+def solo_lo_principal(alfa: Image.Image, minimo: float = 0.3) -> Image.Image:
+    """Deja en la mascara la pieza mas grande y las que miden al menos `minimo` de ella (quita lanchas, personas
+    o restos sueltos de la escena)."""
+    import numpy as np
+    from scipy import ndimage
+    m = np.array(alfa) > 24
+    etiquetas, n = ndimage.label(m)
+    if n <= 1:
+        return alfa
+    areas = ndimage.sum(m, etiquetas, range(1, n + 1))
+    quedan = [i + 1 for i, a in enumerate(areas) if a >= minimo * areas.max()]
+    return Image.fromarray(np.where(np.isin(etiquetas, quedan), np.array(alfa), 0).astype("uint8"))
+
+
+def encuadrar(img: Image.Image) -> Image.Image | None:
+    """La aeronave o el buque recortado, centrado y a la misma escala sobre el fondo comun (None sin rembg)."""
+    from PIL import ImageDraw, ImageFilter
+    r = _rembg()
+    if r is None:
+        return None
+    rembg, sesion = r
+    recorte = rembg.remove(img.convert("RGB"), session=sesion, post_process_mask=True).convert("RGBA")
+    recorte.putalpha(solo_lo_principal(recorte.getchannel("A")))
+    caja = recorte.getchannel("A").point(lambda v: 255 if v > 24 else 0).getbbox()
+    if caja:
+        recorte = recorte.crop(caja)
+    k = min(ANCHO * 0.84 / recorte.width, ALTO * 0.66 / recorte.height)
+    recorte = recorte.resize((max(1, round(recorte.width * k)), max(1, round(recorte.height * k))), Image.LANCZOS)
+    lienzo = fondo()
+    x, y = (ANCHO - recorte.width) // 2, round(ALTO * 0.52 - recorte.height / 2)
+    sombra = Image.new("RGBA", lienzo.size, (0, 0, 0, 0))
+    base = y + recorte.height
+    ImageDraw.Draw(sombra).ellipse([x + recorte.width * 0.1, base - 6, x + recorte.width * 0.9, base + 16],
+                                   fill=(0, 0, 0, 90))
+    lienzo = Image.alpha_composite(lienzo, sombra.filter(ImageFilter.GaussianBlur(8)))
+    lienzo.alpha_composite(recorte, (x, y))
+    return lienzo.convert("RGB")
+
+
+def publicar(original: Image.Image, nombre: str) -> None:
+    """Guarda el original en tools/fotos/originales y la version encuadrada (o el original) en las fotos."""
+    ORIGINALES.mkdir(parents=True, exist_ok=True)
+    original.save(ORIGINALES / nombre, "JPEG", quality=88, optimize=True)
+    final = encuadrar(original) or original
+    final.save(FOTOS / nombre, "JPEG", quality=85, optimize=True, progressive=True)
+
+
+def uniformar_todas() -> None:
+    """Rehace el encuadre de todas las fotos desde sus originales (sin red)."""
+    if _rembg() is None:
+        raise SystemExit("Falta rembg: backend\\venv\\Scripts\\python -m pip install -r tools\\fotos\\requirements.txt")
+    ORIGINALES.mkdir(parents=True, exist_ok=True)
+    # la primera vez (fotos del catalogo o bajadas antes del encuadre), la foto publicada es el original
+    for nombre in [*FOTOS_CATALOGO, *(f.name for f in FOTOS.glob("ref_*.jpg"))]:
+        if not (ORIGINALES / nombre).is_file() and (FOTOS / nombre).is_file():
+            (ORIGINALES / nombre).write_bytes((FOTOS / nombre).read_bytes())
+    for original in sorted(ORIGINALES.glob("*.jpg")):
+        encuadrar(Image.open(original).convert("RGB")).save(FOTOS / original.name, "JPEG", quality=85, optimize=True,
+                                                            progressive=True)
+        print(f"  {original.name}: encuadrada")
+
+
 def guardar_foto(clave: str, c: dict) -> str:
     img = Image.open(io.BytesIO(_bajar(c["miniatura"]))).convert("RGB")
     img.thumbnail((LADO_MAX, LADO_MAX), Image.LANCZOS)
     nombre = f"ref_{clave}.jpg"
-    img.save(FOTOS / nombre, "JPEG", quality=85, optimize=True, progressive=True)
+    publicar(img, nombre)
     return f"/static/fotos/{nombre}"
 
 
@@ -176,7 +284,8 @@ def escribir_creditos(m: dict) -> None:
             filas.append(f"| `{Path(e['foto']).name}` | `{clave}` · {que} | {_md(e['obra'])} | {_md(e['autor'])} | "
                          f"[{_md(e['licencia'])}]({e['url_licencia']}) | {e['pagina']} |")
     bloque = "\n".join([INICIO_TABLA, "## Fotos de referencia (Wikimedia Commons)", "",
-                        "Descargadas y reducidas a 720 px por `tools/fotos/fotos_referencia.py`, sin otra modificación. "
+                        "Descargadas por `tools/fotos/fotos_referencia.py`, reducidas y recortadas sobre un fondo "
+                        "uniforme (los originales reducidos están en `tools/fotos/originales/`). "
                         "Donde la FANB no tiene el equipo, la foto es un ejemplo real que sirve de referencia; las "
                         "cifras del simulador siguen siendo genéricas.", "", *filas, FIN_TABLA])
     texto = CREDITOS.read_text(encoding="utf-8")
@@ -231,8 +340,12 @@ def main() -> int:
     ap.add_argument("--archivo", action="append", metavar="CLAVE=TITULO", help="usar un archivo concreto de Commons")
     ap.add_argument("--forzar", action="store_true", help="volver a elegir tambien las que ya tienen foto")
     ap.add_argument("--quitar", action="append", metavar="CLAVE", help="quitar la foto (vuelve a la ilustracion)")
+    ap.add_argument("--uniformar", action="store_true", help="rehacer el encuadre de todas desde los originales")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")  # consola de Windows: autores con caracteres fuera de su codificacion
+    if args.uniformar:
+        uniformar_todas()
+        return 0
     elegir = {k: int(v) for k, v in _pares(args.elegir, "--elegir").items()}
     archivos = _pares(args.archivo, "--archivo")
     m = leer_manifiesto()
@@ -243,6 +356,7 @@ def main() -> int:
         e = m[POR_CLAVE[clave][0]].pop(clave, None)
         if e:
             (FOTOS / Path(e["foto"]).name).unlink(missing_ok=True)
+            (ORIGINALES / Path(e["foto"]).name).unlink(missing_ok=True)
             print(f"  {clave}: foto quitada")
 
     candidatas, faltan = {}, []
