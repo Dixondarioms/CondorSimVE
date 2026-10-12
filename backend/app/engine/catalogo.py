@@ -406,6 +406,7 @@ def como_dict(c: Clase) -> dict:
         "se_consume": c.se_consume, "celula": c.celula, "defensa_aerea": c.defensa_aerea, "stock_max": c.stock_max,
         "reposicion_turno": c.reposicion_turno, "misil": c.misil, "lanza_misiles": c.lanza_misiles,
         "plazas_aeronaves": c.plazas_aeronaves, "embarcable": c.embarcable,
+        "foto": (FOTOS_CLASE.get(c.id) or {}).get("foto"), "credito": (FOTOS_CLASE.get(c.id) or {}).get("credito"),
     }
 
 
@@ -560,3 +561,68 @@ def aplicar_ajustes(ruta=None) -> dict:
 
 
 aplicar_ajustes()
+
+
+# ---------------------------------------------------------------------------------------------------------
+# Fotos de referencia (tools/fotos/fotos_referencia.py): frontend/static/fotos/referencias.json reemplaza la
+# ilustracion de un modelo por una foto de Wikimedia Commons y da foto a las clases sin modelo (los buques).
+#   {"modelos": {"helo_ataque": {"foto": "/static/fotos/ref_helo_ataque.jpg", "obra": "...", "autor": "...",
+#                                "licencia": "CC BY-SA 4.0", "url_licencia": "https://...", "pagina": "https://..."}},
+#    "clases": {"fragata": {...}}}
+# Solo cambia la imagen y su credito, nunca los valores de juego. Las entradas sin archivo se ignoran.
+# ---------------------------------------------------------------------------------------------------------
+RUTA_FOTOS = _Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "static"
+RUTA_REFERENCIAS = RUTA_FOTOS / "fotos" / "referencias.json"
+FOTOS_CLASE: dict[str, dict] = {}  # clase -> {"foto": url, "credito": {...}}
+_CAMPOS_CREDITO = ("obra", "autor", "licencia", "url_licencia", "pagina")
+
+
+def _referencia_valida(entrada, donde: str, raiz: _Path) -> dict | None:
+    if not isinstance(entrada, dict) or not all(isinstance(entrada.get(k), str) and entrada[k]
+                                                for k in ("foto", *_CAMPOS_CREDITO)):
+        _log.warning("referencias de fotos: %s incompleta (se ignora)", donde)
+        return None
+    foto = entrada["foto"]
+    if not foto.startswith("/static/fotos/") or ".." in foto or not (raiz / foto[len("/static/"):]).is_file():
+        _log.warning("referencias de fotos: %s: no existe %s (se ignora)", donde, foto)
+        return None
+    if not entrada["pagina"].startswith("https://"):
+        _log.warning("referencias de fotos: %s: el origen debe ser un enlace https (se ignora)", donde)
+        return None
+    return {"foto": foto, "credito": {k: entrada[k] for k in _CAMPOS_CREDITO}}
+
+
+def aplicar_referencias(ruta=None, raiz_static=None) -> dict:
+    """Aplica las fotos de referencia a MODELOS y FOTOS_CLASE. Devuelve {"modelos": [ids], "clases": [ids]}."""
+    ruta = _Path(ruta or RUTA_REFERENCIAS)
+    raiz = _Path(raiz_static or RUTA_FOTOS)
+    resumen = {"modelos": [], "clases": []}
+    if not ruta.is_file():
+        return resumen
+    try:
+        datos = _json.loads(ruta.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        _log.warning("referencias de fotos: no se pudo leer %s: %s (se ignora)", ruta, e)
+        return resumen
+    if not isinstance(datos, dict):
+        return resumen
+    for id_, entrada in (datos.get("modelos") or {}).items():
+        if id_ not in MODELOS:
+            _log.warning("referencias de fotos: modelo desconocido %r (se ignora)", id_)
+            continue
+        ref = _referencia_valida(entrada, f"modelos.{id_}", raiz)
+        if ref:
+            MODELOS[id_] = replace(MODELOS[id_], foto=ref["foto"], credito=ref["credito"])
+            resumen["modelos"].append(id_)
+    for id_, entrada in (datos.get("clases") or {}).items():
+        if id_ not in CLASES:
+            _log.warning("referencias de fotos: clase desconocida %r (se ignora)", id_)
+            continue
+        ref = _referencia_valida(entrada, f"clases.{id_}", raiz)
+        if ref:
+            FOTOS_CLASE[id_] = ref
+            resumen["clases"].append(id_)
+    return resumen
+
+
+aplicar_referencias()

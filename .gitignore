@@ -30,3 +30,4 @@ dist/
 frontend/static/geo/aerodromos/
 tools/video/salida/*
 !tools/video/salida/locucion/
+tools/fotos/salida/

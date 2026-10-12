@@ -20,6 +20,10 @@ Bolivariana (escudo de la DIDA en `frontend/static/img/dida_logo.jpg`, en la por
   regenera con `python tools/generar_manual.py --imagenes <carpeta de capturas>` (capturas: `tools/manual/capturas.py`).
 - **Video de presentación en 4K con locución** (voces neuronales de Microsoft, español de Venezuela): doble clic en
   `tools\video\generar_video.cmd`; detalles en `tools/video/README.md`.
+- **Fotos de referencia** de aeronaves, drones y buques (Wikimedia Commons, licencias libres, con su crédito): doble
+  clic en `tools\fotos\descargar_fotos.cmd` en un equipo con internet y reinicie el servidor. Prefiere el equipo
+  venezolano (Mi-35M, Mi-17V-5, K-8W, fragatas Mariscal Sucre, Sábalo, Capana...); para lo que la FANB no tiene usa
+  un ejemplo real. Abre una hoja con las candidatas; para cambiar una: `descargar_fotos.cmd --elegir fragata=2`.
 
 El logotipo e iconos están en `frontend/static/img/` (imagen institucional S.I.E.T.E. de la FANB). El acceso directo
 del Escritorio y `SIETE.exe` usan `icono_escritorio.ico` / `icono_escritorio.png`.
