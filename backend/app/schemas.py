@@ -94,6 +94,8 @@ class EscenarioOut(BaseModel):
     logistica: bool = True
     efectos_clima: bool = True
     fuego_automatico: bool = True
+    ia_azul: bool = False
+    ia_rojo: bool = False
 
 
 class EscenarioConfig(BaseModel):
@@ -115,6 +117,9 @@ class EscenarioConfig(BaseModel):
     logistica: bool | None = None
     efectos_clima: bool | None = None
     fuego_automatico: bool | None = None
+    # adversario automatico: el simulador conduce ese bando
+    ia_azul: bool | None = None
+    ia_rojo: bool | None = None
     # identidad nacional de cada bando (ver /api/naciones); "" quita la identidad y deja "Azul"/"Rojo"
     nacion_azul: str | None = None
     nacion_rojo: str | None = None

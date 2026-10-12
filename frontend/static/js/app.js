@@ -1557,6 +1557,8 @@
       for (const [id, campo] of [["dir-niebla", "niebla"], ["dir-logistica", "logistica"], ["dir-clima", "efectos_clima"], ["dir-fuego", "fuego_automatico"]]) {
         set(id, (e) => { e.checked = esc[campo] !== false; });
       }
+      set("dir-ia-azul", (e) => { e.checked = !!esc.ia_azul; });
+      set("dir-ia-rojo", (e) => { e.checked = !!esc.ia_rojo; });
       set("cfg-limite", (e) => { e.value = esc.limite_decision_seg || 0; });
       set("cfg-hora", (e) => { e.value = `${String(Math.floor(esc.hora_inicio_min / 60)).padStart(2, "0")}:${String(esc.hora_inicio_min % 60).padStart(2, "0")}`; });
       set("cfg-nacion-azul", (e) => { e.value = esc.nacion_azul || ""; });
@@ -1580,7 +1582,8 @@
       const listo = esc[`listo_${bando}`];
       const el = $(`estado-${bando}`);
       el.classList.toggle("listo", listo);
-      el.querySelector("b").textContent = listo ? "LISTO" : rol === bando ? "PLANIFICANDO" : "PENDIENTE";
+      el.querySelector("b").textContent = (esc[`ia_${bando}`] ? "IA · " : "") + (listo ? "LISTO" : rol === bando ? "PLANIFICANDO" : "PENDIENTE");
+      el.title = esc[`ia_${bando}`] ? "Este bando lo conduce el adversario automático del simulador" : "";
       el.querySelector("i").classList.toggle("pulso", !listo);
       el.querySelector(".rotulo-bando").textContent = nombreDeBando(bando).toUpperCase();
     }
@@ -2237,6 +2240,7 @@
     enSilencio(api("PATCH", rutaEsc("/config"), {
       niebla: $("dir-niebla").checked, logistica: $("dir-logistica").checked,
       efectos_clima: $("dir-clima").checked, fuego_automatico: $("dir-fuego").checked,
+      ia_azul: $("dir-ia-azul").checked, ia_rojo: $("dir-ia-rojo").checked,
     }).then(() => toast("Interruptores aplicados", true)));
   });
   $("btn-evento-posicion").addEventListener("click", () => {

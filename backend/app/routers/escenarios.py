@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from sqlalchemy.orm import Session
 
-from app import auth, diapositivas_html, informe_html, schemas, state, turnos
+from app import adversario, auth, diapositivas_html, informe_html, schemas, state, turnos
 from app.db import get_db
 from app.engine import aar, clock, naciones, plantillas, timeline
 from app.models.aar import Instantanea
@@ -157,6 +157,21 @@ async def configurar(
             cambios.append(f"{etiqueta} {'activado' if nuevo else 'desactivado'}")
             db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino="todos",
                           descripcion=f"Direccion del ejercicio: {etiqueta} {'activado' if nuevo else 'desactivado'}."))
+    ia_encendida = []
+    for campo, etiqueta in (("ia_azul", "adversario automatico del bando Azul"), ("ia_rojo", "adversario automatico del bando Rojo")):
+        nuevo = getattr(payload, campo)
+        if nuevo is not None and nuevo != getattr(esc, campo):
+            setattr(esc, campo, nuevo)
+            cambios.append(f"{etiqueta} {'activado' if nuevo else 'desactivado'}")
+            db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino="todos",
+                          descripcion=f"Direccion del ejercicio: {etiqueta} {'activado' if nuevo else 'desactivado'}."))
+            if nuevo:
+                ia_encendida.append(campo[3:])
+            else:
+                setattr(esc, f"listo_{campo[3:]}", False)
+    if ia_encendida and esc.estado == "activo" and esc.fase == "decision":
+        db.flush()
+        adversario.jugar_turno(db, esc, bandos=ia_encendida)  # juega ya el turno en curso
     for campo, etiqueta in (("nacion_azul", "Azul"), ("nacion_rojo", "Rojo")):
         nueva_nacion = getattr(payload, campo)
         if nueva_nacion is None or nueva_nacion == getattr(esc, campo):

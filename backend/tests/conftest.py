@@ -14,6 +14,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app import adversario as adversario_mod
 from app import auth
 from app import models  # noqa: F401  (registra todas las tablas)
 from app import state as state_mod
@@ -50,6 +51,7 @@ def terreno_llano(monkeypatch):
     monkeypatch.setattr(state_mod, "get_terreno", lambda: TerrenoFalso())
     monkeypatch.setattr(router_unidades, "get_terreno", lambda: TerrenoFalso())
     monkeypatch.setattr(router_ordenes, "get_terreno", lambda: TerrenoFalso())
+    monkeypatch.setattr(adversario_mod, "get_terreno", lambda: TerrenoFalso())
     monkeypatch.setattr(auth, "ITERACIONES", 1000)  # hash rapido solo en tests
 
 

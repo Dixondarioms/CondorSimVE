@@ -49,6 +49,9 @@ def avanzar_turno(
     escenario.fase = "decision"
     escenario.listo_azul = escenario.listo_rojo = False
     programar_limite(escenario)
+    if escenario.ia_azul or escenario.ia_rojo:
+        from app import adversario  # importacion tardia: el adversario usa la validacion de las ordenes (routers)
+        adversario.jugar_turno(db, escenario, terreno)
     db.commit()
     db.refresh(escenario)
     return ordenes_procesadas

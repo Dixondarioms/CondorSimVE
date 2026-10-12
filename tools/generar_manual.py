@@ -701,7 +701,7 @@ def construir(salida: Path, img: Path) -> None:
                "Las comunicaciones simuladas afectan al chat, no a las órdenes ni a la niebla de guerra.",
                "Un solo servidor por aula: el WebSocket y el temporizador viven en el proceso."]),
           H2("Hoja de ruta prevista"),
-          Bul(["Adversario automático: un bando conducido por el simulador.", "Selección de rutas por carreteras y puentes reales.",
+          Bul(["Selección de rutas por carreteras y puentes reales.",
                "Más plantillas de escenario por curso."])]
 
     # ---- 14 novedades
@@ -753,6 +753,8 @@ def construir(salida: Path, img: Path) -> None:
                "20 modelos nuevos con miniatura 3D; firma radar por modelo (los furtivos se detectan mucho más cerca); clases de alerta temprana (radar en vuelo) y avión cisterna (reabastece en vuelo)."],
               ["Fotos de referencia", "Ficha de la unidad; tools/fotos/fotos_referencia.py",
                "Fotos de Wikimedia Commons de aeronaves, drones y buques (venezolanos donde existen), con el mismo encuadre y fondo, y su crédito en la ficha."],
+              ["Adversario automático", "Consola → Dirección del ejercicio",
+               "El simulador conduce un bando con las mismas reglas que un alumno y solo con lo que ese bando ve: ataca, se reabastece, va a sus objetivos, protege sus aviones sin armas y lanza cazas. Un solo bando de alumnos puede entrenar sin contraparte."],
               ["Satélite de Venezuela a zoom 13", "Capa Satélite; tools/preparar_satelite.py",
                "El doble de nitidez al acercar el mapa (unos 19 m por píxel): calles, pistas y plataformas se distinguen mejor."],
           ], [3.6 * cm, 5.2 * cm, ANCHO_TEXTO - 8.8 * cm])]

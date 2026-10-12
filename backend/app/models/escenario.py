@@ -1,7 +1,7 @@
 import secrets
 from datetime import datetime, timezone
 
-from sqlalchemy import true, Boolean, DateTime, Integer, String
+from sqlalchemy import false, true, Boolean, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -52,6 +52,9 @@ class Escenario(Base):
     logistica: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
     efectos_clima: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
     fuego_automatico: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+    # adversario automatico: el simulador da las ordenes de ese bando al abrirse cada turno (ver app/adversario.py)
+    ia_azul: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    ia_rojo: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
     # identidad nacional de cada bando (ver engine/naciones.py); "" = sin especificar (se muestra "Azul"/"Rojo")
     nacion_azul: Mapped[str] = mapped_column(String(20), default="venezuela")

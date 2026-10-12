@@ -531,6 +531,9 @@ def construir(salida: Path) -> None:
           "quitar una unidad, selecciónela y use «Eliminar unidad» en su ficha."),
         P("<b>Dirección del ejercicio</b>: interruptores para simplificar con fines didácticos: niebla de guerra, consumo de combustible y "
           f"munición, efectos del clima y fuego automático. Pulse {B('Aplicar interruptores')}; cada cambio queda en el informe."),
+        P("<b>Adversario automático</b>: con «el simulador conduce el bando Azul (o Rojo)» marcado, el simulador da las órdenes de ese "
+          "bando al empezar cada turno y lo marca listo, para que un solo bando de alumnos entrene sin contraparte. Juega con las "
+          "mismas reglas y solo con lo que su bando ve; en el pie de pantalla aparece «IA · LISTO»."),
     ])
     h += al_lado("consola_eventos", "Consola: eventos e informes inyectados.", [
         H2("7.9 Eventos, informes y ajustes manuales"),

@@ -774,6 +774,18 @@ plantilla…» (marcada como *Guardada por un instructor*), se instancia igual q
   ambos bandos ven todo), **consumo de combustible y munición** (apagado, nada se gasta; el reabastecimiento sigue),
   **efectos del clima** (apagados, todo se resuelve como con cielo despejado) y **fuego automático** (apagado, las
   patrullas, la antiaérea y los destructores solo disparan por orden). Cada cambio queda como evento y en el informe.
+- **Adversario automático** (*Consola → Dirección del ejercicio* → «el simulador conduce el bando Azul / Rojo»;
+  `ia_azul` / `ia_rojo` en `PATCH /config`; `backend/app/adversario.py`): el simulador da las órdenes de ese bando al
+  abrirse cada turno (y en el turno en curso al encenderlo) y lo marca **listo**, así un solo bando de alumnos puede
+  entrenar sin contraparte. Sus órdenes pasan por la misma validación que las de los alumnos (alcance, munición,
+  combustible, niebla de guerra) y **solo usa lo que su bando sabe**: sus unidades, las enemigas que detecta (posición,
+  tipo y clase, nunca su fuerza ni su logística), los últimos contactos y sus objetivos. Conducta: las aeronaves vuelven
+  a la base con poco combustible (a una con plazas libres), atacan el mejor blanco a su alcance o se acercan a uno que
+  puedan batir y volver; los aviones sin armas (alerta temprana, cisterna, guerra electrónica) se mantienen fuera del
+  alcance de la antiaérea que ven; la guerra electrónica interfiere al enemigo; las unidades de tierra se reabastecen,
+  atacan si la relación es favorable y van a sus objetivos (ocupar, destruir, proteger); los buques lanzan salvas de
+  misiles; las bases lanzan cazas si el enemigo tiene aviación a la vista. El pie de pantalla muestra «IA · LISTO».
+  Es una conducta didáctica y legible, no óptima: sirve de oponente, no reemplaza al análisis del instructor.
 - **Informes inyectados** (*Consola → Eventos e informes inyectados*): además del aviso de texto, un informe puede
   llevar **fuente** (Inteligencia, Población, Reconocimiento…) y **posición** (clic en el mapa) con una vigencia en
   turnos: el bando destinatario lo ve en el mapa como un rombo amarillo con la fuente, «como si viniera de
