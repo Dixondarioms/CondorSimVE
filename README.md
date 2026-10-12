@@ -21,7 +21,8 @@ Bolivariana (escudo de la DIDA en `frontend/static/img/dida_logo.jpg`, en la por
 - **Video de presentación en 4K con locución** (voces neuronales de Microsoft, español de Venezuela): doble clic en
   `tools\video\generar_video.cmd`; detalles en `tools/video/README.md`.
 
-El logotipo e iconos están en `frontend/static/img/` (imagen institucional S.I.E.T.E. de la FANB).
+El logotipo e iconos están en `frontend/static/img/` (imagen institucional S.I.E.T.E. de la FANB). El acceso directo
+del Escritorio y `SIETE.exe` usan `icono_escritorio.ico` / `icono_escritorio.png`.
 
 ## Puesta en marcha
 
@@ -59,7 +60,7 @@ En un PC con Windows basta con **doble clic en `instalar.cmd`** (ejecuta `instal
 2. Crea `backend\venv` e instala `requirements.txt` (se salta si ya está instalado y no cambió).
 3. Si la base no tiene usuarios, crea la cuenta del administrador **`admin`** con la contraseña inicial
    **`siete1234`**, que se pide cambiar al entrar por primera vez (ver *Cuentas y acceso*).
-4. Crea el acceso directo **S.I.E.T.E.** en el Escritorio (icono del sistema). Al abrirlo se arranca el
+4. Crea el acceso directo **S.I.E.T.E.** en el Escritorio (icono `frontend/static/img/icono_escritorio.ico`). Al abrirlo se arranca el
    servidor en `http://localhost:8000/`, abierto a la red local, y a los pocos segundos se abre el navegador.
 5. Abre el puerto TCP 8000 en el cortafuegos de Windows si se ejecuta como administrador; si no, muestra el
    comando `netsh` para hacerlo.
