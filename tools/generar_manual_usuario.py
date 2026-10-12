@@ -331,7 +331,8 @@ def construir(salida: Path) -> None:
     ])
     h += al_lado("ficha_unidad", "Ficha de la unidad seleccionada.", [
         P("La <b>ficha</b> de la unidad seleccionada muestra:"),
-        Bul(["<b>Fuerza</b>, <b>combustible</b> y <b>munición</b> en barras (en rojo cuando están bajos).",
+        Bul(["Una <b>foto de referencia</b> de la aeronave, el dron o el buque (con su autor y licencia), o su ilustración.",
+             "<b>Fuerza</b>, <b>combustible</b> y <b>munición</b> en barras (en rojo cuando están bajos).",
              "Clase, terreno donde está, velocidad, alcance de fuego, detección, autonomía, movilidad y el clima local.",
              "La orden pendiente, si tiene una.",
              "En bases y depósitos, sus <b>existencias</b>; en las bases aéreas, el daño de pista, plataforma y depósito."]),
@@ -476,7 +477,8 @@ def construir(salida: Path) -> None:
     h += figura("plantillas", "Nuevo escenario desde una plantilla.", ancho=ANCHO_TEXTO * 0.8)
     h += [Bul([f"{B('Nuevo')} crea un escenario vacío y le pide el nombre.",
                f"{B('Desde plantilla…')} crea un escenario nuevo con unidades, objetivos y clima ya cargados. Hay plantillas del sistema y las que "
-               "guardaron los instructores."])]
+               "guardaron los instructores. Entre las del sistema está «3 de enero de 2026: Operación Resolución Absoluta», que reconstruye "
+               "el ataque con las aeronaves y los buques de EE. UU. que se informaron y las defensas venezolanas del litoral central."])]
     h += figura("guardar_plantilla", "Guardar el escenario actual como plantilla.", ancho=ANCHO_TEXTO * 0.62)
     h += [P(f"{B('Guardar como plantilla…')} guarda las unidades tal como están ahora (sin las destruidas), los objetivos, el clima y la "
             "identidad nacional. Marque <b>Conservar la fuerza, el combustible…</b> para guardar la situación con su desgaste (por ejemplo "

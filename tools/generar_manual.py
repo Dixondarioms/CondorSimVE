@@ -277,7 +277,7 @@ def construir(salida: Path, img: Path) -> None:
           Paragraph("MANUAL DE REFERENCIA", ParagraphStyle("mu", parent=S["subtitulo"], fontName="Texto-B", fontSize=18, textColor=AZUL)),
           Spacer(1, 8), Paragraph("Qué es · cómo se hizo · instalación · cómo funciona", S["subtitulo"]), Spacer(1, 28)]
     h += credito_portada()
-    h += [Spacer(1, 10), Paragraph(f"{fecha} · versión del manual 1.3", S["subtitulo"])]
+    h += [Spacer(1, 10), Paragraph(f"{fecha} · versión del manual 1.4", S["subtitulo"])]
     h.append(PageBreak())
 
     # ---- indice
@@ -701,10 +701,11 @@ def construir(salida: Path, img: Path) -> None:
                "Las comunicaciones simuladas afectan al chat, no a las órdenes ni a la niebla de guerra.",
                "Un solo servidor por aula: el WebSocket y el temporizador viven en el proceso."]),
           H2("Hoja de ruta prevista"),
-          Bul(["Selección de rutas por carreteras y puentes reales.", "Más plantillas de escenario por curso."])]
+          Bul(["Adversario automático: un bando conducido por el simulador.", "Selección de rutas por carreteras y puentes reales.",
+               "Más plantillas de escenario por curso."])]
 
     # ---- 14 novedades
-    h += H1("14. Novedades de las versiones 1.1 a 1.3")
+    h += H1("14. Novedades de las versiones 1.1 a 1.4")
     h += [P("Resumen de lo incorporado después de la primera edición del manual; cada punto está explicado en su capítulo."),
           Tbl(["Novedad", "Dónde", "Qué aporta"], [
               ["Meteorología por zonas", "Consola → Meteorología por zonas; capa Meteorología",
@@ -746,6 +747,14 @@ def construir(salida: Path, img: Path) -> None:
                "Los alumnos piden su cuenta y el instructor la aprueba o rechaza; la cuenta admin trae una contraseña inicial que se cambia al primer acceso; contraseñas provisionales y cambio de contraseña para todos."],
               ["Valores de juego editables", "backend/data/ajustes_catalogo.json",
                "El instructor ajusta velocidades, alcances, efectividades y topes sin tocar el código (requiere reiniciar el servidor)."],
+              ["Escenario del 3 de enero de 2026 (reconstrucción)", "Desde plantilla… → «3 de enero de 2026: Operación Resolución Absoluta»",
+               "Reconstrucción con fuentes abiertas: 73 aeronaves de EE. UU. en 31 grupos, sus buques y las defensas venezolanas de Caracas, Miranda y La Guaira, con objetivos para ambos bandos."],
+              ["Aeronaves de EE. UU., alerta temprana y cisternas", "Catálogo (capítulos 9.3 y 11)",
+               "20 modelos nuevos con miniatura 3D; firma radar por modelo (los furtivos se detectan mucho más cerca); clases de alerta temprana (radar en vuelo) y avión cisterna (reabastece en vuelo)."],
+              ["Fotos de referencia", "Ficha de la unidad; tools/fotos/fotos_referencia.py",
+               "Fotos de Wikimedia Commons de aeronaves, drones y buques (venezolanos donde existen), con el mismo encuadre y fondo, y su crédito en la ficha."],
+              ["Satélite de Venezuela a zoom 13", "Capa Satélite; tools/preparar_satelite.py",
+               "El doble de nitidez al acercar el mapa (unos 19 m por píxel): calles, pistas y plataformas se distinguen mejor."],
           ], [3.6 * cm, 5.2 * cm, ANCHO_TEXTO - 8.8 * cm])]
 
     # ---- anexos
