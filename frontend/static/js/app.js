@@ -449,7 +449,7 @@
     app.map = map;
     L.control.zoom({ position: "bottomright" }).addTo(map);
     L.control.attribution({ position: "bottomleft", prefix: false })
-      .addAttribution("Satélite: Sentinel-2 cloudless (EOX, CC BY 4.0) · Relieve: SRTM/GMTED (AWS Terrain Tiles) · Cobertura: ESA WorldCover · Vectores: Natural Earth · Aeródromos: © colaboradores de OpenStreetMap (ODbL)").addTo(map);
+      .addAttribution("Satélite: Sentinel-2 cloudless (EOX, CC BY 4.0) · Relieve: SRTM/GMTED (AWS Terrain Tiles) · Cobertura: ESA WorldCover · Vectores: Natural Earth · Aeródromos y carreteras: © colaboradores de OpenStreetMap (ODbL) y Natural Earth").addTo(map);
 
     // Fondo: el relieve coloreado por clase de terreno de cada region (la mas detallada encima) y, opcionalmente, la foto
     // satelital real de cada region que la tenga descargada (tools/preparar_satelite.py: Venezuela hasta el zoom 13,
