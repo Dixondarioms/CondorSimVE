@@ -57,8 +57,8 @@ def test_los_datos_reales_tienen_la_autopista_regional_del_centro():
     real = terreno_mod.cargar()
     datos = zlib.decompress((terreno_mod.DATA_DIR / "venezuela" / "vias.bin.z").read_bytes())
     assert sum(1 for b in datos[::97] if b) > 100
-    # entre Maracay y Valencia: alguna celda con carretera principal en un entorno de ~1 km
-    assert any(real.via(10.22 + d / 100, -67.80 + e / 100) == 2 for d in range(-2, 3) for e in range(-2, 3))
+    # entre Maracay y Valencia (al norte del lago): alguna celda con carretera principal en un entorno de ~2 km
+    assert any(real.via(10.28 + d / 100, -67.75 + e / 100) == 2 for d in range(-2, 3) for e in range(-2, 3))
 
 
 # ---------- seleccion de rutas por carreteras ----------
