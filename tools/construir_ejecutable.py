@@ -33,7 +33,7 @@ from empaquetar_datos import CARPETA_SATELITE, CARPETAS, SIN_COMPRIMIR, sha256_d
 DIST = RAIZ / "dist"
 TRABAJO = DIST / "_construccion"
 LANZADOR = RAIZ / "tools" / "ejecutable" / "siete.py"
-ICONO_PNG = RAIZ / "frontend" / "static" / "img" / "siete_icono_256.png"
+ICONO_PNG = RAIZ / "frontend" / "static" / "img" / "icono_escritorio.png"
 
 # Lo que no viaja en la carpeta portatil: datos del aula de este equipo, pruebas y caches.
 IGNORAR = shutil.ignore_patterns("__pycache__", "*.pyc", "*.log", "plantillas_usuario")

@@ -29,3 +29,7 @@ usan fotos: son ilustraciones vectoriales hechas para este proyecto y se ceden a
 | `helo_transporte.svg` | `helo_transporte` · Helicóptero de transporte artillado (genérico) |
 | `ataque_ligero.svg` | `ataque_ligero` · Avión de ataque ligero (genérico) |
 | `crucero.svg` | `crucero` · Misil de crucero (genérico) |
+
+Las ilustraciones se reemplazan por fotos reales, y los buques reciben la suya, con
+`tools/fotos/fotos_referencia.py` (doble clic en `tools\fotos\descargar_fotos.cmd`, necesita internet): sus
+créditos se agregan abajo y en `referencias.json`.

@@ -8,6 +8,8 @@ explican (anotar()).
 
 import base64
 import json
+import os
+import shutil
 import socket
 import subprocess
 import tempfile
@@ -18,6 +20,9 @@ from pathlib import Path
 from websockets.sync.client import connect
 
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+if not Path(CHROME).exists():  # Linux (p. ej. el Chromium de Playwright) o la variable SIETE_CHROME
+    CHROME = (os.environ.get("SIETE_CHROME") or shutil.which("google-chrome") or shutil.which("chromium")
+              or shutil.which("chromium-browser") or "/opt/pw-browsers/chromium-1194/chrome-linux/chrome")
 
 
 def _puerto_libre() -> int:
@@ -27,14 +32,16 @@ def _puerto_libre() -> int:
 
 
 class Navegador:
-    def __init__(self, ancho=1440, alto=900):
-        self.ancho, self.alto = ancho, alto
+    def __init__(self, ancho=1440, alto=900, escala=1):
+        """`escala`: pixeles fisicos por pixel CSS (2 con 1920x1080 da capturas 4K)."""
+        self.ancho, self.alto, self.escala = ancho, alto, escala
         self.puerto = _puerto_libre()
         self.perfil = tempfile.TemporaryDirectory()
         self.proceso = subprocess.Popen(
             [CHROME, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run", "--no-default-browser-check",
              f"--remote-debugging-port={self.puerto}", "--remote-allow-origins=*", f"--user-data-dir={self.perfil.name}",
-             f"--window-size={ancho},{alto}", "--force-device-scale-factor=1", "about:blank"],
+             f"--window-size={ancho},{alto}", f"--force-device-scale-factor={escala}",
+             *(["--no-sandbox"] if hasattr(os, "geteuid") and os.geteuid() == 0 else []), "about:blank"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         for _ in range(100):
             try:
@@ -49,7 +56,7 @@ class Navegador:
             raise RuntimeError("Chrome no abrio el puerto de depuracion")
         self.ws = connect(paginas[0]["webSocketDebuggerUrl"], max_size=None, open_timeout=20)
         self._id = 0
-        self.enviar("Emulation.setDeviceMetricsOverride", {"width": ancho, "height": alto, "deviceScaleFactor": 1, "mobile": False})
+        self.enviar("Emulation.setDeviceMetricsOverride", {"width": ancho, "height": alto, "deviceScaleFactor": escala, "mobile": False})
 
     # ---------------------------------------------------------------- protocolo
     def enviar(self, metodo: str, params: dict | None = None, espera=60):

@@ -1,0 +1,6 @@
+# Video de presentacion (tools/video): voz neuronal de Microsoft, montaje y capturas
+edge-tts>=7.2
+numpy
+opencv-python-headless
+pillow
+websockets

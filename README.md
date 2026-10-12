@@ -18,8 +18,15 @@ Bolivariana (escudo de la DIDA en `frontend/static/img/dida_logo.jpg`, en la por
   sobre el arnés de pruebas, hace los clics, recorta cada panel y numera las zonas. PDF: `python tools/generar_manual_usuario.py`.
 - **Manual de referencia** `docs/Manual_SIETE.pdf` (qué es, cómo se hizo, instalación, reglas del motor y catálogo). Se
   regenera con `python tools/generar_manual.py --imagenes <carpeta de capturas>` (capturas: `tools/manual/capturas.py`).
+- **Video de presentación en 4K con locución** (voces neuronales de Microsoft, español de Venezuela): doble clic en
+  `tools\video\generar_video.cmd`; detalles en `tools/video/README.md`.
+- **Fotos de referencia** de aeronaves, drones y buques (Wikimedia Commons, licencias libres, con su crédito): doble
+  clic en `tools\fotos\descargar_fotos.cmd` en un equipo con internet y reinicie el servidor. Prefiere el equipo
+  venezolano (Mi-35M, Mi-17V-5, K-8W, fragatas Mariscal Sucre, Sábalo, Capana...); para lo que la FANB no tiene usa
+  un ejemplo real. Abre una hoja con las candidatas; para cambiar una: `descargar_fotos.cmd --elegir fragata=2`.
 
-El logotipo e iconos están en `frontend/static/img/` (imagen institucional S.I.E.T.E. de la FANB).
+El logotipo e iconos están en `frontend/static/img/` (imagen institucional S.I.E.T.E. de la FANB). El acceso directo
+del Escritorio y `SIETE.exe` usan `icono_escritorio.ico` / `icono_escritorio.png`.
 
 ## Puesta en marcha
 
@@ -57,7 +64,7 @@ En un PC con Windows basta con **doble clic en `instalar.cmd`** (ejecuta `instal
 2. Crea `backend\venv` e instala `requirements.txt` (se salta si ya está instalado y no cambió).
 3. Si la base no tiene usuarios, crea la cuenta del administrador **`admin`** con la contraseña inicial
    **`siete1234`**, que se pide cambiar al entrar por primera vez (ver *Cuentas y acceso*).
-4. Crea el acceso directo **S.I.E.T.E.** en el Escritorio (icono del sistema). Al abrirlo se arranca el
+4. Crea el acceso directo **S.I.E.T.E.** en el Escritorio (icono `frontend/static/img/icono_escritorio.ico`). Al abrirlo se arranca el
    servidor en `http://localhost:8000/`, abierto a la red local, y a los pocos segundos se abre el navegador.
 5. Abre el puerto TCP 8000 en el cortafuegos de Windows si se ejecuta como administrador; si no, muestra el
    comando `netsh` para hacerlo.

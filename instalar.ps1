@@ -83,7 +83,7 @@ $Raiz = $PSScriptRoot
 $Backend = Join-Path $Raiz 'backend'
 $VenvPython = Join-Path $Backend 'venv\Scripts\python.exe'
 $ArchivoEnv = Join-Path $Backend '.env'
-$Icono = Join-Path $Raiz 'frontend\static\img\favicon.ico'
+$Icono = Join-Path $Raiz 'frontend\static\img\icono_escritorio.ico'
 $NombreTarea = 'SIETE Servidor'
 $NombreAcceso = 'S.I.E.T.E..lnk'
 if (-not $Destino) { $Destino = [Environment]::GetFolderPath('Desktop') }
@@ -644,6 +644,8 @@ function Update-Simulador($esAdmin) {
     Install-Entorno $py -Forzar
     Invoke-Migraciones
     Restart-Tarea $esAdmin
+    # Si ya hay acceso directo, se rehace para que tome el icono vigente.
+    if (Test-Path (Join-Path $Destino $NombreAcceso)) { New-AccesoDirecto }
     Write-Host ""
     Write-Host "Actualización terminada." -ForegroundColor Green
     if (-not (Test-TareaExiste)) { Write-Host "  - Si el servidor estaba en marcha, ciérrelo (detener.cmd) y vuelva a abrirlo con el acceso directo." }

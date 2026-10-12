@@ -63,7 +63,7 @@
       cuerpo.append(ataque, el("p", "arma", m.armamento), el("p", "desc", m.descripcion));
       const c = m.credito;
       const credito = el("small", "credito");
-      credito.append(m.foto.endsWith(".svg") ? "Imagen: " : "Foto: ");
+      credito.append(m.foto.endsWith(".svg") ? "Imagen: " : c.obra ? `Foto de referencia (${c.obra}): ` : "Foto: ");
       const enlace = el("a", "", `${c.autor}, ${c.licencia}`);
       enlace.href = c.pagina;
       enlace.target = "_blank";

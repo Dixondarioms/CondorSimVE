@@ -728,12 +728,14 @@
     const modelo = Logica.modeloDe(u, app.catalogo && app.catalogo.modelos);
     const grupo = modelo ? ` · ${rotuloModelo(u)}` : "";
     el.textContent = `${u.nombre} (${u.clase || u.tipo}${grupo}, ${u.terreno}) fuerza ${pct(u.fuerza)}`;
-    if (!modelo) return el;
+    const cl = modelo ? null : claseDe(u);
+    const ref = modelo || (cl && cl.foto ? cl : null); // buques: foto de referencia de su clase
+    if (!ref) return el;
     const caja = document.createElement("div");
     caja.className = "tip-modelo";
     const foto = document.createElement("img");
-    foto.src = modelo.foto;
-    foto.alt = modelo.nombre;
+    foto.src = ref.foto;
+    foto.alt = ref.nombre;
     foto.width = 132;
     caja.append(foto, el);
     return caja;
@@ -1207,9 +1209,14 @@
     const interferida = app.porId.get(app.seleccion) ? Logica.textoInterferido(u, cl, app.data && app.data.interferencias) : "";
     if (interferida) notas.push(interferida);
     if (oculto) notas.push("Niebla de guerra: de las unidades enemigas solo se conoce su posición y clase.");
-    const foto = modelo
-      ? `<figure class="foto-modelo"><img src="${escapar(modelo.foto)}" alt="${escapar(modelo.nombre)}">`
-        + `<figcaption>${escapar(modelo.fabricante)} · ${escapar(modelo.pais)}. Foto: ${escapar(modelo.credito.autor)}, ${escapar(modelo.credito.licencia)}</figcaption></figure>`
+    // Foto del modelo (aeronaves) o, si no tiene, la de referencia de su clase (buques). La "obra" solo la
+    // traen las fotos de referencia de Wikimedia Commons (tools/fotos/fotos_referencia.py).
+    const ref = modelo || (cl && cl.foto ? cl : null);
+    const origen = modelo ? `${escapar(modelo.fabricante)} · ${escapar(modelo.pais)}. ` : "";
+    const obra = ref && ref.credito.obra ? `Referencia: ${escapar(ref.credito.obra)}. ` : "";
+    const foto = ref
+      ? `<figure class="foto-modelo"><img src="${escapar(ref.foto)}" alt="${escapar(ref.nombre)}">`
+        + `<figcaption>${origen}${obra}${ref.foto.endsWith(".svg") ? "Imagen" : "Foto"}: ${escapar(ref.credito.autor)}, ${escapar(ref.credito.licencia)}</figcaption></figure>`
       : "";
     cont.innerHTML = foto + `<div class="det-titulo"><span class="simbolo">${simboloSvg(u.sidc, 30)}</span>`
       + `<div><h3>${escapar(u.nombre)}</h3><small>Bando ${nombreBando} · ${rama}${u.echelon ? " · " + escapar(u.echelon) : ""}</small></div></div>`
