@@ -397,9 +397,16 @@
             <label class="chk"><input type="checkbox" id="dir-logistica" checked><span>Consumo de combustible y munición</span></label>
             <label class="chk"><input type="checkbox" id="dir-clima" checked><span>Efectos del clima y de las zonas meteorológicas</span></label>
             <label class="chk"><input type="checkbox" id="dir-fuego" checked><span>Fuego automático (patrullas, antiaérea, destructores)</span></label>
+            <label class="chk"><input type="checkbox" id="dir-noche"><span>Ciclo de día y noche (de noche se detecta menos a simple vista; el radar no cambia)</span></label>
             <label class="chk"><input type="checkbox" id="dir-ia-azul"><span>Adversario automático: el simulador conduce el bando Azul</span></label>
             <label class="chk"><input type="checkbox" id="dir-ia-rojo"><span>Adversario automático: el simulador conduce el bando Rojo</span></label>
+            <label class="mini">Nivel del adversario automático<select id="dir-ia-nivel">
+              <option value="prudente">Prudente: solo ataca con ventaja clara y cuida sus aviones</option>
+              <option value="normal" selected>Normal</option>
+              <option value="agresiva">Agresiva: ataca con poca ventaja y persigue lejos</option>
+            </select></label>
             <button id="btn-direccion" type="button">Aplicar interruptores</button>
+            <button id="btn-demo" type="button" class="secundario" title="El simulador conduce los dos bandos y resuelve un turno cada 15 segundos: para mostrar un ejercicio en clase">Modo demostración</button>
           </details>
 
           <details>

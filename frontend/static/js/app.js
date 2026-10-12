@@ -1643,7 +1643,13 @@
   function actualizarCabecera(data) {
     const esc = data.escenario;
     $("h-turno").textContent = String(esc.turno_actual);
-    $("h-hora").textContent = horaDelTurno(esc.turno_actual);
+    const periodo = esc.dia_noche ? (esc.periodo || "dia") : "dia";
+    $("h-hora").textContent = horaDelTurno(esc.turno_actual) + (esc.dia_noche ? ` · ${{ dia: "Día", crepusculo: "Crepúsculo", noche: "Noche" }[periodo]}` : "");
+    if (app.map) {
+      const c = app.map.getContainer();
+      c.classList.toggle("mapa-noche", periodo === "noche");
+      c.classList.toggle("mapa-crepusculo", periodo === "crepusculo");
+    }
     const rol = app.usuario.rol;
     const b = $("h-bando");
     b.textContent = Logica.etiquetaBando(rol, data.vista, esAlumno() ? puestoActual() : null);
@@ -1659,6 +1665,8 @@
         set(id, (e) => { e.checked = esc[campo] !== false; });
       }
       set("dir-ia-azul", (e) => { e.checked = !!esc.ia_azul; });
+      set("dir-noche", (e) => { e.checked = !!esc.dia_noche; });
+      set("dir-ia-nivel", (e) => { e.value = esc.ia_nivel || "normal"; });
       set("dir-ia-rojo", (e) => { e.checked = !!esc.ia_rojo; });
       set("cfg-limite", (e) => { e.value = esc.limite_decision_seg || 0; });
       set("cfg-hora", (e) => { e.value = `${String(Math.floor(esc.hora_inicio_min / 60)).padStart(2, "0")}:${String(esc.hora_inicio_min % 60).padStart(2, "0")}`; });
@@ -2343,7 +2351,14 @@
       niebla: $("dir-niebla").checked, logistica: $("dir-logistica").checked,
       efectos_clima: $("dir-clima").checked, fuego_automatico: $("dir-fuego").checked,
       ia_azul: $("dir-ia-azul").checked, ia_rojo: $("dir-ia-rojo").checked,
+      dia_noche: $("dir-noche").checked, ia_nivel: $("dir-ia-nivel").value,
     }).then(() => toast("Interruptores aplicados", true)));
+  });
+  $("btn-demo").addEventListener("click", () => {
+    if (!app.escenarioId) return;
+    if (!confirm("Modo demostración: el simulador conducirá los dos bandos y resolverá un turno cada 15 segundos. ¿Continuar?")) return;
+    enSilencio(api("PATCH", rutaEsc("/config"), { ia_azul: true, ia_rojo: true, limite_decision_seg: 15 })
+      .then(() => toast("Modo demostración: la IA juega los dos bandos (para detenerlo, desmarque los adversarios o pause).", true)));
   });
   $("btn-evento-posicion").addEventListener("click", () => {
     app.marcandoEvento = !app.marcandoEvento;

@@ -97,6 +97,9 @@ class EscenarioOut(BaseModel):
     fuego_automatico: bool = True
     ia_azul: bool = False
     ia_rojo: bool = False
+    ia_nivel: str = "normal"
+    dia_noche: bool = False
+    periodo: str = "dia"  # dia | crepusculo | noche del turno en curso (solo informa si dia_noche)
 
 
 class EscenarioConfig(BaseModel):
@@ -123,6 +126,9 @@ class EscenarioConfig(BaseModel):
     # adversario automatico: el simulador conduce ese bando
     ia_azul: bool | None = None
     ia_rojo: bool | None = None
+    ia_nivel: Literal["prudente", "normal", "agresiva"] | None = None
+    # ciclo de dia y noche: de noche se detecta menos a simple vista
+    dia_noche: bool | None = None
     # identidad nacional de cada bando (ver /api/naciones); "" quita la identidad y deja "Azul"/"Rojo"
     nacion_azul: str | None = None
     nacion_rojo: str | None = None

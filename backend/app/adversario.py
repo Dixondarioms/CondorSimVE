@@ -50,6 +50,19 @@ REABASTECER = 20  # % de combustible o municion por debajo del cual una unidad d
 RELACION_MINIMA = 0.6  # ataque propio / defensa del blanco (de su clase) para atacar en tierra
 APROXIMACION = 0.8  # se acerca hasta este factor de su alcance
 GRUPO_CAZA = 2  # aeronaves por grupo que lanza una base
+# Niveles del adversario (Escenario.ia_nivel): cuanto riesgo toma.
+NIVELES = {
+    # relacion: ataque/defensa minima para atacar en tierra; regreso: puntos de combustible sobre el de regreso;
+    # aproximacion: fraccion de su alcance a la que se acerca; persecucion_km: hasta donde va por un blanco en tierra;
+    # evita_antiaerea: tambien las aeronaves armadas evitan acercarse a la antiaerea conocida (salvo para batirla);
+    # cazas_por_enemigo: cazas propios en vuelo por cada aeronave enemiga a la vista antes de dejar de lanzar mas
+    "prudente": {"relacion": 0.9, "regreso": 10, "aproximacion": 0.9, "persecucion_km": 30, "evita_antiaerea": True,
+                 "cazas_por_enemigo": 1.0},
+    "normal": {"relacion": 0.6, "regreso": 0, "aproximacion": 0.8, "persecucion_km": 60, "evita_antiaerea": False,
+               "cazas_por_enemigo": 1.0},
+    "agresiva": {"relacion": 0.35, "regreso": -10, "aproximacion": 0.7, "persecucion_km": 150, "evita_antiaerea": False,
+                 "cazas_por_enemigo": 2.0},
+}
 PRIORIDAD = {"antiaerea": 1.6, "radar": 1.5, "guerra_electronica": 1.4, "lanzador_misiles": 1.4, "base_aerea": 1.3,
              "portaaviones": 1.3, "destructor": 1.2, "fragata": 1.2, "artilleria": 1.2, "caza": 1.2,
              "avion_ge": 1.3, "alerta_temprana": 1.4, "cisterna": 1.3}
@@ -99,6 +112,7 @@ class _Turno:
         self.objetivos = db.query(Objetivo).filter(Objetivo.escenario_id == esc.id, Objetivo.bando == bando,
                                                    Objetivo.estado == "pendiente").all()
         self.decisiones: list[str] = []
+        self.nivel = NIVELES.get(getattr(esc, "ia_nivel", "normal") or "normal", NIVELES["normal"])
         self.reservas: dict[int, int] = {}  # plazas de cada base ya comprometidas por los aterrizajes de este turno
 
     # ---------------------------------------------------------------- emision
@@ -189,7 +203,7 @@ class _Turno:
                 return
         else:
             sin_armas = not any(catalogo.perfil(u).ataque_vs.values())
-            if u.combustible <= REGRESO_COMBUSTIBLE or (u.municion <= 5 and not sin_armas):
+            if u.combustible <= REGRESO_COMBUSTIBLE + self.nivel["regreso"] or (u.municion <= 5 and not sin_armas):
                 if self.aterrizar(u):
                     return
         sin_armas = not any(catalogo.perfil(u).ataque_vs.values())
@@ -207,11 +221,13 @@ class _Turno:
         blanco = self.mejor_blanco(u)
         if blanco and u.municion > 0:
             base = min(self.bases_para(u), key=lambda b: geo.distancia_km(blanco.lat, blanco.lon, b.lat, b.lon), default=None)
-            ida = max(0.0, geo.distancia_km(u.lat, u.lon, blanco.lat, blanco.lon) - u.alcance_km * APROXIMACION)
+            ida = max(0.0, geo.distancia_km(u.lat, u.lon, blanco.lat, blanco.lon) - u.alcance_km * self.nivel["aproximacion"])
             vuelta = geo.distancia_km(blanco.lat, blanco.lon, base.lat, base.lon) if base else 0.0
             if ida + vuelta * 1.15 < self.autonomia_restante(u):
-                lat, lon = _punto_a_distancia(u, blanco.lat, blanco.lon, u.alcance_km * APROXIMACION)
-                if self.mover(u, lat, lon):
+                lat, lon = _punto_a_distancia(u, blanco.lat, blanco.lon, u.alcance_km * self.nivel["aproximacion"])
+                expuesto = (self.nivel["evita_antiaerea"] and not catalogo.obtener(blanco.clase, blanco.tipo).defensa_aerea
+                            and self.en_peligro(lat, lon, 1.0))
+                if not expuesto and self.mover(u, lat, lon):
                     return
         if u.municion > 0 and not sin_armas and self.hacia_objetivo_aereo(u):
             return
@@ -233,7 +249,7 @@ class _Turno:
         if not destinos:
             return False
         lat, lon = min(destinos, key=lambda d: geo.distancia_km(u.lat, u.lon, d[0], d[1]))
-        margen = min(u.alcance_km, u.deteccion_km or u.alcance_km) * APROXIMACION
+        margen = min(u.alcance_km, u.deteccion_km or u.alcance_km) * self.nivel["aproximacion"]
         base = min(self.bases_para(u), key=lambda b: geo.distancia_km(lat, lon, b.lat, b.lon), default=None)
         ida = max(0.0, geo.distancia_km(u.lat, u.lon, lat, lon) - margen)
         vuelta = geo.distancia_km(lat, lon, base.lat, base.lon) if base else 0.0
@@ -322,7 +338,7 @@ class _Turno:
         aviones_enemigos = [e for e in self.enemigos if e.tipo == "aerea" and not e.en_tierra]
         cazas_propios = [a for a in self.propias if a.tipo == "aerea" and not a.en_tierra
                          and catalogo.perfil(a).ataque_vs.get("aerea", 0) >= 1.0]
-        if not aviones_enemigos or len(cazas_propios) > len(aviones_enemigos):
+        if not aviones_enemigos or len(cazas_propios) > len(aviones_enemigos) * self.nivel["cazas_por_enemigo"]:
             return
         for modelo in self.modelos_caza(b):
             if self.ordenar(b, tipo="despegar", modelo=modelo, aeronaves=GRUPO_CAZA):
@@ -356,14 +372,14 @@ class _Turno:
         if (u.combustible < REABASTECER or u.municion < REABASTECER) and self.reabastecer(u):
             return
         blanco = self.mejor_blanco(u, u.alcance_km)
-        if blanco and u.municion > 0 and self.relacion(u, blanco) >= RELACION_MINIMA:
+        if blanco and u.municion > 0 and self.relacion(u, blanco) >= self.nivel["relacion"]:
             if self.ordenar(u, tipo="atacar", objetivo_unidad_id=blanco.id):
                 return
         if self.ir_a_objetivo(u):
             return
         blanco = self.mejor_blanco(u)
-        if blanco and self.relacion(u, blanco) >= RELACION_MINIMA and geo.distancia_km(u.lat, u.lon, blanco.lat, blanco.lon) < 60:
-            lat, lon = _punto_a_distancia(u, blanco.lat, blanco.lon, u.alcance_km * APROXIMACION)
+        if blanco and self.relacion(u, blanco) >= self.nivel["relacion"] and geo.distancia_km(u.lat, u.lon, blanco.lat, blanco.lon) < self.nivel["persecucion_km"]:
+            lat, lon = _punto_a_distancia(u, blanco.lat, blanco.lon, u.alcance_km * self.nivel["aproximacion"])
             self.mover(u, lat, lon)
 
     def ir_a_objetivo(self, u) -> bool:
@@ -375,7 +391,7 @@ class _Turno:
             elif o.tipo == "destruir" and o.unidad_id:
                 p = self.posicion_conocida(o.unidad_id)
                 if p:
-                    destinos.append((p[0], p[1], u.alcance_km * APROXIMACION))
+                    destinos.append((p[0], p[1], u.alcance_km * self.nivel["aproximacion"]))
             elif o.tipo == "proteger":
                 p = next((x for x in self.propias if x.id == o.unidad_id), None)
                 if p and p is not u and geo.distancia_km(u.lat, u.lon, p.lat, p.lon) > 10:
@@ -436,8 +452,8 @@ class _Turno:
         if catalogo.opera_aeronaves(u):
             return self.base(u)
         blanco = self.mejor_blanco(u)
-        if blanco and blanco.tipo == "naval" and self.relacion(u, blanco) >= RELACION_MINIMA:
-            lat, lon = _punto_a_distancia(u, blanco.lat, blanco.lon, u.alcance_km * APROXIMACION)
+        if blanco and blanco.tipo == "naval" and self.relacion(u, blanco) >= self.nivel["relacion"]:
+            lat, lon = _punto_a_distancia(u, blanco.lat, blanco.lon, u.alcance_km * self.nivel["aproximacion"])
             if self.terreno is None or self.terreno.clase(lat, lon) == "agua":
                 self.mover(u, lat, lon)
 

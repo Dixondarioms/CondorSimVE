@@ -541,7 +541,12 @@ def construir(salida: Path) -> None:
           f"munición, efectos del clima y fuego automático. Pulse {B('Aplicar interruptores')}; cada cambio queda en el informe."),
         P("<b>Adversario automático</b>: con «el simulador conduce el bando Azul (o Rojo)» marcado, el simulador da las órdenes de ese "
           "bando al empezar cada turno y lo marca listo, para que un solo bando de alumnos entrene sin contraparte. Juega con las "
-          "mismas reglas y solo con lo que su bando ve; en el pie de pantalla aparece «IA · LISTO»."),
+          "mismas reglas y solo con lo que su bando ve; en el pie de pantalla aparece «IA · LISTO». Elija su <b>nivel</b>: "
+          "prudente (solo ataca con clara ventaja y cuida sus aviones), normal o agresiva (ataca con poca ventaja y persigue lejos). "
+          f"{B('Modo demostración')} pone a la IA a jugar los dos bandos, un turno cada 15 segundos, para mostrar un ejercicio en clase."),
+        P("<b>Ciclo de día y noche</b>: cada turno es una hora; de noche se detecta a la mitad de distancia a simple vista y algo "
+          "menos con las cámaras de aviones y drones; el radar no cambia. La cabecera muestra «Día», «Crepúsculo» o «Noche» y el "
+          "mapa se oscurece."),
     ])
     h += al_lado("consola_eventos", "Consola: eventos e informes inyectados.", [
         H2("7.9 Eventos, informes y ajustes manuales"),

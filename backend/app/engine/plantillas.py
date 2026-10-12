@@ -97,6 +97,7 @@ class Plantilla:
     # adversario automatico ya encendido (el simulador conduce ese bando desde el primer turno)
     ia_azul: bool = False
     ia_rojo: bool = False
+    dia_noche: bool = False  # ciclo de dia y noche encendido
 
 
 _DEMO_LLANOS = Plantilla(
@@ -176,7 +177,7 @@ _ATAQUE_3_ENERO = Plantilla(
         "aéreos son aproximadas, y las cifras de los modelos son didácticas. El desenlace político (la captura del "
         "jefe de Estado) queda fuera del alcance de este ejercicio táctico."
     ),
-    clima="despejado", hora_inicio_min=60, nacion_azul="venezuela", nacion_rojo="estados_unidos",
+    clima="despejado", hora_inicio_min=60, nacion_azul="venezuela", nacion_rojo="estados_unidos", dia_noche=True,
     unidades=(
         # ---- Venezuela (azul) ----
         UnidadPlantilla("Base Aérea Generalísimo Francisco de Miranda (La Carlota)", "azul", "base_aerea", 10.4850, -66.8436),
@@ -271,7 +272,7 @@ _DEFENSA_CENTRAL = Plantilla(
         "capas y la protección de la base. El bando rojo lo conduce el adversario automático (puede apagarse en "
         "Consola → Dirección del ejercicio). Fuerzas genéricas, sin pretensión de representar a un país real."
     ),
-    clima="despejado", hora_inicio_min=300, nacion_azul="venezuela", nacion_rojo="", ia_rojo=True,
+    clima="despejado", hora_inicio_min=300, nacion_azul="venezuela", nacion_rojo="", ia_rojo=True, dia_noche=True,
     unidades=(
         UnidadPlantilla("Base Aérea El Libertador", "azul", "base_aerea", 10.18056, -67.56111),
         _grupo("Su-30MK2 (alerta)", "azul", "su30", 4, 10.18056, -67.56111, base="Base Aérea El Libertador"),
@@ -309,7 +310,7 @@ _INTERDICCION_LLANOS = Plantilla(
         "los puestos. El bando rojo lo conduce el adversario automático. Fuerzas genéricas, sin pretensión de "
         "representar a un país real."
     ),
-    clima="despejado", hora_inicio_min=360, nacion_azul="venezuela", nacion_rojo="", ia_rojo=True,
+    clima="despejado", hora_inicio_min=360, nacion_azul="venezuela", nacion_rojo="", ia_rojo=True, dia_noche=True,
     unidades=(
         UnidadPlantilla("Aeropuerto de Barinas", "azul", "base_aerea", 8.62, -70.21),
         _grupo("K-8W (ataque)", "azul", "ataque_ligero", 4, 8.62, -70.21, base="Aeropuerto de Barinas"),
@@ -344,7 +345,7 @@ _COSTA_ORIENTAL = Plantilla(
         "antes del desembarco y la defensa de la playa. El bando rojo lo conduce el adversario automático. Fuerzas "
         "genéricas, sin pretensión de representar a un país real."
     ),
-    clima="despejado", hora_inicio_min=240, nacion_azul="venezuela", nacion_rojo="", ia_rojo=True,
+    clima="despejado", hora_inicio_min=240, nacion_azul="venezuela", nacion_rojo="", ia_rojo=True, dia_noche=True,
     unidades=(
         UnidadPlantilla("Aeropuerto de Barcelona", "azul", "base_aerea", 10.107, -64.689),
         _grupo("F-16 (Barcelona)", "azul", "f16", 2, 10.107, -64.689, base="Aeropuerto de Barcelona"),
@@ -391,7 +392,8 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
     if p is None:
         raise KeyError(plantilla_id)
     esc = Escenario(nombre=p.nombre, clima=p.clima, hora_inicio_min=p.hora_inicio_min,
-                    nacion_azul=p.nacion_azul, nacion_rojo=p.nacion_rojo, ia_azul=p.ia_azul, ia_rojo=p.ia_rojo)
+                    nacion_azul=p.nacion_azul, nacion_rojo=p.nacion_rojo, ia_azul=p.ia_azul, ia_rojo=p.ia_rojo,
+                    dia_noche=p.dia_noche)
     db.add(esc)
     db.flush()
 
@@ -537,7 +539,7 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
         "guardada_en": datetime.now(timezone.utc).isoformat(timespec="seconds"), "escenario_origen": esc.id,
         "con_estado": bool(con_estado), "clima": esc.clima, "hora_inicio_min": esc.hora_inicio_min,
         "nacion_azul": esc.nacion_azul or "", "nacion_rojo": esc.nacion_rojo or "",
-        "ia_azul": bool(esc.ia_azul), "ia_rojo": bool(esc.ia_rojo),
+        "ia_azul": bool(esc.ia_azul), "ia_rojo": bool(esc.ia_rojo), "dia_noche": bool(esc.dia_noche),
         "unidades": unidades, "objetivos": objetivos,
     }
 
@@ -601,7 +603,7 @@ def desde_dict(datos: dict) -> Plantilla:
         unidades=tuple(unidades), objetivos=tuple(objetivos), origen="usuario",
         con_estado=bool(datos.get("con_estado")), guardada_en=str(datos.get("guardada_en") or ""),
         escenario_origen=datos.get("escenario_origen"),
-        ia_azul=bool(datos.get("ia_azul")), ia_rojo=bool(datos.get("ia_rojo")),
+        ia_azul=bool(datos.get("ia_azul")), ia_rojo=bool(datos.get("ia_rojo")), dia_noche=bool(datos.get("dia_noche")),
     )
 
 

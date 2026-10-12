@@ -157,6 +157,14 @@ async def configurar(
             cambios.append(f"{etiqueta} {'activado' if nuevo else 'desactivado'}")
             db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino="todos",
                           descripcion=f"Direccion del ejercicio: {etiqueta} {'activado' if nuevo else 'desactivado'}."))
+    if payload.ia_nivel is not None and payload.ia_nivel != esc.ia_nivel:
+        esc.ia_nivel = payload.ia_nivel
+        cambios.append(f"nivel del adversario automatico: {payload.ia_nivel}")
+    if payload.dia_noche is not None and payload.dia_noche != esc.dia_noche:
+        esc.dia_noche = payload.dia_noche
+        cambios.append(f"ciclo de dia y noche {'activado' if payload.dia_noche else 'desactivado'}")
+        db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino="todos",
+                      descripcion=f"Direccion del ejercicio: ciclo de dia y noche {'activado' if payload.dia_noche else 'desactivado'}."))
     ia_encendida = []
     for campo, etiqueta in (("ia_azul", "adversario automatico del bando Azul"), ("ia_rojo", "adversario automatico del bando Rojo")):
         nuevo = getattr(payload, campo)
@@ -254,6 +262,7 @@ def duplicar(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends
                       auto_resolver=esc.auto_resolver, limite_decision_seg=esc.limite_decision_seg,
                       hora_inicio_min=esc.hora_inicio_min, com_latencia_ms=esc.com_latencia_ms,
                       com_jitter_ms=esc.com_jitter_ms, com_perdida_pct=esc.com_perdida_pct, com_ordenes_pct=esc.com_ordenes_pct,
+                      dia_noche=esc.dia_noche, ia_nivel=esc.ia_nivel,
                       nacion_azul=esc.nacion_azul, nacion_rojo=esc.nacion_rojo)
     db.add(copia)
     db.flush()

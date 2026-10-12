@@ -813,6 +813,17 @@ plantilla…» (marcada como *Guardada por un instructor*), se instancia igual q
   atacan si la relación es favorable y van a sus objetivos (ocupar, destruir, proteger); los buques lanzan salvas de
   misiles; las bases lanzan cazas si el enemigo tiene aviación a la vista. El pie de pantalla muestra «IA · LISTO».
   Es una conducta didáctica y legible, no óptima: sirve de oponente, no reemplaza al análisis del instructor.
+  **Nivel** (`ia_nivel`: `prudente` | `normal` | `agresiva`, en la misma sección): cuánto riesgo toma. La prudente solo
+  ataca con clara ventaja, persigue poco, vuelve antes a la base y no se mete en la antiaérea que conoce; la agresiva
+  ataca con poca ventaja, persigue hasta 150 km y lanza más cazas (tabla `NIVELES` en `backend/app/adversario.py`).
+  **Modo demostración** (botón en la misma sección): la IA conduce los dos bandos y el turno se resuelve solo cada
+  15 s, para mostrar un ejercicio en clase; se detiene desmarcando los adversarios o pausando.
+- **Ciclo de día y noche** (*Consola → Dirección del ejercicio*; `dia_noche` en `PATCH /config`; las plantillas
+  contra la IA y el ataque del 3 de enero lo traen encendido): cada turno es una hora desde la hora de inicio; de
+  07:00 a 17:59 es de día, a las 06:00 y a las 18:00 crepúsculo y el resto noche (`engine/clima.py`,
+  `periodo_del_dia`). De noche la detección a simple vista (tropas, vehículos, buques) baja a la mitad (75 % en el
+  crepúsculo) y la de aeronaves, drones y reconocimiento, con cámaras térmicas, al 80 % (90 %); los radares y la
+  escucha electrónica no cambian. La cabecera muestra la hora con «Día / Crepúsculo / Noche» y el mapa se oscurece.
 - **Informes inyectados** (*Consola → Eventos e informes inyectados*): además del aviso de texto, un informe puede
   llevar **fuente** (Inteligencia, Población, Reconocimiento…) y **posición** (clic en el mapa) con una vigencia en
   turnos: el bando destinatario lo ve en el mapa como un rombo amarillo con la fuente, «como si viniera de

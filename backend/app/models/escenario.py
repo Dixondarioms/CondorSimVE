@@ -57,7 +57,18 @@ class Escenario(Base):
     # adversario automatico: el simulador da las ordenes de ese bando al abrirse cada turno (ver app/adversario.py)
     ia_azul: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     ia_rojo: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    # prudente | normal | agresiva: cuanto riesgo toma el adversario automatico (ver app/adversario.py)
+    ia_nivel: Mapped[str] = mapped_column(String(10), default="normal", server_default="normal")
+    # ciclo de dia y noche: de noche se detecta menos a simple vista (ver engine/clima.py, periodo_del_dia)
+    dia_noche: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
     # identidad nacional de cada bando (ver engine/naciones.py); "" = sin especificar (se muestra "Azul"/"Rojo")
     nacion_azul: Mapped[str] = mapped_column(String(20), default="venezuela")
     nacion_rojo: Mapped[str] = mapped_column(String(20), default="")
+
+    @property
+    def periodo(self) -> str:
+        """dia | crepusculo | noche del turno en curso ("dia" si el ciclo de dia y noche esta apagado)."""
+        from app.engine.clima import periodo_de  # importacion tardia: el motor importa los modelos
+
+        return periodo_de(self)
