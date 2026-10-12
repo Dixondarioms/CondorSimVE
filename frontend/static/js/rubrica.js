@@ -72,7 +72,28 @@
     return filas;
   }
 
-  const api = { filasIndicadores, filasPuestos, filasAlumnos, observaciones, resumen, BANDOS, SIN_AUTOR };
+  /** Filas [indicador, azul, rojo] de los indicadores doctrinales (valor y puntaje 0-100) y la calificacion. */
+  function filasDoctrina(rubrica) {
+    const b = rubrica.bandos || {};
+    const ref = BANDOS.map((k) => b[k] && b[k].doctrina).find(Boolean);
+    if (!ref) return [];
+    const celda = (k, i) => {
+      const x = b[k] && b[k].doctrina && b[k].doctrina.indicadores[i];
+      if (!x) return "-";
+      return `${x.valor}${x.puntaje === null || x.puntaje === undefined ? " (no aplica)" : ` · ${x.puntaje}/100`}`;
+    };
+    const filas = ref.indicadores.map((ind, i) => [ind.nombre, ...BANDOS.map((k) => celda(k, i))]);
+    filas.push(["Calificación (1 a 20)", ...BANDOS.map((k) => (b[k] && b[k].doctrina && b[k].doctrina.nota != null ? `${b[k].doctrina.nota} / 20` : "-"))]);
+    return filas;
+  }
+
+  /** Criterio de cada indicador doctrinal (para la nota al pie). */
+  const criterios = (rubrica) => {
+    const ref = BANDOS.map((k) => rubrica.bandos && rubrica.bandos[k] && rubrica.bandos[k].doctrina).find(Boolean);
+    return ref ? ref.indicadores.map((i) => `${i.nombre}: ${i.criterio}`) : [];
+  };
+
+  const api = { filasIndicadores, filasPuestos, filasAlumnos, filasDoctrina, criterios, observaciones, resumen, BANDOS, SIN_AUTOR };
   if (typeof module !== "undefined" && module.exports) { module.exports = api; return; }
   raiz.Rubrica = api;
 })(typeof window !== "undefined" ? window : globalThis);

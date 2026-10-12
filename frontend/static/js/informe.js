@@ -206,6 +206,23 @@
       th.appendChild(celda("th", "Indicador"));
       for (const b of Rubrica.BANDOS) th.appendChild(celda("th", b, "tag-" + b));
       cont.appendChild(t);
+      // indicadores doctrinales y calificacion (1 a 20)
+      const doctrina = Rubrica.filasDoctrina(datos);
+      if (doctrina.length) {
+        cont.appendChild(celda("h4", "Indicadores doctrinales y calificación"));
+        const td = tabla([], doctrina);
+        const thd = td.firstChild;
+        thd.appendChild(celda("th", "Indicador"));
+        for (const b of Rubrica.BANDOS) thd.appendChild(celda("th", b, "tag-" + b));
+        td.lastChild && td.lastChild.classList && td.lastChild.classList.add("fila-nota");
+        cont.appendChild(td);
+        const det = document.createElement("details");
+        det.appendChild(celda("summary", "Cómo se calcula cada indicador"));
+        const ul = document.createElement("ul");
+        for (const c of Rubrica.criterios(datos)) ul.appendChild(celda("li", c));
+        det.appendChild(ul);
+        cont.appendChild(det);
+      }
       for (const b of Rubrica.BANDOS) {
         const x = datos.bandos[b];
         if (!x) continue;
@@ -230,6 +247,59 @@
       $("dlg-rubrica").showModal();
     }
     $("rp-rubrica").addEventListener("click", rubrica);
+
+    // Comparar ejercicios: calificacion e indicadores por bando y evolucion de cada alumno
+    async function abrirComparar() {
+      let lista = [];
+      try { lista = (await ctx.api("GET", "/api/escenarios")) || []; } catch (_) { return; }
+      if (!Array.isArray(lista)) lista = lista.escenarios || [];
+      const cont = $("cmp-lista");
+      limpiar(cont);
+      const actual = ctx.escenarioId();
+      for (const e of lista) {
+        const l = document.createElement("label");
+        l.className = "chk";
+        const c = document.createElement("input");
+        c.type = "checkbox"; c.value = e.id; c.checked = e.id === actual;
+        l.append(c, celda("span", `${e.id} · ${e.nombre} (${e.estado}, turno ${e.turno_actual})`));
+        cont.appendChild(l);
+      }
+      limpiar($("cmp-contenido"));
+      $("dlg-comparar").showModal();
+    }
+    async function verComparacion() {
+      const ids = [...document.querySelectorAll("#cmp-lista input:checked")].map((c) => c.value);
+      if (!ids.length) return ctx.toast("Marque al menos un ejercicio.");
+      let d;
+      try { d = await ctx.api("GET", `/api/evaluacion/comparar?ids=${ids.join(",")}`); } catch (e) { return ctx.toast(e.message); }
+      const cont = $("cmp-contenido");
+      limpiar(cont);
+      const claves = Object.keys(d.indicadores);
+      const filas = [];
+      for (const ej of d.ejercicios) {
+        for (const b of Rubrica.BANDOS) {
+          const x = ej.bandos[b];
+          if (!x) continue;
+          filas.push([`${ej.nombre} (${ej.turnos} t.)`, b, x.nota == null ? "-" : `${x.nota} / 20`,
+            ...claves.map((k) => (x.indicadores[k] == null ? "-" : x.indicadores[k]))]);
+        }
+      }
+      cont.appendChild(celda("h4", "Calificación e indicadores doctrinales (0 a 100) por ejercicio y bando"));
+      cont.appendChild(tabla(["Ejercicio", "Bando", "Nota", ...claves.map((k) => d.indicadores[k])], filas, [2]));
+      if (d.alumnos.length) {
+        cont.appendChild(celda("h4", "Evolución por alumno"));
+        const fa = [];
+        for (const a of d.alumnos) {
+          for (const e of a.ejercicios) {
+            fa.push([a.username, e.escenario, `${e.bando} · ${e.puesto}`, e.ordenes, e.rechazadas,
+              `${e.turnos_activos} / ${e.turnos_pasivos}`, e.misiones, e.nota_bando == null ? "-" : `${e.nota_bando} / 20`]);
+          }
+        }
+        cont.appendChild(tabla(["Alumno", "Ejercicio", "Bando · puesto", "Órdenes", "Rechazadas", "Turnos activos / pasivos", "Misiones", "Nota del bando"], fa, [3, 4, 6]));
+      }
+    }
+    $("rb-comparar").addEventListener("click", abrirComparar);
+    $("cmp-ver").addEventListener("click", verComparacion);
 
     return { abrir, cerrar, activo: () => activo };
   }

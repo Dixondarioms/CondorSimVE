@@ -405,3 +405,18 @@ body.replay-animado #leyenda-mapa, body.replay-animado #rp-combates { display: n
 .perfil-vuelo { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 8px 0 2px; }
 .perfil-vuelo > span { font-size: 12px; color: var(--texto-sec); margin-right: 2px; }
 .perfil-vuelo button { flex: 1 1 0; }
+
+/* botones en fila (ordenes: seguir carreteras / limpiar waypoints) */
+.fila-botones { display: flex; gap: 6px; flex-wrap: wrap; }
+.fila-botones > button { flex: 1 1 auto; }
+
+/* catalogo propio: lista de tipos con sus botones */
+.lista-propios { list-style: none; padding: 0; margin: 6px 0 0; }
+.lista-propios li { display: flex; gap: 6px; align-items: center; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+.lista-propios li span { flex: 1; font-size: 12px; }
+
+/* rubrica: fila de la calificacion */
+table tr.fila-nota td { font-weight: 700; }
+
+/* comparar ejercicios: lista de escenarios con casillas */
+.cmp-lista { max-height: 180px; overflow: auto; display: grid; gap: 2px; margin: 6px 0; }

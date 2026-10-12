@@ -324,6 +324,7 @@
     }
     llenarSelect($("u-escalon"), [["", "Escalón: el de la clase"], ...cat.escalones.map((e) => [e, e])]);
     aplicarDefectosClase();
+    prepararCatalogoPropio();
   }
 
   const modeloPorId = (id) => (app.catalogo && app.catalogo.modelos ? app.catalogo.modelos.find((m) => m.id === id) : null) || null;
@@ -331,10 +332,16 @@
   function aplicarDefectosClase() {
     const c = app.catalogo && app.catalogo.clases.find((x) => x.id === $("u-clase").value);
     if (!c) return;
-    const esCaza = c.id === "caza";
-    if (!esCaza) app.modeloUnidad = null;
-    $("u-aeronave-fila").hidden = !esCaza;
-    const ref = (esCaza && app.modeloUnidad && modeloPorId(app.modeloUnidad.modelo)) || c;
+    // aeronaves: el modelo se elige con fotos (dialogo); el resto, de una lista con los tipos del catalogo propio
+    const aerea = c.tipo === "aerea" && !c.misil;
+    const elegido = app.modeloUnidad && modeloPorId(app.modeloUnidad.modelo);
+    if (!aerea || (elegido && elegido.clase !== c.id)) app.modeloUnidad = null;
+    $("u-aeronave-fila").hidden = !aerea;
+    const tipos = (app.catalogo.modelos || []).filter((m) => m.clase === c.id);
+    $("u-tipo-fila").hidden = aerea || !tipos.length;
+    if (!aerea) llenarSelect($("u-tipo"), [["", `${c.nombre} (valores de la clase)`], ...tipos.map((m) => [m.id, m.nombre])]);
+    const tipo = !aerea && $("u-tipo").value ? modeloPorId($("u-tipo").value) : null;
+    const ref = (aerea && app.modeloUnidad && modeloPorId(app.modeloUnidad.modelo)) || tipo || c;
     $("u-velocidad").value = ref.velocidad_kmh;
     $("u-alcance").value = ref.alcance_km;
     $("u-deteccion").value = ref.deteccion_km;
@@ -344,18 +351,91 @@
     actualizarFilaModelo();
   }
   $("u-clase").addEventListener("change", aplicarDefectosClase);
+  $("u-tipo").addEventListener("change", aplicarDefectosClase);
 
   function actualizarFilaModelo() {
     const m = app.modeloUnidad ? modeloPorId(app.modeloUnidad.modelo) : null;
     const foto = $("u-modelo-foto");
     foto.hidden = !m;
     if (m) { foto.src = m.foto; foto.alt = m.nombre; }
-    $("u-modelo-nombre").textContent = m ? m.nombre : "Caza genérico";
+    const clase = app.catalogo && app.catalogo.clases.find((x) => x.id === $("u-clase").value);
+    $("u-modelo-nombre").textContent = m ? m.nombre : `${clase ? clase.nombre : "Aeronave"} (genérico)`;
     $("u-modelo-grupo").textContent = m ? `Grupo de ${app.modeloUnidad.aeronaves} aeronave${app.modeloUnidad.aeronaves === 1 ? "" : "s"}` : "Sin modelo: valores de la clase";
   }
   $("btn-elegir-modelo").addEventListener("click", async () => {
     const elegido = await app.aviacion.elegirModelo(app.modeloUnidad);
-    if (elegido) { app.modeloUnidad = elegido; aplicarDefectosClase(); }
+    if (elegido) {
+      const m = modeloPorId(elegido.modelo);
+      if (m && m.clase !== $("u-clase").value) $("u-clase").value = m.clase; // el modelo define la clase
+      app.modeloUnidad = elegido;
+      aplicarDefectosClase();
+    }
+  });
+
+  // ---------- catalogo propio (tipos de unidad del instructor) ----------
+  const MP_CAMPOS = [["mp-vel", "velocidad_kmh"], ["mp-alc", "alcance_km"], ["mp-det", "deteccion_km"], ["mp-aut", "autonomia_km"], ["mp-def", "defensa"]];
+  function mpLlenarDesde(ref) {
+    for (const [id, campo] of MP_CAMPOS) $(id).value = ref[campo] ?? 0;
+    const atk = ref.ataque_vs || {};
+    $("mp-at-t").value = atk.terrestre ?? 0; $("mp-at-a").value = atk.aerea ?? 0; $("mp-at-n").value = atk.naval ?? 0;
+  }
+  function mpClase() { return app.catalogo.clases.find((x) => x.id === $("mp-clase").value); }
+  function mpNuevo() {
+    app.mpEditando = null;
+    for (const id of ["mp-nombre", "mp-corto", "mp-pais", "mp-desc"]) $(id).value = "";
+    if (mpClase()) mpLlenarDesde(mpClase());
+    $("btn-mp-guardar").textContent = "Guardar tipo";
+  }
+  function prepararCatalogoPropio() {
+    const cat = app.catalogo;
+    llenarSelect($("mp-clase"), cat.clases.filter((c) => c.tipo !== "base" && !c.misil).map((c) => [c.id, c.nombre]));
+    if (!app.mpEditando && mpClase()) mpLlenarDesde(mpClase());
+    const lista = $("mp-lista");
+    limpiar(lista);
+    const propios = (cat.modelos || []).filter((m) => m.propio);
+    if (!propios.length) { const li = document.createElement("li"); li.className = "ayuda"; li.textContent = "Todavía no hay tipos propios."; lista.appendChild(li); }
+    for (const m of propios) {
+      const li = document.createElement("li");
+      const clase = cat.clases.find((c) => c.id === m.clase);
+      const t = document.createElement("span"); t.textContent = `${m.nombre} · ${clase ? clase.nombre : m.clase}`;
+      const editar = document.createElement("button"); editar.type = "button"; editar.className = "secundario mini"; editar.textContent = "Editar";
+      editar.addEventListener("click", () => {
+        app.mpEditando = m.id;
+        $("mp-clase").value = m.clase; $("mp-nombre").value = m.nombre; $("mp-corto").value = m.corto;
+        $("mp-pais").value = m.pais === "-" ? "" : m.pais; $("mp-desc").value = m.descripcion || "";
+        mpLlenarDesde(m);
+        $("btn-mp-guardar").textContent = "Guardar cambios";
+      });
+      const quitar = document.createElement("button"); quitar.type = "button"; quitar.className = "secundario mini"; quitar.textContent = "Eliminar";
+      quitar.addEventListener("click", async () => {
+        if (!confirm(`¿Eliminar el tipo «${m.nombre}»? Las unidades que ya lo usan conservan sus valores.`)) return;
+        try { await api("DELETE", `/api/catalogo/modelos/${encodeURIComponent(m.id)}`); await recargarCatalogo(); toast("Tipo eliminado", true); } catch (e) { toast(e.message); }
+      });
+      li.append(t, editar, quitar);
+      lista.appendChild(li);
+    }
+  }
+  async function recargarCatalogo() {
+    app.catalogo = await api("GET", "/api/catalogo");
+    prepararCatalogo();
+  }
+  $("mp-clase").addEventListener("change", () => { if (!app.mpEditando && mpClase()) mpLlenarDesde(mpClase()); });
+  $("btn-mp-nuevo").addEventListener("click", mpNuevo);
+  $("btn-mp-guardar").addEventListener("click", async () => {
+    const num = (id) => parseFloat($(id).value) || 0;
+    const cuerpo = {
+      nombre: $("mp-nombre").value.trim(), corto: $("mp-corto").value.trim(), clase: $("mp-clase").value,
+      pais: $("mp-pais").value.trim(), descripcion: $("mp-desc").value.trim(),
+      velocidad_kmh: num("mp-vel"), alcance_km: num("mp-alc"), deteccion_km: num("mp-det"), autonomia_km: num("mp-aut"),
+      defensa: num("mp-def"), ataque_vs: { terrestre: num("mp-at-t"), aerea: num("mp-at-a"), naval: num("mp-at-n") },
+    };
+    if (app.mpEditando) cuerpo.id = app.mpEditando;
+    try {
+      const m = await api("POST", "/api/catalogo/modelos", cuerpo);
+      await recargarCatalogo();
+      mpNuevo();
+      toast(`Tipo «${m.nombre}» guardado: ya puede usarlo en «Agregar unidad».`, true);
+    } catch (e) { toast(e.message); }
   });
 
   // ---------- mapa (100% offline) ----------
@@ -440,6 +520,11 @@
     const fronteras = L.geoJSON(null, { style: { color: "#1a1a1a", weight: 2.5, fill: false } }).addTo(c.referencias);
     const estados = L.geoJSON(null, { style: { color: "#333", weight: 1, dashArray: "4 4", fill: false, opacity: 0.7 } }).addTo(c.referencias);
     const rios = L.geoJSON(null, { style: { color: "#2f6fb0", weight: 1.5 } }).addTo(c.referencias);
+    // carreteras reales (tools/preparar_vias.py): se ven al acercar el mapa (ajustarPorZoom)
+    c.carreteras = L.geoJSON(null, {
+      style: (f) => (f.properties.nivel === 2 ? { color: "#e8b04a", weight: 2, opacity: 0.9 } : { color: "#c99a55", weight: 1.1, opacity: 0.75 }),
+      interactive: false,
+    });
     const lagos = L.geoJSON(null, { style: { color: "#2f6fb0", weight: 1, fillColor: "#78aacd", fillOpacity: 0.7 } }).addTo(c.referencias);
     const lugares = L.geoJSON(null, {
       pointToLayer: (f, ll) => {
@@ -451,7 +536,7 @@
       },
     }).addTo(c.referencias);
     for (const m of mapas) {
-      for (const [archivo, capa] of [["fronteras", fronteras], ["estados", estados], ["rios", rios], ["lagos", lagos], ["lugares", lugares]]) {
+      for (const [archivo, capa] of [["fronteras", fronteras], ["estados", estados], ["rios", rios], ["lagos", lagos], ["lugares", lugares], ["carreteras", c.carreteras]]) {
         fetch(`/static/geo/${m.id}/${archivo}.geojson`).then((r) => (r.ok ? r.json() : null)).then((g) => { if (g) capa.addData(g); }).catch(() => {});
       }
     }
@@ -482,7 +567,7 @@
       pendiente = setTimeout(async () => {
         try {
           const r = await api("GET", `/api/terreno/clase?lat=${e.latlng.lat}&lon=${e.latlng.lng}`, undefined, true);
-          $("coords").textContent = `${txt} · ${r.clase}`;
+          $("coords").textContent = `${txt} · ${r.clase}${r.via_nombre ? ` · ${r.via_nombre}` : ""}`;
         } catch (_) { /* fuera de linea o sin sesion */ }
       }, 250);
     });
@@ -544,7 +629,7 @@
       try {
         await api("POST", rutaEsc("/unidades"), {
           nombre, bando: $("u-bando").value, clase: $("u-clase").value, echelon: $("u-escalon").value,
-          modelo: app.modeloUnidad ? app.modeloUnidad.modelo : undefined,
+          modelo: app.modeloUnidad ? app.modeloUnidad.modelo : ($("u-tipo-fila").hidden ? undefined : $("u-tipo").value || undefined),
           aeronaves: app.modeloUnidad ? app.modeloUnidad.aeronaves : undefined,
           lat, lon: lng, fuerza: num("u-fuerza") ?? 100, velocidad_kmh: num("u-velocidad"),
           alcance_km: num("u-alcance"), deteccion_km: num("u-deteccion"), autonomia_km: num("u-autonomia"),
@@ -661,6 +746,11 @@
     const on = app.capaActiva.alcances && app.capaActiva.unidades && z >= Logica.ZOOM_ALCANCES;
     if (on) app.capas.alcances.addTo(app.map);
     else app.map.removeLayer(app.capas.alcances);
+    const carreteras = app.capas.carreteras;
+    if (carreteras) {
+      if (z >= Logica.ZOOM_CARRETERAS) app.capas.referencias.addLayer(carreteras);
+      else app.capas.referencias.removeLayer(carreteras);
+    }
   }
 
   /** Anillo de alcance de cada unidad desplegada (propias y enemigas a la vista): se ve al acercar el mapa. */
@@ -1386,6 +1476,17 @@
     if (app.data) actualizarNuevaOrden(app.data);
   }));
   $("btn-limpiar-wp").addEventListener("click", () => { app.waypoints = []; dibujarWaypoints(); });
+  $("btn-ruta-vias").addEventListener("click", async () => {
+    if (!app.unidadOrden || !app.waypoints.length) return toast("Seleccione la unidad y marque el destino en el mapa.");
+    const destino = app.waypoints[app.waypoints.length - 1];
+    try {
+      const r = await api("POST", rutaEsc("/ordenes/ruta"), { unidad_id: app.unidadOrden, destino });
+      app.waypoints = r.waypoints;
+      dibujarWaypoints();
+      pedirPreview();
+      if (r.nota) toast(r.nota, true);
+    } catch (e) { toast(e.message); }
+  });
   $("o-lote-limpiar").addEventListener("click", () => { app.lote.clear(); if (app.data) { actualizarNuevaOrden(app.data); renderOOBSeleccion(); marcarSeleccionEnMapa(); } });
   $("o-objetivo").addEventListener("change", () => { if (app.data) actualizarNuevaOrden(app.data); });
 

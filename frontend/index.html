@@ -172,7 +172,10 @@
               <p class="ayuda">Haga clic en el mapa para marcar waypoints. El terreno, el clima y el combustible limitan el avance.</p>
               <div id="o-waypoints" class="ayuda"></div>
               <p id="o-preview" class="ayuda preview"></p>
-              <button id="btn-limpiar-wp" class="secundario" type="button">Limpiar waypoints</button>
+              <div class="fila-botones">
+                <button id="btn-ruta-vias" class="secundario" type="button" title="Toma el último waypoint como destino y traza el camino más rápido por carreteras y puentes">Seguir carreteras</button>
+                <button id="btn-limpiar-wp" class="secundario" type="button">Limpiar waypoints</button>
+              </div>
             </div>
             <div id="o-construir" hidden>
               <select id="o-obra" aria-label="Obra">
@@ -323,7 +326,37 @@
               <div><b id="u-modelo-nombre">Caza genérico</b><small id="u-modelo-grupo"></small></div>
               <button id="btn-elegir-modelo" type="button" class="secundario mini">Elegir aeronave…</button>
             </div>
+            <label id="u-tipo-fila" class="mini" hidden>Tipo (catálogo propio)<select id="u-tipo"></select></label>
             <button id="btn-modo-agregar" type="button">Ubicar en mapa</button>
+          </details>
+
+          <details>
+            <summary>Catálogo propio (tipos de unidad de la AMB)</summary>
+            <p class="ayuda">Defina sus propios tipos de unidad (por ejemplo «Buk-M2E», «VN-16» o «Mi-17V5») a partir de una clase: la
+              clase da el símbolo y las reglas; el tipo, el nombre y los valores de juego. Quedan disponibles al instante en
+              «Agregar unidad».</p>
+            <div class="grid">
+              <input id="mp-nombre" placeholder="Nombre (ej. Buk-M2E)" maxlength="80">
+              <input id="mp-corto" placeholder="Abreviatura en el mapa" maxlength="14">
+              <select id="mp-clase" aria-label="Clase"></select>
+              <input id="mp-pais" placeholder="País u origen" maxlength="40">
+            </div>
+            <div class="grid">
+              <label class="mini">Velocidad km/h<input id="mp-vel" type="number" min="0" max="3000"></label>
+              <label class="mini">Alcance km<input id="mp-alc" type="number" min="0" max="2000"></label>
+              <label class="mini">Detección km<input id="mp-det" type="number" min="0" max="1000"></label>
+              <label class="mini">Autonomía km<input id="mp-aut" type="number" min="0" max="20000"></label>
+              <label class="mini">Ataque terrestre<input id="mp-at-t" type="number" min="0" max="5" step="0.05"></label>
+              <label class="mini">Ataque aéreo<input id="mp-at-a" type="number" min="0" max="5" step="0.05"></label>
+              <label class="mini">Ataque naval<input id="mp-at-n" type="number" min="0" max="5" step="0.05"></label>
+              <label class="mini">Defensa<input id="mp-def" type="number" min="0" max="5" step="0.05"></label>
+            </div>
+            <textarea id="mp-desc" placeholder="Descripción (opcional)" maxlength="600" rows="2"></textarea>
+            <div class="fila-botones">
+              <button id="btn-mp-guardar" type="button">Guardar tipo</button>
+              <button id="btn-mp-nuevo" type="button" class="secundario">Nuevo</button>
+            </div>
+            <ul id="mp-lista" class="lista-propios"></ul>
           </details>
 
           <details>
@@ -720,6 +753,18 @@
       <div id="rb-contenido"></div>
       <p id="rb-nota" class="ayuda"></p>
       <a id="rb-csv" class="enlace-boton" title="Evaluación por alumno en CSV (hoja de cálculo)">CSV por alumno</a>
+      <button id="rb-comparar" type="button" class="secundario">Comparar con otros ejercicios…</button>
+      <button>Cerrar</button>
+    </form>
+  </dialog>
+  <dialog id="dlg-comparar" class="ancho">
+    <form method="dialog">
+      <h3>Comparar ejercicios</h3>
+      <p class="ayuda">Marque los ejercicios a comparar (hasta 12): la calificación y los indicadores doctrinales de cada
+        bando, y la evolución de cada alumno de un ejercicio a otro.</p>
+      <div id="cmp-lista" class="cmp-lista"></div>
+      <button id="cmp-ver" type="button">Comparar</button>
+      <div id="cmp-contenido"></div>
       <button>Cerrar</button>
     </form>
   </dialog>
