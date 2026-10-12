@@ -505,6 +505,7 @@ def modelo_dict(m: Modelo) -> dict:
         "autonomia_km": m.autonomia_km, "ataque_vs": m.ataque_vs, "defensa": m.defensa, "foto": m.foto,
         "credito": m.credito, "embarcable": modelo_embarcable(m), "misil": CLASES[m.clase].misil,
         "firma": m.firma if m.firma is not None else CLASES[m.clase].firma,
+        "propio": m.id.startswith("u_"),  # tipo del catalogo propio del instructor (engine/modelos_usuario.py)
     }
 
 
@@ -527,6 +528,7 @@ def como_dict(c: Clase) -> dict:
         "se_consume": c.se_consume, "celula": c.celula, "defensa_aerea": c.defensa_aerea, "stock_max": c.stock_max,
         "reposicion_turno": c.reposicion_turno, "misil": c.misil, "lanza_misiles": c.lanza_misiles,
         "plazas_aeronaves": c.plazas_aeronaves, "embarcable": c.embarcable,
+        "ataque_vs": dict(c.ataque_vs), "defensa": c.defensa,
         "foto": (FOTOS_CLASE.get(c.id) or {}).get("foto"), "credito": (FOTOS_CLASE.get(c.id) or {}).get("credito"),
     }
 

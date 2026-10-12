@@ -43,7 +43,7 @@ async def crear_unidad(
     if payload.modelo:
         modelo = catalogo.MODELOS.get(payload.modelo)
         if modelo is None:
-            raise HTTPException(status_code=400, detail="Modelo de aeronave desconocido")
+            raise HTTPException(status_code=400, detail="Modelo o tipo de unidad desconocido")
         if payload.clase is not None and payload.clase != modelo.clase:
             raise HTTPException(status_code=400, detail="El modelo no corresponde a la clase")
         payload.clase = modelo.clase
@@ -62,7 +62,7 @@ async def crear_unidad(
     if payload.echelon not in catalogo.ESCALONES:
         raise HTTPException(status_code=400, detail="Escalon desconocido")
     aeronaves = payload.aeronaves if clase.tipo == "aerea" else 1
-    escalon = payload.echelon or (catalogo.escalon_grupo(aeronaves) if modelo else clase.escalon)
+    escalon = payload.echelon or (catalogo.escalon_grupo(aeronaves) if modelo and clase.tipo == "aerea" else clase.escalon)
 
     validar_ubicacion(clase.tipo, payload.lat, payload.lon)
 

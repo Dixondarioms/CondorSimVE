@@ -61,6 +61,10 @@ def plantillas_usuario_temporales(monkeypatch, tmp_path):
     from app.engine import plantillas
 
     monkeypatch.setattr(plantillas, "RUTA_PLANTILLAS_USUARIO", tmp_path / "plantillas_usuario")
+    # el catalogo propio del instructor tambien: nunca se escribe backend/data/modelos_usuario.json en las pruebas
+    from app.engine import catalogo, modelos_usuario
+    monkeypatch.setattr(modelos_usuario, "RUTA", tmp_path / "modelos_usuario.json")
+    monkeypatch.setattr(catalogo, "MODELOS", {k: v for k, v in catalogo.MODELOS.items() if not k.startswith("u_")})
 
 
 # ---------------------------------------------------------------- PostgreSQL de prueba
