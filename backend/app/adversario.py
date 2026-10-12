@@ -5,7 +5,8 @@ una orden a cada unidad de su bando y marca el bando como listo. Las ordenes pas
 de los alumnos (routers/ordenes._crear_orden): alcance, municion, combustible, puestos, niebla de guerra...
 
 Solo usa lo que su bando sabe: sus propias unidades, las enemigas que detecta ahora (posicion, tipo y clase; nunca
-su fuerza, su modelo ni su logistica), los ultimos contactos y sus propios objetivos.
+su fuerza, su modelo ni su logistica), los ultimos contactos, sus propios objetivos y la ubicacion de las bases
+enemigas (instalaciones fijas que figuran en el mapa de referencia).
 
 Conducta (didactica y legible, no optima):
   - Aeronaves: vuelven a la base con poco combustible o sin municion; atacan al mejor blanco a su alcance; si no,
@@ -91,6 +92,8 @@ class _Turno:
         # del enemigo solo se usa lo que se ve en el mapa: id, posicion, tipo, clase y si esta en tierra
         self.enemigos = [u for u in self.visibles if u.bando != bando and u.estado == "activa" and not catalogo.es_misil(u)]
         ids_vistos = {u.id for u in self.enemigos}
+        # instalaciones fijas del enemigo (bases aereas, puertos, depositos): figuran en el mapa, se conoce su ubicacion
+        self.bases_enemigas = [u for u in todas if u.bando != bando and u.tipo == "base" and u.estado == "activa"]
         self.contactos = [c for c in db.query(Contacto).filter(Contacto.escenario_id == esc.id, Contacto.bando == bando)
                           if c.unidad_id not in ids_vistos]
         self.objetivos = db.query(Objetivo).filter(Objetivo.escenario_id == esc.id, Objetivo.bando == bando,
@@ -156,6 +159,9 @@ class _Turno:
         for c in self.contactos:
             if c.unidad_id == unidad_id:
                 return (c.lat, c.lon)
+        for b in self.bases_enemigas:
+            if b.id == unidad_id:
+                return (b.lat, b.lon)
         return None
 
     def amenazas(self):
@@ -172,7 +178,8 @@ class _Turno:
 
     def frente(self):
         """Centro del enemigo conocido (visto o ultimo contacto)."""
-        return _centro([(e.lat, e.lon) for e in self.enemigos] + [(c.lat, c.lon) for c in self.contactos])
+        return (_centro([(e.lat, e.lon) for e in self.enemigos] + [(c.lat, c.lon) for c in self.contactos])
+                or _centro([(b.lat, b.lon) for b in self.bases_enemigas]))
 
     # ---------------------------------------------------------------- aeronaves
     def aeronave(self, u):
@@ -206,8 +213,33 @@ class _Turno:
                 lat, lon = _punto_a_distancia(u, blanco.lat, blanco.lon, u.alcance_km * APROXIMACION)
                 if self.mover(u, lat, lon):
                     return
+        if u.municion > 0 and not sin_armas and self.hacia_objetivo_aereo(u):
+            return
         if not u.en_tierra:
             self.patrullar(u)
+
+    def hacia_objetivo_aereo(self, u) -> bool:
+        """Sin blancos a la vista: se acerca a la posicion conocida de un objetivo a destruir que pueda batir, hasta
+        tenerlo a distancia de deteccion y de tiro, si le alcanza el combustible para volver."""
+        destinos = []
+        for o in self.objetivos:
+            if o.tipo != "destruir" or not o.unidad_id:
+                continue
+            p = self.posicion_conocida(o.unidad_id)
+            es_base = any(b.id == o.unidad_id for b in self.bases_enemigas)
+            if p and (es_base or o.unidad_id in {c.unidad_id for c in self.contactos}) \
+                    and catalogo.perfil(u).ataque_vs.get("terrestre", 0) > 0:
+                destinos.append(p)
+        if not destinos:
+            return False
+        lat, lon = min(destinos, key=lambda d: geo.distancia_km(u.lat, u.lon, d[0], d[1]))
+        margen = min(u.alcance_km, u.deteccion_km or u.alcance_km) * APROXIMACION
+        base = min(self.bases_para(u), key=lambda b: geo.distancia_km(lat, lon, b.lat, b.lon), default=None)
+        ida = max(0.0, geo.distancia_km(u.lat, u.lon, lat, lon) - margen)
+        vuelta = geo.distancia_km(lat, lon, base.lat, base.lon) if base else 0.0
+        if ida + vuelta * 1.15 >= self.autonomia_restante(u):
+            return False
+        return self.mover(u, *_punto_a_distancia(u, lat, lon, margen))
 
     def aterrizar(self, u) -> bool:
         """En la base mas cercana que tenga plazas, contando las que ya piden otros grupos este turno."""
@@ -233,6 +265,18 @@ class _Turno:
     def patrullar(self, u):
         protegidas = self.protegidas()
         punto = _centro([(p.lat, p.lon) for p in protegidas]) if protegidas else None
+        frente = self.frente()
+        if punto is None and frente is not None:
+            # patrulla de combate a medio camino hacia el enemigo, fuera de su defensa antiaerea conocida
+            base = min(self.bases_para(u), key=lambda b: geo.distancia_km(u.lat, u.lon, b.lat, b.lon), default=None)
+            origen = (base.lat, base.lon) if base else (u.lat, u.lon)
+            d = geo.distancia_km(origen[0], origen[1], frente[0], frente[1])
+            rumbo = _rumbo(origen[0], origen[1], frente[0], frente[1])
+            for fraccion in (0.5, 0.3, 0.15):
+                candidato = geo.destino(origen[0], origen[1], rumbo, d * fraccion)
+                if not self.en_peligro(*candidato):
+                    punto = candidato
+                    break
         if punto is None:
             base = min(self.bases_para(u), key=lambda b: geo.distancia_km(u.lat, u.lon, b.lat, b.lon), default=None)
             punto = (base.lat, base.lon) if base else (u.lat, u.lon)

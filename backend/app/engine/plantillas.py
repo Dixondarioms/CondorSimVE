@@ -94,6 +94,9 @@ class Plantilla:
     con_estado: bool = False
     guardada_en: str = ""
     escenario_origen: int | None = None
+    # adversario automatico ya encendido (el simulador conduce ese bando desde el primer turno)
+    ia_azul: bool = False
+    ia_rojo: bool = False
 
 
 _DEMO_LLANOS = Plantilla(
@@ -253,7 +256,123 @@ _ATAQUE_3_ENERO = Plantilla(
     ),
 )
 
-PLANTILLAS: dict[str, Plantilla] = {p.id: p for p in [_DEMO_LLANOS, _DEFENSA_3_ENERO, _ATAQUE_3_ENERO]}
+def _grupo(nombre, bando, modelo, n, lat, lon, base=None, perfil=None):
+    return UnidadPlantilla(nombre, bando, catalogo.MODELOS[modelo].clase, lat, lon, modelo=modelo, aeronaves=n,
+                           en_tierra=base is not None, base=base, perfil_vuelo=perfil)
+
+
+# ---- biblioteca de escenarios para un solo bando de alumnos (el rojo lo conduce el adversario automatico) ----
+_DEFENSA_CENTRAL = Plantilla(
+    id="defensa_aerea_central", nombre="Defensa aérea de la región central (contra la IA)",
+    descripcion=(
+        "El bando azul defiende la Base Aérea El Libertador y la región Maracay-Valencia de un ataque aeronaval que "
+        "llega desde el Caribe: un portaaviones con su escolta, cazas embarcados, guerra electrónica y drones armados. "
+        "Ejercita la alerta temprana con el radar de montaña, el empleo de los Su-30 y F-16, la defensa antiaérea por "
+        "capas y la protección de la base. El bando rojo lo conduce el adversario automático (puede apagarse en "
+        "Consola → Dirección del ejercicio). Fuerzas genéricas, sin pretensión de representar a un país real."
+    ),
+    clima="despejado", hora_inicio_min=300, nacion_azul="venezuela", nacion_rojo="", ia_rojo=True,
+    unidades=(
+        UnidadPlantilla("Base Aérea El Libertador", "azul", "base_aerea", 10.18056, -67.56111),
+        _grupo("Su-30MK2 (alerta)", "azul", "su30", 4, 10.18056, -67.56111, base="Base Aérea El Libertador"),
+        _grupo("F-16 (alerta)", "azul", "f16", 2, 10.18056, -67.56111, base="Base Aérea El Libertador"),
+        UnidadPlantilla("Radar de montaña (Cordillera de la Costa)", "azul", "radar", 10.33, -67.45),
+        UnidadPlantilla("Defensa antiaérea de la base", "azul", "antiaerea", 10.20, -67.53),
+        UnidadPlantilla("Igla-S Maracay", "azul", "antiaerea_portatil", 10.17, -67.58),
+        UnidadPlantilla("Guerra electrónica central", "azul", "guerra_electronica", 10.22, -67.48),
+        UnidadPlantilla("Puerto Cabello", "azul", "puerto", 10.48, -68.01),
+        UnidadPlantilla("Patrullero (Puerto Cabello)", "azul", "patrullero", 10.62, -68.05),
+        UnidadPlantilla("Portaaviones rojo", "rojo", "portaaviones", 11.80, -67.90),
+        UnidadPlantilla("Destructor de escolta rojo", "rojo", "destructor", 11.50, -68.30),
+        _grupo("Cazas embarcados 1", "rojo", "caza_embarcado", 4, 11.20, -67.60),
+        _grupo("Cazas embarcados 2", "rojo", "caza_embarcado", 4, 11.80, -67.90, base="Portaaviones rojo"),
+        _grupo("Avión de guerra electrónica rojo", "rojo", "ge_aereo", 1, 11.60, -67.40),
+        _grupo("Drones armados rojos", "rojo", "uav_armado", 2, 11.10, -67.90),
+    ),
+    objetivos=(
+        ObjetivoPlantilla("azul", "proteger", "Mantener operativa El Libertador", 40, unidad="Base Aérea El Libertador", hasta_turno=8),
+        ObjetivoPlantilla("azul", "proteger", "Mantener el radar de montaña", 20,
+                          unidad="Radar de montaña (Cordillera de la Costa)", hasta_turno=8),
+        ObjetivoPlantilla("azul", "destruir", "Hundir el portaaviones", 40, unidad="Portaaviones rojo"),
+        ObjetivoPlantilla("rojo", "destruir", "Neutralizar El Libertador", 40, unidad="Base Aérea El Libertador"),
+        ObjetivoPlantilla("rojo", "destruir", "Cegar el radar de montaña", 20, unidad="Radar de montaña (Cordillera de la Costa)"),
+    ),
+)
+
+_INTERDICCION_LLANOS = Plantilla(
+    id="interdiccion_llanos", nombre="Interdicción en los llanos (contra la IA)",
+    descripcion=(
+        "Una columna mecanizada roja con sus convoyes avanza desde Guasdualito hacia Barinas. El bando azul debe "
+        "detenerla antes de que ocupe la ciudad: aviones de ataque K-8W y helicópteros Mi-35 desde el aeropuerto de "
+        "Barinas, drones armados de reconocimiento y ataque, y una defensa terrestre escalonada. Ejercita la "
+        "interdicción de la logística (los convoyes son vulnerables), el apoyo aéreo cercano y la coordinación entre "
+        "los puestos. El bando rojo lo conduce el adversario automático. Fuerzas genéricas, sin pretensión de "
+        "representar a un país real."
+    ),
+    clima="despejado", hora_inicio_min=360, nacion_azul="venezuela", nacion_rojo="", ia_rojo=True,
+    unidades=(
+        UnidadPlantilla("Aeropuerto de Barinas", "azul", "base_aerea", 8.62, -70.21),
+        _grupo("K-8W (ataque)", "azul", "ataque_ligero", 4, 8.62, -70.21, base="Aeropuerto de Barinas"),
+        _grupo("Mi-35M (ataque)", "azul", "helo_ataque", 2, 8.62, -70.21, base="Aeropuerto de Barinas"),
+        _grupo("Drones armados azules", "azul", "uav_armado", 2, 8.62, -70.21, base="Aeropuerto de Barinas"),
+        UnidadPlantilla("Brigada de Infantería Barinas", "azul", "infanteria", 8.63, -70.24, "brigada"),
+        UnidadPlantilla("Grupo de Caballería Blindada", "azul", "blindado", 8.23, -70.82, "batallon"),
+        UnidadPlantilla("Artillería de campaña", "azul", "artilleria", 8.45, -70.40, "batallon"),
+        UnidadPlantilla("Depósito Barinas", "azul", "deposito", 8.60, -70.26),
+        UnidadPlantilla("Columna blindada roja", "rojo", "blindado", 7.70, -70.55, "batallon"),
+        UnidadPlantilla("Infantería mecanizada roja", "rojo", "infanteria", 7.55, -70.65, "batallon"),
+        UnidadPlantilla("Antiaérea portátil roja", "rojo", "antiaerea_portatil", 7.60, -70.60),
+        UnidadPlantilla("Convoy rojo 1", "rojo", "transporte", 7.40, -70.75),
+        UnidadPlantilla("Convoy rojo 2", "rojo", "transporte", 7.30, -70.80),
+        UnidadPlantilla("Depósito rojo (Guasdualito)", "rojo", "deposito", 7.24, -70.73),
+    ),
+    objetivos=(
+        ObjetivoPlantilla("rojo", "ocupar", "Ocupar Barinas", 50, lat=8.63, lon=-70.24, radio_km=8, turnos_requeridos=2),
+        ObjetivoPlantilla("azul", "proteger", "Mantener Barinas", 40, unidad="Brigada de Infantería Barinas", hasta_turno=10),
+        ObjetivoPlantilla("azul", "destruir", "Cortar el convoy rojo 1", 20, unidad="Convoy rojo 1"),
+        ObjetivoPlantilla("azul", "destruir", "Cortar el convoy rojo 2", 20, unidad="Convoy rojo 2"),
+        ObjetivoPlantilla("azul", "destruir", "Detener la columna blindada", 30, unidad="Columna blindada roja"),
+    ),
+)
+
+_COSTA_ORIENTAL = Plantilla(
+    id="defensa_costa_oriental", nombre="Defensa de la costa oriental (contra la IA)",
+    descripcion=(
+        "Una fuerza anfibia roja (dos buques de desembarco con fragatas de escolta y helicópteros) se aproxima a "
+        "Barcelona y Puerto La Cruz. El bando azul defiende la costa con misiles costeros, patrulleros, infantería "
+        "de marina, un radar y aviación desde Barcelona. Ejercita la defensa de costa, el ataque a la fuerza naval "
+        "antes del desembarco y la defensa de la playa. El bando rojo lo conduce el adversario automático. Fuerzas "
+        "genéricas, sin pretensión de representar a un país real."
+    ),
+    clima="despejado", hora_inicio_min=240, nacion_azul="venezuela", nacion_rojo="", ia_rojo=True,
+    unidades=(
+        UnidadPlantilla("Aeropuerto de Barcelona", "azul", "base_aerea", 10.107, -64.689),
+        _grupo("F-16 (Barcelona)", "azul", "f16", 2, 10.107, -64.689, base="Aeropuerto de Barcelona"),
+        _grupo("Mi-35M (Barcelona)", "azul", "helo_ataque", 2, 10.107, -64.689, base="Aeropuerto de Barcelona"),
+        UnidadPlantilla("Batería de misiles costeros", "azul", "lanzador_misiles", 10.12, -64.72),
+        UnidadPlantilla("Radar costero", "azul", "radar", 10.05, -64.45),
+        UnidadPlantilla("Infantería de Marina (Barcelona)", "azul", "infanteria", 10.11, -64.66, "batallon"),
+        UnidadPlantilla("Antiaérea costera", "azul", "antiaerea", 10.08, -64.70),
+        UnidadPlantilla("Puerto de Puerto La Cruz", "azul", "puerto", 10.21, -64.63),
+        UnidadPlantilla("Patrullero oriental", "azul", "patrullero", 10.35, -64.50),
+        UnidadPlantilla("Buque de desembarco rojo 1", "rojo", "buque_desembarco", 10.45, -64.55),
+        UnidadPlantilla("Buque de desembarco rojo 2", "rojo", "buque_desembarco", 10.55, -64.30),
+        UnidadPlantilla("Fragata de escolta roja 1", "rojo", "fragata", 10.70, -64.70),
+        UnidadPlantilla("Fragata de escolta roja 2", "rojo", "fragata", 10.55, -64.80),
+        _grupo("Helicópteros de ataque rojos", "rojo", "helo_ataque", 2, 10.60, -64.55),
+    ),
+    objetivos=(
+        ObjetivoPlantilla("rojo", "destruir", "Abrir la playa: batir a la Infantería de Marina", 40,
+                          unidad="Infantería de Marina (Barcelona)"),
+        ObjetivoPlantilla("rojo", "destruir", "Neutralizar la batería costera", 25, unidad="Batería de misiles costeros"),
+        ObjetivoPlantilla("azul", "destruir", "Hundir el buque de desembarco 1", 30, unidad="Buque de desembarco rojo 1"),
+        ObjetivoPlantilla("azul", "destruir", "Hundir el buque de desembarco 2", 30, unidad="Buque de desembarco rojo 2"),
+        ObjetivoPlantilla("azul", "proteger", "Mantener la batería costera", 20, unidad="Batería de misiles costeros", hasta_turno=8),
+    ),
+)
+
+PLANTILLAS: dict[str, Plantilla] = {p.id: p for p in [
+    _DEMO_LLANOS, _DEFENSA_3_ENERO, _ATAQUE_3_ENERO, _DEFENSA_CENTRAL, _INTERDICCION_LLANOS, _COSTA_ORIENTAL]}
 
 
 def obtener(plantilla_id: str) -> Plantilla | None:
@@ -272,7 +391,7 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
     if p is None:
         raise KeyError(plantilla_id)
     esc = Escenario(nombre=p.nombre, clima=p.clima, hora_inicio_min=p.hora_inicio_min,
-                    nacion_azul=p.nacion_azul, nacion_rojo=p.nacion_rojo)
+                    nacion_azul=p.nacion_azul, nacion_rojo=p.nacion_rojo, ia_azul=p.ia_azul, ia_rojo=p.ia_rojo)
     db.add(esc)
     db.flush()
 
@@ -312,6 +431,10 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
 
     db.commit()
     db.refresh(esc)
+    if esc.ia_azul or esc.ia_rojo:
+        from app import adversario  # importacion tardia: el adversario usa la validacion de las ordenes (routers)
+        adversario.jugar_turno(db, esc)  # el bando del simulador ya da las ordenes del primer turno
+        db.commit()
     return esc
 
 
@@ -320,6 +443,7 @@ def plantilla_dict(p: Plantilla) -> dict:
         "id": p.id, "nombre": p.nombre, "descripcion": p.descripcion, "nacion_azul": p.nacion_azul,
         "nacion_rojo": p.nacion_rojo, "unidades": len(p.unidades), "objetivos": len(p.objetivos),
         "origen": p.origen, "con_estado": p.con_estado, "guardada_en": p.guardada_en,
+        "ia_azul": p.ia_azul, "ia_rojo": p.ia_rojo,
     }
 
 
@@ -413,6 +537,7 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
         "guardada_en": datetime.now(timezone.utc).isoformat(timespec="seconds"), "escenario_origen": esc.id,
         "con_estado": bool(con_estado), "clima": esc.clima, "hora_inicio_min": esc.hora_inicio_min,
         "nacion_azul": esc.nacion_azul or "", "nacion_rojo": esc.nacion_rojo or "",
+        "ia_azul": bool(esc.ia_azul), "ia_rojo": bool(esc.ia_rojo),
         "unidades": unidades, "objetivos": objetivos,
     }
 
@@ -476,6 +601,7 @@ def desde_dict(datos: dict) -> Plantilla:
         unidades=tuple(unidades), objetivos=tuple(objetivos), origen="usuario",
         con_estado=bool(datos.get("con_estado")), guardada_en=str(datos.get("guardada_en") or ""),
         escenario_origen=datos.get("escenario_origen"),
+        ia_azul=bool(datos.get("ia_azul")), ia_rojo=bool(datos.get("ia_rojo")),
     )
 
 

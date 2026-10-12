@@ -3,6 +3,7 @@
 from app import adversario
 from app.models.objetivo import Objetivo
 from app.models.orden import Orden
+from app.models.unidad import Unidad
 from tests.conftest import TerrenoFalso
 from tests.test_api import _preparar
 from tests.test_orders import _avanzar, _escenario, _unidad
@@ -10,7 +11,7 @@ from tests.test_orders import _avanzar, _escenario, _unidad
 
 def _ordenes(db, esc, bando=None):
     q = db.query(Orden).filter(Orden.escenario_id == esc.id, Orden.estado == "pendiente").all()
-    return {o.unidad_id: o for o in q if bando is None or o.unidad.bando == bando} if q else {}
+    return {o.unidad_id: o for o in q if bando is None or db.get(Unidad, o.unidad_id).bando == bando}
 
 
 def _jugar(db, esc, **kw):
@@ -103,3 +104,37 @@ def test_el_instructor_la_enciende_desde_la_consola_y_juega_el_turno_en_curso(ap
     assert any("adversario automatico del bando Rojo activado" in ev["descripcion"] for ev in datos["eventos"])
     r = prof.patch(f"{base}/config", json={"ia_rojo": False})
     assert r.json()["escenario"]["ia_rojo"] is False and r.json()["escenario"]["listo_rojo"] is False
+
+
+def test_las_plantillas_contra_la_ia_crean_el_escenario_con_el_rojo_ya_jugando(db_session):
+    from app.engine import plantillas
+    for pid in ("defensa_aerea_central", "interdiccion_llanos", "defensa_costa_oriental"):
+        assert plantillas.PLANTILLAS[pid].ia_rojo
+        esc = plantillas.crear_desde_plantilla(db_session, pid)
+        assert esc.ia_rojo and not esc.ia_azul and esc.listo_rojo
+        assert _ordenes(db_session, esc, "rojo"), pid  # el rojo ya dio ordenes en el primer turno
+
+
+def test_la_ia_conoce_la_ubicacion_de_las_bases_enemigas_y_va_a_su_objetivo(db_session):
+    esc = _escenario(db_session)
+    esc.ia_rojo = True
+    db_session.commit()
+    base = _unidad(db_session, esc, nombre="Base azul", bando="azul", tipo="base", clase="base_aerea", lat=0.0, lon=0.0,
+                   velocidad_kmh=0, alcance_km=25)
+    _unidad(db_session, esc, nombre="Base roja", bando="rojo", tipo="base", clase="base_aerea", lat=3.0, lon=0.0,
+            velocidad_kmh=0, alcance_km=25)
+    caza = _unidad(db_session, esc, nombre="Caza rojo", bando="rojo", tipo="aerea", clase="ataque", lat=2.0, lon=0.0,
+                   velocidad_kmh=700, alcance_km=100, deteccion_km=30, autonomia_km=2000)
+    db_session.add(Objetivo(escenario_id=esc.id, bando="rojo", tipo="destruir", nombre="Base", puntos=10, unidad_id=base.id))
+    db_session.commit()
+    _jugar(db_session, esc)
+    o = _ordenes(db_session, esc)[caza.id]
+    assert o.tipo == "mover" and o.waypoints[-1][0] < 1.0  # se acerca a la base azul (a distancia de deteccion)
+
+
+def test_guardar_como_plantilla_conserva_el_adversario(db_session, tmp_path, monkeypatch):
+    from app.engine import plantillas
+    monkeypatch.setattr(plantillas, "RUTA_PLANTILLAS_USUARIO", tmp_path)
+    esc = plantillas.crear_desde_plantilla(db_session, "interdiccion_llanos")
+    p = plantillas.guardar_desde_escenario(db_session, esc, "Llanos con IA")
+    assert p.ia_rojo and not p.ia_azul

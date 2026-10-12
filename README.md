@@ -704,6 +704,19 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
     da +40 % de combustible a las aeronaves propias en vuelo a ≤ 40 km (gasta su carga y la recarga en una base aérea).
     Ambas vuelan alto por defecto y las conduce el A3. Las plantillas guardan además el **perfil de vuelo** de cada
     aeronave.
+- **Escenarios contra la IA** (el bando rojo lo conduce el adversario automático desde el primer turno; se puede
+  apagar en *Consola → Dirección del ejercicio*). Fuerzas rojas genéricas, sin identidad nacional:
+  - **`defensa_aerea_central`** — *Defensa aérea de la región central*: la Base Aérea El Libertador, Su-30 y F-16 en
+    alerta, radar de montaña, antiaérea por capas y guerra electrónica contra un ataque aeronaval desde el Caribe
+    (portaaviones con escolta, cazas embarcados, guerra electrónica y drones armados).
+  - **`interdiccion_llanos`** — *Interdicción en los llanos*: una columna mecanizada roja con sus convoyes avanza de
+    Guasdualito a Barinas; el azul la detiene con K-8W, Mi-35M y drones desde el aeropuerto de Barinas y una defensa
+    terrestre escalonada (objetivos: cortar los convoyes, detener la columna, mantener Barinas).
+  - **`defensa_costa_oriental`** — *Defensa de la costa oriental*: dos buques de desembarco con fragatas y
+    helicópteros frente a Barcelona y Puerto La Cruz contra misiles costeros, patrulleros, infantería de marina,
+    radar y aviación.
+  - Una plantilla puede traer la IA encendida (`ia_azul` / `ia_rojo` en `Plantilla`); «Guardar como plantilla»
+    también la conserva.
 - Para agregar una plantilla propia: una entrada más en `PLANTILLAS` (`engine/plantillas.py`), con sus
   `UnidadPlantilla` y, si aplica, `ObjetivoPlantilla`; no hace falta tocar la base de datos ni el resto del código.
 
