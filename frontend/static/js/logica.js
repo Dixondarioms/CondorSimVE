@@ -726,6 +726,7 @@
   // ---- unidades segun el zoom: de lejos no deben tapar el mapa ni encimarse; de cerca se ven con detalle ----
   const ZOOM_ROTULOS = 8; // por debajo, las unidades van sin nombre (se lee al pasar el cursor)
   const ZOOM_ALCANCES = 9; // desde aca, cada unidad desplegada muestra el anillo de su alcance
+  const ZOOM_CARRETERAS = 7; // desde aca se dibujan las carreteras reales
 
   /** Factor de tamaño de miniaturas y simbolos: 0,35 de lejos (pais entero), 1 hacia el zoom 10, hasta 1,5 de cerca. */
   function escalaUnidad(zoom) {
@@ -747,7 +748,7 @@
   }
 
   const api = {
-    MAPA_VENEZUELA, ordenarMapas, limitesDe, limitesDeMapas, textoMapa, ZOOM_ROTULOS, ZOOM_ALCANCES, escalaUnidad, unidadesConAlcance,
+    MAPA_VENEZUELA, ordenarMapas, limitesDe, limitesDeMapas, textoMapa, ZOOM_ROTULOS, ZOOM_ALCANCES, ZOOM_CARRETERAS, escalaUnidad, unidadesConAlcance,
     PERFILES_VUELO, textoPerfil, muestraCobertura,
     PUESTOS, puestoDe, puestoPuede, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,

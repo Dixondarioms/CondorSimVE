@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 
 from app.engine import catalogo, geo, relieve
 from app.engine import clima as clima_mod
-from app.terreno import FACTOR_MOVIMIENTO, Terreno
+from app.terreno import FACTOR_MOVIMIENTO, FACTOR_PUENTE, FACTOR_VIA, Terreno
 
 TURNO_DURACION_HORAS = 1.0
 PASO_KM = 1.0
@@ -42,13 +42,18 @@ def obra_en(obras, lat: float, lon: float):
     return mejor
 
 
-def factor_terreno(unidad, clase_terreno: str, obras, lat: float, lon: float) -> float:
-    """Fraccion de la velocidad que conserva `unidad` sobre ese terreno (0 = no puede pasar)."""
+def factor_terreno(unidad, clase_terreno: str, obras, lat: float, lon: float, via: int = 0) -> float:
+    """Fraccion de la velocidad que conserva `unidad` sobre ese terreno (0 = no puede pasar). Una carretera (`via`)
+    la acelera y, donde cruza un rio o el agua, tiene un puente."""
     if unidad.tipo == "aerea":
         return 1.0
     if unidad.tipo == "naval":
         return 1.0 if clase_terreno == "agua" else 0.0
     base = FACTOR_MOVIMIENTO.get(clase_terreno, 1.0)
+    if via and clase_terreno in ("rio", "agua"):
+        return FACTOR_PUENTE
+    if via:
+        return max(base, FACTOR_VIA.get(via, 1.0))
     if clase_terreno != "rio":
         return base
     ligera = catalogo.obtener(unidad.clase, unidad.tipo).movilidad == "ligera"
@@ -92,7 +97,7 @@ def simular(unidad, waypoints: list, terreno: Terreno, clima: str = "despejado",
                 factor = 1.0
             else:
                 clase_terreno = terreno.clase(sig_lat, sig_lon)
-                factor = factor_terreno(unidad, clase_terreno, obras, sig_lat, sig_lon)
+                factor = factor_terreno(unidad, clase_terreno, obras, sig_lat, sig_lon, terreno.via(sig_lat, sig_lon))
             if factor <= 0:
                 mov.nota = (
                     "Avance detenido: rio sin puente ni vado (se necesitan ingenieros)."

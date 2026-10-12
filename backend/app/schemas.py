@@ -141,6 +141,11 @@ class PrevisualizarIn(BaseModel):
     waypoints: list[tuple[float, float]] = Field(min_length=1, max_length=30)
 
 
+class RutaIn(BaseModel):
+    unidad_id: int
+    destino: tuple[float, float]
+
+
 class UnidadCreate(BaseModel):
     nombre: str = Field(min_length=1, max_length=120)
     bando: Bando

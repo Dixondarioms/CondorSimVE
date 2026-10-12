@@ -12,8 +12,10 @@ from app.engine import guerra_electronica as ge_mod
 from app.engine import misiles as misiles_mod
 from app.engine import transporte as transporte_mod
 from app.engine import misiones as misiones_mod
+from app.engine import rutas as rutas_mod
 from app.engine.orders import COSTO_OBRA, tipo_efectivo
 from app.models.escenario import Escenario
+from app.models.obra import Obra
 from app.models.orden import Orden
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
@@ -279,6 +281,21 @@ def previsualizar(
         == [round(payload.waypoints[-1][0], 5), round(payload.waypoints[-1][1], 5)],
         "nota": mov.nota,
     }
+
+
+@router.post("/ruta")
+def trazar_ruta(
+    payload: schemas.RutaIn,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(solo_alumnos),
+):
+    """Waypoints del camino mas rapido de la unidad hasta `destino`, por carreteras y puentes reales y las obras
+    vigentes del bando, sin emitir la orden (el alumno la revisa y la emite como un "mover")."""
+    unidad = _unidad_propia(db, esc, payload.unidad_id, usuario)
+    _validar_waypoints([payload.destino])
+    obras = db.query(Obra).filter(Obra.escenario_id == esc.id, Obra.expira_turno >= esc.turno_actual).all()
+    return rutas_mod.ruta(unidad, list(payload.destino), get_terreno(), obras)
 
 
 @router.delete("/{orden_id}")
