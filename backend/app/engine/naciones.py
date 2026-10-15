@@ -53,12 +53,18 @@ _LISTA = [
     Nacion("trinidad_tobago", "Trinidad y Tobago", "trinitense", "Puerto España", ("#CE1126", "#000000", "#FFFFFF"), "TT"),
     Nacion("uruguay", "Uruguay", "uruguayo", "Montevideo", ("#FFFFFF", "#0038A8", "#FCD116"), "UY"),
 ]
-NACIONES: dict[str, Nacion] = {n.id: n for n in _LISTA}
+# Estados FICTICIOS del mapa ficticio (region "teatro_ficticio", tools/generar_mapa_ficticio.py), para ejercicios
+# que no involucran a ningun pais real. Codigos XV y XO: el rango X* de ISO 3166 es de uso privado.
+_FICTICIAS = [
+    Nacion("valdoria", "República de Valdoria (ficticia)", "valdoriano", "Valdora", ("#1F4E9C", "#FFFFFF", "#3FA34D"), "XV"),
+    Nacion("ostrania", "República de Ostrania (ficticia)", "ostranio", "Nueva Ostria", ("#B3202A", "#1A1A1A", "#F2C14E"), "XO"),
+]
+NACIONES: dict[str, Nacion] = {n.id: n for n in _LISTA + _FICTICIAS}
 
 # Nombre en español de cada pais o territorio de America (ISO 3166-1 alfa-2), incluidos los que no son estados
 # soberanos (y por eso no estan en NACIONES): sirve para rotular datos geograficos como los aerodromos.
 PAISES_AMERICA: dict[str, str] = {
-    **{n.iso: n.nombre for n in _LISTA},
+    **{n.iso: n.nombre for n in _LISTA + _FICTICIAS},
     "AG": "Antigua y Barbuda", "DM": "Dominica", "GD": "Granada", "KN": "San Cristóbal y Nieves",
     "LC": "Santa Lucía", "VC": "San Vicente y las Granadinas",
     # territorios y dependencias

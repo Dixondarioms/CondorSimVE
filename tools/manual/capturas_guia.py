@@ -614,6 +614,16 @@ def ficha_puente(n):
     guardar(n, "ficha_puente", n.rect("#panel-izq"), margen=0)
 
 
+def mapa_ficticio(n):
+    n.ir(arnes("instructor", lat=9.25, lon=-23.75, zoom=7), LISTA_APP, 4)
+    n.clic("#base-relieve")
+    time.sleep(2.5)
+    guardar(n, "mapa_ficticio", rect_mapa(n), margen=0)
+    n.clic("#base-satelite")
+    n.vista(10.45, -26.2, 10, 4)
+    guardar(n, "mapa_ficticio_cerca", rect_mapa(n), margen=0)
+
+
 def objetivos_avance(n):
     n.ir(arnes("instructor"), LISTA_APP, 2)
     guardar(n, "objetivos_avance", n.rect("#tarjeta-objetivos"), margen=4)
@@ -682,7 +692,7 @@ CAPTURAS = [
     consola_turno, consola_meteo, consola_identidad, consola_agregar, consola_objetivos, consola_direccion, consola_eventos,
     consola_escenario, consola_usuarios, plantillas, ver_como, videowall, observador,
     ia_pantalla, consola_ia, plantillas_ia, barra_inferior_ia, mapa_dia_noche, mapa_carreteras, consola_catalogo,
-    situacion, mapa_infraestructura, ficha_puente, objetivos_avance,
+    situacion, mapa_infraestructura, ficha_puente, objetivos_avance, mapa_ficticio,
     informe_repeticion, informe_dialogos, informe_rubrica, informe_doctrina, comparar, informe_replay,
 ]
 

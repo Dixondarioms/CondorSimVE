@@ -685,3 +685,28 @@ def eliminar_usuario(plantilla_id: str) -> bool:
         return False
     ruta.unlink()
     return True
+
+
+# ---------------------------------------------------------------------------------------------------------
+# Plantillas del sistema generadas por herramientas (JSON en backend/data/plantillas_sistema), p. ej. la del mapa
+# ficticio (tools/generar_mapa_ficticio.py), cuyas posiciones dependen del terreno generado. Son del sistema
+# ("codigo"): no se pueden eliminar desde la interfaz.
+RUTA_PLANTILLAS_SISTEMA = Path(__file__).resolve().parents[2] / "data" / "plantillas_sistema"
+
+
+def _cargar_sistema() -> None:
+    from dataclasses import replace
+
+    if not RUTA_PLANTILLAS_SISTEMA.is_dir():
+        return
+    for archivo in sorted(RUTA_PLANTILLAS_SISTEMA.glob("*.json")):
+        try:
+            p = desde_dict(json.loads(archivo.read_text(encoding="utf-8")))
+        except (PlantillaInvalida, ValueError, TypeError, KeyError, OSError) as exc:
+            log.warning("Plantilla del sistema ignorada (%s): %s", archivo.name, exc)
+            continue
+        if p.id not in PLANTILLAS:
+            PLANTILLAS[p.id] = replace(p, origen="codigo", guardada_en="", escenario_origen=None)
+
+
+_cargar_sistema()

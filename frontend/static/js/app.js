@@ -2053,7 +2053,7 @@
     app.aviacion.conectar();
     app.infraestructura = Infraestructura.crear({
       map: () => app.map, api, toast, rutaEsc, usuario: () => app.usuario, datos: () => app.data,
-      escenarioId: () => app.escenarioId, capa: () => app.capas.infraestructura,
+      escenarioId: () => app.escenarioId, capa: () => app.capas.infraestructura, mapas: () => Logica.ordenarMapas(app.mapas),
     });
     app.infraestructura.cargar();
     app.misiones = Misiones.crear({

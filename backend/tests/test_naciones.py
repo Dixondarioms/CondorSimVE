@@ -29,7 +29,7 @@ def test_el_catalogo_cubre_todos_los_estados_de_america_ordenados_con_venezuela_
     ids = list(naciones.NACIONES)
     assert ids[0] == "venezuela"
     sin_tildes = lambda t: unicodedata.normalize("NFKD", t).encode("ascii", "ignore").decode().lower()
-    resto = [n.nombre for n in list(naciones.NACIONES.values())[1:]]
+    resto = [n.nombre for n in list(naciones.NACIONES.values())[1:] if not n.iso.startswith("X")]  # las ficticias van al final
     assert resto == sorted(resto, key=sin_tildes)
     for n in naciones.NACIONES.values():
         assert re.fullmatch(r"[a-z_]+", n.id), n.id  # snake_case sin tildes

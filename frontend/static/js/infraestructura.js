@@ -88,17 +88,18 @@
       } else {
         div.appendChild(el("p", "ayuda", "Capa de referencia: solo forma parte del ejercicio si el instructor la coloca."));
       }
-      div.appendChild(el("p", "credito", "Ubicación: © colaboradores de OpenStreetMap"));
+      div.appendChild(el("p", "credito", String(p.id || "").startsWith("fic") ? "Mapa ficticio: no representa ningún país real"
+        : "Ubicación: © colaboradores de OpenStreetMap"));
       return div;
     }
 
     async function cargar() {
       if (datos) return;
-      try {
-        const r = await fetch("/static/geo/venezuela/infraestructura.json");
-        if (!r.ok) return;
-        datos = await r.json();
-      } catch (_) { return; }
+      // una capa por region del mapa (Venezuela, el mapa ficticio...): la que no la tenga simplemente no aporta nada
+      const ids = (ctx.mapas ? ctx.mapas() : []).map((m) => m.id);
+      const partes = await Promise.all((ids.length ? ids : ["venezuela"]).map((id) => fetch(`/static/geo/${id}/infraestructura.json`)
+        .then((r) => (r.ok ? r.json() : null)).catch(() => null)));
+      datos = { instalaciones: partes.filter(Boolean).flatMap((p) => p.instalaciones || []) };
       const capa = ctx.capa();
       for (const p of datos.instalaciones || []) {
         const m = L.marker([p.lat, p.lon], { icon: icono(p), keyboard: false, riseOnHover: true });

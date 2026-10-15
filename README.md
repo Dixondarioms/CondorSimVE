@@ -13,7 +13,7 @@ recortado, sin el fondo: `dida_logo_recortado.png`, que genera `python tools/rec
 
 ## Manuales
 
-- **Manual de usuario** `docs/Manual_Usuario_SIETE.pdf`: guía paso a paso, con 74 capturas, de cada parte de la interfaz
+- **Manual de usuario** `docs/Manual_Usuario_SIETE.pdf`: guía paso a paso, con 76 capturas, de cada parte de la interfaz
   para el instructor, los alumnos de cada puesto y el observador, con un capítulo sobre el combate contra la IA (ejercicios
   listos, niveles del adversario, ciclo de día y noche y modo demostración). Capturas: `python tools/manual/capturas_guia.py` (con
   el servidor en marcha en el puerto 8000): maneja Chrome por su protocolo de depuración (`tools/manual/navegador.py`)
@@ -837,6 +837,14 @@ plantilla…» (marcada como *Guardada por un instructor*), se instancia igual q
   fuerza queda cortado (la carretera no da paso sobre el río o el agua en su radio). Si el bando no tiene instalaciones
   de una categoría, no le afecta. Las plantillas de la región central y de la costa oriental traen Planta Centro, El
   Palito y la refinería de Puerto La Cruz con objetivos para ambos bandos.
+- **Mapa ficticio** (región `teatro_ficticio`, botón *Teatro ficticio* de la tarjeta Capas): la República de Valdoria y
+  la República de Ostrania, dos estados inventados en una masa de tierra del tamaño de un país ubicada en pleno
+  Atlántico (6 a 12,5° N, 27,5 a 20° O), con la misma resolución que la región de Venezuela. Tiene relieve (cordillera,
+  serranía costera, macizo con mesetas, llanos, plataforma continental), ríos calculados sobre la elevación, un lago,
+  embalses con su represa, bosques, pantanos, 28 ciudades, carreteras con puentes y pasos de frontera, provincias,
+  infraestructura, relieve y foto satelital sintética, las naciones ficticias (`valdoria`, `ostrania`) y la plantilla
+  *Valdoria contra Ostrania*. Se regenera sin internet con `python tools/generar_mapa_ficticio.py` (semilla fija: siempre
+  el mismo mapa); las plantillas del sistema en JSON (`backend/data/plantillas_sistema/`) se cargan solas.
 - **Pestaña Situación** (`frontend/static/js/situacion.js`): **cuadro radar** (lo que detecta cada sensor del bando,
   con distancia, rumbo y cota; `engine/vision.py`, `cuadro_sensores`), con aviso automático de los contactos nuevos al
   cerrar el turno (evento «radar», `engine/contactos.py`) y botón para difundirlo a la red del bando; **personal**
