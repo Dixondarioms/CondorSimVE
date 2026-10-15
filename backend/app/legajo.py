@@ -111,7 +111,7 @@ def _final(info: dict) -> list:
 
 def informacion(db: Session, esc: Escenario, bando: str, documentos: dict) -> dict:
     nacion = naciones.obtener(getattr(esc, f"nacion_{bando}"))
-    pais = nacion.nombre.replace(" (ficticia)", "") if nacion else f"Bando {bando.capitalize()}"
+    pais = nacion.nombre.replace(" (ficticia)", "").replace(" (ficticio)", "") if nacion else f"Bando {bando.capitalize()}"
     base = (db.query(Unidad).filter(Unidad.escenario_id == esc.id, Unidad.bando == bando, Unidad.clase == "base_aerea")
             .order_by(Unidad.id).first())
     ref = calendario.referencia(esc, esc.turno_actual)

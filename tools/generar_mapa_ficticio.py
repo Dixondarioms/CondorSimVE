@@ -1,5 +1,5 @@
 """Mapa FICTICIO para ejercicios que no involucran a ningun pais real: la region "teatro_ficticio", con dos
-estados inventados, la Republica de Valdoria (al oeste, bando azul por defecto) y la Republica de Ostrania (al
+estados inventados, la Republica de País Azul (al oeste, bando azul por defecto) y la Republica de País Rojo (al
 este, bando rojo), en una masa de tierra del tamaño de un pais con todo lo que el motor usa de un mapa real:
 
   - relieve: una cordillera alta al oeste, una serrania costera al norte, un macizo con mesetas al sureste, llanos
@@ -21,7 +21,7 @@ sale de una semilla, asi que el resultado es siempre el mismo. Genera lo mismo q
   frontend/static/geo/teatro_ficticio/*.geojson               fronteras, provincias, rios, lagos, ciudades, carreteras
   frontend/static/geo/teatro_ficticio/infraestructura.json    centrales, refinerias, comunicaciones y puentes
   backend/data/terreno/teatro_ficticio/                       grillas del motor (clases, alturas, vias) y meta.json
-  backend/data/plantillas_sistema/teatro_ficticio.json        plantilla "Valdoria contra Ostrania"
+  backend/data/plantillas_sistema/teatro_ficticio.json        plantilla "País Azul contra País Rojo"
 
     backend\\venv\\Scripts\\python tools/generar_mapa_ficticio.py
 """
@@ -48,7 +48,7 @@ from preparar_vias import simplificar  # noqa: E402
 
 RAIZ = AQUI.parent
 ID = "teatro_ficticio"
-REG = pt.Region(ID, "Teatro ficticio (Valdoria y Ostrania)", (-27.5, 6.0, -20.0, 12.5), 9, 5, "10m", 0)
+REG = pt.Region(ID, "Teatro ficticio (País Azul y País Rojo)", (-27.5, 6.0, -20.0, 12.5), 9, 5, "10m", 0)
 TILES_SAT = RAIZ / "frontend" / "static" / "tiles_sat"
 GEO = RAIZ / "frontend" / "static" / "geo" / ID
 DATOS = RAIZ / "backend" / "data" / "terreno" / ID
@@ -58,14 +58,14 @@ F = 4  # factor de la grilla gruesa (hidrologia y caminos): ~1,2 km por celda
 FUENTE = "Mapa ficticio generado por S.I.E.T.E. (tools/generar_mapa_ficticio.py): no representa ningún país real"
 
 PAISES = {
-    "valdoria": {"nombre": "República de Valdoria", "bando": "azul"},
-    "ostrania": {"nombre": "República de Ostrania", "bando": "rojo"},
+    "valdoria": {"nombre": "País Azul", "bando": "azul"},
+    "ostrania": {"nombre": "País Rojo", "bando": "rojo"},
 }
 # ciudades: (nombre, pais, peso) — el peso ordena la poblacion; la capital es la primera de cada pais
 NOMBRES_CIUDADES = {
-    "valdoria": ["Valdora", "Puerto Albán", "San Telmo", "Rocaverde", "Las Moras", "Villa Esmeralda", "Ciudad Arenas",
+    "valdoria": ["Capital Azul", "Puerto Albán", "San Telmo", "Rocaverde", "Las Moras", "Villa Esmeralda", "Ciudad Arenas",
                  "Montecal", "Río Claro", "El Pinar", "Santa Irene", "Altamesa", "La Candela", "Puerto Sereno"],
-    "ostrania": ["Nueva Ostria", "Puerto Varela", "Tierra Roja", "San Fermín", "Las Dunas", "Monteoscuro", "Villa Oriente",
+    "ostrania": ["Capital Roja", "Puerto Varela", "Tierra Roja", "San Fermín", "Las Dunas", "Monteoscuro", "Villa Oriente",
                  "Ciudad Cobre", "Los Álamos", "Santa Brígida", "El Mirador", "Campo Alegre", "Puerto Lince", "Altavista"],
 }
 NOMBRES_RIOS = ["Río Aldana", "Río Verdal", "Río Caraño", "Río Toroya", "Río Mirana", "Río Saltén", "Río Ostral",
@@ -256,7 +256,7 @@ class Mapa:
         # paises: frontera ondulada de norte a sur
         ondas = ruido(rng, (h, 8), 260, 4, 0.45)[:, :1]  # solo depende de la latitud: una sola linea de norte a sur
         borde = 0.52 + 0.035 * np.sin(v * 6.0 + 1.3) + 0.03 * ondas
-        self.pais2 = np.where(u < borde, 0, 1).astype(np.uint8)  # 0 Valdoria (oeste), 1 Ostrania (este)
+        self.pais2 = np.where(u < borde, 0, 1).astype(np.uint8)  # 0 País Azul (oeste), 1 País Rojo (este)
 
     # ---------------------------------------------------------------- hidrologia (grilla gruesa)
     def hidrologia(self):
@@ -840,7 +840,7 @@ class Mapa:
         pais_c = reducir(self.pais.astype(np.float32), F) > 0.5
         limite = contornos(pais_c & self.tc, minimo=6)
         for c in limite:
-            # solo los tramos del contorno de Ostrania que no son costa
+            # solo los tramos del contorno de País Rojo que no son costa
             tramo = []
             for x, y in c:
                 xi, yi = int(round(x)), int(round(y))
@@ -849,12 +849,12 @@ class Mapa:
                 if interior:
                     tramo.append((x * F + F / 2, y * F + F / 2))
                 elif len(tramo) > 3:
-                    fr.append(linea({"name": "Frontera Valdoria – Ostrania"}, self._a_lonlat(chaikin(tramo, 2))))
+                    fr.append(linea({"name": "Frontera País Azul – País Rojo"}, self._a_lonlat(chaikin(tramo, 2))))
                     tramo = []
                 else:
                     tramo = []
             if len(tramo) > 3:
-                fr.append(linea({"name": "Frontera Valdoria – Ostrania"}, self._a_lonlat(chaikin(tramo, 2))))
+                fr.append(linea({"name": "Frontera País Azul – País Rojo"}, self._a_lonlat(chaikin(tramo, 2))))
         guardar("fronteras", fr)
         # provincias: limites de un Voronoi entre las ciudades de cada pais (solo por tierra y dentro del pais)
         yy, xx = np.mgrid[0:self.hc, 0:self.wc]
@@ -927,7 +927,7 @@ class Mapa:
 
     # ---------------------------------------------------------------- plantilla de ejercicio
     def escribir_plantilla(self):
-        """"Valdoria contra Ostrania": cada bando con su capital, bases, defensa, sensores, infraestructura y una
+        """"País Azul contra País Rojo": cada bando con su capital, bases, defensa, sensores, infraestructura y una
         fuerza de maniobra cerca de la frontera; objetivos que pesan en la guerra para ambos."""
         unidades, objetivos = [], []
         cap = {p: next(c for c in self.ciudades if c["pais"] == p and c["capital"]) for p in PAISES}
@@ -960,9 +960,9 @@ class Mapa:
         for p, datos in PAISES.items():
             b = datos["bando"]
             c = cap[p]
-            sentido = 0.0 if p == "valdoria" else math.pi  # hacia la frontera: este para Valdoria, oeste para Ostrania
+            sentido = 0.0 if p == "valdoria" else math.pi  # hacia la frontera: este para País Azul, oeste para País Rojo
             hacia = math.atan2(fr[0] - c["celda"][0], fr[1] - c["celda"][1])
-            gent = "valdoriano" if p == "valdoria" else "ostranio"
+            gent = "azul" if p == "valdoria" else "rojo"
             base = punto(c["celda"], 12, sentido + 1.2)
             u(f"Base Aérea de {c['nombre']}", b, "base_aerea", *base)
             u(f"Cazas {gent}s", b, "caza", *base, modelo="f16" if p == "valdoria" else "su30", aeronaves=4,
@@ -1022,10 +1022,10 @@ class Mapa:
                               "lat": round(fr_lat, 5), "lon": round(fr_lon, 5), "radio_km": 8.0, "turnos_requeridos": 3})
         nv, no = cap["valdoria"]["nombre"], cap["ostrania"]["nombre"]
         plantilla = {
-            "id": "teatro_ficticio", "nombre": "Valdoria contra Ostrania (mapa ficticio)",
+            "id": "teatro_ficticio", "nombre": "País Azul contra País Rojo (mapa ficticio)",
             "descripcion": (
-                "Ejercicio sobre el mapa ficticio, sin ningún país real: la República de Valdoria (azul, capital "
-                f"{nv}) y la República de Ostrania (rojo, capital {no}) se enfrentan a lo largo de su frontera. Cada bando "
+                "Ejercicio sobre el mapa ficticio, sin ningún país real: el País Azul (azul, capital "
+                f"{nv}) y el País Rojo (rojo, capital {no}) se enfrentan a lo largo de su frontera. Cada bando "
                 "tiene su base aérea con cazas, ataque y helicópteros, defensa antiaérea, radar, depósito, una fuerza de "
                 "maniobra a 30-65 km de la frontera y su infraestructura: centrales, refinería, centro de comunicaciones "
                 "y los puentes de las troncales. Objetivos: el paso de frontera central, la base aérea enemiga y la "

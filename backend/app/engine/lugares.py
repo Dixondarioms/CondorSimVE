@@ -1,4 +1,4 @@
-"""Ciudades de referencia para describir posiciones en texto ("a 35 km al NE de Valdora").
+"""Ciudades de referencia para describir posiciones en texto ("a 35 km al NE de Capital Azul").
 
 Lee las capas `lugares.geojson` de cada region (frontend/static/geo/<region>/), las mismas que dibuja el mapa.
 """
@@ -60,7 +60,7 @@ def cercano(lat: float, lon: float, max_km: float = 250.0) -> dict | None:
 
 
 def describir(lat: float, lon: float) -> str:
-    """"en Valdora", "a 35 km al NE de Valdora" o, lejos de toda ciudad, la posicion en grados."""
+    """"en Capital Azul", "a 35 km al NE de Capital Azul" o, lejos de toda ciudad, la posicion en grados."""
     c = cercano(lat, lon)
     if c is None:
         return f"en {abs(lat):.1f}° {'N' if lat >= 0 else 'S'} {abs(lon):.1f}° {'O' if lon < 0 else 'E'}"

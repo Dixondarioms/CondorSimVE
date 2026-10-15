@@ -468,13 +468,13 @@ def construir(salida: Path, img: Path) -> None:
             "la región nueva aparece sola. Los demás scripts de <font face='Mono'>tools/</font> también necesitan internet una sola vez: "
             "<font face='Mono'>preparar_satelite.py --region &lt;id&gt;</font> (foto satelital de una región: Venezuela hasta el zoom 13 y América hasta el 8 ya incluidas), "
             "<font face='Mono'>preparar_aerodromos.py</font> (planos de las bases) y <font face='Mono'>generar_bases_aereas.py</font>."),
-          P("<b>Mapa ficticio</b> (región <font face='Mono'>teatro_ficticio</font>): dos repúblicas inventadas, Valdoria y Ostrania, en el "
+          P("<b>Mapa ficticio</b> (región <font face='Mono'>teatro_ficticio</font>): dos repúblicas inventadas, País Azul y País Rojo, en el "
             "Atlántico (6 a 12,5° N, 27,5 a 20° O), a ~300 m por píxel. Lo genera sin internet "
             "<font face='Mono'>python tools/generar_mapa_ficticio.py</font> a partir de una semilla fija (siempre el mismo mapa): tierra con "
             "ruido fractal, cordilleras de crestas, mesetas escalonadas y llanos; drenaje por relleno de depresiones y acumulación de "
             "flujo (ríos con nombre, lago y embalses detrás de represas); cobertura por humedad; ciudades donde se asientan las reales; "
             "carreteras por el camino de menor costo sobre el terreno (árbol de expansión mínima entre ciudades más enlaces vecinos); "
-            "frontera, provincias, infraestructura y la plantilla <i>Valdoria contra Ostrania</i> "
+            "frontera, provincias, infraestructura y la plantilla <i>País Azul contra País Rojo</i> "
             "(<font face='Mono'>backend/data/plantillas_sistema/teatro_ficticio.json</font>). Escribe lo mismo que una región real: "
             "teselas de relieve y satelitales, capas vectoriales y las grillas del motor (clases, alturas y vías).")]
 
@@ -970,7 +970,7 @@ def construir(salida: Path, img: Path) -> None:
                "Lo que detecta cada sensor, con distancia y rumbo; los contactos nuevos se informan solos al bando y se pueden difundir a la red."],
               ["Porcentaje de objetivos y tiempo de recorrido", "Tarjeta Objetivos y puntaje; vista previa de Mover",
                "Objetivos cumplidos sobre asignados de cada bando; duración total, turnos y hora de llegada de una ruta."],
-              ["Mapa ficticio: Valdoria y Ostrania", "Capas → Teatro ficticio; Desde plantilla…; tools/generar_mapa_ficticio.py",
+              ["Mapa ficticio: País Azul y País Rojo", "Capas → Teatro ficticio; Desde plantilla…; tools/generar_mapa_ficticio.py",
                "Un país inventado en dos repúblicas, con relieve, ríos, embalses, bosques, ciudades, carreteras, infraestructura y su ejercicio, para ejercitar sin ningún país real."],
               ["TIEM, etapa 1: reparticiones del Estado Mayor", "Usuarios; Mi repartición; engine/puestos.py",
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],

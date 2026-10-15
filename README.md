@@ -926,13 +926,13 @@ plantilla…» (marcada como *Guardada por un instructor*), se instancia igual q
   fuerza queda cortado (la carretera no da paso sobre el río o el agua en su radio). Si el bando no tiene instalaciones
   de una categoría, no le afecta. Las plantillas de la región central y de la costa oriental traen Planta Centro, El
   Palito y la refinería de Puerto La Cruz con objetivos para ambos bandos.
-- **Mapa ficticio** (región `teatro_ficticio`, botón *Teatro ficticio* de la tarjeta Capas): la República de Valdoria y
-  la República de Ostrania, dos estados inventados en una masa de tierra del tamaño de un país ubicada en pleno
+- **Mapa ficticio** (región `teatro_ficticio`, botón *Teatro ficticio* de la tarjeta Capas): el País Azul y
+  el País Rojo, dos estados inventados en una masa de tierra del tamaño de un país ubicada en pleno
   Atlántico (6 a 12,5° N, 27,5 a 20° O), con la misma resolución que la región de Venezuela. Tiene relieve (cordillera,
   serranía costera, macizo con mesetas, llanos, plataforma continental), ríos calculados sobre la elevación, un lago,
   embalses con su represa, bosques, pantanos, 28 ciudades, carreteras con puentes y pasos de frontera, provincias,
   infraestructura, relieve y foto satelital sintética, las naciones ficticias (`valdoria`, `ostrania`) y la plantilla
-  *Valdoria contra Ostrania*. Se regenera sin internet con `python tools/generar_mapa_ficticio.py` (semilla fija: siempre
+  *País Azul contra País Rojo*. Se regenera sin internet con `python tools/generar_mapa_ficticio.py` (semilla fija: siempre
   el mismo mapa); las plantillas del sistema en JSON (`backend/data/plantillas_sistema/`) se cargan solas.
 - **Pestaña Situación** (`frontend/static/js/situacion.js`): **cuadro radar** (lo que detecta cada sensor del bando,
   con distancia, rumbo y cota; `engine/vision.py`, `cuadro_sensores`), con aviso automático de los contactos nuevos al

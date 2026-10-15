@@ -56,8 +56,8 @@ _LISTA = [
 # Estados FICTICIOS del mapa ficticio (region "teatro_ficticio", tools/generar_mapa_ficticio.py), para ejercicios
 # que no involucran a ningun pais real. Codigos XV y XO: el rango X* de ISO 3166 es de uso privado.
 _FICTICIAS = [
-    Nacion("valdoria", "República de Valdoria (ficticia)", "valdoriano", "Valdora", ("#1F4E9C", "#FFFFFF", "#3FA34D"), "XV"),
-    Nacion("ostrania", "República de Ostrania (ficticia)", "ostranio", "Nueva Ostria", ("#B3202A", "#1A1A1A", "#F2C14E"), "XO"),
+    Nacion("valdoria", "País Azul (ficticio)", "azul", "Capital Azul", ("#1F4E9C", "#FFFFFF", "#3FA34D"), "XV"),
+    Nacion("ostrania", "País Rojo (ficticio)", "rojo", "Capital Roja", ("#B3202A", "#1A1A1A", "#F2C14E"), "XO"),
 ]
 NACIONES: dict[str, Nacion] = {n.id: n for n in _LISTA + _FICTICIAS}
 

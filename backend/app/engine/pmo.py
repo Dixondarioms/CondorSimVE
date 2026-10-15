@@ -157,12 +157,24 @@ def guardar(db: Session, esc: Escenario, bando: str, contenido: dict, origen: st
 
 # ---------------------------------------------------------------- generacion automatica
 def _pais(esc: Escenario, bando: str) -> str:
-    """Nombre del pais del bando como va en una oracion ("la República de Valdoria", "Venezuela")."""
+    """Nombre del pais del bando como va en una oracion ("el País Azul", "Venezuela")."""
     n = naciones.obtener(getattr(esc, f"nacion_{bando}"))
     if n is None:
         return f"el País {bando.capitalize()}"
-    nombre = n.nombre.replace(" (ficticia)", "")
-    return f"la {nombre}" if nombre.startswith("República") else nombre
+    nombre = n.nombre.replace(" (ficticia)", "").replace(" (ficticio)", "")
+    if nombre.startswith("República"):
+        return f"la {nombre}"
+    return f"el {nombre}" if nombre.startswith("País") else nombre
+
+
+def _contraer(d):
+    """«de el País Azul» -> «del País Azul» y «a el» -> «al» en todo el documento."""
+    if isinstance(d, dict):
+        return {k: _contraer(v) for k, v in d.items()}
+    if isinstance(d, str):
+        for a, b in ((" de el ", " del "), (" a el ", " al "), ("De el ", "Del ")):
+            d = d.replace(a, b)
+    return d
 
 
 def _mayuscula(t: str) -> str:
@@ -426,7 +438,7 @@ def generar_contenido(esc: Escenario, unidades: list[Unidad], objetivos: list[Ob
             "cuando": _cuando(esc),
             "proposito": f"preservar la libertad de acción de las fuerzas propias y la integridad territorial de {pais}",
         }
-    return normalizar({
+    return _contraer(normalizar({
         "situacion_general": sit,
         "fuerzas_enemigas": _fuerzas_enemigas(enemigas, pais_e),
         "fuerzas_propias": _fuerzas_propias(propias, pais),
@@ -437,7 +449,7 @@ def generar_contenido(esc: Escenario, unidades: list[Unidad], objetivos: list[Ob
         "area_operaciones": _area(unidades),
         "limitaciones": _limitaciones(mios, enemigas, por_id),
         "instrucciones": _instrucciones(esc),
-    })
+    }))
 
 
 def preparar_calendario(esc: Escenario, hoy: date | None = None) -> None:
@@ -517,8 +529,8 @@ def generar_cadena(db: Session, esc: Escenario, bando: str, unidades: list[Unida
     pais, pais_e = _pais(esc, bando), _pais(esc, enemigo)
     ulterior = Objetivo(
         escenario_id=esc.id, bando=bando, tipo="efecto", nivel="ulterior", puntos=0, umbral=60.0,
-        nombre=(f"Neutralizar la capacidad militar de {pais_e} en la zona fronteriza" if postura == "ofensiva"
-                else f"Preservar la integridad territorial de {pais}"),
+        nombre=_contraer(f"Neutralizar la capacidad militar de {pais_e} en la zona fronteriza" if postura == "ofensiva"
+                         else f"Preservar la integridad territorial de {pais}"),
         efecto="Objetivo del Teatro de Operaciones al que contribuye el Componente Aéreo",
         indicador="Objetivos asignados al Componente Aéreo cumplidos (60 % o más)",
     )

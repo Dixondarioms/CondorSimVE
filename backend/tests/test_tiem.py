@@ -105,7 +105,7 @@ def test_la_situacion_se_genera_sola_a_partir_del_escenario(db_session):
     db_session.commit()
     assert hecho["calendario"] and set(hecho["pmo"]) == {"azul", "rojo"} and hecho["objetivos"] > 2
     assert (esc.fecha_inicio, esc.turno_h, esc.turno_final) == ("2026-10-16", 3, 24)
-    for bando, pais, enemigo in (("azul", "Valdoria", "Ostrania"), ("rojo", "Ostrania", "Valdoria")):
+    for bando, pais, enemigo in (("azul", "País Azul", "País Rojo"), ("rojo", "País Rojo", "País Azul")):
         d = pmo.como_dict(pmo.obtener(db_session, esc, bando), bando)
         c = d["contenido"]
         assert d["origen"] == "automatico" and d["avisos_mision"] == []

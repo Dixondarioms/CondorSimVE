@@ -801,7 +801,7 @@
       const DEF = { venezuela: { nombre: "Venezuela y vecinos", bbox: [-73.5, 0.5, -59.5, 12.5], z: 9, z_min: 5, metros_por_pixel: 304, satelite: { z_min: 5, z_max: 12 } },
         america: { nombre: "América", bbox: [-170, -56, -30, 72], z: 7, z_min: 3, metros_por_pixel: 1178, satelite: { z_min: 3, z_max: 8 } },
         mundo: { nombre: "Mundo", bbox: [-180, -60, 180, 75], z: 6, z_min: 2, metros_por_pixel: 2366, satelite: null },
-        teatro_ficticio: { nombre: "Teatro ficticio (Valdoria y Ostrania)", bbox: [-27.5, 6.0, -20.0, 12.5], z: 9, z_min: 5, metros_por_pixel: 302, satelite: { z_min: 5, z_max: 10 } } };
+        teatro_ficticio: { nombre: "Teatro ficticio (País Azul y País Rojo)", bbox: [-27.5, 6.0, -20.0, 12.5], z: 9, z_min: 5, metros_por_pixel: 302, satelite: { z_min: 5, z_max: 10 } } };
       return json({ mapas: metas.filter(Boolean).map((id) => ({ id, ...DEF[id] })) });
     }
     if (path === "/api/plantillas" && metodo === "GET") {

@@ -1,5 +1,5 @@
-"""Mapa ficticio (tools/generar_mapa_ficticio.py): la region "teatro_ficticio" con la Republica de Valdoria y la
-Republica de Ostrania, sus capas y la plantilla "Valdoria contra Ostrania"."""
+"""Mapa ficticio (tools/generar_mapa_ficticio.py): la region "teatro_ficticio" con la Republica de País Azul y la
+Republica de País Rojo, sus capas y la plantilla "País Azul contra País Rojo"."""
 
 import json
 import zlib
@@ -54,12 +54,12 @@ def test_tiene_la_geografia_de_un_pais():
 def test_capas_vectoriales():
     capas = {n: json.loads((GEO / f"{n}.geojson").read_text(encoding="utf-8"))["features"]
              for n in ("fronteras", "estados", "rios", "lagos", "lugares", "carreteras")}
-    assert any(f["properties"].get("name") == "Frontera Valdoria – Ostrania" for f in capas["fronteras"])
+    assert any(f["properties"].get("name") == "Frontera País Azul – País Rojo" for f in capas["fronteras"])
     assert sum(1 for f in capas["rios"] if f["properties"]["name"]) >= 4  # rios principales con nombre
     lagos = {f["properties"]["name"] for f in capas["lagos"]}
     assert any(n.startswith("Embalse") for n in lagos) and any(n.startswith(("Lago", "Laguna")) for n in lagos)
     capitales = [f["properties"] for f in capas["lugares"] if f["properties"]["capital"]]
-    assert {c["name"] for c in capitales} == {"Valdora", "Nueva Ostria"}
+    assert {c["name"] for c in capitales} == {"Capital Azul", "Capital Roja"}
     assert {f["properties"]["nivel"] for f in capas["carreteras"]} == {1, 2}
     infra = json.loads((GEO / "infraestructura.json").read_text(encoding="utf-8"))["instalaciones"]
     assert {i["clase"] for i in infra} >= {"hidroelectrica", "termoelectrica", "refineria", "centro_comunicaciones", "puente"}
@@ -67,7 +67,7 @@ def test_capas_vectoriales():
 
 
 def test_naciones_ficticias():
-    assert naciones.NACIONES["valdoria"].capital == "Valdora"
+    assert naciones.NACIONES["valdoria"].capital == "Capital Azul"
     assert naciones.NACIONES["ostrania"].iso == "XO"
 
 

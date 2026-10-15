@@ -172,7 +172,7 @@ def construir(salida: Path) -> None:
               ["Pestaña Situación: cuadro radar con aviso automático de contactos, personal e infraestructura", "6.14"],
               ["Porcentaje de objetivos cumplidos de cada bando", "5.2"],
               ["Tiempo de todo el recorrido y hora de llegada de las órdenes de mover", "6.5"],
-              ["Mapa ficticio con dos países inventados, Valdoria y Ostrania, y su ejercicio", "4.12 y 7.2"],
+              ["Mapa ficticio con dos países inventados, País Azul y País Rojo, y su ejercicio", "4.12 y 7.2"],
           ], [ANCHO_TEXTO - 3.2 * cm, 3.2 * cm])]
 
     # ---------------------------------------------------------------- 2 acceso
@@ -348,9 +348,9 @@ def construir(salida: Path) -> None:
             "Nieves y los pasos fronterizos con Colombia."),
           P("Es una capa de referencia: la instalación solo forma parte del ejercicio si el instructor la coloca (7.14). Ya en el "
             "ejercicio se ve con su miniatura (central con chimeneas, presa, refinería, antena o puente) en el color de su bando.")]
-    h += [H2("4.12 El mapa ficticio: Valdoria y Ostrania"),
+    h += [H2("4.12 El mapa ficticio: País Azul y País Rojo"),
           P("Para ejercicios que no deben involucrar a ningún país real, el simulador trae un <b>mapa ficticio</b> completo: la "
-            "<b>República de Valdoria</b> (al oeste) y la <b>República de Ostrania</b> (al este) comparten una masa de tierra del tamaño "
+            "<b>País Azul</b> (al oeste) y la <b>País Rojo</b> (al este) comparten una masa de tierra del tamaño "
             "de un país, ubicada en pleno océano Atlántico para que no se cruce con ningún mapa real. Tiene todo lo que el motor usa de "
             "un mapa verdadero, con la misma resolución que el de Venezuela (unos 300 m por píxel):"),
           Bul(["<b>Relieve</b>: una cordillera de más de 3 500 m al oeste, una serranía costera al norte, un macizo con mesetas "
@@ -362,12 +362,12 @@ def construir(salida: Path) -> None:
                "de frontera; las unidades las aprovechan igual que en el mapa real.",
                "<b>Frontera y provincias</b>, <b>infraestructura</b> (centrales, refinerías, centros de comunicaciones y puentes, en la "
                "capa Infraestructura) y foto satelital sintética además del relieve."]),
-          P("Para ir al mapa, use el botón <b>Teatro ficticio (Valdoria y Ostrania)</b> de la tarjeta Capas. Para ejercitar en él, "
-            f"cree el escenario {B('Desde plantilla…')} → <b>Valdoria contra Ostrania (mapa ficticio)</b> (7.2), o coloque unidades "
+          P("Para ir al mapa, use el botón <b>Teatro ficticio (País Azul y País Rojo)</b> de la tarjeta Capas. Para ejercitar en él, "
+            f"cree el escenario {B('Desde plantilla…')} → <b>País Azul contra País Rojo (mapa ficticio)</b> (7.2), o coloque unidades "
             "allí como en cualquier otra región. En <i>Identidad nacional</i> (7.7) están las dos repúblicas ficticias.")]
-    h += figura("mapa_ficticio", "El mapa ficticio completo en relieve: Valdoria al oeste y Ostrania al este, con su frontera, "
+    h += figura("mapa_ficticio", "El mapa ficticio completo en relieve: País Azul al oeste y País Rojo al este, con su frontera, "
                 "ciudades, carreteras, ríos, lagos y la cordillera occidental.", ancho=ANCHO_TEXTO * 0.9)
-    h += figura("mapa_ficticio_cerca", "Vista satelital sintética cerca de Valdora, la capital de Valdoria.", ancho=ANCHO_TEXTO * 0.82)
+    h += figura("mapa_ficticio_cerca", "Vista satelital sintética cerca de Capital Azul, la capital de País Azul.", ancho=ANCHO_TEXTO * 0.82)
     h += figura("mapa_infraestructura", "Infraestructura en el piedemonte andino: la hidroeléctrica José Antonio Páez y un puente del bando azul "
                 "y una central del bando rojo en el ejercicio; a la derecha, iconos de la capa (Masparro y otras centrales).",
                 ancho=ANCHO_TEXTO * 0.82)
@@ -841,7 +841,7 @@ def construir(salida: Path) -> None:
                "el ataque con las aeronaves y los buques de EE. UU. que se informaron y las defensas venezolanas del litoral central.",
                "Las plantillas con la etiqueta amarilla <b>Contra la IA</b> crean un ejercicio en el que el simulador ya conduce al bando rojo "
                "(capítulo 8).",
-               "<b>Valdoria contra Ostrania (mapa ficticio)</b> crea un ejercicio sobre el mapa ficticio (4.12), sin ningún país real: cada "
+               "<b>País Azul contra País Rojo (mapa ficticio)</b> crea un ejercicio sobre el mapa ficticio (4.12), sin ningún país real: cada "
                "república con su base aérea, cazas, ataque y helicópteros, antiaérea, radar, depósito, una fuerza de maniobra cerca de la "
                "frontera y su infraestructura; objetivos: el paso de frontera central, la base aérea enemiga y la infraestructura del otro "
                "bando. Lo pueden jugar dos grupos de alumnos o, activando la IA (8.3), uno solo."])]
