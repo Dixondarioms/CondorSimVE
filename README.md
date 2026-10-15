@@ -218,6 +218,20 @@ a3da`; en el arnés, `arnes.html?rol=azul&puesto=a3`.
 - Cada paso avisa al bando (evento `tiem`), la revisión queda en el informe y la exportación incluye los documentos.
   Migración `0027`.
 
+### Apreciaciones de Estado Mayor y juego de guerra (TIEM, etapa 3)
+
+- **Fase I, Paso 2**: seis apreciaciones más en `engine/tiem.py` — Inteligencia (A-2), Operaciones (A-3), Defensa Aérea
+  (A-3 D/A), Personal (A-1), Logística (A-4) y Comunicaciones y Electrónica (C-E) — con sus formatos guía.
+- **Matriz de confrontación** (campo `matriz`): cada F/A contra cada capacidad del enemigo, con efecto *no afecta*,
+  *degrada* o *anula* y su análisis; filas y columnas salen de `tiem.contexto` (F/A del documento de Formas de Acción;
+  capacidades de la Apreciación de Inteligencia o de la Guía). Luego, comparación y F/A recomendada.
+- Las sugerencias de cada apreciación calculan la situación de su área: personal (`engine/personal.py`), logística
+  (existencias, convoyes, refinación, puentes), comunicaciones (centros, energía, GE, red degradada) y defensa aérea.
+- **Juego de guerra** (`app/ensayos.py`, `POST /api/escenarios/{id}/tiem/{bando}/ensayos`): copia del escenario en su
+  estado actual con la IA conduciendo al enemigo, resolución automática y solo los alumnos del bando asignados; hasta 3
+  por bando. `GET /tiem` devuelve el resumen de cada ensayo (turnos, objetivos, puntos y unidades perdidas). Campos
+  `ensayo_de`, `ensayo_bando`, `ensayo_fa` y `ensayo_desde` del escenario (migración `0028`).
+
 Alumnos y observadores solo acceden a los **escenarios que el instructor les asigna** (panel "Escenario").
 
 ### Cuentas y acceso

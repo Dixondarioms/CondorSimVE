@@ -729,7 +729,26 @@ def construir(salida: Path, img: Path) -> None:
                "(mejor ataque + defensa) / 2; los sensores sin armas valen 1; lo enemigo, con un error fijo de hasta ±15 %. "
                "Relación ≥ 1,5 favorable, 0,67 a 1,5 equilibrado, menor desfavorable.",
                "<b>Archivos adjuntos</b> (tabla <font face='Mono'>archivos_tiem</font>): .doc, .docx, .odt, .rtf o .pdf hasta "
-               "10 MB, hasta 5 por documento, guardados en la base (viajan con sus respaldos). Migración 0027."])]
+               "10 MB, hasta 5 por documento, guardados en la base (viajan con sus respaldos). Migración 0027."]),
+          H2("8.13 El TIEM en el simulador (etapa 3): apreciaciones de Estado Mayor y juego de guerra"),
+          Bul(["<b>Seis apreciaciones</b> (Fase I, Paso 2) con sus formatos guía: Inteligencia (A-2: situación del enemigo, "
+               "capacidades, su practicabilidad y aceptabilidad, conclusiones), Operaciones (A-3) y Defensa Aérea (A-3 D/A): "
+               "situación, PRC, fortalezas y debilidades, <b>confrontación</b>, comparación y F/A recomendada; Personal (A-1), "
+               "Logística (A-4) y Comunicaciones y Electrónica (C-E): situación del área, análisis de cada F/A operacional y "
+               "conclusiones.",
+               "<b>Matriz de confrontación</b> (campo de tipo matriz): celdas {F/A, capacidad, efecto (no afecta, degrada, anula), "
+               "análisis}. Filas y columnas salen del contexto del bando (<font face='Mono'>tiem.contexto</font>): las F/A del "
+               "documento de Formas de Acción y las capacidades de la Apreciación de Inteligencia o de la Guía.",
+               "<b>Ayudas de cada área</b>: situación de personal (<font face='Mono'>engine/personal.py</font>), logística "
+               "(existencias, convoyes, refinación, puentes), comunicaciones (centros, energía, guerra electrónica, red degradada) y "
+               "defensa aérea (radares, antiaérea, caza y amenaza aérea estimada).",
+               "<b>Juego de guerra</b> (<font face='Mono'>app/ensayos.py</font>, <font face='Mono'>POST /tiem/{bando}/ensayos</font>): "
+               "copia del escenario en su estado actual (unidades con todas sus columnas y referencias reasignadas, objetivos con su "
+               "cadena, calendario, PMO y contactos del bando), con la IA conduciendo al enemigo, resolución automática y solo los "
+               "alumnos del bando asignados. Hasta 3 por bando; no se ensaya un ensayo. El resumen (turnos, objetivos, puntos, "
+               "unidades perdidas) se lista en la pestaña TIEM. Campos <font face='Mono'>ensayo_de</font>, "
+               "<font face='Mono'>ensayo_bando</font>, <font face='Mono'>ensayo_fa</font> y <font face='Mono'>ensayo_desde</font> "
+               "del escenario (migración 0028)."])]
     h += Img(img, "cap_ia_noche.jpg", "Figura 4. Un alumno del bando azul contra la IA a las 23:00: el mapa oscurecido, la hora y el periodo en Estado del escenario y el bando rojo «IA · LISTO».")
 
     # ---- 9 aviacion
@@ -840,7 +859,7 @@ def construir(salida: Path, img: Path) -> None:
                "El adversario automático da órdenes turno a turno: no planifica misiones aéreas de varios turnos ni lee el chat o los eventos inyectados.",
                "Un solo servidor por aula: el WebSocket y el temporizador viven en el proceso."]),
           H2("Hoja de ruta prevista"),
-          Bul(["Etapas siguientes del TIEM: apreciaciones de Estado Mayor y juego de guerra, decisión y Plan de Operaciones con "
+          Bul(["Etapas siguientes del TIEM: decisión del comandante y Plan de Operaciones con "
                "tareas que se convierten en órdenes, supervisión y evaluación con exportación de documentos.",
                "Más plantillas de escenario por curso.", "Carreteras terciarias y puentes etiquetados de OpenStreetMap."])]
 
@@ -921,6 +940,8 @@ def construir(salida: Path, img: Path) -> None:
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
               ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña TIEM; engine/pmo.py",
                "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["TIEM, etapa 3: apreciaciones de EM y juego de guerra", "Pestaña TIEM → Paso 2; Juego de guerra; app/ensayos.py",
+               "Las seis apreciaciones de Estado Mayor con la confrontación de las F/A y ensayos de F/A contra la IA en una copia del ejercicio (8.13)."],
               ["TIEM, etapa 2: apreciación inicial", "Pestaña TIEM → Fase I · Paso 1; engine/tiem.py",
                "Análisis de la misión, concepto del comandante, guía de planeamiento y formas de acción con APA; PRC calculado, revisión del instructor y Word adjunto (8.12)."],
               ["TIEM, etapa 1: calendario, conducción y cadena de objetivos", "Consola → Calendario; Dirección del ejercicio; Objetivos",

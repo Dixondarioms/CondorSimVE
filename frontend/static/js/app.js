@@ -2082,6 +2082,9 @@
     app.tiem = Tiem.crear({
       api, rutaEsc, toast, escenarioId: () => app.escenarioId, esInstructor,
       bando: () => (esAlumno() ? app.usuario.rol : $("pmo-bando").value),
+      escenario: () => (app.data ? app.data.escenario : null),
+      irEscenario: (id) => { $("escenario").value = String(id); cambiarEscenario(); },
+      recargarEscenarios: () => cargarEscenarios(app.escenarioId),
     });
     $("pmo-bando").addEventListener("change", () => app.tiem.dibujarLista());
     app.misiones = Misiones.crear({

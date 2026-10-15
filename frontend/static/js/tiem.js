@@ -50,6 +50,35 @@
     return { contenido: out, llenados };
   }
 
+  const EFECTOS = { "no afecta": "ok", degrada: "mov", anula: "fuego" };
+
+  /** Filas (F/A) y columnas (capacidades del enemigo) de la matriz de confrontación: las del contexto del bando más
+   * las que ya tienen celdas escritas (por si una F/A cambió de nombre). */
+  function ejesMatriz(celdas, contexto) {
+    const filas = [...(contexto && contexto.formas) || []];
+    const columnas = [...(contexto && contexto.capacidades) || []];
+    for (const c of celdas || []) {
+      if (c.fa && !filas.includes(c.fa)) filas.push(c.fa);
+      if (c.capacidad && !columnas.includes(c.capacidad)) columnas.push(c.capacidad);
+    }
+    return { filas, columnas };
+  }
+
+  /** Celda de la matriz para esa F/A y capacidad (o una vacía). */
+  const celdaDe = (celdas, fa, capacidad) => (celdas || []).find((c) => c.fa === fa && c.capacidad === capacidad) || { fa, capacidad, efecto: "", analisis: "" };
+
+  /** Agrupa los documentos por paso del TIEM, en el orden recibido: [{paso, tipos: [...]}]. */
+  function porPaso(orden, definiciones) {
+    const grupos = [];
+    for (const t of orden || []) {
+      const paso = definiciones[t].paso;
+      let g = grupos.find((x) => x.paso === paso);
+      if (!g) { g = { paso, tipos: [] }; grupos.push(g); }
+      g.tipos.push(t);
+    }
+    return grupos;
+  }
+
   /** Resumen APA de una Forma de Acción: "Naturaleza Sí · Integridad Parcial · Oportunidad Sí · Practicable · Aceptabilidad alta". */
   function resumenApa(fa) {
     const p = [];
@@ -94,18 +123,63 @@
       const docs = datos && datos.documentos[b];
       if (!docs) { caja.append(el("p", "vacio", "Sin documentos.")); return; }
       $("tiem-avance").textContent = textoAvance(docs);
-      const ol = el("ol", "tiem-lista");
-      for (const tipo of datos.orden) {
-        const d = docs[tipo];
-        const df = datos.definiciones[tipo];
-        const li = el("li");
-        const est = textoEstado(d);
-        const t = el("div", "texto");
-        t.append(el("b", "", df.titulo), el("span", "ayuda", `Redactan: ${siglasRedactan(df)}${d.archivos.length ? ` · ${d.archivos.length} adjunto(s)` : ""}`));
-        li.append(t, el("span", `chip ${est.clase}`, est.texto), boton("Abrir", () => abrir(b, tipo), "mini"));
-        ol.append(li);
+      for (const g of porPaso(datos.orden, datos.definiciones)) {
+        caja.append(el("h3", "tiem-paso", g.paso === "Fase I · Paso 1" ? "Paso 1: Apreciación inicial" : "Paso 2: Apreciaciones de Estado Mayor"));
+        const ol = el("ol", "tiem-lista");
+        for (const tipo of g.tipos) {
+          const d = docs[tipo];
+          const df = datos.definiciones[tipo];
+          const li = el("li");
+          const est = textoEstado(d);
+          const t = el("div", "texto");
+          t.append(el("b", "", df.titulo), el("span", "ayuda", `Redactan: ${siglasRedactan(df)}${d.archivos.length ? ` · ${d.archivos.length} adjunto(s)` : ""}`));
+          li.append(t, el("span", `chip ${est.clase}`, est.texto), boton("Abrir", () => abrir(b, tipo), "mini"));
+          ol.append(li);
+        }
+        caja.append(ol);
       }
-      caja.append(ol);
+      dibujarEnsayos(b);
+    }
+
+    // ---------------------------------------------------------------- juego de guerra: ensayos
+    function dibujarEnsayos(b) {
+      const esc = ctx.escenario();
+      $("ensayo-aviso").hidden = !(esc && esc.ensayo_de);
+      $("sec-ensayos").hidden = !!(esc && esc.ensayo_de);
+      $("sec-apreciacion").hidden = !!(esc && esc.ensayo_de); // los documentos se redactan en el ejercicio original
+      if (esc && esc.ensayo_de) {
+        $("ensayo-aviso-texto").textContent = `Esto es un ensayo (juego de guerra) de «${esc.ensayo_fa}»: la IA conduce al enemigo y el turno se resuelve en cuanto su bando confirma.`;
+        return;
+      }
+      const formas = (datos.contexto && datos.contexto[b] && datos.contexto[b].formas) || [];
+      const sel = $("ensayo-fa");
+      const previo = sel.value;
+      sel.replaceChildren(...formas.map((f) => new Option(f, f)));
+      if (formas.includes(previo)) sel.value = previo;
+      const puede = !!(datos.puede_ensayar && datos.puede_ensayar[b]);
+      $("ensayo-crear").hidden = !puede || !formas.length;
+      $("ensayo-sin-fa").hidden = !!formas.length;
+      const ul = $("ensayos-lista");
+      ul.replaceChildren();
+      for (const e of (datos.ensayos && datos.ensayos[b]) || []) {
+        const li = el("li");
+        const t = el("div", "texto");
+        t.append(el("b", "", e.nombre), el("span", "ayuda", e.texto));
+        li.append(t, boton("Ir al ensayo", () => ctx.irEscenario(e.id), "mini"));
+        ul.append(li);
+      }
+    }
+
+    async function ensayar() {
+      const fa = $("ensayo-fa").value;
+      if (!fa) return;
+      if (!confirm(`Se creará una copia del ejercicio en su estado actual para ensayar «${fa}» contra la IA. ¿Continuar?`)) return;
+      try {
+        const e = await ctx.api("POST", ctx.rutaEsc(`/tiem/${bandoElegido()}/ensayos`), { fa });
+        ctx.toast(`Ensayo creado: ${e.nombre}. Ábralo con «Ir al ensayo».`, true);
+        await ctx.recargarEscenarios();
+        cargar();
+      } catch (_) { /* toast ya mostrado */ }
     }
 
     // ---------------------------------------------------------------- diálogo
@@ -229,6 +303,7 @@
       else if (c.tipo === "mision") {
         sec.append(el("p", "pmo-mision", Pmo.textoMision(v)));
       } else if (c.tipo === "tabla") sec.append(tablaLectura(c.columnas, v));
+      else if (c.tipo === "matriz") sec.append(matrizLectura(v));
       else if (c.tipo === "formas") {
         for (const fa of v) {
           const card = el("div", "tiem-fa");
@@ -256,6 +331,67 @@
       return sec;
     }
 
+    function matrizLectura(celdas) {
+      const { filas, columnas } = ejesMatriz(celdas, contextoActual());
+      const t = el("table", "tiem-tabla tiem-matriz");
+      const tr = el("tr");
+      tr.append(el("th", "", "F/A \\ Capacidad del enemigo"), ...columnas.map((c) => el("th", "", c)));
+      t.append(tr);
+      for (const fa of filas) {
+        const r = el("tr");
+        r.append(el("th", "", fa));
+        for (const cap of columnas) {
+          const c = celdaDe(celdas, fa, cap);
+          const td = el("td");
+          if (c.efecto) td.append(el("span", `chip ${EFECTOS[c.efecto] || ""}`, textoOpcion(c.efecto)));
+          if (c.analisis) td.append(el("p", "ayuda", c.analisis));
+          r.append(td);
+        }
+        t.append(r);
+      }
+      return t;
+    }
+
+    const contextoActual = () => (datos && datos.contexto && abierto ? datos.contexto[abierto.bando] : null);
+
+    function editorMatriz(c) {
+      const celdas = borrador[c.clave] || (borrador[c.clave] = []);
+      const { filas, columnas } = ejesMatriz(celdas, contextoActual());
+      if (!filas.length || !columnas.length) {
+        return el("p", "vacio", "Primero se necesitan las Formas de Acción y las capacidades del enemigo (Guía de Planeamiento o Apreciación de Inteligencia).");
+      }
+      const t = el("table", "tiem-tabla tiem-matriz");
+      const tr = el("tr");
+      tr.append(el("th", "", "F/A \\ Capacidad del enemigo"), ...columnas.map((x) => el("th", "", x)));
+      t.append(tr);
+      for (const fa of filas) {
+        const r = el("tr");
+        r.append(el("th", "", fa));
+        for (const cap of columnas) {
+          const td = el("td");
+          const celda = () => {
+            let x = celdas.find((y) => y.fa === fa && y.capacidad === cap);
+            if (!x) { x = { fa, capacidad: cap, efecto: "", analisis: "" }; celdas.push(x); }
+            return x;
+          };
+          const actual = celdaDe(celdas, fa, cap);
+          const sel = el("select");
+          sel.append(new Option("—", ""), ...(def().efectos || []).map((e) => new Option(textoOpcion(e), e)));
+          sel.value = actual.efecto || "";
+          sel.addEventListener("change", () => { celda().efecto = sel.value; });
+          const ta = el("textarea");
+          ta.rows = 2;
+          ta.placeholder = "Análisis";
+          ta.value = actual.analisis || "";
+          ta.addEventListener("input", () => { celda().analisis = ta.value; });
+          td.append(sel, ta);
+          r.append(td);
+        }
+        t.append(r);
+      }
+      return t;
+    }
+
     // ---------------------------------------------------------------- edición
     function campoEditable(c, df) {
       const sec = el("section", "tiem-campo editando");
@@ -271,6 +407,7 @@
       } else if (c.tipo === "mision") sec.append(editorMision(c.clave));
       else if (c.tipo === "tabla") sec.append(editorTabla(c));
       else if (c.tipo === "formas") sec.append(editorFormas(c, df));
+      else if (c.tipo === "matriz") sec.append(editorMatriz(c));
       return sec;
     }
 
@@ -424,6 +561,8 @@
       lector.readAsDataURL(f);
     });
     $("btn-tiem-adjuntar").addEventListener("click", () => $("tiem-archivo").click());
+    $("btn-ensayar").addEventListener("click", ensayar);
+    $("ensayo-volver").addEventListener("click", () => { const e = ctx.escenario(); if (e && e.ensayo_de) ctx.irEscenario(e.ensayo_de); });
     $("dlg-tiem").addEventListener("cancel", (e) => { e.preventDefault(); cerrar(); });
 
     return {
@@ -439,7 +578,7 @@
     };
   }
 
-  const api = { ESTADOS, textoEstado, textoAvance, textoOpcion, completarVacios, resumenApa, crear };
+  const api = { ESTADOS, textoEstado, textoAvance, textoOpcion, completarVacios, resumenApa, ejesMatriz, celdaDe, porPaso, crear };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.Tiem = api;
 })(typeof window !== "undefined" ? window : globalThis);

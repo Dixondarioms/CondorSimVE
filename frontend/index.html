@@ -267,11 +267,27 @@
             <h2>Calendario de la operación</h2>
             <div id="pmo-calendario"></div>
           </section>
+          <section class="bloque" id="ensayo-aviso" hidden>
+            <h2>Juego de guerra</h2>
+            <p id="ensayo-aviso-texto" class="ayuda"></p>
+            <button id="ensayo-volver" type="button" class="secundario">Volver al ejercicio</button>
+          </section>
           <section class="bloque" id="sec-apreciacion">
-            <h2>Fase I · Paso 1: Apreciación inicial <span id="tiem-avance" class="contador"></span></h2>
+            <h2>Fase I: Apreciación de la situación <span id="tiem-avance" class="contador"></span></h2>
             <p class="ayuda">Los documentos que el Estado Mayor del bando redacta y presenta al instructor. Cada uno lo
               redactan las reparticiones indicadas; todas lo pueden leer.</p>
             <div id="tiem-docs"></div>
+          </section>
+          <section class="bloque" id="sec-ensayos">
+            <h2>Juego de guerra: ensayos de F/A</h2>
+            <p class="ayuda">Ensaye una Forma de Acción en una copia del ejercicio, en su estado actual, con la IA
+              conduciendo al enemigo. El resultado ayuda a fundamentar la confrontación de las F/A.</p>
+            <p id="ensayo-sin-fa" class="vacio">Todavía no hay Formas de Acción redactadas.</p>
+            <div id="ensayo-crear" class="fila">
+              <select id="ensayo-fa" aria-label="Forma de Acción a ensayar"></select>
+              <button id="btn-ensayar" type="button" class="secundario mini">Ensayar en el simulador</button>
+            </div>
+            <ul id="ensayos-lista" class="tiem-lista"></ul>
           </section>
           <section class="bloque" id="sec-pmo">
             <h2>Problema Militar Operativo <span id="pmo-origen" class="contador"></span></h2>

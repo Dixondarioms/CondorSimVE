@@ -14,7 +14,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app import auth
+from app import auth, ensayos
 from app.db import get_db
 from app.engine import aar, pmo, puestos, tiem
 from app.models.documento_tiem import ArchivoTiem, DocumentoTiem
@@ -119,12 +119,26 @@ def _serializar(db: Session, d: DocumentoTiem | None, bando: str, tipo: str, u) 
 
 
 def _respuesta(db: Session, esc: Escenario, u) -> dict:
+    documentos = {b: {t: _serializar(db, _doc(db, esc, b, t), b, t, u) for t in tiem.ORDEN}
+                  for b in _bandos_visibles(u.rol)}
     return {
         "orden": list(tiem.ORDEN),
         "definiciones": {t: tiem.definicion(d) for t, d in tiem.DOCUMENTOS.items()},
-        "documentos": {b: {t: _serializar(db, _doc(db, esc, b, t), b, t, u) for t in tiem.ORDEN}
-                       for b in _bandos_visibles(u.rol)},
+        "documentos": documentos,
+        # nombres de las F/A y de las capacidades del enemigo de cada bando (filas y columnas de la confrontacion)
+        "contexto": {b: tiem.contexto({t: d["contenido"] for t, d in docs.items()}) for b, docs in documentos.items()},
+        "ensayos": {b: [ensayos.resumen(db, e) for e in ensayos.ensayos_de(db, esc, b)] for b in documentos},
+        "puede_ensayar": {b: _puede_ensayar(u, b) for b in documentos},
     }
+
+
+ENSAYAN = ("comandante", "jem", "a3", "a3da", "a2")
+
+
+def _puede_ensayar(u, bando: str) -> bool:
+    if _es_instructor(u):
+        return True
+    return u.rol == bando and puestos.normalizar(u.puesto) in ENSAYAN
 
 
 def _avisar(db: Session, esc: Escenario, bando: str, texto: str) -> None:
@@ -275,3 +289,28 @@ async def quitar(archivo_id: int, esc: Escenario = Depends(auth.escenario_dep), 
     db.commit()
     await manager.difundir_estado(db, esc)
     return _serializar(db, d, d.bando, d.tipo, u)
+
+
+class EnsayoIn(BaseModel):
+    fa: str = Field(min_length=1, max_length=300)
+
+
+@router.post("/{bando}/ensayos")
+async def ensayar(bando: str, payload: EnsayoIn, esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db),
+                  u=Depends(autor)):
+    """Juego de guerra: crea una copia del escenario en su estado actual para ensayar una F/A contra la IA."""
+    if bando not in pmo.BANDOS:
+        raise HTTPException(status_code=404, detail="Bando desconocido")
+    if not _puede_ensayar(u, bando):
+        raise HTTPException(status_code=403, detail="Los ensayos los crean el Comandante, el JEM, la A-3, la A-3 D/A o la A-2")
+    if esc.ensayo_de is not None:
+        raise HTTPException(status_code=400, detail="Esto ya es un ensayo: créelo desde el ejercicio original")
+    if esc.estado == "finalizado":
+        raise HTTPException(status_code=400, detail="El ejercicio está finalizado")
+    if len(ensayos.ensayos_de(db, esc, bando)) >= ensayos.MAX_ENSAYOS:
+        raise HTTPException(status_code=400, detail=f"Cada bando puede tener hasta {ensayos.MAX_ENSAYOS} ensayos por ejercicio")
+    copia = ensayos.crear(db, esc, bando, payload.fa.strip())
+    _avisar(db, esc, bando, f"Juego de guerra: {u.username} creó «{copia.nombre}».")
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return ensayos.resumen(db, copia)

@@ -112,6 +112,10 @@ class EscenarioOut(BaseModel):
     turno_h: int | None = None
     turno_final: int | None = None
     calendario: dict | None = None
+    # juego de guerra: copia de ensayo de una F/A (ver app/ensayos.py)
+    ensayo_de: int | None = None
+    ensayo_bando: str | None = None
+    ensayo_fa: str = ""
 
 
 class FaseIn(BaseModel):

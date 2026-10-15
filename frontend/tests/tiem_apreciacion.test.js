@@ -29,3 +29,19 @@ test("resumen APA de una forma de acción", () => {
   assert.equal(T.textoOpcion("operacional"), "Operacional");
   assert.equal(T.textoOpcion(""), "—");
 });
+
+test("ejes y celdas de la matriz de confrontación", () => {
+  const ctx = { formas: ["F/A 1: Neutralizar", "F/A 2: Destruir"], capacidades: ["C1: Atacar"] };
+  const celdas = [{ fa: "F/A 1: Neutralizar", capacidad: "C1: Atacar", efecto: "degrada", analisis: "x" },
+    { fa: "F/A vieja", capacidad: "C9: Otra", efecto: "anula", analisis: "" }];
+  assert.deepEqual(T.ejesMatriz(celdas, ctx), {
+    filas: ["F/A 1: Neutralizar", "F/A 2: Destruir", "F/A vieja"], columnas: ["C1: Atacar", "C9: Otra"] });
+  assert.equal(T.celdaDe(celdas, "F/A 1: Neutralizar", "C1: Atacar").efecto, "degrada");
+  assert.deepEqual(T.celdaDe(celdas, "F/A 2: Destruir", "C1: Atacar"), { fa: "F/A 2: Destruir", capacidad: "C1: Atacar", efecto: "", analisis: "" });
+  assert.deepEqual(T.ejesMatriz([], null), { filas: [], columnas: [] });
+});
+
+test("los documentos se agrupan por paso del TIEM", () => {
+  const defs = { a: { paso: "Fase I · Paso 1" }, b: { paso: "Fase I · Paso 1" }, c: { paso: "Fase I · Paso 2" } };
+  assert.deepEqual(T.porPaso(["a", "b", "c"], defs), [{ paso: "Fase I · Paso 1", tipos: ["a", "b"] }, { paso: "Fase I · Paso 2", tipos: ["c"] }]);
+});

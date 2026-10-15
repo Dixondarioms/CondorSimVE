@@ -670,7 +670,7 @@ def instructor_conduce(n):
 
 def _abrir_documento(n, indice):
     n.clic('[data-pestana="pmo"]')
-    n.esperar("document.querySelectorAll('#tiem-docs button').length === 4")
+    n.esperar("document.querySelectorAll('#tiem-docs button').length >= 10")
     n.js(f"document.querySelectorAll('#tiem-docs button')[{indice}].click()")
     n.esperar("document.getElementById('dlg-tiem').open")
     time.sleep(0.6)
@@ -679,7 +679,7 @@ def _abrir_documento(n, indice):
 def tiem_documentos(n):
     n.ir(arnes("azul", "a3"), LISTA_APP, 2)
     n.clic('[data-pestana="pmo"]')
-    n.esperar("document.querySelectorAll('#tiem-docs button').length === 4")
+    n.esperar("document.querySelectorAll('#tiem-docs button').length >= 10")
     n.js("(() => { const p = document.getElementById('panel-izq'); const s = document.getElementById('sec-apreciacion');"
          " p.scrollTop += s.getBoundingClientRect().top - p.getBoundingClientRect().top - 36; })()")
     time.sleep(0.4)
@@ -709,6 +709,24 @@ def tiem_instructor(n):
     n.js("document.getElementById('tiem-revision').scrollIntoView({ block: 'center' })")
     time.sleep(0.4)
     guardar(n, "tiem_instructor", n.rect("#dlg-tiem"), margen=0)
+
+
+def tiem_paso2(n):
+    n.ir(arnes("azul", "a3"), LISTA_APP, 2)
+    n.clic('[data-pestana="pmo"]')
+    n.esperar("document.querySelectorAll('#tiem-docs button').length >= 10")
+    n.js("(() => { const p = document.getElementById('panel-izq'); const s = [...document.querySelectorAll('#tiem-docs h3')][1];"
+         " p.scrollTop += s.getBoundingClientRect().top - p.getBoundingClientRect().top - 40; })()")
+    time.sleep(0.4)
+    guardar(n, "tiem_paso2", n.rect("#panel-izq"), margen=0)
+    n.js("(() => { const p = document.getElementById('panel-izq'); const s = document.getElementById('sec-ensayos');"
+         " p.scrollTop += s.getBoundingClientRect().top - p.getBoundingClientRect().top - 36; })()")
+    time.sleep(0.4)
+    guardar(n, "tiem_ensayos", n.rect("#panel-izq"), margen=0)
+    _abrir_documento(n, 5)
+    n.js("document.querySelector('#tiem-cuerpo .tiem-matriz').scrollIntoView({ block: 'center' })")
+    time.sleep(0.4)
+    guardar(n, "tiem_matriz", n.rect("#dlg-tiem"), margen=0)
 
 
 def objetivos_avance(n):
@@ -780,7 +798,7 @@ CAPTURAS = [
     consola_escenario, consola_usuarios, plantillas, ver_como, videowall, observador,
     ia_pantalla, consola_ia, plantillas_ia, barra_inferior_ia, mapa_dia_noche, mapa_carreteras, consola_catalogo,
     situacion, mapa_infraestructura, ficha_puente, objetivos_avance, mapa_ficticio,
-    pmo_alumno, pmo_instructor, consola_calendario, instructor_conduce, tiem_documentos, tiem_analisis, tiem_instructor,
+    pmo_alumno, pmo_instructor, consola_calendario, instructor_conduce, tiem_documentos, tiem_analisis, tiem_instructor, tiem_paso2,
     informe_repeticion, informe_dialogos, informe_rubrica, informe_doctrina, comparar, informe_replay,
 ]
 

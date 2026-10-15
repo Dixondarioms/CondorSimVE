@@ -305,6 +305,31 @@
       { nombre: "F/A 2", que: "Destruir la pista de la base enemiga", donde: "Base de Guasdualito", cuando: "El día D a la hora H", quien: "4 Su-30MK2",
         naturaleza: "si", integridad: "si", oportunidad: "parcial", practicabilidad: "parcialmente practicable", aceptabilidad: "media" }], conclusion: "" } },
   };
+  const FA1 = "F/A 1: Neutralizar el radar de vigilancia enemigo";
+  const FA2 = "F/A 2: Destruir la pista de la base enemiga";
+  const C1 = "C1: Atacar el Aeropuerto de Barinas";
+  const C2 = "C2: Interceptar nuestros ataques con caza";
+  DOCS_TIEM.apreciacion_inteligencia = { estado: "aprobado", presentado_turno: 3, revisado_turno: 3, editado_por: "bravo2", editado_puesto: "a2", contenido: {
+    mision_especifica: MISION_ESP, situacion_enemigo: "- Unas 4 aeronaves de combate en la Base de Guasdualito.\n- Un radar de vigilancia y un sistema antiaéreo.",
+    capacidades_enemigo: [{ que: "Atacar el Aeropuerto de Barinas", donde: "Barinas", con_que: "4 aviones de ataque", desde_donde: "Guasdualito", cuando: "Desde H", como: "Rasante, de noche", peligrosidad: "1" },
+      { que: "Interceptar nuestros ataques con caza", donde: "Zona de Guasdualito", con_que: "2 cazas", desde_donde: "Guasdualito", cuando: "Desde H", como: "Guiados por radar", peligrosidad: "2" }],
+    analisis_capacidades: [{ capacidad: C1, practicabilidad: "practicable", aceptabilidad: "alta", retenida: "si", fundamento: "Tiene medios y alcance." }],
+    conclusiones: "El enemigo puede interferir con la misión sobre todo atacando nuestra base (C1) y, en segundo lugar, interceptando (C2)." } };
+  DOCS_TIEM.apreciacion_operaciones = { estado: "presentado", presentado_turno: 4, editado_por: "ua3", editado_puesto: "a3", contenido: {
+    mision_resumen: "Defensa del piedemonte ante la concentración enemiga.", mision_especifica: MISION_ESP,
+    tareas: [{ tarea: "Impedir la superioridad aérea enemiga", origen: "impuesta", prioridad: "1" }],
+    prc: DOCS_TIEM.analisis_mision.contenido.prc,
+    fortalezas_debilidades: [{ lado: "propio", tipo: "fortaleza", descripcion: "Superioridad en fuerzas de superficie (1,78 : 1)" },
+      { lado: "propio", tipo: "debilidad", descripcion: "Un solo aeródromo propio" }],
+    confrontacion: [{ fa: FA1, capacidad: C1, efecto: "no afecta", analisis: "El ataque enemigo no impide el ataque al radar." },
+      { fa: FA1, capacidad: C2, efecto: "degrada", analisis: "La caza enemiga puede interceptar; hace falta escolta." },
+      { fa: FA2, capacidad: C1, efecto: "degrada", analisis: "Si la base propia es atacada, faltan aviones para la F/A." },
+      { fa: FA2, capacidad: C2, efecto: "anula", analisis: "Sin escolta, la caza enemiga derriba el paquete (ensayo 1)." }],
+    comparacion: [{ fa: FA1, ventajas: "Pocos medios; ciega a la defensa aérea", desventajas: "La antiaérea sigue a ojo", principios: "Objetivo, sorpresa, economía de fuerza", riesgos: "Bajo" },
+      { fa: FA2, ventajas: "Inmoviliza la aviación enemiga", desventajas: "Muy expuesta a la caza", principios: "Ofensiva, masa", riesgos: "Alto" }],
+    fa_recomendada: FA1, justificacion: "Logra el efecto con menos riesgo y la confirma el ensayo en el simulador.", factores_limitantes: "" } };
+  const ENSAYOS = [{ id: 7, nombre: "Ensayo 1 · F/A 2 · Azul · Ejercicio de ejemplo", fa: FA2, estado: "activo", turnos_jugados: 3,
+    texto: "Ensayo de F/A 2: Destruir la pista de la base enemiga: 3 turno(s) jugado(s); objetivos 0 cumplido(s) y 1 fallido(s) de 6; puntos por bajas infligidas 1 contra 4 sufridos; unidades perdidas: propias 2, enemigas 0." }];
   function documentoTiem(bando, tipo) {
     const d = bando === "azul" ? DOCS_TIEM[tipo] : null;
     const puede = ROL === "instructor" || (ROL === bando && CAT.tiem.definiciones[tipo].redactan.includes(PUESTO === "mando" ? "comandante" : PUESTO));
@@ -317,7 +342,10 @@
   function respuestaTiem() {
     const bandos = BANDOS.includes(ROL) ? [ROL] : BANDOS;
     return { orden: CAT.tiem.orden, definiciones: CAT.tiem.definiciones,
-      documentos: Object.fromEntries(bandos.map((b) => [b, Object.fromEntries(CAT.tiem.orden.map((t) => [t, documentoTiem(b, t)]))])) };
+      documentos: Object.fromEntries(bandos.map((b) => [b, Object.fromEntries(CAT.tiem.orden.map((t) => [t, documentoTiem(b, t)]))])),
+      contexto: Object.fromEntries(bandos.map((b) => [b, b === "azul" ? { formas: [FA1, FA2], capacidades: [C1, C2] } : { formas: [], capacidades: [] }])),
+      ensayos: Object.fromEntries(bandos.map((b) => [b, b === "azul" ? ENSAYOS : []])),
+      puede_ensayar: Object.fromEntries(bandos.map((b) => [b, ROL === "instructor" || ROL === b])) };
   }
   const textoMisionPmo = (m) => `${["tarea", "que", "donde", "cuando"].map((k) => m[k]).filter(Boolean).join(" ")}, a fin de ${m.proposito}.`;
   function respuestaPmo(rol) {

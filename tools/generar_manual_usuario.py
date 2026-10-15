@@ -145,6 +145,8 @@ def construir(salida: Path) -> None:
               ["El simulador sigue el TIEM: los puestos pasan a ser las reparticiones del Estado Mayor (Comandante, JEM, A-1, A-2, "
                "A-3, A-3 D/A, A-4 y C-E)", "6.2"],
               ["Pestaña TIEM: el Problema Militar Operativo de cada bando, redactado por el instructor o creado automáticamente", "6.15 y 7.15"],
+              ["Apreciaciones de Estado Mayor (Fase I, Paso 2) de A-1, A-2, A-3, A-3 D/A, A-4 y C-E, confrontación de las F/A "
+               "con las capacidades del enemigo y juego de guerra contra la IA", "6.17"],
               ["Apreciación inicial (Fase I, Paso 1): análisis de la misión, concepto del comandante, guía de planeamiento y "
                "formas de acción con el criterio APA, con Poder Relativo de Combate calculado y Word adjunto", "6.16 y 7.18"],
               ["Calendario de la operación: día D, hora H y fases (alistamiento, concentración y despliegue, ejecución, repliegue)", "6.15 y 7.16"],
@@ -687,6 +689,47 @@ def construir(salida: Path) -> None:
           "análisis completo."),
     ], ancho_img=7.4 * cm)
 
+    h += [H2("6.17 Las apreciaciones de Estado Mayor y el juego de guerra")]
+    h += al_lado("tiem_paso2", "Paso 2: una apreciación por repartición.", [
+        P("Con la Guía de Planeamiento y las Formas de Acción, cada repartición elabora su <b>apreciación</b> (Fase I, Paso 2 "
+          "del TIEM) para recomendar al Comandante la mejor F/A. Están en la misma pestaña TIEM, bajo «Paso 2»:"),
+        Tbl(["Apreciación", "La redacta", "Qué concluye"], [
+            ["Inteligencia", "A-2", "Capacidades del enemigo, su análisis y su orden de peligrosidad"],
+            ["Operaciones", "A-3", "Confrontación de las F/A, comparación y F/A recomendada"],
+            ["Defensa Aérea", "A-3 D/A", "Lo mismo, desde las operaciones defensivas"],
+            ["Personal", "A-1", "Necesidades de personal de cada F/A"],
+            ["Logística", "A-4", "Si la logística sostiene cada F/A"],
+            ["Comunicaciones y Electrónica", "C-E", "Cómo apoyar cada F/A con comunicaciones y guerra electrónica"],
+        ], [2.8 * cm, 1.5 * cm, 3.6 * cm], tam=7.4),
+        P("El Comandante y el JEM pueden redactar o corregir cualquiera. " + B("Traer datos del PMO y del escenario") + " transcribe "
+          "la misión específica y las capacidades de la Guía, calcula el Poder Relativo de Combate y la situación de cada área "
+          "(efectivos y bajas para la A-1; existencias, convoyes y refinación para la A-4; comunicaciones, energía y guerra "
+          "electrónica para la C-E; la defensa aérea y la amenaza aérea para la A-3 D/A) y arma las filas de cada F/A."),
+    ], ancho_img=6.4 * cm)
+    h += figura("tiem_matriz", "Apreciación de Operaciones: confrontación de cada F/A con cada capacidad del enemigo, comparación y "
+                "F/A recomendada.", ancho=ANCHO_TEXTO)
+    h += [H3("La confrontación de las F/A con las capacidades del enemigo"),
+          P("En las apreciaciones de Operaciones y de Defensa Aérea, la <b>matriz de confrontación</b> pone las Formas de Acción en "
+            "las filas y las capacidades del enemigo en las columnas (las de la Apreciación de Inteligencia o, si aún no está, las "
+            "de la Guía de Planeamiento). En cada cruce, dándolas a ambas como ejecutadas, se elige si la capacidad <b>no afecta</b>, "
+            "<b>degrada</b> o <b>anula</b> la F/A y se escribe el análisis. Luego se comparan las F/A (ventajas, desventajas, "
+            "principios de la guerra aérea que cumplen y riesgos) y se recomienda la mejor, con su justificación y sus factores "
+            "limitantes.")]
+    h += al_lado("tiem_ensayos", "Juego de guerra: ensayos de F/A y su resultado.", [
+        H3("Juego de guerra: ensayar una F/A en el simulador"),
+        P("Para fundamentar la confrontación, el bando puede <b>ensayar</b> una F/A en el propio simulador (lo pueden hacer el "
+          "Comandante, el JEM, la A-3, la A-3 D/A y la A-2):"),
+        pasos("En la sección <b>Juego de guerra</b> de la pestaña TIEM, elija la F/A.",
+              f"Pulse {B('Ensayar en el simulador')}: se crea una <b>copia del ejercicio en su estado actual</b> (unidades con su "
+              "fuerza, combustible y posición; objetivos; calendario), en la que <b>la IA conduce al enemigo</b>. Solo los alumnos de "
+              "su bando la ven.",
+              f"Pulse {B('Ir al ensayo')} y conduzca la F/A como en el ejercicio. El turno se resuelve en cuanto su bando pulsa "
+              "«Estoy listo».",
+              f"Vuelva con {B('Volver al ejercicio')}: el ensayo figura en la lista con su resultado (turnos jugados, objetivos, "
+              "puntos y unidades perdidas de cada bando), para citarlo en la matriz."),
+        P("Cada bando puede tener hasta tres ensayos por ejercicio. Lo que pasa en un ensayo no cambia el ejercicio original."),
+    ], ancho_img=6.4 * cm)
+
     h += H1("7. Guía del instructor")
     h += [H2("7.1 Preparar un ejercicio: lista de pasos"),
           pasos("Cree el escenario: vacío con <b>Nuevo</b> o <b>Desde plantilla…</b> (7.2).",
@@ -921,6 +964,8 @@ def construir(salida: Path) -> None:
                f"{B('Reabrir como borrador')}: lo desbloquea sin observaciones.",
                f"{B('Editar')}: el instructor puede corregir o completar cualquier documento, por ejemplo para dar una solución "
                "de escuela."]),
+          P("Las apreciaciones del Paso 2 y los ensayos del juego de guerra se revisan igual: el instructor ve los ensayos de cada "
+            "bando en su lista y puede abrirlos desde el selector de escenario para ver cómo se jugaron."),
           P("Cada revisión queda registrada en el informe, y los documentos (contenido, estado, observaciones y turno en que se "
             "presentaron) viajan en la exportación del escenario. El instructor que conduce un bando (7.17) redacta sus documentos "
             "como su Comandante.")]

@@ -13,6 +13,15 @@ manual indica:
                    cuando, quien y como, analizada con el criterio APA (adaptabilidad en naturaleza, integridad y
                    oportunidad; practicabilidad; aceptabilidad).
 
+Fase I, Paso 2 (apreciaciones de Estado Mayor), una por reparticion, con los formatos guia del TIEM:
+  apreciacion_inteligencia (A-2): situacion del enemigo, capacidades y su analisis (practicabilidad y aceptabilidad
+                   para el enemigo) y conclusiones en orden de peligrosidad.
+  apreciacion_operaciones (A-3) y apreciacion_defensa_aerea (A-3 D/A): situacion operacional, PRC, fortalezas y
+                   debilidades, confrontacion de cada F/A contra cada capacidad del enemigo (matriz), comparacion de
+                   las F/A (ventajas, desventajas, principios de la guerra aerea, riesgos) y F/A recomendada.
+  apreciacion_personal (A-1), apreciacion_logistica (A-4) y apreciacion_ce (C-E): situacion de su area, analisis de
+                   cada F/A operacional (necesidades y formas de accion de apoyo) y la F/A mas favorable.
+
 El simulador ayuda con lo que es transcripcion (`sugerencias`: datos del PMO, de la cadena de objetivos, del
 calendario y el Poder Relativo de Combate calculado); el analisis queda a cargo de los alumnos. Cada documento pasa
 por los estados borrador -> presentado -> aprobado o devuelto (con las observaciones del instructor).
@@ -32,6 +41,9 @@ MAX_FORMAS = 6
 LADOS = ("propio", "enemigo")
 NIVELES_GUERRA = ("estrategico", "operacional", "tactico")
 CATEGORIAS_EFECTO = ("directo", "indirecto", "secuencial", "simultaneo", "sistemico", "acumulativo", "cascada")
+EFECTOS_CONFRONTACION = ("no afecta", "degrada", "anula")  # efecto de una capacidad del enemigo sobre una F/A
+PRINCIPIOS_GUERRA_AEREA = ("objetivo", "ofensiva", "seguridad", "sorpresa", "simplicidad", "masa y maniobra",
+                           "economía de fuerza", "movimiento", "cooperación")
 
 
 @dataclass(frozen=True)
@@ -45,7 +57,7 @@ class Columna:
 class Campo:
     clave: str
     titulo: str
-    tipo: str = "texto"  # texto | linea | mision | tabla | formas
+    tipo: str = "texto"  # texto | linea | mision | tabla | formas | matriz (F/A x capacidades del enemigo)
     ayuda: str = ""
     requerido: bool = True
     columnas: tuple = ()  # tabla
@@ -95,6 +107,50 @@ CAMPOS_FA = (
 )
 REQUERIDOS_FA = ("que", "donde", "cuando", "quien", "naturaleza", "integridad", "oportunidad", "practicabilidad")
 
+_CAPACIDADES = (Columna("que", "¿Qué?"), Columna("donde", "¿Dónde?"), Columna("con_que", "¿Con qué?"),
+                Columna("desde_donde", "¿Desde dónde?"), Columna("cuando", "¿Cuándo?"), Columna("como", "¿Cómo?"),
+                Columna("peligrosidad", "Orden de peligrosidad"))
+_CONCLUSION_APOYO = ("apoya", "apoya con limitaciones", "no apoya")
+
+_CAMPOS_OPERACIONES = (
+    Campo("mision_resumen", "1.1 Resumen de la situación general y misión del escalón superior"),
+    Campo("tareas", "1.2 Tareas impuestas, deducidas y su secuencia", "tabla", columnas=_TAREAS),
+    Campo("mision_especifica", "1.3 Misión específica", "mision"),
+    Campo("prc", "2.1 Poder relativo de combate", "tabla", columnas=_PRC),
+    Campo("factores", "2.1 Factores generales, militares y características del Teatro de Operaciones", requerido=False,
+          ayuda="Solo lo que influye en el cumplimiento de la misión, positiva o negativamente."),
+    Campo("fortalezas_debilidades", "2.1.4 Fortalezas y debilidades", "tabla", columnas=(
+        Columna("lado", "Lado", LADOS), Columna("tipo", "Tipo", ("fortaleza", "debilidad")),
+        Columna("descripcion", "Descripción"))),
+    Campo("confrontacion", "3. Confrontación de las F/A vs las capacidades del enemigo", "matriz",
+          ayuda="Dándolas a ambas como ejecutadas, cómo afecta cada capacidad del enemigo a cada F/A: no la afecta, la "
+                "degrada o la anula. El ensayo en el simulador (juego de guerra) ayuda a fundamentarlo."),
+    Campo("comparacion", "4. Comparación de nuestras F/A", "tabla", columnas=(
+        Columna("fa", "F/A"), Columna("ventajas", "Ventajas"), Columna("desventajas", "Desventajas"),
+        Columna("principios", "Principios de la guerra aérea que cumple"), Columna("riesgos", "Riesgos asumidos"))),
+    Campo("fa_recomendada", "5.1 Forma de Acción recomendada", "linea"),
+    Campo("justificacion", "5.2 Justificación"),
+    Campo("factores_limitantes", "5.3 Factores limitantes", requerido=False),
+)
+
+
+def _campos_apoyo(titulo_situacion: str, ayuda_situacion: str) -> tuple:
+    """Formato comun de las apreciaciones de personal, logistica y comunicaciones."""
+    return (
+        Campo("mision_especifica", "1.1 Misión específica", "mision"),
+        Campo("situacion_propia", "2.1 Situación operacional propia",
+              ayuda="Disposición y dotación de las unidades, naturaleza de las operaciones, terreno y clima, y las "
+                    "capacidades del enemigo que afectan al área."),
+        Campo("situacion_area", titulo_situacion, ayuda=ayuda_situacion),
+        Campo("analisis_fa", "3. Análisis de las F/A operacionales", "tabla", columnas=(
+            Columna("fa", "F/A"), Columna("necesidades", "Necesidades y requerimientos"),
+            Columna("formas_apoyo", "Formas de acción de apoyo (qué, dónde, cuándo, quién)"),
+            Columna("conclusion", "Conclusión parcial", _CONCLUSION_APOYO))),
+        Campo("conclusiones", "4. Conclusiones y recomendaciones",
+              ayuda="La F/A operacional más favorable desde el punto de vista del área y las providencias a tomar."),
+    )
+
+
 DOCUMENTOS: dict[str, Documento] = {d.tipo: d for d in [
     Documento("analisis_mision", "Análisis de la misión", "Fase I · Paso 1", ("comandante", "jem"), (
         Campo("resumen_situacion", "1. Resumen de la situación (contexto histórico y situación actual)"),
@@ -131,10 +187,7 @@ DOCUMENTOS: dict[str, Documento] = {d.tipo: d for d in [
         Campo("mision_to", "1. Misión estratégico-operacional del Teatro de Operaciones"),
         Campo("mision_especifica", "2. Misión específica", "mision"),
         Campo("cog", "3. Centros de gravedad", "tabla", columnas=_COG, min_filas=2),
-        Campo("capacidades_enemigo", "4. Capacidades del enemigo", "tabla", columnas=(
-            Columna("que", "¿Qué?"), Columna("donde", "¿Dónde?"), Columna("con_que", "¿Con qué?"),
-            Columna("desde_donde", "¿Desde dónde?"), Columna("cuando", "¿Cuándo?"), Columna("como", "¿Cómo?"),
-            Columna("peligrosidad", "Orden de peligrosidad")),
+        Campo("capacidades_enemigo", "4. Capacidades del enemigo", "tabla", columnas=_CAPACIDADES,
               ayuda="Lo que el enemigo realmente está en condiciones de hacer y que interfiere con nuestra misión, "
                     "sin tener en cuenta nuestra oposición; ordenadas de mayor a menor peligrosidad."),
         Campo("condiciones", "5. Condiciones de ejecución (en tiempo y lugar)"),
@@ -156,6 +209,45 @@ DOCUMENTOS: dict[str, Documento] = {d.tipo: d for d in [
                     "aceptabilidad (costo y beneficio)."),
         Campo("conclusion", "Conclusión: F/A que reúnen el criterio APA", requerido=False),
     ), "Operaciones, Defensa Aérea e Inteligencia elaboran las F/A que luego apreciará todo el Estado Mayor."),
+    Documento("apreciacion_inteligencia", "Apreciación de Inteligencia", "Fase I · Paso 2", ("a2", "jem", "comandante"), (
+        Campo("mision_especifica", "1. Misión específica", "mision"),
+        Campo("situacion_enemigo", "2. Situación del enemigo",
+              ayuda="Organización, despliegue, sistemas de armas, defensa aérea, terreno y meteorología: solo lo que "
+                    "afecta a nuestra misión y respaldado con hechos."),
+        Campo("capacidades_enemigo", "3. Capacidades del enemigo", "tabla", columnas=_CAPACIDADES),
+        Campo("analisis_capacidades", "4. Análisis de las capacidades del enemigo", "tabla", columnas=(
+            Columna("capacidad", "Capacidad"),
+            Columna("practicabilidad", "Practicabilidad (con nuestra oposición)", ("practicable", "parcialmente practicable", "no practicable")),
+            Columna("aceptabilidad", "Aceptabilidad para el enemigo", ("alta", "media", "baja")),
+            Columna("retenida", "¿Se retiene?", ("si", "no")), Columna("fundamento", "Fundamento")),
+              ayuda="Se retienen las capacidades que, practicables y aceptables para el enemigo, pueden interferir "
+                    "con nuestra misión."),
+        Campo("conclusiones", "5. Conclusiones",
+              ayuda="Capacidad global del enemigo para interferir con la misión y las capacidades ordenadas de mayor a "
+                    "menor peligrosidad, justificando el orden."),
+    ), "La A-2 determina la capacidad del enemigo para interferir con nuestra misión."),
+    Documento("apreciacion_operaciones", "Apreciación de Operaciones", "Fase I · Paso 2", ("a3", "jem", "comandante"), (
+        *_CAMPOS_OPERACIONES,
+    ), "La A-3 confronta las F/A con las capacidades del enemigo, las compara y recomienda la mejor."),
+    Documento("apreciacion_defensa_aerea", "Apreciación de Defensa Aérea", "Fase I · Paso 2", ("a3da", "jem", "comandante"), (
+        *(Campo("factores", "2.1 Situación de la defensa aérea propia y de la amenaza aérea enemiga",
+                ayuda="Radares, artillería y misiles antiaéreos, interceptores, alerta temprana y sus coberturas; líneas "
+                      "de defensa (LDM, LID, LIMP, LLB); la aviación enemiga que puede atacarnos.")
+          if c.clave == "factores" else c for c in _CAMPOS_OPERACIONES),
+    ), "La A-3 D/A aprecia las F/A desde las operaciones defensivas."),
+    Documento("apreciacion_personal", "Apreciación de Personal", "Fase I · Paso 2", ("a1", "jem", "comandante"), (
+        *_campos_apoyo("2.2 Situación de personal",
+                       "Efectivos y su ubicación, reemplazos, entrenamiento, moral, prisioneros de guerra, asuntos civiles."),
+    ), "La A-1 determina las necesidades de personal de cada F/A operacional."),
+    Documento("apreciacion_logistica", "Apreciación de Logística", "Fase I · Paso 2", ("a4", "jem", "comandante"), (
+        *_campos_apoyo("2.2 Situación logística",
+                       "Abastecimiento de combustible y munición, existencias de las bases y depósitos, mantenimiento, "
+                       "transporte, instalaciones, sanidad y evacuación."),
+    ), "La A-4 determina si la logística puede sostener cada F/A operacional."),
+    Documento("apreciacion_ce", "Apreciación de Comunicaciones y Electrónica", "Fase I · Paso 2", ("ce", "jem", "comandante"), (
+        *_campos_apoyo("2.2 Situación de comunicaciones y electrónica",
+                       "Redes y enlaces, centros de comunicaciones, guerra electrónica propia y enemiga, emisiones."),
+    ), "La C-E determina cómo apoyar con comunicaciones y guerra electrónica cada F/A operacional."),
 ]}
 ORDEN = tuple(DOCUMENTOS)
 
@@ -170,6 +262,7 @@ def definicion(d: Documento) -> dict:
             "min_filas": c.min_filas,
         } for c in d.campos],
         "campos_fa": [{"clave": k, "titulo": t, "tipo": tp, "opciones": list(o)} for k, t, tp, o in CAMPOS_FA],
+        "efectos": list(EFECTOS_CONFRONTACION),
     }
 
 
@@ -212,6 +305,19 @@ def normalizar(tipo: str, contenido: dict | None) -> dict:
                 if any(fa.values()):
                     formas.append(fa)
             out[campo.clave] = formas
+        elif campo.tipo == "matriz":
+            celdas, vistas = [], set()
+            for f in (v if isinstance(v, list) else [])[:MAX_FILAS * 4]:
+                if not isinstance(f, dict):
+                    continue
+                fa, cap = _txt(f.get("fa"), 300), _txt(f.get("capacidad"), 300)
+                efecto = _txt(f.get("efecto"), 20)
+                celda = {"fa": fa, "capacidad": cap, "efecto": efecto if efecto in EFECTOS_CONFRONTACION else "",
+                         "analisis": _txt(f.get("analisis"), 2000)}
+                if fa and cap and (fa, cap) not in vistas and (celda["efecto"] or celda["analisis"]):
+                    vistas.add((fa, cap))
+                    celdas.append(celda)
+            out[campo.clave] = celdas
         else:
             out[campo.clave] = _txt(v, 200 if campo.tipo == "linea" else MAX_TEXTO)
     return out
@@ -222,6 +328,8 @@ def _vacio(campo: Campo, valor) -> bool:
         return not any(valor.values())
     if campo.tipo in ("tabla", "formas"):
         return len(valor) < (campo.min_filas if campo.tipo == "tabla" else 2)
+    if campo.tipo == "matriz":
+        return not any(c["efecto"] for c in valor)
     return not valor
 
 
@@ -404,5 +512,130 @@ def sugerencias(tipo: str, esc, unidades, objetivos, bando: str, pm_contenido: d
             "- Actitud: (ofensiva o defensiva)\n- Tipos de operaciones: \n- Organización de la fuerza: \n- Nivel de daño deseado: "
     elif tipo == "formas_accion":
         s["efecto_deseado"] = pmo.texto_mision(mision_especifica)
-    return normalizar(tipo, s)
+    elif tipo.startswith("apreciacion_"):
+        guia = documentos.get("guia") or {}
+        ctx = contexto(documentos)
+        mision = next((d.get("mision_especifica") for d in (guia, concepto, analisis)
+                       if any((d.get("mision_especifica") or {}).values())), None) or p["mision"]
+        s["mision_especifica"] = mision
+        if tipo == "apreciacion_inteligencia":
+            s["situacion_enemigo"] = analisis.get("situacion_enemigo") or p["fuerzas_enemigas"]
+            s["capacidades_enemigo"] = guia.get("capacidades_enemigo") or []
+            s["analisis_capacidades"] = [{"capacidad": c} for c in ctx["capacidades"]]
+        elif tipo in ("apreciacion_operaciones", "apreciacion_defensa_aerea"):
+            s["mision_resumen"] = "\n".join(x for x in (analisis.get("resumen_situacion") or p["situacion_general"],
+                                                         analisis.get("mision_to") or p["mision_superior"]) if x)
+            s["tareas"] = concepto.get("tareas") or analisis.get("tareas") or []
+            s["prc"] = [{"factor": f["factor"], "propio": str(f["propio"]).replace(".", ","),
+                         "enemigo": str(f["enemigo"]).replace(".", ","), "relacion": f["relacion"],
+                         "conclusion": f["conclusion"]} for f in prc["filas"]]
+            s["fortalezas_debilidades"] = filas_fortalezas(prc)
+            s["confrontacion"] = [{"fa": fa, "capacidad": c, "efecto": "", "analisis": ""}
+                                  for fa in ctx["formas"] for c in ctx["capacidades"]]
+            s["comparacion"] = [{"fa": fa} for fa in ctx["formas"]]
+            if tipo == "apreciacion_defensa_aerea":
+                s["factores"] = situacion_defensa_aerea(unidades, bando)
+        else:
+            s["situacion_propia"] = "\n".join(x for x in (p["fuerzas_propias"], p["medios"]) if x)
+            s["situacion_area"] = {"apreciacion_personal": situacion_personal, "apreciacion_logistica": situacion_logistica,
+                                   "apreciacion_ce": situacion_ce}[tipo](esc, unidades, bando)
+            s["analisis_fa"] = [{"fa": fa} for fa in ctx["formas"]]
+    return _completar_matriz(tipo, normalizar(tipo, s), s)
+
+
+def _completar_matriz(tipo: str, normal: dict, crudo: dict) -> dict:
+    """La matriz sugerida va con las celdas vacias (normalizar las descarta): son el esqueleto F/A x capacidad."""
+    for campo in DOCUMENTOS[tipo].campos:
+        if campo.tipo == "matriz" and crudo.get(campo.clave):
+            normal[campo.clave] = crudo[campo.clave]
+    return normal
+
+
+def contexto(documentos: dict[str, dict]) -> dict:
+    """Las F/A operacionales y las capacidades del enemigo del bando, como se nombran en la confrontacion."""
+    formas = [f"{fa.get('nombre') or f'F/A {i}'}: {fa.get('que', '')}".strip()
+              for i, fa in enumerate((documentos.get("formas_accion") or {}).get("formas") or [], 1)]
+    fuente = ((documentos.get("apreciacion_inteligencia") or {}).get("capacidades_enemigo")
+              or (documentos.get("guia") or {}).get("capacidades_enemigo") or [])
+    capacidades = [f"C{i}: {c.get('que', '')}".strip() for i, c in enumerate(fuente, 1) if c.get("que")]
+    return {"formas": formas, "capacidades": capacidades}
+
+
+def filas_fortalezas(prc: dict) -> list[dict]:
+    filas = []
+    for f in prc["filas"]:
+        if f["valor"] is None:
+            continue
+        if f["valor"] >= 1.5:
+            filas += [{"lado": "propio", "tipo": "fortaleza", "descripcion": f"Superioridad en {f['factor'].lower()} ({f['relacion']})"},
+                      {"lado": "enemigo", "tipo": "debilidad", "descripcion": f"Inferioridad en {f['factor'].lower()}"}]
+        elif f["valor"] < 0.67:
+            filas += [{"lado": "enemigo", "tipo": "fortaleza", "descripcion": f"Superioridad en {f['factor'].lower()} ({f['relacion']})"},
+                      {"lado": "propio", "tipo": "debilidad", "descripcion": f"Inferioridad en {f['factor'].lower()}"}]
+    return filas
+
+
+def _nombre_clase(u) -> str:
+    return catalogo.obtener(u.clase, u.tipo).nombre
+
+
+def situacion_defensa_aerea(unidades, bando: str) -> str:
+    enemigo = "rojo" if bando == "azul" else "azul"
+    propias = [u for u in unidades if u.bando == bando and u.estado == "activa" and _factor(u) == "defensa_aerea"]
+    lineas = ["Defensa aérea propia:"]
+    for u in propias:
+        lineas.append(f"- {u.nombre} ({_nombre_clase(u).lower()}): alcance {u.alcance_km:.0f} km, detección "
+                      f"{u.deteccion_km:.0f} km, fuerza {u.fuerza:.0f} %.")
+    if not propias:
+        lineas.append("- Sin medios de defensa aérea asignados.")
+    cazas = [u for u in unidades if u.bando == bando and u.estado == "activa" and u.clase == "caza"]
+    if cazas:
+        lineas.append(f"- Caza de intercepción: {sum(max(1, u.aeronaves or 1) for u in cazas)} aeronaves.")
+    amenaza = [u for u in unidades if u.bando == enemigo and u.estado == "activa" and _factor(u) == "aviacion"]
+    lineas.append(f"Amenaza aérea estimada: unas {sum(max(1, u.aeronaves or 1) for u in amenaza)} aeronaves de combate "
+                  "enemigas (ver la Apreciación de Inteligencia).")
+    return "\n".join(lineas)
+
+
+def situacion_personal(esc, unidades, bando: str) -> str:
+    from app.engine import personal  # importacion tardia: personal importa el catalogo
+
+    r = personal.resumen(unidades, bando)
+    lineas = [f"- Efectivos del bando: {r['actual']} de {r['inicial']} ({r['operativo_pct'] or 0} % operativo), "
+              f"bajas {r['bajas']}."]
+    lineas += [f"- {x['nombre']}: {x['actual']} de {x['inicial']} en {x['unidades']} unidad(es)." for x in r["ramas"]]
+    return "\n".join(lineas)
+
+
+def situacion_logistica(esc, unidades, bando: str) -> str:
+    from app.engine import infraestructura
+
+    lineas = []
+    for u in unidades:
+        if u.bando != bando or u.estado != "activa" or u.tipo != "base" or catalogo.obtener(u.clase, u.tipo).infraestructura:
+            continue
+        lineas.append(f"- {u.nombre}: combustible {u.stock_combustible:.0f}, munición {u.stock_municion:.0f} (existencias).")
+    convoyes = [u for u in unidades if u.bando == bando and u.estado == "activa" and u.clase == "transporte"]
+    if convoyes:
+        lineas.append(f"- Convoyes de abastecimiento: {len(convoyes)}.")
+    for f in infraestructura.resumen(unidades, bando):
+        if f["categoria"] in ("combustible", "puente"):
+            lineas.append(f"- {f['nombre']}: {f['capacidad_pct']:.0f} % ({f['efecto']}).")
+    return "\n".join(lineas) or "- Sin datos logísticos en el escenario."
+
+
+def situacion_ce(esc, unidades, bando: str) -> str:
+    from app.engine import infraestructura
+
+    lineas = []
+    for f in infraestructura.resumen(unidades, bando):
+        if f["categoria"] in ("comunicaciones", "energia"):
+            lineas.append(f"- {f['nombre']}: {f['capacidad_pct']:.0f} % ({f['efecto']}).")
+    ge = [u for u in unidades if u.bando == bando and u.estado == "activa" and _factor(u) == "guerra_electronica"]
+    if ge:
+        lineas.append("- Medios de guerra electrónica y reconocimiento: " + ", ".join(u.nombre for u in ge) + ".")
+    if getattr(esc, "com_perdida_pct", 0) or getattr(esc, "com_latencia_ms", 0):
+        lineas.append(f"- Red del bando degradada: demora de {esc.com_latencia_ms / 1000:.0f} s y "
+                      f"{esc.com_perdida_pct} % de mensajes perdidos.")
+    return "\n".join(lineas) or "- Sin datos de comunicaciones en el escenario."
 

@@ -1,7 +1,7 @@
 import secrets
 from datetime import datetime, timezone
 
-from sqlalchemy import false, true, Boolean, DateTime, Integer, String, Text
+from sqlalchemy import false, true, Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -78,6 +78,13 @@ class Escenario(Base):
     turno_h: Mapped[int | None] = mapped_column(Integer, nullable=True)
     turno_final: Mapped[int | None] = mapped_column(Integer, nullable=True)
     fases_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # juego de guerra (TIEM): esta es la copia de ensayo de una F/A del escenario `ensayo_de`, para el bando
+    # `ensayo_bando`, creada en el turno `ensayo_desde` (ver app/ensayos.py)
+    ensayo_de: Mapped[int | None] = mapped_column(ForeignKey("escenarios.id"), nullable=True)
+    ensayo_bando: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    ensayo_fa: Mapped[str] = mapped_column(String(300), default="", server_default="")
+    ensayo_desde: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     def conduccion(self, bando: str) -> str:
         """alumnos | instructor | ia: quien da las ordenes de ese bando."""
