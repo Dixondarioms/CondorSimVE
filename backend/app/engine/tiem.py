@@ -309,6 +309,20 @@ DOCUMENTOS: dict[str, Documento] = {d.tipo: d for d in [
         Campo("logistica", "4. Asuntos logísticos", requerido=False),
         Campo("comando", "5. Asuntos de comando y comunicaciones", requerido=False),
     ), "El plan convierte la decisión en tareas para cada unidad, en tiempo y espacio."),
+    Documento("supervision", "Supervisión de la ejecución", "Fase III", ("comandante", "jem", "a3", "a3da", "a2"), (
+        Campo("registro", "Registro de supervisión", "tabla", requerido=False, columnas=(
+            Columna("turno", "Turno"), Columna("objetivo", "Objetivo (lo previsto)"), Columna("resultado", "Resultado"),
+            Columna("diferencia", "Diferencia"), Columna("causa", "Causa"), Columna("accion", "Acción correctiva"),
+            Columna("responsable", "Responsable"), Columna("estado", "Estado", ("abierta", "cerrada"))),
+              ayuda="Objetivo → resultado → diferencia → causa → acción correctiva. Las tres primeras las arma el cuadro de "
+                    "supervisión; la causa y la acción correctiva son del Estado Mayor."),
+        Campo("apreciaciones_rapidas", "Apreciaciones rápidas", "tabla", requerido=False, columnas=(
+            Columna("turno", "Turno"), Columna("situacion", "Situación nueva"), Columna("fa", "Formas de acción consideradas"),
+            Columna("decision", "Decisión"))),
+        Campo("ordenes_fragmentarias", "Órdenes fragmentarias", "tareas", requerido=False,
+              ayuda="Tareas nuevas o que reemplazan a las del plan; se emiten desde la Orden de Operaciones igual que las "
+                    "del Plan de Operaciones, aunque el plan ya esté aprobado."),
+    ), "El Estado Mayor sigue la ejecución y corrige las desviaciones del plan."),
 ]}
 ORDEN = tuple(DOCUMENTOS)
 

@@ -762,7 +762,17 @@ def construir(salida: Path, img: Path) -> None:
                "en curso y no se emitieron se traducen a órdenes y pasan por <font face='Mono'>ordenes._crear_orden</font>, la "
                "misma validación de una orden manual, con la repartición de quien las emite; la posición de un enemigo sale de lo "
                "que el bando ve o de su último contacto. Cada resultado queda en la tabla <font face='Mono'>ejecuciones_tarea</font> "
-               "(emitida con su orden, o rechazada con el motivo, que se puede reintentar). Migración 0029."])]
+               "(emitida con su orden, o rechazada con el motivo, que se puede reintentar). Migración 0029."]),
+          H2("8.15 El TIEM en el simulador (etapa 5): supervisión de la ejecución"),
+          Bul(["<b>Cuadro de supervisión</b> (<font face='Mono'>engine/supervision.py</font>, en <font face='Mono'>GET /tiem</font>): "
+               "renglones objetivo, resultado, diferencia, estado (conforme, en curso, desvío, fallido) y causa sugerida, a partir "
+               "de las tareas vencidas (su ejecución y el estado y resultado de su orden), los objetivos del bando (estado, "
+               "progreso y plazos que vencen en 2 turnos) y las unidades propias destruidas o con menos del 50 % de fuerza. Solo "
+               "usa información propia: nunca el estado real del enemigo.",
+               "<b>Parte del turno</b>: órdenes del turno anterior cumplidas y rechazadas, eventos de objetivos y pérdidas propias.",
+               "<b>Documento de Supervisión</b> (Fase III): registro de causas y acciones correctivas, apreciaciones rápidas y "
+               "<b>órdenes fragmentarias</b> (campo de tipo tareas), que <font face='Mono'>POST /tiem/{bando}/emitir</font> emite "
+               "junto con las del Plan de Operaciones aunque el plan esté aprobado."])]
     h += Img(img, "cap_ia_noche.jpg", "Figura 4. Un alumno del bando azul contra la IA a las 23:00: el mapa oscurecido, la hora y el periodo en Estado del escenario y el bando rojo «IA · LISTO».")
 
     # ---- 9 aviacion
@@ -954,6 +964,8 @@ def construir(salida: Path, img: Path) -> None:
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
               ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña TIEM; engine/pmo.py",
                "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["TIEM, etapa 5: supervisión de la ejecución", "Pestaña TIEM → Supervisión de la ejecución; engine/supervision.py",
+               "Parte del turno, cuadro de diferencias con el plan, registro de causas y acciones correctivas y órdenes fragmentarias (8.15)."],
               ["TIEM, etapa 4: decisión, Plan de Operaciones y órdenes", "Pestaña TIEM → Paso 3 y Fase II; Orden de Operaciones",
                "Decisión del Comandante, análisis previo y Plan de Operaciones cuyas tareas se emiten como órdenes del simulador (8.14)."],
               ["TIEM, etapa 3: apreciaciones de EM y juego de guerra", "Pestaña TIEM → Paso 2; Juego de guerra; app/ensayos.py",

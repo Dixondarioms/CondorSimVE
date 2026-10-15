@@ -73,7 +73,21 @@
     "Fase I · Paso 3": "Fase I · Paso 3: Decisión del Comandante",
     "Fase II · Paso 1": "Fase II · Análisis previo al plan",
     "Fase II · Paso 2": "Fase II · Plan de Operaciones",
+    "Fase III": "Fase III · Supervisión de la ejecución",
   };
+
+  const ESTADOS_SUP = { conforme: ["Conforme", "ok"], "en curso": ["En curso", ""], desvio: ["Desvío", "mov"], fallido: ["Fallido", "fuego"] };
+
+  /** Tareas del plan más las órdenes fragmentarias de la supervisión, marcadas con su origen. */
+  function tareasDelBando(docs) {
+    const plan = (((docs || {}).plan_operaciones || {}).contenido || {}).tareas || [];
+    const frago = (((docs || {}).supervision || {}).contenido || {}).ordenes_fragmentarias || [];
+    return [...plan.map((t) => ({ ...t, origen: "plan" })), ...frago.map((t) => ({ ...t, origen: "frago" }))];
+  }
+
+  /** Renglón del registro de supervisión a partir de un renglón del cuadro automático. */
+  const renglonRegistro = (f) => ({ turno: String(f.turno || ""), objetivo: f.objetivo, resultado: f.resultado, diferencia: f.diferencia,
+    causa: f.causa_sugerida || "", accion: "", responsable: "", estado: "abierta" });
 
   /** "H", "H+3" o "H-2" de un turno, o "" sin hora H. */
   function refH(turno, turnoH) {
@@ -181,13 +195,66 @@
       }
       dibujarEnsayos(b);
       dibujarOrden(b);
+      dibujarSupervision(b);
+    }
+
+    // ---------------------------------------------------------------- Fase III: supervisión de la ejecución
+    function dibujarSupervision(b) {
+      const esc = ctx.escenario();
+      $("sec-supervision").hidden = !!(esc && esc.ensayo_de);
+      const sup = datos.supervision && datos.supervision[b];
+      const parte = $("sup-parte");
+      parte.replaceChildren();
+      if (sup && sup.parte) {
+        parte.append(el("b", "", `Parte del turno ${sup.parte.turno}${sup.parte.referencia ? ` (${sup.parte.referencia})` : ""}`));
+        const ul = el("ul");
+        sup.parte.lineas.forEach((l) => ul.append(el("li", "", l)));
+        parte.append(ul);
+      } else parte.append(el("p", "vacio", "Todavía no se resolvió ningún turno."));
+      const cuenta = $("sup-cuenta");
+      cuenta.replaceChildren();
+      const filas = (sup && sup.cuadro) || [];
+      for (const [k, [texto, clase]] of Object.entries(ESTADOS_SUP)) {
+        const n = (sup && sup.cuenta && sup.cuenta[k]) || 0;
+        if (n) cuenta.append(el("span", `chip ${clase}`, `${texto}: ${n}`));
+      }
+      const ul = $("sup-cuadro");
+      ul.replaceChildren();
+      if (!filas.length) { ul.append(el("li", "vacio", "Sin tareas vencidas ni objetivos que supervisar.")); return; }
+      const solo = $("sup-solo-desvios").checked;
+      const docSup = datos.documentos[b].supervision;
+      for (const f of filas.filter((x) => !solo || x.estado === "desvio" || x.estado === "fallido").slice(0, 40)) {
+        const li = el("li");
+        const t = el("div", "texto");
+        t.append(el("b", "", f.objetivo), el("span", "ayuda", `${f.origen} · ${f.resultado}`));
+        if (f.diferencia) t.append(el("span", "ayuda diferencia", `Diferencia: ${f.diferencia}`));
+        const [texto, clase] = ESTADOS_SUP[f.estado] || [f.estado, ""];
+        li.append(t, el("span", `chip ${clase}`, texto));
+        if ((f.estado === "desvio" || f.estado === "fallido") && docSup && docSup.puede_redactar) {
+          li.append(boton("Al registro", () => alRegistro(b, f), "mini"));
+        }
+        ul.append(li);
+      }
+    }
+
+    /** Abre la Supervisión en edición con un renglón nuevo del registro (objetivo, resultado, diferencia y causa sugerida). */
+    function alRegistro(b, fila) {
+      const d = datos.documentos[b].supervision;
+      if (!ctx.esInstructor() && (d.estado === "presentado" || d.estado === "aprobado")) {
+        ctx.toast("La Supervisión está presentada al instructor: espere su revisión para seguir registrando.");
+        return;
+      }
+      abrir(b, "supervision");
+      borrador = JSON.parse(JSON.stringify(d.contenido));
+      borrador.registro = [...(borrador.registro || []), renglonRegistro(fila)];
+      dibujarDialogo();
+      ctx.toast("Renglón agregado al registro: complete la causa y la acción correctiva, y guarde.", true);
     }
 
     // ---------------------------------------------------------------- Orden de Operaciones (tareas -> órdenes)
     function dibujarOrden(b) {
       const esc = ctx.escenario();
-      const plan = datos.documentos[b].plan_operaciones;
-      const tareas = (plan && plan.contenido.tareas) || [];
+      const tareas = tareasDelBando(datos.documentos[b]);
       $("sec-orden-op").hidden = !!(esc && esc.ensayo_de);
       const turnoH = esc && esc.calendario ? esc.calendario.turno_h : null;
       const { vencen, proximas } = ordenDelDia(tareas, datos.ejecuciones && datos.ejecuciones[b], datos.turno_actual);
@@ -199,7 +266,7 @@
           const li = el("li");
           const txt = el("div", "texto");
           const ref = refH(t.turno, turnoH);
-          txt.append(el("b", "", textoTarea(t, tipos)), el("span", "ayuda", `Turno ${t.turno}${ref ? ` (${ref})` : ""}${t.detalle ? ` · ${t.detalle}` : ""}`));
+          txt.append(el("b", "", textoTarea(t, tipos)), el("span", "ayuda", `${t.origen === "frago" ? "Orden fragmentaria · " : ""}Turno ${t.turno}${ref ? ` (${ref})` : ""}${t.detalle ? ` · ${t.detalle}` : ""}`));
           if (e && e.estado === "rechazada" && e.motivo) txt.append(el("span", "ayuda motivo", `Rechazada: ${e.motivo}`));
           const chip = { emitida: ["Emitida", "ok"], rechazada: ["Rechazada", "fuego"], pendiente: ["Pendiente", ""] }[estado];
           li.append(txt, el("span", `chip ${chip[1]}`, chip[0]));
@@ -723,6 +790,8 @@
     $("btn-tiem-adjuntar").addEventListener("click", () => $("tiem-archivo").click());
     $("btn-ensayar").addEventListener("click", ensayar);
     $("btn-emitir-orden").addEventListener("click", emitirOrden);
+    $("sup-solo-desvios").addEventListener("change", () => { if (datos) dibujarSupervision(bandoElegido()); });
+    $("btn-sup-abrir").addEventListener("click", () => abrir(bandoElegido(), "supervision"));
     $("ensayo-volver").addEventListener("click", () => { const e = ctx.escenario(); if (e && e.ensayo_de) ctx.irEscenario(e.ensayo_de); });
     $("dlg-tiem").addEventListener("cancel", (e) => { e.preventDefault(); cerrar(); });
 
@@ -741,7 +810,7 @@
   }
 
   const api = { ESTADOS, textoEstado, textoAvance, textoOpcion, completarVacios, resumenApa, ejesMatriz, celdaDe, porPaso,
-    refH, ordenDelDia, textoTarea, crear };
+    refH, ordenDelDia, textoTarea, tareasDelBando, renglonRegistro, crear };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.Tiem = api;
 })(typeof window !== "undefined" ? window : globalThis);

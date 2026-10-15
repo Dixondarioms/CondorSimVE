@@ -61,3 +61,12 @@ test("Orden de Operaciones: lo que vence ahora y lo de las próximas 24 horas", 
   assert.equal(T.textoTarea({ tipo: "atacar", unidad_nombre: "A", objetivo_nombre: "R1" }, { atacar: "Atacar" }), "Atacar con A a R1");
   assert.equal(T.textoTarea({ tipo: "mover", unidad_nombre: "A", objetivo_nombre: "el puente" }, { mover: "Desplazar" }), "Desplazar con A hacia el puente");
 });
+
+test("supervisión: tareas del plan y órdenes fragmentarias, y renglón del registro", () => {
+  const docs = { plan_operaciones: { contenido: { tareas: [{ id: "p1", turno: 2 }] } },
+    supervision: { contenido: { ordenes_fragmentarias: [{ id: "f1", turno: 3 }] } } };
+  assert.deepEqual(T.tareasDelBando(docs).map((t) => [t.id, t.origen]), [["p1", "plan"], ["f1", "frago"]]);
+  assert.deepEqual(T.tareasDelBando({}), []);
+  assert.deepEqual(T.renglonRegistro({ turno: 4, objetivo: "Atacar R1", resultado: "Rechazada", diferencia: "No se ejecutó", causa_sugerida: "Sin combustible" }),
+    { turno: "4", objetivo: "Atacar R1", resultado: "Rechazada", diferencia: "No se ejecutó", causa: "Sin combustible", accion: "", responsable: "", estado: "abierta" });
+});

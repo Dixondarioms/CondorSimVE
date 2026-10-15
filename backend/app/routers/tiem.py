@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from app import auth, ensayos, schemas, state
 from app.db import get_db
-from app.engine import aar, catalogo, pmo, puestos, tiem
+from app.engine import aar, catalogo, pmo, puestos, supervision, tiem
 from app.models.contacto import Contacto
 from app.models.documento_tiem import ArchivoTiem, DocumentoTiem, EjecucionTarea
 from app.models.escenario import Escenario
@@ -137,8 +137,16 @@ def _respuesta(db: Session, esc: Escenario, u) -> dict:
                         for b in documentos},
         "opciones_tarea": {b: _opciones_tarea(db, esc, b) for b in documentos},
         "turno_actual": esc.turno_actual,
+        # Fase III: cuadro de supervision (objetivo, resultado, diferencia) y parte del ultimo turno de cada bando
+        "supervision": {b: _supervision(db, esc, b, {t: d["contenido"] for t, d in docs.items()})
+                        for b, docs in documentos.items()},
         "puede_ensayar": {b: _puede_ensayar(u, b) for b in documentos},
     }
+
+
+def _supervision(db: Session, esc: Escenario, bando: str, documentos: dict) -> dict:
+    filas = supervision.cuadro(db, esc, bando, documentos)
+    return {"cuadro": filas, "cuenta": supervision.contar(filas), "parte": supervision.parte(db, esc, bando)}
 
 
 ENSAYAN = ("comandante", "jem", "a3", "a3da", "a2")
@@ -389,7 +397,8 @@ class EmitirIn(BaseModel):
 @router.post("/{bando}/emitir")
 async def emitir(bando: str, payload: EmitirIn, esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db),
                  u=Depends(autor)):
-    """Orden de Operaciones: emite como ordenes del simulador las tareas del plan que vencen en el turno en curso (o
+    """Orden de Operaciones: emite como ordenes del simulador las tareas del plan (y las ordenes fragmentarias de la
+    Supervision) que vencen en el turno en curso (o
     antes y aun no emitidas). Cada orden pasa por la misma validacion que una orden manual, con la reparticion de
     quien la emite; las que no se pueden cumplir quedan rechazadas con el motivo y se pueden reintentar."""
     from app.routers.ordenes import _crear_orden, _en_decision  # importacion tardia: evita ciclos entre routers
@@ -401,10 +410,11 @@ async def emitir(bando: str, payload: EmitirIn, esc: Escenario = Depends(auth.es
     elif u.rol != bando:
         raise HTTPException(status_code=403, detail="Solo puede emitir las tareas de su bando")
     _en_decision(esc)
-    plan = _contenido(_doc(db, esc, bando, "plan_operaciones"), "plan_operaciones")
+    docs = {t: _contenido(_doc(db, esc, bando, t), t) for t in ("plan_operaciones", "supervision")}
+    tareas = [t for t, _origen in supervision.tareas_del_bando(docs)]
     hechas = {e.tarea_id: e for e in db.query(EjecucionTarea).filter(EjecucionTarea.escenario_id == esc.id,
                                                                    EjecucionTarea.bando == bando)}
-    elegidas = [t for t in plan["tareas"] if t["turno"] and t["turno"] <= esc.turno_actual
+    elegidas = [t for t in tareas if t["turno"] and t["turno"] <= esc.turno_actual
                 and (t["id"] not in hechas or hechas[t["id"]].estado != "emitida")
                 and (payload.ids is None or t["id"] in payload.ids)]
     conocidas = _conocidas(db, esc, bando)

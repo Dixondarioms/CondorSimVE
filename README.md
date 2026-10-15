@@ -243,6 +243,15 @@ a3da`; en el arnés, `arnes.html?rol=azul&puesto=a3`.
   hasta el turno en curso, con la misma validación que una orden manual (`ordenes._crear_orden`) y la repartición de
   quien las emite; cada resultado (emitida o rechazada con su motivo) queda en `ejecuciones_tarea` (migración `0029`).
 
+### Supervisión de la ejecución (TIEM, etapa 5)
+
+- **Cuadro de supervisión** (`engine/supervision.py`, en `GET /tiem` como `supervision`): objetivo → resultado →
+  diferencia, con estado *conforme*, *en curso*, *desvío* o *fallido* y causa sugerida, a partir de las tareas vencidas
+  (ejecución y resultado de su orden), los objetivos del bando (estado, progreso y plazos por vencer) y las unidades
+  propias destruidas o por debajo del 50 %. Solo usa lo que el bando sabe. Incluye el **parte** del turno anterior.
+- **Documento de Supervisión** (Fase III): registro de causas y acciones correctivas, apreciaciones rápidas y
+  **órdenes fragmentarias** (tareas), que la Orden de Operaciones emite junto con las del plan aunque esté aprobado.
+
 Alumnos y observadores solo acceden a los **escenarios que el instructor les asigna** (panel "Escenario").
 
 ### Cuentas y acceso

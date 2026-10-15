@@ -670,7 +670,7 @@ def instructor_conduce(n):
 
 def _abrir_documento(n, indice):
     n.clic('[data-pestana="pmo"]')
-    n.esperar("document.querySelectorAll('#tiem-docs button').length >= 13")
+    n.esperar("document.querySelectorAll('#tiem-docs button').length >= 14")
     n.js(f"document.querySelectorAll('#tiem-docs button')[{indice}].click()")
     n.esperar("document.getElementById('dlg-tiem').open")
     time.sleep(0.6)
@@ -679,7 +679,7 @@ def _abrir_documento(n, indice):
 def tiem_documentos(n):
     n.ir(arnes("azul", "a3"), LISTA_APP, 2)
     n.clic('[data-pestana="pmo"]')
-    n.esperar("document.querySelectorAll('#tiem-docs button').length >= 13")
+    n.esperar("document.querySelectorAll('#tiem-docs button').length >= 14")
     n.js("(() => { const p = document.getElementById('panel-izq'); const s = document.getElementById('sec-apreciacion');"
          " p.scrollTop += s.getBoundingClientRect().top - p.getBoundingClientRect().top - 36; })()")
     time.sleep(0.4)
@@ -714,7 +714,7 @@ def tiem_instructor(n):
 def tiem_paso2(n):
     n.ir(arnes("azul", "a3"), LISTA_APP, 2)
     n.clic('[data-pestana="pmo"]')
-    n.esperar("document.querySelectorAll('#tiem-docs button').length >= 13")
+    n.esperar("document.querySelectorAll('#tiem-docs button').length >= 14")
     n.js("(() => { const p = document.getElementById('panel-izq'); const s = [...document.querySelectorAll('#tiem-docs h3')][1];"
          " p.scrollTop += s.getBoundingClientRect().top - p.getBoundingClientRect().top - 40; })()")
     time.sleep(0.4)
@@ -732,7 +732,7 @@ def tiem_paso2(n):
 def tiem_plan(n):
     n.ir(arnes("azul", "a3"), LISTA_APP, 2)
     n.clic('[data-pestana="pmo"]')
-    n.esperar("document.querySelectorAll('#tiem-docs button').length >= 13")
+    n.esperar("document.querySelectorAll('#tiem-docs button').length >= 14")
     n.js("(() => { const p = document.getElementById('panel-izq'); const s = document.getElementById('sec-orden-op');"
          " p.scrollTop += s.getBoundingClientRect().top - p.getBoundingClientRect().top - 36; })()")
     time.sleep(0.4)
@@ -755,6 +755,20 @@ def tiem_plan_editar(n):
     n.js("[...document.querySelectorAll('#tiem-cuerpo .tiem-campo')].find((c) => c.textContent.includes('3.2 Tareas')).scrollIntoView({ block: 'center' })")
     time.sleep(0.4)
     guardar(n, "tiem_plan_editar", n.rect("#dlg-tiem"), margen=0)
+
+
+def tiem_supervision(n):
+    n.ir(arnes("azul", "a3"), LISTA_APP, 2)
+    n.clic('[data-pestana="pmo"]')
+    n.esperar("document.querySelectorAll('#tiem-docs button').length >= 14")
+    n.js("(() => { const p = document.getElementById('panel-izq'); const s = document.getElementById('sec-supervision');"
+         " p.scrollTop += s.getBoundingClientRect().top - p.getBoundingClientRect().top - 36; })()")
+    time.sleep(0.4)
+    guardar(n, "tiem_supervision", n.rect("#panel-izq"), margen=0)
+    n.clic("#btn-sup-abrir")
+    n.esperar("document.getElementById('dlg-tiem').open")
+    time.sleep(0.6)
+    guardar(n, "tiem_supervision_doc", n.rect("#dlg-tiem"), margen=0)
 
 
 def objetivos_avance(n):
@@ -826,7 +840,7 @@ CAPTURAS = [
     consola_escenario, consola_usuarios, plantillas, ver_como, videowall, observador,
     ia_pantalla, consola_ia, plantillas_ia, barra_inferior_ia, mapa_dia_noche, mapa_carreteras, consola_catalogo,
     situacion, mapa_infraestructura, ficha_puente, objetivos_avance, mapa_ficticio,
-    pmo_alumno, pmo_instructor, consola_calendario, instructor_conduce, tiem_documentos, tiem_analisis, tiem_instructor, tiem_paso2, tiem_plan, tiem_plan_editar,
+    pmo_alumno, pmo_instructor, consola_calendario, instructor_conduce, tiem_documentos, tiem_analisis, tiem_instructor, tiem_paso2, tiem_plan, tiem_plan_editar, tiem_supervision,
     informe_repeticion, informe_dialogos, informe_rubrica, informe_doctrina, comparar, informe_replay,
 ]
 

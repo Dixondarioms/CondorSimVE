@@ -145,6 +145,8 @@ def construir(salida: Path) -> None:
               ["El simulador sigue el TIEM: los puestos pasan a ser las reparticiones del Estado Mayor (Comandante, JEM, A-1, A-2, "
                "A-3, A-3 D/A, A-4 y C-E)", "6.2"],
               ["Pestaña TIEM: el Problema Militar Operativo de cada bando, redactado por el instructor o creado automáticamente", "6.15 y 7.15"],
+              ["Supervisión de la ejecución (Fase III): cuadro automático de diferencias con el plan, parte del turno, registro "
+               "de causas y acciones correctivas, apreciaciones rápidas y órdenes fragmentarias", "6.19"],
               ["Decisión del Comandante, análisis previo y Plan de Operaciones con tareas que se emiten como órdenes del "
                "simulador desde la Orden de Operaciones", "6.18"],
               ["Apreciaciones de Estado Mayor (Fase I, Paso 2) de A-1, A-2, A-3, A-3 D/A, A-4 y C-E, confrontación de las F/A "
@@ -766,6 +768,30 @@ def construir(salida: Path) -> None:
               "«Estoy listo»."),
         P("Así se ve en el propio ejercicio si el plan era ejecutable y dónde hubo que apartarse de él."),
     ], ancho_img=6.4 * cm)
+
+    h += [H2("6.19 La supervisión de la ejecución")]
+    h += al_lado("tiem_supervision", "Supervisión de la ejecución: parte del turno y cuadro de diferencias con el plan.", [
+        P("Emitidas las órdenes, empieza la <b>Fase III</b> del TIEM: el Estado Mayor sigue la ejecución con el ciclo "
+          "<b>objetivo → resultado → diferencia → causa → acción correctiva</b>. La sección <b>Supervisión de la ejecución</b> "
+          "de la pestaña TIEM hace la primera parte sola, con lo que su bando sabe:"),
+        Bul(["El <b>parte del turno</b> anterior: órdenes cumplidas y rechazadas, objetivos cumplidos o fallidos y pérdidas.",
+             "Un <b>cuadro</b> con cada tarea del plan ya vencida (¿se emitió?, ¿cómo terminó su orden?), cada objetivo (cumplido, "
+             "fallido o con el plazo por vencer) y las unidades propias destruidas o con menos del 50 % de fuerza.",
+             "Cada renglón tiene su estado: <b>Conforme</b>, <b>En curso</b>, <b>Desvío</b> o <b>Fallido</b>, con la "
+             "<b>diferencia</b> respecto de lo previsto y, cuando se la conoce, la causa (por ejemplo, el motivo del rechazo)."]),
+        P(f"{B('Al registro')} lleva un desvío al <b>registro de supervisión</b> para escribir su causa y la acción correctiva."),
+    ], ancho_img=6.4 * cm)
+    h += figura("tiem_supervision_doc", "Documento de Supervisión: registro, apreciaciones rápidas y órdenes fragmentarias.",
+                ancho=ANCHO_TEXTO)
+    h += [P("El documento <b>Supervisión de la ejecución</b> (Fase III; lo redactan el Comandante, el JEM, la A-3, la A-3 D/A y la "
+            "A-2) tiene tres partes, todas opcionales porque se completan a lo largo del ejercicio:"),
+          Bul(["<b>Registro de supervisión</b>: turno, objetivo, resultado, diferencia, <b>causa</b>, <b>acción correctiva</b>, "
+               "responsable y si quedó abierta o cerrada.",
+               "<b>Apreciaciones rápidas</b>: ante una situación nueva, las formas de acción consideradas y la decisión.",
+               "<b>Órdenes fragmentarias</b>: tareas nuevas o que reemplazan a las del plan (con la misma forma que las del Plan "
+               "de Operaciones). Se suman a la <b>Orden de Operaciones</b> y se emiten como órdenes aunque el plan ya esté "
+               "aprobado."]),
+          P("Así la corrección queda documentada y se puede evaluar después: qué se previó, qué pasó, por qué y qué se hizo.")]
 
     h += H1("7. Guía del instructor")
     h += [H2("7.1 Preparar un ejercicio: lista de pasos"),

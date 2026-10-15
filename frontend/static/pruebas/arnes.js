@@ -342,6 +342,21 @@
       { id: "t4", turno: 5, unidad_id: 7, unidad_nombre: "Helo Artillado", tipo: "apoyar", objetivo: "u:1", objetivo_nombre: "1ra Bda Infantería", detalle: "Apoyar el cruce del puente" },
       { id: "t5", turno: 8, unidad_id: 2, unidad_nombre: "Blindados A", tipo: "mover", objetivo: "o:1", objetivo_nombre: "Tomar el puente", detalle: "Consolidar la cabeza de puente" }],
     coordinacion: "- Toda misión de ataque lleva escolta de caza.\n- Informe de daños al regresar." } };
+  DOCS_TIEM.supervision = { estado: "borrador", editado_por: "ua3", editado_puesto: "a3", contenido: {
+    registro: [{ turno: "3", objetivo: "Patrullar con Flecha 1 sobre Radar Rojo (H)", resultado: "Orden rechazada al emitirla: combustible insuficiente",
+      diferencia: "El paquete de ataque salió sin escolta", causa: "Flecha 1 no reabasteció después de su patrulla anterior",
+      accion: "Reemplazar la escolta por Cobra 1 (orden fragmentaria) y reabastecer a Flecha 1", responsable: "A-3", estado: "cerrada" }],
+    apreciaciones_rapidas: [{ turno: "3", situacion: "Caza R despegó hacia el paquete de ataque", fa: "Abortar el ataque / escoltar con Cobra 1", decision: "Escoltar con Cobra 1" }],
+    ordenes_fragmentarias: [{ id: "f1", turno: 3, unidad_id: 15, unidad_nombre: "Cobra 1", tipo: "patrullar", objetivo: "u:18", objetivo_nombre: "Radar Rojo", detalle: "Escoltar el paquete de ataque en lugar de Flecha 1" }] } };
+  const SUPERVISION = {
+    cuenta: { conforme: 2, "en curso": 3, desvio: 2, fallido: 1 },
+    parte: { turno: 2, referencia: "D · H-1 · 07:00 · Concentración y despliegue", lineas: ["Órdenes del turno 2: 4 cumplida(s), 1 rechazada(s).", "Objetivo cumplido: Mantener la base (+30 puntos)"] },
+    cuadro: [
+      { clave: "u:6", origen: "Fuerzas propias", turno: 3, objetivo: "AA Portátil 1", resultado: "Destruida.", diferencia: "Pérdida de medios: revisar la distribución del poder combativo.", estado: "fallido", causa_sugerida: "" },
+      { clave: "t:t2", origen: "Plan de Operaciones", turno: 3, objetivo: "Patrullar con Flecha 1 sobre Radar Rojo (H)", resultado: "Orden rechazada al emitirla: Combustible insuficiente para patrullar: aterrice y reabastezca", diferencia: "La tarea no se ejecutó.", estado: "desvio", causa_sugerida: "Combustible insuficiente para patrullar: aterrice y reabastezca" },
+      { clave: "o:2", origen: "Objetivo", turno: 3, objetivo: "Neutralizar la infantería enemiga (efecto: fuerza al 40 % o menos)", resultado: "Pendiente.", diferencia: "Vence en el turno 5 y todavía no se cumplió.", estado: "desvio", causa_sugerida: "El ritmo de la operación no alcanza para el plazo." },
+      { clave: "t:t1", origen: "Plan de Operaciones", turno: 3, objetivo: "Atacar con Halcón 1 a Radar Rojo (H)", resultado: "Orden emitida en el turno 3; se cumple al resolverse el turno.", diferencia: "", estado: "en curso", causa_sugerida: "" },
+      { clave: "o:3", origen: "Objetivo", turno: 2, objetivo: "Mantener la base", resultado: "Cumplido en el turno 2.", diferencia: "", estado: "conforme", causa_sugerida: "" }] };
   const EJECUCIONES = { t1: { estado: "emitida", turno: 3, orden_id: 2, motivo: "", emitida_por: "ua3" },
     t2: { estado: "rechazada", turno: 3, orden_id: null, motivo: "Combustible insuficiente para patrullar: aterrice y reabastezca", emitida_por: "ua3" } };
   const ENSAYOS = [{ id: 7, nombre: "Ensayo 1 · F/A 2 · Azul · Ejercicio de ejemplo", fa: FA2, estado: "activo", turnos_jugados: 3,
@@ -368,6 +383,7 @@
         objetivos: [...objetivos.filter((o) => o.bando === b && o.tipo !== "efecto").map((o) => ({ clave: `o:${o.id}`, nombre: o.nombre, grupo: "Objetivos del bando" })),
           ...UNIDADES.filter((u) => u.bando !== b && [11, 18, 13].includes(u.id)).map((u) => ({ clave: `u:${u.id}`, nombre: u.nombre, grupo: "Unidades enemigas conocidas" })),
           ...UNIDADES.filter((u) => u.bando === b && u.id < 20).map((u) => ({ clave: `u:${u.id}`, nombre: u.nombre, grupo: "Unidades y bases propias" }))] }])),
+      supervision: Object.fromEntries(bandos.map((b) => [b, b === "azul" ? SUPERVISION : { cuadro: [], cuenta: {}, parte: null }])),
       turno_actual: ESC.turno_actual };
   }
   const textoMisionPmo = (m) => `${["tarea", "que", "donde", "cuando"].map((k) => m[k]).filter(Boolean).join(" ")}, a fin de ${m.proposito}.`;
