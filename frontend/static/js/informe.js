@@ -223,6 +223,17 @@
         det.appendChild(ul);
         cont.appendChild(det);
       }
+      // trabajo de Estado Mayor (TIEM): documentos, forma, oportunidad, ejecucion del plan y supervision
+      const tiem = Rubrica.filasTiem(datos);
+      if (tiem.length) {
+        cont.appendChild(celda("h4", "Trabajo de Estado Mayor (TIEM)"));
+        const tt = tabla([], tiem);
+        const tht = tt.firstChild;
+        tht.appendChild(celda("th", "Indicador"));
+        for (const b of Rubrica.BANDOS) tht.appendChild(celda("th", b, "tag-" + b));
+        tt.lastChild && tt.lastChild.classList && tt.lastChild.classList.add("fila-nota");
+        cont.appendChild(tt);
+      }
       for (const b of Rubrica.BANDOS) {
         const x = datos.bandos[b];
         if (!x) continue;

@@ -10,13 +10,13 @@ import json
 from pathlib import PurePath
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import Response
+from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app import auth, ensayos, schemas, state
+from app import auth, ensayos, legajo, schemas, state
 from app.db import get_db
-from app.engine import aar, catalogo, pmo, puestos, supervision, tiem
+from app.engine import aar, catalogo, pmo, puestos, supervision, tiem, tiem_evaluacion
 from app.models.contacto import Contacto
 from app.models.documento_tiem import ArchivoTiem, DocumentoTiem, EjecucionTarea
 from app.models.escenario import Escenario
@@ -42,6 +42,7 @@ class ContenidoIn(BaseModel):
 class RevisionIn(BaseModel):
     estado: str = Field(pattern="^(aprobado|devuelto|borrador)$")
     observaciones: str = Field(default="", max_length=4000)
+    nota: int | None = Field(default=None, ge=1, le=20)  # calificacion del documento (opcional)
 
 
 class ArchivoIn(BaseModel):
@@ -112,6 +113,7 @@ def _serializar(db: Session, d: DocumentoTiem | None, bando: str, tipo: str, u) 
         "editado_puesto": d.editado_puesto if d else "",
         "actualizado_en": d.actualizado_en.isoformat() if d and d.actualizado_en else None,
         "presentado_turno": d.presentado_turno if d else None, "revisado_turno": d.revisado_turno if d else None,
+        "nota": d.nota if d else None,
         "contenido": contenido, "revision": tiem.revisar(tipo, contenido),
         "puede_redactar": _puede_redactar(u, bando, tipo) and u.rol != "observador",
         "archivos": [{"id": a.id, "nombre": a.nombre, "tamano": a.tamano, "subido_por": a.subido_por,
@@ -241,6 +243,8 @@ async def revisar(bando: str, tipo: str, payload: RevisionIn, esc: Escenario = D
     _validar(bando, tipo)
     d = _doc(db, esc, bando, tipo, crear=True)
     d.estado, d.observaciones, d.revisado_turno = payload.estado, payload.observaciones.strip(), esc.turno_actual
+    if payload.nota is not None:
+        d.nota = payload.nota
     titulo = tiem.DOCUMENTOS[tipo].titulo
     texto = {"aprobado": f"{titulo}: aprobada por el instructor.",
              "devuelto": f"{titulo}: devuelta por el instructor con observaciones.",
@@ -441,3 +445,54 @@ async def emitir(bando: str, payload: EmitirIn, esc: Escenario = Depends(auth.es
     db.commit()
     await manager.difundir_estado(db, esc)
     return {"resultados": resultados, "emitidas": sum(1 for r in resultados if r["ok"])}
+
+
+# ---------------------------------------------------------------- exportacion y evaluacion
+def _descarga(datos: bytes, nombre: str) -> Response:
+    return Response(datos, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    headers={"Content-Disposition": f'attachment; filename="{nombre}"'})
+
+
+def _bando_legible(bando: str, u) -> None:
+    if bando not in pmo.BANDOS or bando not in _bandos_visibles(u.rol):
+        raise HTTPException(status_code=404, detail="Bando no disponible")
+
+
+@router.get("/{bando}/legajo.docx")
+def legajo_word(bando: str, esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db), u=Depends(lector)):
+    """Legajo completo del bando en Word: portada, Problema Militar y todos los documentos redactados."""
+    _bando_legible(bando, u)
+    titulo, bloques = legajo.bloques_legajo(db, esc, bando)
+    return _descarga(legajo.word(titulo, bloques), f"legajo_tiem_{bando}_esc{esc.id}.docx")
+
+
+@router.get("/{bando}/legajo.html", response_class=HTMLResponse)
+def legajo_html(bando: str, esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db), u=Depends(lector)):
+    """El mismo legajo como pagina imprimible (el navegador la guarda como PDF)."""
+    _bando_legible(bando, u)
+    titulo, bloques = legajo.bloques_legajo(db, esc, bando)
+    return HTMLResponse(legajo.pagina(f"{titulo} · {bando.capitalize()}", bloques))
+
+
+@router.get("/{bando}/{tipo}/documento.docx")
+def documento_word(bando: str, tipo: str, esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db),
+                   u=Depends(lector)):
+    _validar(bando, tipo)
+    _bando_legible(bando, u)
+    titulo, bloques = legajo.bloques_un_documento(db, esc, bando, tipo)
+    return _descarga(legajo.word(titulo, bloques), f"{tipo}_{bando}_esc{esc.id}.docx")
+
+
+@router.get("/{bando}/{tipo}/documento.html", response_class=HTMLResponse)
+def documento_html(bando: str, tipo: str, esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db),
+                   u=Depends(lector)):
+    _validar(bando, tipo)
+    _bando_legible(bando, u)
+    titulo, bloques = legajo.bloques_un_documento(db, esc, bando, tipo)
+    return HTMLResponse(legajo.pagina(titulo, bloques))
+
+
+@router.get("/evaluacion")
+def evaluacion(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db), u=Depends(lector)):
+    """Evaluacion del trabajo de Estado Mayor: cada bando la suya; el instructor y el observador, las dos."""
+    return {b: tiem_evaluacion.evaluar(db, esc, b) for b in _bandos_visibles(u.rol)}

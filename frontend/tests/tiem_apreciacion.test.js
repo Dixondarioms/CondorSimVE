@@ -70,3 +70,7 @@ test("supervisión: tareas del plan y órdenes fragmentarias, y renglón del reg
   assert.deepEqual(T.renglonRegistro({ turno: 4, objetivo: "Atacar R1", resultado: "Rechazada", diferencia: "No se ejecutó", causa_sugerida: "Sin combustible" }),
     { turno: "4", objetivo: "Atacar R1", resultado: "Rechazada", diferencia: "No se ejecutó", causa: "Sin combustible", accion: "", responsable: "", estado: "abierta" });
 });
+
+test("la nota del instructor aparece en el estado del documento", () => {
+  assert.equal(T.textoEstado({ estado: "aprobado", existe: true, revisado_turno: 3, nota: 17 }).texto, "Aprobado (turno 3) · 17/20");
+});

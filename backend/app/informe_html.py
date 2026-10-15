@@ -127,6 +127,21 @@ def _rubrica_html(rubrica: dict | None) -> str:
                       + '<p class="meta">' + " ".join(
                           f'{e(i["nombre"])}: {e(i["criterio"])}' for i in next(iter(bandos.values()))["doctrina"]["indicadores"])
                       + "</p>")
+    if any((bandos[b].get("tiem") or {}).get("aplica") for b in bandos):
+        ref = next(bandos[b]["tiem"] for b in bandos if (bandos[b].get("tiem") or {}).get("aplica"))
+        filas_t = []
+        for k, ind in enumerate(ref["indicadores"]):
+            fila = [e(ind["nombre"])]
+            for b in bandos:
+                t = bandos[b].get("tiem") or {}
+                i = t["indicadores"][k] if t.get("aplica") else None
+                fila.append("-" if i is None else e(i["valor"]) + (f' <b>({i["puntaje"]}/100)</b>' if i["puntaje"] is not None else " (no aplica)"))
+            filas_t.append(fila)
+        for campo, titulo in (("nota_automatica", "Nota automatica"), ("nota_instructor", "Nota del instructor"),
+                              ("nota", "Calificacion del trabajo de Estado Mayor")):
+            filas_t.append([f"<b>{titulo}</b>"] + [f'<b>{(bandos[b].get("tiem") or {}).get(campo) or "-"}</b>' for b in bandos])
+        partes.append("<h3>Trabajo de Estado Mayor (TIEM)</h3>"
+                      + _tabla(["Indicador"] + [_bando(b) for b in bandos], filas_t, cabecera_html=True))
     for b, x in bandos.items():
         partes.append(f"<h3>Observaciones para {_bando(b)}</h3><ul>"
                       + "".join(f"<li>{e(o)}</li>" for o in x["observaciones"]) + "</ul>")

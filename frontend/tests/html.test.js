@@ -13,7 +13,7 @@ test("index.html no repite identificadores (getElementById devolveria el primero
 });
 
 test("los controles de direccion del ejercicio existen (dia y noche, nivel de la IA, modo demostracion)", () => {
-  for (const id of ["dir-noche", "dir-ia-nivel", "btn-demo", "dir-cond-azul", "dir-cond-rojo", "pest-pmo", "cal-fecha", "ob-padre", "dlg-tiem", "tiem-docs", "tiem-archivo", "sec-ensayos", "btn-ensayar", "ensayo-volver", "sec-orden-op", "btn-emitir-orden", "sec-supervision", "sup-cuadro", "btn-sup-abrir", "mp-tipo-nombre"]) {
+  for (const id of ["dir-noche", "dir-ia-nivel", "btn-demo", "dir-cond-azul", "dir-cond-rojo", "pest-pmo", "cal-fecha", "ob-padre", "dlg-tiem", "tiem-docs", "tiem-archivo", "sec-ensayos", "btn-ensayar", "ensayo-volver", "sec-orden-op", "btn-emitir-orden", "sec-supervision", "sup-cuadro", "btn-sup-abrir", "sec-evaluacion", "legajo-word", "legajo-pdf", "mp-tipo-nombre"]) {
     assert.ok(html.includes(`id="${id}"`), id);
   }
 });

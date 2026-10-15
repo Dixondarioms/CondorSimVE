@@ -145,6 +145,8 @@ def construir(salida: Path) -> None:
               ["El simulador sigue el TIEM: los puestos pasan a ser las reparticiones del Estado Mayor (Comandante, JEM, A-1, A-2, "
                "A-3, A-3 D/A, A-4 y C-E)", "6.2"],
               ["Pestaña TIEM: el Problema Militar Operativo de cada bando, redactado por el instructor o creado automáticamente", "6.15 y 7.15"],
+              ["Evaluación del trabajo de Estado Mayor (nota de 1 a 20 y nota del instructor por documento) y legajo del TIEM "
+               "en Word o para imprimir como PDF", "6.20 y 9.4"],
               ["Supervisión de la ejecución (Fase III): cuadro automático de diferencias con el plan, parte del turno, registro "
                "de causas y acciones correctivas, apreciaciones rápidas y órdenes fragmentarias", "6.19"],
               ["Decisión del Comandante, análisis previo y Plan de Operaciones con tareas que se emiten como órdenes del "
@@ -793,6 +795,32 @@ def construir(salida: Path) -> None:
                "aprobado."]),
           P("Así la corrección queda documentada y se puede evaluar después: qué se previó, qué pasó, por qué y qué se hizo.")]
 
+    h += [H2("6.20 Evaluación del trabajo de Estado Mayor y legajo")]
+    h += al_lado("tiem_evaluacion", "Evaluación y legajo: indicadores, notas y descarga del legajo.", [
+        P("La sección <b>Evaluación y legajo</b> de la pestaña TIEM evalúa el trabajo de Estado Mayor del bando con cinco "
+          "indicadores de 0 a 100 (pase el cursor por cada uno para ver cómo se calcula):"),
+        Bul(["<b>Documentos del TIEM</b>: aprobados y presentados de los 13 de las fases I y II.",
+             "<b>Forma según el TIEM</b>: documentos sin faltantes ni observaciones de forma.",
+             "<b>Oportunidad</b>: documentos de la Fase I presentados a más tardar en el turno de la hora H.",
+             "<b>Ejecución del plan</b>: tareas vencidas que se emitieron como órdenes.",
+             "<b>Supervisión</b>: desvíos registrados con su causa y su acción correctiva."]),
+        P("La <b>nota automática</b> (1 a 20) promedia los indicadores que aplican. El instructor puede poner una <b>nota a cada "
+          "documento</b> al revisarlo; su promedio es la nota del instructor y la <b>calificación</b> promedia ambas. La misma "
+          "evaluación figura en la rúbrica del informe (9.4)."),
+    ], ancho_img=6.4 * cm)
+    h += al_lado("legajo_word", "Un documento del TIEM exportado a Word, con el formato de toda apreciación escrita.", [
+        H3("Word y PDF"),
+        Bul([f"Cada documento tiene {B('Descargar en Word')} e {B('Imprimir o PDF')} en su ventana.",
+             f"{B('Descargar el legajo en Word')} baja en un solo archivo .docx la portada, el Problema Militar y todos los "
+             "documentos redactados, cada uno en su página.",
+             f"{B('Legajo para imprimir o PDF')} abre el mismo legajo en una pestaña; con {B('Imprimir o guardar como PDF')} "
+             "se imprime o se guarda como PDF."]),
+        P("El formato es el del TIEM para toda apreciación escrita: <b>encabezamiento</b> (clasificación arriba y abajo, "
+          "Cuartel General que la prepara, lugar, fecha y hora, nombre clave de la operación y número de copia), "
+          "<b>cuerpo</b> con los párrafos del documento y <b>final</b> (firma, nombre, grado y cargo, anexos y distribución). "
+          "El archivo se abre con Word, LibreOffice o WPS y se puede completar y firmar."),
+    ], ancho_img=7.4 * cm)
+
     h += H1("7. Guía del instructor")
     h += [H2("7.1 Preparar un ejercicio: lista de pasos"),
           pasos("Cree el escenario: vacío con <b>Nuevo</b> o <b>Desde plantilla…</b> (7.2).",
@@ -1021,7 +1049,8 @@ def construir(salida: Path) -> None:
                 ancho=ANCHO_TEXTO)
     h += [P("En la pestaña <b>TIEM</b>, el instructor elige el bando y abre cualquiera de sus documentos. Cuando un bando presenta "
             "uno, llega una alerta. Al revisarlo:"),
-          Bul([f"{B('Aprobar')}: queda aprobado (y bloqueado para el bando).",
+          Bul([f"{B('Aprobar')}: queda aprobado (y bloqueado para el bando). El simulador pide una <b>nota de 1 a 20</b> "
+               "(opcional), que entra en la evaluación del trabajo de Estado Mayor (6.20).",
                f"{B('Devolver con observaciones')}: escriba qué corregir; el bando las ve arriba del documento, puede editarlo de "
                "nuevo y volver a presentarlo.",
                f"{B('Reabrir como borrador')}: lo desbloquea sin observaciones.",
@@ -1201,6 +1230,8 @@ def construir(salida: Path) -> None:
               ["Cumplimiento de objetivos", "Objetivos cumplidos sobre los asignados."],
               ["Iniciativa", "Turnos en los que el bando dio al menos una orden o planificó una misión."],
           ], [4.6 * cm, ANCHO_TEXTO - 4.6 * cm]),
+          P("Si los bandos trabajaron con los documentos del TIEM, la rúbrica agrega la tabla <b>Trabajo de Estado Mayor (TIEM)</b> "
+            "con los indicadores de 6.20, la nota automática, la del instructor y la calificación."),
           P("Un indicador que no aplica (por ejemplo, la coordinación cuando un solo alumno condujo todo) figura como «no aplica» y no "
             "cuenta para la nota. En un ejercicio contra la IA, la nota del bando de la IA sirve de referencia, no de calificación."),
           H2("9.5 Comparar ejercicios")]

@@ -23,6 +23,7 @@
     if (doc.estado === "presentado" && doc.presentado_turno) texto += ` (turno ${doc.presentado_turno})`;
     if ((doc.estado === "aprobado" || doc.estado === "devuelto") && doc.revisado_turno) texto += ` (turno ${doc.revisado_turno})`;
     if (doc.estado === "borrador" && !doc.existe) texto = "Sin empezar";
+    if (doc.nota) texto += ` · ${doc.nota}/20`;
     return { texto, clase: e.clase };
   }
 
@@ -156,6 +157,7 @@
     const Pmo = raiz.Pmo;
     let datos = null; // GET /tiem
     let firma = "";
+    let evaluacion = null;
     let abierto = null; // {bando, tipo}
     let borrador = null; // contenido en edición (null = leyendo)
 
@@ -196,6 +198,40 @@
       dibujarEnsayos(b);
       dibujarOrden(b);
       dibujarSupervision(b);
+      dibujarEvaluacion(b);
+    }
+
+    // ---------------------------------------------------------------- evaluación y legajo
+    async function cargarEvaluacion() {
+      if (!ctx.escenarioId()) return;
+      try { evaluacion = await ctx.api("GET", ctx.rutaEsc("/tiem/evaluacion"), undefined, true); } catch (_) { evaluacion = null; }
+      if (datos) dibujarEvaluacion(bandoElegido());
+    }
+
+    function dibujarEvaluacion(b) {
+      const esc = ctx.escenario();
+      $("sec-evaluacion").hidden = !!(esc && esc.ensayo_de);
+      $("legajo-word").href = ctx.rutaEsc(`/tiem/${b}/legajo.docx`);
+      $("legajo-pdf").href = ctx.rutaEsc(`/tiem/${b}/legajo.html`);
+      const caja = $("tiem-evaluacion");
+      caja.replaceChildren();
+      const ev = evaluacion && evaluacion[b];
+      if (!ev || !ev.aplica) { caja.append(el("p", "vacio", "Todavía no hay documentos del TIEM que evaluar.")); return; }
+      const t = el("table", "tiem-tabla");
+      for (const i of ev.indicadores) {
+        const tr = el("tr");
+        tr.append(el("th", "", i.nombre), el("td", "", i.valor),
+          el("td", "num", i.puntaje == null ? "no aplica" : `${i.puntaje}/100`));
+        tr.title = i.criterio;
+        t.append(tr);
+      }
+      const nota = (x) => (x == null ? "—" : `${x} / 20`);
+      for (const [titulo, valor] of [["Nota automática", ev.nota_automatica], ["Nota del instructor", ev.nota_instructor], ["Calificación", ev.nota]]) {
+        const tr = el("tr", titulo === "Calificación" ? "fila-nota" : "");
+        tr.append(el("th", "", titulo), el("td", "", ""), el("td", "num", nota(valor)));
+        t.append(tr);
+      }
+      caja.append(t);
     }
 
     // ---------------------------------------------------------------- Fase III: supervisión de la ejecución
@@ -411,6 +447,14 @@
       } else {
         if (d.puede_redactar && !bloqueado) caja.append(boton(d.existe ? "Editar" : "Redactar", () => { borrador = JSON.parse(JSON.stringify(d.contenido)); dibujarDialogo(); }, ""));
         if (d.puede_redactar && !instructor && (d.estado === "borrador" || d.estado === "devuelto") && d.existe) caja.append(boton("Presentar al instructor", presentar, ""));
+        if (d.existe) {
+          const word = el("a", "boton-enlace", "Descargar en Word");
+          word.href = rutaDoc("/documento.docx");
+          const pdf = el("a", "boton-enlace", "Imprimir o PDF");
+          pdf.href = rutaDoc("/documento.html");
+          pdf.target = "_blank";
+          caja.append(word, pdf);
+        }
         if (instructor) {
           caja.append(boton("Aprobar", () => revisar("aprobado"), ""), boton("Devolver con observaciones", () => revisar("devuelto")));
           if (d.estado !== "borrador") caja.append(boton("Reabrir como borrador", () => revisar("borrador")));
@@ -767,7 +811,15 @@
         if (o === null) return;
         observaciones = o;
       }
-      try { reemplazar(await ctx.api("POST", rutaDoc("/revisar"), { estado, observaciones })); } catch (_) { /* toast */ }
+      const cuerpo = { estado, observaciones };
+      if (estado !== "borrador") {
+        const n = prompt("Nota del documento (1 a 20; vacío = sin nota):", doc().nota || "");
+        if (n === null) return;
+        const nota = parseInt(n, 10);
+        if (n.trim() && !(nota >= 1 && nota <= 20)) return ctx.toast("La nota va de 1 a 20.");
+        if (nota) cuerpo.nota = nota;
+      }
+      try { reemplazar(await ctx.api("POST", rutaDoc("/revisar"), cuerpo)); } catch (_) { /* toast */ }
     }
 
     async function quitarAdjunto(id) {
@@ -803,7 +855,7 @@
         const avisos = (data.eventos || []).filter((ev) => ev.tipo === "tiem").map((ev) => ev.id);
         // tambien al cambiar de turno: la Orden de Operaciones y las unidades conocidas cambian
         const nueva = `${data.escenario.id}:${data.escenario.turno_actual}:${avisos.length ? Math.max(...avisos) : 0}`;
-        if (nueva !== firma) { firma = nueva; cargar(); }
+        if (nueva !== firma) { firma = nueva; cargar(); cargarEvaluacion(); }
       },
       reiniciar() { datos = null; firma = ""; abierto = null; borrador = null; if ($("dlg-tiem").open) $("dlg-tiem").close(); },
     };

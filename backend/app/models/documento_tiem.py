@@ -29,6 +29,7 @@ class DocumentoTiem(Base):
     actualizado_en: Mapped[datetime] = mapped_column(DateTime, default=_ahora, onupdate=_ahora)
     presentado_turno: Mapped[int | None] = mapped_column(Integer, nullable=True)
     revisado_turno: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    nota: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 1 a 20, la pone el instructor al revisarlo
 
 
 class ArchivoTiem(Base):

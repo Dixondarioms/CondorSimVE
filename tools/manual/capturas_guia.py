@@ -771,6 +771,16 @@ def tiem_supervision(n):
     guardar(n, "tiem_supervision_doc", n.rect("#dlg-tiem"), margen=0)
 
 
+def tiem_evaluacion(n):
+    n.ir(arnes("azul", "comandante"), LISTA_APP, 2)
+    n.clic('[data-pestana="pmo"]')
+    n.esperar("document.querySelectorAll('#tiem-evaluacion tr').length > 5")
+    n.js("(() => { const p = document.getElementById('panel-izq'); const s = document.getElementById('sec-evaluacion');"
+         " p.scrollTop += s.getBoundingClientRect().top - p.getBoundingClientRect().top - 36; })()")
+    time.sleep(0.4)
+    guardar(n, "tiem_evaluacion", n.rect("#panel-izq"), margen=0)
+
+
 def objetivos_avance(n):
     n.ir(arnes("instructor"), LISTA_APP, 2)
     guardar(n, "objetivos_avance", n.rect("#tarjeta-objetivos"), margen=4)
@@ -840,7 +850,7 @@ CAPTURAS = [
     consola_escenario, consola_usuarios, plantillas, ver_como, videowall, observador,
     ia_pantalla, consola_ia, plantillas_ia, barra_inferior_ia, mapa_dia_noche, mapa_carreteras, consola_catalogo,
     situacion, mapa_infraestructura, ficha_puente, objetivos_avance, mapa_ficticio,
-    pmo_alumno, pmo_instructor, consola_calendario, instructor_conduce, tiem_documentos, tiem_analisis, tiem_instructor, tiem_paso2, tiem_plan, tiem_plan_editar, tiem_supervision,
+    pmo_alumno, pmo_instructor, consola_calendario, instructor_conduce, tiem_documentos, tiem_analisis, tiem_instructor, tiem_paso2, tiem_plan, tiem_plan_editar, tiem_supervision, tiem_evaluacion,
     informe_repeticion, informe_dialogos, informe_rubrica, informe_doctrina, comparar, informe_replay,
 ]
 

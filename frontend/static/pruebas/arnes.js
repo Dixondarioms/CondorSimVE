@@ -637,6 +637,17 @@
     ["objetivos", "Cumplimiento de objetivos", "Objetivos cumplidos sobre los asignados al bando."],
     ["iniciativa", "Iniciativa", "Turnos en los que el bando dio al menos una orden o planificó una misión."],
   ];
+  // evaluacion del TIEM de ejemplo (mismo formato que backend/app/engine/tiem_evaluacion.py)
+  const indT = (id, nombre, valor, puntaje, criterio) => ({ id, nombre, valor, puntaje, criterio });
+  const EVAL_TIEM = {
+    azul: { aplica: true, nota_automatica: 13.8, nota_instructor: 16, nota: 14.9, escala: "1 a 20", documentos: [],
+      indicadores: [
+        indT("documentos", "Documentos del TIEM", "4 aprobado(s) y 3 presentado(s) de 13", 42, "Aprobados (1) y presentados sin revisar (0,5) sobre los 13 documentos de las fases I y II."),
+        indT("forma", "Forma según el TIEM", "6 de 8 documento(s) sin observaciones", 75, "Documentos sin faltantes ni observaciones de forma."),
+        indT("oportunidad", "Oportunidad de la apreciación", "5 de 6 presentado(s) hasta la hora H (turno 3)", 83, "Documentos de la Fase I presentados a más tardar en el turno de la hora H."),
+        indT("ejecucion", "Ejecución del plan", "3 de 4 tarea(s) vencida(s) emitida(s)", 75, "Tareas vencidas que se emitieron como órdenes."),
+        indT("supervision", "Supervisión de la ejecución", "3 desvío(s) o fallido(s); 1 con causa y acción correctiva", 33, "Desvíos registrados con su causa y su acción correctiva.")] },
+    rojo: { aplica: false, indicadores: [], documentos: [], nota_automatica: null, nota_instructor: null, nota: null } };
   function doctrina(valores) {
     const indicadores = INDICADORES.map(([id, nombre, criterio]) => ({ id, nombre, criterio, valor: valores[id][0], puntaje: valores[id][1] }));
     const p = indicadores.map((i) => i.puntaje).filter((x) => x !== null);
@@ -851,7 +862,8 @@
     if (path === "/api/escenarios/1/aar") return json(informe());
     if (path === "/api/escenarios/1/aar/replay") return json(replay());
     if (path === "/api/escenarios/1/aar/timeline") return json(timeline());
-    if (path === "/api/escenarios/1/aar/rubrica") return json(rubrica());
+    if (path === "/api/escenarios/1/aar/rubrica") { const r = rubrica(); for (const k of BANDOS) if (r.bandos[k]) r.bandos[k].tiem = EVAL_TIEM[k]; return json(r); }
+    if (path === "/api/escenarios/1/tiem/evaluacion") return json(Object.fromEntries((BANDOS.includes(ROL) ? [ROL] : BANDOS).map((k) => [k, EVAL_TIEM[k]])));
 
     if (path === "/api/escenarios/1/ordenes/previsualizar") {
       const u = UNIDADES.find((x) => x.id === cuerpo.unidad_id);

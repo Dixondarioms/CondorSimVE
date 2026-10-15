@@ -558,3 +558,11 @@ body.conduciendo #cabecera { box-shadow: inset 0 -3px 0 var(--ambar); }
 .sup-parte { background: var(--panel-2); border-left: 3px solid var(--azul); padding: 6px 8px; margin: 4px 0 6px; font-size: 12px; }
 .sup-parte ul { margin: 2px 0 0; padding-left: 18px; }
 #btn-sup-abrir { margin-top: 6px; width: 100%; }
+
+/* ---------- TIEM etapa 6: evaluacion y legajo ---------- */
+a.boton-enlace { display: inline-flex; align-items: center; justify-content: center; padding: 6px 10px; border-radius: var(--radio);
+  border: 1px solid var(--borde); background: var(--panel-2); color: var(--texto); text-decoration: none; font-size: 12px; }
+a.boton-enlace:hover { border-color: var(--azul); }
+#tiem-evaluacion table th { text-align: left; font-weight: 600; }
+#tiem-evaluacion tr.fila-nota td, #tiem-evaluacion tr.fila-nota th { color: var(--ambar); font-weight: 700; }
+#tiem-evaluacion td.num { white-space: nowrap; }

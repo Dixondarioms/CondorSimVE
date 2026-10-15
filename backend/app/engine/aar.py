@@ -715,6 +715,9 @@ def construir_rubrica(db: Session, escenario: Escenario) -> dict:
     contactos = db.query(Contacto).filter(Contacto.escenario_id == escenario.id).all()
     for b in bandos:
         r[b]["doctrina"] = _doctrina(b, r[b], unidades, ordenes, combates, contactos, turnos_resueltos)
+        from app.engine import tiem_evaluacion  # importacion tardia: evalua los documentos del TIEM
+
+        r[b]["tiem"] = tiem_evaluacion.evaluar(db, escenario, b)
 
     alumnos, sin_autor = _alumnos(db, escenario, unidades, ordenes, misiones, turnos_resueltos)
     return {

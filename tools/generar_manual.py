@@ -772,7 +772,19 @@ def construir(salida: Path, img: Path) -> None:
                "<b>Parte del turno</b>: órdenes del turno anterior cumplidas y rechazadas, eventos de objetivos y pérdidas propias.",
                "<b>Documento de Supervisión</b> (Fase III): registro de causas y acciones correctivas, apreciaciones rápidas y "
                "<b>órdenes fragmentarias</b> (campo de tipo tareas), que <font face='Mono'>POST /tiem/{bando}/emitir</font> emite "
-               "junto con las del Plan de Operaciones aunque el plan esté aprobado."])]
+               "junto con las del Plan de Operaciones aunque el plan esté aprobado."]),
+          H2("8.16 El TIEM en el simulador (etapa 6): evaluación y exportación"),
+          Bul(["<b>Evaluación</b> (<font face='Mono'>engine/tiem_evaluacion.py</font>, <font face='Mono'>GET /tiem/evaluacion</font> "
+               "y la clave <font face='Mono'>tiem</font> de cada bando en la rúbrica): indicadores documentos (aprobados 1, "
+               "presentados 0,5, sobre 13), forma (sin faltantes ni avisos), oportunidad (Fase I presentada hasta H), ejecución "
+               "(tareas vencidas emitidas) y supervisión (desvíos con causa y acción); nota automática = 1 + 19 × promedio / 100; "
+               "nota del instructor = promedio de las notas (1 a 20) puestas al revisar cada documento (columna "
+               "<font face='Mono'>nota</font>, migración 0030); calificación = promedio de ambas.",
+               "<b>Exportación</b> (<font face='Mono'>app/legajo.py</font>): bloques independientes del formato (títulos, párrafos, "
+               "viñetas, misión y tablas: COG, matriz de confrontación, F/A con su APA, tareas) que se escriben como .docx "
+               "(WordprocessingML en un zip, sin dependencias; tablas con fila de títulos repetida) o como página HTML "
+               "imprimible. Rutas <font face='Mono'>/tiem/{bando}/legajo.docx</font>, <font face='Mono'>legajo.html</font>, "
+               "<font face='Mono'>/tiem/{bando}/{tipo}/documento.docx</font> y <font face='Mono'>documento.html</font>."])]
     h += Img(img, "cap_ia_noche.jpg", "Figura 4. Un alumno del bando azul contra la IA a las 23:00: el mapa oscurecido, la hora y el periodo en Estado del escenario y el bando rojo «IA · LISTO».")
 
     # ---- 9 aviacion
@@ -883,8 +895,8 @@ def construir(salida: Path, img: Path) -> None:
                "El adversario automático da órdenes turno a turno: no planifica misiones aéreas de varios turnos ni lee el chat o los eventos inyectados.",
                "Un solo servidor por aula: el WebSocket y el temporizador viven en el proceso."]),
           H2("Hoja de ruta prevista"),
-          Bul(["Etapas siguientes del TIEM: "
-               "tareas que se convierten en órdenes, supervisión y evaluación con exportación de documentos.",
+          Bul(["El TIEM ya está completo en el simulador (8.11 a 8.16); los próximos pasos son anexos del Plan de Operaciones "
+               "(inteligencia, logística, comunicaciones, defensa aérea) y plantillas de ejercicios con su Problema Militar.",
                "Más plantillas de escenario por curso.", "Carreteras terciarias y puentes etiquetados de OpenStreetMap."])]
 
     # ---- 14 novedades
@@ -964,6 +976,8 @@ def construir(salida: Path, img: Path) -> None:
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
               ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña TIEM; engine/pmo.py",
                "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["TIEM, etapa 6: evaluación y exportación", "Pestaña TIEM → Evaluación y legajo; Informe → Rúbrica",
+               "Evaluación del trabajo de Estado Mayor con nota de 1 a 20 y legajo de documentos en Word o PDF (8.16)."],
               ["TIEM, etapa 5: supervisión de la ejecución", "Pestaña TIEM → Supervisión de la ejecución; engine/supervision.py",
                "Parte del turno, cuadro de diferencias con el plan, registro de causas y acciones correctivas y órdenes fragmentarias (8.15)."],
               ["TIEM, etapa 4: decisión, Plan de Operaciones y órdenes", "Pestaña TIEM → Paso 3 y Fase II; Orden de Operaciones",

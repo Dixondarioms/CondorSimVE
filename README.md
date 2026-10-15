@@ -252,6 +252,17 @@ a3da`; en el arnés, `arnes.html?rol=azul&puesto=a3`.
 - **Documento de Supervisión** (Fase III): registro de causas y acciones correctivas, apreciaciones rápidas y
   **órdenes fragmentarias** (tareas), que la Orden de Operaciones emite junto con las del plan aunque esté aprobado.
 
+### Evaluación y exportación (TIEM, etapa 6)
+
+- **Evaluación del trabajo de Estado Mayor** (`engine/tiem_evaluacion.py`, `GET /tiem/evaluacion`, y la clave `tiem`
+  de cada bando en la rúbrica del informe): documentos, forma según el TIEM, oportunidad (Fase I hasta H), ejecución
+  del plan y supervisión, de 0 a 100; nota automática de 1 a 20, nota del instructor (promedio de las notas que pone a
+  cada documento al revisarlo; columna `nota`, migración `0030`) y calificación (promedio de ambas).
+- **Exportación** (`app/legajo.py`): cada documento o el legajo completo del bando (portada, PMO y documentos) en Word
+  (`.docx` armado sin dependencias) o como página imprimible para guardar como PDF: `/tiem/{bando}/legajo.docx`,
+  `/tiem/{bando}/legajo.html`, `/tiem/{bando}/{tipo}/documento.docx` y `documento.html`. Formato del TIEM:
+  encabezamiento, cuerpo y final con firma y distribución.
+
 Alumnos y observadores solo acceden a los **escenarios que el instructor les asigna** (panel "Escenario").
 
 ### Cuentas y acceso
