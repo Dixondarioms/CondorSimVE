@@ -15,8 +15,13 @@
 <body>
   <!-- ============ acceso ============ -->
   <div id="login" hidden>
-    <form id="login-form" autocomplete="on">
-      <img class="logo-siete" src="/static/img/siete_logo_recortado.jpg" alt="S.I.E.T.E. · Fuerza Armada Nacional Bolivariana">
+    <form id="login-form" method="post" autocomplete="on">
+      <div id="aguila-login" class="aguila en-reposo plegada" role="img" aria-label="Águila del S.I.E.T.E.">
+        <img class="ala-izq" src="/static/img/siete_aguila.png" alt="" draggable="false">
+        <img class="ala-der" src="/static/img/siete_aguila.png" alt="" draggable="false">
+        <img class="cuerpo" src="/static/img/siete_aguila.png" alt="" draggable="false">
+        <img class="posada" src="/static/img/siete_aguila_plegada.png" alt="" draggable="false">
+      </div>
       <h2>S.I.E.T.E.</h2>
       <p class="sec">Sistema Integral de Entrenamiento Táctico y Estratégico. Ingrese con su cuenta; si no tiene una, solicítela y el instructor la aprobará.</p>
       <input id="l-user" name="username" placeholder="Usuario" autocomplete="username" required>
@@ -26,7 +31,7 @@
       <button id="btn-ir-registro" type="button" class="enlace">Solicitar una cuenta</button>
     </form>
 
-    <form id="registro-form" autocomplete="off" hidden>
+    <form id="registro-form" method="post" autocomplete="off" hidden>
       <h2>SOLICITAR CUENTA</h2>
       <p class="sec">Elija su usuario y contraseña. La cuenta quedará pendiente hasta que el instructor la apruebe (puede cambiarle el rol o la repartición).</p>
       <input id="r-user" placeholder="Usuario (letras, números, punto, guion)" maxlength="50" autocomplete="username" required>
@@ -54,7 +59,7 @@
       <button id="btn-volver-login" type="button" class="enlace">Volver al ingreso</button>
     </form>
 
-    <form id="clave-form" hidden>
+    <form id="clave-form" method="post" hidden>
       <h2>CAMBIAR CONTRASEÑA</h2>
       <p id="c-motivo" class="sec"></p>
       <input id="c-actual" type="password" placeholder="Contraseña actual" autocomplete="current-password" required>
@@ -987,6 +992,7 @@
   <script src="/static/js/pmo.js"></script>
   <script src="/static/js/tiem.js"></script>
   <script src="/static/js/infraestructura.js"></script>
+  <script src="/static/js/aguila.js"></script>
   <script src="/static/pruebas/arnes.js"></script>
   <script src="/static/js/app.js"></script>
 </body>

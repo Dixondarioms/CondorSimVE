@@ -109,6 +109,7 @@
     $("login-form").hidden = cual !== "login";
     $("registro-form").hidden = cual !== "registro";
     $("clave-form").hidden = cual !== "clave";
+    $("login").classList.remove("despegando");
     $("login").hidden = false;
   }
 
@@ -181,7 +182,9 @@
     $("l-error").textContent = "";
     try {
       await api("POST", "/api/auth/login", { username: $("l-user").value.trim(), password: $("l-pass").value }, true);
-      arrancar();
+      // ingreso aprobado: el aguila levanta el vuelo y, cuando desaparece, se muestra el simulador
+      $("login").classList.add("despegando");
+      Aguila.despegar($("aguila-login"), arrancar);
     } catch (err) {
       $("l-error").textContent = err.message;
     }

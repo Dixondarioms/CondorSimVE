@@ -21,8 +21,10 @@ log = logging.getLogger("uvicorn.error")
 CSP = (
     "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
     "script-src 'self'; connect-src 'self' ws: wss:; frame-ancestors 'none'; "
-    "base-uri 'none'; form-action 'self'"
+    "base-uri 'none'; form-action 'none'"
 )
+# form-action 'none': ningun formulario se envia sin JavaScript (si se pulsa Ingresar antes de que cargue la pagina,
+# el navegador no manda usuario y contrasena en la direccion); los dialogos (method="dialog") no navegan y siguen igual.
 
 
 @asynccontextmanager

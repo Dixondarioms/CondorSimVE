@@ -1,10 +1,11 @@
-"""Quita el fondo cuadriculado gris (falsa transparencia) de la imagen del aguila del SIETE y la deja en PNG
-con transparencia real: frontend/static/img/siete_aguila.png.
+"""Quita el fondo cuadriculado gris (falsa transparencia) de una imagen del aguila del SIETE y la deja en PNG
+con transparencia real en frontend/static/img/ (por omision siete_aguila.png, alas desplegadas; la de alas
+recogidas es siete_aguila_plegada.png).
 
 El fondo es gris neutro (R = G = B) y el aguila es verde y amarilla, asi que la opacidad sale del croma
 (max - min de los canales); el interior del aguila se rellena entero y el halo se limpia del gris de fondo.
 
-    backend\\venv\\Scripts\\python tools/manual/quitar_fondo_aguila.py ruta\\imagen.jpg
+    backend\\venv\\Scripts\\python tools/manual/quitar_fondo_aguila.py ruta\\imagen.jpg [siete_aguila_plegada.png]
 """
 
 import sys
@@ -14,7 +15,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 
-DESTINO = Path(__file__).resolve().parents[2] / "frontend" / "static" / "img" / "siete_aguila.png"
+IMG = Path(__file__).resolve().parents[2] / "frontend" / "static" / "img"
 
 
 def quitar_fondo(origen: Path) -> Image.Image:
@@ -43,6 +44,7 @@ def quitar_fondo(origen: Path) -> Image.Image:
 
 
 if __name__ == "__main__":
+    destino = IMG / (sys.argv[2] if len(sys.argv) > 2 else "siete_aguila.png")
     im = quitar_fondo(Path(sys.argv[1]))
-    im.save(DESTINO)
-    print(DESTINO, im.size)
+    im.save(destino)
+    print(destino, im.size)
