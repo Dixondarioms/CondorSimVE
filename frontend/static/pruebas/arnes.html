@@ -273,10 +273,21 @@
             <button id="ensayo-volver" type="button" class="secundario">Volver al ejercicio</button>
           </section>
           <section class="bloque" id="sec-apreciacion">
-            <h2>Fase I: Apreciación de la situación <span id="tiem-avance" class="contador"></span></h2>
+            <h2>Trabajo de Estado Mayor <span id="tiem-avance" class="contador"></span></h2>
             <p class="ayuda">Los documentos que el Estado Mayor del bando redacta y presenta al instructor. Cada uno lo
               redactan las reparticiones indicadas; todas lo pueden leer.</p>
             <div id="tiem-docs"></div>
+          </section>
+          <section class="bloque" id="sec-orden-op">
+            <h2>Orden de Operaciones</h2>
+            <p class="ayuda">Las tareas del Plan de Operaciones para las próximas 24 horas. Las que vencen en este turno se
+              emiten como órdenes del simulador, con la misma validación que una orden manual; cada repartición emite las
+              de las unidades que conduce.</p>
+            <h4>Vencen en este turno</h4>
+            <ul id="orden-vencen" class="tiem-lista"></ul>
+            <button id="btn-emitir-orden" type="button">Emitir las tareas de este turno como órdenes</button>
+            <h4>Próximas 24 horas</h4>
+            <ul id="orden-proximas" class="tiem-lista"></ul>
           </section>
           <section class="bloque" id="sec-ensayos">
             <h2>Juego de guerra: ensayos de F/A</h2>

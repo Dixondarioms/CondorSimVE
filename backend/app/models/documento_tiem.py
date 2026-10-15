@@ -44,3 +44,21 @@ class ArchivoTiem(Base):
     datos: Mapped[bytes] = mapped_column(LargeBinary)
     subido_por: Mapped[str] = mapped_column(String(50), default="")
     subido_en: Mapped[datetime] = mapped_column(DateTime, default=_ahora)
+
+
+class EjecucionTarea(Base):
+    """Lo que paso con una tarea del Plan de Operaciones al emitirla como orden (ver routers/tiem.py, emitir)."""
+
+    __tablename__ = "ejecuciones_tarea"
+    __table_args__ = (UniqueConstraint("escenario_id", "bando", "tarea_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    escenario_id: Mapped[int] = mapped_column(ForeignKey("escenarios.id"), index=True)
+    bando: Mapped[str] = mapped_column(String(10))
+    tarea_id: Mapped[str] = mapped_column(String(16))
+    # emitida (ya es una orden) | rechazada (el motivo dice por que; se puede volver a intentar)
+    estado: Mapped[str] = mapped_column(String(12))
+    turno: Mapped[int] = mapped_column(Integer)
+    orden_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    motivo: Mapped[str] = mapped_column(String(300), default="")
+    emitida_por: Mapped[str] = mapped_column(String(50), default="")

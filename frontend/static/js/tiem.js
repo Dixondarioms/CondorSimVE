@@ -67,6 +67,47 @@
   /** Celda de la matriz para esa F/A y capacidad (o una vacía). */
   const celdaDe = (celdas, fa, capacidad) => (celdas || []).find((c) => c.fa === fa && c.capacidad === capacidad) || { fa, capacidad, efecto: "", analisis: "" };
 
+  const TITULOS_PASO = {
+    "Fase I · Paso 1": "Fase I · Paso 1: Apreciación inicial",
+    "Fase I · Paso 2": "Fase I · Paso 2: Apreciaciones de Estado Mayor",
+    "Fase I · Paso 3": "Fase I · Paso 3: Decisión del Comandante",
+    "Fase II · Paso 1": "Fase II · Análisis previo al plan",
+    "Fase II · Paso 2": "Fase II · Plan de Operaciones",
+  };
+
+  /** "H", "H+3" o "H-2" de un turno, o "" sin hora H. */
+  function refH(turno, turnoH) {
+    if (!turnoH || !turno) return "";
+    const n = turno - turnoH;
+    return n === 0 ? "H" : `H${n > 0 ? "+" : ""}${n}`;
+  }
+
+  /** Orden de Operaciones: las tareas del plan que vencen ahora (o antes y no se emitieron) y las de las próximas
+   * `horizonte` horas, cada una con su estado. */
+  function ordenDelDia(tareas, ejecuciones, turno, horizonte = 24) {
+    const vencen = [];
+    const proximas = [];
+    for (const t of tareas || []) {
+      if (!t.turno) continue;
+      const e = (ejecuciones || {})[t.id] || null;
+      const item = { tarea: t, ejecucion: e, estado: e ? e.estado : "pendiente" };
+      if (t.turno <= turno) {
+        if (!e || e.estado !== "emitida" || e.turno === turno) vencen.push(item);
+      } else if (t.turno < turno + horizonte) proximas.push(item);
+    }
+    const orden = (a, b) => a.tarea.turno - b.tarea.turno;
+    return { vencen: vencen.sort(orden), proximas: proximas.sort(orden) };
+  }
+
+  /** "Atacar con A a R1" (como engine/tiem.texto_tarea, sin el turno). */
+  function textoTarea(t, tipos) {
+    const verbo = (tipos || {})[t.tipo] || "Cumplir";
+    const nexo = { mover: "hacia", patrullar: "sobre", interferir: "sobre", aterrizar: "en" }[t.tipo] || "a";
+    return `${verbo} con ${t.unidad_nombre || "la unidad"}${t.objetivo_nombre ? ` ${nexo} ${t.objetivo_nombre}` : ""}`;
+  }
+
+  const nuevoId = () => Array.from({ length: 8 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join("");
+
   /** Agrupa los documentos por paso del TIEM, en el orden recibido: [{paso, tipos: [...]}]. */
   function porPaso(orden, definiciones) {
     const grupos = [];
@@ -124,7 +165,7 @@
       if (!docs) { caja.append(el("p", "vacio", "Sin documentos.")); return; }
       $("tiem-avance").textContent = textoAvance(docs);
       for (const g of porPaso(datos.orden, datos.definiciones)) {
-        caja.append(el("h3", "tiem-paso", g.paso === "Fase I · Paso 1" ? "Paso 1: Apreciación inicial" : "Paso 2: Apreciaciones de Estado Mayor"));
+        caja.append(el("h3", "tiem-paso", TITULOS_PASO[g.paso] || g.paso));
         const ol = el("ol", "tiem-lista");
         for (const tipo of g.tipos) {
           const d = docs[tipo];
@@ -139,6 +180,47 @@
         caja.append(ol);
       }
       dibujarEnsayos(b);
+      dibujarOrden(b);
+    }
+
+    // ---------------------------------------------------------------- Orden de Operaciones (tareas -> órdenes)
+    function dibujarOrden(b) {
+      const esc = ctx.escenario();
+      const plan = datos.documentos[b].plan_operaciones;
+      const tareas = (plan && plan.contenido.tareas) || [];
+      $("sec-orden-op").hidden = !!(esc && esc.ensayo_de);
+      const turnoH = esc && esc.calendario ? esc.calendario.turno_h : null;
+      const { vencen, proximas } = ordenDelDia(tareas, datos.ejecuciones && datos.ejecuciones[b], datos.turno_actual);
+      const tipos = datos.definiciones.plan_operaciones.tipos_tarea;
+      const pintar = (ul, items, vacio) => {
+        ul.replaceChildren();
+        if (!items.length) { ul.append(el("li", "vacio", vacio)); return; }
+        for (const { tarea: t, ejecucion: e, estado } of items) {
+          const li = el("li");
+          const txt = el("div", "texto");
+          const ref = refH(t.turno, turnoH);
+          txt.append(el("b", "", textoTarea(t, tipos)), el("span", "ayuda", `Turno ${t.turno}${ref ? ` (${ref})` : ""}${t.detalle ? ` · ${t.detalle}` : ""}`));
+          if (e && e.estado === "rechazada" && e.motivo) txt.append(el("span", "ayuda motivo", `Rechazada: ${e.motivo}`));
+          const chip = { emitida: ["Emitida", "ok"], rechazada: ["Rechazada", "fuego"], pendiente: ["Pendiente", ""] }[estado];
+          li.append(txt, el("span", `chip ${chip[1]}`, chip[0]));
+          ul.append(li);
+        }
+      };
+      pintar($("orden-vencen"), vencen, tareas.length ? "Ninguna tarea vence en este turno." : "El Plan de Operaciones todavía no tiene tareas.");
+      pintar($("orden-proximas"), proximas, "Sin tareas en las próximas 24 horas.");
+      const porEmitir = vencen.filter((x) => x.estado !== "emitida").length;
+      $("btn-emitir-orden").disabled = !porEmitir;
+      $("btn-emitir-orden").textContent = porEmitir ? `Emitir ${porEmitir} tarea(s) de este turno como órdenes` : "No hay tareas por emitir";
+      $("btn-emitir-orden").hidden = (ctx.usuario() || {}).rol === "observador";
+    }
+
+    async function emitirOrden() {
+      try {
+        const r = await ctx.api("POST", ctx.rutaEsc(`/tiem/${bandoElegido()}/emitir`), {});
+        const malas = r.resultados.filter((x) => !x.ok);
+        ctx.toast(`${r.emitidas} orden(es) emitida(s)${malas.length ? `; ${malas.length} rechazada(s): ${malas.map((x) => x.motivo).join(" · ")}` : ""}.`, !malas.length);
+        cargar();
+      } catch (_) { /* toast ya mostrado */ }
     }
 
     // ---------------------------------------------------------------- juego de guerra: ensayos
@@ -304,6 +386,7 @@
         sec.append(el("p", "pmo-mision", Pmo.textoMision(v)));
       } else if (c.tipo === "tabla") sec.append(tablaLectura(c.columnas, v));
       else if (c.tipo === "matriz") sec.append(matrizLectura(v));
+      else if (c.tipo === "tareas") sec.append(tareasLectura(v));
       else if (c.tipo === "formas") {
         for (const fa of v) {
           const card = el("div", "tiem-fa");
@@ -350,6 +433,82 @@
         t.append(r);
       }
       return t;
+    }
+
+    function tareasLectura(tareas) {
+      const esc = ctx.escenario();
+      const turnoH = esc && esc.calendario ? esc.calendario.turno_h : null;
+      const ej = (datos.ejecuciones && datos.ejecuciones[abierto.bando]) || {};
+      const tipos = def().tipos_tarea;
+      const t = el("table", "tiem-tabla");
+      const tr = el("tr");
+      ["Turno", "Unidad", "Acción", "Objetivo o destino", "Detalle", "Ejecución"].forEach((x) => tr.append(el("th", "", x)));
+      t.append(tr);
+      for (const x of [...tareas].sort((a, b) => (a.turno || 0) - (b.turno || 0))) {
+        const r = el("tr");
+        const e = ej[x.id];
+        const ref = refH(x.turno, turnoH);
+        [`${x.turno || "—"}${ref ? ` (${ref})` : ""}`, x.unidad_nombre, tipos[x.tipo] || "—", x.objetivo_nombre, x.detalle,
+          e ? (e.estado === "emitida" ? `Emitida (turno ${e.turno})` : `Rechazada: ${e.motivo}`) : "Pendiente"]
+          .forEach((v) => r.append(el("td", "", v || "")));
+        t.append(r);
+      }
+      return t;
+    }
+
+    function editorTareas(c) {
+      const caja = el("div", "tiem-editor-tabla");
+      const tareas = borrador[c.clave] || (borrador[c.clave] = []);
+      const op = (datos.opciones_tarea && datos.opciones_tarea[abierto.bando]) || { unidades: [], objetivos: [] };
+      const tipos = def().tipos_tarea;
+      const esc = ctx.escenario();
+      const turnoH = esc && esc.calendario ? esc.calendario.turno_h : null;
+      const pintar = () => {
+        caja.replaceChildren();
+        const t = el("table", "tiem-tabla");
+        const tr = el("tr");
+        ["Turno", "Unidad", "Acción", "Objetivo o destino", "Detalle (en infinitivo)", ""].forEach((x) => tr.append(el("th", "", x)));
+        t.append(tr);
+        tareas.forEach((x, i) => {
+          const r = el("tr");
+          const turno = el("input");
+          turno.type = "number"; turno.min = 1; turno.value = x.turno || "";
+          const ref = el("span", "ayuda", refH(x.turno, turnoH));
+          turno.addEventListener("input", () => { x.turno = parseInt(turno.value, 10) || null; ref.textContent = refH(x.turno, turnoH); });
+          const tdT = el("td"); tdT.append(turno, ref);
+          const uni = el("select");
+          uni.append(new Option("—", ""), ...op.unidades.map((u) => new Option(u.nombre, String(u.id))));
+          uni.value = x.unidad_id ? String(x.unidad_id) : "";
+          uni.addEventListener("change", () => { x.unidad_id = parseInt(uni.value, 10) || null; x.unidad_nombre = uni.selectedOptions[0] ? uni.selectedOptions[0].text : ""; });
+          const acc = el("select");
+          acc.append(new Option("—", ""), ...Object.entries(tipos).map(([k, v]) => new Option(v, k)));
+          acc.value = x.tipo || "";
+          acc.addEventListener("change", () => { x.tipo = acc.value; });
+          const obj = el("select");
+          obj.append(new Option("—", ""));
+          const grupos = {};
+          for (const o of op.objetivos) {
+            if (!grupos[o.grupo]) { grupos[o.grupo] = el("optgroup"); grupos[o.grupo].label = o.grupo; obj.append(grupos[o.grupo]); }
+            grupos[o.grupo].append(new Option(o.nombre, o.clave));
+          }
+          if (x.objetivo && ![...obj.options].some((o) => o.value === x.objetivo)) obj.append(new Option(x.objetivo_nombre || x.objetivo, x.objetivo));
+          obj.value = x.objetivo || "";
+          obj.addEventListener("change", () => { x.objetivo = obj.value; x.objetivo_nombre = obj.selectedOptions[0] ? obj.selectedOptions[0].text : ""; });
+          const det = el("input");
+          det.value = x.detalle || "";
+          det.placeholder = "Atacar el día D a la hora H con 4 aviones…";
+          det.addEventListener("input", () => { x.detalle = det.value; });
+          for (const e of [uni, acc, obj, det]) { const td = el("td"); td.append(e); r.append(td); }
+          r.prepend(tdT);
+          const tdX = el("td");
+          tdX.append(boton("×", () => { tareas.splice(i, 1); pintar(); }, "mini peligro"));
+          r.append(tdX);
+          t.append(r);
+        });
+        caja.append(t, boton("+ Agregar tarea", () => { tareas.push({ id: nuevoId(), turno: (esc && esc.turno_actual) || 1 }); pintar(); }, "mini"));
+      };
+      pintar();
+      return caja;
     }
 
     const contextoActual = () => (datos && datos.contexto && abierto ? datos.contexto[abierto.bando] : null);
@@ -408,6 +567,7 @@
       else if (c.tipo === "tabla") sec.append(editorTabla(c));
       else if (c.tipo === "formas") sec.append(editorFormas(c, df));
       else if (c.tipo === "matriz") sec.append(editorMatriz(c));
+      else if (c.tipo === "tareas") sec.append(editorTareas(c));
       return sec;
     }
 
@@ -562,6 +722,7 @@
     });
     $("btn-tiem-adjuntar").addEventListener("click", () => $("tiem-archivo").click());
     $("btn-ensayar").addEventListener("click", ensayar);
+    $("btn-emitir-orden").addEventListener("click", emitirOrden);
     $("ensayo-volver").addEventListener("click", () => { const e = ctx.escenario(); if (e && e.ensayo_de) ctx.irEscenario(e.ensayo_de); });
     $("dlg-tiem").addEventListener("cancel", (e) => { e.preventDefault(); cerrar(); });
 
@@ -571,14 +732,16 @@
       /** En cada estado: recarga cuando cambia el escenario o llega un aviso del TIEM. */
       render(data) {
         const avisos = (data.eventos || []).filter((ev) => ev.tipo === "tiem").map((ev) => ev.id);
-        const nueva = `${data.escenario.id}:${avisos.length ? Math.max(...avisos) : 0}`;
+        // tambien al cambiar de turno: la Orden de Operaciones y las unidades conocidas cambian
+        const nueva = `${data.escenario.id}:${data.escenario.turno_actual}:${avisos.length ? Math.max(...avisos) : 0}`;
         if (nueva !== firma) { firma = nueva; cargar(); }
       },
       reiniciar() { datos = null; firma = ""; abierto = null; borrador = null; if ($("dlg-tiem").open) $("dlg-tiem").close(); },
     };
   }
 
-  const api = { ESTADOS, textoEstado, textoAvance, textoOpcion, completarVacios, resumenApa, ejesMatriz, celdaDe, porPaso, crear };
+  const api = { ESTADOS, textoEstado, textoAvance, textoOpcion, completarVacios, resumenApa, ejesMatriz, celdaDe, porPaso,
+    refH, ordenDelDia, textoTarea, crear };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.Tiem = api;
 })(typeof window !== "undefined" ? window : globalThis);

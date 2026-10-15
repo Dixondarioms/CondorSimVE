@@ -45,3 +45,19 @@ test("los documentos se agrupan por paso del TIEM", () => {
   const defs = { a: { paso: "Fase I · Paso 1" }, b: { paso: "Fase I · Paso 1" }, c: { paso: "Fase I · Paso 2" } };
   assert.deepEqual(T.porPaso(["a", "b", "c"], defs), [{ paso: "Fase I · Paso 1", tipos: ["a", "b"] }, { paso: "Fase I · Paso 2", tipos: ["c"] }]);
 });
+
+test("Orden de Operaciones: lo que vence ahora y lo de las próximas 24 horas", () => {
+  assert.equal(T.refH(5, 3), "H+2");
+  assert.equal(T.refH(3, 3), "H");
+  assert.equal(T.refH(1, 3), "H-2");
+  assert.equal(T.refH(4, null), "");
+  const tareas = [
+    { id: "a", turno: 2, tipo: "mover" }, { id: "b", turno: 3, tipo: "atacar" }, { id: "c", turno: 4, tipo: "mover" },
+    { id: "d", turno: 40, tipo: "mover" }, { id: "e", turno: 1, tipo: "mover" }, { id: "f", turno: null }];
+  const ej = { a: { estado: "rechazada", turno: 2, motivo: "x" }, e: { estado: "emitida", turno: 1 } };
+  const r = T.ordenDelDia(tareas, ej, 3);
+  assert.deepEqual(r.vencen.map((x) => [x.tarea.id, x.estado]), [["a", "rechazada"], ["b", "pendiente"]]);
+  assert.deepEqual(r.proximas.map((x) => x.tarea.id), ["c"]);  // la del turno 40 queda fuera de las 24 h
+  assert.equal(T.textoTarea({ tipo: "atacar", unidad_nombre: "A", objetivo_nombre: "R1" }, { atacar: "Atacar" }), "Atacar con A a R1");
+  assert.equal(T.textoTarea({ tipo: "mover", unidad_nombre: "A", objetivo_nombre: "el puente" }, { mover: "Desplazar" }), "Desplazar con A hacia el puente");
+});

@@ -14,10 +14,11 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app import auth, ensayos
+from app import auth, ensayos, schemas, state
 from app.db import get_db
-from app.engine import aar, pmo, puestos, tiem
-from app.models.documento_tiem import ArchivoTiem, DocumentoTiem
+from app.engine import aar, catalogo, pmo, puestos, tiem
+from app.models.contacto import Contacto
+from app.models.documento_tiem import ArchivoTiem, DocumentoTiem, EjecucionTarea
 from app.models.escenario import Escenario
 from app.models.evento import Evento
 from app.models.objetivo import Objetivo
@@ -128,6 +129,14 @@ def _respuesta(db: Session, esc: Escenario, u) -> dict:
         # nombres de las F/A y de las capacidades del enemigo de cada bando (filas y columnas de la confrontacion)
         "contexto": {b: tiem.contexto({t: d["contenido"] for t, d in docs.items()}) for b, docs in documentos.items()},
         "ensayos": {b: [ensayos.resumen(db, e) for e in ensayos.ensayos_de(db, esc, b)] for b in documentos},
+        # tareas del Plan de Operaciones: que paso con cada una y con que se pueden armar
+        "ejecuciones": {b: {e.tarea_id: {"estado": e.estado, "turno": e.turno, "orden_id": e.orden_id, "motivo": e.motivo,
+                                         "emitida_por": e.emitida_por}
+                            for e in db.query(EjecucionTarea).filter(EjecucionTarea.escenario_id == esc.id,
+                                                                    EjecucionTarea.bando == b)}
+                        for b in documentos},
+        "opciones_tarea": {b: _opciones_tarea(db, esc, b) for b in documentos},
+        "turno_actual": esc.turno_actual,
         "puede_ensayar": {b: _puede_ensayar(u, b) for b in documentos},
     }
 
@@ -314,3 +323,111 @@ async def ensayar(bando: str, payload: EnsayoIn, esc: Escenario = Depends(auth.e
     db.commit()
     await manager.difundir_estado(db, esc)
     return ensayos.resumen(db, copia)
+
+
+# ---------------------------------------------------------------- tareas del Plan de Operaciones -> ordenes
+def _conocidas(db: Session, esc: Escenario, bando: str) -> dict[int, tuple]:
+    """Unidades enemigas que el bando conoce: {id: (nombre, lat, lon, visible)} (las vistas ahora y los contactos)."""
+    out = {}
+    for c in db.query(Contacto).filter(Contacto.escenario_id == esc.id, Contacto.bando == bando):
+        u = db.get(Unidad, c.unidad_id)
+        if u is not None and u.estado == "activa":
+            out[u.id] = (u.nombre, c.lat, c.lon, False)
+    for u in state.unidades_visibles_para(db, esc, bando):
+        if u.bando != bando and u.estado == "activa":
+            out[u.id] = (u.nombre, u.lat, u.lon, True)
+    return out
+
+
+def _opciones_tarea(db: Session, esc: Escenario, bando: str) -> dict:
+    propias = db.query(Unidad).filter(Unidad.escenario_id == esc.id, Unidad.bando == bando, Unidad.estado == "activa")
+    objetivos = db.query(Objetivo).filter(Objetivo.escenario_id == esc.id, Objetivo.bando == bando, Objetivo.tipo != "efecto")
+    propias = [u for u in propias.order_by(Unidad.nombre) if not catalogo.es_misil(u)]
+    return {
+        "unidades": [{"id": u.id, "nombre": u.nombre, "tipo": u.tipo, "clase": u.clase} for u in propias],
+        "objetivos": ([{"clave": f"o:{o.id}", "nombre": o.nombre, "grupo": "Objetivos del bando"} for o in objetivos.order_by(Objetivo.id)]
+                      + [{"clave": f"u:{i}", "nombre": n, "grupo": "Unidades enemigas conocidas"}
+                         for i, (n, *_r) in sorted(_conocidas(db, esc, bando).items(), key=lambda x: x[1][0])]
+                      + [{"clave": f"u:{u.id}", "nombre": u.nombre, "grupo": "Unidades y bases propias"} for u in propias]),
+    }
+
+
+def _orden_de_tarea(db: Session, esc: Escenario, bando: str, t: dict, conocidas: dict) -> schemas.OrdenCreate:
+    """Traduce una tarea a la orden del simulador; ValueError con el motivo si no se puede armar."""
+    tipo, (clase_obj, num) = t["tipo"], t["objetivo"].split(":")
+    num = int(num)
+    unidad_obj, punto = None, None
+    if clase_obj == "o":
+        o = db.get(Objetivo, num)
+        if o is None or o.escenario_id != esc.id:
+            raise ValueError("El objetivo ya no existe")
+        if o.unidad_id:
+            num, clase_obj = o.unidad_id, "u"
+        else:
+            punto = (o.lat, o.lon)
+    if clase_obj == "u":
+        u = db.get(Unidad, num)
+        if u is None or u.escenario_id != esc.id or u.estado != "activa":
+            raise ValueError("El objetivo o destino ya no está activo")
+        if u.bando == bando:
+            unidad_obj, punto = u, (u.lat, u.lon)
+        elif num in conocidas:
+            unidad_obj, punto = u, conocidas[num][1:3]
+        else:
+            raise ValueError("No se conoce la posición del objetivo: hay que localizarlo primero")
+    if tipo in ("atacar", "apoyar", "aterrizar"):
+        if unidad_obj is None:
+            raise ValueError(f"Para {tiem.TIPOS_TAREA[tipo].lower()} hace falta una unidad, no una zona")
+        return schemas.OrdenCreate(unidad_id=t["unidad_id"], tipo=tipo, objetivo_unidad_id=unidad_obj.id)
+    return schemas.OrdenCreate(unidad_id=t["unidad_id"], tipo=tipo, waypoints=[punto])
+
+
+class EmitirIn(BaseModel):
+    ids: list[str] | None = None  # tareas a emitir; sin ids, todas las que vencen hasta este turno
+
+
+@router.post("/{bando}/emitir")
+async def emitir(bando: str, payload: EmitirIn, esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db),
+                 u=Depends(autor)):
+    """Orden de Operaciones: emite como ordenes del simulador las tareas del plan que vencen en el turno en curso (o
+    antes y aun no emitidas). Cada orden pasa por la misma validacion que una orden manual, con la reparticion de
+    quien la emite; las que no se pueden cumplir quedan rechazadas con el motivo y se pueden reintentar."""
+    from app.routers.ordenes import _crear_orden, _en_decision  # importacion tardia: evita ciclos entre routers
+
+    if bando not in pmo.BANDOS:
+        raise HTTPException(status_code=404, detail="Bando desconocido")
+    if _es_instructor(u):
+        u = auth.InstructorConductor(id=u.id, username=u.username, rol=bando)
+    elif u.rol != bando:
+        raise HTTPException(status_code=403, detail="Solo puede emitir las tareas de su bando")
+    _en_decision(esc)
+    plan = _contenido(_doc(db, esc, bando, "plan_operaciones"), "plan_operaciones")
+    hechas = {e.tarea_id: e for e in db.query(EjecucionTarea).filter(EjecucionTarea.escenario_id == esc.id,
+                                                                   EjecucionTarea.bando == bando)}
+    elegidas = [t for t in plan["tareas"] if t["turno"] and t["turno"] <= esc.turno_actual
+                and (t["id"] not in hechas or hechas[t["id"]].estado != "emitida")
+                and (payload.ids is None or t["id"] in payload.ids)]
+    conocidas = _conocidas(db, esc, bando)
+    resultados = []
+    for t in elegidas:
+        ok, motivo, orden_id = False, "", None
+        try:
+            if not (t["unidad_id"] and t["tipo"] and t["objetivo"]):
+                raise ValueError("La tarea está incompleta")
+            orden = _crear_orden(_orden_de_tarea(db, esc, bando, t, conocidas), esc, db, u)
+            db.flush()
+            ok, orden_id = True, orden.id
+        except HTTPException as e:
+            motivo = str(e.detail)
+        except ValueError as e:
+            motivo = str(e)
+        ej = hechas.get(t["id"]) or EjecucionTarea(escenario_id=esc.id, bando=bando, tarea_id=t["id"])
+        ej.estado = "emitida" if ok else "rechazada"
+        ej.turno, ej.orden_id, ej.motivo, ej.emitida_por = esc.turno_actual, orden_id, motivo[:300], u.username
+        db.add(ej)
+        resultados.append({"id": t["id"], "texto": tiem.texto_tarea(t), "ok": ok, "motivo": motivo, "orden_id": orden_id})
+    if any(r["ok"] for r in resultados):
+        setattr(esc, f"listo_{bando}", False)
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return {"resultados": resultados, "emitidas": sum(1 for r in resultados if r["ok"])}

@@ -232,6 +232,17 @@ a3da`; en el arnés, `arnes.html?rol=azul&puesto=a3`.
   por bando. `GET /tiem` devuelve el resumen de cada ensayo (turnos, objetivos, puntos y unidades perdidas). Campos
   `ensayo_de`, `ensayo_bando`, `ensayo_fa` y `ensayo_desde` del escenario (migración `0028`).
 
+### Decisión, Plan de Operaciones y Orden de Operaciones (TIEM, etapa 4)
+
+- **Decisión del Comandante** (Fase I, Paso 3; solo el Comandante), **Análisis previo al plan** (Fase II, Paso 1; JEM y
+  A-3) y **Plan de Operaciones** (Fase II, Paso 2; JEM, A-3, A-3 D/A) en `engine/tiem.py`, con sus formatos guía.
+- **Tareas del plan** (campo `tareas`): unidad, acción (`mover`, `atacar`, `patrullar`, `apoyar`, `aterrizar`,
+  `interferir`), turno, objetivo o destino (`o:<id>` objetivo del bando, `u:<id>` unidad) y detalle en infinitivo. `GET
+  /tiem` trae `opciones_tarea` (unidades propias, objetivos y enemigos conocidos), `ejecuciones` y `turno_actual`.
+- **Orden de Operaciones** (`POST /api/escenarios/{id}/tiem/{bando}/emitir`): emite como órdenes las tareas que vencen
+  hasta el turno en curso, con la misma validación que una orden manual (`ordenes._crear_orden`) y la repartición de
+  quien las emite; cada resultado (emitida o rechazada con su motivo) queda en `ejecuciones_tarea` (migración `0029`).
+
 Alumnos y observadores solo acceden a los **escenarios que el instructor les asigna** (panel "Escenario").
 
 ### Cuentas y acceso

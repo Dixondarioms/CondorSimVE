@@ -748,7 +748,21 @@ def construir(salida: Path, img: Path) -> None:
                "alumnos del bando asignados. Hasta 3 por bando; no se ensaya un ensayo. El resumen (turnos, objetivos, puntos, "
                "unidades perdidas) se lista en la pestaña TIEM. Campos <font face='Mono'>ensayo_de</font>, "
                "<font face='Mono'>ensayo_bando</font>, <font face='Mono'>ensayo_fa</font> y <font face='Mono'>ensayo_desde</font> "
-               "del escenario (migración 0028)."])]
+               "del escenario (migración 0028)."]),
+          H2("8.14 El TIEM en el simulador (etapa 4): decisión, plan y órdenes"),
+          Bul(["<b>Decisión del Comandante</b> (Fase I, Paso 3; solo el Comandante), <b>Análisis previo al plan</b> (Fase II, "
+               "Paso 1; JEM y A-3) y <b>Plan de Operaciones</b> (Fase II, Paso 2; JEM, A-3 y A-3 D/A), con sus formatos guía. Las "
+               "ayudas traen la F/A recomendada por la A-3, la organización de la fuerza (unidades propias por categoría), los "
+               "objetivos materiales de la cadena y las aeronaves por esfuerzo (ofensivo, defensivo, apoyo).",
+               "<b>Tareas del plan</b> (campo de tipo tareas): {id, unidad, acción (mover, atacar, patrullar, apoyar, aterrizar, "
+               "interferir), turno, objetivo o destino («o:&lt;id&gt;» objetivo del bando, «u:&lt;id&gt;» unidad) y detalle}. Las "
+               "opciones del editor salen de <font face='Mono'>GET /tiem</font> (<font face='Mono'>opciones_tarea</font>): unidades "
+               "propias, objetivos y unidades enemigas conocidas (vistas o con contacto).",
+               "<b>Orden de Operaciones</b> (<font face='Mono'>POST /tiem/{bando}/emitir</font>): las tareas que vencen hasta el turno "
+               "en curso y no se emitieron se traducen a órdenes y pasan por <font face='Mono'>ordenes._crear_orden</font>, la "
+               "misma validación de una orden manual, con la repartición de quien las emite; la posición de un enemigo sale de lo "
+               "que el bando ve o de su último contacto. Cada resultado queda en la tabla <font face='Mono'>ejecuciones_tarea</font> "
+               "(emitida con su orden, o rechazada con el motivo, que se puede reintentar). Migración 0029."])]
     h += Img(img, "cap_ia_noche.jpg", "Figura 4. Un alumno del bando azul contra la IA a las 23:00: el mapa oscurecido, la hora y el periodo en Estado del escenario y el bando rojo «IA · LISTO».")
 
     # ---- 9 aviacion
@@ -859,7 +873,7 @@ def construir(salida: Path, img: Path) -> None:
                "El adversario automático da órdenes turno a turno: no planifica misiones aéreas de varios turnos ni lee el chat o los eventos inyectados.",
                "Un solo servidor por aula: el WebSocket y el temporizador viven en el proceso."]),
           H2("Hoja de ruta prevista"),
-          Bul(["Etapas siguientes del TIEM: decisión del comandante y Plan de Operaciones con "
+          Bul(["Etapas siguientes del TIEM: "
                "tareas que se convierten en órdenes, supervisión y evaluación con exportación de documentos.",
                "Más plantillas de escenario por curso.", "Carreteras terciarias y puentes etiquetados de OpenStreetMap."])]
 
@@ -940,6 +954,8 @@ def construir(salida: Path, img: Path) -> None:
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
               ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña TIEM; engine/pmo.py",
                "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["TIEM, etapa 4: decisión, Plan de Operaciones y órdenes", "Pestaña TIEM → Paso 3 y Fase II; Orden de Operaciones",
+               "Decisión del Comandante, análisis previo y Plan de Operaciones cuyas tareas se emiten como órdenes del simulador (8.14)."],
               ["TIEM, etapa 3: apreciaciones de EM y juego de guerra", "Pestaña TIEM → Paso 2; Juego de guerra; app/ensayos.py",
                "Las seis apreciaciones de Estado Mayor con la confrontación de las F/A y ensayos de F/A contra la IA en una copia del ejercicio (8.13)."],
               ["TIEM, etapa 2: apreciación inicial", "Pestaña TIEM → Fase I · Paso 1; engine/tiem.py",

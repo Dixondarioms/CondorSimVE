@@ -22,6 +22,16 @@ Fase I, Paso 2 (apreciaciones de Estado Mayor), una por reparticion, con los for
   apreciacion_personal (A-1), apreciacion_logistica (A-4) y apreciacion_ce (C-E): situacion de su area, analisis de
                    cada F/A operacional (necesidades y formas de accion de apoyo) y la F/A mas favorable.
 
+Fase I, Paso 3 y Fase II (planes y ordenes):
+  decision         Decision del Comandante: F/A adoptada, fundamentacion, idea general de la maniobra, acciones
+                   inmediatas, limitaciones y organizacion de la fuerza.
+  analisis_previo  Analisis previo al plan (JEM y A-3): estudio, suposiciones, objetivos materiales con APA,
+                   distribucion del poder combativo, despliegues y planes alternos.
+  plan_operaciones Plan de Operaciones: situacion, mision, concepto, TAREAS de las unidades subordinadas (cada una es
+                   una orden del simulador para un turno: unidad, accion, objetivo o destino y turno), coordinacion,
+                   logistica y comando. Las tareas que vencen se emiten como ordenes desde la Orden de Operaciones
+                   (ver routers/tiem.py, emitir).
+
 El simulador ayuda con lo que es transcripcion (`sugerencias`: datos del PMO, de la cadena de objetivos, del
 calendario y el Poder Relativo de Combate calculado); el analisis queda a cargo de los alumnos. Cada documento pasa
 por los estados borrador -> presentado -> aprobado o devuelto (con las observaciones del instructor).
@@ -29,6 +39,8 @@ por los estados borrador -> presentado -> aprobado o devuelto (con las observaci
 
 import json
 import random
+import re
+import secrets
 from dataclasses import dataclass
 
 from app.engine import calendario, catalogo, pmo
@@ -42,6 +54,10 @@ LADOS = ("propio", "enemigo")
 NIVELES_GUERRA = ("estrategico", "operacional", "tactico")
 CATEGORIAS_EFECTO = ("directo", "indirecto", "secuencial", "simultaneo", "sistemico", "acumulativo", "cascada")
 EFECTOS_CONFRONTACION = ("no afecta", "degrada", "anula")  # efecto de una capacidad del enemigo sobre una F/A
+# acciones del simulador que puede tener una tarea del Plan de Operaciones (ver routers/ordenes.py)
+TIPOS_TAREA = {"mover": "Desplazar", "atacar": "Atacar", "patrullar": "Patrullar", "apoyar": "Apoyar",
+               "aterrizar": "Aterrizar", "interferir": "Interferir"}
+AREAS_ACCION = ("personal", "inteligencia", "logistica", "operaciones", "otros")
 PRINCIPIOS_GUERRA_AEREA = ("objetivo", "ofensiva", "seguridad", "sorpresa", "simplicidad", "masa y maniobra",
                            "economía de fuerza", "movimiento", "cooperación")
 
@@ -57,7 +73,7 @@ class Columna:
 class Campo:
     clave: str
     titulo: str
-    tipo: str = "texto"  # texto | linea | mision | tabla | formas | matriz (F/A x capacidades del enemigo)
+    tipo: str = "texto"  # texto | linea | mision | tabla | formas | matriz (F/A x capacidades) | tareas (del plan)
     ayuda: str = ""
     requerido: bool = True
     columnas: tuple = ()  # tabla
@@ -111,6 +127,8 @@ _CAPACIDADES = (Columna("que", "¿Qué?"), Columna("donde", "¿Dónde?"), Column
                 Columna("desde_donde", "¿Desde dónde?"), Columna("cuando", "¿Cuándo?"), Columna("como", "¿Cómo?"),
                 Columna("peligrosidad", "Orden de peligrosidad"))
 _CONCLUSION_APOYO = ("apoya", "apoya con limitaciones", "no apoya")
+_ORGANIZACION = (Columna("elemento", "Elemento"), Columna("unidades", "Unidades"), Columna("ubicacion", "Ubicación"),
+                 Columna("comandante", "Comandante"))
 
 _CAMPOS_OPERACIONES = (
     Campo("mision_resumen", "1.1 Resumen de la situación general y misión del escalón superior"),
@@ -248,6 +266,49 @@ DOCUMENTOS: dict[str, Documento] = {d.tipo: d for d in [
         *_campos_apoyo("2.2 Situación de comunicaciones y electrónica",
                        "Redes y enlaces, centros de comunicaciones, guerra electrónica propia y enemiga, emisiones."),
     ), "La C-E determina cómo apoyar con comunicaciones y guerra electrónica cada F/A operacional."),
+    Documento("decision", "Decisión del Comandante", "Fase I · Paso 3", ("comandante",), (
+        Campo("fa_adoptada", "1. Forma de Acción adoptada", "linea",
+              ayuda="La F/A elegida después de oír a todo el Estado Mayor (puede ser una combinación de varias)."),
+        Campo("fundamentacion", "2. Fundamentación",
+              ayuda="Por qué esa F/A, según la misión, la situación y las apreciaciones (sobre todo la de Operaciones)."),
+        Campo("idea_maniobra", "3. Idea general de la maniobra",
+              ayuda="Fases según los objetivos intermedios, acciones en cada fase, tareas a las unidades y tácticas."),
+        Campo("acciones_inmediatas", "4. Acciones inmediatas", "tabla", columnas=(
+            Columna("area", "Área", AREAS_ACCION), Columna("accion", "Acción"), Columna("responsable", "Responsable"))),
+        Campo("limitaciones", "5. Limitaciones", requerido=False),
+        Campo("organizacion_fuerza", "6. Organización de la fuerza", "tabla", columnas=_ORGANIZACION),
+    ), "El Comandante decide la Forma de Acción que cumplirá la misión."),
+    Documento("analisis_previo", "Análisis previo al plan", "Fase II · Paso 1", ("jem", "a3", "comandante"), (
+        Campo("estudio", "1. Estudio de la información disponible",
+              ayuda="La misión, la decisión del Comandante y lo sobresaliente de las apreciaciones (fortalezas, "
+                    "debilidades y limitaciones de personal, logística y comunicaciones)."),
+        Campo("suposiciones", "2. Suposiciones", "tabla", columnas=_SUPOSICIONES, requerido=False),
+        Campo("objetivos_materiales", "3. Objetivos materiales correctos", "tabla", columnas=(
+            Columna("prioridad", "Prioridad"), Columna("objetivo", "Objetivo material"), Columna("efecto", "Efecto a lograr"),
+            Columna("adaptabilidad", "Adaptable", ("si", "parcial", "no")),
+            Columna("practicabilidad", "Practicable", ("si", "parcial", "no")),
+            Columna("aceptabilidad", "Aceptable", ("si", "parcial", "no")))),
+        Campo("distribucion", "4. Distribución del poder combativo", "tabla", columnas=(
+            Columna("esfuerzo", "Esfuerzo"), Columna("medios", "Medios asignados"), Columna("porcentaje", "% de los medios"))),
+        Campo("despliegues", "5. Despliegues", ayuda="Desde dónde se proyecta la acción y por qué (bases, redespliegues)."),
+        Campo("planes_alternos", "6. Formas de acción alternas o planes alternos", requerido=False),
+    ), "El Estado Mayor concreta cómo materializar la decisión: objetivos, fuerzas y despliegues."),
+    Documento("plan_operaciones", "Plan de Operaciones", "Fase II · Paso 2", ("jem", "a3", "a3da", "comandante"), (
+        Campo("nombre_clave", "Nombre clave de la operación", "linea"),
+        Campo("organizacion_fuerzas", "Organización de las fuerzas", "tabla", columnas=_ORGANIZACION),
+        Campo("resumen_situacion", "1.1 Resumen de la situación"),
+        Campo("fuerzas_enemigas", "1.2 Fuerzas enemigas"),
+        Campo("fuerzas_amigas", "1.3 Fuerzas amigas", requerido=False),
+        Campo("suposiciones", "1.4 Suposiciones", "tabla", columnas=_SUPOSICIONES, requerido=False),
+        Campo("mision", "2. Misión", "mision"),
+        Campo("concepto", "3.1 Concepto de la operación"),
+        Campo("tareas", "3.2 Tareas de las unidades subordinadas", "tareas",
+              ayuda="Una actividad por tarea, en infinitivo: qué unidad, qué acción, contra qué o hacia dónde y en qué "
+                    "turno (H+n). Cada tarea se emite como orden del simulador desde la Orden de Operaciones."),
+        Campo("coordinacion", "3.4 Instrucciones de coordinación"),
+        Campo("logistica", "4. Asuntos logísticos", requerido=False),
+        Campo("comando", "5. Asuntos de comando y comunicaciones", requerido=False),
+    ), "El plan convierte la decisión en tareas para cada unidad, en tiempo y espacio."),
 ]}
 ORDEN = tuple(DOCUMENTOS)
 
@@ -263,6 +324,7 @@ def definicion(d: Documento) -> dict:
         } for c in d.campos],
         "campos_fa": [{"clave": k, "titulo": t, "tipo": tp, "opciones": list(o)} for k, t, tp, o in CAMPOS_FA],
         "efectos": list(EFECTOS_CONFRONTACION),
+        "tipos_tarea": TIPOS_TAREA,
     }
 
 
@@ -305,6 +367,9 @@ def normalizar(tipo: str, contenido: dict | None) -> dict:
                 if any(fa.values()):
                     formas.append(fa)
             out[campo.clave] = formas
+        elif campo.tipo == "tareas":
+            out[campo.clave] = [t for t in (normalizar_tarea(f) for f in (v if isinstance(v, list) else [])[:MAX_TAREAS])
+                                if t is not None]
         elif campo.tipo == "matriz":
             celdas, vistas = [], set()
             for f in (v if isinstance(v, list) else [])[:MAX_FILAS * 4]:
@@ -323,6 +388,45 @@ def normalizar(tipo: str, contenido: dict | None) -> dict:
     return out
 
 
+MAX_TAREAS = 80
+_ID_TAREA = re.compile(r"^[a-z0-9]{4,16}$")
+_OBJETIVO_TAREA = re.compile(r"^[uo]:\d+$")
+
+
+def normalizar_tarea(f) -> dict | None:
+    """Tarea del plan: {id, unidad_id, unidad_nombre, tipo, turno, objetivo ("u:<id>" unidad | "o:<id>" objetivo),
+    objetivo_nombre, detalle}. Las vacias se descartan; el id se conserva (enlaza con su ejecucion)."""
+    if not isinstance(f, dict):
+        return None
+    def entero(x, minimo=1, maximo=9999):
+        try:
+            n = int(x)
+        except (TypeError, ValueError):
+            return None
+        return n if minimo <= n <= maximo else None
+    t = {
+        "id": f.get("id") if isinstance(f.get("id"), str) and _ID_TAREA.match(f.get("id")) else secrets.token_hex(4),
+        "unidad_id": entero(f.get("unidad_id"), 1, 10 ** 9), "unidad_nombre": _txt(f.get("unidad_nombre"), 120),
+        "tipo": f.get("tipo") if f.get("tipo") in TIPOS_TAREA else "",
+        "turno": entero(f.get("turno")),
+        "objetivo": f.get("objetivo") if isinstance(f.get("objetivo"), str) and _OBJETIVO_TAREA.match(f.get("objetivo")) else "",
+        "objetivo_nombre": _txt(f.get("objetivo_nombre"), 160), "detalle": _txt(f.get("detalle"), 600),
+    }
+    if not (t["unidad_id"] or t["tipo"] or t["detalle"] or t["objetivo"]):
+        return None
+    return t
+
+
+def texto_tarea(t: dict, ref_turno: str = "") -> str:
+    """"Atacar con Escuadrón 1 a Radar enemigo (turno 5, H+2)"."""
+    verbo = TIPOS_TAREA.get(t["tipo"], "Cumplir")
+    unidad = t["unidad_nombre"] or f"la unidad {t['unidad_id']}"
+    nexo = {"mover": "hacia", "patrullar": "sobre", "interferir": "sobre", "aterrizar": "en"}.get(t["tipo"], "a")
+    destino = f" {nexo} {t['objetivo_nombre']}" if t["objetivo_nombre"] else ""
+    cuando = f" (turno {t['turno']}{', ' + ref_turno if ref_turno else ''})" if t["turno"] else ""
+    return f"{verbo} con {unidad}{destino}{cuando}"
+
+
 def _vacio(campo: Campo, valor) -> bool:
     if campo.tipo == "mision":
         return not any(valor.values())
@@ -330,6 +434,8 @@ def _vacio(campo: Campo, valor) -> bool:
         return len(valor) < (campo.min_filas if campo.tipo == "tabla" else 2)
     if campo.tipo == "matriz":
         return not any(c["efecto"] for c in valor)
+    if campo.tipo == "tareas":
+        return not valor
     return not valor
 
 
@@ -354,6 +460,12 @@ def revisar(tipo: str, contenido: dict) -> dict:
             lados = {f["lado"] for f in v}
             if not set(LADOS) <= lados:
                 faltan.append(f"{campo.titulo}: identifique al menos un centro de gravedad propio y uno enemigo.")
+        if campo.tipo == "tareas":
+            for i, t in enumerate(v, 1):
+                vacios = [n for k, n in (("unidad_id", "unidad"), ("tipo", "acción"), ("turno", "turno"),
+                                         ("objetivo", "objetivo o destino")) if not t[k]]
+                if vacios:
+                    faltan.append(f"Tarea {i}: falta {', '.join(vacios)}.")
         if campo.tipo == "formas":
             for i, fa in enumerate(v, 1):
                 nombre = fa["nombre"] or f"F/A {i}"
@@ -540,7 +652,90 @@ def sugerencias(tipo: str, esc, unidades, objetivos, bando: str, pm_contenido: d
             s["situacion_area"] = {"apreciacion_personal": situacion_personal, "apreciacion_logistica": situacion_logistica,
                                    "apreciacion_ce": situacion_ce}[tipo](esc, unidades, bando)
             s["analisis_fa"] = [{"fa": fa} for fa in ctx["formas"]]
+    elif tipo in ("decision", "analisis_previo", "plan_operaciones"):
+        ops = documentos.get("apreciacion_operaciones") or {}
+        decision = documentos.get("decision") or {}
+        previo = documentos.get("analisis_previo") or {}
+        guia = documentos.get("guia") or {}
+        if tipo == "decision":
+            s["fa_adoptada"] = ops.get("fa_recomendada") or ""
+            s["fundamentacion"] = ops.get("justificacion") or ""
+            s["limitaciones"] = "\n".join(x for x in (ops.get("factores_limitantes"), p["limitaciones"]) if x)
+            s["organizacion_fuerza"] = organizacion_fuerza(unidades, bando)
+        elif tipo == "analisis_previo":
+            partes = [f"- Misión: {pmo.texto_mision(mision_especifica)}"]
+            if decision.get("fa_adoptada"):
+                partes.append(f"- Decisión del Comandante: {decision['fa_adoptada']}.")
+            for f in ops.get("fortalezas_debilidades") or []:
+                partes.append(f"- {f['tipo'].capitalize() if f.get('tipo') else 'Factor'} {f.get('lado', '')}: {f.get('descripcion', '')}")
+            s["estudio"] = "\n".join(partes)
+            s["suposiciones"] = concepto.get("suposiciones") or guia.get("suposiciones") or []
+            materiales = sorted((o for o in objetivos if o.bando == bando and o.nivel == "material"), key=lambda o: -o.puntos)
+            s["objetivos_materiales"] = [{"prioridad": str(i), "objetivo": o.nombre, "efecto": o.efecto or ""}
+                                         for i, o in enumerate(materiales[:MAX_FILAS], 1)]
+            s["distribucion"] = distribucion_poder(unidades, bando)
+        else:
+            s["nombre_clave"] = guia.get("nombre_clave") or ""
+            s["organizacion_fuerzas"] = decision.get("organizacion_fuerza") or organizacion_fuerza(unidades, bando)
+            s["resumen_situacion"] = analisis.get("resumen_situacion") or p["situacion_general"]
+            intel = documentos.get("apreciacion_inteligencia") or {}
+            s["fuerzas_enemigas"] = intel.get("conclusiones") or analisis.get("situacion_enemigo") or p["fuerzas_enemigas"]
+            s["suposiciones"] = previo.get("suposiciones") or []
+            s["mision"] = mision_especifica
+            s["concepto"] = decision.get("idea_maniobra") or ""
+            s["coordinacion"] = p["instrucciones"]
     return _completar_matriz(tipo, normalizar(tipo, s), s)
+
+
+def organizacion_fuerza(unidades, bando: str) -> list[dict]:
+    """Elementos de la fuerza propia por categoria, con sus unidades y donde estan."""
+    from app.engine import lugares
+
+    grupos: dict[str, list] = {}
+    nombres = {"aviacion": "Aviación de combate", "defensa_aerea": "Defensa aérea", "superficie": "Fuerzas de superficie",
+               "guerra_electronica": "Guerra electrónica y reconocimiento"}
+    for u in unidades:
+        if u.bando != bando or u.estado != "activa" or getattr(u, "transporte_id", None):
+            continue
+        f = _factor(u) or ("logistica" if u.tipo != "base" else None)
+        if u.tipo == "base" and not catalogo.obtener(u.clase, u.tipo).infraestructura:
+            f = "bases"
+        if f:
+            grupos.setdefault(f, []).append(u)
+    filas = []
+    for clave, titulo in (("aviacion", "Aviación de combate"), ("defensa_aerea", "Defensa aérea"),
+                          ("superficie", "Fuerzas de superficie"), ("guerra_electronica", "Guerra electrónica y reconocimiento"),
+                          ("logistica", "Logística"), ("bases", "Bases y apoyo")):
+        us = grupos.get(clave)
+        if us:
+            filas.append({"elemento": nombres.get(clave, titulo), "unidades": ", ".join(u.nombre for u in us)[:600],
+                          "ubicacion": lugares.describir(us[0].lat, us[0].lon), "comandante": ""})
+    return filas
+
+
+def distribucion_poder(unidades, bando: str) -> list[dict]:
+    """Aeronaves propias por esfuerzo (ofensivo, defensivo, apoyo), como punto de partida de la distribucion."""
+    esfuerzos = {"Ofensivo (ataque, helicópteros, drones armados)": [], "Defensivo (caza y alerta temprana)": [],
+                 "Apoyo (reconocimiento, guerra electrónica, cisternas)": []}
+    claves = list(esfuerzos)
+    for u in unidades:
+        if u.bando != bando or u.estado != "activa" or u.tipo != "aerea" or catalogo.es_misil(u):
+            continue
+        c = catalogo.obtener(u.clase, u.tipo)
+        if c.id in ("caza", "alerta_temprana"):
+            esfuerzos[claves[1]].append(u)
+        elif max(c.ataque_vs.values()) > 0:
+            esfuerzos[claves[0]].append(u)
+        else:
+            esfuerzos[claves[2]].append(u)
+    total = sum(max(1, u.aeronaves or 1) for us in esfuerzos.values() for u in us)
+    filas = []
+    for nombre, us in esfuerzos.items():
+        n = sum(max(1, u.aeronaves or 1) for u in us)
+        if n:
+            filas.append({"esfuerzo": nombre, "medios": f"{n} aeronaves: " + ", ".join(u.nombre for u in us)[:500],
+                          "porcentaje": f"{round(100 * n / total)} %"})
+    return filas
 
 
 def _completar_matriz(tipo: str, normal: dict, crudo: dict) -> dict:

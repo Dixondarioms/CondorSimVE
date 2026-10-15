@@ -2080,7 +2080,7 @@
       api, rutaEsc, toast, usuario: () => app.usuario, escenarioId: () => app.escenarioId, esInstructor,
     });
     app.tiem = Tiem.crear({
-      api, rutaEsc, toast, escenarioId: () => app.escenarioId, esInstructor,
+      api, rutaEsc, toast, escenarioId: () => app.escenarioId, esInstructor, usuario: () => app.usuario,
       bando: () => (esAlumno() ? app.usuario.rol : $("pmo-bando").value),
       escenario: () => (app.data ? app.data.escenario : null),
       irEscenario: (id) => { $("escenario").value = String(id); cambiarEscenario(); },

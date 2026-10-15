@@ -328,6 +328,22 @@
     comparacion: [{ fa: FA1, ventajas: "Pocos medios; ciega a la defensa aérea", desventajas: "La antiaérea sigue a ojo", principios: "Objetivo, sorpresa, economía de fuerza", riesgos: "Bajo" },
       { fa: FA2, ventajas: "Inmoviliza la aviación enemiga", desventajas: "Muy expuesta a la caza", principios: "Ofensiva, masa", riesgos: "Alto" }],
     fa_recomendada: FA1, justificacion: "Logra el efecto con menos riesgo y la confirma el ensayo en el simulador.", factores_limitantes: "" } };
+  DOCS_TIEM.decision = { estado: "aprobado", presentado_turno: 4, revisado_turno: 4, editado_por: "alfa", editado_puesto: "comandante", contenido: {
+    fa_adoptada: FA1, fundamentacion: "Logra el efecto deseado con el menor riesgo y la confirman el ensayo y la Apreciación de Operaciones.",
+    idea_maniobra: "- Fase de ejecución (H a H+6): neutralizar el radar enemigo con Halcón 1 escoltado por Flecha 1.\n- Luego, apoyar con el Helo Artillado el avance de la 1ra Bda Infantería hacia el puente.",
+    acciones_inmediatas: [{ area: "logistica", accion: "Reabastecer a Blindados A antes de H", responsable: "A-4" }],
+    organizacion_fuerza: [{ elemento: "Aviación de combate", unidades: "Halcón 1, Flecha 1, Cobra 1", ubicacion: "Aeropuerto de Barinas", comandante: "" }] } };
+  DOCS_TIEM.plan_operaciones = { estado: "presentado", presentado_turno: 4, editado_por: "ua3", editado_puesto: "a3", contenido: {
+    nombre_clave: "Operación CENTINELA", mision: MISION_ESP, concepto: "Neutralizar el radar enemigo y luego apoyar el avance hacia el puente.",
+    tareas: [
+      { id: "t1", turno: 3, unidad_id: 8, unidad_nombre: "Halcón 1", tipo: "atacar", objetivo: "u:18", objetivo_nombre: "Radar Rojo", detalle: "Atacar el radar el día D a la hora H" },
+      { id: "t2", turno: 3, unidad_id: 10, unidad_nombre: "Flecha 1", tipo: "patrullar", objetivo: "u:18", objetivo_nombre: "Radar Rojo", detalle: "Escoltar el paquete de ataque" },
+      { id: "t3", turno: 3, unidad_id: 1, unidad_nombre: "1ra Bda Infantería", tipo: "mover", objetivo: "o:1", objetivo_nombre: "Tomar el puente", detalle: "Avanzar hacia el puente" },
+      { id: "t4", turno: 5, unidad_id: 7, unidad_nombre: "Helo Artillado", tipo: "apoyar", objetivo: "u:1", objetivo_nombre: "1ra Bda Infantería", detalle: "Apoyar el cruce del puente" },
+      { id: "t5", turno: 8, unidad_id: 2, unidad_nombre: "Blindados A", tipo: "mover", objetivo: "o:1", objetivo_nombre: "Tomar el puente", detalle: "Consolidar la cabeza de puente" }],
+    coordinacion: "- Toda misión de ataque lleva escolta de caza.\n- Informe de daños al regresar." } };
+  const EJECUCIONES = { t1: { estado: "emitida", turno: 3, orden_id: 2, motivo: "", emitida_por: "ua3" },
+    t2: { estado: "rechazada", turno: 3, orden_id: null, motivo: "Combustible insuficiente para patrullar: aterrice y reabastezca", emitida_por: "ua3" } };
   const ENSAYOS = [{ id: 7, nombre: "Ensayo 1 · F/A 2 · Azul · Ejercicio de ejemplo", fa: FA2, estado: "activo", turnos_jugados: 3,
     texto: "Ensayo de F/A 2: Destruir la pista de la base enemiga: 3 turno(s) jugado(s); objetivos 0 cumplido(s) y 1 fallido(s) de 6; puntos por bajas infligidas 1 contra 4 sufridos; unidades perdidas: propias 2, enemigas 0." }];
   function documentoTiem(bando, tipo) {
@@ -345,7 +361,14 @@
       documentos: Object.fromEntries(bandos.map((b) => [b, Object.fromEntries(CAT.tiem.orden.map((t) => [t, documentoTiem(b, t)]))])),
       contexto: Object.fromEntries(bandos.map((b) => [b, b === "azul" ? { formas: [FA1, FA2], capacidades: [C1, C2] } : { formas: [], capacidades: [] }])),
       ensayos: Object.fromEntries(bandos.map((b) => [b, b === "azul" ? ENSAYOS : []])),
-      puede_ensayar: Object.fromEntries(bandos.map((b) => [b, ROL === "instructor" || ROL === b])) };
+      puede_ensayar: Object.fromEntries(bandos.map((b) => [b, ROL === "instructor" || ROL === b])),
+      ejecuciones: Object.fromEntries(bandos.map((b) => [b, b === "azul" ? EJECUCIONES : {}])),
+      opciones_tarea: Object.fromEntries(bandos.map((b) => [b, {
+        unidades: UNIDADES.filter((u) => u.bando === b && u.tipo !== "misil" && u.clase !== "misil_crucero").map((u) => ({ id: u.id, nombre: u.nombre, tipo: u.tipo, clase: u.clase })),
+        objetivos: [...objetivos.filter((o) => o.bando === b && o.tipo !== "efecto").map((o) => ({ clave: `o:${o.id}`, nombre: o.nombre, grupo: "Objetivos del bando" })),
+          ...UNIDADES.filter((u) => u.bando !== b && [11, 18, 13].includes(u.id)).map((u) => ({ clave: `u:${u.id}`, nombre: u.nombre, grupo: "Unidades enemigas conocidas" })),
+          ...UNIDADES.filter((u) => u.bando === b && u.id < 20).map((u) => ({ clave: `u:${u.id}`, nombre: u.nombre, grupo: "Unidades y bases propias" }))] }])),
+      turno_actual: ESC.turno_actual };
   }
   const textoMisionPmo = (m) => `${["tarea", "que", "donde", "cuando"].map((k) => m[k]).filter(Boolean).join(" ")}, a fin de ${m.proposito}.`;
   function respuestaPmo(rol) {
@@ -946,6 +969,11 @@
       return json(documentoTiem(m[1], m[2]));
     }
     if ((m = path.match(/^\/api\/escenarios\/1\/tiem\/(azul|rojo)\/([a-z_]+)\/sugerencias$/))) return json({ contenido: {} });
+    if ((m = path.match(/^\/api\/escenarios\/1\/tiem\/(azul|rojo)\/emitir$/))) {
+      EJECUCIONES.t2 = { estado: "emitida", turno: ESC.turno_actual, orden_id: 9, motivo: "", emitida_por: USUARIOS[ROL][1] };
+      EJECUCIONES.t3 = { estado: "emitida", turno: ESC.turno_actual, orden_id: 10, motivo: "", emitida_por: USUARIOS[ROL][1] };
+      return json({ emitidas: 2, resultados: [{ id: "t2", ok: true }, { id: "t3", ok: true }] });
+    }
     if (path === "/api/escenarios/1/pmo/generar" && metodo === "POST") {
       PMO.rojo = PMO.rojo || { origen: "automatico", contenido: { ...PMO.azul.contenido } };
       return json({ ...respuestaPmo(ROL), hecho: { calendario: false, objetivos: 0, pmo: ["azul", "rojo"] } });

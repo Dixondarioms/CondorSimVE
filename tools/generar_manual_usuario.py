@@ -145,6 +145,8 @@ def construir(salida: Path) -> None:
               ["El simulador sigue el TIEM: los puestos pasan a ser las reparticiones del Estado Mayor (Comandante, JEM, A-1, A-2, "
                "A-3, A-3 D/A, A-4 y C-E)", "6.2"],
               ["Pestaña TIEM: el Problema Militar Operativo de cada bando, redactado por el instructor o creado automáticamente", "6.15 y 7.15"],
+              ["Decisión del Comandante, análisis previo y Plan de Operaciones con tareas que se emiten como órdenes del "
+               "simulador desde la Orden de Operaciones", "6.18"],
               ["Apreciaciones de Estado Mayor (Fase I, Paso 2) de A-1, A-2, A-3, A-3 D/A, A-4 y C-E, confrontación de las F/A "
                "con las capacidades del enemigo y juego de guerra contra la IA", "6.17"],
               ["Apreciación inicial (Fase I, Paso 1): análisis de la misión, concepto del comandante, guía de planeamiento y "
@@ -730,6 +732,41 @@ def construir(salida: Path) -> None:
         P("Cada bando puede tener hasta tres ensayos por ejercicio. Lo que pasa en un ensayo no cambia el ejercicio original."),
     ], ancho_img=6.4 * cm)
 
+    h += [H2("6.18 La decisión, el Plan de Operaciones y la Orden de Operaciones")]
+    h += figura("tiem_decision", "Decisión del Comandante: F/A adoptada, fundamentación, idea de la maniobra, acciones inmediatas y "
+                "organización de la fuerza.", ancho=ANCHO_TEXTO)
+    h += [P("Oídas las apreciaciones, el <b>Comandante</b> decide (Fase I, Paso 3): redacta la <b>Decisión del Comandante</b> con la "
+            "F/A adoptada (la ayuda trae la que recomendó la A-3), su fundamentación, la idea general de la maniobra, las acciones "
+            "inmediatas, las limitaciones y la organización de la fuerza (la ayuda la arma con las unidades del bando)."),
+          P("Empieza la <b>Fase II</b>: el JEM y la A-3 redactan el <b>Análisis previo al plan</b> (estudio de la información, "
+            "suposiciones, objetivos materiales con su APA, distribución del poder combativo con las aeronaves por esfuerzo, "
+            "despliegues y planes alternos) y luego el <b>Plan de Operaciones</b>: situación, misión, concepto de la operación, "
+            "instrucciones de coordinación, logística, comando y, sobre todo, las <b>tareas de las unidades subordinadas</b>.")]
+    h += figura("tiem_plan_editar", "Tareas del Plan de Operaciones: turno (con su referencia a H), unidad, acción, objetivo o destino "
+                "y el detalle en infinitivo.", ancho=ANCHO_TEXTO)
+    h += [H3("Las tareas del plan son órdenes del simulador"),
+          P("Cada tarea es una actividad de una unidad, como la pide el TIEM («Atacar el día D a la hora H el radar…»), y a la vez "
+            "una orden que el simulador sabe cumplir:"),
+          Bul(["<b>Turno</b>: cuándo se cumple; al lado se ve su referencia a la hora H (H, H+2…).",
+               "<b>Unidad</b>: cualquiera de las propias.",
+               "<b>Acción</b>: desplazar, atacar, patrullar, apoyar, aterrizar o interferir.",
+               "<b>Objetivo o destino</b>: un objetivo del bando (una zona a ocupar o una unidad), una unidad enemiga ya conocida "
+               "(vista o con último contacto) o una unidad o base propia. Atacar, apoyar y aterrizar necesitan una unidad.",
+               "<b>Detalle</b>: la tarea redactada en infinitivo, para el documento."])]
+    h += al_lado("tiem_orden", "Orden de Operaciones: lo que vence en el turno y lo de las próximas 24 horas.", [
+        H3("La Orden de Operaciones"),
+        P("En la pestaña TIEM, la sección <b>Orden de Operaciones</b> muestra las tareas del plan que <b>vencen en este turno</b> "
+          "(y las de turnos anteriores que no se emitieron) y las de las <b>próximas 24 horas</b>, cada una con su estado."),
+        pasos(f"Al empezar cada turno, revise lo que vence y pulse {B('Emitir las tareas de este turno como órdenes')}.",
+              "Cada tarea se convierte en una orden de la cola, con la <b>misma validación</b> que una orden dada a mano y con la "
+              "repartición de quien la emite (cada repartición emite las de las unidades que conduce).",
+              "Si una orden no se puede cumplir (sin combustible, objetivo no localizado, fuera de su repartición…), la tarea queda "
+              "<b>Rechazada</b> con el motivo; corrija la situación o el plan y vuelva a emitirla.",
+              "Las órdenes emitidas se pueden ajustar o reemplazar a mano como cualquier otra, y el bando confirma el turno con "
+              "«Estoy listo»."),
+        P("Así se ve en el propio ejercicio si el plan era ejecutable y dónde hubo que apartarse de él."),
+    ], ancho_img=6.4 * cm)
+
     h += H1("7. Guía del instructor")
     h += [H2("7.1 Preparar un ejercicio: lista de pasos"),
           pasos("Cree el escenario: vacío con <b>Nuevo</b> o <b>Desde plantilla…</b> (7.2).",
@@ -964,6 +1001,8 @@ def construir(salida: Path) -> None:
                f"{B('Reabrir como borrador')}: lo desbloquea sin observaciones.",
                f"{B('Editar')}: el instructor puede corregir o completar cualquier documento, por ejemplo para dar una solución "
                "de escuela."]),
+          P("La Decisión, el Análisis previo y el Plan de Operaciones también se revisan así. El instructor puede emitir las tareas "
+            "de un bando desde su Orden de Operaciones (como su Comandante), por ejemplo si conduce ese bando (7.17)."),
           P("Las apreciaciones del Paso 2 y los ensayos del juego de guerra se revisan igual: el instructor ve los ensayos de cada "
             "bando en su lista y puede abrirlos desde el selector de escenario para ver cómo se jugaron."),
           P("Cada revisión queda registrada en el informe, y los documentos (contenido, estado, observaciones y turno en que se "
