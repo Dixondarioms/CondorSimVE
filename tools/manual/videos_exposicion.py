@@ -1,7 +1,7 @@
 """Videos narrados de S.I.E.T.E. para exposiciones (MP4 1920x1080, voz natural y subtitulos).
 
   1. SIETE_1_que_es.mp4       Que es el SIETE, como esta hecho y que puede hacer (voz: Sebastian, Venezuela).
-  2. SIETE_2_como_se_usa.mp4  Como se usa: roles, reparticiones del TIEM y que hace cada uno (voz: Paola, Venezuela).
+  2. SIETE_2_como_se_usa.mp4  Como se usa: roles, reparticiones del TIEM y que hace cada uno (voz: Jorge, Mexico).
 
 Cada escena es una captura real del simulador (tools/manual/salida, generadas por capturas_guia.py, capturas.py y
 diagramas.py) con su titulo y la frase que se narra como subtitulo. La voz es neuronal de Microsoft (las voces
@@ -11,6 +11,7 @@ Windows (voz.ps1), que suenan mas roboticas. ffmpeg arma cada frase como un clip
     backend\\venv\\Scripts\\python -m pip install edge-tts                    # una vez
     backend\\venv\\Scripts\\python tools/manual/videos_exposicion.py          # los dos
     backend\\venv\\Scripts\\python tools/manual/videos_exposicion.py 2        # solo el segundo
+    backend\\venv\\Scripts\\python tools/manual/videos_exposicion.py --voz2=es-CO-GonzaloNeural --velocidad=+10%
 """
 
 import asyncio
@@ -49,8 +50,9 @@ VIDEO_1 = {
     "escenas": [
         ("portada", "", [
             "Bienvenidos. Les presentamos el SIETE: el Sistema Integral de Entrenamiento Táctico y Estratégico.",
-            "Fue desarrollado en la División de Ingeniería y Desarrollo Aeroespacial de la Aviación Militar Bolivariana, "
-            "para entrenar a los Estados Mayores en el planeamiento y la conducción de operaciones aéreas.",
+            "Fue desarrollado en la División de Ingeniería y Desarrollo Aeroespacial, "
+            "para formar oficiales de Estado Mayor de la Aviación Militar Bolivariana en el planeamiento y la conducción "
+            "de operaciones aéreas.",
         ]),
         ("pantalla_general", "Qué es el SIETE", [
             "El SIETE es un simulador de operaciones aéreas por turnos, pensado para el aula.",
@@ -154,19 +156,19 @@ VIDEO_1 = {
             "Todos los documentos del TIEM se exportan a Word o a PDF, con el formato del TIEM.",
         ]),
         ("cierre", "", [
-            "El SIETE: desarrollado en la DIDA para formar a los Estados Mayores de la Aviación Militar Bolivariana en el "
-            "planeamiento y la conducción de operaciones aéreas, con soberanía tecnológica.",
+            "El SIETE: desarrollado en la DIDA para formar oficiales de Estado Mayor de la Aviación Militar Bolivariana, "
+            "en el planeamiento y la conducción de operaciones aéreas, con soberanía tecnológica.",
             "Muchas gracias.",
         ]),
     ],
 }
 
 VIDEO_2 = {
-    "archivo": "SIETE_2_como_se_usa.mp4", "voz": "es-VE-PaolaNeural", "voz_local": "Sabina", "subtitulo_portada": "Cómo se usa: roles y tareas de cada uno",
+    "archivo": "SIETE_2_como_se_usa.mp4", "voz": "es-MX-JorgeNeural", "voz_local": "Raul", "subtitulo_portada": "Cómo se usa: roles y tareas de cada uno",
     "escenas": [
         ("portada", "", [
-            "En este video veremos cómo se usa el SIETE para entrenar al Estado Mayor de un componente aéreo con el "
-            "Trabajo Integral de Estado Mayor: los roles del ejercicio y lo que hace cada participante.",
+            "En este video veremos cómo se usa el SIETE para formar oficiales de Estado Mayor de la Aviación Militar "
+            "Bolivariana con el Trabajo Integral de Estado Mayor: los roles del ejercicio y lo que hace cada participante.",
         ]),
         ("diag_puestos", "Los roles del ejercicio", [
             "Hay tres roles. El instructor dirige el ejercicio. Los alumnos integran el Estado Mayor de cada bando. Y el "
@@ -302,6 +304,7 @@ VIDEO_2 = {
 }
 
 
+VELOCIDAD = "+8%"  # ritmo de la voz natural (0% = normal)
 NUMEROS = {"uno": "1", "dos": "2", "tres": "3", "cuatro": "4"}
 
 
@@ -342,8 +345,8 @@ def centrado(d, y, texto, f, color=(255, 255, 255)):
 
 def portada(subtitulo: str) -> Image.Image:
     im = fondo()
-    siete = logo("siete_logo_recortado.jpg", 330)
-    im.paste(siete, ((ANCHO - siete.width) // 2, 36))
+    aguila = logo("siete_aguila.png", 330)
+    pegar(im, aguila, ((ANCHO - aguila.width) // 2, 36))
     d = ImageDraw.Draw(im)
     centrado(d, 435, "S.I.E.T.E.", fuente(80, True))
     centrado(d, 510, "Sistema Integral de Entrenamiento Táctico y Estratégico", fuente(38), (200, 214, 235))
@@ -359,12 +362,12 @@ def portada(subtitulo: str) -> Image.Image:
 
 def cierre() -> Image.Image:
     im = fondo()
-    siete = logo("siete_logo_recortado.jpg", 300)
+    aguila = logo("siete_aguila.png", 300)
     dida = logo("dida_logo_redondo.png", 300)
-    hueco = 60
-    x = (ANCHO - siete.width - dida.width - hueco) // 2
-    im.paste(siete, (x, 50))
-    pegar(im, dida, (x + siete.width + hueco, 50))
+    hueco = 70
+    x = (ANCHO - aguila.width - dida.width - hueco) // 2
+    pegar(im, aguila, (x, 50))
+    pegar(im, dida, (x + aguila.width + hueco, 50))
     d = ImageDraw.Draw(im)
     centrado(d, 450, "S.I.E.T.E.", fuente(72, True))
     centrado(d, 518, "Sistema Integral de Entrenamiento Táctico y Estratégico", fuente(36), (200, 214, 235))
@@ -376,6 +379,8 @@ def cierre() -> Image.Image:
 
 def separador(titulo: str, subtitulo: str) -> Image.Image:
     im = fondo()
+    aguila = logo("siete_aguila.png", 200)
+    pegar(im, aguila, ((ANCHO - aguila.width) // 2, 100))
     d = ImageDraw.Draw(im)
     centrado(d, 380, titulo, fuente(66, True))
     centrado(d, 465, subtitulo, fuente(36), (200, 214, 235))
@@ -456,7 +461,7 @@ async def _voces_naturales(frases: list[dict], voz: str) -> None:
         async with limite:
             for intento in range(4):
                 try:
-                    await edge_tts.Communicate(_hablado(f["texto"]), voz, rate="-4%").save(str(mp3))
+                    await edge_tts.Communicate(_hablado(f["texto"]), voz, rate=VELOCIDAD).save(str(mp3))
                     break
                 except Exception:
                     if intento == 3:
@@ -531,8 +536,14 @@ def generar(video: dict, n: int, offline: bool = False) -> Path:
 
 
 def main() -> None:
+    """Opciones: 1 o 2 (solo ese video), --offline, --voz1=es-VE-SebastianNeural, --voz2=..., --velocidad=+8%."""
+    global VELOCIDAD
+    opciones = dict(a[2:].split("=", 1) for a in sys.argv[1:] if a.startswith("--") and "=" in a)
+    VIDEO_1["voz"] = opciones.get("voz1", VIDEO_1["voz"])
+    VIDEO_2["voz"] = opciones.get("voz2", VIDEO_2["voz"])
+    VELOCIDAD = opciones.get("velocidad", VELOCIDAD)
     offline = "--offline" in sys.argv
-    pedidos = [a for a in sys.argv[1:] if a != "--offline"] or ["1", "2"]
+    pedidos = [a for a in sys.argv[1:] if not a.startswith("--")] or ["1", "2"]
     DESTINO.mkdir(parents=True, exist_ok=True)
     for n, video in ((1, VIDEO_1), (2, VIDEO_2)):
         if str(n) in pedidos:
