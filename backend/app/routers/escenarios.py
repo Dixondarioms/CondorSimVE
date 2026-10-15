@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse, Response
@@ -7,9 +7,10 @@ from sqlalchemy.orm import Session
 
 from app import adversario, auth, diapositivas_html, informe_html, schemas, state, turnos
 from app.db import get_db
-from app.engine import aar, clock, naciones, plantillas, timeline
+from app.engine import aar, calendario, clock, naciones, plantillas, timeline
 from app.models.aar import Instantanea
 from app.models.objetivo import Objetivo
+from app.models.problema_militar import ProblemaMilitar
 from app.models.asignacion import Asignacion
 from app.models.escenario import Escenario
 from app.models.evento import Evento
@@ -19,7 +20,6 @@ from app.ws_manager import manager
 
 router = APIRouter(prefix="/api/escenarios", tags=["escenarios"])
 solo_instructor = auth.requiere_roles("instructor")
-solo_alumnos = auth.requiere_roles("azul", "rojo")
 
 
 async def _difundir_y_estado(db: Session, esc: Escenario, usuario: Usuario, vista: str | None = None):
@@ -165,6 +165,20 @@ async def configurar(
         cambios.append(f"ciclo de dia y noche {'activado' if payload.dia_noche else 'desactivado'}")
         db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino="todos",
                       descripcion=f"Direccion del ejercicio: ciclo de dia y noche {'activado' if payload.dia_noche else 'desactivado'}."))
+    for bando in ("azul", "rojo"):
+        pedida = getattr(payload, f"conduccion_{bando}")
+        if pedida is None or pedida == esc.conduccion(bando):
+            continue
+        # "ia" enciende el adversario automatico; "alumnos" o "instructor" lo apagan
+        setattr(payload, f"ia_{bando}", pedida == "ia")
+        if pedida != "ia":
+            setattr(esc, f"conduce_{bando}", pedida)
+            if not getattr(esc, f"ia_{bando}"):
+                cambios.append(f"bando {bando.capitalize()} conducido por {'el instructor' if pedida == 'instructor' else 'los alumnos'}")
+                db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino="todos",
+                              descripcion=f"Direccion del ejercicio: el bando {bando.capitalize()} lo conduce "
+                                          f"{'el instructor' if pedida == 'instructor' else 'el grupo de alumnos'}."))
+    _aplicar_calendario(payload, esc, cambios)
     ia_encendida = []
     for campo, etiqueta in (("ia_azul", "adversario automatico del bando Azul"), ("ia_rojo", "adversario automatico del bando Rojo")):
         nuevo = getattr(payload, campo)
@@ -194,12 +208,39 @@ async def configurar(
     return await _difundir_y_estado(db, esc, usuario)
 
 
+def _aplicar_calendario(payload: schemas.EscenarioConfig, esc: Escenario, cambios: list[str]) -> None:
+    """Fecha de inicio, hora H, ultimo turno y fases de la operacion (ver engine/calendario.py)."""
+    if payload.fecha_inicio is not None and (payload.fecha_inicio or None) != esc.fecha_inicio:
+        if payload.fecha_inicio:
+            try:
+                date.fromisoformat(payload.fecha_inicio)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Fecha de inicio invalida")
+        esc.fecha_inicio = payload.fecha_inicio or None
+        cambios.append(f"fecha del turno 1: {esc.fecha_inicio or 'sin fecha'}")
+    if payload.turno_h is not None and (payload.turno_h or None) != esc.turno_h:
+        esc.turno_h = payload.turno_h or None
+        cambios.append(f"hora H en el turno {esc.turno_h}" if esc.turno_h else "sin hora H")
+    if payload.turno_final is not None and (payload.turno_final or None) != esc.turno_final:
+        esc.turno_final = payload.turno_final or None
+        cambios.append(f"ultimo turno previsto {esc.turno_final}" if esc.turno_final else "sin ultimo turno previsto")
+    if esc.turno_h and esc.turno_final and esc.turno_final < esc.turno_h:
+        raise HTTPException(status_code=400, detail="El ultimo turno previsto no puede ser anterior a la hora H")
+    if payload.fases is not None:
+        try:
+            fases = calendario.validar_fases([f.model_dump() for f in payload.fases])
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        esc.fases_json = json.dumps(fases, ensure_ascii=False) if fases else None
+        cambios.append("fases de la operacion " + (", ".join(f["nombre"] for f in fases) if fases else "por defecto"))
+
+
 @router.post("/{escenario_id}/listo")
 async def marcar_listo(
     payload: schemas.ListoIn,
     esc: Escenario = Depends(auth.escenario_dep),
     db: Session = Depends(get_db),
-    usuario: Usuario = Depends(solo_alumnos),
+    usuario: Usuario = Depends(auth.conductor),
 ):
     auth.exigir_funcion(usuario, "listo")
     if esc.estado != "activo" or esc.fase != "decision":
@@ -263,7 +304,9 @@ def duplicar(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends
                       hora_inicio_min=esc.hora_inicio_min, com_latencia_ms=esc.com_latencia_ms,
                       com_jitter_ms=esc.com_jitter_ms, com_perdida_pct=esc.com_perdida_pct, com_ordenes_pct=esc.com_ordenes_pct,
                       dia_noche=esc.dia_noche, ia_nivel=esc.ia_nivel,
-                      nacion_azul=esc.nacion_azul, nacion_rojo=esc.nacion_rojo)
+                      nacion_azul=esc.nacion_azul, nacion_rojo=esc.nacion_rojo,
+                      conduce_azul=esc.conduce_azul, conduce_rojo=esc.conduce_rojo, fecha_inicio=esc.fecha_inicio,
+                      turno_h=esc.turno_h, turno_final=esc.turno_final, fases_json=esc.fases_json)
     db.add(copia)
     db.flush()
     campos = ("nombre", "bando", "tipo", "clase", "echelon", "modelo", "aeronaves", "velocidad_kmh", "alcance_km",
@@ -274,14 +317,24 @@ def duplicar(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends
         nuevas[u.id] = Unidad(escenario_id=copia.id, lat=lat, lon=lon, **{c: getattr(u, c) for c in campos})
         db.add(nuevas[u.id])
     db.flush()
-    for o in db.query(Objetivo).filter(Objetivo.escenario_id == esc.id).order_by(Objetivo.id):
+    copias: dict[int, Objetivo] = {}
+    originales = db.query(Objetivo).filter(Objetivo.escenario_id == esc.id).order_by(Objetivo.id).all()
+    for o in originales:
         if o.unidad_id is not None and o.unidad_id not in nuevas:
             continue
-        db.add(Objetivo(
+        copias[o.id] = Objetivo(
             escenario_id=copia.id, bando=o.bando, tipo=o.tipo, nombre=o.nombre, puntos=o.puntos, lat=o.lat, lon=o.lon,
             radio_km=o.radio_km, turnos_requeridos=o.turnos_requeridos, hasta_turno=o.hasta_turno,
             unidad_id=nuevas[o.unidad_id].id if o.unidad_id is not None else None,
-        ))
+            nivel=o.nivel, efecto=o.efecto, indicador=o.indicador, umbral=o.umbral,
+        )
+        db.add(copias[o.id])
+    db.flush()
+    for o in originales:  # la cadena de objetivos apunta a las copias
+        if o.id in copias and o.padre_id in copias:
+            copias[o.id].padre_id = copias[o.padre_id].id
+    for pm in db.query(ProblemaMilitar).filter(ProblemaMilitar.escenario_id == esc.id):
+        db.add(ProblemaMilitar(escenario_id=copia.id, bando=pm.bando, contenido_json=pm.contenido_json, origen=pm.origen))
     for a in db.query(Asignacion).filter(Asignacion.escenario_id == esc.id):
         db.add(Asignacion(usuario_id=a.usuario_id, escenario_id=copia.id))
     db.commit()
@@ -415,6 +468,12 @@ def exportar(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends
             "nombre": esc.nombre, "clima": esc.clima, "azar": esc.azar, "semilla": esc.semilla,
             "auto_resolver": esc.auto_resolver, "limite_decision_seg": esc.limite_decision_seg,
             "nacion_azul": esc.nacion_azul, "nacion_rojo": esc.nacion_rojo,
+            "conduccion_azul": esc.conduccion_azul, "conduccion_rojo": esc.conduccion_rojo,
+            "calendario": esc.calendario,
+        },
+        "problema_militar": {
+            pm.bando: json.loads(pm.contenido_json)
+            for pm in db.query(ProblemaMilitar).filter(ProblemaMilitar.escenario_id == esc.id)
         },
         "unidades": unidades,
         "objetivos": [

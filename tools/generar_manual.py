@@ -295,15 +295,16 @@ def construir(salida: Path, img: Path) -> None:
     h += [P("S.I.E.T.E. (Sistema Integral de Entrenamiento Táctico y Estratégico) es un <b>juego de guerra (wargame) de conducción</b> para el aula: una herramienta de "
             "adiestramiento en el <b>proceso de conducción</b> de operaciones terrestres, aéreas y navales sobre el terreno "
             "real de Venezuela y su entorno. Un <b>instructor o director de ejercicio</b> arma la situación, controla el reloj y "
-            "evalúa; los <b>alumnos</b>, organizados por bando (azul y rojo) y por puesto de estado mayor, aprecian la situación, "
+            "evalúa; los <b>alumnos</b>, organizados por bando (azul y rojo) y por repartición del Estado Mayor (TIEM), aprecian la situación, "
             "redactan órdenes y ven sus consecuencias turno a turno."),
           P("Es una aplicación <b>web multiusuario</b> que se instala en un solo equipo del aula y se usa desde cualquier "
             "navegador de la red local. <b>No necesita internet</b>: el mapa satelital, el relieve, los planos de las bases "
             "aéreas, el catálogo de unidades y las librerías se sirven desde el propio servidor."),
           H2("1.1 Para qué sirve"),
           Bul(["Practicar el ciclo de conducción: apreciación de situación, decisión, emisión de órdenes, ejecución y evaluación.",
-               "Ejercitar el trabajo de un estado mayor: puestos A2 (inteligencia), A3 (operaciones), A4 (logística) y A5 (planificación) "
-               "trabajando a la vez sobre el mismo bando, con la niebla de guerra y las comunicaciones simuladas.",
+               "Ejercitar el trabajo de Estado Mayor según el TIEM: cada bando es el Estado Mayor de un componente aéreo (Comandante, JEM, "
+               "A-1, A-2, A-3, A-3 D/A, A-4 y C-E) que parte de un Problema Militar Operativo, con calendario D/H, cadena de objetivos, "
+               "niebla de guerra y comunicaciones simuladas.",
                "Ensayar operaciones aéreas (bases, ciclo de vuelo, misiones con roles, drones, guerra electrónica, defensa antiaérea), "
                "navales (buques, portaaviones, submarinos, misiles de crucero) y terrestres (terreno, ríos, ingenieros, logística).",
                "Revisar el ejercicio después (informe AAR): repetición turno a turno, combates, logística y puntaje."]),
@@ -315,7 +316,7 @@ def construir(salida: Path, img: Path) -> None:
           H2("1.3 En una página"),
           Tbl(["Aspecto", "Cómo lo resuelve el simulador"], [
               ["Tiempo", "Por turnos: 1 turno = 1 hora simulada. Fase de decisión (órdenes) y fase de resolución automática."],
-              ["Participantes", "Instructor (director), bando azul, bando rojo (varios alumnos por bando, por puesto) y observadores."],
+              ["Participantes", "Instructor (director), bando azul, bando rojo (varios alumnos por bando, cada uno en una repartición del TIEM) y observadores."],
               ["Unidades", f"{n_clases} clases (terrestres, aéreas, navales y bases) y {n_modelos} modelos de aeronave y misil, con miniaturas 3D en el mapa."],
               ["Terreno", "Venezuela y países vecinos: satélite Sentinel-2, relieve, clases de terreno (bosque, pantano, urbano, montaña, agua), ríos."],
               ["Bases aéreas", "Las 9 bases de la AMB con su plano real (pistas, rodajes, hangares) y daños visibles."],
@@ -328,7 +329,7 @@ def construir(salida: Path, img: Path) -> None:
     h += H1("2. Cómo se hizo")
     h += [P("El simulador fue desarrollado como un proyecto propio, en código abierto y con datos abiertos, tomando como "
             "referencia funcional y doctrinal los simuladores de conducción de uso en escuelas militares (el concepto de "
-            "director de ejercicio, puestos por función, turnos, niebla de guerra e informe posterior). No utiliza código, "
+            "director de ejercicio, reparticiones del Estado Mayor, turnos, niebla de guerra e informe posterior). No utiliza código, "
             "datos ni mapas de ningún producto de terceros."),
           H2("2.1 Arquitectura")]
     h += Img(img, "diag_arquitectura.png", "Esquema 1. Arquitectura: estaciones del aula, servidor y datos.")
@@ -337,7 +338,7 @@ def construir(salida: Path, img: Path) -> None:
         ["Motor de simulación", "Python (paquete engine/)", "Catálogo, movimiento, visión, combate, aeronaves, misiones, misiles, guerra electrónica, logística, objetivos, informe."],
         ["Base de datos", "SQLite (por defecto) o PostgreSQL; SQLAlchemy + Alembic", "Escenarios, unidades, órdenes, usuarios, instantáneas de cada turno; migraciones automáticas."],
         ["Interfaz", "HTML, CSS y JavaScript sin frameworks; Leaflet; milsymbol", "Mapa táctico, paneles, órdenes, misiones, informe, videowall. Miniaturas 3D propias."],
-        ["Seguridad", "Sesiones HttpOnly, PBKDF2-SHA256, CSP", "Roles y puestos verificados en el servidor; sin recursos externos; HTTPS opcional."],
+        ["Seguridad", "Sesiones HttpOnly, PBKDF2-SHA256, CSP", "Roles y reparticiones verificados en el servidor; sin recursos externos; HTTPS opcional."],
         ["Pruebas", "pytest (motor, API, migraciones) y Node (lógica del cliente)", "Más de 550 pruebas automatizadas; arnés visual con datos simulados."],
     ], [3.0 * cm, 5.0 * cm, ANCHO_TEXTO - 8.0 * cm])]
     h += [H2("2.2 Datos y licencias"),
@@ -415,22 +416,23 @@ def construir(salida: Path, img: Path) -> None:
           *Img(img, "cap_login.jpg", "Figura 1. Inicio de sesión, con el enlace «Solicitar una cuenta». Tras 5 intentos fallidos la cuenta se bloquea 5 minutos.", ancho=9.5 * cm),
           Nota("Deje la consola del servidor abierta mientras dure el ejercicio. Para detenerlo, Ctrl+C. Para que arranque solo al encender el "
                "equipo, cree una tarea programada de Windows que ejecute el comando de arranque."),
-          H2("3.4 Usuarios, roles y puestos"),
+          H2("3.4 Usuarios, roles y reparticiones"),
           P("<b>Primer acceso del administrador.</b> Entre con el usuario <b>admin</b> y la contraseña inicial <b>siete1234</b>. El "
             "simulador pide de inmediato elegir una contraseña nueva (mínimo 8 caracteres) y no deja hacer nada más hasta "
             "cambiarla. Si alguna vez se pierde, en la carpeta <font face='Mono'>backend</font> del servidor:"),
           Code("venv\\Scripts\\python -m app.restablecer_admin"),
           P("devuelve <b>admin</b> a la contraseña inicial (con la misma obligación de cambiarla), sin tocar a los demás usuarios."),
           P("<b>Cuentas de los alumnos.</b> Cada alumno pide su cuenta en la pantalla de acceso con <b>Solicitar una cuenta</b>: elige "
-            "usuario y contraseña, el rol (alumno azul o rojo, observador o instructor) y su puesto. La cuenta queda <b>pendiente</b> y no "
+            "usuario y contraseña, el rol (alumno azul o rojo, observador o instructor) y su repartición. La cuenta queda <b>pendiente</b> y no "
             "permite entrar hasta que el instructor la aprueba en <i>Consola → Usuarios → Solicitudes de cuenta pendientes</i>, con el rol "
-            "y el puesto pedidos o con los que él decida; también puede rechazarla. El título <b>Usuarios</b> muestra cuántas hay pendientes "
+            "y la repartición pedidos o con los que él decida; también puede rechazarla. El título <b>Usuarios</b> muestra cuántas hay pendientes "
             "y el simulador avisa cuando llega una nueva."),
           P("El instructor también puede crear cuentas directamente en el panel <b>Usuarios</b>, o ponerle una contraseña nueva a quien la "
             "olvidó (botón <b>Clave</b>): en ambos casos es <b>provisional</b> y el alumno debe cambiarla al entrar. Cualquier usuario cambia la "
             "suya desde el menú del perfil (<i>Cambiar contraseña</i>). Cada alumno tiene un rol (azul, rojo u observador) y, dentro del "
-            "bando, un puesto (EM por defecto, o A2, A3, A4, A5). Por consola también se crean cuentas, ya aprobadas:"),
-          Code("venv\\Scripts\\python -m app.crear_usuario a5azul --rol azul --puesto planificacion\n"
+            "bando, una repartición del TIEM (comandante por defecto, o jem, a1, a2, a3, a3da, a4, ce). Por consola también se crean "
+            "cuentas, ya aprobadas:"),
+          Code("venv\\Scripts\\python -m app.crear_usuario da_azul --rol azul --puesto a3da\n"
                "venv\\Scripts\\python -m app.crear_usuario obs1 --rol observador"),
           H2("3.5 HTTPS (opcional)"),
           P("Con <font face='Mono'>--https</font> en lugar de <font face='Mono'>--port 8000</font> el servidor genera un certificado "
@@ -477,26 +479,34 @@ def construir(salida: Path, img: Path) -> None:
             "teselas de relieve y satelitales, capas vectoriales y las grillas del motor (clases, alturas y vías).")]
 
     # ---- 4 roles
-    h += H1("4. Roles, puestos y acceso")
-    h += Img(img, "diag_puestos.png", "Esquema 2. Roles del ejercicio y puestos de cada bando.")
+    h += H1("4. Roles, reparticiones y acceso")
+    h += Img(img, "diag_puestos.png", "Esquema 2. Roles del ejercicio y reparticiones del Estado Mayor de cada bando (TIEM).")
     h += [Tbl(["Rol", "Ve", "Puede"], [
         ["Instructor", "Todo, sin niebla; puede «ver como» un bando", "Crear y editar escenarios, ubicar unidades, clima, eventos, ajustes, usuarios, resolver turnos, informe"],
-        ["Azul / Rojo", "Sus unidades, los enemigos detectados y los últimos contactos", "Emitir y cancelar órdenes y misiones de su puesto, gráficos, chat, marcar «listo»; informe al finalizar"],
+        ["Azul / Rojo", "Sus unidades, los enemigos detectados, los últimos contactos y su Problema Militar", "Emitir y cancelar órdenes y misiones de su repartición, gráficos, chat, marcar «listo» (Comandante o JEM); informe al finalizar"],
         ["Observador", "Todo", "Solo lectura, incluido el informe"],
     ], [2.4 * cm, 5.6 * cm, ANCHO_TEXTO - 8.0 * cm]),
-          Tbl(["Puesto", "Conduce", "Confirma «listo»"], [
-              ["EM · Estado Mayor", "Todo (un solo alumno por bando)", "Sí"],
-              ["A2 · Inteligencia", "Radares (control de emisiones) y guerra electrónica terrestre; sigue contactos y dibuja gráficos de blancos", "No"],
-              ["A3 · Operaciones", "Aeronaves ya creadas: rutas, patrullas, ataques, aterrizajes, misiones de grupos existentes", "No"],
-              ["A4 · Logística", "Ingenieros (puentes y vados) y convoyes de abastecimiento", "No"],
-              ["A5 · Planificación", "Unidades terrestres y navales, antiaérea, lanzamiento de misiles, envío de grupos desde bases y portaaviones, misiones programadas", "Sí"],
-          ], [3.4 * cm, ANCHO_TEXTO - 6.4 * cm, 3.0 * cm]),
-          P("El servidor rechaza toda orden fuera del puesto explicando a quién corresponde, y la interfaz solo muestra las "
-            "herramientas de cada puesto. Los alumnos y observadores solo ven los escenarios que el instructor les asigna.")]
+          Tbl(["Repartición", "Conduce (función)", "Confirma «listo»"], [
+              ["comandante · CMDTE", "Todo el bando (todas las funciones); por defecto para un solo alumno", "Sí"],
+              ["jem · Jefe de Estado Mayor", "Todas las funciones; coordina a las reparticiones", "Sí"],
+              ["a1 · A-1 Personal", "Ninguna orden a unidades: efectivos, bajas y apreciación de personal", "No"],
+              ["a2 · A-2 Inteligencia", "reconocimiento: unidades y drones de reconocimiento", "No"],
+              ["a3 · A-3 Operaciones", "superficie (terrestres, navales, lanzadores), aereo (ataque, helicópteros, drones armados, cisternas), "
+               "caza y despegar (bases y portaaviones)", "No"],
+              ["a3da · A-3 D/A Defensa Aérea", "defensa_aerea (radares, antiaérea, alerta temprana), caza y despegar", "No"],
+              ["a4 · A-4 Logística", "logistica: convoyes, depósitos, ingenieros y toda orden de construir", "No"],
+              ["ce · C-E Comunicaciones y Electrónica", "guerra_electronica: escucha e interferencia terrestres y aviones de GE", "No"],
+          ], [4.4 * cm, ANCHO_TEXTO - 7.2 * cm, 2.8 * cm]),
+          P("La función de cada orden la decide <font face='Mono'>engine/puestos.py</font> (<font face='Mono'>funcion_de_orden</font>) "
+            "por la clase de la unidad y el tipo de orden; el servidor rechaza toda orden fuera de la repartición explicando a quién "
+            "corresponde, y la interfaz solo muestra las herramientas de cada una. Los ids anteriores al TIEM (mando, inteligencia, "
+            "operaciones, logistica, planificacion) se traducen solos (migración 0025: mando → comandante, inteligencia → a2, "
+            "operaciones y planificacion → a3, logistica → a4). Los alumnos y observadores solo ven los escenarios que el instructor "
+            "les asigna.")]
 
     # ---- 5 pantalla
     h += H1("5. La pantalla")
-    h += Img(img, "cap_azul.jpg", "Figura 2. Pantalla de un alumno del bando azul (puesto EM) con datos de ejemplo.")
+    h += Img(img, "cap_azul.jpg", "Figura 2. Pantalla de un alumno del bando azul (Comandante) con datos de ejemplo.")
     h += [Tbl(["Zona", "Contenido"], [
         ["Cabecera", "Escenario activo, indicador de conexión, reloj de la fase (cuenta regresiva si el instructor fijó un límite), botones Videowall, Informe y sesión."],
         ["Panel izquierdo · Fuerzas", "Orden de batalla por rama (infantería, blindados, artillería, aviación, naval, bases), con el estado de cada unidad y buscador. Al elegir una unidad, su ficha (clase, modelo, fuerza, combustible, munición, situación) y las acciones (radar, fuego, misiles, despegue)."],
@@ -526,7 +536,7 @@ def construir(salida: Path, img: Path) -> None:
                "<b>Objetivos y puntaje</b>: ocupar una zona N turnos, destruir una unidad o proteger una unidad propia, cada uno con sus puntos y para un bando.",
                "<b>Identidad nacional</b>: cada bando puede representar a Venezuela, Colombia, Brasil, Guyana o Trinidad y Tobago (solo nombre para la interfaz).",
                "<b>Comunicaciones simuladas</b>: latencia, jitter y pérdida del chat de cada bando.",
-               "<b>Usuarios</b>: crear alumnos y observadores, asignar puesto y asignarlos al escenario.",
+               "<b>Usuarios</b>: crear alumnos y observadores, asignar su repartición y asignarlos al escenario.",
                "<b>Modo de resolución</b>: manual (el instructor resuelve), automática al estar ambos bandos listos, o con límite de tiempo por fase; "
                "azar reproducible opcional.",
                "<b>Ajustes durante el ejercicio</b>: arrastrar unidades (<i>Editar el escenario</i>), ajuste manual de fuerza, combustible, munición y existencias, "
@@ -544,20 +554,20 @@ def construir(salida: Path, img: Path) -> None:
               ["Mover", "Toda unidad móvil", "Clics en el mapa (waypoints); se previsualiza dónde termina el turno", "Avanza según velocidad, terreno, ríos, clima, peso y combustible."],
               ["Atacar", "Unidades con armas", "Objetivo enemigo detectado (lista o clic en el mapa)", "Combate en la fase 3 si el blanco está al alcance; gasta munición."],
               ["Apoyar", "Unidades con armas", "Otra unidad propia a su alcance", "+30 % (hasta +60 %) al ataque y la defensa de la apoyada; 10 % de munición."],
-              ["Construir", "Ingenieros (A4)", "Vado o puente, clic sobre un río", "Cruce para vehículos pesados; dura 4 o 12 turnos."],
-              ["Despegar", "Bases aéreas y portaaviones (A5)", "«Enviar aeronaves o drones…»: modelo, cantidad, indicativo", "El grupo nace junto a la base al resolverse; recibe órdenes el turno siguiente."],
-              ["Patrullar", "Aeronaves (A3)", "Clic en el punto de patrulla", "Se mantiene en la zona e intercepta aviones enemigos al alcance."],
-              ["Aterrizar", "Aeronaves en vuelo (A3)", "Base o portaaviones propio con plazas", "Estaciona, reabastece y rearma en 2 turnos."],
-              ["Interferir", "Guerra electrónica (A2 / A3)", "Clic en el centro de la zona", "Degrada sensores, antiaérea y enlaces de drones enemigos; delata al emisor."],
-              ["Lanzar misiles", "Fragata, destructor, submarino, batería (A5)", "Blanco detectado en tierra o mar y 1–4 misiles", "Salva de misiles de crucero guiada; puede ser interceptada."],
-              ["Misión aérea", "Grupos (A3) o despegues programados (A5)", "«Planificar misión…»: rol y ruta con puntos", "El grupo ejecuta solo la misión turno tras turno."],
+              ["Construir", "Ingenieros (A-4)", "Vado o puente, clic sobre un río", "Cruce para vehículos pesados; dura 4 o 12 turnos."],
+              ["Despegar", "Bases aéreas y portaaviones (A-3, A-3 D/A)", "«Enviar aeronaves o drones…»: modelo, cantidad, indicativo", "El grupo nace junto a la base al resolverse; recibe órdenes el turno siguiente."],
+              ["Patrullar", "Aeronaves (A-3; caza también A-3 D/A)", "Clic en el punto de patrulla", "Se mantiene en la zona e intercepta aviones enemigos al alcance."],
+              ["Aterrizar", "Aeronaves en vuelo (su repartición)", "Base o portaaviones propio con plazas", "Estaciona, reabastece y rearma en 2 turnos."],
+              ["Interferir", "Guerra electrónica (C-E)", "Clic en el centro de la zona", "Degrada sensores, antiaérea y enlaces de drones enemigos; delata al emisor."],
+              ["Lanzar misiles", "Fragata, destructor, submarino, batería (A-3)", "Blanco detectado en tierra o mar y 1–4 misiles", "Salva de misiles de crucero guiada; puede ser interceptada."],
+              ["Misión aérea", "Grupos (su repartición) o despegues programados (A-3, A-3 D/A)", "«Planificar misión…»: rol y ruta con puntos", "El grupo ejecuta solo la misión turno tras turno."],
           ], [2.2 * cm, 3.2 * cm, 4.6 * cm, ANCHO_TEXTO - 10.0 * cm]),
           H2("7.2 Acciones inmediatas desde la ficha de la unidad"),
           Bul(["<b>Radar</b> (radares, antiaérea guiada por radar, destructores): encender o apagar. Apagado ve solo 5 km, pero la escucha enemiga no lo localiza.",
                "<b>Fuego automático</b> (antiaérea, destructores): libre o retenido.",
                "Estas acciones rigen de inmediato, no esperan al turno."]),
           H2("7.3 Confirmar y resolver"),
-          P("Cuando el bando termina, pulsa <b>Estoy listo</b> (lo confirman el EM o A5). El turno se resuelve cuando el instructor pulsa "
+          P("Cuando el bando termina, pulsa <b>Estoy listo</b> (lo confirman el Comandante o el JEM). El turno se resuelve cuando el instructor pulsa "
             "<b>Resolver y avanzar turno</b>, o solo al estar ambos listos, o al agotarse el tiempo de la fase. Cada orden resuelta muestra "
             "su resultado en la cola (por ejemplo «Ataque a Infantería Roja: pérdidas 12 % / 27 %») y los sucesos importantes llegan como alertas."),
           H2("7.4 Lo que ve cada bando"),
@@ -675,6 +685,33 @@ def construir(salida: Path, img: Path) -> None:
             "emisión. Al cerrar cada turno, cada sensor informa al bando los enemigos que este no tenía a la vista el turno anterior "
             "(evento «radar»). La previsualización de una orden de mover también da el <b>tiempo de todo el recorrido</b> (mismas "
             "reglas de terreno, carreteras, ríos, clima y peso), los turnos y la hora simulada de llegada.")]
+    h += [H2("8.11 El TIEM en el simulador (etapa 1)"),
+          P("El simulador se reorienta al <b>Trabajo Integral de Estado Mayor</b> (TIEM): cada bando es el Estado Mayor del componente "
+            "aéreo de un Teatro de Operaciones. La etapa 1 incorpora los cimientos sobre los que se apoyarán la apreciación, el plan y la "
+            "supervisión de las etapas siguientes:"),
+          Bul(["<b>Reparticiones</b> (<font face='Mono'>engine/puestos.py</font>): funciones superficie, aereo, caza, despegar, "
+               "defensa_aerea, reconocimiento, logistica, guerra_electronica y listo; la matriz del capítulo 4 se aplica en el servidor "
+               "(<font face='Mono'>auth.exigir_funcion</font>) y se refleja en la interfaz (<font face='Mono'>logica.js</font>).",
+               "<b>Problema Militar Operativo</b> (<font face='Mono'>engine/pmo.py</font>, tabla <font face='Mono'>problemas_militares</font>, "
+               "API <font face='Mono'>/api/escenarios/{id}/pmo</font>): diez párrafos por bando; la misión se guarda por partes (tarea, qué, "
+               "dónde, cuándo, propósito) y se valida con las reglas del TIEM. El generador usa los países, las unidades (las enemigas en "
+               "cantidades aproximadas y por zona, nunca con su posición exacta), los objetivos (postura ofensiva o defensiva), las "
+               "ciudades de las capas <font face='Mono'>lugares.geojson</font> (<font face='Mono'>engine/lugares.py</font>) y el calendario. "
+               "Lo redactado por el instructor no se reemplaza salvo pedido expreso.",
+               "<b>Calendario</b> (<font face='Mono'>engine/calendario.py</font>): fecha del turno 1, turno de la hora H, último turno y "
+               "fases; cada turno se nombra D±n y H±n. Si faltan, el generador fija la fecha (día siguiente a la creación), H tres turnos "
+               "después del actual y 24 turnos de duración.",
+               "<b>Conducción de cada bando</b>: <font face='Mono'>conduce_azul/rojo</font> (alumnos o instructor) más el adversario "
+               "automático (<font face='Mono'>ia_azul/rojo</font>, con prioridad). El instructor conduce enviando la cabecera "
+               "<font face='Mono'>X-Conduce-Bando</font> (dependencia <font face='Mono'>auth.conductor</font>): para el servidor es el "
+               "Comandante de ese bando; sus órdenes cuentan para el bando pero no en la evaluación por alumno.",
+               "<b>Cadena de objetivos</b> (<font face='Mono'>engine/objetivos.py</font>): nivel (ulterior, asignado, material), "
+               "<font face='Mono'>padre_id</font>, efecto deseado, indicador y umbral. «neutralizar» se cumple cuando la fuerza baja al "
+               "umbral (50 %); «efecto» cuando se cumple el umbral (100 %) de sus dependientes y falla cuando ya no puede; "
+               "<font face='Mono'>hasta_turno</font> es un plazo para todos menos proteger. El generador agrupa los objetivos materiales "
+               "en asignados (superioridad aérea, sostenimiento, superficie, terreno, capacidad propia) bajo un ulterior.",
+               "Migraciones 0025 (reparticiones) y 0026 (PMO, calendario, conducción y cadena). Las plantillas, la copia y la "
+               "exportación de escenarios guardan todo lo anterior."])]
     h += Img(img, "cap_ia_noche.jpg", "Figura 4. Un alumno del bando azul contra la IA a las 23:00: el mapa oscurecido, la hora y el periodo en Estado del escenario y el bando rojo «IA · LISTO».")
 
     # ---- 9 aviacion
@@ -687,7 +724,7 @@ def construir(salida: Path, img: Path) -> None:
           H2("9.2 Misiones aéreas con roles"),
           P("Además de las órdenes turno a turno, un grupo puede recibir una <b>misión</b> (<i>Planificar misión…</i>): un rol y una ruta de puntos "
             "(<b>paso</b>, <b>órbita</b> de N turnos, <b>blanco</b>, <b>aterrizaje</b>) que el motor ejecuta solo. Puede volarla un grupo existente "
-            "(A3) o un grupo que despegará de una base en un turno programado, hasta 24 turnos después (A5). Mientras se traza, el servidor estima "
+            "(la repartición que lo conduce) o un grupo que despegará de una base en un turno programado, hasta 24 turnos después (A-3 o A-3 D/A). Mientras se traza, el servidor estima "
             "la hora de llegada y el combustible en cada punto."),
           Tbl(["Rol", "Comportamiento"], [
               ["CAP", "En la órbita intercepta aviones enemigos."],
@@ -766,14 +803,14 @@ def construir(salida: Path, img: Path) -> None:
             "al inicio o al final y la casilla <b>Estela</b>, que deja el recorrido de cada unidad en el color de su bando. El instructor y el "
             "observador lo ven siempre; los alumnos, al finalizar el escenario.")]
     h += Img(img, "cap_replay.jpg", "Figura 12. Replay animado detenido a mitad del ejercicio: estelas, combate en curso y rótulo con hora, clima, marcador y novedades.")
-    h += [H2("12.2 Rúbrica por bando, por puesto y por alumno"),
-          P("<i>Informe → Rúbrica</i> resume la actuación de cada bando y de cada puesto responsable (A2 a A5): órdenes emitidas, resueltas y "
+    h += [H2("12.2 Rúbrica por bando, por repartición y por alumno"),
+          P("<i>Informe → Rúbrica</i> resume la actuación de cada bando y de cada repartición responsable (A-2, A-3, A-3 D/A, A-4 y C-E): órdenes emitidas, resueltas y "
             "rechazadas con su motivo, turnos con órdenes frente a turnos pasivos, logística, pérdidas, objetivos y misiones, con <b>observaciones "
-            "automáticas</b>. Como cada orden y misión registra <b>quién la emitió y en qué puesto</b> (la cola de órdenes lo muestra), la sección "
+            "automáticas</b>. Como cada orden y misión registra <b>quién la emitió y en qué repartición</b> (la cola de órdenes lo muestra), la sección "
             "<b>Evaluación por alumno</b> hace lo mismo para cada usuario, y el botón <b>CSV por alumno</b> la descarga para la planilla de "
             "calificaciones. Las órdenes automáticas del motor no se atribuyen a nadie, y las anteriores a la versión 1.3 figuran como "
             "«sin autor registrado». La rúbrica también va en el informe imprimible y en las diapositivas.")]
-    h += Img(img, "cap_rubrica.jpg", "Figura 13. Rúbrica del ejercicio con la evaluación por bando, por puesto y por alumno.")
+    h += Img(img, "cap_rubrica.jpg", "Figura 13. Rúbrica del ejercicio con la evaluación por bando, por repartición y por alumno.")
 
     # ---- 13 limitaciones
     h += H1("13. Limitaciones conocidas")
@@ -785,10 +822,13 @@ def construir(salida: Path, img: Path) -> None:
                "El adversario automático da órdenes turno a turno: no planifica misiones aéreas de varios turnos ni lee el chat o los eventos inyectados.",
                "Un solo servidor por aula: el WebSocket y el temporizador viven en el proceso."]),
           H2("Hoja de ruta prevista"),
-          Bul(["Más plantillas de escenario por curso.", "Carreteras terciarias y puentes etiquetados de OpenStreetMap."])]
+          Bul(["Etapas siguientes del TIEM: apreciación inicial (análisis de la misión, concepto del comandante, guía de planeamiento, "
+               "formas de acción con el criterio APA), apreciaciones de Estado Mayor y juego de guerra, decisión y Plan de Operaciones con "
+               "tareas que se convierten en órdenes, supervisión y evaluación con exportación de documentos.",
+               "Más plantillas de escenario por curso.", "Carreteras terciarias y puentes etiquetados de OpenStreetMap."])]
 
     # ---- 14 novedades
-    h += H1("14. Novedades de las versiones 1.1 a 1.6")
+    h += H1("14. Novedades de las versiones 1.1 a 1.7")
     h += [P("Resumen de lo incorporado después de la primera edición del manual; cada punto está explicado en su capítulo."),
           Tbl(["Novedad", "Dónde", "Qué aporta"], [
               ["Meteorología por zonas", "Consola → Meteorología por zonas; capa Meteorología",
@@ -860,6 +900,12 @@ def construir(salida: Path, img: Path) -> None:
                "Objetivos cumplidos sobre asignados de cada bando; duración total, turnos y hora de llegada de una ruta."],
               ["Mapa ficticio: Valdoria y Ostrania", "Capas → Teatro ficticio; Desde plantilla…; tools/generar_mapa_ficticio.py",
                "Un país inventado en dos repúblicas, con relieve, ríos, embalses, bosques, ciudades, carreteras, infraestructura y su ejercicio, para ejercitar sin ningún país real."],
+              ["TIEM, etapa 1: reparticiones del Estado Mayor", "Usuarios; Mi repartición; engine/puestos.py",
+               "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
+              ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña PMO; engine/pmo.py",
+               "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["TIEM, etapa 1: calendario, conducción y cadena de objetivos", "Consola → Calendario; Dirección del ejercicio; Objetivos",
+               "Día D, hora H y fases; cada bando lo conduce un grupo de alumnos, el instructor o la IA; objetivos ulterior, asignados y materiales con efecto, indicador, plazo y «neutralizar» (8.11)."],
               ["Satélite de Venezuela a zoom 13", "Capa Satélite; tools/preparar_satelite.py",
                "El doble de nitidez al acercar el mapa (unos 19 m por píxel): calles, pistas y plataformas se distinguen mejor."],
           ], [3.6 * cm, 5.2 * cm, ANCHO_TEXTO - 8.8 * cm])]
@@ -888,7 +934,9 @@ def construir(salida: Path, img: Path) -> None:
         ["Pedir una cuenta", "Pantalla de acceso → Solicitar una cuenta; el instructor la aprueba en Consola → Usuarios"],
         ["Cambiar la propia contraseña", "Menú del perfil → Cambiar contraseña"],
         ["Recuperar la cuenta admin", "backend: venv\\Scripts\\python -m app.restablecer_admin"],
-        ["Crear usuario", "Consola → Usuarios, o backend: venv\\Scripts\\python -m app.crear_usuario &lt;nombre&gt; --rol azul|rojo|observador|instructor [--puesto ...]"],
+        ["Crear usuario", "Consola → Usuarios, o backend: venv\\Scripts\\python -m app.crear_usuario &lt;nombre&gt; --rol azul|rojo|observador|instructor [--puesto comandante|jem|a1|a2|a3|a3da|a4|ce]"],
+        ["Problema Militar y calendario", "Pestaña PMO → Crear la situación automáticamente / Redactar; Consola → Calendario de la operación"],
+        ["Conducir un bando como instructor", "Consola → Dirección del ejercicio → Conduce el bando: El instructor; cabecera → Conducir Rojo/Azul"],
         ["Pruebas", "backend: venv\\Scripts\\python -m pytest · raíz: node --test \"frontend/tests/*.test.js\""],
     ], [5.2 * cm, ANCHO_TEXTO - 5.2 * cm])]
     h += [H2("Anexo B. Estructura del proyecto"),

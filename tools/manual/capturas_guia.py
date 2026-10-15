@@ -96,7 +96,7 @@ def acceso_registro(n):
     n.clic("#btn-ir-registro")
     n.valor("#r-user", "carlos.perez")
     n.valor("#r-rol", "azul")
-    n.valor("#r-puesto", "operaciones")
+    n.valor("#r-puesto", "a3")
     guardar(n, "acceso_registro", n.rect("#registro-form"), margen=14)
 
 
@@ -155,7 +155,7 @@ def cabecera(n):
 
 
 def alumno_pantalla(n):
-    n.ir(arnes("azul", "mando"), LISTA_APP, 3)
+    n.ir(arnes("azul", "comandante"), LISTA_APP, 3)
     marcas = [
         (*centro(n.rect("#cabecera"), 0.12, 0.5), "1"),
         (*centro(n.rect("#oob-titulo"), 0.85, 0.5), "2"),
@@ -167,7 +167,7 @@ def alumno_pantalla(n):
 
 
 def alumno_secciones(n):
-    n.ir(arnes("azul", "mando"), LISTA_APP, 1.5)
+    n.ir(arnes("azul", "comandante"), LISTA_APP, 1.5)
     seleccionar(n, 2)
     al_panel(n, "#sec-puesto")
     r = n.rect("#panel-izq")
@@ -177,7 +177,7 @@ def alumno_secciones(n):
 
 
 def oob_ficha(n):
-    n.ir(arnes("azul", "mando"), LISTA_APP, 1.5)
+    n.ir(arnes("azul", "comandante"), LISTA_APP, 1.5)
     seleccionar(n, 2)
     n.js("document.getElementById('panel-izq').scrollTop = 0")
     time.sleep(0.3)
@@ -188,7 +188,7 @@ def oob_ficha(n):
 
 
 def ficha_acciones(n):
-    n.ir(arnes("azul", "mando"), LISTA_APP, 1.5)
+    n.ir(arnes("azul", "comandante"), LISTA_APP, 1.5)
     seleccionar(n, 19)
     al_panel(n, "#detalle-contenido")
     n.js("document.getElementById('panel-izq').scrollTop -= 40")
@@ -197,7 +197,7 @@ def ficha_acciones(n):
 
 # ------------------------------------------------------------------ ordenes
 def orden_mover(n):
-    n.ir(arnes("azul", "mando", 8.6, -70.55, 11), LISTA_APP, 2)
+    n.ir(arnes("azul", "comandante", 8.6, -70.55, 11), LISTA_APP, 2)
     seleccionar(n, 2)
     n.clic('[data-modo="mover"]')
     n.vista(8.54, -70.6, 11, 1.5)
@@ -210,7 +210,7 @@ def orden_mover(n):
 
 
 def orden_atacar(n):
-    n.ir(arnes("azul", "mando", 8.62, -70.6, 12), LISTA_APP, 2)
+    n.ir(arnes("azul", "comandante", 8.62, -70.6, 12), LISTA_APP, 2)
     seleccionar(n, 3)
     n.clic('[data-modo="atacar"]')
     n.valor("#o-objetivo", "11")
@@ -221,7 +221,7 @@ def orden_atacar(n):
 
 
 def seleccion_multiple(n):
-    n.ir(arnes("azul", "mando"), LISTA_APP, 2)
+    n.ir(arnes("azul", "comandante"), LISTA_APP, 2)
     seleccionar(n, 1)
     seleccionar(n, 2, ctrl=True)
     seleccionar(n, 3, ctrl=True)
@@ -235,7 +235,7 @@ def seleccion_multiple(n):
 
 
 def orden_construir(n):
-    n.ir(arnes("azul", "logistica"), LISTA_APP, 2)
+    n.ir(arnes("azul", "a4"), LISTA_APP, 2)
     seleccionar(n, 4)
     n.clic('[data-modo="construir"]')
     al_panel(n, "#sec-orden")
@@ -243,7 +243,7 @@ def orden_construir(n):
 
 
 def cola_y_listo(n):
-    n.ir(arnes("azul", "mando"), LISTA_APP, 2)
+    n.ir(arnes("azul", "comandante"), LISTA_APP, 2)
     al_panel(n, ".cola")
     guardar(n, "cola_ordenes", n.rect(".cola"), margen=8)
     guardar(n, "barra_inferior", n.rect("#control-turno"), margen=0)
@@ -251,7 +251,7 @@ def cola_y_listo(n):
 
 # ------------------------------------------------------------------ aviacion
 def aviacion_enviar(n):
-    n.ir(arnes("azul", "planificacion"), LISTA_APP, 2)
+    n.ir(arnes("azul", "a3"), LISTA_APP, 2)
     n.clic("#btn-enviar-caza")
     n.esperar("document.getElementById('dlg-aeronaves').open")
     time.sleep(1)
@@ -259,7 +259,7 @@ def aviacion_enviar(n):
 
 
 def orden_patrullar(n):
-    n.ir(arnes("azul", "operaciones", 8.68, -70.45, 10), LISTA_APP, 2)
+    n.ir(arnes("azul", "a3", 8.68, -70.45, 10), LISTA_APP, 2)
     seleccionar(n, 8)
     n.clic('[data-modo="patrullar"]')
     n.vista(8.68, -70.45, 10, 1.5)
@@ -270,7 +270,7 @@ def orden_patrullar(n):
 
 
 def mision_planificar(n):
-    n.ir(arnes("azul", "operaciones", 8.66, -70.5, 11), LISTA_APP, 2)
+    n.ir(arnes("azul", "a3", 8.66, -70.5, 11), LISTA_APP, 2)
     n.clic("#btn-planificar-mision")
     n.esperar("!document.getElementById('panel-mision').hidden")
     n.js("document.getElementById('pm-origen-grupo').click()")
@@ -285,7 +285,7 @@ def mision_planificar(n):
 
 
 def perfil_vuelo(n):
-    n.ir(arnes("azul", "operaciones"), LISTA_APP, 2)
+    n.ir(arnes("azul", "a3"), LISTA_APP, 2)
     seleccionar(n, 10)
     n.js("document.querySelector('.perfil-vuelo').scrollIntoView({ block: 'center' })")
     time.sleep(0.4)
@@ -300,7 +300,7 @@ def cobertura_radar(n):
 
 
 def cronograma(n):
-    n.ir(arnes("azul", "operaciones"), LISTA_APP, 2)
+    n.ir(arnes("azul", "a3"), LISTA_APP, 2)
     n.clic("#btn-cronograma")
     n.esperar("document.getElementById('dlg-cronograma').open")
     time.sleep(1)
@@ -308,14 +308,14 @@ def cronograma(n):
 
 
 def misiones_lista(n):
-    n.ir(arnes("azul", "operaciones"), LISTA_APP, 2)
+    n.ir(arnes("azul", "a3"), LISTA_APP, 2)
     al_panel(n, "#sec-misiones")
     guardar(n, "misiones_lista", n.rect("#sec-misiones"), margen=6)
 
 
 # ------------------------------------------------------------------ naval, guerra electronica
 def naval_misiles(n):
-    n.ir(arnes("azul", "mando", *CARIBE, 10), LISTA_APP, 2)
+    n.ir(arnes("azul", "comandante", *CARIBE, 10), LISTA_APP, 2)
     seleccionar(n, 20)
     n.clic('[data-modo="lanzar"]')
     n.valor("#o-objetivo", "23")
@@ -326,7 +326,7 @@ def naval_misiles(n):
 
 
 def naval_desembarcar(n):
-    n.ir(arnes("azul", "mando", *CARIBE, 11), LISTA_APP, 2)
+    n.ir(arnes("azul", "comandante", *CARIBE, 11), LISTA_APP, 2)
     seleccionar(n, 26)
     n.clic('[data-modo="desembarcar"]')
     n.vista(10.55, -68.08, 11, 1.5)
@@ -338,7 +338,7 @@ def naval_desembarcar(n):
 
 
 def orden_interferir(n):
-    n.ir(arnes("azul", "inteligencia", 8.62, -70.62, 10), LISTA_APP, 2)
+    n.ir(arnes("azul", "a2", 8.62, -70.62, 10), LISTA_APP, 2)
     seleccionar(n, 16)
     n.clic('[data-modo="interferir"]')
     n.vista(8.64, -70.62, 10, 1.5)
@@ -350,7 +350,7 @@ def orden_interferir(n):
 
 # ------------------------------------------------------------------ mapa
 def panel_derecho(n):
-    n.ir(arnes("azul", "mando"), LISTA_APP, 2)
+    n.ir(arnes("azul", "comandante"), LISTA_APP, 2)
     n.js("document.getElementById('panel-der').scrollTop = 0")
     guardar(n, "panel_der_arriba", n.rect("#panel-der"), margen=0)
     n.js("document.getElementById('tarjeta-chat').scrollIntoView({ block: 'start' })")
@@ -391,7 +391,7 @@ def mapa_regla(n):
 
 
 def mapa_graficos(n):
-    n.ir(arnes("azul", "mando", 8.64, -70.6, 11), LISTA_APP, 2)
+    n.ir(arnes("azul", "comandante", 8.64, -70.6, 11), LISTA_APP, 2)
     n.js("document.getElementById('zona-mapa').classList.add('ver-graficos')")
     n.clic('[data-grafico="eje_avance"]')
     n.valor("#graf-etiqueta", "EJE BRAVO")
@@ -402,7 +402,7 @@ def mapa_graficos(n):
 
 
 def mapa_ficha(n):
-    n.ir(arnes("azul", "mando", 8.62, -70.52, 11), LISTA_APP, 2)
+    n.ir(arnes("azul", "comandante", 8.62, -70.52, 11), LISTA_APP, 2)
     n.cursor_mapa(8.650, -70.500)
     x, y = n.punto_mapa(8.650, -70.500)
     guardar(n, "mapa_ficha", {"x": x - 260, "y": y - 250, "w": 520, "h": 330}, margen=0)
@@ -516,7 +516,7 @@ def observador(n):
 
 # ------------------------------------------------------------------ combate contra la IA, dia y noche
 def ia_pantalla(n):
-    n.ir(arnes("azul", "mando", extra=CONTRA_IA), LISTA_APP, 3)
+    n.ir(arnes("azul", "comandante", extra=CONTRA_IA), LISTA_APP, 3)
     marcas = [
         (*centro(n.rect("#esc-hora"), -0.25, 0.5), "1"),
         (*centro(n.rect("#map"), 0.25, 0.8), "2"),
@@ -534,7 +534,7 @@ def consola_ia(n):
     consola(n, "dirección del ejercicio")
     r = n.rect("#panel-izq")
     der = r["x"] + r["w"] - 16
-    marcas = [(der, n.rect("#dir-noche")["y"] + 10, "1"), (der, n.rect("#dir-ia-azul")["y"] + 10, "2"),
+    marcas = [(der, n.rect("#dir-noche")["y"] + 10, "1"), (der, n.rect("#dir-cond-azul")["y"] + 10, "2"),
               (der, n.rect("#dir-ia-nivel")["y"] - 10, "3"), (*centro(n.rect("#btn-demo"), 1.12, 0.5), "4")]
     guardar(n, "consola_ia", r, marcas, margen=0)
 
@@ -549,13 +549,13 @@ def plantillas_ia(n):
 
 
 def barra_inferior_ia(n):
-    n.ir(arnes("azul", "mando", extra=CONTRA_IA), LISTA_APP, 2)
+    n.ir(arnes("azul", "comandante", extra=CONTRA_IA), LISTA_APP, 2)
     guardar(n, "barra_inferior_ia", n.rect("#control-turno"), margen=0)
 
 
 def mapa_dia_noche(n):
     for nombre, extra in (("mapa_dia", "&noche=1&hora=480"), ("mapa_crepusculo", "&noche=1&hora=960"), ("mapa_noche", "&noche=1&hora=1260")):
-        n.ir(arnes("azul", "mando", 8.6, -70.58, 11, extra=extra), LISTA_APP, 3)
+        n.ir(arnes("azul", "comandante", 8.6, -70.58, 11, extra=extra), LISTA_APP, 3)
         r = rect_mapa(n)
         guardar(n, nombre, {"x": r["x"], "y": r["y"], "w": r["w"], "h": r["h"]}, margen=0)
     tarjeta = n.js("(() => { const b = document.getElementById('esc-hora').closest('.tarjeta').getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; })()")
@@ -585,7 +585,7 @@ def consola_catalogo(n):
 
 # ------------------------------------------------------------------ situacion: radar, personal, infraestructura
 def situacion(n):
-    n.ir(arnes("azul", "mando"), LISTA_APP, 2)
+    n.ir(arnes("azul", "comandante"), LISTA_APP, 2)
     n.clic('[data-pestana="situacion"]')
     time.sleep(0.6)
     n.js("document.getElementById('panel-izq').scrollTop = 0")
@@ -607,7 +607,7 @@ def mapa_infraestructura(n):
 
 
 def ficha_puente(n):
-    n.ir(arnes("azul", "mando", 8.6055, -70.585, 13), LISTA_APP, 2)
+    n.ir(arnes("azul", "comandante", 8.6055, -70.585, 13), LISTA_APP, 2)
     seleccionar(n, 31)
     al_panel(n, "#detalle-contenido")
     n.js("document.getElementById('panel-izq').scrollTop -= 40")
@@ -622,6 +622,50 @@ def mapa_ficticio(n):
     n.clic("#base-satelite")
     n.vista(10.45, -26.2, 10, 4)
     guardar(n, "mapa_ficticio_cerca", rect_mapa(n), margen=0)
+
+
+def pmo_alumno(n):
+    n.ir(arnes("azul", "a3"), LISTA_APP, 2)
+    n.clic('[data-pestana="pmo"]')
+    n.esperar("document.querySelector('#pmo-doc .pmo-campo')")
+    time.sleep(0.5)
+    n.js("document.getElementById('panel-izq').scrollTop = 0")
+    guardar(n, "pmo_calendario", n.rect("#panel-izq"), margen=0)
+    n.js("document.querySelector('#pmo-doc .pmo-mision').scrollIntoView({ block: 'center' })")
+    time.sleep(0.4)
+    guardar(n, "pmo_mision", n.rect("#panel-izq"), margen=0)
+
+
+def pmo_instructor(n):
+    n.ir(arnes("instructor"), LISTA_APP, 2)
+    n.clic('[data-pestana="pmo"]')
+    n.esperar("document.querySelector('#pmo-doc .pmo-campo')")
+    n.js("(() => { const p = document.getElementById('panel-izq'); const s = document.getElementById('sec-pmo');"
+         " p.scrollTop += s.getBoundingClientRect().top - p.getBoundingClientRect().top - 36; })()")
+    time.sleep(0.4)
+    r = n.rect("#panel-izq")
+    marcas = [(*centro(n.rect("#pmo-bando"), 1.06, 0.5), "1"), (*centro(n.rect("#btn-pmo-generar"), 0.97, 0.5), "2"),
+              (*centro(n.rect("#btn-pmo-editar"), 0.97, 0.5), "3")]
+    guardar(n, "pmo_instructor", r, marcas, margen=0)
+    n.clic("#btn-pmo-editar")
+    n.js("document.querySelector('.pmo-mision-form').scrollIntoView({ block: 'start' })")
+    n.js("(() => { const i = document.querySelector('input[data-mision=\"tarea\"]'); i.value = 'Operaciones aéreas defensivas si el enemigo ataca';"
+         " i.dispatchEvent(new Event('input')); })()")
+    time.sleep(0.4)
+    guardar(n, "pmo_editar", n.rect("#panel-izq"), margen=0)
+
+
+def consola_calendario(n):
+    n.ir(arnes("instructor"), LISTA_APP, 1.5)
+    consola(n, "calendario de la operación")
+    guardar(n, "consola_calendario", n.rect("#panel-izq"), margen=0)
+
+
+def instructor_conduce(n):
+    n.ir(arnes("instructor", extra="&conduce=instructor"), LISTA_APP, 2)
+    n.clic("#btn-conducir-rojo")
+    time.sleep(1.2)
+    guardar(n, "instructor_conduce", n.rect("#cabecera"), margen=0)
 
 
 def objetivos_avance(n):
@@ -693,6 +737,7 @@ CAPTURAS = [
     consola_escenario, consola_usuarios, plantillas, ver_como, videowall, observador,
     ia_pantalla, consola_ia, plantillas_ia, barra_inferior_ia, mapa_dia_noche, mapa_carreteras, consola_catalogo,
     situacion, mapa_infraestructura, ficha_puente, objetivos_avance, mapa_ficticio,
+    pmo_alumno, pmo_instructor, consola_calendario, instructor_conduce,
     informe_repeticion, informe_dialogos, informe_rubrica, informe_doctrina, comparar, informe_replay,
 ]
 

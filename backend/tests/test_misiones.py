@@ -200,7 +200,7 @@ def test_api_planificar_validar_y_ver_solo_el_propio_bando(api):
 
 def test_api_puestos_y_la_orden_directa_reemplaza_la_mision(api):
     prof = api("prof")
-    for nombre, puesto in (("a3ops", "operaciones"), ("a5plan", "planificacion")):
+    for nombre, puesto in (("ua3", "a3"), ("ua4", "a4")):
         assert prof.post("/api/usuarios", json={"username": nombre, "password": "clave-segura-1", "rol": "azul",
                                                 "puesto": puesto}).status_code == 200
     prof, base, *_ = _preparar(api)
@@ -210,12 +210,12 @@ def test_api_puestos_y_la_orden_directa_reemplaza_la_mision(api):
     ruta = [{"tipo": "orbita", "lat": 0.5, "lon": 0.3, "turnos": 1}, _aterrizaje_api(ba)]
     desde_base = {"rol": "CAP", "base_id": ba["id"], "modelo": "f16", "aeronaves": 2, "puntos": ruta}
     al_grupo = {"rol": "CAP", "unidad_id": caza["id"], "puntos": ruta}
-    a3, a5 = api("a3ops"), api("a5plan")
-    r = a3.post(f"{base}/misiones", json=desde_base)
-    assert r.status_code == 403 and "Planificacion (A5)" in r.json()["detail"]
-    assert a5.post(f"{base}/misiones", json=desde_base).status_code == 200
-    r = a5.post(f"{base}/misiones", json=al_grupo)
-    assert r.status_code == 403 and "Operaciones en curso (A3)" in r.json()["detail"]
+    a3, a4 = api("ua3"), api("ua4")
+    r = a4.post(f"{base}/misiones", json=desde_base)
+    assert r.status_code == 403 and "Operaciones (A-3) o Defensa Aerea (A-3 D/A)" in r.json()["detail"]
+    assert a3.post(f"{base}/misiones", json=desde_base).status_code == 200
+    r = a4.post(f"{base}/misiones", json=al_grupo)
+    assert r.status_code == 403 and "Operaciones (A-3)" in r.json()["detail"]
     mid = a3.post(f"{base}/misiones", json=al_grupo).json()["id"]
     assert a3.post(f"{base}/ordenes", json={"unidad_id": caza["id"], "tipo": "mover",
                                               "waypoints": [[0.2, 0.3]]}).status_code == 200

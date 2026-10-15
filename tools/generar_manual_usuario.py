@@ -1,5 +1,5 @@
 """Genera el manual de usuario en PDF (docs/Manual_Usuario_SIETE.pdf): guia paso a paso, con capturas, de cada parte
-de la interfaz para el instructor, los alumnos de cada puesto y el observador.
+de la interfaz para el instructor, los alumnos de cada repartición y el observador.
 
 Las capturas salen de tools/manual/capturas_guia.py (arnes de pruebas manejado con Chrome). El aspecto (fuentes,
 colores, tablas) es el del manual de referencia (tools/generar_manual.py), del que se reusan las piezas.
@@ -108,7 +108,7 @@ def construir(salida: Path) -> None:
     h += [Paragraph("S.I.E.T.E.", S["titulo"]), Spacer(1, 6),
           Paragraph("Sistema Integral de Entrenamiento Táctico y Estratégico", S["subtitulo"]), Spacer(1, 26),
           Paragraph("MANUAL DE USUARIO", ParagraphStyle("mu", parent=S["subtitulo"], fontName="Texto-B", fontSize=20, textColor=AZUL)),
-          Spacer(1, 8), Paragraph("Guía paso a paso para el instructor, los alumnos de cada puesto y el observador", S["subtitulo"]),
+          Spacer(1, 8), Paragraph("Guía paso a paso para el instructor, los alumnos de cada repartición y el observador", S["subtitulo"]),
           Spacer(1, 24)]
     h += credito_portada()
     h += [Spacer(1, 10), Paragraph(f"{fecha} · versión 1.2", S["subtitulo"]), PageBreak()]
@@ -127,7 +127,8 @@ def construir(salida: Path) -> None:
           Tbl(["Rol", "Qué hace en el ejercicio", "Capítulos"], [
               ["Instructor (director del ejercicio)", "Prepara el escenario, ubica las unidades, fija objetivos, clima y reglas, aprueba las cuentas, "
                "resuelve los turnos, inyecta eventos y conduce el análisis posterior.", "2 a 5, 7 a 9"],
-              ["Alumno del bando azul o rojo", "Aprecia la situación, da órdenes a las unidades de su puesto, coordina con su bando por la red "
+              ["Alumno del bando azul o rojo", "Integra el Estado Mayor de su bando en una repartición del TIEM (Comandante, JEM, A-1, A-2, "
+               "A-3, A-3 D/A, A-4 o C-E): lee el Problema Militar, da órdenes a las unidades de su repartición, coordina por la red "
                "de comunicaciones y confirma el turno.", "2 a 6, 8, 9"],
               ["Observador", "Ve todo el ejercicio sin poder cambiar nada (evaluadores, visitas).", "2 a 5, 9, 10"],
           ], [4.0 * cm, ANCHO_TEXTO - 6.0 * cm, 2.0 * cm]),
@@ -141,6 +142,12 @@ def construir(salida: Path) -> None:
                "La <b>IA</b> (adversario automático) es el simulador conduciendo un bando: no hay alumnos detrás de esas unidades (capítulo 8)."]),
           H2("1.3 Novedades de esta versión"),
           Tbl(["Novedad", "Dónde se explica"], [
+              ["El simulador sigue el TIEM: los puestos pasan a ser las reparticiones del Estado Mayor (Comandante, JEM, A-1, A-2, "
+               "A-3, A-3 D/A, A-4 y C-E)", "6.2"],
+              ["Pestaña PMO: el Problema Militar Operativo de cada bando, redactado por el instructor o creado automáticamente", "6.15 y 7.15"],
+              ["Calendario de la operación: día D, hora H y fases (alistamiento, concentración y despliegue, ejecución, repliegue)", "6.15 y 7.16"],
+              ["Quién conduce cada bando, a elección del instructor: un grupo de alumnos, el instructor o la IA", "7.17"],
+              ["Cadena de objetivos: ulterior, asignados y materiales, con efecto deseado, indicador, plazo y «neutralizar»", "5.2 y 7.5"],
               ["Combate contra la IA: ejercicios listos, tres niveles del adversario y modo demostración", "Capítulo 8"],
               ["Ciclo de día y noche: de noche se detecta menos a simple vista y el mapa se oscurece", "8.6"],
               ["Hora simulada y periodo del día en la tarjeta Estado del escenario", "5.1"],
@@ -178,10 +185,10 @@ def construir(salida: Path) -> None:
         P("Los alumnos no necesitan que el instructor les cree la cuenta: la piden ellos mismos."),
         pasos(f"En la pantalla de acceso pulse {B('Solicitar una cuenta')}.",
               "Elija un <b>usuario</b> (letras, números, punto o guion, sin espacios) y escriba la <b>contraseña</b> dos veces (mínimo 8 caracteres).",
-              "Elija el <b>rol</b> que le corresponde (alumno del bando azul o rojo, observador o instructor) y, si es alumno, su <b>puesto</b>.",
+              "Elija el <b>rol</b> que le corresponde (alumno del bando azul o rojo, observador o instructor) y, si es alumno, su <b>repartición</b> (6.2).",
               f"Pulse {B('Enviar solicitud')}."),
         P("La cuenta queda <b>pendiente</b>: hasta que el instructor la apruebe (7.11) el simulador responde «Su solicitud de cuenta aún no "
-          "fue aprobada». El instructor puede aprobarla con otro rol o puesto."),
+          "fue aprobada». El instructor puede aprobarla con otro rol o repartición."),
     ])
     h += al_lado("acceso_clave", "Cambio de contraseña.", [
         H2("2.4 Primer acceso: cambiar la contraseña"),
@@ -193,7 +200,7 @@ def construir(salida: Path) -> None:
     ])
     h += al_lado("menu_perfil", "Menú del perfil.", [
         H2("2.5 Menú del perfil"),
-        P("El botón redondo de la esquina superior derecha abre el menú del perfil: muestra su usuario, su rol y su puesto."),
+        P("El botón redondo de la esquina superior derecha abre el menú del perfil: muestra su usuario, su rol y su repartición."),
         Bul([f"{B('Cambiar contraseña')}: la misma pantalla de 2.4; aquí se puede cancelar. Al cambiarla se cierran sus otras sesiones abiertas.",
              f"{B('Cerrar sesión')}: sale del simulador en ese equipo. Use siempre esta opción en equipos compartidos."]),
     ], ancho_img=7.5 * cm)
@@ -211,7 +218,7 @@ def construir(salida: Path) -> None:
     # ---------------------------------------------------------------- 3 pantalla
     h += H1("3. La pantalla principal")
     h += [P("Todos los roles comparten la misma disposición. Lo que cambia es qué se ve y qué se puede hacer: el instructor tiene además la "
-            "pestaña <b>Consola</b>; el alumno, los bloques para dar órdenes de su puesto.")]
+            "pestaña <b>Consola</b>; el alumno, los bloques para dar órdenes de su repartición.")]
     h += figura("pantalla_general", "Pantalla del instructor con el ejercicio de ejemplo.")
     h += [leyenda([
         ("1", "Cabecera", "Escenario activo, botones de escenario, conexión, reloj, videowall, informe y perfil (3.1)."),
@@ -234,14 +241,15 @@ def construir(salida: Path) -> None:
         ("6", "Reloj", "Hora del turno o, si el instructor fijó un límite, la cuenta regresiva de la fase de decisión."),
         ("7", "Videowall", "Mapa a pantalla completa para la pantalla grande del aula (7.13). Tecla V."),
         ("8", "Informe", "Informe posterior al ejercicio (capítulo 9)."),
-        ("9", "Perfil", "Usuario, rol y puesto; cambiar contraseña y cerrar sesión (2.5)."),
+        ("9", "Perfil", "Usuario, rol y repartición; cambiar contraseña y cerrar sesión (2.5)."),
     ]),
-          P("En pantallas anchas (más de 1 450 píxeles) la barra de título también muestra el <b>turno</b>, la <b>hora simulada</b> y el "
-            "<b>bando</b> con que trabaja. En cualquier pantalla, la hora y el periodo del día están en la tarjeta <b>Estado del escenario</b> (5.1).")]
+          P("En pantallas anchas (más de 1 450 píxeles) la barra de título también muestra el <b>turno</b>, la <b>hora simulada</b>, el "
+            "<b>calendario de la operación</b> (por ejemplo «D+1 · H+5 · Ejecución», 6.15) y el <b>bando</b> con que trabaja. En cualquier "
+            "pantalla, la hora, el periodo del día y el calendario están en la tarjeta <b>Estado del escenario</b> (5.1).")]
     h += [H2("3.2 La barra inferior")]
     h += figura("barra_inferior", "Barra inferior de un alumno: botón para confirmar el turno y estado de ambos bandos.")
     h += [Bul([f"<b>Alumnos:</b> {B('Estoy listo - confirmar órdenes')} avisa que su bando terminó de dar órdenes (lo pueden pulsar el "
-               "Estado Mayor y el A5). Si después emite o cancela una orden, el «listo» se anula y hay que volver a confirmarlo.",
+               "Comandante y el JEM). Si después emite o cancela una orden, el «listo» se anula y hay que volver a confirmarlo.",
                f"<b>Instructor:</b> {B('Resolver y avanzar turno')} resuelve el turno aunque algún bando no esté listo (7.12).",
                "A la derecha, el estado de cada bando: <b>PENDIENTE</b> (dando órdenes) o <b>LISTO</b>. <b>IA · LISTO</b> indica que ese bando "
                "lo conduce el simulador y ya dio sus órdenes del turno (capítulo 8)."])]
@@ -358,14 +366,20 @@ def construir(salida: Path) -> None:
     h += H1("5. El panel derecho")
     h += al_lado("panel_der_arriba", "Estado del escenario, objetivos y capas.", [
         H2("5.1 Estado del escenario"),
-        P("Clima general y su visibilidad, la <b>hora simulada</b> (con el ciclo de día y noche, también si es de <b>día</b>, "
+        P("Clima general y su visibilidad, la <b>hora simulada</b>, el <b>calendario</b> de la operación (día D, hora H y fase, si el "
+          "instructor lo fijó; 6.15) (con el ciclo de día y noche, también si es de <b>día</b>, "
           "<b>crepúsculo</b> o <b>noche</b>, 8.6), cómo afecta el clima al movimiento terrestre y a los ataques aéreos, la <b>fase</b> del turno (Decisión o "
           "Resolución, y si el escenario está activo, en pausa o finalizado) y el <b>modo</b>: con o sin azar en los combates, y resolución "
           "manual (la decide el instructor) o automática (cuando ambos bandos están listos)."),
         H2("5.2 Objetivos y puntaje"),
         P("El marcador de cada bando (puntos por objetivos más un punto por cada 10 de fuerza infligida al enemigo) y la lista de "
-          "objetivos de su bando con su avance: ocupar una zona varios turnos, destruir una unidad o proteger una propia. Cada bando ve solo "
-          "los suyos."),
+          "objetivos de su bando con su avance: ocupar una zona varios turnos, destruir o <b>neutralizar</b> una unidad (bajar su fuerza "
+          "hasta un porcentaje), proteger una propia o lograr un <b>efecto</b>. Cada bando ve solo los suyos."),
+        P("Los objetivos forman la <b>cadena del TIEM</b> y se muestran como un árbol: arriba el <b>objetivo ulterior</b> (el del Teatro "
+          "de Operaciones), debajo los <b>objetivos asignados</b> al componente aéreo y, dentro de cada uno, los <b>objetivos materiales</b> "
+          "que se atacan o protegen en el terreno. Un objetivo asignado se cumple cuando se cumple el porcentaje indicado de los que "
+          "dependen de él («1/2 cumplidos»). Bajo cada objetivo se leen su <b>efecto deseado</b> y el <b>indicador</b> con que se mide; "
+          "si tiene <b>plazo</b>, falla al llegar ese turno sin haberse cumplido."),
     ])
     h += al_lado("objetivos_avance", "Objetivos y puntaje, con el porcentaje cumplido.", [
         P("Debajo del marcador, una barra muestra el <b>porcentaje de objetivos cumplidos</b>: «1 de 3 cumplidos (33 %)». El alumno ve "
@@ -374,7 +388,7 @@ def construir(salida: Path) -> None:
     ], ancho_img=6.6 * cm)
     h += al_lado("panel_der_abajo", "Comunicaciones y alertas.", [
         H2("5.3 Comunicaciones"),
-        P("Chat de texto del ejercicio. El alumno elige el canal: <b>Red del bando</b> (todos los puestos de su bando) o <b>Al mando "
+        P("Chat de texto del ejercicio. El alumno elige el canal: <b>Red del bando</b> (todas las reparticiones de su bando) o <b>Al mando "
           "(instructor)</b>. El instructor escribe a todos o a un bando."),
         pasos("Elija el canal.", f"Escriba el mensaje y pulse {B('Enviar')} (o Intro)."),
         P("Si el instructor activó las <b>comunicaciones simuladas</b>, los mensajes llegan con demora y algunos se pierden, como en una red "
@@ -387,7 +401,7 @@ def construir(salida: Path) -> None:
     # ---------------------------------------------------------------- 6 alumno
     h += H1("6. Guía del alumno")
     h += [H2("6.1 Su pantalla")]
-    h += figura("alumno_pantalla", "Pantalla de un alumno del bando azul (puesto Estado Mayor).")
+    h += figura("alumno_pantalla", "Pantalla de un alumno del bando azul (Comandante).")
     h += [leyenda([
         ("1", "Escenario y bando", "El escenario en el que participa y su bando. Solo ve los escenarios que el instructor le asignó."),
         ("2", "Orden de batalla", "Sus unidades por rama y las enemigas que su bando detecta."),
@@ -395,19 +409,32 @@ def construir(salida: Path) -> None:
         ("4", "Panel derecho", "Estado, objetivos de su bando, capas, comunicaciones y alertas."),
         ("5", "Estoy listo", "Confirma las órdenes de su bando para el turno (6.12)."),
     ])]
-    h += [H2("6.2 Su puesto"),
-          P("Cada alumno ocupa un <b>puesto</b> del estado mayor de su bando. Todos ven lo mismo; cambia <b>qué unidades conducen</b>. El bloque "
-            "<b>Mi puesto</b> lo recuerda y el simulador rechaza (explicando a quién corresponde) cualquier orden fuera de su puesto."),
-          Tbl(["Puesto", "Conduce", "Confirma «listo»"], [
-              ["EM · Estado Mayor", "Todo el bando (un solo alumno por bando)", "Sí"],
-              ["A2 · Inteligencia", "Radares (encender o apagar) y guerra electrónica terrestre; sigue contactos y dibuja gráficos de blancos", "No"],
-              ["A3 · Operaciones en curso", "Las aeronaves ya en el aire: rutas, patrullas, ataques, aterrizajes y misiones de grupos existentes", "No"],
-              ["A4 · Logística", "Ingenieros (puentes y vados) y convoyes de abastecimiento", "No"],
-              ["A5 · Planificación", "Unidades terrestres y navales, antiaérea, misiles, envío de aeronaves desde las bases y misiones programadas", "Sí"],
-          ], [3.6 * cm, ANCHO_TEXTO - 6.4 * cm, 2.8 * cm])]
+    h += [H2("6.2 Su repartición del Estado Mayor"),
+          P("Como lo establece el TIEM (Trabajo Integral de Estado Mayor), cada bando trabaja como el Estado Mayor de un componente aéreo "
+            "y cada alumno ocupa una <b>repartición</b>. Todos ven lo mismo (la misma niebla de guerra, la misma red y el mismo Problema "
+            "Militar); cambia <b>qué unidades conducen</b>. El bloque <b>Mi repartición</b> lo recuerda y el simulador rechaza (explicando a "
+            "quién corresponde) cualquier orden fuera de su área, lo que obliga a coordinar como en un Estado Mayor real."),
+          Tbl(["Repartición", "Conduce", "Confirma «listo»"], [
+              ["CMDTE · Comandante", "Todo el bando: decide y puede dar cualquier orden", "Sí"],
+              ["JEM · Jefe de Estado Mayor", "Coordina a las reparticiones; reúne sus funciones (puede dar cualquier orden)", "Sí"],
+              ["A-1 · Personal", "No ordena unidades: sigue los efectivos, las bajas y los reemplazos (pestaña Situación) y prepara la "
+               "apreciación de personal", "No"],
+              ["A-2 · Inteligencia", "El reconocimiento: unidades y drones de reconocimiento; sigue los contactos, el cuadro radar y las "
+               "capacidades del enemigo", "No"],
+              ["A-3 · Operaciones", "La maniobra: despegues desde las bases, caza, ataque, helicópteros, drones armados, cisternas, fuerzas "
+               "de superficie (terrestres y navales) y lanzadores de misiles", "No"],
+              ["A-3 D/A · Defensa Aérea", "Radares (encender o apagar), artillería y misiles antiaéreos, alerta temprana y la caza de "
+               "intercepción con sus despegues", "No"],
+              ["A-4 · Logística", "Convoyes de abastecimiento, depósitos e ingenieros (puentes y vados)", "No"],
+              ["C-E · Comunicaciones y Electrónica", "La guerra electrónica: escucha e interferencia desde tierra y aviones de guerra "
+               "electrónica", "No"],
+          ], [4.0 * cm, ANCHO_TEXTO - 6.8 * cm, 2.8 * cm]),
+          P("La caza la pueden conducir la A-3 (escolta, superioridad aérea) y la A-3 D/A (intercepción). Si el bando tiene un solo alumno, "
+            "ese alumno es el Comandante y conduce todo. Las cuentas creadas antes de esta versión pasaron solas a la repartición "
+            "equivalente: EM → Comandante, A2 → A-2, A3 y A5 → A-3, A4 → A-4.")]
     h += al_lado("alumno_secciones", "Bloques del panel izquierdo de un alumno.", [
         P("En la pestaña de su panel izquierdo, debajo del orden de batalla y de la ficha de la unidad, encuentra:"),
-        leyenda([("1", "Mi puesto", "Su puesto y lo que puede conducir."),
+        leyenda([("1", "Mi repartición", "Su repartición y lo que puede conducir."),
                  ("2", "Aviación", "Enviar aeronaves o drones desde una base o un portaaviones (6.9)."),
                  ("3", "Misiones aéreas", "Planificar misiones y ver las del bando (6.9)."),
                  ("4", "Nueva orden", "La orden para la unidad seleccionada (6.4).")]),
@@ -430,13 +457,13 @@ def construir(salida: Path) -> None:
     h += al_lado("ficha_acciones", "Acciones inmediatas en la ficha.", [
         P("<b>Acciones inmediatas.</b> Algunas unidades tienen botones en la ficha que rigen al instante, sin esperar el turno:"),
         Bul([f"{B('Apagar radar')} / {B('Encender radar')} (radares, antiaérea guiada por radar, destructores): apagado solo ve 5 km, pero la "
-             "escucha enemiga no lo puede localizar (A2 o EM).",
+             "escucha enemiga no lo puede localizar (A-3 D/A).",
              f"{B('Retener el fuego')} / {B('Fuego libre')} (antiaérea, destructores): con fuego libre dispara sola contra la aeronave enemiga "
              "más cercana a su alcance."]),
     ])
     h += [H2("6.4 Dar una orden: los pasos de siempre"),
           pasos("Seleccione la unidad (en el orden de batalla o con un clic en el mapa).",
-                "En <b>Nueva orden</b>, elija el tipo de orden: los botones que aparecen dependen de la unidad y de su puesto.",
+                "En <b>Nueva orden</b>, elija el tipo de orden: los botones que aparecen dependen de la unidad y de su repartición.",
                 "Complete la orden (puntos en el mapa, objetivo, base, etc.). El simulador le muestra una vista previa.",
                 f"Pulse {B('Emitir orden')}. La orden aparece en la <b>cola de órdenes</b> como PENDIENTE."),
           Nota("Cada unidad tiene una sola orden por turno: si emite otra, reemplaza a la anterior. Las órdenes se cumplen al resolverse el turno."),
@@ -486,19 +513,19 @@ def construir(salida: Path) -> None:
     ])
     h += [H2("6.9 Aviación")]
     h += figura("aviacion_enviar", "Enviar aeronaves: fichas de los modelos con foto, prestaciones y armamento.")
-    h += [P("<b>Enviar aeronaves o drones</b> (A5 o EM):"),
+    h += [P("<b>Enviar aeronaves o drones</b> (A-3 o A-3 D/A):"),
           pasos(f"Pulse {B('Enviar aeronaves o drones…')} en el bloque Aviación.", "Elija el modelo en las fichas (foto, velocidad, alcances, autonomía, armamento).",
                 "Elija la <b>base de origen</b> (o un portaaviones), la <b>cantidad</b> (1 a 8) y, si quiere, un <b>indicativo</b>.",
                 f"Pulse {B('Enviar a despegar')}: el grupo aparece junto a la base al resolverse el turno y recibe órdenes desde el siguiente."),
           P("Una base muy dañada o sin existencias no puede lanzar aviones. Desde un portaaviones solo despegan helicópteros, drones y cazas embarcados.")]
     h += figura("orden_patrullar", "Patrulla: el grupo vuela al punto, se mantiene en la zona e intercepta a los aviones enemigos que detecte.")
-    h += [Bul(["<b>Patrullar</b> (A3 o EM): clic en el punto de patrulla. Gasta combustible cada turno y, con combustible crítico, regresa sola.",
+    h += [Bul(["<b>Patrullar</b> (la repartición que conduce la aeronave): clic en el punto de patrulla. Gasta combustible cada turno y, con combustible crítico, regresa sola.",
                "<b>Aterrizar</b>: elija la base o portaaviones de destino. En tierra tarda 2 turnos en reabastecer y rearmar; después cualquier orden de vuelo es el despegue."]),
           ]
     h += al_lado("perfil_vuelo", "Perfil de vuelo en la ficha de una aeronave.", [
         H3("Perfil de vuelo"),
         P("Cada aeronave vuela en un <b>perfil</b>, que se elige en su ficha con los botones <b>Alto</b>, <b>Medio</b> o <b>Rasante</b> "
-          "(A3 o EM). El cambio rige de inmediato, y el mapa anota «alto» o «rasante» bajo el avión."),
+          "(la repartición que conduce la aeronave). El cambio rige de inmediato, y el mapa anota «alto» o «rasante» bajo el avión."),
         Tbl(["Perfil", "Ventajas", "Costos"], [
             ["Alto (6 000 m)", "Fuera del alcance de la antiaérea portátil; gasta 15 % menos.", "Lo ven los radares desde muy lejos."],
             ["Medio (1 500 m)", "Equilibrado; es el de siempre.", "Lo ocultan solo las montañas altas."],
@@ -509,7 +536,7 @@ def construir(salida: Path) -> None:
     h += [H3("Misiones aéreas"),
           P("Una <b>misión</b> es un plan que el grupo cumple solo, turno tras turno, sin que haya que darle órdenes cada vez: un rol y una ruta de puntos.")]
     h += figura("mision_planificar", "Planificador de misiones: interdicción con un grupo existente; la ruta se marca con clics en el mapa.")
-    h += [pasos(f"Pulse {B('Planificar misión…')}.", "Elija quién la vuela: <b>un grupo existente</b> (A3) o un <b>despegue desde una base</b> en un turno futuro (A5), con modelo y cantidad.",
+    h += [pasos(f"Pulse {B('Planificar misión…')}.", "Elija quién la vuela: <b>un grupo existente</b> (solo aparecen los que su repartición conduce) o un <b>despegue desde una base</b> en un turno futuro (A-3 o A-3 D/A), con modelo y cantidad.",
                 "Elija el <b>rol</b>: CAP, interdicción, CAS, SEAD, reconocimiento, guerra electrónica, traslado o escolta.",
                 "Haga clic en el mapa para cada punto de la ruta y elija su tipo: <b>paso</b>, <b>órbita</b> (N turnos) o <b>blanco</b>.",
                 "Elija dónde aterriza al final y, si quiere, una <b>escolta del paquete</b>.",
@@ -540,17 +567,17 @@ def construir(salida: Path) -> None:
                "<b>Desembarcar:</b> seleccione el transporte, pulse <b>Desembarcar</b> y marque la ruta; el último punto, en tierra firme, es el lugar de desembarco."])]
     h += [H2("6.11 Guerra electrónica")]
     h += figura("orden_interferir", "Interferir: la zona violeta muestra dónde se degradarán los sensores enemigos.")
-    h += [pasos("Seleccione la unidad de guerra electrónica (A2 o EM) y pulse <b>Interferir</b>.",
+    h += [pasos("Seleccione la unidad de guerra electrónica (C-E) y pulse <b>Interferir</b>.",
                 "Haga clic en el centro de la zona, dentro del alcance del interferidor.", f"Pulse {B('Emitir orden')}."),
           P("Durante ese turno y la planificación del siguiente, en la zona el enemigo detecta mucho menos, su antiaérea guiada por radar pierde "
             "efecto y sus drones pierden el enlace. Pero al emitir, el enemigo localiza al interferidor.")]
     h += al_lado("cola_ordenes", "Cola de órdenes del turno.", [
         H2("6.12 La cola de órdenes y el «listo»"),
-        P("La <b>cola de órdenes</b> lista las órdenes del turno de su bando, con quién las dio y su puesto:"),
+        P("La <b>cola de órdenes</b> lista las órdenes del turno de su bando, con quién las dio y su repartición:"),
         Bul(["<b>PENDIENTE</b>: se cumplirá al resolverse el turno. La «×» la cancela.",
              "<b>RESUELTA</b>: ya se cumplió; muestra el resultado (por ejemplo las pérdidas de un ataque).",
              "<b>RECHAZADA</b>: no se pudo cumplir, con el motivo (fuera de alcance, sin combustible…)."]),
-        P(f"Cuando su bando terminó, el EM o el A5 pulsan {B('Estoy listo - confirmar órdenes')}. El turno se resuelve cuando el instructor lo "
+        P(f"Cuando su bando terminó, el Comandante o el JEM pulsan {B('Estoy listo - confirmar órdenes')}. El turno se resuelve cuando el instructor lo "
           "decide, cuando ambos bandos están listos (si así lo configuró) o al agotarse el tiempo."),
     ], ancho_img=7.0 * cm)
     h += [H2("6.13 Lo que ve su bando"),
@@ -563,7 +590,7 @@ def construir(salida: Path) -> None:
     h += al_lado("situacion_radar", "Pestaña Situación: cuadro radar.", [
         H2("6.14 La pestaña Situación"),
         P("La pestaña <b>Situación</b>, junto a Fuerzas, reúne lo que el bando sabe de un vistazo: lo que detectan sus radares, su personal "
-          "y su infraestructura. La ven todos los puestos; el instructor y el observador, la de los dos bandos."),
+          "y su infraestructura. La ven todas las reparticiones; el instructor y el observador, la de los dos bandos."),
         H3("Cuadro radar"),
         P("Cada radar y sensor del bando —radares de vigilancia, antiaérea guiada por radar, buques con radar, aviones de alerta "
           "temprana y unidades de escucha electrónica— con su estado (emitiendo, en silencio, interferido, con energía de respaldo) y "
@@ -572,8 +599,8 @@ def construir(salida: Path) -> None:
         Bul(["Un clic en un contacto lo selecciona y lo muestra en el mapa; un clic en el sensor, lo mismo con el sensor.",
              "<b>Aviso automático:</b> al cerrar cada turno, cada sensor que detecta un enemigo que el bando no tenía a la vista lo "
              "informa solo, como alerta: «Radar Norte informa 1 contacto(s) nuevo(s): caza rasante a 85 km, rumbo 040°».",
-             f"{B('Difundir el cuadro a la red del bando')} envía al chat del bando un resumen de todos los contactos (para el A2 que "
-             "informa al Estado Mayor)."]),
+             f"{B('Difundir el cuadro a la red del bando')} envía al chat del bando un resumen de todos los contactos (para que la A-2 "
+             "informe al Comandante y a las demás reparticiones)."]),
     ], ancho_img=6.4 * cm)
     h += al_lado("situacion_personal", "Pestaña Situación: personal e infraestructura.", [
         H3("Personal"),
@@ -588,12 +615,36 @@ def construir(salida: Path) -> None:
     ], ancho_img=6.4 * cm)
 
     # ---------------------------------------------------------------- 7 instructor
+    h += [H2("6.15 La pestaña PMO: el Problema Militar y el calendario")]
+    h += al_lado("pmo_calendario", "Pestaña PMO de un alumno: calendario de la operación y Problema Militar Operativo.", [
+        P("El trabajo de Estado Mayor empieza, como en el TIEM, con el <b>Problema Militar Operativo</b> (PMO) que emite el escalón "
+          "superior. La pestaña <b>PMO</b> del panel izquierdo lo muestra para su bando, junto con el <b>calendario de la operación</b>."),
+        H3("Calendario de la operación"),
+        Bul(["<b>Día D</b> y <b>hora H</b>: el momento en que empieza la operación (la H cae en un turno).",
+             "<b>Ahora</b>: el turno en curso contado desde D y H («D+1 · H+20») y la fase en que está la operación.",
+             "Las <b>fases</b> (alistamiento, concentración y despliegue, ejecución y repliegue) con sus turnos; la que está en curso "
+             "aparece resaltada.",
+             "El mismo dato está en la cabecera y en la tarjeta Estado del escenario."]),
+    ], ancho_img=6.4 * cm)
+    h += al_lado("pmo_mision", "La misión del bando, enunciada como la pide el TIEM.", [
+        H3("El Problema Militar Operativo"),
+        P("El documento tiene los párrafos de siempre: situación general, fuerzas enemigas (lo que estima la inteligencia, sin la "
+          "posición exacta de cada unidad), fuerzas propias, misión del Comando del Teatro de Operaciones, idea general de la operación "
+          "conjunta, <b>misión del Componente Aéreo</b> (su bando), medios asignados, área de operaciones, limitaciones (restricciones y "
+          "coacciones) e instrucciones de coordinación."),
+        P("La misión se muestra completa y por partes, como la enseña el TIEM: <b>TAREA</b> (qué, dónde, cuándo) <b>«a fin de» "
+          "PROPÓSITO</b>. Es el punto de partida del análisis de la misión y de la apreciación de su Estado Mayor."),
+        P("Cuando el instructor emite o corrige el PMO, su bando recibe una alerta y la pestaña se actualiza sola."),
+    ], ancho_img=6.4 * cm)
+
     h += H1("7. Guía del instructor")
     h += [H2("7.1 Preparar un ejercicio: lista de pasos"),
           pasos("Cree el escenario: vacío con <b>Nuevo</b> o <b>Desde plantilla…</b> (7.2).",
                 "Ubique las unidades de ambos bandos (7.4) y, si corresponde, las bases aéreas reales desde su capa.",
                 "Fije el clima, la hora inicial y el modo de resolución (7.3); si quiere, zonas de meteorología (7.6).",
                 "Cree los objetivos de cada bando (7.5).",
+                "Elija quién conduce cada bando (7.17) y cree la situación: el Problema Militar Operativo y el calendario D/H, "
+                "redactados por usted o creados automáticamente (7.15 y 7.16).",
                 "Apruebe o cree las cuentas de los alumnos y asígnelos al escenario (7.10 y 7.11).",
                 "Explique la situación y deje que los bandos den órdenes; resuelva los turnos (7.12).",
                 "Al terminar, finalice el escenario y conduzca el análisis con el informe (capítulo 9)."),
@@ -651,11 +702,16 @@ def construir(salida: Path) -> None:
     h += figura("elegir_aeronave", "Elegir el modelo de aeronave: foto, prestaciones y armamento de cada uno.", ancho=ANCHO_TEXTO * 0.85)
     h += al_lado("consola_objetivos", "Consola: objetivos y puntaje.", [
         H2("7.5 Objetivos y puntaje"),
-        pasos("Elija el tipo: <b>Ocupar una zona</b>, <b>Destruir una unidad</b> enemiga o <b>Proteger una unidad</b> propia.",
+        pasos("Elija el tipo: <b>Ocupar una zona</b>, <b>Destruir</b> o <b>Neutralizar una unidad</b> enemiga, <b>Proteger una unidad</b> "
+              "propia o <b>Efecto</b> (un objetivo ulterior o asignado que agrupa a otros).",
               "Elija para qué bando es, el nombre y los puntos.",
-              "Ocupar: radio y turnos seguidos; con " + B("Ubicar la zona en el mapa") + " marque el centro. Destruir o proteger: la unidad "
-              "(y, para proteger, hasta qué turno).", f"Pulse {B('Crear objetivo')}."),
-        P("Cada bando ve solo sus objetivos y su avance. Además de los objetivos, cada 10 de fuerza infligida al enemigo vale 1 punto."),
+              "Ocupar: radio y turnos seguidos; con " + B("Ubicar la zona en el mapa") + " marque el centro. Destruir, neutralizar o "
+              "proteger: la unidad (y, para proteger, hasta qué turno). Neutralizar: la fuerza a la que debe quedar (50 % si no indica otra). "
+              "Efecto: su nivel (ulterior o asignado) y qué porcentaje de los objetivos que dependen de él debe cumplirse.",
+              "Opcional: el <b>objetivo superior</b> al que contribuye, el <b>efecto deseado</b>, el <b>indicador</b> con que se mide y un "
+              "<b>plazo</b> (turno).", f"Pulse {B('Crear objetivo')}."),
+        P("Cada bando ve solo sus objetivos y su avance, como un árbol (5.2). Además de los objetivos, cada 10 de fuerza infligida al "
+          "enemigo vale 1 punto. «Crear la situación automáticamente» (7.15) arma sola la cadena a partir de los objetivos que ya existen."),
     ])
     h += al_lado("consola_meteo", "Consola: meteorología por zonas.", [
         H2("7.6 Meteorología por zonas"),
@@ -678,8 +734,8 @@ def construir(salida: Path) -> None:
           "quitar una unidad, selecciónela y use «Eliminar unidad» en su ficha."),
         P("<b>Dirección del ejercicio</b>: interruptores para simplificar con fines didácticos: niebla de guerra, consumo de combustible y "
           f"munición, efectos del clima y fuego automático. Pulse {B('Aplicar interruptores')}; cada cambio queda en el informe."),
-        P("En la misma sección están el <b>ciclo de día y noche</b>, el <b>adversario automático</b> de cada bando, su <b>nivel</b> y el "
-          f"botón {B('Modo demostración')}: se explican en el capítulo 8, «Combate contra la IA»."),
+        P("En la misma sección están el <b>ciclo de día y noche</b>, <b>quién conduce cada bando</b> (7.17), el <b>nivel</b> del adversario "
+          f"automático y el botón {B('Modo demostración')}: se explican en el capítulo 8, «Combate contra la IA»."),
     ])
     h += al_lado("consola_eventos", "Consola: eventos e informes inyectados.", [
         H2("7.9 Eventos, informes y ajustes manuales"),
@@ -699,9 +755,9 @@ def construir(salida: Path) -> None:
     h += al_lado("consola_usuarios", "Consola: usuarios y solicitudes.", [
         H2("7.11 Usuarios y solicitudes de cuenta"),
         P("<b>Solicitudes de cuenta pendientes</b> (recuadro ámbar; el título Usuarios muestra cuántas hay y el simulador avisa de las nuevas):"),
-        pasos("Revise el usuario y lo que pidió.", "Si hace falta, cambie el rol o el puesto en sus listas.",
+        pasos("Revise el usuario y lo que pidió.", "Si hace falta, cambie el rol o la repartición en sus listas.",
               f"Pulse {B('Aprobar')} (el alumno ya puede entrar con la contraseña que eligió) o {B('Rechazar')} (se borra y el nombre queda libre)."),
-        P("En la lista de usuarios se cambia el rol o el puesto de cada uno (el alumno vuelve a entrar con su nueva interfaz), se pone una "
+        P("En la lista de usuarios se cambia el rol o la repartición de cada uno (el alumno vuelve a entrar con su nueva interfaz), se pone una "
           f"contraseña nueva con {B('Clave')} (provisional: el alumno la cambia al entrar) y se activa o desactiva la cuenta. Abajo se crea "
           "un usuario directamente, también con contraseña provisional."),
     ])
@@ -755,13 +811,62 @@ def construir(salida: Path) -> None:
     ], ancho_img=6.0 * cm)
 
     # ---------------------------------------------------------------- 8 combate contra la IA
+    h += [H2("7.15 La situación: el Problema Militar Operativo")]
+    h += al_lado("pmo_instructor", "Pestaña PMO del instructor.", [
+        P("El Problema Militar Operativo de cada bando (6.15) lo prepara el instructor de dos maneras, que se pueden combinar:"),
+        leyenda([("1", "Bando", "El PMO que se muestra y se edita: Azul o Rojo."),
+                 ("2", "Crear la situación automáticamente", "El simulador lo redacta a partir del escenario."),
+                 ("3", "Redactar / corregir", "Escribirlo o corregirlo a mano.")]),
+        P("<b>Automáticamente</b>, el simulador usa los países de cada bando, sus unidades, los objetivos, el terreno y el calendario: "
+          "redacta la situación general (con una causa del conflicto), las fuerzas enemigas en forma aproximada, las propias, la misión "
+          "del escalón superior y la del componente aéreo según la postura del bando (ofensiva si sus objetivos son atacar u ocupar; "
+          "defensiva si son proteger), los medios, el área de operaciones con sus paralelos y meridianos, las limitaciones y las "
+          "instrucciones. Además, si faltan, fija el <b>calendario</b> (7.16) y arma la <b>cadena de objetivos</b> (7.5)."),
+    ], ancho_img=6.4 * cm)
+    h += al_lado("pmo_editar", "Redactar el PMO: la misión por partes y su revisión.", [
+        P("<b>A mano</b>, " + B("Redactar / corregir") + " abre un formulario con cada párrafo. Las líneas que empiezan con «- » se ven "
+          "como viñetas. La misión se escribe por partes (tarea, qué, dónde, cuándo y propósito) y el simulador la arma y la "
+          "revisa mientras se escribe con las reglas del TIEM: que la tarea empiece con un verbo en infinitivo, que estén el qué, "
+          "el dónde, el cuándo y el propósito, y que no tenga condiciones («si…», «en caso de…»)."),
+        P(f"{B('Guardar y enviar al bando')} lo emite: el bando recibe una alerta. Lo que el instructor redacta a mano no se reemplaza al "
+          "crear la situación automáticamente, salvo que marque «reemplazar también lo redactado a mano»."),
+    ], ancho_img=6.4 * cm)
+    h += al_lado("consola_calendario", "Consola: calendario de la operación.", [
+        H2("7.16 El calendario de la operación"),
+        P("En <i>Consola → Calendario de la operación</i> se fija:"),
+        Bul(["La <b>fecha del turno 1</b>; cada turno dura una hora simulada desde la hora inicial (7.3), así que un ejercicio de "
+             "varios días es simplemente uno de muchos turnos.",
+             "El <b>turno en que cae la hora H</b>: el día D es el de ese turno.",
+             "El <b>último turno previsto</b>, que da la duración del ejercicio.",
+             "Las <b>fases de la operación</b>, con su nombre y sus turnos. Si no se definen, el simulador usa alistamiento, "
+             "concentración y despliegue (antes de H), ejecución (desde H) y repliegue (los dos últimos turnos)."]),
+        P(f"Pulse {B('Aplicar calendario')}. {B('Usar las fases por defecto')} descarta las fases propias. Dejar la fecha y la hora H "
+          "vacías quita el calendario."),
+    ], ancho_img=6.4 * cm)
+    h += [H2("7.17 Quién conduce cada bando"),
+          P("En <i>Consola → Dirección del ejercicio</i>, para cada bando, el instructor elige quién lo conduce:"),
+          Tbl(["Opción", "Qué pasa"], [
+              ["Grupo de alumnos", "Los alumnos asignados a ese bando, cada uno en su repartición (6.2). Es lo habitual."],
+              ["El instructor", "El propio instructor da las órdenes de ese bando, como su comandante. Sirve para jugar de enemigo "
+               "con un plan propio cuando no hay otro grupo de alumnos."],
+              ["Adversario automático (IA)", "El simulador conduce el bando (capítulo 8)."],
+          ], [4.4 * cm, ANCHO_TEXTO - 4.4 * cm])]
+    h += figura("instructor_conduce", "El instructor conduciendo el bando Rojo: la franja ámbar lo recuerda y el botón vuelve a la consola.",
+                ancho=ANCHO_TEXTO)
+    h += [pasos("Elija <b>El instructor</b> para el bando y pulse " + B("Aplicar interruptores") + ".",
+                "En la cabecera aparece el botón " + B("Conducir Rojo") + " (o Azul). Al pulsarlo, la pantalla pasa a ser la del "
+                "comandante de ese bando: su niebla de guerra, sus órdenes, sus misiones y su «Estoy listo».",
+                "Dé las órdenes del bando como cualquier alumno.",
+                f"Pulse {B('Volver a instructor')} para regresar a la consola (y, por ejemplo, resolver el turno)."),
+          P("Las órdenes que da el instructor cuentan para su bando en el informe, pero no aparecen en la evaluación por alumno.")]
+
     h += H1("8. Combate contra la IA")
     h += [P("En el <b>combate contra la IA</b> el simulador conduce uno de los bandos (normalmente el rojo) con su <b>adversario "
             "automático</b>. Así un solo grupo de alumnos puede entrenar sin que otro grupo haga de enemigo, el instructor queda libre para "
             "dirigir y observar, y el ejercicio se puede repetir con la misma situación para comparar el desempeño."),
           H2("8.1 Cómo juega la IA"),
           Bul(["<b>Con las mismas reglas que un alumno.</b> Sus órdenes pasan por las mismas comprobaciones de alcance, combustible, "
-               "munición, terreno y puesto; si una no se puede cumplir, se rechaza igual que la de un alumno.",
+               "munición, terreno y repartición; si una no se puede cumplir, se rechaza igual que la de un alumno.",
                "<b>Solo con lo que su bando sabe.</b> Ve sus unidades, las enemigas que detecta (posición y clase, nunca su fuerza ni su "
                "logística), los últimos contactos, sus objetivos y la ubicación de las bases enemigas, que son instalaciones fijas. No ve las "
                "órdenes, los gráficos ni el chat de los alumnos. Si sus sensores no lo detectan, no sabe que usted está ahí.",
@@ -788,7 +893,7 @@ def construir(salida: Path) -> None:
                "y F-16, defensa antiaérea por capas, protección de la base, de Planta Centro y de la refinería El Palito.", "05:00 (de noche)"],
               ["Interdicción en los llanos", "Una columna mecanizada roja con sus convoyes avanza de Guasdualito hacia Barinas.",
                "Interdicción de la logística (los convoyes son vulnerables), apoyo aéreo cercano con K-8W, Mi-35 y drones, coordinación entre "
-               "puestos.", "06:00 (crepúsculo)"],
+               "reparticiones.", "06:00 (crepúsculo)"],
               ["Defensa de la costa oriental", "Una fuerza anfibia roja (buques de desembarco con fragatas y helicópteros) se acerca a "
                "Barcelona y Puerto La Cruz.", "Defensa de costa, ataque a la fuerza naval antes del desembarco, defensa de la playa y de "
                "la refinería de Puerto La Cruz.",
@@ -801,14 +906,14 @@ def construir(salida: Path) -> None:
         H2("8.3 Activar la IA en cualquier ejercicio"),
         P("Cualquier escenario, también uno creado a mano o desde otra plantilla, se puede jugar contra la IA:"),
         pasos("Abra la pestaña <b>Consola</b> y despliegue <b>Dirección del ejercicio</b>.",
-              "Marque «el simulador conduce el bando Rojo» (2), o el Azul, o los dos.",
+              "En «Conduce el bando Rojo» (2), o el Azul, o los dos, elija <b>Adversario automático (IA)</b>.",
               "Elija el <b>nivel</b> del adversario (3; ver 8.4).",
               "Si quiere, marque el <b>ciclo de día y noche</b> (1; ver 8.6).",
               f"Pulse {B('Aplicar interruptores')}. La IA da sus órdenes del turno en curso en ese momento."),
-        P("Para devolver el bando a los alumnos, desmarque la casilla y aplique: el bando queda «pendiente» y los alumnos lo conducen "
-          "desde ese turno. Cada cambio queda registrado como evento y en el informe."),
+        P("Para devolver el bando a los alumnos, elija <b>Grupo de alumnos</b> y aplique: el bando queda «pendiente» y los alumnos lo "
+          "conducen desde ese turno. Cada cambio queda registrado como evento y en el informe."),
         leyenda([("1", "Ciclo de día y noche", "Activa la hora del día en la detección (8.6)."),
-                 ("2", "Adversario automático", "Qué bando conduce el simulador."),
+                 ("2", "Quién conduce", "Grupo de alumnos, el instructor o el adversario automático (7.17)."),
                  ("3", "Nivel", "Prudente, normal o agresiva (8.4)."),
                  ("4", "Modo demostración", "La IA juega los dos bandos sola (8.7).")]),
     ], ancho_img=7.2 * cm)
@@ -863,13 +968,13 @@ def construir(salida: Path) -> None:
           P(f"{B('Modo demostración')} pone a la IA a conducir <b>los dos bandos</b> y fija un límite de decisión de 15 segundos: el "
             "ejercicio avanza solo, un turno cada 15 segundos. Sirve para mostrar en clase, en el videowall (7.13), cómo se desarrolla un "
             "escenario antes de que lo jueguen los alumnos, o para ver cómo resuelve el simulador una situación."),
-          Bul([f"Para detenerlo, pulse {B('Pausar')} (7.3), o desmarque los dos adversarios automáticos y pulse {B('Aplicar interruptores')}.",
+          Bul([f"Para detenerlo, pulse {B('Pausar')} (7.3), o devuelva los dos bandos a «Grupo de alumnos» y pulse {B('Aplicar interruptores')}.",
                "Después, devuelva el límite de decisión al que quiera usar en <i>Turno y configuración</i> (0 = sin límite).",
                "Como la demostración cambia el escenario, conviene hacerla sobre una copia: Consola → Escenario → <b>Duplicar</b> (7.10)."])]
     h += [H2("8.8 Una clase contra la IA, paso a paso"),
           pasos("Cree el escenario desde una plantilla <b>Contra la IA</b> (8.2), o active la IA en uno propio (8.3).",
                 "Elija el nivel del adversario y revise la hora de inicio y el ciclo de día y noche.",
-                "Asigne a los alumnos al escenario (7.10) y distribuya los puestos del bando azul (6.2).",
+                "Asigne a los alumnos al escenario (7.10) y distribuya las reparticiones del bando azul (6.2).",
                 "Explique la situación y los objetivos. La IA ya dio sus órdenes del primer turno: su bando figura como <b>IA · LISTO</b>.",
                 f"Los alumnos dan sus órdenes y pulsan {B('Estoy listo')}. Si está marcado «Resolver solo cuando ambos bandos estén listos», "
                 f"el turno se resuelve en ese momento; si no, pulse {B('Resolver y avanzar turno')}.",
@@ -889,7 +994,7 @@ def construir(salida: Path) -> None:
         ["&lt; y &gt;, la barra y Reproducir", "Recorren el ejercicio turno a turno: posiciones, trayectorias y combates de cada turno sobre el mapa."],
         ["Resumen", "Resumen por bando: pérdidas, unidades destruidas, objetivos y puntaje."],
         ["Línea de tiempo", "Combustible y munición de cada unidad turno a turno, cruzados con combates y reabastecimientos."],
-        ["Rúbrica", "Evaluación por bando, por puesto y por alumno, con observaciones automáticas."],
+        ["Rúbrica", "Evaluación por bando, por repartición y por alumno, con observaciones automáticas."],
         ["Imprimible", "Informe completo en una página lista para imprimir o guardar en PDF."],
         ["Diapositivas", "Presentación automática para la sesión de análisis: una diapositiva por turno, resumen y evaluación."],
         ["Replay", "Animación continua del ejercicio (9.6)."],
@@ -903,8 +1008,8 @@ def construir(salida: Path) -> None:
     h += [P("En la <b>línea de tiempo</b> cada fila es una unidad: la línea verde es el combustible y la ámbar la munición. Los símbolos marcan "
             "caídas abruptas (▼), niveles críticos (●), reabastecimientos (▲) y combates (◆). Los filtros de arriba eligen qué mostrar y de qué bando.")]
     h += [H2("9.3 Rúbrica")]
-    h += figura("informe_rubrica", "Rúbrica: indicadores por bando y por puesto, y evaluación por alumno.")
-    h += [P("La <b>rúbrica</b> resume la conducción de cada bando y de cada puesto (órdenes emitidas, resueltas y rechazadas con su motivo, "
+    h += figura("informe_rubrica", "Rúbrica: indicadores por bando y por repartición, y evaluación por alumno.")
+    h += [P("La <b>rúbrica</b> resume la conducción de cada bando y de cada repartición (órdenes emitidas, resueltas y rechazadas con su motivo, "
             "turnos con órdenes y turnos pasivos, logística, pérdidas, objetivos, misiones) con <b>observaciones automáticas</b>. La "
             f"<b>evaluación por alumno</b> hace lo mismo para cada usuario, y {B('CSV por alumno')} la descarga para la planilla de calificaciones."),
           H2("9.4 Indicadores doctrinales y calificación")]
@@ -916,7 +1021,7 @@ def construir(salida: Path) -> None:
               ["Reacción ante las amenazas", "Cuántos turnos tarda el bando en dar una orden contra una unidad enemiga que lo atacó."],
               ["Conocimiento del enemigo", "Qué parte de las unidades enemigas llegó a detectar (radares, reconocimiento, guerra electrónica)."],
               ["Sostenimiento logístico", "Si las unidades que se quedaron sin combustible o munición fueron reabastecidas."],
-              ["Coordinación entre puestos", "Si los puestos A2 a A5 con unidades a cargo dieron órdenes (solo cuando el bando trabaja con varios puestos)."],
+              ["Coordinación entre reparticiones", "Si las reparticiones A-2 a C-E con unidades a cargo dieron órdenes (solo cuando el bando trabaja con varias reparticiones)."],
               ["Economía de fuerzas", "Pérdidas infligidas frente a pérdidas sufridas en los combates del bando."],
               ["Cumplimiento de objetivos", "Objetivos cumplidos sobre los asignados."],
               ["Iniciativa", "Turnos en los que el bando dio al menos una orden o planificó una misión."],
@@ -947,8 +1052,9 @@ def construir(salida: Path) -> None:
     h += [Tbl(["Pregunta o problema", "Respuesta"], [
         ["Mi orden aparece RECHAZADA.", "Lea el motivo en la cola: objetivo fuera de alcance o no detectado, sin combustible o munición, "
          "terreno intransitable, río sin puente, base sin existencias…"],
-        ["El simulador dice que la orden corresponde a otro puesto.", "Esa unidad la conduce otra célula de su bando (6.2). Coordine por la red del bando."],
-        ["No veo el botón Estoy listo.", "Solo lo tienen el Estado Mayor y el A5."],
+        ["El simulador dice que la orden corresponde a otra repartición.", "Esa unidad la conduce otra repartición de su bando (6.2). Coordine por la red del bando."],
+        ["No veo el botón Estoy listo.", "Solo lo tienen el Comandante y el JEM."],
+        ["La pestaña PMO dice que no hay Problema Militar.", "El instructor todavía no lo emitió. Cuando lo haga llega una alerta y la pestaña se actualiza sola."],
         ["No veo a las unidades enemigas.", "Solo se ven las que su bando detecta. Acérquese con reconocimiento, drones o radares."],
         ["Las unidades se ven muy pequeñas o sin nombre.", "Es el mapa de lejos (4.2). Acerque el zoom: aparecen nombres y anillos de alcance."],
         ["El mapa sale gris o vacío.", "Faltan los datos de mapa en el servidor (avise al instructor) o se eligió una región sin datos."],

@@ -194,7 +194,7 @@ def escena_mapa(g: Guion):
 
 
 def escena_ordenes(g: Guion):
-    g.escena(arnes("azul", "mando", 8.56, -70.6, 11))
+    g.escena(arnes("azul", "comandante", 8.56, -70.6, 11))
     g.rotulo("El alumno da órdenes", "Selecciona una unidad en el orden de batalla: su ficha muestra fuerza, combustible, munición y alcances.")
     g.clic('#oob .oob-item[data-id="2"]')
     g.n.vista(8.54, -70.6, 11, 1.2)
@@ -220,13 +220,13 @@ def escena_ordenes(g: Guion):
 
 
 def escena_aviacion(g: Guion):
-    g.escena(arnes("azul", "planificacion", 8.62, -70.45, 10))
+    g.escena(arnes("azul", "a3", 8.62, -70.45, 10))
     g.rotulo("Aviación", "El puesto A5 envía aeronaves o drones desde una base: cada modelo con su foto, prestaciones y armamento.")
     g.clic("#btn-enviar-caza")
     g.pausa(4)
     g.n.js("document.getElementById('dlg-aeronaves').close()")
     g.corte()
-    g.escena(arnes("azul", "operaciones", 8.66, -70.5, 11))
+    g.escena(arnes("azul", "a3", 8.66, -70.5, 11))
     g.rotulo("Misiones aéreas", "El A3 planifica una misión: rol (CAP, interdicción, CAS, SEAD…) y ruta; el grupo la cumple solo, turno a turno.")
     g.clic("#btn-planificar-mision")
     g.n.js("document.getElementById('pm-origen-grupo').click()")
@@ -248,7 +248,7 @@ def escena_relieve(g: Guion):
     g.rotulo("Cobertura real del radar", "Turquesa: hasta dónde ve aviones a 1 500 m; naranja: a baja cota. Este radar, en un valle, queda casi ciego.")
     g.pausa(5)
     g.corte()
-    g.escena(arnes("azul", "operaciones", 8.62, -70.4, 10))
+    g.escena(arnes("azul", "a3", 8.62, -70.4, 10))
     g.clic('#oob .oob-item[data-id="10"]')
     g.n.js("document.querySelector('.perfil-vuelo').scrollIntoView({ block: 'center' })")
     g.rotulo("Perfil de vuelo", "Alto, medio o rasante: a baja cota se esconde tras el relieve, pero gasta más y queda expuesto a la antiaérea portátil.")
@@ -273,7 +273,7 @@ def escena_aerodromos(g: Guion):
 
 
 def escena_naval(g: Guion):
-    g.escena(arnes("azul", "mando", 10.66, -67.98, 10))
+    g.escena(arnes("azul", "comandante", 10.66, -67.98, 10))
     g.rotulo("Fuerzas navales", "Grupo naval frente a Puerto Cabello: portaaviones, destructor, submarino y buque de desembarco.")
     g.pausa(2)
     g.clic('#oob .oob-item[data-id="20"]')

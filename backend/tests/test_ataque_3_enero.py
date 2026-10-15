@@ -89,7 +89,7 @@ def test_el_avion_cisterna_reabastece_combustible_en_vuelo(db_session):
     assert kc.carga == pytest.approx(85.0)
 
 
-def test_el_cisterna_y_la_alerta_temprana_los_conduce_operaciones():
-    for clase in ("cisterna", "alerta_temprana"):
+def test_el_cisterna_lo_conduce_operaciones_y_la_alerta_temprana_defensa_aerea():
+    for clase, funcion in (("cisterna", "aereo"), ("alerta_temprana", "defensa_aerea")):
         u = SimpleNamespace(tipo="aerea", clase=clase)
-        assert puestos.funcion_de_orden(u, "mover", catalogo.CLASES[clase]) == "aereo"
+        assert puestos.funcion_de_orden(u, "mover", catalogo.CLASES[clase]) == funcion

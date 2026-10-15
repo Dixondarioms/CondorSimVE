@@ -70,7 +70,7 @@ class UnidadPlantilla:
 @dataclass(frozen=True)
 class ObjetivoPlantilla:
     bando: str
-    tipo: str  # "ocupar" | "destruir" | "proteger"
+    tipo: str  # "ocupar" | "destruir" | "neutralizar" | "proteger" | "efecto"
     nombre: str
     puntos: int = 20
     lat: float | None = None
@@ -79,6 +79,12 @@ class ObjetivoPlantilla:
     turnos_requeridos: int = 1
     unidad: str | None = None  # nombre de una UnidadPlantilla de esta misma plantilla (destruir/proteger)
     hasta_turno: int | None = None
+    # cadena de objetivos del TIEM (ver engine/objetivos.py); `padre` es el nombre del objetivo superior
+    nivel: str = "material"
+    padre: str | None = None
+    efecto: str = ""
+    indicador: str = ""
+    umbral: float | None = None
 
 
 @dataclass(frozen=True)
@@ -100,6 +106,14 @@ class Plantilla:
     ia_azul: bool = False
     ia_rojo: bool = False
     dia_noche: bool = False  # ciclo de dia y noche encendido
+    # TIEM: quien conduce cada bando, calendario D/H y Problema Militar Operativo de cada bando ({bando: contenido})
+    conduce_azul: str = "alumnos"
+    conduce_rojo: str = "alumnos"
+    fecha_inicio: str | None = None
+    turno_h: int | None = None
+    turno_final: int | None = None
+    fases: tuple = ()
+    pmo: dict = field(default_factory=dict)
 
 
 _DEMO_LLANOS = Plantilla(
@@ -411,7 +425,9 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
         raise KeyError(plantilla_id)
     esc = Escenario(nombre=p.nombre, clima=p.clima, hora_inicio_min=p.hora_inicio_min,
                     nacion_azul=p.nacion_azul, nacion_rojo=p.nacion_rojo, ia_azul=p.ia_azul, ia_rojo=p.ia_rojo,
-                    dia_noche=p.dia_noche)
+                    dia_noche=p.dia_noche, conduce_azul=p.conduce_azul, conduce_rojo=p.conduce_rojo,
+                    fecha_inicio=p.fecha_inicio, turno_h=p.turno_h, turno_final=p.turno_final,
+                    fases_json=json.dumps(list(p.fases), ensure_ascii=False) if p.fases else None)
     db.add(esc)
     db.flush()
 
@@ -443,12 +459,26 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
             unidades[u.nombre].en_tierra = True
             unidades[u.nombre].base_id = unidades[u.base].id
 
+    creados: list[tuple[ObjetivoPlantilla, Objetivo]] = []
     for o in p.objetivos:
-        db.add(Objetivo(
+        obj = Objetivo(
             escenario_id=esc.id, bando=o.bando, tipo=o.tipo, nombre=o.nombre, puntos=o.puntos,
             lat=o.lat, lon=o.lon, radio_km=o.radio_km, turnos_requeridos=o.turnos_requeridos,
             unidad_id=unidades[o.unidad].id if o.unidad else None, hasta_turno=o.hasta_turno,
-        ))
+            nivel=o.nivel, efecto=o.efecto, indicador=o.indicador, umbral=o.umbral,
+        )
+        db.add(obj)
+        creados.append((o, obj))
+    db.flush()
+    for o, obj in creados:  # la cadena de objetivos se arma por nombre dentro de cada bando
+        if o.padre:
+            padre = next((x for po, x in creados if po.bando == o.bando and po.nombre == o.padre and x is not obj), None)
+            obj.padre_id = padre.id if padre else None
+    if p.pmo:
+        from app.engine import pmo  # importacion tardia: pmo importa este modulo indirectamente
+
+        for bando, contenido in p.pmo.items():
+            pmo.guardar(db, esc, bando, contenido, "instructor")
 
     db.commit()
     db.refresh(esc)
@@ -549,20 +579,31 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
             d["base"] = nombres[d["base"]]
 
     objetivos = []
-    for o in db.query(Objetivo).filter(Objetivo.escenario_id == esc.id).order_by(Objetivo.id):
-        if o.tipo in ("destruir", "proteger") and o.unidad_id not in nombres:
+    todos = db.query(Objetivo).filter(Objetivo.escenario_id == esc.id).order_by(Objetivo.id).all()
+    nombre_obj = {o.id: o.nombre for o in todos}
+    for o in todos:
+        if o.tipo in ("destruir", "neutralizar", "proteger") and o.unidad_id not in nombres:
             continue  # la unidad ya no existe: el objetivo no tiene sentido en la plantilla
         objetivos.append({
             "bando": o.bando, "tipo": o.tipo, "nombre": o.nombre, "puntos": o.puntos, "lat": o.lat, "lon": o.lon,
             "radio_km": o.radio_km, "turnos_requeridos": o.turnos_requeridos,
             "unidad": nombres.get(o.unidad_id) if o.unidad_id is not None else None, "hasta_turno": o.hasta_turno,
+            "nivel": o.nivel or "material", "padre": nombre_obj.get(o.padre_id), "efecto": o.efecto or "",
+            "indicador": o.indicador or "", "umbral": o.umbral,
         })
+    from app.models.problema_militar import ProblemaMilitar  # importacion tardia: solo al guardar
+
+    problemas = {pm.bando: json.loads(pm.contenido_json)
+                 for pm in db.query(ProblemaMilitar).filter(ProblemaMilitar.escenario_id == esc.id)}
     return {
         "id": plantilla_id, "nombre": nombre, "descripcion": descripcion, "origen": "usuario",
         "guardada_en": datetime.now(timezone.utc).isoformat(timespec="seconds"), "escenario_origen": esc.id,
         "con_estado": bool(con_estado), "clima": esc.clima, "hora_inicio_min": esc.hora_inicio_min,
         "nacion_azul": esc.nacion_azul or "", "nacion_rojo": esc.nacion_rojo or "",
         "ia_azul": bool(esc.ia_azul), "ia_rojo": bool(esc.ia_rojo), "dia_noche": bool(esc.dia_noche),
+        "conduce_azul": esc.conduce_azul or "alumnos", "conduce_rojo": esc.conduce_rojo or "alumnos",
+        "fecha_inicio": esc.fecha_inicio, "turno_h": esc.turno_h, "turno_final": esc.turno_final,
+        "fases": json.loads(esc.fases_json) if esc.fases_json else [], "pmo": problemas,
         "unidades": unidades, "objetivos": objetivos,
     }
 
@@ -623,17 +664,35 @@ def desde_dict(datos: dict) -> Plantilla:
         ))
     objetivos: list[ObjetivoPlantilla] = []
     for d in datos.get("objetivos") or []:
-        if d.get("tipo") not in ("ocupar", "destruir", "proteger") or d.get("bando") not in ("azul", "rojo"):
+        if (d.get("tipo") not in ("ocupar", "destruir", "neutralizar", "proteger", "efecto")
+                or d.get("bando") not in ("azul", "rojo")):
             raise PlantillaInvalida("Objetivo con tipo o bando invalido")
         unidad = d.get("unidad")
-        if d["tipo"] != "ocupar" and unidad not in vistos:
+        if d["tipo"] not in ("ocupar", "efecto") and unidad not in vistos:
             raise PlantillaInvalida(f"El objetivo {d.get('nombre')!r} referencia una unidad que no esta en la plantilla")
+        nivel = d.get("nivel") if d.get("nivel") in ("ulterior", "asignado", "material") else "material"
+        if d["tipo"] == "efecto" and nivel == "material":
+            nivel = "asignado"
+        umbral = d.get("umbral")
         objetivos.append(ObjetivoPlantilla(
             d["bando"], d["tipo"], str(d.get("nombre") or "Objetivo"), int(d.get("puntos") or 0),
             lat=d.get("lat"), lon=d.get("lon"), radio_km=float(d.get("radio_km") or 5.0),
-            turnos_requeridos=int(d.get("turnos_requeridos") or 1), unidad=unidad if d["tipo"] != "ocupar" else None,
-            hasta_turno=d.get("hasta_turno"),
+            turnos_requeridos=int(d.get("turnos_requeridos") or 1),
+            unidad=unidad if d["tipo"] not in ("ocupar", "efecto") else None, hasta_turno=d.get("hasta_turno"),
+            nivel=nivel, padre=d.get("padre") or None, efecto=str(d.get("efecto") or "")[:300],
+            indicador=str(d.get("indicador") or "")[:300],
+            umbral=None if umbral is None else max(0.0, min(100.0, float(umbral))),
         ))
+    from app.engine import calendario  # importacion tardia: evita el ciclo con los modelos
+
+    try:
+        fases = tuple(calendario.validar_fases(datos.get("fases") or []))
+    except ValueError as exc:
+        raise PlantillaInvalida(f"Fases de la operacion: {exc}") from None
+
+    def turno_opcional(campo):
+        v = datos.get(campo)
+        return None if v in (None, "", 0) else max(1, int(v))
     return Plantilla(
         id=plantilla_id, nombre=nombre, descripcion=str(datos.get("descripcion") or ""),
         clima=str(datos.get("clima") or "despejado"), hora_inicio_min=int(datos.get("hora_inicio_min") or 360),
@@ -642,6 +701,11 @@ def desde_dict(datos: dict) -> Plantilla:
         con_estado=bool(datos.get("con_estado")), guardada_en=str(datos.get("guardada_en") or ""),
         escenario_origen=datos.get("escenario_origen"),
         ia_azul=bool(datos.get("ia_azul")), ia_rojo=bool(datos.get("ia_rojo")), dia_noche=bool(datos.get("dia_noche")),
+        conduce_azul="instructor" if datos.get("conduce_azul") == "instructor" else "alumnos",
+        conduce_rojo="instructor" if datos.get("conduce_rojo") == "instructor" else "alumnos",
+        fecha_inicio=str(datos["fecha_inicio"])[:10] if datos.get("fecha_inicio") else None,
+        turno_h=turno_opcional("turno_h"), turno_final=turno_opcional("turno_final"), fases=fases,
+        pmo={b: c for b, c in (datos.get("pmo") or {}).items() if b in ("azul", "rojo") and isinstance(c, dict)},
     )
 
 

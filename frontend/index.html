@@ -28,7 +28,7 @@
 
     <form id="registro-form" autocomplete="off" hidden>
       <h2>SOLICITAR CUENTA</h2>
-      <p class="sec">Elija su usuario y contraseña. La cuenta quedará pendiente hasta que el instructor la apruebe (puede cambiarle el rol o el puesto).</p>
+      <p class="sec">Elija su usuario y contraseña. La cuenta quedará pendiente hasta que el instructor la apruebe (puede cambiarle el rol o la repartición).</p>
       <input id="r-user" placeholder="Usuario (letras, números, punto, guion)" maxlength="50" autocomplete="username" required>
       <input id="r-pass" type="password" placeholder="Contraseña (mín. 8 caracteres)" autocomplete="new-password" required>
       <input id="r-pass2" type="password" placeholder="Repita la contraseña" autocomplete="new-password" required>
@@ -38,12 +38,15 @@
         <option value="observador">Observador</option>
         <option value="instructor">Instructor</option>
       </select>
-      <select id="r-puesto" aria-label="Puesto dentro del bando">
-        <option value="mando">EM · Estado Mayor (todas las funciones)</option>
-        <option value="inteligencia">A2 · Inteligencia</option>
-        <option value="operaciones">A3 · Operaciones en curso</option>
-        <option value="logistica">A4 · Logística</option>
-        <option value="planificacion">A5 · Planificación</option>
+      <select id="r-puesto" aria-label="Repartición dentro del bando">
+        <option value="comandante">CMDTE · Comandante (todas las funciones)</option>
+        <option value="jem">JEM · Jefe de Estado Mayor (todas las funciones)</option>
+        <option value="a1">A-1 · Personal</option>
+        <option value="a2">A-2 · Inteligencia</option>
+        <option value="a3">A-3 · Operaciones</option>
+        <option value="a3da">A-3 D/A · Defensa Aérea</option>
+        <option value="a4">A-4 · Logística</option>
+        <option value="ce">C-E · Comunicaciones y Electrónica</option>
       </select>
       <button type="submit" class="primario">Enviar solicitud</button>
       <p id="r-error" class="error" role="alert"></p>
@@ -73,6 +76,7 @@
         <span class="dato">TURNO: <b id="h-turno">-</b> <small>(1h Simulada)</small></span>
         <span class="sep">|</span>
         <span class="dato">HORA SIMULADA: <b id="h-hora">--:--h</b></span>
+        <span class="dato" id="h-calendario-caja" hidden><span class="sep">|</span> <b id="h-calendario" title="Calendario de la operación: día D, hora H y fase"></b></span>
         <span class="sep">|</span>
         <span class="dato">BANDO: <b id="h-bando" class="">-</b></span>
       </div>
@@ -85,6 +89,10 @@
         <button id="btn-nuevo-escenario" class="solo-instructor secundario" type="button">Nuevo</button>
         <button id="btn-plantillas" class="solo-instructor secundario" type="button" title="Crear un escenario a partir de uno precargado">Desde plantilla…</button>
         <button id="btn-guardar-plantilla" class="solo-instructor secundario" type="button" title="Guardar las unidades, los objetivos y el clima actuales de este escenario como una plantilla reutilizable">Guardar como plantilla…</button>
+        <button id="btn-conducir-azul" class="secundario" type="button" hidden title="Dar las órdenes del bando Azul como su comandante">Conducir Azul</button>
+        <button id="btn-conducir-rojo" class="secundario" type="button" hidden title="Dar las órdenes del bando Rojo como su comandante">Conducir Rojo</button>
+        <span id="barra-conduce" class="barra-conduce" hidden><span id="barra-conduce-texto"></span>
+          <button id="btn-dejar-conducir" type="button" class="mini">Volver a instructor</button></span>
         <span id="estado-conexion" class="conexion off" title="desconectado"></span>
         <div id="reloj" class="reloj" role="timer" aria-live="off">
           <span class="etiqueta" id="reloj-etiqueta">TIEMPO RESTANTE PLANIFICACIÓN:</span>
@@ -112,6 +120,7 @@
         <div class="pestanas" role="tablist">
           <button type="button" role="tab" class="activa" data-pestana="fuerzas">FUERZAS</button>
           <button type="button" role="tab" data-pestana="situacion" title="Cuadro radar, personal e infraestructura">SITUACIÓN</button>
+          <button type="button" role="tab" data-pestana="pmo" title="Problema Militar Operativo y calendario de la operación (TIEM)">PMO</button>
           <button type="button" role="tab" data-pestana="consola" class="solo-instructor">CONSOLA</button>
         </div>
 
@@ -128,7 +137,7 @@
           </section>
 
           <section class="bloque solo-alumno" id="sec-puesto">
-            <h2>Mi puesto <span id="puesto-nombre" class="contador azul-suave"></span></h2>
+            <h2>Mi repartición <span id="puesto-nombre" class="contador azul-suave"></span></h2>
             <p class="ayuda" id="puesto-desc"></p>
           </section>
 
@@ -249,6 +258,27 @@
             <p class="ayuda">Centrales eléctricas, refinerías, centros de comunicaciones y puentes del bando en el
               ejercicio, y lo que su estado significa para la operación.</p>
             <div id="cuadro-infra"></div>
+          </section>
+        </div>
+
+        <!-- PMO: Problema Militar Operativo y calendario de la operacion (js/pmo.js) -->
+        <div id="pest-pmo" class="pestana" hidden>
+          <section class="bloque" id="sec-calendario">
+            <h2>Calendario de la operación</h2>
+            <div id="pmo-calendario"></div>
+          </section>
+          <section class="bloque" id="sec-pmo">
+            <h2>Problema Militar Operativo <span id="pmo-origen" class="contador"></span></h2>
+            <p class="ayuda">El documento con que empieza el trabajo de Estado Mayor (TIEM): la situación, la misión del
+              escalón superior, la idea general y la misión de su bando, con sus medios, el área y las limitaciones.</p>
+            <label class="mini solo-control">Bando<select id="pmo-bando"><option value="azul">Azul</option><option value="rojo">Rojo</option></select></label>
+            <div class="fila-botones solo-instructor">
+              <button id="btn-pmo-generar" type="button" title="Redacta el PMO de los dos bandos, fija el calendario si falta y arma la cadena de objetivos a partir del escenario">Crear la situación automáticamente</button>
+              <button id="btn-pmo-editar" type="button" class="secundario">Redactar / corregir</button>
+            </div>
+            <label class="chk solo-instructor"><input type="checkbox" id="pmo-sobrescribir"><span>Al crearla, reemplazar también lo redactado a mano</span></label>
+            <div id="pmo-doc" class="pmo-doc"></div>
+            <form id="pmo-form" class="pmo-form" hidden></form>
           </section>
         </div>
 
@@ -387,12 +417,14 @@
 
           <details>
             <summary>Objetivos y puntaje</summary>
-            <p class="ayuda">Cada bando ve solo los suyos. Ocupar: mantener la zona (sin enemigos) varios turnos seguidos. Destruir: unidad enemiga. Proteger: unidad propia viva hasta un turno. Además, cada 10 de fuerza que un bando inflige al enemigo vale 1 punto.</p>
+            <p class="ayuda">Cada bando ve solo los suyos. Ocupar: mantener la zona (sin enemigos) varios turnos seguidos. Destruir: unidad enemiga. Neutralizar: bajar la fuerza de una unidad enemiga hasta un porcentaje. Proteger: unidad propia viva hasta un turno. Efecto: objetivo ulterior o asignado de la cadena del TIEM, que se cumple cuando se cumplen los objetivos que dependen de él. Además, cada 10 de fuerza que un bando inflige al enemigo vale 1 punto.</p>
             <div class="grid">
               <select id="ob-tipo" aria-label="Tipo de objetivo">
                 <option value="ocupar">Ocupar una zona</option>
                 <option value="destruir">Destruir una unidad</option>
+                <option value="neutralizar">Neutralizar una unidad</option>
                 <option value="proteger">Proteger una unidad</option>
+                <option value="efecto">Efecto (ulterior o asignado)</option>
               </select>
               <select id="ob-bando" aria-label="Bando"><option value="azul">Para Azul</option><option value="rojo">Para Rojo</option></select>
               <input id="ob-nombre" placeholder="Nombre (ej. Tomar el puente)" maxlength="120">
@@ -401,7 +433,13 @@
               <label class="mini ob-ocupar">Turnos seguidos<input id="ob-turnos" type="number" min="1" max="48" value="1"></label>
               <label class="mini ob-unidad" hidden>Unidad<select id="ob-unidad"></select></label>
               <label class="mini ob-proteger" hidden>Hasta el turno<input id="ob-hasta" type="number" min="1" max="999" value="6"></label>
+              <label class="mini ob-plazo">Plazo (turno, opcional)<input id="ob-plazo" type="number" min="1" max="999" placeholder="sin plazo"></label>
+              <label class="mini ob-efecto" hidden>Nivel<select id="ob-nivel"><option value="asignado">Asignado</option><option value="ulterior">Ulterior</option></select></label>
+              <label class="mini ob-umbral" hidden><span id="ob-umbral-etq">Umbral (%)</span><input id="ob-umbral" type="number" min="0" max="100" step="5" placeholder="50"></label>
+              <label class="mini">Objetivo superior<select id="ob-padre"></select></label>
             </div>
+            <input id="ob-efecto" placeholder="Efecto deseado (ej. Degradar la defensa aérea del enemigo al 50 %)" maxlength="300">
+            <input id="ob-indicador" placeholder="Indicador con que se mide (ej. Dos antiaéreas fuera de servicio)" maxlength="300">
             <div class="ob-ocupar">
               <button id="btn-ob-ubicar" type="button" class="secundario">Ubicar la zona en el mapa</button>
               <p id="ob-centro" class="ayuda preview"></p>
@@ -417,6 +455,23 @@
           </details>
 
           <details>
+            <summary>Calendario de la operación (TIEM)</summary>
+            <p class="ayuda">Cada turno dura 1 h simulada. Fije la fecha del turno 1 y el turno en que cae la hora H: el día D es el de ese turno, y la cabecera muestra D+1, H+5 y la fase en curso. Sin fases propias se usan alistamiento, concentración y despliegue, ejecución y repliegue.</p>
+            <div class="grid">
+              <label class="mini">Fecha del turno 1<input id="cal-fecha" type="date"></label>
+              <label class="mini">Hora H en el turno<input id="cal-h" type="number" min="0" max="9999" placeholder="sin H"></label>
+              <label class="mini">Último turno previsto<input id="cal-final" type="number" min="0" max="9999" placeholder="sin límite"></label>
+            </div>
+            <h4>Fases de la operación</h4>
+            <div id="cal-fases" class="cal-fases"></div>
+            <div class="fila-botones">
+              <button id="btn-cal-fase" type="button" class="secundario mini">Agregar fase</button>
+              <button id="btn-cal-defecto" type="button" class="secundario mini">Usar las fases por defecto</button>
+            </div>
+            <button id="btn-calendario" type="button">Aplicar calendario</button>
+          </details>
+
+          <details>
             <summary>Dirección del ejercicio (interruptores del motor)</summary>
             <p class="ayuda">Simplifican el ejercicio con fines didácticos. Cada cambio queda registrado como evento y en el informe.</p>
             <label class="chk"><input type="checkbox" id="dir-niebla" checked><span>Niebla de guerra (apagada: ambos bandos ven todo)</span></label>
@@ -424,8 +479,12 @@
             <label class="chk"><input type="checkbox" id="dir-clima" checked><span>Efectos del clima y de las zonas meteorológicas</span></label>
             <label class="chk"><input type="checkbox" id="dir-fuego" checked><span>Fuego automático (patrullas, antiaérea, destructores)</span></label>
             <label class="chk"><input type="checkbox" id="dir-noche"><span>Ciclo de día y noche (de noche se detecta menos a simple vista; el radar no cambia)</span></label>
-            <label class="chk"><input type="checkbox" id="dir-ia-azul"><span>Adversario automático: el simulador conduce el bando Azul</span></label>
-            <label class="chk"><input type="checkbox" id="dir-ia-rojo"><span>Adversario automático: el simulador conduce el bando Rojo</span></label>
+            <label class="mini">Conduce el bando Azul<select id="dir-cond-azul">
+              <option value="alumnos">Grupo de alumnos</option><option value="instructor">El instructor</option><option value="ia">Adversario automático (IA)</option>
+            </select></label>
+            <label class="mini">Conduce el bando Rojo<select id="dir-cond-rojo">
+              <option value="alumnos">Grupo de alumnos</option><option value="instructor">El instructor</option><option value="ia">Adversario automático (IA)</option>
+            </select></label>
             <label class="mini">Nivel del adversario automático<select id="dir-ia-nivel">
               <option value="prudente">Prudente: solo ataca con ventaja clara y cuida sus aviones</option>
               <option value="normal" selected>Normal</option>
@@ -496,12 +555,15 @@
                 <option value="observador">Observador</option>
                 <option value="instructor">Instructor</option>
               </select>
-              <select id="nu-puesto" title="Puesto del alumno dentro de su bando" aria-label="Puesto dentro del bando">
-                <option value="mando">EM · Estado Mayor (todas las funciones)</option>
-                <option value="inteligencia">A2 · Inteligencia</option>
-                <option value="operaciones">A3 · Operaciones en curso</option>
-                <option value="logistica">A4 · Logística</option>
-                <option value="planificacion">A5 · Planificación</option>
+              <select id="nu-puesto" title="Repartición del TIEM del alumno dentro de su bando" aria-label="Repartición dentro del bando">
+                <option value="comandante">CMDTE · Comandante (todas las funciones)</option>
+                <option value="jem">JEM · Jefe de Estado Mayor (todas las funciones)</option>
+                <option value="a1">A-1 · Personal</option>
+                <option value="a2">A-2 · Inteligencia</option>
+                <option value="a3">A-3 · Operaciones</option>
+                <option value="a3da">A-3 D/A · Defensa Aérea</option>
+                <option value="a4">A-4 · Logística</option>
+                <option value="ce">C-E · Comunicaciones y Electrónica</option>
               </select>
               <button id="btn-crear-usuario" type="button">Crear usuario</button>
             </div>
@@ -645,6 +707,7 @@
             </div>
             <dl class="datos">
               <div><dt>Hora simulada</dt><dd id="esc-hora">-</dd></div>
+              <div id="esc-calendario-fila" hidden><dt>Calendario</dt><dd id="esc-calendario">-</dd></div>
               <div><dt>Movimiento terrestre</dt><dd id="clima-mov">-</dd></div>
               <div><dt>Ataques aéreos</dt><dd id="clima-aire">-</dd></div>
               <div><dt>Fase</dt><dd id="esc-fase">-</dd></div>
@@ -851,6 +914,7 @@
   <script src="/static/js/informe.js"></script>
   <script src="/static/js/plantillas.js"></script>
   <script src="/static/js/situacion.js"></script>
+  <script src="/static/js/pmo.js"></script>
   <script src="/static/js/infraestructura.js"></script>
   <script src="/static/js/app.js"></script>
 </body>

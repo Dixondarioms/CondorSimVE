@@ -20,7 +20,6 @@ from app.routers.ordenes import _en_decision
 from app.ws_manager import manager
 
 router = APIRouter(prefix="/api/escenarios/{escenario_id}/misiones", tags=["misiones"])
-solo_alumnos = auth.requiere_roles("azul", "rojo")
 
 
 def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: Usuario) -> dict:
@@ -111,7 +110,7 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
 
 @router.post("/previsualizar")
 def previsualizar(payload: schemas.MisionIn, esc: Escenario = Depends(auth.escenario_dep),
-                  db: Session = Depends(get_db), usuario: Usuario = Depends(solo_alumnos)):
+                  db: Session = Depends(get_db), usuario: Usuario = Depends(auth.conductor)):
     """Estimacion (hora y combustible en cada punto) y errores de la mision, sin crearla."""
     r = _preparar(payload, esc, db, usuario)
     return {"plan": r["plan"], "errores": r["errores"], "turno_despegue": r["turno"], "puntos": r["puntos"]}
@@ -119,7 +118,7 @@ def previsualizar(payload: schemas.MisionIn, esc: Escenario = Depends(auth.escen
 
 @router.post("")
 async def crear(payload: schemas.MisionIn, esc: Escenario = Depends(auth.escenario_dep),
-                db: Session = Depends(get_db), usuario: Usuario = Depends(solo_alumnos)):
+                db: Session = Depends(get_db), usuario: Usuario = Depends(auth.conductor)):
     _en_decision(esc)
     r = _preparar(payload, esc, db, usuario)
     if r["errores"]:
@@ -178,7 +177,7 @@ def listar(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(g
 
 @router.delete("/{mision_id}")
 async def cancelar(mision_id: int, esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db),
-                   usuario: Usuario = Depends(solo_alumnos)):
+                   usuario: Usuario = Depends(auth.conductor)):
     """Cancela una mision programada; una en curso se aborta y el grupo regresa a la base mas cercana."""
     _en_decision(esc)
     m = db.get(Mision, mision_id)

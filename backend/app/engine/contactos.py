@@ -28,7 +28,7 @@ def _describir(c: dict) -> str:
 
 def avisar_contactos_nuevos(db: Session, escenario: Escenario, unidades, existentes: dict, terreno, ge) -> None:
     """Cada radar o sensor que detecta un enemigo que su bando no tenia a la vista el turno anterior lo informa al
-    bando (evento "radar"): que es, a que distancia, en que rumbo y a que cota. Asi el A2 y el resto del bando se
+    bando (evento "radar"): que es, a que distancia, en que rumbo y a que cota. Asi el A-2 y el resto del bando se
     enteran aunque nadie este mirando el mapa."""
     turno = escenario.turno_actual
     clima = clima_mod.contexto(db, escenario)

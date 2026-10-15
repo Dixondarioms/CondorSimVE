@@ -14,7 +14,7 @@ recortado, sin el fondo: `dida_logo_recortado.png`, que genera `python tools/rec
 ## Manuales
 
 - **Manual de usuario** `docs/Manual_Usuario_SIETE.pdf`: guía paso a paso, con 76 capturas, de cada parte de la interfaz
-  para el instructor, los alumnos de cada puesto y el observador, con un capítulo sobre el combate contra la IA (ejercicios
+  para el instructor, los alumnos de cada repartición y el observador, con un capítulo sobre el combate contra la IA (ejercicios
   listos, niveles del adversario, ciclo de día y noche y modo demostración). Capturas: `python tools/manual/capturas_guia.py` (con
   el servidor en marcha en el puerto 8000): maneja Chrome por su protocolo de depuración (`tools/manual/navegador.py`)
   sobre el arnés de pruebas, hace los clics, recorta cada panel y numera las zonas. PDF: `python tools/generar_manual_usuario.py`.
@@ -154,26 +154,54 @@ Sirve para revisar la interfaz tras un cambio. Regenérelo si cambia `index.html
 | `azul` / `rojo` | Sus unidades + enemigas detectadas + últimos contactos | Emitir/cancelar órdenes, marcar "listo"; informe solo al finalizar |
 | `observador` | Todo | Solo lectura (incluye el informe) |
 
-### Puestos por función dentro del bando (estado mayor de aula)
+### Reparticiones del Estado Mayor (TIEM)
 
-Cada alumno de un bando ocupa un **puesto**, como las células de un centro de operaciones; así varios
-alumnos trabajan a la vez sobre el mismo bando sin pisarse. Todos los puestos comparten la misma vista
-(niebla de guerra, contactos, gráficos, red de mensajes del bando); lo que cambia es **qué órdenes puede
-emitir** cada uno. El instructor lo asigna al crear el usuario o después (panel "Usuarios"); cambiarlo
-cierra la sesión del alumno para que entre con su nueva interfaz.
+El simulador sigue el **TIEM** (Trabajo Integral de Estado Mayor): cada bando es el Estado Mayor del componente aéreo
+de un Teatro de Operaciones y cada alumno ocupa una **repartición**. Todas comparten la misma vista (niebla de
+guerra, contactos, gráficos, Problema Militar, red de mensajes del bando); lo que cambia es **qué órdenes puede
+emitir** cada una. El instructor la asigna al crear el usuario o después (panel "Usuarios"); cambiarla cierra la
+sesión del alumno para que entre con su nueva interfaz.
 
-| Puesto | Conduce | Confirma LISTO |
+| Repartición (id) | Conduce (funciones de `engine/puestos.py`) | Confirma LISTO |
 |---|---|---|
-| **EM · Estado Mayor** (por defecto) | Todo: es el comportamiento de siempre para un solo alumno por bando | Sí |
-| **A2 · Inteligencia** | Radares y unidades terrestres de guerra electrónica (escucha e interferencia); sigue contactos, dibuja gráficos de blancos | No |
-| **A3 · Operaciones en curso** | Las aeronaves ya creadas: despegue desde pista, rutas, patrullas, ataques, aterrizajes | No |
-| **A4 · Logística** | Ingenieros (puentes y vados) y convoyes de abastecimiento | No |
-| **A5 · Planificación** | Unidades terrestres y navales, y el envío de grupos de caza desde las bases | Sí |
+| **CMDTE · Comandante** (`comandante`, por defecto) | Todo el bando | Sí |
+| **JEM · Jefe de Estado Mayor** (`jem`) | Todo; coordina a las reparticiones | Sí |
+| **A-1 · Personal** (`a1`) | Ninguna unidad: efectivos, bajas, reemplazos (pestaña Situación) | No |
+| **A-2 · Inteligencia** (`a2`) | `reconocimiento`: unidades y drones de reconocimiento | No |
+| **A-3 · Operaciones** (`a3`) | `superficie` (terrestres, navales, lanzadores), `aereo` (ataque, helicópteros, drones armados, cisternas), `caza`, `despegar` | No |
+| **A-3 D/A · Defensa Aérea** (`a3da`) | `defensa_aerea` (radares, antiaérea, alerta temprana), `caza`, `despegar` | No |
+| **A-4 · Logística** (`a4`) | `logistica`: convoyes, depósitos, ingenieros, toda orden de construir | No |
+| **C-E · Comunicaciones y Electrónica** (`ce`) | `guerra_electronica`: escucha e interferencia terrestres y aviones de GE | No |
 
-El servidor rechaza (403, explicando qué puesto corresponde) cualquier orden, cancelación o "listo" fuera
-del puesto; la interfaz solo muestra las herramientas del puesto ("Mi puesto" en el panel izquierdo) y
-avisa si la unidad seleccionada la conduce otra célula. Desde la consola: `python -m app.crear_usuario
-a5azul --rol azul --puesto planificacion`; en el arnés, `arnes.html?rol=azul&puesto=operaciones`.
+El servidor rechaza (403, explicando qué repartición corresponde) cualquier orden, cancelación o "listo" fuera
+de su área; la interfaz solo muestra sus herramientas ("Mi repartición" en el panel izquierdo) y avisa si la
+unidad seleccionada la conduce otra. Los ids anteriores (`mando`, `inteligencia`, `operaciones`, `logistica`,
+`planificacion`) se aceptan y se traducen (migración `0025`: mando → comandante, inteligencia → a2, operaciones y
+planificacion → a3, logistica → a4). Desde la consola: `python -m app.crear_usuario da_azul --rol azul --puesto
+a3da`; en el arnés, `arnes.html?rol=azul&puesto=a3`.
+
+### Problema Militar, calendario, conducción y cadena de objetivos (TIEM, etapa 1)
+
+- **Problema Militar Operativo** (`engine/pmo.py`, tabla `problemas_militares`, pestaña **PMO**): por bando,
+  situación general, fuerzas enemigas y propias, misión del Comando del Teatro de Operaciones, idea general de la
+  operación conjunta, **misión del Componente Aéreo** (guardada por partes: tarea, qué, dónde, cuándo y propósito, y
+  revisada con las reglas del TIEM: verbo en infinitivo, sin condiciones), medios, área de operaciones, limitaciones
+  e instrucciones de coordinación. `GET /api/escenarios/{id}/pmo` (cada bando el suyo), `PUT /pmo/{bando}`
+  (instructor) y `POST /pmo/generar`: **crea la situación automáticamente** a partir de los países, las unidades
+  (las enemigas, aproximadas y por zona), los objetivos (postura ofensiva o defensiva), las ciudades de
+  `lugares.geojson` (`engine/lugares.py`) y el calendario; no reemplaza lo redactado por el instructor salvo
+  `sobrescribir`.
+- **Calendario** (`engine/calendario.py`): `fecha_inicio` (turno 1), `turno_h` (el día D es el de ese turno),
+  `turno_final` y fases (`fases_json`; por defecto alistamiento, concentración y despliegue, ejecución y repliegue).
+  Cada turno se nombra D±n · H±n · fase en la cabecera, en *Estado del escenario* y en la pestaña PMO.
+- **Quién conduce cada bando** (a elección del instructor): `conduccion_azul/rojo` = alumnos | instructor | ia
+  (`PATCH /config`). Con "instructor", el botón *Conducir Rojo/Azul* le da la pantalla del Comandante de ese bando;
+  sus pedidos llevan la cabecera `X-Conduce-Bando` (`auth.conductor`) y no cuentan en la evaluación por alumno.
+- **Cadena de objetivos** (`engine/objetivos.py`): `nivel` (ulterior, asignado, material), `padre_id`, `efecto`
+  deseado, `indicador` y `umbral`; tipo **neutralizar** (fuerza ≤ umbral, 50 % por defecto) y **efecto** (se cumple
+  con el umbral % de sus dependientes, 100 % por defecto; falla cuando ya no puede). `hasta_turno` es un plazo para
+  todos menos proteger. El generador agrupa los objetivos materiales en asignados bajo un ulterior.
+- Migración `0026`; las plantillas, la copia y la exportación guardan PMO, calendario, conducción y cadena.
 
 Alumnos y observadores solo acceden a los **escenarios que el instructor les asigna** (panel "Escenario").
 
@@ -185,11 +213,11 @@ Alumnos y observadores solo acceden a los **escenarios que el instructor les asi
   `python -m app.restablecer_admin` (en `backend`) devuelve `admin` a la contraseña inicial con la misma obligación,
   sin tocar a los demás usuarios.
 - **Solicitar una cuenta.** En la pantalla de acceso, *Solicitar una cuenta* pide usuario, contraseña (dos veces),
-  rol (alumno azul o rojo, observador o instructor) y puesto. La cuenta queda **pendiente**: quien intenta entrar
+  rol (alumno azul o rojo, observador o instructor) y repartición. La cuenta queda **pendiente**: quien intenta entrar
   recibe "Su solicitud de cuenta aun no fue aprobada" (solo si la contraseña es correcta; si no, el error de siempre).
   Hay un tope de 50 solicitudes pendientes.
 - **Aprobar o rechazar.** El instructor ve las solicitudes en *Consola → Usuarios* (con un contador junto al título;
-  se revisan cada 30 s y avisa de las nuevas) y las **aprueba** con el rol y el puesto pedidos o con los que elija, o
+  se revisan cada 30 s y avisa de las nuevas) y las **aprueba** con el rol y la repartición pedidos o con los que elija, o
   las **rechaza** (se borran y el nombre queda libre). API: `POST /api/auth/solicitar` (sin sesión),
   `POST /api/usuarios/{id}/aprobar` y `DELETE /api/usuarios/{id}/solicitud`.
 - **Contraseñas provisionales.** Una cuenta creada por el instructor en el panel, o a la que él le pone una
@@ -347,14 +375,14 @@ correlaciones (`consumo_en_combate`, `coincide_con_combate`, `combate_con_logist
 **Indicadores doctrinales y calificación (1 a 20).** La rúbrica suma, por bando, siete indicadores de 0 a 100, cada
 uno con su criterio a la vista: **reacción ante las amenazas** (turnos entre el primer ataque de una unidad enemiga y la
 primera orden propia contra ella), **conocimiento del enemigo** (unidades enemigas detectadas sobre el total),
-**sostenimiento logístico**, **coordinación entre puestos** (según quién dio cada orden; no aplica si un solo alumno
+**sostenimiento logístico**, **coordinación entre reparticiones** (según quién dio cada orden; no aplica si un solo alumno
 condujo todo), **economía de fuerzas** (pérdidas infligidas sobre el total), **cumplimiento de objetivos** e
 **iniciativa** (turnos con órdenes). La **calificación** es su promedio en la escala de 1 a 20 (sin turnos jugados no
 hay nota). Va en el diálogo *Rúbrica*, en el informe imprimible y en la exportación. **Comparar ejercicios**
 (*Rúbrica → Comparar con otros ejercicios…*; `GET /api/evaluacion/comparar?ids=1,2,3`, instructor y observador): la
 nota y los indicadores de cada bando en varios ejercicios y la evolución de cada alumno de uno a otro.
 
-**Rúbrica de evaluación por bando y por puesto.** El botón *Rúbrica* de la repetición (y la sección
+**Rúbrica de evaluación por bando y por repartición.** El botón *Rúbrica* de la repetición (y la sección
 "Rubrica de evaluacion" del informe imprimible) resume, para cada bando: órdenes emitidas / resueltas /
 rechazadas con los tres motivos de rechazo más frecuentes (agrupados sin cifras: "Objetivo fuera de alcance"),
 **turnos pasivos** (turnos resueltos en los que el bando no emitió ninguna orden ni planificó misiones),
@@ -362,7 +390,7 @@ logística (unidades que llegaron a menos del 25 % de combustible o munición y 
 pérdidas infligidas vs. sufridas y unidades destruidas, objetivos cumplidos / fallidos / pendientes, misiones
 aéreas cumplidas / abortadas / fallidas, y una lista de **observaciones automáticas** en español (p. ej. "2
 orden(es) rechazada(s) por 'Objetivo fuera de alcance': revisar la apreciacion de distancias antes de emitir
-la orden."). El desglose por puesto (A2, A3, A4, A5) se deriva de la **función de cada orden** —el puesto
+la orden."). El desglose por repartición (A-2, A-3, A-3 D/A, A-4, C-E) se deriva de la **función de cada orden** —la repartición
 responsable según la unidad y el tipo de orden—, no del alumno que la firmó.
 Datos en `GET /api/escenarios/{id}/aar/rubrica` (mismos permisos que el informe) e incluidos en la
 exportación JSON (`rubrica`).
@@ -387,11 +415,11 @@ logística o ajustes del instructor) y el marcador acumulado al terminar ese tur
 Node (`frontend/tests/replay.test.js`). En el arnés, `&abrir=replay&instante=2.5` lo abre detenido en ese punto.
 
 **Autor de cada orden y rúbrica por alumno.** Cada orden y cada misión aérea guarda quién la emitió
-(`autor_id`, `autor_puesto`: el puesto que ocupaba el alumno en ese momento; migración `0018`). La cola de
-órdenes muestra el autor y su sigla de puesto junto a cada orden; las órdenes automáticas del motor
+(`autor_id`, `autor_puesto`: la repartición que ocupaba el alumno en ese momento; migración `0018`). La cola de
+órdenes muestra el autor y su sigla de repartición junto a cada orden; las órdenes automáticas del motor
 (intercepciones, defensa antiaérea, ataques pedidos por misiones, regreso por combustible crítico) no tienen
 autor. La rúbrica añade la sección `alumnos`: por cada usuario de un bando asignado al escenario o que haya
-firmado algo, su bando y puesto, órdenes emitidas / resueltas / rechazadas con motivos, **turnos con órdenes
+firmado algo, su bando y repartición, órdenes emitidas / resueltas / rechazadas con motivos, **turnos con órdenes
 vs. turnos pasivos**, misiones planificadas / cumplidas / abortadas / fallidas y observaciones automáticas
 del mismo estilo que las de bando ("No emitio ninguna orden ni planifico misiones durante el ejercicio.").
 Se muestra en el diálogo *Rúbrica*, en el informe imprimible, en las diapositivas y se descarga como CSV
@@ -541,8 +569,9 @@ ella, contra el bando contrario: sus sensores detectan al **30 %** (radares al *
 el interferidor es visible para el enemigo mientras emite, y recibe un aviso con la zona. Las zonas se ven en el
 mapa (capa "Guerra electrónica") y el detalle de una unidad afectada lo explica.
 
-**Puestos**: los radares y la GE terrestre los conduce **A2 Inteligencia**; el avión de GE y los drones, como toda
-aeronave, **A3 Operaciones**; el envío desde la base, **A5 Planificación**.
+**Reparticiones**: los radares los conduce **A-3 D/A Defensa Aérea**; la GE terrestre y el avión de GE, **C-E**; los
+drones de reconocimiento, **A-2**; los armados, como toda aeronave de ataque, **A-3**; el envío desde la base, **A-3** o
+**A-3 D/A**.
 
 ## Buques, portaaviones y misiles de crucero
 
@@ -567,7 +596,7 @@ aeronave, **A3 Operaciones**; el envío desde la base, **A5 Planificación**.
   para los topes de aeronaves. **Intercepción antes del impacto:** la antiaérea automática, los destructores y
   las patrullas enemigas disparan contra la salva en ese mismo turno y sus pérdidas se descuentan **antes** de que
   impacte; si la derriban, no impacta («Derribado antes del impacto», con aviso al lanzador). Lo mismo vale ahora
-  para la munición merodeadora. La orden la conduce el puesto de superficie (A5) o el Estado Mayor.
+  para la munición merodeadora. La orden la conduce la A-3 (superficie) o el Comandante.
 - En el mapa, cada buque y el misil tienen su miniatura; el detalle de un lanzador muestra los misiles listos y el
   de un portaaviones, las aeronaves a bordo. Motor: `engine/misiles.py`, `engine/aeronaves.py`, `engine/orders.py`;
   migración 0013 (`blanco_id`).

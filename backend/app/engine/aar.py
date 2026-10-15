@@ -245,10 +245,10 @@ def construir_replay(db: Session, escenario: Escenario) -> dict:
 UMBRAL_CRITICO = 25.0  # % de combustible o municion por debajo del cual la unidad esta al limite
 TOP_MOTIVOS = 3
 
-# El desglose por puesto se deriva de la FUNCION de cada orden (el puesto responsable segun engine/puestos.py),
+# El desglose por reparticion se deriva de la FUNCION de cada orden (la responsable segun engine/puestos.py),
 # no del alumno que la firmo; la evaluacion por alumno (seccion `alumnos`) si usa el autor registrado.
 NOTA_PUESTOS = (
-    "El desglose por puesto se deriva de la funcion de cada orden (puesto responsable: A2, A3, A4 o A5), "
+    "El desglose por reparticion se deriva de la funcion de cada orden (responsable: A-2, A-3, A-3 D/A, A-4 o C-E), "
     "no del alumno que la firmo; la evaluacion por alumno usa el autor registrado en cada orden y mision."
 )
 SIN_AUTOR = "sin autor registrado"
@@ -290,7 +290,7 @@ def _sugerencia(motivo: str) -> str:
 
 
 def _puesto_de(unidad: Unidad | None, tipo_orden: str) -> str:
-    """Puesto especializado responsable de una orden (mando queda fuera: reune a todos)."""
+    """Reparticion responsable de una orden (Comandante y JEM quedan fuera: reunen a todas)."""
     if unidad is None:
         funcion = "despegar" if tipo_orden in ("despegar", "mision") else "superficie"
     else:
@@ -354,7 +354,7 @@ def _observacion_misiones(mi: dict) -> str | None:
     malas = mi["abortadas"] + mi["fallidas"]
     if malas and malas >= mi["cumplidas"]:
         return (f"Misiones aereas abortadas o fallidas ({malas}) igualan o superan a las cumplidas "
-                f"({mi['cumplidas']}): revisar el combustible, las rutas y la ventana de aterrizaje (A3).")
+                f"({mi['cumplidas']}): revisar el combustible, las rutas y la ventana de aterrizaje (A-3).")
     return None
 
 
@@ -375,8 +375,10 @@ def _alumnos(db: Session, escenario: Escenario, unidades: dict, ordenes: list, m
     por_nombre = {u.username: u.id for u in usuarios.values()}
 
     fichas: dict[int, dict] = {}
+    # el instructor puede conducir un bando (conduccion "instructor"): sus ordenes cuentan para el bando, no se evaluan
+    instructores = {uid for uid, u in usuarios.items() if u.rol == "instructor"}
     for uid, u in usuarios.items():
-        if uid not in autores and u.username not in nombres and u.rol not in puestos.BANDOS:
+        if uid in instructores or (uid not in autores and u.username not in nombres and u.rol not in puestos.BANDOS):
             continue  # observadores e instructores asignados que no emitieron nada no se evaluan
         fichas[uid] = {
             "usuario_id": uid, "username": u.username, "bando": u.rol, "asignado": uid in asignados,
@@ -391,8 +393,8 @@ def _alumnos(db: Session, escenario: Escenario, unidades: dict, ordenes: list, m
             _contar_orden(f["ordenes"], o)
             f["_turnos"].add(o.turno_emitida)
             if o.autor_puesto:
-                f["_puestos"][o.autor_puesto] += 1
-        elif not orders_mod.es_automatica(o):
+                f["_puestos"][puestos.normalizar(o.autor_puesto)] += 1
+        elif not orders_mod.es_automatica(o) and o.autor_id not in instructores:
             u = unidades.get(o.unidad_id)
             if u is not None and u.bando in sin_autor:
                 sin_autor[u.bando]["ordenes"] += 1
@@ -402,8 +404,8 @@ def _alumnos(db: Session, escenario: Escenario, unidades: dict, ordenes: list, m
             _contar_mision(f["misiones"], m)
             f["_turnos"].add(m.creada_turno)
             if m.autor_puesto:
-                f["_puestos"][m.autor_puesto] += 1
-        elif m.bando in sin_autor:
+                f["_puestos"][puestos.normalizar(m.autor_puesto)] += 1
+        elif m.bando in sin_autor and m.autor_id not in instructores:
             sin_autor[m.bando]["misiones"] += 1
 
     lista = []
@@ -501,21 +503,21 @@ def _doctrina(b: str, x: dict, unidades: dict, ordenes: list, combates: list, co
                      "100 si ninguna unidad bajó del nivel crítico; si no, reabastecimientos / (reabastecimientos + "
                      "unidades críticas)."))
 
-    # 4. coordinacion entre puestos (solo si el bando trabajo como estado mayor con varios puestos)
-    # se mide por el puesto de quien dio cada orden (autor), no por la unidad: un solo alumno en el Estado Mayor no cuenta
+    # 4. coordinacion entre reparticiones (solo si el bando trabajo como estado mayor con varias reparticiones)
+    # se mide por el puesto de quien dio cada orden (autor), no por la unidad: un solo alumno como Comandante no cuenta
     con_unidades = {_puesto_de(u, "mover") for u in unidades.values() if u.bando == b} & set(x["puestos"])
-    autores = {o.autor_puesto for o in ordenes
-               if o.autor_puesto in x["puestos"] and unidades.get(o.unidad_id) and unidades[o.unidad_id].bando == b}
+    autores = {puestos.normalizar(o.autor_puesto) for o in ordenes
+               if o.autor_puesto and puestos.normalizar(o.autor_puesto) in x["puestos"] and unidades.get(o.unidad_id) and unidades[o.unidad_id].bando == b}
     if autores:
         activos = autores & con_unidades
-        inds.append(_ind("coordinacion", "Coordinación entre puestos",
-                         f"{len(activos)} de {len(con_unidades)} puesto(s) con unidades a cargo dieron órdenes",
+        inds.append(_ind("coordinacion", "Coordinación entre reparticiones",
+                         f"{len(activos)} de {len(con_unidades)} repartición(es) con unidades a cargo dieron órdenes",
                          100 * len(activos) / max(1, len(con_unidades)),
-                         "Puestos especializados (A2, A3, A4, A5) que dieron órdenes, sobre los que tenían unidades a "
+                         "Reparticiones (A-2, A-3, A-3 D/A, A-4, C-E) que dieron órdenes, sobre las que tenían unidades a "
                          "cargo (según quién emitió cada orden)."))
     else:
-        inds.append(_ind("coordinacion", "Coordinación entre puestos", "un solo puesto (Estado Mayor) condujo todo",
-                         None, "Solo aplica cuando el bando trabaja con varios puestos (A2 a A5)."))
+        inds.append(_ind("coordinacion", "Coordinación entre reparticiones", "el Comandante o el JEM condujo todo",
+                         None, "Solo aplica cuando el bando trabaja con varias reparticiones (A-2 a C-E)."))
 
     # 5. economia de fuerzas: relacion de intercambio
     pd = x["perdidas"]
@@ -578,10 +580,9 @@ def construir_rubrica(db: Session, escenario: Escenario) -> dict:
             "puestos": OrderedDict(),
             "observaciones": [],
         }
-        for p in puestos.PUESTOS.values():
-            if p.id != puestos.POR_DEFECTO:
-                r[b]["puestos"][p.id] = {"sigla": p.sigla, "nombre": p.nombre, "ordenes": _bloque_ordenes(),
-                                         "misiones": 0, "observaciones": []}
+        for p in puestos.especializados():
+            r[b]["puestos"][p.id] = {"sigla": p.sigla, "nombre": p.nombre, "ordenes": _bloque_ordenes(),
+                                     "misiones": 0, "observaciones": []}
 
     # ---- ordenes (por bando y por puesto responsable) ----
     actividad: dict[str, set[int]] = {b: set() for b in bandos}
@@ -685,7 +686,7 @@ def construir_rubrica(db: Session, escenario: Escenario) -> dict:
             cabeza = (f"{len(lg['unidades_criticas'])} unidad(es) llegaron a menos del {UMBRAL_CRITICO:.0f} % de "
                       f"combustible o municion ({nombres}{extra})")
             if lg["reabastecimientos"] == 0:
-                obs.append(cabeza + " y no hubo ningun reabastecimiento: coordinar los convoyes y las bases (A4) "
+                obs.append(cabeza + " y no hubo ningun reabastecimiento: coordinar los convoyes y las bases (A-4) "
                            "antes de que la unidad quede inmovil.")
             else:
                 obs.append(cabeza + f"; se hicieron {lg['reabastecimientos']} reabastecimiento(s): anticipar el "

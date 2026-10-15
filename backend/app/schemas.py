@@ -1,14 +1,18 @@
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
+
+from app.engine.puestos import EQUIVALENCIAS
 
 Bando = Literal["azul", "rojo"]
 TipoUnidad = Literal["terrestre", "aerea", "naval", "base"]
 Clima = Literal["despejado", "nublado", "lluvia", "tormenta"]
 Rol = Literal["instructor", "azul", "rojo", "observador"]
-# puesto por funcion dentro del bando (ver engine/puestos.py); solo tiene efecto en los alumnos
-Puesto = Literal["mando", "inteligencia", "operaciones", "logistica", "planificacion"]
+# reparticion del TIEM dentro del bando (ver engine/puestos.py); solo tiene efecto en los alumnos. Acepta los ids
+# anteriores (mando, inteligencia...) y los traduce.
+Puesto = Annotated[Literal["comandante", "jem", "a1", "a2", "a3", "a3da", "a4", "ce"],
+                   BeforeValidator(lambda v: EQUIVALENCIAS.get(v, v))]
 
 
 class LoginIn(BaseModel):
@@ -22,7 +26,7 @@ class UsuarioOut(BaseModel):
     id: int
     username: str
     rol: str
-    puesto: str = "mando"
+    puesto: str = "comandante"
     activo: bool
     aprobado: bool = True
     debe_cambiar_clave: bool = False
@@ -34,7 +38,7 @@ class SolicitudCuentaIn(BaseModel):
     username: str = Field(min_length=3, max_length=50, pattern=r"^[A-Za-z0-9_.-]+$")
     password: str = Field(min_length=1, max_length=200)
     rol: Rol
-    puesto: Puesto = "mando"
+    puesto: Puesto = "comandante"
 
 
 class CambioClaveIn(BaseModel):
@@ -53,7 +57,7 @@ class UsuarioCreate(BaseModel):
     username: str = Field(min_length=3, max_length=50, pattern=r"^[A-Za-z0-9_.-]+$")
     password: str = Field(min_length=1, max_length=200)
     rol: Rol
-    puesto: Puesto = "mando"
+    puesto: Puesto = "comandante"
 
 
 class UsuarioUpdate(BaseModel):
@@ -100,6 +104,20 @@ class EscenarioOut(BaseModel):
     ia_nivel: str = "normal"
     dia_noche: bool = False
     periodo: str = "dia"  # dia | crepusculo | noche del turno en curso (solo informa si dia_noche)
+    # quien conduce cada bando: alumnos | instructor | ia
+    conduccion_azul: str = "alumnos"
+    conduccion_rojo: str = "alumnos"
+    # calendario de la operacion (TIEM): dia D, hora H, fases y referencia del turno en curso
+    fecha_inicio: str | None = None
+    turno_h: int | None = None
+    turno_final: int | None = None
+    calendario: dict | None = None
+
+
+class FaseIn(BaseModel):
+    nombre: str = Field(min_length=1, max_length=60)
+    desde: int = Field(ge=1, le=9999)
+    hasta: int | None = Field(default=None, ge=1, le=9999)
 
 
 class EscenarioConfig(BaseModel):
@@ -132,6 +150,15 @@ class EscenarioConfig(BaseModel):
     # identidad nacional de cada bando (ver /api/naciones); "" quita la identidad y deja "Azul"/"Rojo"
     nacion_azul: str | None = None
     nacion_rojo: str | None = None
+    # quien conduce cada bando (a eleccion del instructor); "ia" equivale a encender ia_<bando>
+    conduccion_azul: Literal["alumnos", "instructor", "ia"] | None = None
+    conduccion_rojo: Literal["alumnos", "instructor", "ia"] | None = None
+    # calendario: fecha del turno 1 ("" la quita), turno de la hora H y ultimo turno previsto (0 los quita) y fases
+    # de la operacion ([] vuelve a las de por defecto)
+    fecha_inicio: str | None = Field(default=None, pattern=r"^(\d{4}-\d{2}-\d{2})?$")
+    turno_h: int | None = Field(default=None, ge=0, le=9999)
+    turno_final: int | None = Field(default=None, ge=0, le=9999)
+    fases: list[FaseIn] | None = Field(default=None, max_length=8)
 
 
 class ListoIn(BaseModel):
@@ -394,7 +421,7 @@ class ObraOut(BaseModel):
 
 
 class ObjetivoIn(BaseModel):
-    tipo: Literal["ocupar", "destruir", "proteger"]
+    tipo: Literal["ocupar", "destruir", "neutralizar", "proteger", "efecto"]
     bando: Bando
     nombre: str = Field(min_length=1, max_length=120)
     puntos: int = Field(default=10, ge=0, le=1000)
@@ -403,9 +430,27 @@ class ObjetivoIn(BaseModel):
     lon: float | None = Field(default=None, ge=-180, le=180)
     radio_km: float = Field(default=5.0, gt=0, le=200)
     turnos_requeridos: int = Field(default=1, ge=1, le=48)
-    # destruir / proteger
+    # destruir / neutralizar / proteger
     unidad_id: int | None = None
+    # proteger: hasta cuando; en los demas, plazo (si llega sin cumplirse, falla)
     hasta_turno: int | None = Field(default=None, ge=1, le=999)
+    # cadena de objetivos del TIEM
+    nivel: Literal["ulterior", "asignado", "material"] = "material"
+    padre_id: int | None = None
+    efecto: str = Field(default="", max_length=300)
+    indicador: str = Field(default="", max_length=300)
+    # neutralizar: fuerza (%) a alcanzar; efecto: % de los objetivos dependientes que deben cumplirse
+    umbral: float | None = Field(default=None, ge=0, le=100)
+
+
+class ObjetivoEdicion(BaseModel):
+    nombre: str | None = Field(default=None, min_length=1, max_length=120)
+    puntos: int | None = Field(default=None, ge=0, le=1000)
+    hasta_turno: int | None = Field(default=None, ge=1, le=999)
+    padre_id: int | None = None
+    efecto: str | None = Field(default=None, max_length=300)
+    indicador: str | None = Field(default=None, max_length=300)
+    umbral: float | None = Field(default=None, ge=0, le=100)
 
 
 class ObjetivoOut(BaseModel):
@@ -424,6 +469,12 @@ class ObjetivoOut(BaseModel):
     hasta_turno: int | None = None
     estado: str
     turno_resuelto: int | None = None
+    nivel: str = "material"
+    padre_id: int | None = None
+    efecto: str = ""
+    indicador: str = ""
+    umbral: float | None = None
+    avance: dict | None = None  # efecto: {cumplidos, total, requerido_pct}
 
 
 TipoGrafico = Literal["linea_fase", "eje_avance", "zona_reunion", "punto_control"]

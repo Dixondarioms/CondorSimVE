@@ -8,7 +8,8 @@
   const params = new URLSearchParams(location.search);
   const ROL = ["instructor", "azul", "rojo", "observador"].includes(params.get("rol")) ? params.get("rol") : "instructor";
   const USUARIOS = { instructor: [1, "prof"], azul: [2, "alfa"], rojo: [3, "bravo"], observador: [4, "obs"] };
-  const PUESTO = ["mando", "inteligencia", "operaciones", "logistica", "planificacion"].includes(params.get("puesto")) ? params.get("puesto") : "mando";
+  // reparticiones del TIEM (los ids anteriores, como "mando" u "operaciones", se siguen aceptando y se traducen)
+  const PUESTO = ["comandante", "jem", "a1", "a2", "a3", "a3da", "a4", "ce", "mando", "inteligencia", "operaciones", "logistica", "planificacion"].includes(params.get("puesto")) ? params.get("puesto") : "comandante";
   const YO = { id: USUARIOS[ROL][0], username: USUARIOS[ROL][1], rol: ROL, puesto: PUESTO, activo: true };
   const iso = (ms = 0) => new Date(Date.now() + ms).toISOString().slice(0, 19);
   const BANDOS = ["azul", "rojo"];
@@ -27,8 +28,46 @@
     ia_azul: params.get("ia") === "azul", ia_rojo: params.get("ia") === "rojo",
     ia_nivel: ["prudente", "normal", "agresiva"].includes(params.get("nivel")) ? params.get("nivel") : "normal",
     dia_noche: params.get("noche") === "1",
+    // TIEM: quien conduce cada bando y calendario de la operacion (dia D, hora H, fases)
+    conduce_azul: "alumnos", conduce_rojo: params.get("conduce") === "instructor" ? "instructor" : "alumnos",
+    fecha_inicio: "2026-10-20", turno_h: 3, turno_final: 24, fases: null,
   };
   if (params.get("hora")) ESC.hora_inicio_min = parseInt(params.get("hora"), 10) || 360;
+  for (const b of BANDOS) {
+    Object.defineProperty(ESC, `conduccion_${b}`, { enumerable: true, get() { return ESC[`ia_${b}`] ? "ia" : ESC[`conduce_${b}`]; } });
+  }
+  // mismo calculo que backend/app/engine/calendario.py (resumen)
+  function fasesPorDefecto(h, fin) {
+    const conc = Math.min(2, h - 1);
+    const f = [];
+    if (h - 1 - conc >= 1) f.push({ nombre: "Alistamiento", desde: 1, hasta: h - 1 - conc });
+    if (conc) f.push({ nombre: "Concentracion y despliegue", desde: h - conc, hasta: h - 1 });
+    const rep = fin && fin - h >= 6 ? 2 : 0;
+    f.push({ nombre: "Ejecucion", desde: h, hasta: fin ? fin - rep : null });
+    if (rep) f.push({ nombre: "Repliegue", desde: fin - rep + 1, hasta: fin });
+    return f;
+  }
+  function referencia(t) {
+    const min = (ESC.hora_inicio_min || 0) + (Math.max(1, t) - 1) * 60;
+    const dia = Math.floor(min / 1440);
+    const f = new Date(`${ESC.fecha_inicio}T00:00:00Z`);
+    f.setUTCDate(f.getUTCDate() + dia);
+    const rel = (l, n) => (n === 0 ? l : `${l}${n > 0 ? "+" : ""}${n}`);
+    const diaH = Math.floor(((ESC.hora_inicio_min || 0) + (ESC.turno_h - 1) * 60) / 1440);
+    const fases = ESC.fases || fasesPorDefecto(ESC.turno_h, ESC.turno_final);
+    const fase = fases.find((x) => x.desde <= t && (x.hasta == null || t <= x.hasta));
+    return { turno: t, fecha: f.toISOString().slice(0, 10), hora: `${String(Math.floor((min % 1440) / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`,
+      dia: rel("D", dia - diaH), hora_h: rel("H", t - ESC.turno_h), fase: fase ? fase.nombre : "" };
+  }
+  Object.defineProperty(ESC, "calendario", {
+    enumerable: true,
+    get() {
+      if (!ESC.turno_h && !ESC.fecha_inicio) return null;
+      const h = referencia(ESC.turno_h);
+      return { fecha_inicio: ESC.fecha_inicio, turno_h: ESC.turno_h, turno_final: ESC.turno_final, dia_d: h.fecha, hora_h: h.hora,
+        fases: ESC.fases || fasesPorDefecto(ESC.turno_h, ESC.turno_final), fases_propias: !!ESC.fases, actual: referencia(ESC.turno_actual) };
+    },
+  });
   // periodo del dia del turno en curso (mismo criterio que backend/app/engine/clima.py, periodo_del_dia)
   Object.defineProperty(ESC, "periodo", {
     enumerable: true,
@@ -141,15 +180,15 @@
     { id: 1, bando: "azul", rol: "CAP", rol_nombre: "Patrulla aerea de combate (CAP)", nombre: "Flecha", estado: "en_curso", unidad_id: 10, base_id: null, modelo: "su30", aeronaves: 2, turno_despegue: 2, creada_turno: 2,
       puntos: [{ tipo: "orbita", lat: 8.75, lon: -70.3, turnos: 3 }, { tipo: "aterrizaje", lat: 8.618, lon: -70.215, base_id: 9 }],
       plan: { puntos: [{ tipo: "orbita", km: 32, llegada_h: 0.03, combustible_llegada: 99, salida_h: 4, combustible_salida: 75 }, { tipo: "aterrizaje", km: 31, llegada_h: 4.03, combustible_llegada: 74 }], duracion_h: 4.03, combustible_final: 74, advertencias: [] },
-      indice: 0, espera: 2, resultado: "En orbita: 2 turno(s) mas.", autor: "alfa", autor_puesto: "operaciones" },
+      indice: 0, espera: 2, resultado: "En orbita: 2 turno(s) mas.", autor: "alfa", autor_puesto: "a3" },
     { id: 2, bando: "azul", rol: "INTERDICCION", rol_nombre: "Interdiccion (ataque a un blanco)", nombre: "Rayo", estado: "programada", unidad_id: null, base_id: 9, modelo: "f16", aeronaves: 2, turno_despegue: 5, creada_turno: 3,
       puntos: [{ tipo: "paso", lat: 8.60, lon: -70.66 }, { tipo: "blanco", lat: 8.66, lon: -70.60, objetivo_unidad_id: 11 }, { tipo: "aterrizaje", lat: 8.618, lon: -70.215, base_id: 9 }],
       plan: { puntos: [{ tipo: "paso", km: 18, llegada_h: 0.02, combustible_llegada: 99 }, { tipo: "blanco", km: 9, llegada_h: 0.03, combustible_llegada: 98.6, salida_h: 1 }, { tipo: "aterrizaje", km: 16, llegada_h: 1.02, combustible_llegada: 97.7 }], duracion_h: 1.02, combustible_final: 97.7, advertencias: [] },
-      indice: 0, espera: -1, resultado: "Programada.", autor: "alfa", autor_puesto: "operaciones" },
+      indice: 0, espera: -1, resultado: "Programada.", autor: "alfa", autor_puesto: "a3" },
     { id: 3, bando: "rojo", rol: "SEAD", rol_nombre: "Supresion de defensas aereas (SEAD)", nombre: "Víbora", estado: "programada", unidad_id: null, base_id: 12, modelo: "su30", aeronaves: 2, turno_despegue: 4, creada_turno: 3,
       puntos: [{ tipo: "blanco", lat: 8.588, lon: -70.55 }, { tipo: "aterrizaje", lat: 8.7, lon: -70.62, base_id: 12 }],
       plan: { puntos: [{ tipo: "blanco", km: 13, llegada_h: 0.01, combustible_llegada: 99.6, salida_h: 1 }, { tipo: "aterrizaje", km: 13, llegada_h: 1.01, combustible_llegada: 99.1 }], duracion_h: 1.01, combustible_final: 99.1, advertencias: [] },
-      indice: 0, espera: -1, resultado: "Programada.", autor: "bravo", autor_puesto: "mando" },
+      indice: 0, espera: -1, resultado: "Programada.", autor: "bravo", autor_puesto: "comandante" },
   ];
   let proximaMision = 4;
 
@@ -186,19 +225,60 @@
   const CONTACTO_FANTASMA = { unidad_id: 14, nombre: "Recon Roja", tipo: "terrestre", clase: "reconocimiento", lat: 9.6, lon: -69.8, turno_visto: 2 };
   let ordenes = [
     // autor / autor_puesto: quien la emitio y su puesto en ese momento (vacios en las ordenes automaticas del motor)
-    { id: 1, escenario_id: 1, unidad_id: 2, tipo: "mover", objetivo_unidad_id: null, waypoints: [[8.600, -70.570], [8.620, -70.550]], detalle: "", turno_emitida: 3, estado: "pendiente", resultado: "", autor: "alfa", autor_puesto: "planificacion" },
-    { id: 2, escenario_id: 1, unidad_id: 3, tipo: "atacar", objetivo_unidad_id: 11, waypoints: [], detalle: "", turno_emitida: 3, estado: "pendiente", resultado: "", autor: "alfa", autor_puesto: "planificacion" },
-    { id: 3, escenario_id: 1, unidad_id: 4, tipo: "construir", objetivo_unidad_id: null, waypoints: [[8.605, -70.580]], detalle: "puente", turno_emitida: 3, estado: "pendiente", resultado: "", autor: "carlos", autor_puesto: "logistica" },
-    { id: 4, escenario_id: 1, unidad_id: 1, tipo: "atacar", objetivo_unidad_id: 11, waypoints: [], detalle: "", turno_emitida: 2, estado: "resuelta", resultado: "Ataque a Infantería Roja. Ratio 1.32: defensor pierde 19.0%, atacante pierde 12.0%. Efectos: clima x0.80 al ataque; sorpresa (atacante no detectado) x1.20.", autor: "alfa", autor_puesto: "mando" },
+    { id: 1, escenario_id: 1, unidad_id: 2, tipo: "mover", objetivo_unidad_id: null, waypoints: [[8.600, -70.570], [8.620, -70.550]], detalle: "", turno_emitida: 3, estado: "pendiente", resultado: "", autor: "alfa", autor_puesto: "a3" },
+    { id: 2, escenario_id: 1, unidad_id: 3, tipo: "atacar", objetivo_unidad_id: 11, waypoints: [], detalle: "", turno_emitida: 3, estado: "pendiente", resultado: "", autor: "alfa", autor_puesto: "a3" },
+    { id: 3, escenario_id: 1, unidad_id: 4, tipo: "construir", objetivo_unidad_id: null, waypoints: [[8.605, -70.580]], detalle: "puente", turno_emitida: 3, estado: "pendiente", resultado: "", autor: "carlos", autor_puesto: "a4" },
+    { id: 4, escenario_id: 1, unidad_id: 1, tipo: "atacar", objetivo_unidad_id: 11, waypoints: [], detalle: "", turno_emitida: 2, estado: "resuelta", resultado: "Ataque a Infantería Roja. Ratio 1.32: defensor pierde 19.0%, atacante pierde 12.0%. Efectos: clima x0.80 al ataque; sorpresa (atacante no detectado) x1.20.", autor: "alfa", autor_puesto: "comandante" },
   ];
   let proximaOrden = 5;
+  // cadena de objetivos del TIEM: ulterior -> asignados -> materiales (padre_id)
   let objetivos = [
-    { id: 1, bando: "azul", tipo: "ocupar", nombre: "Tomar el puente", puntos: 40, lat: 8.63, lon: -70.52, radio_km: 4, turnos_requeridos: 3, progreso: 1, unidad_id: null, unidad_nombre: "", hasta_turno: null, estado: "pendiente", turno_resuelto: null },
-    { id: 2, bando: "azul", tipo: "destruir", nombre: "Neutralizar la infantería enemiga", puntos: 50, lat: null, lon: null, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: 11, unidad_nombre: "Infantería Roja", hasta_turno: null, estado: "pendiente", turno_resuelto: null },
-    { id: 3, bando: "azul", tipo: "proteger", nombre: "Mantener la base", puntos: 30, lat: null, lon: null, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: 9, unidad_nombre: "Aeropuerto de Barinas", hasta_turno: 8, estado: "cumplido", turno_resuelto: 2 },
+    { id: 6, bando: "azul", tipo: "efecto", nivel: "ulterior", nombre: "Restablecer la seguridad en el piedemonte", puntos: 0, lat: null, lon: null, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: null, unidad_nombre: "", hasta_turno: null, estado: "pendiente", turno_resuelto: null, padre_id: null, umbral: 60, efecto: "Objetivo del Teatro de Operaciones al que contribuye el Componente Aéreo", indicador: "Objetivos asignados cumplidos (60 % o más)" },
+    { id: 7, bando: "azul", tipo: "efecto", nivel: "asignado", nombre: "Apoyar la conquista de los objetivos terrestres", puntos: 20, lat: null, lon: null, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: null, unidad_nombre: "", hasta_turno: null, estado: "pendiente", turno_resuelto: null, padre_id: 6, umbral: 100, efecto: "Permitir que las fuerzas propias ocupen y mantengan los puntos clave del terreno", indicador: "Puente tomado e infantería enemiga neutralizada" },
+    { id: 8, bando: "azul", tipo: "efecto", nivel: "asignado", nombre: "Preservar la capacidad de combate propia", puntos: 20, lat: null, lon: null, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: null, unidad_nombre: "", hasta_turno: null, estado: "cumplido", turno_resuelto: 2, padre_id: 6, umbral: 100, efecto: "Mantener operativas las bases propias", indicador: "La base sigue en servicio al final del plazo" },
+    { id: 1, bando: "azul", tipo: "ocupar", nombre: "Tomar el puente", puntos: 40, lat: 8.63, lon: -70.52, radio_km: 4, turnos_requeridos: 3, progreso: 1, unidad_id: null, unidad_nombre: "", hasta_turno: null, estado: "pendiente", turno_resuelto: null, padre_id: 7, efecto: "Tomar el puente: zona ocupada y mantenida por fuerzas propias" },
+    { id: 2, bando: "azul", tipo: "neutralizar", nombre: "Neutralizar la infantería enemiga", puntos: 50, lat: null, lon: null, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: 11, unidad_nombre: "Infantería Roja", hasta_turno: 10, estado: "pendiente", turno_resuelto: null, padre_id: 7, umbral: 40, efecto: "Infantería Roja con 40 % de su fuerza o menos" },
+    { id: 3, bando: "azul", tipo: "proteger", nombre: "Mantener la base", puntos: 30, lat: null, lon: null, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: 9, unidad_nombre: "Aeropuerto de Barinas", hasta_turno: 8, estado: "cumplido", turno_resuelto: 2, padre_id: 8, efecto: "Aeropuerto de Barinas en servicio al final del plazo" },
     { id: 4, bando: "rojo", tipo: "ocupar", nombre: "Cruzar el río", puntos: 25, lat: 8.7, lon: -70.7, radio_km: 5, turnos_requeridos: 1, progreso: 0, unidad_id: null, unidad_nombre: "", hasta_turno: null, estado: "pendiente", turno_resuelto: null },
   ];
-  let proximoObjetivo = 5;
+  let proximoObjetivo = 9;
+  // avance de los objetivos de efecto (como state.serializar_objetivo)
+  const conAvance = (o) => (o.tipo !== "efecto" ? o : { ...o, avance: { cumplidos: objetivos.filter((h) => h.padre_id === o.id && h.estado === "cumplido").length,
+    total: objetivos.filter((h) => h.padre_id === o.id).length, requerido_pct: o.umbral ?? 100 } });
+
+  // Problema Militar Operativo de ejemplo (mismo formato que GET /api/escenarios/{id}/pmo)
+  const CAMPOS_PMO = [["situacion_general", "1. Situación general"], ["fuerzas_enemigas", "2. a. Fuerzas enemigas"], ["fuerzas_propias", "2. b. Fuerzas propias"],
+    ["mision_superior", "3. Misión del Comando del Teatro de Operaciones"], ["idea_general", "4. Idea general de la operación conjunta"],
+    ["mision", "5. Misión del Componente Aéreo"], ["medios", "6. Medios asignados"], ["area_operaciones", "7. Área de operaciones"],
+    ["limitaciones", "8. Limitaciones"], ["instrucciones", "9. Instrucciones de coordinación"]];
+  const PMO = {
+    azul: { origen: "automatico", contenido: {
+      situacion_general: "Desde hace varios meses las relaciones con el País Rojo se han deteriorado por una disputa por la delimitación de la frontera común. El País Rojo ha concentrado fuerzas aéreas y terrestres en el piedemonte y todo indica que atacará en los próximos días. El gobierno activó el Teatro de Operaciones Occidental para defender la soberanía nacional.",
+      fuerzas_enemigas: "La inteligencia estima que el País Rojo dispone en el área de operaciones de:\n- Medios aéreos: unas 4 aeronaves de combate.\n- Defensa aérea: 1 sistema de misiles antiaéreos, en la zona de Guasdualito.\n- Fuerzas terrestres: 1 unidad de infantería; 1 unidad blindada, en la zona de Santa Bárbara de Barinas.",
+      fuerzas_propias: "Las fuerzas armadas conducen la operación con los componentes del Teatro de Operaciones:\n- Componente Terrestre: 4 unidades desplegadas en la zona de Barinas.\n- Componente Naval: 0 unidades (fuera del ejercicio).\n- Componente Aéreo: los medios del párrafo 6 (el bando que conducen ustedes).",
+      mision_superior: "Conducir operaciones militares conjuntas defensivas en el Teatro de Operaciones Occidental a partir del día D (2026-10-20) a la hora H (08:00), a fin de preservar la soberanía y la integridad territorial y crear las condiciones para restablecer la paz.",
+      idea_general: "El Teatro de Operaciones conducirá una operación defensiva para impedir que el enemigo logre sus objetivos en territorio propio, con el esfuerzo principal en la defensa aérea y en la preservación de las bases, para pasar luego a la contraofensiva.\nLa operación se desarrollará en las siguientes fases:\n- Concentracion y despliegue (desde H-2 hasta H-1).\n- Ejecucion (desde H hasta H+19).\n- Repliegue (desde H+20 hasta H+21).",
+      mision: { tarea: "Conducir operaciones aéreas defensivas y contraofensivas", que: "para impedir que el enemigo obtenga la superioridad aérea y apoyar la conquista de los objetivos terrestres",
+        donde: "en el área de operaciones del Teatro de Operaciones Occidental", cuando: "a partir del día D (2026-10-20) a la hora H (08:00)",
+        proposito: "preservar la libertad de acción de las fuerzas propias y la integridad territorial" },
+      medios: "- Aeronaves: 4 Sukhoi Su-30MK2; 2 K-8W Karakorum.\n- Bases y apoyo: Aeropuerto de Barinas.\n- Defensa aérea: Defensa antiaérea Barinas.",
+      area_operaciones: "Comprendida entre los paralelos 7°50' N y 9°20' N y los meridianos 71°30' O y 69°50' O, que incluye Barinas, Socopó y Santa Bárbara de Barinas. El espacio aéreo correspondiente forma parte del área.",
+      limitaciones: "Restricciones (lo que no se debe hacer):\n- No atacar a la población civil ni bienes protegidos por el Derecho Internacional Humanitario.\n- No violar el espacio aéreo ni el territorio de terceros países.\nCoacciones (lo que se debe hacer):\n- Mantener operativas durante toda la operación: Aeropuerto de Barinas.\n- Mantener en todo momento una reserva de caza para la defensa aérea del territorio propio.",
+      instrucciones: "- Día D: 2026-10-20; hora H: 08:00 (turno 3).\n- Duración prevista del ejercicio: hasta el turno 24.\n- El Estado Mayor presentará al comandante la apreciación inicial y las formas de acción antes de iniciar la conducción (Fase I del TIEM).",
+    } },
+    rojo: null,
+  };
+  const textoMisionPmo = (m) => `${["tarea", "que", "donde", "cuando"].map((k) => m[k]).filter(Boolean).join(" ")}, a fin de ${m.proposito}.`;
+  function respuestaPmo(rol) {
+    const bandos = BANDOS.includes(rol) ? [rol] : BANDOS;
+    const vacio = { situacion_general: "", mision: { tarea: "", que: "", donde: "", cuando: "", proposito: "" } };
+    return {
+      campos: CAMPOS_PMO.map(([clave, titulo]) => ({ clave, titulo })), calendario: ESC.calendario,
+      bandos: Object.fromEntries(bandos.map((b) => [b, PMO[b]
+        ? { bando: b, existe: true, origen: PMO[b].origen, contenido: PMO[b].contenido, mision_texto: textoMisionPmo(PMO[b].contenido.mision), avisos_mision: [] }
+        : { bando: b, existe: false, origen: null, contenido: vacio, mision_texto: "", avisos_mision: [] }])),
+    };
+  }
   const OBRAS = [
     { id: 1, bando: "azul", tipo: "puente", lat: 8.605, lon: -70.560, radio_km: 0.8, creada_turno: 2, expira_turno: 14 },
     { id: 2, bando: "rojo", tipo: "vado", lat: 8.605, lon: -70.700, radio_km: 0.8, creada_turno: 3, expira_turno: 7 },
@@ -338,7 +418,7 @@
       informes: ROL === "rojo" ? [] : INFORMES,
       misiones: misiones.filter((mi) => !esBando || mi.bando === rol),
       graficos: graficos.filter((g) => g.bando === "todos" || !esBando || g.bando === rol),
-      objetivos: objetivos.filter((o) => !esBando || o.bando === rol),
+      objetivos: objetivos.filter((o) => !esBando || o.bando === rol).map(conAvance),
       marcador: marcadorDe(),
       personal: Object.fromEntries((esBando ? [rol] : BANDOS).map((b) => [b, personalDe(todas, b)])),
       infraestructura: Object.fromEntries((esBando ? [rol] : BANDOS).map((b) => [b, infraDe(todas, b)])),
@@ -774,7 +854,23 @@
     if (path === "/api/escenarios/1/pausar") { ESC.estado = "pausado"; enviarEstado(); return json(estadoPara()); }
     if (path === "/api/escenarios/1/reanudar") { ESC.estado = "activo"; enviarEstado(); return json(estadoPara()); }
     if (path === "/api/escenarios/1/finalizar") { ESC.estado = "finalizado"; enviarEstado(); return json(estadoPara()); }
+    if (path === "/api/escenarios/1/pmo" && metodo === "GET") return json(respuestaPmo(ROL));
+    if (path === "/api/escenarios/1/pmo/generar" && metodo === "POST") {
+      PMO.rojo = PMO.rojo || { origen: "automatico", contenido: { ...PMO.azul.contenido } };
+      return json({ ...respuestaPmo(ROL), hecho: { calendario: false, objetivos: 0, pmo: ["azul", "rojo"] } });
+    }
+    if ((m = path.match(/^\/api\/escenarios\/1\/pmo\/(azul|rojo)$/)) && metodo === "PUT") {
+      PMO[m[1]] = { origen: "instructor", contenido: cuerpo.contenido };
+      return json(respuestaPmo(ROL));
+    }
     if (path === "/api/escenarios/1/config" && metodo === "PATCH") {
+      for (const b of BANDOS) {
+        const c = cuerpo[`conduccion_${b}`];
+        if (c) { ESC[`ia_${b}`] = c === "ia"; if (c !== "ia") ESC[`conduce_${b}`] = c; }
+        delete cuerpo[`conduccion_${b}`];
+      }
+      if ("fases" in cuerpo) { ESC.fases = cuerpo.fases && cuerpo.fases.length ? cuerpo.fases : null; delete cuerpo.fases; }
+      for (const k of ["turno_h", "turno_final"]) if (k in cuerpo) cuerpo[k] = cuerpo[k] || null;
       Object.assign(ESC, Object.fromEntries(Object.entries(cuerpo).filter(([k]) => k !== "hora_inicio")));
       if ("nacion_azul" in cuerpo || "nacion_rojo" in cuerpo) {
         eventos.unshift({ id: eventos.length + 10, escenario_id: 1, turno: ESC.turno_actual, tipo: "ajuste",

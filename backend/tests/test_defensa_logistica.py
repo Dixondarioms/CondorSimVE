@@ -141,19 +141,19 @@ def test_el_convoy_se_recarga_con_las_existencias_del_deposito(db_session):
 # ---------- API ----------
 def test_api_control_de_emisiones_y_fuego_automatico_con_puestos(api):
     prof = api("prof")
-    for nombre, puesto in (("a2int", "inteligencia"), ("a5plan", "planificacion")):
+    for nombre, puesto in (("uda", "a3da"), ("ua3", "a3")):
         assert prof.post("/api/usuarios", json={"username": nombre, "password": "clave-segura-1", "rol": "azul",
                                                 "puesto": puesto}).status_code == 200
     prof, base, a, *_ = _preparar(api)
     nueva = lambda clase: prof.post(f"{base}/unidades", json=dict(nombre=clase, bando="azul", clase=clase, lat=0.3, lon=0.3)).json()  # noqa: E731
     radar, aa = nueva("radar"), nueva("antiaerea")
     defensa = lambda cliente, u, cuerpo: api(cliente).post(f"{base}/unidades/{u['id']}/defensa", json=cuerpo)  # noqa: E731
-    r = defensa("a5plan", radar, {"emitiendo": False})
-    assert r.status_code == 403 and "Inteligencia (A2)" in r.json()["detail"]
-    r = defensa("a2int", radar, {"emitiendo": False})
+    r = defensa("ua3", radar, {"emitiendo": False})
+    assert r.status_code == 403 and "Defensa Aerea (A-3 D/A)" in r.json()["detail"]
+    r = defensa("uda", radar, {"emitiendo": False})
     assert r.status_code == 200 and r.json()["emitiendo"] is False
-    assert defensa("a2int", aa, {"fuego_libre": False}).status_code == 403
-    assert defensa("a5plan", aa, {"fuego_libre": False}).json()["fuego_libre"] is False
+    assert defensa("ua3", aa, {"fuego_libre": False}).status_code == 403
+    assert defensa("uda", aa, {"fuego_libre": False}).json()["fuego_libre"] is False
     assert defensa("alfa", a, {"emitiendo": False}).status_code == 400  # la infanteria no tiene radar
     assert defensa("bravo", radar, {"emitiendo": True}).status_code == 404  # no es suya
     assert api("alfa").get(base).json()["unidades"][0].get("emitiendo") is not None

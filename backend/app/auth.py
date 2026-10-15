@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import os
 import secrets
+from dataclasses import dataclass
 from datetime import timedelta
 
 from fastapi import Depends, HTTPException, Request, Response, WebSocket
@@ -222,14 +223,46 @@ def requiere_roles(*roles: str):
     return dependencia
 
 
+CABECERA_CONDUCE = "X-Conduce-Bando"
+
+
+@dataclass(frozen=True)
+class InstructorConductor:
+    """El instructor dando ordenes por un bando que el escenario le encarga conducir (conduccion "instructor").
+
+    Se comporta como un alumno de ese bando con todas las funciones (Comandante): el resto del codigo usa `rol`,
+    `puesto`, `id` y `username` igual que con un alumno."""
+
+    id: int
+    username: str
+    rol: str
+    puesto: str = puestos.POR_DEFECTO
+    instructor: bool = True
+
+
+def conductor(escenario_id: int, request: Request, db: Session = Depends(get_db),
+              usuario: Usuario = Depends(usuario_actual)):
+    """Quien da ordenes por un bando: el alumno, por el suyo, o el instructor, por el bando que indica en la cabecera
+    X-Conduce-Bando cuando el escenario se lo encarga."""
+    if usuario.rol in puestos.BANDOS:
+        return usuario
+    bando = request.headers.get(CABECERA_CONDUCE, "")
+    if usuario.rol == "instructor" and bando in puestos.BANDOS:
+        esc = db.get(Escenario, escenario_id)
+        if esc is not None and esc.conduccion(bando) == "instructor":
+            return InstructorConductor(id=usuario.id, username=usuario.username, rol=bando)
+        raise HTTPException(status_code=403, detail=f"El bando {bando} no esta a cargo del instructor en este escenario")
+    raise HTTPException(status_code=403, detail="No autorizado para esta accion")
+
+
 def exigir_funcion(usuario: Usuario, funcion: str) -> None:
-    """403 si el puesto del alumno dentro de su bando no tiene esa funcion (ver engine/puestos.py)."""
+    """403 si la reparticion del alumno dentro de su bando no tiene esa funcion (ver engine/puestos.py)."""
     if puestos.puede(usuario.puesto, funcion):
         return
-    quien = " o ".join(f"{p.nombre} ({p.sigla})" for p in puestos.responsables(funcion)) or "el Estado Mayor"
+    quien = " o ".join(f"{p.nombre} ({p.sigla})" for p in puestos.responsables(funcion)) or "el Comandante"
     raise HTTPException(
         status_code=403,
-        detail=f"Esa accion corresponde al puesto {quien} de su bando; usted ocupa {puestos.obtener(usuario.puesto).nombre}",
+        detail=f"Esa accion corresponde a la reparticion {quien} de su bando; usted ocupa {puestos.obtener(usuario.puesto).nombre}",
     )
 
 

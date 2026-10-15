@@ -36,10 +36,13 @@
     const bando = () => (ctx.usuario() || {}).rol;
     const esAlumno = () => Logica.esBando(bando());
     const delBando = (f) => (datos() ? datos().unidades.filter((u) => u.bando === bando() && u.estado === "activa" && f(u)) : []);
-    const grupos = () => delBando((u) => u.tipo === "aerea");
+    // aeronaves que la reparticion del alumno puede conducir (A-3, A-3 D/A, A-2 o C-E segun la clase)
+    const conduce = (u) => !esAlumno() || ctx.puede(Logica.funcionDeOrden(u, "mision", ctx.claseDe(u)));
+    const grupos = () => delBando((u) => u.tipo === "aerea" && conduce(u));
+    const conduceId = (id) => { const u = datos() && datos().unidades.find((x) => x.id === id); return !!u && conduce(u); };
     const bases = () => delBando((u) => u.clase === "base_aerea");
     const enemigos = () => (datos() ? datos().unidades.filter((u) => u.bando !== bando() && u.estado === "activa" && (u.tipo !== "aerea" || u.en_tierra)) : []);
-    const puedeGrupos = () => esAlumno() && ctx.puede("aereo");
+    const puedeGrupos = () => esAlumno() && grupos().length > 0;
     const puedeBases = () => esAlumno() && ctx.puede("despegar");
     const turnoActual = () => (datos() ? datos().escenario.turno_actual : 1);
     const inicioMin = () => (datos() ? datos().escenario.hora_inicio_min : 360);
@@ -383,7 +386,7 @@
           el("span", "", `${Logica.ESTADOS_MISION[m.estado] || m.estado} · ${Logica.textoMision(m)}`),
         );
         li.appendChild(t);
-        if (esAlumno() && Logica.misionActiva(m) && ctx.puede(m.unidad_id ? "aereo" : "despegar")) {
+        if (esAlumno() && Logica.misionActiva(m) && (m.unidad_id ? conduceId(m.unidad_id) : ctx.puede("despegar"))) {
           const x = el("button", "", "×");
           x.type = "button";
           x.title = m.estado === "en_curso" ? "Abortar: regresa a la base" : "Cancelar la misión";

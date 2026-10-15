@@ -71,20 +71,26 @@ def serializar_grafico(g: Grafico) -> dict:
     ).model_dump()
 
 
-def serializar_objetivo(o: Objetivo, unidades: dict) -> dict:
+def serializar_objetivo(o: Objetivo, unidades: dict, hijos: list[Objetivo] | None = None) -> dict:
     u = unidades.get(o.unidad_id) if o.unidad_id else None
     return ObjetivoOut(
         id=o.id, bando=o.bando, tipo=o.tipo, nombre=o.nombre, puntos=o.puntos, lat=o.lat, lon=o.lon,
         radio_km=o.radio_km, turnos_requeridos=o.turnos_requeridos, progreso=o.progreso, unidad_id=o.unidad_id,
         unidad_nombre=u.nombre if u else "", hasta_turno=o.hasta_turno, estado=o.estado, turno_resuelto=o.turno_resuelto,
+        nivel=o.nivel or "material", padre_id=o.padre_id, efecto=o.efecto or "", indicador=o.indicador or "",
+        umbral=o.umbral, avance=objetivos_mod.avance_efecto(o, hijos or []) if o.tipo == "efecto" else None,
     ).model_dump()
 
 
 def objetivos_para(db: Session, escenario: Escenario, rol: str) -> list[dict]:
     """Cada bando ve solo sus objetivos; instructor y observador, todos."""
     por_id = {u.id: u for u in db.query(Unidad).filter(Unidad.escenario_id == escenario.id)}
-    lista = db.query(Objetivo).filter(Objetivo.escenario_id == escenario.id).order_by(Objetivo.id)
-    return [serializar_objetivo(o, por_id) for o in lista if not es_bando(rol) or o.bando == rol]
+    lista = db.query(Objetivo).filter(Objetivo.escenario_id == escenario.id).order_by(Objetivo.id).all()
+    hijos: dict[int, list[Objetivo]] = {}
+    for o in lista:
+        if o.padre_id is not None:
+            hijos.setdefault(o.padre_id, []).append(o)
+    return [serializar_objetivo(o, por_id, hijos.get(o.id)) for o in lista if not es_bando(rol) or o.bando == rol]
 
 
 def _obras_visibles(db: Session, escenario: Escenario, rol: str, unidades: list[Unidad]) -> list[Obra]:

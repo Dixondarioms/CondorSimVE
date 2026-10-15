@@ -49,11 +49,11 @@ test("puedeInterferir y el aviso de unidad interferida", () => {
   assert.equal(L.textoInterferido({ bando: "rojo", lat: 0, lon: 0 }, {}, zona), "");
 });
 
-test("la guerra electronica terrestre la conduce A2 y la aerea A3", () => {
+test("la guerra electronica, terrestre o aerea, la conduce C-E", () => {
   const ge = { celula: "ge", interferencia_km: 25 };
   assert.equal(L.funcionDeOrden({ tipo: "terrestre" }, "interferir", ge), "guerra_electronica");
-  assert.equal(L.funcionDeOrden({ tipo: "aerea" }, "interferir", { interferencia_km: 40 }), "aereo");
-  assert.equal(L.puestoPuede("inteligencia", "guerra_electronica"), true);
-  assert.equal(L.puestoPuede("planificacion", "guerra_electronica"), false);
-  assert.equal(L.puestoPuede("mando", "guerra_electronica"), true);
+  assert.equal(L.funcionDeOrden({ tipo: "aerea" }, "interferir", { interferencia_km: 40 }), "guerra_electronica");
+  assert.equal(L.puestoPuede("ce", "guerra_electronica"), true);
+  assert.equal(L.puestoPuede("a3", "guerra_electronica"), false);
+  assert.equal(L.puestoPuede("comandante", "guerra_electronica"), true);
 });

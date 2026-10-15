@@ -7,7 +7,7 @@ La ruta es una lista de puntos:
 - aterrizaje: ultimo punto, en una base aerea propia (la municion merodeadora termina en el blanco).
 
 Una mision puede ser para un grupo que ya existe (la conduce Operaciones, A3) o para un grupo que despegara de una
-base en un turno programado (la planifica Planificacion, A5): asi se arma con anticipacion el plan aereo del dia.
+base en un turno programado (la planifica la A-3 o la A-3 D/A): asi se arma con anticipacion el plan aereo del dia.
 Cada turno el grupo avanza solo por su ruta; una orden directa al grupo reemplaza la mision (redireccionamiento).
 Con combustible critico abandona la ruta y regresa a la base mas cercana.
 

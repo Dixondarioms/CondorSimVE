@@ -23,7 +23,6 @@ from app.terreno import get_terreno
 from app.ws_manager import manager
 
 router = APIRouter(prefix="/api/escenarios/{escenario_id}/ordenes", tags=["ordenes"])
-solo_alumnos = auth.requiere_roles("azul", "rojo")
 
 
 def _en_decision(esc: Escenario) -> Escenario:
@@ -211,7 +210,7 @@ async def emitir_orden(
     payload: schemas.OrdenCreate,
     esc: Escenario = Depends(auth.escenario_dep),
     db: Session = Depends(get_db),
-    usuario: Usuario = Depends(solo_alumnos),
+    usuario: Usuario = Depends(auth.conductor),
 ):
     _en_decision(esc)
     orden = _crear_orden(payload, esc, db, usuario)
@@ -233,7 +232,7 @@ async def emitir_lote(
     payload: schemas.OrdenLote,
     esc: Escenario = Depends(auth.escenario_dep),
     db: Session = Depends(get_db),
-    usuario: Usuario = Depends(solo_alumnos),
+    usuario: Usuario = Depends(auth.conductor),
 ):
     """La misma orden para varias unidades (seleccion multiple). Con `formacion`, los waypoints de cada unidad se
     desplazan segun su posicion relativa al lider (la primera), de modo que el conjunto conserva su formacion.
@@ -265,7 +264,7 @@ def previsualizar(
     payload: schemas.PrevisualizarIn,
     esc: Escenario = Depends(auth.escenario_dep),
     db: Session = Depends(get_db),
-    usuario: Usuario = Depends(solo_alumnos),
+    usuario: Usuario = Depends(auth.conductor),
 ):
     """Donde terminaria la unidad este turno con esos waypoints (terreno, clima y
     combustible incluidos), sin emitir la orden."""
@@ -298,7 +297,7 @@ def trazar_ruta(
     payload: schemas.RutaIn,
     esc: Escenario = Depends(auth.escenario_dep),
     db: Session = Depends(get_db),
-    usuario: Usuario = Depends(solo_alumnos),
+    usuario: Usuario = Depends(auth.conductor),
 ):
     """Waypoints del camino mas rapido de la unidad hasta `destino`, por carreteras y puentes reales y las obras
     vigentes del bando, sin emitir la orden (el alumno la revisa y la emite como un "mover")."""
@@ -319,7 +318,7 @@ async def cancelar_orden(
     orden_id: int,
     esc: Escenario = Depends(auth.escenario_dep),
     db: Session = Depends(get_db),
-    usuario: Usuario = Depends(solo_alumnos),
+    usuario: Usuario = Depends(auth.conductor),
 ):
     _en_decision(esc)
     orden = db.get(Orden, orden_id)

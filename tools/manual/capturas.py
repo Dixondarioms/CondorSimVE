@@ -14,16 +14,16 @@ ARNES = BASE + "/static/pruebas/arnes.html"
 CAPTURAS = [
     ("cap_login", BASE + "/", 1280, 800, 4000, None),
     ("cap_instructor", f"{ARNES}?rol=instructor&lat=8.62&lon=-70.5&zoom=10", 1440, 900, 9000, 875),
-    ("cap_azul", f"{ARNES}?rol=azul&puesto=mando&lat=8.62&lon=-70.55&zoom=11", 1440, 900, 9000, 875),
-    ("cap_a3", f"{ARNES}?rol=azul&puesto=operaciones&lat=8.62&lon=-70.55&zoom=11", 1440, 900, 9000, 875),
+    ("cap_azul", f"{ARNES}?rol=azul&puesto=comandante&lat=8.62&lon=-70.55&zoom=11", 1440, 900, 9000, 875),
+    ("cap_a3", f"{ARNES}?rol=azul&puesto=a3&lat=8.62&lon=-70.55&zoom=11", 1440, 900, 9000, 875),
     ("cap_base_plano", f"{ARNES}?rol=instructor&lat=8.6165&lon=-70.2175&zoom=15", 1440, 900, 10000, 875),
     ("cap_base_cerca", f"{ARNES}?rol=instructor&lat=8.6155&lon=-70.2185&zoom=17", 1440, 900, 10000, 875),
     ("cap_carlota", f"{ARNES}?rol=instructor&lat=10.4855&lon=-66.8425&zoom=15", 1440, 900, 10000, 875),
-    ("cap_naval", f"{ARNES}?rol=azul&puesto=mando&lat=10.66&lon=-68.0&zoom=11", 1440, 900, 9000, 875),
+    ("cap_naval", f"{ARNES}?rol=azul&puesto=comandante&lat=10.66&lon=-68.0&zoom=11", 1440, 900, 9000, 875),
     ("cap_videowall", f"{ARNES}?rol=instructor&modo=videowall&vista=completa&lat=8.62&lon=-70.5&zoom=10", 1440, 900, 9000, 875),
     ("cap_replay", f"{ARNES}?rol=instructor&abrir=replay&instante=2.5", 1440, 900, 12000, 875),
     ("cap_rubrica", f"{ARNES}?rol=instructor&abrir=rubrica", 1440, 900, 12000, 875),
-    ("cap_ia_noche", f"{ARNES}?rol=azul&puesto=mando&ia=rojo&nivel=prudente&noche=1&hora=1260&lat=8.6&lon=-70.57&zoom=11", 1440, 900, 9000, None),
+    ("cap_ia_noche", f"{ARNES}?rol=azul&puesto=comandante&ia=rojo&nivel=prudente&noche=1&hora=1260&lat=8.6&lon=-70.57&zoom=11", 1440, 900, 9000, None),
     ("cap_maqueta", BASE + "/static/maqueta/index.html", 1440, 900, 6000, None),
 ]
 FOTOS = ["f16.jpg", "su30.jpg"]

@@ -24,10 +24,10 @@ def _usuario(api, nombre: str) -> Usuario:
 # ---------------------------------------------------------------- solicitudes desde la pantalla de acceso
 def test_solicitud_queda_pendiente_y_no_permite_entrar(api):
     anon = api()
-    r = anon.post("/api/auth/solicitar", json={"username": "Delta", "password": "otra-clave-9", "rol": "azul", "puesto": "logistica"})
+    r = anon.post("/api/auth/solicitar", json={"username": "Delta", "password": "otra-clave-9", "rol": "azul", "puesto": "a4"})
     assert r.status_code == 201, r.text
     u = _usuario(api, "delta")
-    assert u.aprobado is False and u.rol == "azul" and u.puesto == "logistica"
+    assert u.aprobado is False and u.rol == "azul" and u.puesto == "a4"
 
     r = _login(api(), "delta", "otra-clave-9")
     assert r.status_code == 403 and "aprobada" in r.json()["detail"]
@@ -57,9 +57,9 @@ def test_el_instructor_aprueba_con_otro_rol_y_el_alumno_entra(api):
     pendiente = next(u for u in prof.get("/api/usuarios").json() if u["username"] == "eco")
     assert pendiente["aprobado"] is False
 
-    r = prof.post(f"/api/usuarios/{pendiente['id']}/aprobar", json={"rol": "rojo", "puesto": "planificacion"})
+    r = prof.post(f"/api/usuarios/{pendiente['id']}/aprobar", json={"rol": "rojo", "puesto": "a3da"})
     assert r.status_code == 200, r.text
-    assert r.json()["aprobado"] is True and r.json()["rol"] == "rojo" and r.json()["puesto"] == "planificacion"
+    assert r.json()["aprobado"] is True and r.json()["rol"] == "rojo" and r.json()["puesto"] == "a3da"
 
     c = api()
     assert _login(c, "eco", "otra-clave-9").status_code == 200

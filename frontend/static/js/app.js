@@ -37,9 +37,11 @@
   }
 
   async function api(metodo, ruta, cuerpo, silencioso = false) {
+    const cabeceras = { "Content-Type": "application/json" };
+    if (app.conduce) cabeceras["X-Conduce-Bando"] = app.conduce; // instructor conduciendo un bando
     const resp = await fetch(ruta, {
       method: metodo,
-      headers: { "Content-Type": "application/json" },
+      headers: cabeceras,
       body: cuerpo !== undefined ? JSON.stringify(cuerpo) : undefined,
       credentials: "same-origin",
     });
@@ -89,7 +91,7 @@
   const esInstructor = () => !!app.usuario && app.usuario.rol === "instructor";
   const esAlumno = () => !!app.usuario && esBando(app.usuario.rol);
   /** Puesto del alumno dentro de su bando (los demas roles no tienen restricciones por puesto). */
-  const puestoActual = () => (esAlumno() ? app.usuario.puesto || "mando" : "mando");
+  const puestoActual = () => (esAlumno() ? Logica.puestoDe(app.usuario.puesto).id : "comandante");
   const puedeFuncion = (f) => !esAlumno() || Logica.puestoPuede(puestoActual(), f);
   /** Bando cuya perspectiva se muestra (null = vista completa). */
   const bandoVista = () => {
@@ -111,6 +113,8 @@
   }
 
   function mostrarLogin() {
+    app.conduce = null;
+    app.usuarioReal = null;
     cerrarWs();
     clearInterval(app.relojTimer);
     clearInterval(app.solicitudesTimer);
@@ -291,8 +295,10 @@
     document.querySelectorAll(".pestanas button").forEach((b) => b.classList.toggle("activa", b.dataset.pestana === nombre));
     $("pest-fuerzas").hidden = nombre !== "fuerzas";
     $("pest-situacion").hidden = nombre !== "situacion";
+    $("pest-pmo").hidden = nombre !== "pmo";
     $("pest-consola").hidden = nombre !== "consola" || !esInstructor();
     if (nombre === "situacion" && app.data) renderSituacion(app.data);
+    if (nombre === "pmo" && app.pmo) app.pmo.cargar();
   }
   document.querySelectorAll(".pestanas button").forEach((b) => b.addEventListener("click", () => activarPestana(b.dataset.pestana)));
 
@@ -1668,6 +1674,12 @@
     // tambien en la tarjeta Estado del escenario: en pantallas de hasta 1450 px la cabecera oculta la hora
     $("esc-hora").textContent = $("h-hora").textContent;
     $("esc-hora").className = esc.dia_noche && periodo !== "dia" ? `periodo-${periodo}` : "";
+    const cal = Logica.textoCalendario(esc.calendario);
+    $("h-calendario-caja").hidden = !cal;
+    $("h-calendario").textContent = cal;
+    $("esc-calendario-fila").hidden = !cal;
+    $("esc-calendario").textContent = cal;
+    for (const b of ["azul", "rojo"]) $(`btn-conducir-${b}`).hidden = !esInstructor() || esc[`conduccion_${b}`] !== "instructor";
     if (app.map) {
       const c = app.map.getContainer();
       c.classList.toggle("mapa-noche", periodo === "noche");
@@ -1687,10 +1699,14 @@
       for (const [id, campo] of [["dir-niebla", "niebla"], ["dir-logistica", "logistica"], ["dir-clima", "efectos_clima"], ["dir-fuego", "fuego_automatico"]]) {
         set(id, (e) => { e.checked = esc[campo] !== false; });
       }
-      set("dir-ia-azul", (e) => { e.checked = !!esc.ia_azul; });
+      set("dir-cond-azul", (e) => { e.value = esc.conduccion_azul || "alumnos"; });
+      set("dir-cond-rojo", (e) => { e.value = esc.conduccion_rojo || "alumnos"; });
+      set("cal-fecha", (e) => { e.value = esc.fecha_inicio || ""; });
+      set("cal-h", (e) => { e.value = esc.turno_h || ""; });
+      set("cal-final", (e) => { e.value = esc.turno_final || ""; });
+      pintarFasesConfig(esc.calendario);
       set("dir-noche", (e) => { e.checked = !!esc.dia_noche; });
       set("dir-ia-nivel", (e) => { e.value = esc.ia_nivel || "normal"; });
-      set("dir-ia-rojo", (e) => { e.checked = !!esc.ia_rojo; });
       set("cfg-limite", (e) => { e.value = esc.limite_decision_seg || 0; });
       set("cfg-hora", (e) => { e.value = `${String(Math.floor(esc.hora_inicio_min / 60)).padStart(2, "0")}:${String(esc.hora_inicio_min % 60).padStart(2, "0")}`; });
       set("cfg-nacion-azul", (e) => { e.value = esc.nacion_azul || ""; });
@@ -1913,6 +1929,8 @@
     renderCola(data);
     renderObjetivos(data);
     renderSituacion(data);
+    if (app.pmo) app.pmo.render(data);
+    revisarConduccion(data.escenario);
     actualizarNuevaOrden(data);
     actualizarAviacion(data);
     if (app.misiones) app.misiones.render(data);
@@ -2056,6 +2074,9 @@
       escenarioId: () => app.escenarioId, capa: () => app.capas.infraestructura, mapas: () => Logica.ordenarMapas(app.mapas),
     });
     app.infraestructura.cargar();
+    app.pmo = Pmo.crear({
+      api, rutaEsc, toast, usuario: () => app.usuario, escenarioId: () => app.escenarioId, esInstructor,
+    });
     app.misiones = Misiones.crear({
       api, toast, rutaEsc, usuario: () => app.usuario, datos: () => app.data, catalogo: () => app.catalogo,
       capaBorrador: app.capas.preview, capaRutas: app.capas.misiones, puede: puedeFuncion, claseDe,
@@ -2104,12 +2125,19 @@
       li.textContent = "Sin objetivos definidos.";
       lista.appendChild(li);
     }
-    for (const o of objetivos) {
+    for (const { o, nivel } of Logica.arbolObjetivos(objetivos)) {
       const av = Logica.avanceObjetivo(o);
       const li = document.createElement("li");
-      li.className = `objetivo ${o.estado} ${o.bando}`;
+      li.className = `objetivo ${o.estado} ${o.bando} nivel-${o.nivel || "material"}`;
+      li.style.marginLeft = `${nivel * 14}px`;
       const t = document.createElement("div");
-      t.append(Object.assign(document.createElement("b"), { textContent: o.nombre }), Object.assign(document.createElement("span"), { textContent: Logica.textoObjetivo(o) }));
+      const titulo = o.nivel && o.nivel !== "material" ? `${Logica.NIVELES_OBJETIVO[o.nivel]}: ${o.nombre}` : o.nombre;
+      t.append(Object.assign(document.createElement("b"), { textContent: titulo }), Object.assign(document.createElement("span"), { textContent: Logica.textoObjetivo(o) }));
+      if (o.efecto || o.indicador) {
+        t.append(Object.assign(document.createElement("small"), {
+          className: "efecto", textContent: [o.efecto && `Efecto deseado: ${o.efecto}`, o.indicador && `Indicador: ${o.indicador}`].filter(Boolean).join(" · "),
+        }));
+      }
       const chip = Object.assign(document.createElement("span"), { className: `chip ${av.clase}`, textContent: av.texto });
       li.append(t, chip);
       li.addEventListener("click", () => {
@@ -2122,32 +2150,52 @@
     if (esInstructor()) {
       const ul = $("ob-lista");
       limpiar(ul);
-      for (const o of objetivos) {
+      for (const { o, nivel } of Logica.arbolObjetivos(objetivos)) {
         const li = document.createElement("li");
+        li.style.marginLeft = `${nivel * 12}px`;
         li.append(Object.assign(document.createElement("span"), { textContent: `${o.bando === "azul" ? "Azul" : "Rojo"} · ${o.nombre} (${Logica.avanceObjetivo(o).texto})` }));
         li.appendChild(boton("×", () => enSilencio(api("DELETE", rutaEsc(`/objetivos/${o.id}`))), "mini peligro"));
         ul.appendChild(li);
       }
       llenarUnidadesObjetivo(data.unidades);
+      llenarSuperioresObjetivo(objetivos);
     }
   }
 
   function llenarUnidadesObjetivo(unidades) {
     const tipo = $("ob-tipo").value;
     const bando = $("ob-bando").value;
-    const candidatas = unidades.filter((u) => u.estado === "activa" && (tipo === "destruir" ? u.bando !== bando : u.bando === bando));
+    const enemigas = tipo === "destruir" || tipo === "neutralizar";
+    const candidatas = unidades.filter((u) => u.estado === "activa" && (enemigas ? u.bando !== bando : u.bando === bando));
     llenarSelect($("ob-unidad"), candidatas.map((u) => [u.id, `${u.nombre} (${u.bando})`]));
+  }
+
+  /** Objetivos de efecto de nivel mas alto del mismo bando, que pueden ser el superior del nuevo. */
+  function llenarSuperioresObjetivo(objetivos) {
+    const tipo = $("ob-tipo").value;
+    const nivel = tipo === "efecto" ? $("ob-nivel").value : "material";
+    const posibles = Logica.superioresPosibles(objetivos || [], $("ob-bando").value, nivel);
+    llenarSelect($("ob-padre"), [["", "(ninguno)"], ...posibles.map((o) => [o.id, `${Logica.NIVELES_OBJETIVO[o.nivel] || ""}: ${o.nombre}`])]);
   }
 
   function actualizarFormularioObjetivo() {
     const tipo = $("ob-tipo").value;
     document.querySelectorAll(".ob-ocupar").forEach((e) => { e.hidden = tipo !== "ocupar"; });
-    document.querySelectorAll(".ob-unidad").forEach((e) => { e.hidden = tipo === "ocupar"; });
+    document.querySelectorAll(".ob-unidad").forEach((e) => { e.hidden = tipo === "ocupar" || tipo === "efecto"; });
     document.querySelectorAll(".ob-proteger").forEach((e) => { e.hidden = tipo !== "proteger"; });
-    if (app.data) llenarUnidadesObjetivo(app.data.unidades);
+    document.querySelectorAll(".ob-plazo").forEach((e) => { e.hidden = tipo === "proteger"; });
+    document.querySelectorAll(".ob-efecto").forEach((e) => { e.hidden = tipo !== "efecto"; });
+    document.querySelectorAll(".ob-umbral").forEach((e) => { e.hidden = tipo !== "neutralizar" && tipo !== "efecto"; });
+    $("ob-umbral-etq").textContent = tipo === "efecto" ? "Cumplir el % de los dependientes" : "Fuerza a la que queda (%)";
+    $("ob-umbral").placeholder = tipo === "efecto" ? "100" : "50";
+    if (app.data) {
+      llenarUnidadesObjetivo(app.data.unidades);
+      llenarSuperioresObjetivo(app.data.objetivos);
+    }
   }
   $("ob-tipo").addEventListener("change", actualizarFormularioObjetivo);
   $("ob-bando").addEventListener("change", actualizarFormularioObjetivo);
+  $("ob-nivel").addEventListener("change", actualizarFormularioObjetivo);
   $("btn-ob-ubicar").addEventListener("click", () => {
     app.modoObjetivo = !app.modoObjetivo;
     $("btn-ob-ubicar").textContent = app.modoObjetivo ? "Haga clic en el mapa… (cancelar)" : "Ubicar la zona en el mapa";
@@ -2157,17 +2205,25 @@
     const tipo = $("ob-tipo").value;
     const nombre = $("ob-nombre").value.trim();
     if (!nombre) return toast("Escriba un nombre para el objetivo.");
-    const cuerpo = { tipo, bando: $("ob-bando").value, nombre, puntos: parseInt($("ob-puntos").value, 10) || 0 };
+    const cuerpo = {
+      tipo, bando: $("ob-bando").value, nombre, puntos: parseInt($("ob-puntos").value, 10) || 0,
+      nivel: tipo === "efecto" ? $("ob-nivel").value : "material", padre_id: parseInt($("ob-padre").value, 10) || null,
+      efecto: $("ob-efecto").value.trim(), indicador: $("ob-indicador").value.trim(),
+    };
+    const umbral = parseFloat($("ob-umbral").value);
+    if ((tipo === "neutralizar" || tipo === "efecto") && Number.isFinite(umbral)) cuerpo.umbral = umbral;
+    const plazo = parseInt($("ob-plazo").value, 10);
+    if (tipo !== "proteger" && plazo > 0) cuerpo.hasta_turno = plazo;
     if (tipo === "ocupar") {
       if (!app.objetivoCentro) return toast("Ubique la zona en el mapa.");
       Object.assign(cuerpo, { lat: app.objetivoCentro[0], lon: app.objetivoCentro[1], radio_km: parseFloat($("ob-radio").value) || 5, turnos_requeridos: parseInt($("ob-turnos").value, 10) || 1 });
-    } else {
+    } else if (tipo !== "efecto") {
       cuerpo.unidad_id = parseInt($("ob-unidad").value, 10) || null;
       if (tipo === "proteger") cuerpo.hasta_turno = parseInt($("ob-hasta").value, 10) || null;
     }
     try {
       await api("POST", rutaEsc("/objetivos"), cuerpo);
-      $("ob-nombre").value = "";
+      for (const id of ["ob-nombre", "ob-efecto", "ob-indicador", "ob-plazo", "ob-umbral"]) $(id).value = "";
       app.objetivoCentro = null;
       $("ob-centro").textContent = "";
       toast("Objetivo creado", true);
@@ -2212,11 +2268,11 @@
         if (!u) continue;
         centro = [u.lat, u.lon];
         L.circle(centro, { radius: 6000, color, weight: 2, dashArray: "3 5", fill: false })
-          .bindTooltip(`${o.tipo === "destruir" ? "Destruir" : "Proteger"}: ${etiqueta}`, { sticky: true }).addTo(g);
+          .bindTooltip(`${Logica.ETIQUETA_OBJETIVO[o.tipo] || o.tipo}: ${etiqueta}`, { sticky: true }).addTo(g);
       }
       L.marker(centro, {
         interactive: false, keyboard: false,
-        icon: L.divIcon({ className: `objetivo-marca ${o.bando} ${o.estado}`, html: `<span>${o.tipo === "ocupar" ? "◎" : o.tipo === "destruir" ? "✕" : "⛨"}</span>`, iconSize: [22, 22], iconAnchor: [11, 11] }),
+        icon: L.divIcon({ className: `objetivo-marca ${o.bando} ${o.estado}`, html: `<span>${o.tipo === "ocupar" ? "◎" : o.tipo === "destruir" ? "✕" : o.tipo === "neutralizar" ? "⊘" : "⛨"}</span>`, iconSize: [22, 22], iconAnchor: [11, 11] }),
       }).addTo(g);
     }
   }
@@ -2251,7 +2307,7 @@
     ws.onopen = () => {
       $("estado-conexion").className = "conexion on";
       $("estado-conexion").title = "conectado";
-      if (esInstructor() && app.vista !== "completa") ws.send(JSON.stringify({ vista: app.vista }));
+      if ((esInstructor() || app.conduce) && app.vista !== "completa") ws.send(JSON.stringify({ vista: app.vista }));
       app.wsAlive = setInterval(() => ws.readyState === 1 && ws.send("ping"), 25000);
     };
     ws.onmessage = (ev) => {
@@ -2292,6 +2348,8 @@
     app.posPrevia.clear();
     app.unidadOrden = null;
     app.data = null;
+    if (app.conduce) dejarDeConducir(false);
+    if (app.pmo) app.pmo.reiniciar();
     app.vista = "completa";
     app.memoria = Logica.memoriaVacia();
     app.alertas = [];
@@ -2346,13 +2404,13 @@
 
   function selectPuesto(valor, etiqueta) {
     const sp = document.createElement("select");
-    sp.title = "Puesto dentro del bando";
+    sp.title = "Repartición del TIEM dentro del bando";
     sp.setAttribute("aria-label", etiqueta);
     for (const p of Logica.PUESTOS) {
       const o = document.createElement("option");
       o.value = p.id; o.textContent = `${p.sigla} · ${p.nombre}`; sp.appendChild(o);
     }
-    sp.value = valor || "mando";
+    sp.value = Logica.puestoDe(valor).id;
     return sp;
   }
 
@@ -2509,10 +2567,101 @@
     enSilencio(api("PATCH", rutaEsc("/config"), {
       niebla: $("dir-niebla").checked, logistica: $("dir-logistica").checked,
       efectos_clima: $("dir-clima").checked, fuego_automatico: $("dir-fuego").checked,
-      ia_azul: $("dir-ia-azul").checked, ia_rojo: $("dir-ia-rojo").checked,
+      conduccion_azul: $("dir-cond-azul").value, conduccion_rojo: $("dir-cond-rojo").value,
       dia_noche: $("dir-noche").checked, ia_nivel: $("dir-ia-nivel").value,
     }).then(() => toast("Interruptores aplicados", true)));
   });
+  // ---------- calendario de la operacion (TIEM) ----------
+  /** Filas editables de las fases; se repintan solo si cambiaron en el servidor y nadie esta escribiendo en ellas. */
+  function pintarFasesConfig(cal) {
+    const caja = $("cal-fases");
+    const firma = JSON.stringify(cal ? cal.fases : []);
+    if (caja.dataset.firma === firma || caja.contains(document.activeElement)) return;
+    caja.dataset.firma = firma;
+    caja.replaceChildren();
+    for (const f of cal ? cal.fases : []) agregarFilaFase(f);
+  }
+
+  function agregarFilaFase(f = { nombre: "", desde: "", hasta: "" }) {
+    const fila = document.createElement("div");
+    fila.className = "fila-fase";
+    const campo = (clase, tipo, valor, ph) => Object.assign(document.createElement("input"), { className: clase, type: tipo, value: valor ?? "", placeholder: ph });
+    const nombre = campo("f-nombre", "text", Logica.nombreFase(f.nombre), "Nombre de la fase");
+    nombre.maxLength = 60;
+    fila.append(nombre, campo("f-desde", "number", f.desde, "desde"), campo("f-hasta", "number", f.hasta, "hasta"),
+      boton("×", () => fila.remove(), "mini peligro"));
+    $("cal-fases").appendChild(fila);
+  }
+
+  function leerFasesConfig() {
+    return [...$("cal-fases").querySelectorAll(".fila-fase")].map((f) => ({
+      nombre: f.querySelector(".f-nombre").value.trim(),
+      desde: parseInt(f.querySelector(".f-desde").value, 10),
+      hasta: parseInt(f.querySelector(".f-hasta").value, 10) || null,
+    })).filter((f) => f.nombre || f.desde);
+  }
+
+  $("btn-cal-fase").addEventListener("click", () => agregarFilaFase());
+  $("btn-cal-defecto").addEventListener("click", () => {
+    if (!app.escenarioId) return;
+    $("cal-fases").dataset.firma = "";
+    enSilencio(api("PATCH", rutaEsc("/config"), { fases: [] }).then(() => toast("Fases por defecto", true)));
+  });
+  $("btn-calendario").addEventListener("click", () => {
+    if (!app.escenarioId) return;
+    const cuerpo = {
+      fecha_inicio: $("cal-fecha").value || "", turno_h: parseInt($("cal-h").value, 10) || 0,
+      turno_final: parseInt($("cal-final").value, 10) || 0,
+    };
+    const esc = app.data && app.data.escenario;
+    const fases = leerFasesConfig();
+    if (fases.some((f) => !f.nombre || !(f.desde > 0))) return toast("Cada fase necesita un nombre y un turno de inicio.");
+    if (esc && esc.calendario && esc.calendario.fases_propias) cuerpo.fases = fases;
+    else if (JSON.stringify(fases) !== JSON.stringify(((esc && esc.calendario && esc.calendario.fases) || []).map((f) => ({ nombre: Logica.nombreFase(f.nombre), desde: f.desde, hasta: f.hasta })))) cuerpo.fases = fases;
+    $("cal-fases").dataset.firma = "";
+    enSilencio(api("PATCH", rutaEsc("/config"), cuerpo).then(() => toast("Calendario aplicado", true)));
+  });
+
+  // ---------- el instructor conduce un bando (conduccion "instructor") ----------
+  /** Entra como comandante del bando: ve su niebla de guerra y da sus ordenes; las herramientas del instructor se
+   * ocultan hasta volver. El servidor lo admite solo si el escenario le encarga ese bando. */
+  function conducirBando(bando) {
+    app.usuarioReal = app.usuarioReal || app.usuario;
+    app.conduce = bando;
+    app.usuario = { ...app.usuarioReal, rol: bando, puesto: "comandante" };
+    app.vista = bando;
+    if (app.ws && app.ws.readyState === 1) app.ws.send(JSON.stringify({ vista: bando }));
+    document.body.classList.add("conduciendo");
+    $("barra-conduce").hidden = false;
+    $("barra-conduce-texto").textContent = `Usted conduce el bando ${bando === "azul" ? "Azul" : "Rojo"} (Comandante)`;
+    aplicarRol();
+    toast(`Conduce el bando ${bando === "azul" ? "Azul" : "Rojo"}: sus órdenes salen como las del comandante del bando.`, true);
+  }
+
+  function dejarDeConducir(avisar = true) {
+    if (!app.conduce) return;
+    app.conduce = null;
+    app.usuario = app.usuarioReal;
+    app.usuarioReal = null;
+    app.vista = "completa";
+    if (app.ws && app.ws.readyState === 1) app.ws.send(JSON.stringify({ vista: "completa" }));
+    document.body.classList.remove("conduciendo");
+    $("barra-conduce").hidden = true;
+    aplicarRol();
+    if (avisar) toast("De vuelta a la consola del instructor.", true);
+  }
+
+  /** Si el escenario deja de encargarle el bando al instructor, vuelve a la consola. */
+  function revisarConduccion(esc) {
+    if (app.conduce && esc && esc[`conduccion_${app.conduce}`] !== "instructor") {
+      dejarDeConducir(false);
+      toast("El bando ya no está a cargo del instructor: volvió a la consola.");
+    }
+  }
+  $("btn-conducir-azul").addEventListener("click", () => conducirBando("azul"));
+  $("btn-conducir-rojo").addEventListener("click", () => conducirBando("rojo"));
+  $("btn-dejar-conducir").addEventListener("click", () => dejarDeConducir());
+
   $("btn-demo").addEventListener("click", () => {
     if (!app.escenarioId) return;
     if (!confirm("Modo demostración: el simulador conducirá los dos bandos y resolverá un turno cada 15 segundos. ¿Continuar?")) return;

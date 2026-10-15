@@ -619,16 +619,21 @@
     return unidades.filter((u) => [u.nombre, u.clase, u.modelo, u.tipo].some((c) => sinAcentos(c).includes(q)));
   }
 
-  const ETIQUETA_OBJETIVO = { ocupar: "Ocupar", destruir: "Destruir", proteger: "Proteger" };
+  const ETIQUETA_OBJETIVO = { ocupar: "Ocupar", destruir: "Destruir", neutralizar: "Neutralizar", proteger: "Proteger", efecto: "Efecto" };
+  const NIVELES_OBJETIVO = { ulterior: "Objetivo ulterior", asignado: "Objetivo asignado", material: "Objetivo material" };
 
   /** Linea de resumen de un objetivo: que hay que hacer, cuanto vale y como va. */
   function textoObjetivo(o) {
+    const umbral = o.umbral ?? (o.tipo === "neutralizar" ? 50 : 100);
     const que = {
       ocupar: `Ocupar la zona (radio ${o.radio_km} km)${o.turnos_requeridos > 1 ? ` durante ${o.turnos_requeridos} turnos seguidos` : ""}`,
       destruir: `Destruir ${o.unidad_nombre || "la unidad"}`,
+      neutralizar: `Neutralizar ${o.unidad_nombre || "la unidad"} (fuerza ${umbral} % o menos)`,
       proteger: `Proteger ${o.unidad_nombre || "la unidad"}${o.hasta_turno ? ` hasta el turno ${o.hasta_turno}` : ""}`,
+      efecto: `Cumplir el ${umbral} % de los objetivos que dependen de él`,
     }[o.tipo] || o.tipo;
-    return `${que} · ${o.puntos} pts`;
+    const plazo = o.hasta_turno && o.tipo !== "proteger" ? ` · plazo: turno ${o.hasta_turno}` : "";
+    return `${que}${plazo}${o.puntos ? ` · ${o.puntos} pts` : ""}`;
   }
 
   /** {texto, clase} del avance de un objetivo. */
@@ -636,8 +641,59 @@
     if (o.estado === "cumplido") return { texto: `Cumplido (turno ${o.turno_resuelto})`, clase: "ok" };
     if (o.estado === "fallido") return { texto: `Fallido (turno ${o.turno_resuelto})`, clase: "fuego" };
     if (o.tipo === "ocupar") return { texto: `${o.progreso}/${o.turnos_requeridos} turnos`, clase: o.progreso > 0 ? "mov" : "" };
+    if (o.tipo === "efecto" && o.avance) {
+      const a = o.avance;
+      return { texto: a.total ? `${a.cumplidos}/${a.total} cumplidos` : "Sin objetivos dependientes", clase: a.cumplidos > 0 ? "mov" : "" };
+    }
     return { texto: "En curso", clase: "" };
   }
+
+  /** Cadena de objetivos como arbol: [{o, nivel}] con cada objetivo despues de su superior (nivel = sangria). Los
+   * que no tienen superior visible van primero: ulteriores, asignados y materiales, en ese orden. */
+  function arbolObjetivos(objetivos) {
+    const lista = objetivos || [];
+    const ids = new Set(lista.map((o) => o.id));
+    const hijos = new Map();
+    for (const o of lista) {
+      if (o.padre_id != null && ids.has(o.padre_id)) {
+        if (!hijos.has(o.padre_id)) hijos.set(o.padre_id, []);
+        hijos.get(o.padre_id).push(o);
+      }
+    }
+    const orden = { ulterior: 0, asignado: 1, material: 2 };
+    const raices = lista.filter((o) => o.padre_id == null || !ids.has(o.padre_id))
+      .sort((a, b) => (orden[a.nivel] ?? 2) - (orden[b.nivel] ?? 2) || a.id - b.id);
+    const salida = [];
+    const vistos = new Set();
+    const visitar = (o, nivel) => {
+      if (vistos.has(o.id)) return;
+      vistos.add(o.id);
+      salida.push({ o, nivel });
+      for (const h of hijos.get(o.id) || []) visitar(h, nivel + 1);
+    };
+    raices.forEach((o) => visitar(o, 0));
+    return salida;
+  }
+
+  /** Objetivos de efecto que pueden ser superiores de uno nuevo de ese bando y nivel. */
+  function superioresPosibles(objetivos, bando, nivel) {
+    const orden = { ulterior: 0, asignado: 1, material: 2 };
+    return (objetivos || []).filter((o) => o.tipo === "efecto" && o.bando === bando && (orden[o.nivel] ?? 2) < (orden[nivel] ?? 2));
+  }
+
+  // ---------------------------------------------------------------- calendario de la operacion (TIEM)
+  /** "D+1 · H+5 · Ejecución" del turno en curso, o "" si el escenario no tiene calendario. */
+  function textoCalendario(cal) {
+    if (!cal || !cal.actual) return "";
+    const a = cal.actual;
+    return [a.dia, a.hora_h, nombreFase(a.fase)].filter(Boolean).join(" · ");
+  }
+
+  const FASES_TILDES = { "Concentracion y despliegue": "Concentración y despliegue", Ejecucion: "Ejecución" };
+  const nombreFase = (f) => FASES_TILDES[f] || f || "";
+
+  /** Quien conduce un bando, en palabras. */
+  const CONDUCCION = { alumnos: "Grupo de alumnos", instructor: "Instructor", ia: "Adversario automático (IA)" };
 
   // ---------------------------------------------------------------- identidad nacional del bando
   /** Nacion (del catalogo /api/naciones) asignada a un bando en este escenario, o null si no tiene. */
@@ -654,26 +710,43 @@
     return n ? `${base} (${n.nombre})` : base;
   }
 
-  // ---------------------------------------------------------------- puestos por funcion dentro del bando
+  // ---------------------------------------------------------------- reparticiones del TIEM dentro del bando
   // Misma matriz que backend/app/engine/puestos.py: el servidor es quien decide; esto solo adapta la interfaz.
+  const FUNCIONES_PUESTO = ["superficie", "aereo", "caza", "despegar", "defensa_aerea", "reconocimiento", "logistica", "guerra_electronica", "listo"];
   const PUESTOS = [
-    { id: "mando", sigla: "EM", nombre: "Estado Mayor", descripcion: "Conduce todo el bando: reúne las funciones de los demás puestos.", funciones: ["superficie", "aereo", "despegar", "logistica", "guerra_electronica", "listo"] },
-    { id: "inteligencia", sigla: "A2", nombre: "Inteligencia", descripcion: "Sigue la situación enemiga (contactos, gráficos de blancos, mensajes) y conduce los radares y las unidades terrestres de guerra electrónica: escucha e interferencia.", funciones: ["guerra_electronica"] },
-    { id: "operaciones", sigla: "A3", nombre: "Operaciones en curso", descripcion: "Conduce las aeronaves: despegue desde la pista, rutas, patrullas, ataques y aterrizajes.", funciones: ["aereo"] },
-    { id: "logistica", sigla: "A4", nombre: "Logística", descripcion: "Conduce los convoyes de abastecimiento y a los ingenieros (puentes y vados).", funciones: ["logistica"] },
-    { id: "planificacion", sigla: "A5", nombre: "Planificación", descripcion: "Ordena a las unidades terrestres y navales, envía los grupos de caza desde las bases y confirma las órdenes del bando (LISTO).", funciones: ["superficie", "despegar", "listo"] },
+    { id: "comandante", sigla: "CMDTE", nombre: "Comandante", descripcion: "Decide y conduce el bando: reúne las funciones de todas las reparticiones y confirma las órdenes (LISTO).", funciones: FUNCIONES_PUESTO },
+    { id: "jem", sigla: "JEM", nombre: "Jefe de Estado Mayor", descripcion: "Coordina el trabajo de las reparticiones; reúne sus funciones y confirma las órdenes (LISTO) por el comandante.", funciones: FUNCIONES_PUESTO },
+    { id: "a1", sigla: "A-1", nombre: "Personal", descripcion: "Sigue los efectivos propios (dotación, bajas, reemplazos y moral) y prepara la apreciación de personal. No ordena unidades.", funciones: [] },
+    { id: "a2", sigla: "A-2", nombre: "Inteligencia", descripcion: "Sigue al enemigo (contactos, cuadro de radares, capacidades del ENO) y conduce el reconocimiento: unidades y drones de reconocimiento.", funciones: ["reconocimiento"] },
+    { id: "a3", sigla: "A-3", nombre: "Operaciones", descripcion: "Conduce la maniobra: despegues, caza, ataque, helicópteros, drones armados, cisternas, fuerzas de superficie y lanzadores de misiles.", funciones: ["superficie", "aereo", "caza", "despegar"] },
+    { id: "a3da", sigla: "A-3 D/A", nombre: "Defensa Aérea", descripcion: "Conduce la defensa aérea: radares, artillería y misiles antiaéreos, alerta temprana y la caza de intercepción con sus despegues.", funciones: ["defensa_aerea", "caza", "despegar"] },
+    { id: "a4", sigla: "A-4", nombre: "Logística", descripcion: "Conduce el abastecimiento: convoyes y depósitos, e ingenieros (puentes y vados).", funciones: ["logistica"] },
+    { id: "ce", sigla: "C-E", nombre: "Comunicaciones y Electrónica", descripcion: "Conduce la guerra electrónica: escucha e interferencia desde tierra y aviones de guerra electrónica.", funciones: ["guerra_electronica"] },
   ];
-  /** Puesto por id; vacio o desconocido = Estado Mayor (usuarios anteriores a los puestos). */
-  const puestoDe = (id) => PUESTOS.find((p) => p.id === id) || PUESTOS[0];
+  /** Ids anteriores al TIEM y la reparticion que los reemplaza. */
+  const EQUIVALENCIAS_PUESTO = { mando: "comandante", inteligencia: "a2", operaciones: "a3", logistica: "a4", planificacion: "a3" };
+  const GENERALES = ["comandante", "jem"];
+  /** Reparticion por id; vacio o desconocido = Comandante (los ids viejos se traducen). */
+  const puestoDe = (id) => { const k = EQUIVALENCIAS_PUESTO[id] || id; return PUESTOS.find((p) => p.id === k) || PUESTOS[0]; };
   const puestoPuede = (id, funcion) => puestoDe(id).funciones.includes(funcion);
-  const puestosResponsables = (funcion) => PUESTOS.filter((p) => p.id !== "mando" && p.funciones.includes(funcion));
+  /** Puede conducir aeronaves en vuelo (alguna funcion aerea). */
+  const puestoPuedeAereo = (id) => ["aereo", "caza", "defensa_aerea", "reconocimiento", "guerra_electronica"].some((f) => puestoPuede(id, f));
+  const puestosResponsables = (funcion) => PUESTOS.filter((p) => !GENERALES.includes(p.id) && p.funciones.includes(funcion));
   const etiquetaPuesto = (id) => { const p = puestoDe(id); return `${p.nombre} (${p.sigla})`; };
 
-  /** Funcion (puesto responsable) de una orden sobre una unidad; sin tipo, la de la unidad en general. */
+  const CLASES_DEFENSA_AEREA = ["antiaerea", "antiaerea_portatil", "radar", "alerta_temprana"];
+  const CLASES_GUERRA_ELECTRONICA = ["guerra_electronica", "avion_ge"];
+  const CLASES_RECONOCIMIENTO = ["reconocimiento", "dron_reconocimiento"];
+
+  /** Funcion (reparticion responsable) de una orden sobre una unidad; sin tipo, la de la unidad en general. */
   function funcionDeOrden(u, tipoOrden, clase) {
     if (tipoOrden === "despegar" || u.tipo === "base") return "despegar";
-    if (clase && clase.celula === "ge" && u.tipo !== "aerea") return "guerra_electronica";
-    if (tipoOrden === "construir" || (clase && (clase.construye || clase.carga_max > 0))) return "logistica";
+    const id = (clase && clase.id) || u.clase || "";
+    if (CLASES_DEFENSA_AEREA.includes(id) || (clase && (clase.defensa_aerea || (clase.emisor && clase.solo_aereo)))) return "defensa_aerea";
+    if (CLASES_GUERRA_ELECTRONICA.includes(id) || (clase && clase.interferencia_km > 0)) return "guerra_electronica";
+    if (CLASES_RECONOCIMIENTO.includes(id)) return "reconocimiento";
+    if (tipoOrden === "construir" || (clase && (clase.construye || (clase.carga_max > 0 && u.tipo !== "aerea")))) return "logistica";
+    if (id === "caza") return "caza";
     if (u.tipo === "aerea") return "aereo";
     return "superficie";
   }
@@ -686,7 +759,7 @@
   /** Aviso para una unidad propia que conduce otro puesto ("" si no corresponde a ninguno). */
   function textoPuestoAjeno(u, clase) {
     const r = puestosResponsables(funcionDeOrden(u, null, clase));
-    return r.length ? `Esta unidad la conduce el puesto ${r.map((p) => `${p.nombre} (${p.sigla})`).join(" o ")}.` : "";
+    return r.length ? `Esta unidad la conduce la repartición ${r.map((p) => `${p.nombre} (${p.sigla})`).join(" o ")}.` : "";
   }
 
   // ---------- mapas (regiones del terreno, ver tools/preparar_terreno.py) ----------
@@ -760,7 +833,8 @@
   const api = {
     MAPA_VENEZUELA, ordenarMapas, limitesDe, limitesDeMapas, textoMapa, ZOOM_ROTULOS, ZOOM_ALCANCES, ZOOM_CARRETERAS, escalaUnidad, unidadesConAlcance,
     PERFILES_VUELO, textoPerfil, muestraCobertura,
-    PUESTOS, puestoDe, puestoPuede, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
+    NIVELES_OBJETIVO, arbolObjetivos, superioresPosibles, textoCalendario, nombreFase, CONDUCCION,
+    PUESTOS, puestoDe, puestoPuede, puestoPuedeAereo, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,
     ESTADOS_MISION, TIPOS_PUNTO_MISION, misionActiva, horaEstimada, textoMision, tramosCronograma,
     RADIO_SIN_EMISION_KM, deteccionEfectiva, pctStock,

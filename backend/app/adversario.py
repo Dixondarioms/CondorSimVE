@@ -14,7 +14,7 @@ Conducta (didactica y legible, no optima):
     blancos, patrullan sobre lo que deben proteger o su base. Los drones de reconocimiento y la alerta temprana
     orbitan hacia el enemigo; el cisterna, junto a sus aeronaves; la guerra electronica interfiere al enemigo.
   - Tierra: se reabastecen si les falta combustible o municion; atacan lo que esta a su alcance si la relacion es
-    favorable; si no, van a sus objetivos (ocupar una zona, destruir una unidad conocida, proteger una propia) o se
+    favorable; si no, van a sus objetivos (ocupar una zona, destruir o neutralizar una unidad conocida, proteger una propia) o se
     acercan al enemigo detectado. Los convoyes van hacia las unidades mas necesitadas.
   - Mar: salvas de misiles contra blancos a su alcance, ataque directo o acercamiento por el agua.
   - Bases y portaaviones: lanzan un grupo de caza si el enemigo tiene aviacion a la vista y la propia no alcanza.
@@ -99,7 +99,7 @@ class _Turno:
         from app.routers import ordenes as ordenes_router  # la misma validacion que las ordenes de los alumnos
         self.db, self.esc, self.bando, self.terreno = db, esc, bando, terreno
         self._crear = ordenes_router._crear_orden
-        self.usuario = SimpleNamespace(id=None, rol=bando, puesto="mando", username="IA")
+        self.usuario = SimpleNamespace(id=None, rol=bando, puesto="comandante", username="IA")
         todas = db.query(Unidad).filter(Unidad.escenario_id == esc.id).all()
         self.propias = [u for u in todas if u.bando == bando and u.estado == "activa"
                         and not catalogo.es_misil(u) and not transporte_mod.embarcada(u)]
@@ -241,7 +241,7 @@ class _Turno:
         tenerlo a distancia de deteccion y de tiro, si le alcanza el combustible para volver."""
         destinos = []
         for o in self.objetivos:
-            if o.tipo != "destruir" or not o.unidad_id:
+            if o.tipo not in ("destruir", "neutralizar") or not o.unidad_id:
                 continue
             p = self.posicion_conocida(o.unidad_id)
             es_base = any(b.id == o.unidad_id for b in self.bases_enemigas)
@@ -390,7 +390,7 @@ class _Turno:
             if o.tipo == "ocupar" and o.lat is not None:
                 if geo.distancia_km(u.lat, u.lon, o.lat, o.lon) > o.radio_km * 0.5:
                     destinos.append((o.lat, o.lon, 0.0))
-            elif o.tipo == "destruir" and o.unidad_id:
+            elif o.tipo in ("destruir", "neutralizar") and o.unidad_id:
                 p = self.posicion_conocida(o.unidad_id)
                 if p:
                     destinos.append((p[0], p[1], u.alcance_km * self.nivel["aproximacion"]))

@@ -55,7 +55,7 @@ class Clase:
     interferencia_km: float = 0.0  # radio de la zona que puede interferir (0 = no interfiere)
     dron: bool = False  # aeronave no tripulada: pierde el enlace dentro de una interferencia enemiga
     se_consume: bool = False  # municion merodeadora: se destruye al atacar
-    celula: str = ""  # "ge": radares y guerra electronica, que conduce el puesto A2
+    celula: str = ""  # "ge": radares (A-3 D/A) y guerra electronica (C-E)
     defensa_aerea: bool = False  # dispara sola contra aeronaves enemigas detectadas a su alcance (si su fuego esta libre)
     # ---- buques, portaaviones y misiles de crucero (ver engine/misiles.py y engine/aeronaves.py) ----
     misil: bool = False  # misil de crucero en vuelo: autonomo, guiado hacia su blanco, no admite ordenes
@@ -103,7 +103,7 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
           10, 400, _atk(0.0, 0.0, 0.0), 0.7, "compania", despliegue_turnos=1, lanza_misiles=True,
           armamento="Sin fuego directo: lanza salvas de misiles de crucero contra blancos terrestres y navales; debe "
                     "desplegarse (1 turno quieto) tras moverse"),
-    # ---- sensores y guerra electronica terrestres (los conduce el puesto A2) ----
+    # ---- sensores (A-3 D/A) y guerra electronica (C-E) terrestres ----
     Clase("radar", "Radar de vigilancia aerea", "terrestre", "G", "ESR---", 15, 0, 150, 150, _atk(0.0, 0.0, 0.0), 0.5,
           "", movilidad="pesada", solo_aereo=True, emisor=True, celula="ge",
           armamento="Radar 3D: ve aeronaves en vuelo hasta 150 km, pero lo que esta en tierra solo a pocos km. "
