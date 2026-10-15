@@ -373,12 +373,21 @@ path.ruta-anim { animation: marcha 1.2s linear infinite; }
 #login .logo { width: 44px; height: 44px; margin: 0 auto; }
 /* Aguila del SIETE (js/aguila.js). En reposo (.plegada) se ve la imagen del aguila posada con las alas recogidas
  * (.posada, ubicada para que cabeza y patas coincidan con la desplegada) y respira. Al ingresar se funde en la
- * desplegada: tres piezas de la misma imagen que encajan sin superponerse, con las alas girando en los hombros desde
- * la posicion recogida (los mismos valores que plegada() en aguila.js); las bate y despega (.en-vuelo). */
+ * desplegada, armada con piezas de la misma imagen: el cuerpo y, en cada ala, el brazo (gira en el hombro) y la mano
+ * (las plumas largas, gira en la muneca). Las alas salen de la posicion recogida (los mismos valores que plegada()
+ * en aguila.js), aletean y el aguila despega (.en-vuelo). */
 .aguila { position: relative; width: 100%; max-width: 380px; aspect-ratio: 2219 / 947; margin: 4px auto 10px; pointer-events: none; user-select: none; }
 .aguila img { position: absolute; inset: 0; width: 100%; height: 100%; }
-.aguila .ala-izq { clip-path: polygon(0 0, 43% 0, 43% 58%, 37% 74%, 0 74%); transform-origin: 43.5% 32%; }
-.aguila .ala-der { clip-path: polygon(57% 0, 100% 0, 100% 74%, 63% 74%, 57% 58%); transform-origin: 56.5% 32%; }
+.aguila .ala, .aguila .mano { position: absolute; inset: 0; }
+.aguila .ala-izq { transform-origin: 44% 27%; }
+.aguila .ala-der { transform-origin: 56% 27%; }
+.aguila .ala-izq .mano { transform-origin: 21.5% 10%; }
+.aguila .ala-der .mano { transform-origin: 78.5% 10%; }
+/* brazo y mano se solapan una franja angosta para que no se abra una ranura al doblar la muneca */
+.aguila .ala-izq .brazo { clip-path: polygon(22% 0, 43% 0, 43% 58%, 37% 74%, 17% 74%); }
+.aguila .ala-izq .mano img { clip-path: polygon(0 0, 24% 0, 19% 74%, 0 74%); }
+.aguila .ala-der .brazo { clip-path: polygon(57% 0, 78% 0, 83% 74%, 63% 74%, 57% 58%); }
+.aguila .ala-der .mano img { clip-path: polygon(76% 0, 100% 0, 100% 74%, 81% 74%); }
 .aguila .cuerpo { clip-path: polygon(43% 0, 57% 0, 57% 58%, 63% 74%, 100% 74%, 100% 100%, 0 100%, 0 74%, 37% 74%, 43% 58%); z-index: 1; }
 .aguila img.posada { inset: auto; left: 22.49%; top: 5.07%; width: 54.48%; height: 94.4%; z-index: 2; opacity: 0; }
 .aguila.plegada img.posada { opacity: 1; }

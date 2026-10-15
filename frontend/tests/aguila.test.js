@@ -5,7 +5,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const Aguila = require("../static/js/aguila.js");
 
-test("el vuelo empieza en su lugar, abre las alas posada y termina grande y transparente sobre la pantalla", () => {
+test("el vuelo dura un segundo: abre las alas posada y termina grande y transparente sobre la pantalla", () => {
+  assert.ok(Aguila.VUELO_MS <= 1000);
   const c = Aguila.cuadrosVuelo(100, 200);
   assert.strictEqual(c[0].offset, 0);
   assert.strictEqual(c[c.length - 1].offset, 1);
@@ -17,14 +18,30 @@ test("el vuelo empieza en su lugar, abre las alas posada y termina grande y tran
   for (let i = 1; i < c.length; i++) assert.ok(c[i].offset > c[i - 1].offset);
 });
 
-test("aleteo pausado y simetrico; las alas salen de la posicion recogida de style.css", () => {
-  assert.ok(Aguila.VUELO_MS <= 1000);  // un segundo como maximo
-  assert.ok(Aguila.ALETEO_MS >= 500);  // aleteo pausado
-  const izq = Aguila.cuadrosAleteo(1), der = Aguila.cuadrosAleteo(-1);
-  assert.strictEqual(izq.length, der.length);
-  assert.match(izq[1].transform, /rotate\(30deg\)/);
-  assert.match(der[1].transform, /rotate\(-30deg\)/);
-  assert.strictEqual(Aguila.cuadrosDespliegue(1)[0].transform, Aguila.plegada(1));
+test("aleteo continuo: cada ciclo cierra en su inicio, las alas son simetricas y la mano va retrasada", () => {
+  for (const parte of ["brazo", "mano"]) {
+    const izq = Aguila.cicloAleteo(parte, 1), der = Aguila.cicloAleteo(parte, -1);
+    assert.strictEqual(izq[0].transform, izq[izq.length - 1].transform);
+    assert.strictEqual(izq.length, der.length);
+    assert.ok(izq.length >= 12);  // curva bien muestreada
+  }
+  const arriba = Aguila.pose(0), abajo = Aguila.pose(0.5);
+  assert.ok(arriba.brazo > 20 && abajo.brazo < -10);  // sube y baja
+  assert.ok(abajo.acorte < arriba.acorte);            // al bajar el ala viene hacia adelante
+  // la mano llega abajo despues que el brazo (retraso): a mitad de la bajada todavia esta mas arriba en su ciclo
+  assert.ok(Aguila.pose(0.25).mano > 0);
+  assert.ok(Aguila.pose(0.25).batida < 0);            // el cuerpo sube mientras las alas bajan
+  const b = Aguila.cicloBatida();
+  assert.strictEqual(b[0].transform, b[b.length - 1].transform);
+});
+
+test("las alas se abren desde la posicion recogida de style.css hasta donde empieza el aleteo", () => {
+  for (const s of [1, -1]) {
+    const brazo = Aguila.cuadrosDespliegue("brazo", s), mano = Aguila.cuadrosDespliegue("mano", s);
+    assert.strictEqual(brazo[0].transform, Aguila.plegada(s));
+    assert.strictEqual(brazo[brazo.length - 1].transform, Aguila.cicloAleteo("brazo", s)[0].transform);
+    assert.strictEqual(mano[mano.length - 1].transform, Aguila.cicloAleteo("mano", s)[0].transform);
+  }
   const css = fs.readFileSync(path.join(__dirname, "..", "static", "css", "style.css"), "utf8");
   assert.ok(css.includes(`.aguila.plegada .ala-izq { transform: ${Aguila.plegada(1)}; }`));
   assert.ok(css.includes(`.aguila.plegada .ala-der { transform: ${Aguila.plegada(-1)}; }`));
