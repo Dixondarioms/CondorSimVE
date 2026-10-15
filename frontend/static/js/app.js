@@ -299,6 +299,7 @@
     $("pest-consola").hidden = nombre !== "consola" || !esInstructor();
     if (nombre === "situacion" && app.data) renderSituacion(app.data);
     if (nombre === "pmo" && app.pmo) app.pmo.cargar();
+    if (nombre === "pmo" && app.tiem) app.tiem.cargar();
   }
   document.querySelectorAll(".pestanas button").forEach((b) => b.addEventListener("click", () => activarPestana(b.dataset.pestana)));
 
@@ -1930,6 +1931,7 @@
     renderObjetivos(data);
     renderSituacion(data);
     if (app.pmo) app.pmo.render(data);
+    if (app.tiem) app.tiem.render(data);
     revisarConduccion(data.escenario);
     actualizarNuevaOrden(data);
     actualizarAviacion(data);
@@ -2077,6 +2079,11 @@
     app.pmo = Pmo.crear({
       api, rutaEsc, toast, usuario: () => app.usuario, escenarioId: () => app.escenarioId, esInstructor,
     });
+    app.tiem = Tiem.crear({
+      api, rutaEsc, toast, escenarioId: () => app.escenarioId, esInstructor,
+      bando: () => (esAlumno() ? app.usuario.rol : $("pmo-bando").value),
+    });
+    $("pmo-bando").addEventListener("change", () => app.tiem.dibujarLista());
     app.misiones = Misiones.crear({
       api, toast, rutaEsc, usuario: () => app.usuario, datos: () => app.data, catalogo: () => app.catalogo,
       capaBorrador: app.capas.preview, capaRutas: app.capas.misiones, puede: puedeFuncion, claseDe,
@@ -2350,6 +2357,7 @@
     app.data = null;
     if (app.conduce) dejarDeConducir(false);
     if (app.pmo) app.pmo.reiniciar();
+    if (app.tiem) app.tiem.reiniciar();
     app.vista = "completa";
     app.memoria = Logica.memoriaVacia();
     app.alertas = [];

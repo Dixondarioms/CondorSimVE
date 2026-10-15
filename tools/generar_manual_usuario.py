@@ -144,7 +144,9 @@ def construir(salida: Path) -> None:
           Tbl(["Novedad", "Dónde se explica"], [
               ["El simulador sigue el TIEM: los puestos pasan a ser las reparticiones del Estado Mayor (Comandante, JEM, A-1, A-2, "
                "A-3, A-3 D/A, A-4 y C-E)", "6.2"],
-              ["Pestaña PMO: el Problema Militar Operativo de cada bando, redactado por el instructor o creado automáticamente", "6.15 y 7.15"],
+              ["Pestaña TIEM: el Problema Militar Operativo de cada bando, redactado por el instructor o creado automáticamente", "6.15 y 7.15"],
+              ["Apreciación inicial (Fase I, Paso 1): análisis de la misión, concepto del comandante, guía de planeamiento y "
+               "formas de acción con el criterio APA, con Poder Relativo de Combate calculado y Word adjunto", "6.16 y 7.18"],
               ["Calendario de la operación: día D, hora H y fases (alistamiento, concentración y despliegue, ejecución, repliegue)", "6.15 y 7.16"],
               ["Quién conduce cada bando, a elección del instructor: un grupo de alumnos, el instructor o la IA", "7.17"],
               ["Cadena de objetivos: ulterior, asignados y materiales, con efecto deseado, indicador, plazo y «neutralizar»", "5.2 y 7.5"],
@@ -615,10 +617,11 @@ def construir(salida: Path) -> None:
     ], ancho_img=6.4 * cm)
 
     # ---------------------------------------------------------------- 7 instructor
-    h += [H2("6.15 La pestaña PMO: el Problema Militar y el calendario")]
-    h += al_lado("pmo_calendario", "Pestaña PMO de un alumno: calendario de la operación y Problema Militar Operativo.", [
+    h += [H2("6.15 La pestaña TIEM: el Problema Militar y el calendario")]
+    h += al_lado("pmo_calendario", "Pestaña TIEM de un alumno: calendario de la operación y Problema Militar Operativo.", [
         P("El trabajo de Estado Mayor empieza, como en el TIEM, con el <b>Problema Militar Operativo</b> (PMO) que emite el escalón "
-          "superior. La pestaña <b>PMO</b> del panel izquierdo lo muestra para su bando, junto con el <b>calendario de la operación</b>."),
+          "superior. La pestaña <b>TIEM</b> del panel izquierdo lo muestra para su bando, junto con el <b>calendario de la operación</b> "
+          "y los documentos de la apreciación (6.16)."),
         H3("Calendario de la operación"),
         Bul(["<b>Día D</b> y <b>hora H</b>: el momento en que empieza la operación (la H cae en un turno).",
              "<b>Ahora</b>: el turno en curso contado desde D y H («D+1 · H+20») y la fase en que está la operación.",
@@ -636,6 +639,53 @@ def construir(salida: Path) -> None:
           "PROPÓSITO</b>. Es el punto de partida del análisis de la misión y de la apreciación de su Estado Mayor."),
         P("Cuando el instructor emite o corrige el PMO, su bando recibe una alerta y la pestaña se actualiza sola."),
     ], ancho_img=6.4 * cm)
+
+    h += [H2("6.16 La apreciación inicial: los documentos del Estado Mayor")]
+    h += al_lado("tiem_lista", "Pestaña TIEM: los documentos de la apreciación inicial con su estado.", [
+        P("Con el Problema Militar en la mano, el Estado Mayor del bando cumple la <b>Fase I, Paso 1</b> del TIEM: la "
+          "<b>apreciación inicial</b>. La pestaña TIEM lista sus cuatro documentos, quién los redacta y en qué estado están:"),
+        Tbl(["Documento", "Lo redactan"], [
+            ["Análisis de la misión", "Comandante y JEM"],
+            ["Concepto del Comandante", "Comandante y JEM"],
+            ["Guía de Planeamiento", "JEM y Comandante"],
+            ["Formas de Acción operacionales", "A-3, A-3 D/A y A-2 (y Comandante o JEM)"],
+        ], [4.2 * cm, 3.0 * cm], tam=7.8),
+        P("Todas las reparticiones leen todos los documentos; solo los editan las que figuran. Estados: <b>Sin empezar</b>, "
+          "<b>Borrador</b>, <b>Presentado</b> (bloqueado hasta que el instructor lo revise), <b>Aprobado</b> o <b>Devuelto</b> "
+          "(con las observaciones del instructor arriba del documento)."),
+    ], ancho_img=6.4 * cm)
+    h += figura("tiem_analisis", "Análisis de la misión: situación, Poder Relativo de Combate preliminar, tareas y misión específica.",
+                ancho=ANCHO_TEXTO)
+    h += [pasos(f"En la pestaña <b>TIEM</b>, pulse {B('Abrir')} en el documento.",
+                f"Pulse {B('Redactar')} (o {B('Editar')}).",
+                f"Pulse {B('Traer datos del PMO y del escenario')}: el simulador completa solo los campos <b>vacíos</b> que son "
+                "transcripción o cálculo (la situación y la misión del PMO, el calendario, los objetivos de la cadena y el "
+                "<b>Poder Relativo de Combate</b> preliminar). Lo que usted ya escribió no se toca.",
+                "Complete el análisis: tareas deducidas, centros de gravedad (COG con sus capacidades, requerimientos y "
+                "vulnerabilidades críticas), efecto deseado e indicadores, capacidades del enemigo (qué, dónde, con qué, desde "
+                "dónde, cuándo y cómo), criterios, suposiciones, cronograma y las Formas de Acción.",
+                f"Pulse {B('Guardar')}. Debajo aparece lo que falta para poder presentarlo y las observaciones de forma del TIEM "
+                "(misión con verbo en infinitivo y sin condiciones, F/A que empiezan con un verbo…).",
+                f"Cuando esté completo, pulse {B('Presentar al instructor')}."),
+          P("El <b>Poder Relativo de Combate</b> se calcula por factor (aviación de combate, defensa aérea, fuerzas de superficie, "
+            "guerra electrónica y reconocimiento): lo propio con exactitud y lo enemigo como lo estimaría la inteligencia (con un "
+            "error de hasta 15 %). La relación y la conclusión (favorable, equilibrado, desfavorable) orientan el análisis; las "
+            "fortalezas y debilidades se pueden corregir."),
+          P(f"<b>Adjuntar un Word:</b> {B('Adjuntar un Word o PDF…')} sube un documento (.doc, .docx, .odt, .rtf o .pdf, hasta 10 MB) "
+            "al documento del TIEM, por ejemplo la versión con firma o un anexo. Todo el bando y el instructor lo descargan con un clic.")]
+    h += figura("tiem_formas", "Formas de Acción: cada una con qué, dónde, cuándo y quién, y el resumen de su análisis APA.", ancho=ANCHO_TEXTO)
+    h += al_lado("tiem_editar_fa", "Redactar una F/A: cada conclusión del APA junto a su fundamento.", [
+        H3("Las Formas de Acción y el criterio APA"),
+        P("Se necesitan <b>al menos dos</b>. Cada una responde <b>qué</b> (verbo en infinitivo), <b>dónde</b>, <b>cuándo</b>, "
+          "<b>quién</b> y <b>cómo</b>, y se analiza con el criterio APA:"),
+        Bul(["<b>Adaptabilidad</b>: naturaleza (¿contribuye a la tarea?), integridad o alcance (¿la cumple entera?) y oportunidad "
+             "(¿a tiempo?): sí, parcial o no, con su fundamento.",
+             "<b>Practicabilidad</b>: medios propios, capacidades del enemigo y ambiente operacional (apoyado en el PRC): "
+             "practicable, parcialmente practicable o no practicable.",
+             "<b>Aceptabilidad</b>: resultados frente a costos: alta, media o baja."]),
+        P("Al leerlas, cada F/A muestra el resumen («Naturaleza Sí · Integridad Parcial · Practicable…») y, al desplegarlo, el "
+          "análisis completo."),
+    ], ancho_img=7.4 * cm)
 
     h += H1("7. Guía del instructor")
     h += [H2("7.1 Preparar un ejercicio: lista de pasos"),
@@ -812,7 +862,7 @@ def construir(salida: Path) -> None:
 
     # ---------------------------------------------------------------- 8 combate contra la IA
     h += [H2("7.15 La situación: el Problema Militar Operativo")]
-    h += al_lado("pmo_instructor", "Pestaña PMO del instructor.", [
+    h += al_lado("pmo_instructor", "Pestaña TIEM del instructor: el Problema Militar.", [
         P("El Problema Militar Operativo de cada bando (6.15) lo prepara el instructor de dos maneras, que se pueden combinar:"),
         leyenda([("1", "Bando", "El PMO que se muestra y se edita: Azul o Rojo."),
                  ("2", "Crear la situación automáticamente", "El simulador lo redacta a partir del escenario."),
@@ -859,6 +909,21 @@ def construir(salida: Path) -> None:
                 "Dé las órdenes del bando como cualquier alumno.",
                 f"Pulse {B('Volver a instructor')} para regresar a la consola (y, por ejemplo, resolver el turno)."),
           P("Las órdenes que da el instructor cuentan para su bando en el informe, pero no aparecen en la evaluación por alumno.")]
+
+    h += [H2("7.18 Revisar la apreciación de cada bando")]
+    h += figura("tiem_instructor", "El instructor revisa la Guía de Planeamiento de Azul: lo que falta, el Word adjunto y los botones de revisión.",
+                ancho=ANCHO_TEXTO)
+    h += [P("En la pestaña <b>TIEM</b>, el instructor elige el bando y abre cualquiera de sus documentos. Cuando un bando presenta "
+            "uno, llega una alerta. Al revisarlo:"),
+          Bul([f"{B('Aprobar')}: queda aprobado (y bloqueado para el bando).",
+               f"{B('Devolver con observaciones')}: escriba qué corregir; el bando las ve arriba del documento, puede editarlo de "
+               "nuevo y volver a presentarlo.",
+               f"{B('Reabrir como borrador')}: lo desbloquea sin observaciones.",
+               f"{B('Editar')}: el instructor puede corregir o completar cualquier documento, por ejemplo para dar una solución "
+               "de escuela."]),
+          P("Cada revisión queda registrada en el informe, y los documentos (contenido, estado, observaciones y turno en que se "
+            "presentaron) viajan en la exportación del escenario. El instructor que conduce un bando (7.17) redacta sus documentos "
+            "como su Comandante.")]
 
     h += H1("8. Combate contra la IA")
     h += [P("En el <b>combate contra la IA</b> el simulador conduce uno de los bandos (normalmente el rojo) con su <b>adversario "
@@ -1054,7 +1119,11 @@ def construir(salida: Path) -> None:
          "terreno intransitable, río sin puente, base sin existencias…"],
         ["El simulador dice que la orden corresponde a otra repartición.", "Esa unidad la conduce otra repartición de su bando (6.2). Coordine por la red del bando."],
         ["No veo el botón Estoy listo.", "Solo lo tienen el Comandante y el JEM."],
-        ["La pestaña PMO dice que no hay Problema Militar.", "El instructor todavía no lo emitió. Cuando lo haga llega una alerta y la pestaña se actualiza sola."],
+        ["La pestaña TIEM dice que no hay Problema Militar.", "El instructor todavía no lo emitió. Cuando lo haga llega una alerta y la pestaña se actualiza sola."],
+        ["No puedo presentar un documento del TIEM.", "Debajo del documento figura lo que falta (por ejemplo, la segunda Forma de Acción "
+         "o un centro de gravedad enemigo). Complételo y vuelva a presentarlo."],
+        ["No puedo editar un documento del TIEM.", "Lo redacta otra repartición (6.16), o ya fue presentado o aprobado: espere la "
+         "revisión del instructor o pídale que lo reabra."],
         ["No veo a las unidades enemigas.", "Solo se ven las que su bando detecta. Acérquese con reconocimiento, drones o radares."],
         ["Las unidades se ven muy pequeñas o sin nombre.", "Es el mapa de lejos (4.2). Acerque el zoom: aparecen nombres y anillos de alcance."],
         ["El mapa sale gris o vacío.", "Faltan los datos de mapa en el servidor (avise al instructor) o se eligió una región sin datos."],

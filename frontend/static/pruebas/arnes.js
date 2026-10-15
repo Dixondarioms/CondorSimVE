@@ -268,6 +268,57 @@
     } },
     rojo: null,
   };
+  // documentos del TIEM de ejemplo (Fase I, Paso 1), con el formato de GET /api/escenarios/{id}/tiem
+  const MISION_ESP = { tarea: "Conducir operaciones aéreas defensivas y contraofensivas", que: "para impedir que el enemigo obtenga la superioridad aérea y apoyar la conquista del puente",
+    donde: "en el área de operaciones del Teatro de Operaciones Occidental", cuando: "a partir del día D (2026-10-20) a la hora H (08:00)",
+    proposito: "preservar la libertad de acción de las fuerzas propias y la integridad territorial" };
+  const DOCS_TIEM = {
+    analisis_mision: { estado: "aprobado", presentado_turno: 1, revisado_turno: 2, editado_por: "alfa", editado_puesto: "comandante", contenido: {
+      resumen_situacion: "Desde hace varios meses las relaciones con el País Rojo se han deteriorado por una disputa por la delimitación de la frontera común.",
+      mision_to: "Conducir operaciones militares conjuntas defensivas en el Teatro de Operaciones Occidental a partir del día D a la hora H, a fin de preservar la soberanía.",
+      situacion_propia: "- 4 Su-30MK2 y 2 K-8W en el Aeropuerto de Barinas.\n- Defensa antiaérea en Barinas.",
+      situacion_enemigo: "- Unas 4 aeronaves de combate.\n- 1 sistema de misiles antiaéreos en la zona de Guasdualito.",
+      prc: [{ factor: "Aviación de combate", propio: "8,6", enemigo: "7,6", relacion: "1,13 : 1", conclusion: "equilibrado" },
+        { factor: "Defensa aérea", propio: "2,5", enemigo: "2,8", relacion: "0,89 : 1", conclusion: "equilibrado" },
+        { factor: "Fuerzas de superficie", propio: "6,4", enemigo: "3,6", relacion: "1,78 : 1", conclusion: "favorable" }],
+      fortalezas_debilidades: "- Fortalezas: superioridad propia en fuerzas de superficie.\n- Relación global estimada: 1,27 : 1 (equilibrado).",
+      tareas: [{ tarea: "Impedir la superioridad aérea enemiga", origen: "impuesta", prioridad: "1" }, { tarea: "Proteger el Aeropuerto de Barinas", origen: "deducida", prioridad: "2" }],
+      mision_especifica: MISION_ESP } },
+    concepto: { estado: "presentado", presentado_turno: 2, editado_por: "alfa", editado_puesto: "comandante", contenido: {
+      mision_especifica: MISION_ESP,
+      cog: [{ lado: "enemigo", nivel: "operacional", cog: "Sistema de defensa aérea", cc: "Negar el espacio aéreo", rc: "Radar de vigilancia", vc: "Radar fijo y sin respaldo" },
+        { lado: "propio", nivel: "operacional", cog: "Aeropuerto de Barinas", cc: "Generar salidas de caza", rc: "Pista y combustible", vc: "Un solo depósito" }],
+      objetivos: [{ prioridad: "1", objetivo: "Neutralizar la infantería enemiga", efecto: "Fuerza al 40 % o menos", indicador: "Informe de daños" }],
+      tareas: [{ tarea: "Impedir la superioridad aérea enemiga", origen: "impuesta", prioridad: "1" }],
+      efecto_deseado: [{ efecto: "Defensa aérea enemiga neutralizada", nivel: "operacional", categoria: "directo", indicador: "Radar fuera de servicio" }],
+      idea_general: "Neutralizar primero la defensa aérea enemiga y luego apoyar la conquista del puente.", suposiciones: [] } },
+    guia: { estado: "devuelto", presentado_turno: 2, revisado_turno: 3, editado_por: "ujem", editado_puesto: "jem",
+      observaciones: "Ordene las capacidades del enemigo por peligrosidad y agregue el cronograma.",
+      contenido: { nombre_clave: "Operación CENTINELA", mision_to: "Conducir operaciones militares conjuntas defensivas…", mision_especifica: MISION_ESP,
+        cog: [], capacidades_enemigo: [{ que: "Atacar el Aeropuerto de Barinas", donde: "Barinas", con_que: "4 aviones de ataque", desde_donde: "Base de Guasdualito", cuando: "Desde H", como: "Rasante, de noche" }],
+        condiciones: "- Tiempo: día D 2026-10-20, hora H 08:00 (turno 3).", criterios: "- Actitud: defensiva.", suposiciones: [], administrativos: "", cronograma: [] } },
+    formas_accion: { estado: "borrador", editado_por: "ua3", editado_puesto: "a3", contenido: {
+      efecto_deseado: "Impedir que el enemigo obtenga la superioridad aérea…",
+      formas: [{ nombre: "F/A 1", que: "Neutralizar el radar de vigilancia enemigo", donde: "Zona de Guasdualito", cuando: "El día D entre H y H+2", quien: "2 Su-30MK2",
+        como: "Ataque rasante con escolta de caza.", naturaleza: "si", integridad: "parcial", oportunidad: "si", practicabilidad: "practicable", aceptabilidad: "alta",
+        naturaleza_f: "El radar es parte esencial del sistema de defensa aérea.", integridad_f: "La antiaérea sigue disparando a ojo." },
+      { nombre: "F/A 2", que: "Destruir la pista de la base enemiga", donde: "Base de Guasdualito", cuando: "El día D a la hora H", quien: "4 Su-30MK2",
+        naturaleza: "si", integridad: "si", oportunidad: "parcial", practicabilidad: "parcialmente practicable", aceptabilidad: "media" }], conclusion: "" } },
+  };
+  function documentoTiem(bando, tipo) {
+    const d = bando === "azul" ? DOCS_TIEM[tipo] : null;
+    const puede = ROL === "instructor" || (ROL === bando && CAT.tiem.definiciones[tipo].redactan.includes(PUESTO === "mando" ? "comandante" : PUESTO));
+    const faltan = tipo === "guia" && bando === "azul" ? ["3. Centros de gravedad: complete al menos 2 filas.", "Falta «9. Cronograma de la planificación»."] : [];
+    return { tipo, bando, existe: !!d, estado: d ? d.estado : "borrador", observaciones: (d && d.observaciones) || "", editado_por: d ? d.editado_por : "",
+      editado_puesto: d ? d.editado_puesto : "", actualizado_en: iso(), presentado_turno: (d && d.presentado_turno) || null, revisado_turno: (d && d.revisado_turno) || null,
+      contenido: d ? d.contenido : {}, revision: { faltan, avisos: [] }, puede_redactar: puede && ROL !== "observador",
+      archivos: d && tipo === "guia" ? [{ id: 1, nombre: "Guia de planeamiento CENTINELA.docx", tamano: 48213, subido_por: "ujem", subido_en: iso() }] : [] };
+  }
+  function respuestaTiem() {
+    const bandos = BANDOS.includes(ROL) ? [ROL] : BANDOS;
+    return { orden: CAT.tiem.orden, definiciones: CAT.tiem.definiciones,
+      documentos: Object.fromEntries(bandos.map((b) => [b, Object.fromEntries(CAT.tiem.orden.map((t) => [t, documentoTiem(b, t)]))])) };
+  }
   const textoMisionPmo = (m) => `${["tarea", "que", "donde", "cuando"].map((k) => m[k]).filter(Boolean).join(" ")}, a fin de ${m.proposito}.`;
   function respuestaPmo(rol) {
     const bandos = BANDOS.includes(rol) ? [rol] : BANDOS;
@@ -855,6 +906,18 @@
     if (path === "/api/escenarios/1/reanudar") { ESC.estado = "activo"; enviarEstado(); return json(estadoPara()); }
     if (path === "/api/escenarios/1/finalizar") { ESC.estado = "finalizado"; enviarEstado(); return json(estadoPara()); }
     if (path === "/api/escenarios/1/pmo" && metodo === "GET") return json(respuestaPmo(ROL));
+    if (path === "/api/escenarios/1/tiem" && metodo === "GET") return json(respuestaTiem());
+    if ((m = path.match(/^\/api\/escenarios\/1\/tiem\/(azul|rojo)\/([a-z_]+)$/)) && metodo === "PUT") {
+      DOCS_TIEM[m[2]] = { ...(DOCS_TIEM[m[2]] || { estado: "borrador" }), contenido: cuerpo.contenido, editado_por: USUARIOS[ROL][1] };
+      return json(documentoTiem(m[1], m[2]));
+    }
+    if ((m = path.match(/^\/api\/escenarios\/1\/tiem\/(azul|rojo)\/([a-z_]+)\/(presentar|revisar)$/))) {
+      const d = DOCS_TIEM[m[2]] || (DOCS_TIEM[m[2]] = { contenido: {} });
+      if (m[3] === "presentar") Object.assign(d, { estado: "presentado", presentado_turno: ESC.turno_actual });
+      else Object.assign(d, { estado: cuerpo.estado, observaciones: cuerpo.observaciones || "", revisado_turno: ESC.turno_actual });
+      return json(documentoTiem(m[1], m[2]));
+    }
+    if ((m = path.match(/^\/api\/escenarios\/1\/tiem\/(azul|rojo)\/([a-z_]+)\/sugerencias$/))) return json({ contenido: {} });
     if (path === "/api/escenarios/1/pmo/generar" && metodo === "POST") {
       PMO.rojo = PMO.rojo || { origen: "automatico", contenido: { ...PMO.azul.contenido } };
       return json({ ...respuestaPmo(ROL), hecho: { calendario: false, objetivos: 0, pmo: ["azul", "rojo"] } });

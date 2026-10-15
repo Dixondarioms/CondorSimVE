@@ -11,6 +11,7 @@ from app.engine import aar, calendario, clock, naciones, plantillas, timeline
 from app.models.aar import Instantanea
 from app.models.objetivo import Objetivo
 from app.models.problema_militar import ProblemaMilitar
+from app.models.documento_tiem import DocumentoTiem
 from app.models.asignacion import Asignacion
 from app.models.escenario import Escenario
 from app.models.evento import Evento
@@ -475,6 +476,12 @@ def exportar(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends
             pm.bando: json.loads(pm.contenido_json)
             for pm in db.query(ProblemaMilitar).filter(ProblemaMilitar.escenario_id == esc.id)
         },
+        "documentos_tiem": [
+            {"bando": d.bando, "tipo": d.tipo, "estado": d.estado, "observaciones": d.observaciones,
+             "editado_por": d.editado_por, "presentado_turno": d.presentado_turno, "revisado_turno": d.revisado_turno,
+             "contenido": json.loads(d.contenido_json)}
+            for d in db.query(DocumentoTiem).filter(DocumentoTiem.escenario_id == esc.id).order_by(DocumentoTiem.id)
+        ],
         "unidades": unidades,
         "objetivos": [
             {c.name: getattr(o, c.name) for c in Objetivo.__table__.columns if c.name not in ("id", "escenario_id")}

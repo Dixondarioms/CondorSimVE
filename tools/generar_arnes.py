@@ -17,7 +17,7 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ / "backend"))
 
-from app.engine import catalogo, misiones, modelos_usuario, plantillas  # noqa: E402
+from app.engine import catalogo, misiones, modelos_usuario, plantillas, tiem  # noqa: E402
 
 # tipos del catalogo propio de ejemplo (Consola -> Catalogo propio), solo en el arnes
 TIPOS_PROPIOS = [
@@ -47,7 +47,9 @@ def main() -> None:
                     # plantillas del sistema (las mismas que GET /api/plantillas)
                     "plantillas": [plantillas.plantilla_dict(p) for p in plantillas.PLANTILLAS.values()],
                     "aeronaves": {"max_grupo": catalogo.MAX_AERONAVES_GRUPO, "max_bando": catalogo.MAX_AERONAVES_BANDO,
-                                  "max_drones": catalogo.MAX_DRONES_BANDO}},
+                                  "max_drones": catalogo.MAX_DRONES_BANDO},
+                    # formato de los documentos del TIEM (los mismos que GET /api/escenarios/{id}/tiem)
+                    "tiem": {"orden": list(tiem.ORDEN), "definiciones": {t: tiem.definicion(d) for t, d in tiem.DOCUMENTOS.items()}}},
                    ensure_ascii=False),
         encoding="utf-8")
 

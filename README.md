@@ -182,7 +182,7 @@ a3da`; en el arnés, `arnes.html?rol=azul&puesto=a3`.
 
 ### Problema Militar, calendario, conducción y cadena de objetivos (TIEM, etapa 1)
 
-- **Problema Militar Operativo** (`engine/pmo.py`, tabla `problemas_militares`, pestaña **PMO**): por bando,
+- **Problema Militar Operativo** (`engine/pmo.py`, tabla `problemas_militares`, pestaña **TIEM**): por bando,
   situación general, fuerzas enemigas y propias, misión del Comando del Teatro de Operaciones, idea general de la
   operación conjunta, **misión del Componente Aéreo** (guardada por partes: tarea, qué, dónde, cuándo y propósito, y
   revisada con las reglas del TIEM: verbo en infinitivo, sin condiciones), medios, área de operaciones, limitaciones
@@ -193,7 +193,7 @@ a3da`; en el arnés, `arnes.html?rol=azul&puesto=a3`.
   `sobrescribir`.
 - **Calendario** (`engine/calendario.py`): `fecha_inicio` (turno 1), `turno_h` (el día D es el de ese turno),
   `turno_final` y fases (`fases_json`; por defecto alistamiento, concentración y despliegue, ejecución y repliegue).
-  Cada turno se nombra D±n · H±n · fase en la cabecera, en *Estado del escenario* y en la pestaña PMO.
+  Cada turno se nombra D±n · H±n · fase en la cabecera, en *Estado del escenario* y en la pestaña TIEM.
 - **Quién conduce cada bando** (a elección del instructor): `conduccion_azul/rojo` = alumnos | instructor | ia
   (`PATCH /config`). Con "instructor", el botón *Conducir Rojo/Azul* le da la pantalla del Comandante de ese bando;
   sus pedidos llevan la cabecera `X-Conduce-Bando` (`auth.conductor`) y no cuentan en la evaluación por alumno.
@@ -202,6 +202,21 @@ a3da`; en el arnés, `arnes.html?rol=azul&puesto=a3`.
   con el umbral % de sus dependientes, 100 % por defecto; falla cuando ya no puede). `hasta_turno` es un plazo para
   todos menos proteger. El generador agrupa los objetivos materiales en asignados bajo un ulterior.
 - Migración `0026`; las plantillas, la copia y la exportación guardan PMO, calendario, conducción y cadena.
+
+### Apreciación inicial (TIEM, etapa 2)
+
+- **Documentos de la Fase I, Paso 1** (`engine/tiem.py`, tabla `documentos_tiem`, pestaña **TIEM**): *análisis de la
+  misión* y *concepto del comandante* (Comandante y JEM), *guía de planeamiento* (JEM) y *formas de acción
+  operacionales* (A-3, A-3 D/A, A-2), con los párrafos del formato guía del TIEM: misión por partes, tareas impuestas y
+  deducidas, centros de gravedad con CC/RC/VC, objetivos priorizados, nivel de efecto deseado, capacidades del enemigo
+  (qué, dónde, con qué, desde dónde, cuándo, cómo), criterios, suposiciones, cronograma y F/A con el criterio **APA**.
+- API `/api/escenarios/{id}/tiem`: `GET` (cada bando los suyos), `PUT /{bando}/{tipo}`, `POST …/presentar` (solo si no
+  falta nada), `POST …/revisar` (instructor: aprobado | devuelto | borrador, con observaciones), `GET …/sugerencias`
+  (transcribe PMO, cadena de objetivos y calendario, y agrega el PRC; la interfaz solo llena campos vacíos),
+  `GET /{bando}/prc` (Poder Relativo de Combate preliminar: lo propio exacto, lo enemigo estimado ±15 %) y archivos
+  adjuntos `POST …/archivos` (Word/PDF hasta 10 MB, guardados en `archivos_tiem`), `GET|DELETE /archivos/{id}`.
+- Cada paso avisa al bando (evento `tiem`), la revisión queda en el informe y la exportación incluye los documentos.
+  Migración `0027`.
 
 Alumnos y observadores solo acceden a los **escenarios que el instructor les asigna** (panel "Escenario").
 

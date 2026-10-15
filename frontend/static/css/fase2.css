@@ -502,3 +502,33 @@ body.conduciendo #cabecera { box-shadow: inset 0 -3px 0 var(--ambar); }
 #pmo-calendario .cal-linea span { color: var(--texto-sec); }
 #pmo-calendario .cal-linea.ahora b { color: var(--ambar); }
 .barra-conduce button { background: #1E1E24; color: #FFFFFF; border-color: #1E1E24; }
+
+/* ---------- TIEM etapa 2: documentos de la apreciacion inicial ---------- */
+.tiem-lista { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
+.tiem-lista li { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center;
+  background: var(--panel-2); border: 1px solid var(--borde); border-radius: var(--radio); padding: 6px 8px; }
+.tiem-lista li .texto { display: grid; gap: 2px; }
+.tiem-dialogo { display: grid; gap: 8px; padding: 4px 6px 8px; }
+.tiem-sub { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tiem-observaciones { border-left: 3px solid var(--rojo); background: var(--panel-2); padding: 6px 8px; margin: 0; }
+.tiem-cuerpo { display: grid; gap: 12px; }
+.tiem-campo h4 { margin: 0 0 4px; font-size: 13px; color: var(--ambar); }
+.tiem-campo p { margin: 0 0 4px; }
+.tiem-campo textarea, .tiem-campo input, .tiem-campo select { width: 100%; font: inherit; }
+.tiem-tabla td input, .tiem-tabla td select { min-width: 90px; }
+.tiem-fa { border: 1px solid var(--borde); border-radius: var(--radio); padding: 8px; margin: 0 0 8px; display: grid; gap: 4px; }
+.tiem-fa h5 { margin: 0; font-size: 13px; }
+.tiem-fa .apa { color: var(--verde); margin: 0; }
+.tiem-editor-formas .tiem-fa { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px; }
+.tiem-editor-formas .tiem-fa legend { font-weight: 700; }
+.tiem-editor-formas :is(.fa-como, .fa-prac_propia, .fa-prac_oposicion, .fa-prac_ambiente, .fa-acep_beneficio, .fa-acep_costo) { grid-column: 1 / -1; }
+.tiem-editor-formas .tiem-fa > button { justify-self: start; }
+.tiem-revision ul { margin: 2px 0 6px; padding-left: 18px; }
+.tiem-revision .faltan { color: var(--rojo); }
+.tiem-adjuntos { list-style: none; padding: 0; margin: 4px 0; }
+.tiem-adjuntos a { color: var(--azul); }
+.tiem-botones { position: sticky; bottom: -8px; background: var(--panel); padding-top: 6px; }
+:is(.tiem-lista, .tiem-sub) .chip { white-space: nowrap; font-size: 11px; padding: 1px 8px; border-radius: 9px; background: rgba(255, 255, 255, .1); }
+:is(.tiem-lista, .tiem-sub) .chip.ok { background: rgba(46, 196, 182, .25); color: #7ff0e2; }
+:is(.tiem-lista, .tiem-sub) .chip.fuego { background: rgba(239, 35, 60, .25); color: #ff8c9a; }
+:is(.tiem-lista, .tiem-sub) .chip.mov { background: rgba(255, 183, 3, .25); color: var(--ambar); }

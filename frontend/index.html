@@ -120,7 +120,7 @@
         <div class="pestanas" role="tablist">
           <button type="button" role="tab" class="activa" data-pestana="fuerzas">FUERZAS</button>
           <button type="button" role="tab" data-pestana="situacion" title="Cuadro radar, personal e infraestructura">SITUACIÓN</button>
-          <button type="button" role="tab" data-pestana="pmo" title="Problema Militar Operativo y calendario de la operación (TIEM)">PMO</button>
+          <button type="button" role="tab" data-pestana="pmo" title="Trabajo Integral de Estado Mayor: calendario, Problema Militar y documentos de la apreciación">TIEM</button>
           <button type="button" role="tab" data-pestana="consola" class="solo-instructor">CONSOLA</button>
         </div>
 
@@ -266,6 +266,12 @@
           <section class="bloque" id="sec-calendario">
             <h2>Calendario de la operación</h2>
             <div id="pmo-calendario"></div>
+          </section>
+          <section class="bloque" id="sec-apreciacion">
+            <h2>Fase I · Paso 1: Apreciación inicial <span id="tiem-avance" class="contador"></span></h2>
+            <p class="ayuda">Los documentos que el Estado Mayor del bando redacta y presenta al instructor. Cada uno lo
+              redactan las reparticiones indicadas; todas lo pueden leer.</p>
+            <div id="tiem-docs"></div>
           </section>
           <section class="bloque" id="sec-pmo">
             <h2>Problema Militar Operativo <span id="pmo-origen" class="contador"></span></h2>
@@ -885,6 +891,22 @@
       </div>
     </form>
   </dialog>
+  <dialog id="dlg-tiem" class="ancho">
+    <div class="tiem-dialogo">
+      <h3 id="tiem-titulo"></h3>
+      <div id="tiem-sub" class="tiem-sub"></div>
+      <p id="tiem-observaciones" class="tiem-observaciones" hidden></p>
+      <div id="tiem-cuerpo" class="tiem-cuerpo"></div>
+      <div id="tiem-revision" class="tiem-revision"></div>
+      <div id="tiem-adjuntos-caja" class="tiem-adjuntos-caja">
+        <h4>Archivos adjuntos (Word o PDF)</h4>
+        <ul id="tiem-adjuntos" class="tiem-adjuntos"></ul>
+        <button id="btn-tiem-adjuntar" type="button" class="secundario mini">Adjuntar un Word o PDF…</button>
+        <input id="tiem-archivo" type="file" accept=".doc,.docx,.odt,.rtf,.pdf" hidden>
+      </div>
+      <div id="tiem-botones" class="fila-botones tiem-botones"></div>
+    </div>
+  </dialog>
   <dialog id="dlg-cronograma" class="ancho">
     <form method="dialog">
       <h3>Cronograma de misiones (flow sheet)</h3>
@@ -915,6 +937,7 @@
   <script src="/static/js/plantillas.js"></script>
   <script src="/static/js/situacion.js"></script>
   <script src="/static/js/pmo.js"></script>
+  <script src="/static/js/tiem.js"></script>
   <script src="/static/js/infraestructura.js"></script>
   <script src="/static/js/app.js"></script>
 </body>

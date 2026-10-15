@@ -711,7 +711,25 @@ def construir(salida: Path, img: Path) -> None:
                "<font face='Mono'>hasta_turno</font> es un plazo para todos menos proteger. El generador agrupa los objetivos materiales "
                "en asignados (superioridad aérea, sostenimiento, superficie, terreno, capacidad propia) bajo un ulterior.",
                "Migraciones 0025 (reparticiones) y 0026 (PMO, calendario, conducción y cadena). Las plantillas, la copia y la "
-               "exportación de escenarios guardan todo lo anterior."])]
+               "exportación de escenarios guardan todo lo anterior."]),
+          H2("8.12 El TIEM en el simulador (etapa 2): la apreciación inicial"),
+          Bul(["<b>Documentos</b> (<font face='Mono'>engine/tiem.py</font>, tabla <font face='Mono'>documentos_tiem</font>, API "
+               "<font face='Mono'>/api/escenarios/{id}/tiem</font>): análisis de la misión, concepto del comandante, guía de "
+               "planeamiento y formas de acción, con los párrafos del formato guía del TIEM. Campos de texto, misión por partes, "
+               "tablas (tareas, COG con CC/RC/VC, objetivos, efectos, capacidades del enemigo, suposiciones, cronograma, PRC) y F/A "
+               "con el criterio APA.",
+               "<b>Permisos</b>: cada documento lo redactan las reparticiones del TIEM (concepto: CMDTE y JEM; guía: JEM; F/A: A-3, "
+               "A-3 D/A, A-2); el bando entero lo lee; el instructor ve y edita todos.",
+               "<b>Estados</b>: borrador → presentado (bloqueado; solo si no falta nada: <font face='Mono'>tiem.revisar</font>) → "
+               "aprobado o devuelto con observaciones; cada paso avisa al bando (evento «tiem») y la revisión queda en el informe.",
+               "<b>Ayudas</b> (<font face='Mono'>/sugerencias</font>): transcriben el PMO, la cadena de objetivos y el calendario y "
+               "agregan el Poder Relativo de Combate; solo llenan campos vacíos. El análisis (COG, tareas deducidas, F/A, APA) "
+               "queda a cargo de los alumnos.",
+               "<b>PRC preliminar</b> (<font face='Mono'>/prc</font>): por factor, poder de cada unidad = fuerza × aeronaves × "
+               "(mejor ataque + defensa) / 2; los sensores sin armas valen 1; lo enemigo, con un error fijo de hasta ±15 %. "
+               "Relación ≥ 1,5 favorable, 0,67 a 1,5 equilibrado, menor desfavorable.",
+               "<b>Archivos adjuntos</b> (tabla <font face='Mono'>archivos_tiem</font>): .doc, .docx, .odt, .rtf o .pdf hasta "
+               "10 MB, hasta 5 por documento, guardados en la base (viajan con sus respaldos). Migración 0027."])]
     h += Img(img, "cap_ia_noche.jpg", "Figura 4. Un alumno del bando azul contra la IA a las 23:00: el mapa oscurecido, la hora y el periodo en Estado del escenario y el bando rojo «IA · LISTO».")
 
     # ---- 9 aviacion
@@ -822,8 +840,7 @@ def construir(salida: Path, img: Path) -> None:
                "El adversario automático da órdenes turno a turno: no planifica misiones aéreas de varios turnos ni lee el chat o los eventos inyectados.",
                "Un solo servidor por aula: el WebSocket y el temporizador viven en el proceso."]),
           H2("Hoja de ruta prevista"),
-          Bul(["Etapas siguientes del TIEM: apreciación inicial (análisis de la misión, concepto del comandante, guía de planeamiento, "
-               "formas de acción con el criterio APA), apreciaciones de Estado Mayor y juego de guerra, decisión y Plan de Operaciones con "
+          Bul(["Etapas siguientes del TIEM: apreciaciones de Estado Mayor y juego de guerra, decisión y Plan de Operaciones con "
                "tareas que se convierten en órdenes, supervisión y evaluación con exportación de documentos.",
                "Más plantillas de escenario por curso.", "Carreteras terciarias y puentes etiquetados de OpenStreetMap."])]
 
@@ -902,8 +919,10 @@ def construir(salida: Path, img: Path) -> None:
                "Un país inventado en dos repúblicas, con relieve, ríos, embalses, bosques, ciudades, carreteras, infraestructura y su ejercicio, para ejercitar sin ningún país real."],
               ["TIEM, etapa 1: reparticiones del Estado Mayor", "Usuarios; Mi repartición; engine/puestos.py",
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
-              ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña PMO; engine/pmo.py",
+              ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña TIEM; engine/pmo.py",
                "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["TIEM, etapa 2: apreciación inicial", "Pestaña TIEM → Fase I · Paso 1; engine/tiem.py",
+               "Análisis de la misión, concepto del comandante, guía de planeamiento y formas de acción con APA; PRC calculado, revisión del instructor y Word adjunto (8.12)."],
               ["TIEM, etapa 1: calendario, conducción y cadena de objetivos", "Consola → Calendario; Dirección del ejercicio; Objetivos",
                "Día D, hora H y fases; cada bando lo conduce un grupo de alumnos, el instructor o la IA; objetivos ulterior, asignados y materiales con efecto, indicador, plazo y «neutralizar» (8.11)."],
               ["Satélite de Venezuela a zoom 13", "Capa Satélite; tools/preparar_satelite.py",
@@ -935,7 +954,8 @@ def construir(salida: Path, img: Path) -> None:
         ["Cambiar la propia contraseña", "Menú del perfil → Cambiar contraseña"],
         ["Recuperar la cuenta admin", "backend: venv\\Scripts\\python -m app.restablecer_admin"],
         ["Crear usuario", "Consola → Usuarios, o backend: venv\\Scripts\\python -m app.crear_usuario &lt;nombre&gt; --rol azul|rojo|observador|instructor [--puesto comandante|jem|a1|a2|a3|a3da|a4|ce]"],
-        ["Problema Militar y calendario", "Pestaña PMO → Crear la situación automáticamente / Redactar; Consola → Calendario de la operación"],
+        ["Problema Militar y calendario", "Pestaña TIEM → Crear la situación automáticamente / Redactar; Consola → Calendario de la operación"],
+        ["Documentos de la apreciación", "Pestaña TIEM → Fase I · Paso 1 → Abrir; Presentar al instructor / Aprobar / Devolver"],
         ["Conducir un bando como instructor", "Consola → Dirección del ejercicio → Conduce el bando: El instructor; cabecera → Conducir Rojo/Azul"],
         ["Pruebas", "backend: venv\\Scripts\\python -m pytest · raíz: node --test \"frontend/tests/*.test.js\""],
     ], [5.2 * cm, ANCHO_TEXTO - 5.2 * cm])]
