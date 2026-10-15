@@ -1,16 +1,19 @@
-"""Videos narrados de S.I.E.T.E. para exposiciones (MP4 1920x1080, voz de Microsoft y subtitulos).
+"""Videos narrados de S.I.E.T.E. para exposiciones (MP4 1920x1080, voz natural y subtitulos).
 
-  1. SIETE_1_que_es.mp4       Que es el SIETE, como esta hecho y que puede hacer (voz: Raul).
-  2. SIETE_2_como_se_usa.mp4  Como se usa: roles, reparticiones del TIEM y que hace cada uno (voz: Sabina).
+  1. SIETE_1_que_es.mp4       Que es el SIETE, como esta hecho y que puede hacer (voz: Sebastian, Venezuela).
+  2. SIETE_2_como_se_usa.mp4  Como se usa: roles, reparticiones del TIEM y que hace cada uno (voz: Paola, Venezuela).
 
 Cada escena es una captura real del simulador (tools/manual/salida, generadas por capturas_guia.py, capturas.py y
-diagramas.py) con su titulo y la frase que se narra como subtitulo. La voz sale de las voces de Microsoft instaladas
-en Windows (voz.ps1) y ffmpeg arma cada frase como un clip y los une, con fundidos entre escenas.
+diagramas.py) con su titulo y la frase que se narra como subtitulo. La voz es neuronal de Microsoft (las voces
+naturales de Edge, paquete edge-tts; necesita internet). Sin internet, o con --offline, usa las voces instaladas en
+Windows (voz.ps1), que suenan mas roboticas. ffmpeg arma cada frase como un clip y los une, con fundidos entre escenas.
 
+    backend\\venv\\Scripts\\python -m pip install edge-tts                    # una vez
     backend\\venv\\Scripts\\python tools/manual/videos_exposicion.py          # los dos
     backend\\venv\\Scripts\\python tools/manual/videos_exposicion.py 2        # solo el segundo
 """
 
+import asyncio
 import json
 import re
 import shutil
@@ -41,123 +44,129 @@ def fuente(tam, negrita=False):
 # ------------------------------------------------------------------ guiones
 # Cada escena: (captura | "portada" | "cierre" | "titulo:Texto|Subtitulo", titulo en pantalla, [frases narradas])
 VIDEO_1 = {
-    "archivo": "SIETE_1_que_es.mp4", "voz": "Raul", "subtitulo_portada": "Qué es, cómo está hecho y qué puede hacer",
+    "archivo": "SIETE_1_que_es.mp4", "voz": "es-VE-SebastianNeural", "voz_local": "Raul",
+    "subtitulo_portada": "Operaciones aéreas con el Trabajo Integral de Estado Mayor",
     "escenas": [
         ("portada", "", [
             "Bienvenidos. Les presentamos el SIETE: el Sistema Integral de Entrenamiento Táctico y Estratégico.",
-            "Fue concebido, diseñado y desarrollado por el Capitán Dixon Malpica, en la División de Ingeniería y "
-            "Desarrollo Aeroespacial de la Aviación Militar Bolivariana.",
+            "Fue desarrollado en la División de Ingeniería y Desarrollo Aeroespacial de la Aviación Militar Bolivariana, "
+            "para entrenar a los Estados Mayores en el planeamiento y la conducción de operaciones aéreas.",
         ]),
         ("pantalla_general", "Qué es el SIETE", [
-            "El SIETE es un simulador de ejercicios militares por turnos, pensado para el aula.",
-            "Un instructor dirige el ejercicio, y los alumnos, organizados en dos bandos, el azul y el rojo, planifican y "
-            "conducen operaciones aéreas, terrestres y navales sobre mapas reales.",
+            "El SIETE es un simulador de operaciones aéreas por turnos, pensado para el aula.",
+            "Los alumnos integran el Estado Mayor de un componente aéreo, en dos bandos, el azul y el rojo, y "
+            "planifican y conducen la campaña aérea, con el apoyo de fuerzas terrestres y navales, sobre mapas reales.",
             "Cada turno equivale a una hora simulada: los bandos dan sus órdenes, y el simulador resuelve a la vez "
-            "movimientos, detecciones, combates y logística.",
+            "despegues, vuelos, detecciones, combates aéreos y logística.",
         ]),
-        ("diag_arquitectura", "Cómo está hecho", [
-            "El simulador es una aplicación web que se instala en un solo equipo del aula y se usa desde cualquier "
-            "navegador de la red local.",
-            "No necesita internet: los mapas satelitales, el relieve, los planos de las bases aéreas y el catálogo de "
-            "unidades viajan con el propio simulador.",
-            "El servidor está escrito en Python, con una base de datos que guarda cada ejercicio, y la pantalla se "
-            "actualiza en tiempo real para todos los participantes.",
-            "Funciona en una sola computadora, se lleva en un paquete portátil, y cuenta con más de setecientas pruebas "
-            "automáticas que verifican cada función.",
+        ("titulo:Orientado al TIEM|Planeamiento y conducción de operaciones aéreas según el Trabajo Integral de Estado Mayor", "", [
+            "Su eje es el Trabajo Integral de Estado Mayor, la metodología oficial para planificar y conducir operaciones.",
+            "El simulador no solo resuelve combates: hace que el Estado Mayor aprecie la situación, decida, planifique, "
+            "ordene y supervise la ejecución, paso a paso, como lo establece el TIEM.",
         ]),
-        ("diag_ciclo", "El ciclo de cada turno", [
-            "Cada turno tiene dos fases: la decisión, en la que los bandos dan órdenes, y la resolución, en la que el "
-            "motor calcula lo que ocurre.",
-            "Cada bando ve solo lo que sus sensores detectan: es la niebla de guerra. Del enemigo se conocen únicamente "
-            "los contactos.",
-        ]),
-        ("mapa_relieve", "Mapas reales, con relieve", [
-            "El terreno es real: Venezuela en detalle y toda América, con relieve, ríos, carreteras, ciudades y fronteras.",
-            "El relieve importa: tapa la línea de vista de los radares, y los aviones pueden volar alto, a media altura o "
-            "rasantes para esconderse.",
-        ]),
-        ("mapa_ficticio", "Un mapa ficticio para ejercitar sin países reales", [
-            "Para ejercicios que no deben involucrar a ningún país real, el simulador trae un mapa ficticio completo: el "
-            "País Azul y el País Rojo.",
-            "Tiene cordilleras, llanos, ríos, embalses, ciudades, carreteras e infraestructura, igual que un país verdadero.",
-        ]),
-        ("aviacion_enviar", "Unidades con datos y fotos reales", [
-            "El catálogo incluye unidades terrestres, aéreas y navales: cazas, aviones de ataque, helicópteros, drones, "
-            "defensa antiaérea, radares, buques y misiles.",
-            "Cada modelo tiene su foto, sus prestaciones y su armamento, y el instructor puede agregar los tipos propios "
-            "de la Aviación Militar Bolivariana.",
-        ]),
-        ("mision_planificar", "Aviación y misiones", [
-            "La aviación despega de sus bases, patrulla, ataca y aterriza a reabastecerse.",
-            "Las misiones aéreas se planifican con su rol y su ruta: patrulla de combate, interdicción, apoyo cercano, "
-            "supresión de defensas, reconocimiento o escolta.",
-        ]),
-        ("cobertura_radar", "Sensores y guerra electrónica", [
-            "Los radares tienen cobertura real según el terreno. La guerra electrónica escucha las emisiones del enemigo "
-            "y las interfiere, a costa de quedar expuesta.",
-        ]),
-        ("mapa_dia_noche" if (SALIDA_CAPT / "guia" / "mapa_dia_noche.png").exists() else "mapa_noche", "Clima, día y noche", [
-            "El clima por zonas y el ciclo de día y noche cambian la detección y el movimiento.",
-        ]),
-        ("mapa_infraestructura", "Infraestructura que pesa en la guerra", [
-            "Las centrales eléctricas, refinerías, centros de comunicaciones y puentes son objetivos: si caen, los "
-            "radares pierden alcance, falta combustible y las órdenes se demoran.",
-        ]),
-        ("situacion_radar", "La pestaña Situación", [
-            "El cuadro radar muestra lo que detecta cada sensor, y los contactos nuevos se informan solos al bando.",
-            "También se siguen el personal, las bajas y el estado de la infraestructura.",
-        ]),
-        ("ia_pantalla", "Combate contra la inteligencia artificial", [
-            "Si no hay alumnos para un bando, lo puede conducir el adversario automático, con tres niveles: prudente, "
-            "normal y agresivo.",
-        ]),
-        ("titulo:El Trabajo Integral de Estado Mayor|La metodología del TIEM dentro del simulador", "", [
-            "Lo más importante: el SIETE sigue el Trabajo Integral de Estado Mayor, la metodología oficial para "
-            "planificar y conducir operaciones.",
+        ("diag_puestos", "Un Estado Mayor completo", [
+            "Cada alumno ocupa una repartición: el Comandante, el Jefe de Estado Mayor, personal, inteligencia, "
+            "operaciones, defensa aérea, logística, y comunicaciones y electrónica. Cada una conduce solo lo que le "
+            "corresponde.",
         ]),
         ("pmo_calendario", "Problema Militar y calendario", [
-            "Cada bando recibe su Problema Militar Operativo, que el instructor redacta o el simulador crea "
-            "automáticamente a partir del escenario.",
+            "Cada bando recibe su Problema Militar Operativo, con la misión del componente aéreo, que el instructor "
+            "redacta o el simulador crea automáticamente a partir del escenario.",
             "El calendario fija el día D, la hora H y las fases de la operación.",
         ]),
-        ("tiem_paso2", "Apreciación de la situación", [
+        ("tiem_paso2", "Fase uno: la apreciación", [
             "El Estado Mayor redacta, dentro del simulador, los documentos del TIEM: el análisis de la misión, el "
             "concepto del comandante, la guía de planeamiento y las formas de acción con el criterio de adaptabilidad, "
             "practicabilidad y aceptabilidad.",
-            "Luego, cada repartición elabora su apreciación: inteligencia, operaciones, defensa aérea, personal, "
+            "Luego cada repartición elabora su apreciación: inteligencia, operaciones, defensa aérea, personal, "
             "logística, y comunicaciones y electrónica.",
         ]),
         ("tiem_matriz", "Confrontación y juego de guerra", [
             "Las formas de acción se confrontan con las capacidades del enemigo, y se pueden ensayar en una copia del "
-            "ejercicio contra la inteligencia artificial.",
+            "ejercicio contra la inteligencia artificial antes de decidir.",
         ]),
-        ("tiem_orden", "Del plan a la orden", [
-            "El comandante decide, y el Plan de Operaciones asigna tareas a cada unidad. Esas tareas se emiten como "
-            "órdenes reales del simulador, turno a turno.",
+        ("tiem_orden", "Fase dos: del plan a la orden", [
+            "El Comandante decide, y el Plan de Operaciones asigna tareas a cada unidad aérea. Esas tareas se emiten "
+            "como órdenes reales del simulador, turno a turno.",
         ]),
-        ("tiem_supervision", "Supervisión de la ejecución", [
+        ("tiem_supervision", "Fase tres: la supervisión", [
             "Durante la ejecución, el simulador compara lo planeado con lo ocurrido, y el Estado Mayor registra la causa "
             "de cada desvío y la acción correctiva.",
         ]),
+        ("titulo:La campaña aérea|Aviación, defensa aérea y guerra electrónica", "", [
+            "Veamos ahora cómo el simulador representa la campaña aérea.",
+        ]),
+        ("aviacion_enviar", "Aeronaves con datos reales", [
+            "El catálogo incluye cazas, aviones de ataque, cisternas, helicópteros y drones, cada uno con su "
+            "foto, su alcance, su autonomía y su armamento. También se pueden agregar los tipos propios de la Aviación "
+            "Militar Bolivariana.",
+        ]),
+        ("mision_planificar", "Misiones aéreas", [
+            "La aviación despega de sus bases, cumple su misión y aterriza a reabastecerse.",
+            "Cada misión se planifica con su rol y su ruta: patrulla aérea de combate, interdicción, apoyo aéreo "
+            "cercano, supresión de defensas, reconocimiento o escolta.",
+        ]),
+        ("cronograma", "Cronograma de misiones", [
+            "El cronograma muestra cada misión en el tiempo: el vuelo, la órbita, el ataque y el aterrizaje.",
+        ]),
+        ("perfil_vuelo", "Perfil de vuelo", [
+            "Cada grupo vuela alto, a media altura o rasante: lo que gana en alcance de detección lo pierde frente al "
+            "radar enemigo, y el vuelo rasante gasta más combustible.",
+        ]),
+        ("cobertura_radar", "Defensa aérea y sensores", [
+            "Los radares tienen cobertura real según el relieve, y la defensa aérea combina alerta temprana, antiaéreas "
+            "y caza de intercepción.",
+        ]),
+        ("orden_interferir", "Guerra electrónica", [
+            "La guerra electrónica escucha las emisiones del enemigo y las interfiere, a costa de quedar expuesta.",
+        ]),
+        ("mapa_relieve", "Teatro de operaciones real", [
+            "El terreno es real: Venezuela en detalle y toda América, con relieve, ríos, carreteras, ciudades y fronteras. "
+            "El relieve tapa la línea de vista de los radares.",
+        ]),
+        ("mapa_ficticio", "Un teatro ficticio", [
+            "Para ejercicios que no deben involucrar a ningún país real, hay un mapa ficticio completo: el País Azul y el "
+            "País Rojo, con bases aéreas, ciudades e infraestructura.",
+        ]),
+        ("mapa_noche", "Clima, día y noche", [
+            "El clima por zonas y el ciclo de día y noche cambian la detección y las operaciones aéreas.",
+        ]),
+        ("mapa_infraestructura", "Objetivos estratégicos", [
+            "Las centrales eléctricas, refinerías, centros de comunicaciones y puentes son objetivos: si caen, los "
+            "radares pierden alcance, falta combustible y las órdenes se demoran.",
+        ]),
+        ("ia_pantalla", "Adversario automático", [
+            "Si no hay alumnos para un bando, lo conduce el adversario automático, con tres niveles: prudente, normal y "
+            "agresivo. El instructor también puede jugar de enemigo.",
+        ]),
+        ("diag_arquitectura", "Cómo está hecho", [
+            "El SIETE es una aplicación web que se instala en un solo equipo del aula y se usa desde cualquier navegador "
+            "de la red local.",
+            "No necesita internet: los mapas satelitales, el relieve, los planos de las bases aéreas y el catálogo viajan "
+            "con el propio simulador, en un paquete portátil.",
+            "Es un desarrollo nacional, verificado con más de setecientas pruebas automáticas.",
+        ]),
         ("informe_doctrina", "Evaluación", [
             "Al final, el informe posterior reproduce el ejercicio turno a turno y evalúa la conducción con indicadores "
-            "doctrinales, el trabajo de Estado Mayor y una nota de uno a veinte por bando y por alumno.",
+            "doctrinales, el trabajo de Estado Mayor según el TIEM, y una nota de uno a veinte por bando y por alumno.",
         ]),
         ("legajo_word", "Documentos en Word y PDF", [
-            "Todos los documentos se exportan a Word o a PDF, con el formato del TIEM.",
+            "Todos los documentos del TIEM se exportan a Word o a PDF, con el formato del TIEM.",
         ]),
         ("cierre", "", [
-            "El SIETE: una herramienta nacional para formar oficiales de Estado Mayor, con soberanía tecnológica.",
+            "El SIETE: desarrollado en la DIDA para formar a los Estados Mayores de la Aviación Militar Bolivariana en el "
+            "planeamiento y la conducción de operaciones aéreas, con soberanía tecnológica.",
             "Muchas gracias.",
         ]),
     ],
 }
 
 VIDEO_2 = {
-    "archivo": "SIETE_2_como_se_usa.mp4", "voz": "Sabina", "subtitulo_portada": "Cómo se usa: roles y tareas de cada uno",
+    "archivo": "SIETE_2_como_se_usa.mp4", "voz": "es-VE-PaolaNeural", "voz_local": "Sabina", "subtitulo_portada": "Cómo se usa: roles y tareas de cada uno",
     "escenas": [
         ("portada", "", [
-            "En este video veremos cómo se usa el SIETE: los roles del ejercicio y lo que hace cada participante.",
+            "En este video veremos cómo se usa el SIETE para entrenar al Estado Mayor de un componente aéreo con el "
+            "Trabajo Integral de Estado Mayor: los roles del ejercicio y lo que hace cada participante.",
         ]),
         ("diag_puestos", "Los roles del ejercicio", [
             "Hay tres roles. El instructor dirige el ejercicio. Los alumnos integran el Estado Mayor de cada bando. Y el "
@@ -317,8 +326,14 @@ def fondo() -> Image.Image:
 
 
 def logo(nombre: str, alto: int) -> Image.Image:
-    im = Image.open(IMG / nombre).convert("RGB")
+    im = Image.open(IMG / nombre)
+    im = im.convert("RGBA" if im.mode in ("RGBA", "LA", "P") else "RGB")
     return im.resize((int(im.width * alto / im.height), alto), Image.LANCZOS)
+
+
+def pegar(fondo_im: Image.Image, im: Image.Image, xy) -> None:
+    """Pega respetando la transparencia (el logo redondo de la DIDA)."""
+    fondo_im.paste(im, xy, im if im.mode == "RGBA" else None)
 
 
 def centrado(d, y, texto, f, color=(255, 255, 255)):
@@ -333,28 +348,28 @@ def portada(subtitulo: str) -> Image.Image:
     centrado(d, 435, "S.I.E.T.E.", fuente(80, True))
     centrado(d, 510, "Sistema Integral de Entrenamiento Táctico y Estratégico", fuente(38), (200, 214, 235))
     centrado(d, 572, subtitulo, fuente(40, True), AMBAR)
-    dida = logo("dida_logo.jpg", 180)
+    dida = logo("dida_logo_redondo.png", 180)
     x = ANCHO // 2 - 470
-    im.paste(dida, (x, 640))
+    pegar(im, dida, (x, 640))
     d.text((x + dida.width + 36, 668), "División de Ingeniería y Desarrollo Aeroespacial (DIDA)", font=fuente(30, True), fill=(255, 255, 255))
     d.text((x + dida.width + 36, 714), "Aviación Militar Bolivariana · Fuerza Armada Nacional Bolivariana", font=fuente(28), fill=(200, 214, 235))
-    d.text((x + dida.width + 36, 760), "Creador del simulador: Cap. Dixon Malpica", font=fuente(30, True), fill=AMBAR)
+    d.text((x + dida.width + 36, 760), "Simulador de operaciones aéreas orientado al TIEM", font=fuente(30, True), fill=AMBAR)
     return im
 
 
 def cierre() -> Image.Image:
     im = fondo()
     siete = logo("siete_logo_recortado.jpg", 300)
-    dida = logo("dida_logo.jpg", 300)
+    dida = logo("dida_logo_redondo.png", 300)
     hueco = 60
     x = (ANCHO - siete.width - dida.width - hueco) // 2
     im.paste(siete, (x, 50))
-    im.paste(dida, (x + siete.width + hueco, 50))
+    pegar(im, dida, (x + siete.width + hueco, 50))
     d = ImageDraw.Draw(im)
     centrado(d, 450, "S.I.E.T.E.", fuente(72, True))
     centrado(d, 518, "Sistema Integral de Entrenamiento Táctico y Estratégico", fuente(36), (200, 214, 235))
-    centrado(d, 600, "Concebido, diseñado y desarrollado por el Cap. Dixon Malpica", fuente(38, True), AMBAR)
-    centrado(d, 655, "División de Ingeniería y Desarrollo Aeroespacial (DIDA) · Aviación Militar Bolivariana", fuente(30))
+    centrado(d, 600, "Desarrollado en la División de Ingeniería y Desarrollo Aeroespacial (DIDA)", fuente(38, True), AMBAR)
+    centrado(d, 655, "Aviación Militar Bolivariana · Fuerza Armada Nacional Bolivariana", fuente(30))
     centrado(d, 730, "«El infinito es el límite»", fuente(34, True), (200, 214, 235))
     return im
 
@@ -400,7 +415,7 @@ def escena_base(clave: str, titulo: str, subtitulo_portada: str, max_lineas: int
     d.rectangle([0, 0, ANCHO, 96], fill=(14, 22, 44))
     d.line([(0, 96), (ANCHO, 96)], fill=AMBAR, width=3)
     icono = logo("siete_icono_128.png", 64)
-    im.paste(icono, (36, 16))
+    pegar(im, icono, (36, 16))
     d.text((120, 48), titulo, font=fuente(44, True), fill=(255, 255, 255), anchor="lm")
     d.text((ANCHO - 40, 48), "S.I.E.T.E. · DIDA", font=fuente(26), fill=(200, 214, 235), anchor="rm")
     cap = _captura(clave)
@@ -431,12 +446,42 @@ def con_subtitulo(base: Image.Image, frase: str) -> Image.Image:
 
 
 # ------------------------------------------------------------------ armado
+async def _voces_naturales(frases: list[dict], voz: str) -> None:
+    import edge_tts
+
+    limite = asyncio.Semaphore(4)
+
+    async def una(f):
+        mp3 = f["wav"].with_suffix(".mp3")
+        async with limite:
+            for intento in range(4):
+                try:
+                    await edge_tts.Communicate(_hablado(f["texto"]), voz, rate="-4%").save(str(mp3))
+                    break
+                except Exception:
+                    if intento == 3:
+                        raise
+                    await asyncio.sleep(2 + 3 * intento)
+        subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-i", str(mp3), "-ar", "44100", "-ac", "1", str(f["wav"])],
+                       check=True)
+
+    await asyncio.gather(*(una(f) for f in frases))
+
+
+def _voces_locales(frases: list[dict], voz: str, carpeta: Path) -> None:
+    lista = carpeta / "voces.json"
+    lista.write_text(json.dumps([{"texto": _hablado(f["texto"]), "archivo": str(f["wav"]).replace("\\", "/"), "voz": voz}
+                                 for f in frases], ensure_ascii=False), encoding="utf-8")
+    subprocess.run(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(Path(__file__).with_name("voz.ps1")),
+                    "-Lista", str(lista)], check=True)
+
+
 def _duracion(wav: Path) -> float:
     with wave.open(str(wav)) as w:
         return w.getnframes() / w.getframerate()
 
 
-def generar(video: dict, n: int) -> Path:
+def generar(video: dict, n: int, offline: bool = False) -> Path:
     carpeta = TRABAJO / f"video{n}"
     if carpeta.exists():
         shutil.rmtree(carpeta)
@@ -449,11 +494,14 @@ def generar(video: dict, n: int) -> Path:
             con_subtitulo(base, t).save(png)
             frases.append({"png": png, "wav": carpeta / f"{i:03d}_{j:02d}.wav", "texto": t,
                            "primera": j == 0, "ultima": j == len(textos) - 1})
-    lista = carpeta / "voces.json"
-    lista.write_text(json.dumps([{"texto": _hablado(f["texto"]), "archivo": str(f["wav"]).replace("\\", "/"), "voz": video["voz"]}
-                                 for f in frases], ensure_ascii=False), encoding="utf-8")
-    subprocess.run(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(Path(__file__).with_name("voz.ps1")),
-                    "-Lista", str(lista)], check=True)
+    if offline:
+        _voces_locales(frases, video["voz_local"], carpeta)
+    else:
+        try:
+            asyncio.run(_voces_naturales(frases, video["voz"]))
+        except Exception as e:  # sin internet o sin edge-tts: voces de Windows
+            print(f"Voces naturales no disponibles ({e}); se usan las de Windows.")
+            _voces_locales(frases, video["voz_local"], carpeta)
     clips = []
     for k, f in enumerate(frases):
         dur = _duracion(f["wav"]) + (0.9 if f["ultima"] else 0.35) + (0.3 if f["primera"] else 0.0)
@@ -483,11 +531,12 @@ def generar(video: dict, n: int) -> Path:
 
 
 def main() -> None:
-    pedidos = sys.argv[1:] or ["1", "2"]
+    offline = "--offline" in sys.argv
+    pedidos = [a for a in sys.argv[1:] if a != "--offline"] or ["1", "2"]
     DESTINO.mkdir(parents=True, exist_ok=True)
     for n, video in ((1, VIDEO_1), (2, VIDEO_2)):
         if str(n) in pedidos:
-            generar(video, n)
+            generar(video, n, offline)
 
 
 if __name__ == "__main__":
