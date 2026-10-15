@@ -21,9 +21,9 @@ router = APIRouter(prefix="/api/escenarios/{escenario_id}/unidades", tags=["unid
 solo_instructor = auth.requiere_roles("instructor")
 
 
-def validar_ubicacion(tipo: str, lat: float, lon: float) -> None:
+def validar_ubicacion(tipo: str, lat: float, lon: float, clase_unidad: str = "") -> None:
     terreno = get_terreno()
-    if not terreno.disponible:
+    if not terreno.disponible or clase_unidad == "puente":  # un puente puede estar sobre el agua
         return
     clase = terreno.clase(lat, lon)
     if tipo in ("terrestre", "base") and clase == "agua":
@@ -64,7 +64,7 @@ async def crear_unidad(
     aeronaves = payload.aeronaves if clase.tipo == "aerea" else 1
     escalon = payload.echelon or (catalogo.escalon_grupo(aeronaves) if modelo and clase.tipo == "aerea" else clase.escalon)
 
-    validar_ubicacion(clase.tipo, payload.lat, payload.lon)
+    validar_ubicacion(clase.tipo, payload.lat, payload.lon, clase.id)
 
     def valor(indicado, defecto):
         return defecto if indicado is None else indicado
@@ -90,6 +90,8 @@ async def crear_unidad(
         autonomia_km=valor(payload.autonomia_km, ref.autonomia_km),
         carga=clase.carga_max,
         sidc=catalogo.generar_sidc(payload.bando, clase, escalon),
+        personal=payload.personal,
+        radio_km=payload.radio_km if clase.infraestructura == "puente" else None,
     )
     db.add(unidad)
     db.commit()

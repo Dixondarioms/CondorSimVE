@@ -8,6 +8,7 @@ Requiere el servidor en marcha en 127.0.0.1:8000 (la pantalla de acceso es la re
     backend\\venv\\Scripts\\python tools/manual/capturas_guia.py orden_mover # algunas (por nombre)
 """
 
+import os
 import sys
 import time
 import traceback
@@ -18,7 +19,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from navegador import Navegador, anotar  # noqa: E402
 
-BASE = "http://127.0.0.1:8000"
+BASE = os.environ.get("SIETE_URL", "http://127.0.0.1:8000")  # otro puerto: SIETE_URL=http://127.0.0.1:8002
 SALIDA = Path(__file__).resolve().parent / "salida" / "guia"
 LISTA_APP = "!document.getElementById('app').hidden && document.querySelectorAll('#oob .oob-item').length > 0 && window.__mapa"
 LLANOS = (8.6, -70.57)  # despliegue de ejemplo en el piedemonte andino
@@ -201,7 +202,7 @@ def orden_mover(n):
     n.clic('[data-modo="mover"]')
     n.vista(8.54, -70.6, 11, 1.5)
     # puntos de paso al sur, en terreno libre (un clic sobre otra unidad la seleccionaria)
-    for lat, lon in [(8.545, -70.63), (8.505, -70.6), (8.48, -70.54)]:
+    for lat, lon in [(8.53, -70.66), (8.5, -70.6), (8.48, -70.54)]:
         n.clic_mapa(lat, lon)
     al_panel(n, "#sec-orden")
     time.sleep(1)
@@ -582,6 +583,42 @@ def consola_catalogo(n):
     guardar(n, "consola_catalogo", n.rect("#panel-izq"), margen=0)
 
 
+# ------------------------------------------------------------------ situacion: radar, personal, infraestructura
+def situacion(n):
+    n.ir(arnes("azul", "mando"), LISTA_APP, 2)
+    n.clic('[data-pestana="situacion"]')
+    time.sleep(0.6)
+    n.js("document.getElementById('panel-izq').scrollTop = 0")
+    time.sleep(0.3)
+    guardar(n, "situacion_radar", n.rect("#panel-izq"), margen=0)
+    n.js("document.getElementById('sec-personal').scrollIntoView({ block: 'start' })")
+    time.sleep(0.4)
+    guardar(n, "situacion_personal", n.rect("#panel-izq"), margen=0)
+
+
+def mapa_infraestructura(n):
+    n.ir(arnes("instructor", lat=8.72, lon=-70.45, zoom=10), LISTA_APP, 3)
+    guardar(n, "mapa_infraestructura", rect_mapa(n), margen=0)
+    # ficha de una instalacion real de la capa (Hidroelectrica Masparro, en el piedemonte)
+    n.js("(() => { const m = []; window.__mapa.eachLayer((l) => { if (l.getPopup && l.getPopup() && l.getTooltip && l.getTooltip()"
+         " && /Masparro/.test(l.getTooltip().getContent())) m.push(l); }); if (m[0]) m[0].openPopup(); })()")
+    time.sleep(1.2)
+    guardar(n, "ficha_infraestructura", n.rect(".leaflet-popup"), margen=8)
+
+
+def ficha_puente(n):
+    n.ir(arnes("azul", "mando", 8.6055, -70.585, 13), LISTA_APP, 2)
+    seleccionar(n, 31)
+    al_panel(n, "#detalle-contenido")
+    n.js("document.getElementById('panel-izq').scrollTop -= 40")
+    guardar(n, "ficha_puente", n.rect("#panel-izq"), margen=0)
+
+
+def objetivos_avance(n):
+    n.ir(arnes("instructor"), LISTA_APP, 2)
+    guardar(n, "objetivos_avance", n.rect("#tarjeta-objetivos"), margen=4)
+
+
 # ------------------------------------------------------------------ informe
 def informe_repeticion(n):
     n.ir(arnes("instructor", extra="&abrir=informe"), LISTA_APP + " && !document.getElementById('replay').hidden", 3)
@@ -645,6 +682,7 @@ CAPTURAS = [
     consola_turno, consola_meteo, consola_identidad, consola_agregar, consola_objetivos, consola_direccion, consola_eventos,
     consola_escenario, consola_usuarios, plantillas, ver_como, videowall, observador,
     ia_pantalla, consola_ia, plantillas_ia, barra_inferior_ia, mapa_dia_noche, mapa_carreteras, consola_catalogo,
+    situacion, mapa_infraestructura, ficha_puente, objetivos_avance,
     informe_repeticion, informe_dialogos, informe_rubrica, informe_doctrina, comparar, informe_replay,
 ]
 

@@ -1,4 +1,5 @@
 # Capturas de pantalla del simulador con Chrome headless (arnes de pruebas: datos simulados, sin sesion).
+import os
 import subprocess
 from pathlib import Path
 
@@ -7,7 +8,7 @@ from PIL import Image
 AQUI = Path(__file__).resolve().parent / "salida"  # PNG/JPG generados (no se versionan)
 AQUI.mkdir(exist_ok=True)
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-BASE = "http://127.0.0.1:8000"
+BASE = os.environ.get("SIETE_URL", "http://127.0.0.1:8000")  # otro puerto: SIETE_URL=http://127.0.0.1:8002
 ARNES = BASE + "/static/pruebas/arnes.html"
 
 CAPTURAS = [

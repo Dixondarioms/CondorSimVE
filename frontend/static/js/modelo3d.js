@@ -32,6 +32,8 @@
     antena: [196, 202, 210], radomo: [222, 224, 220], misil: [226, 228, 232], negro: [30, 30, 32],
     concreto: [158, 158, 152], pista: [66, 68, 72], techo: [112, 122, 116], tanque: [196, 196, 186],
     grua: [214, 172, 44], cesped: [104, 122, 84],
+    // infraestructura civil
+    agua: [70, 112, 148], ladrillo: [150, 92, 72], llama: [244, 140, 40],
     // helices y rotores (translucidos)
     rotor: [30, 30, 30, 0.28], pala: [40, 40, 40],
   };

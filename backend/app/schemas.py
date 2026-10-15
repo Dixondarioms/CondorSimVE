@@ -169,6 +169,10 @@ class UnidadCreate(BaseModel):
     alcance_km: float | None = Field(default=None, ge=0, le=2000)
     deteccion_km: float | None = Field(default=None, ge=0, le=2000)
     autonomia_km: float | None = Field(default=None, gt=0, le=20000)
+    # efectivos al inicio (None = la dotacion de su clase y escalon; ver engine/personal.py)
+    personal: int | None = Field(default=None, ge=0, le=200000)
+    # puentes: radio del tramo que corta su destruccion
+    radio_km: float | None = Field(default=None, gt=0, le=20)
 
 
 class UnidadAjuste(BaseModel):
@@ -191,6 +195,7 @@ class UnidadAjuste(BaseModel):
     dano_plataforma: float | None = Field(default=None, ge=0, le=100)
     dano_combustible: float | None = Field(default=None, ge=0, le=100)
     refugios: int | None = Field(default=None, ge=0, le=24)
+    personal: int | None = Field(default=None, ge=0, le=200000)
 
 
 class PerfilVueloIn(BaseModel):
@@ -253,6 +258,10 @@ class UnidadOut(BaseModel):
     perfiles_permitidos: list[str] = []
     stock_combustible: float | None = None
     stock_municion: float | None = None
+    # personal (ver engine/personal.py) y largo de los puentes
+    personal_inicial: int | None = None
+    personal_actual: int | None = None
+    radio_km: float | None = None
 
 
 class OrdenCreate(BaseModel):

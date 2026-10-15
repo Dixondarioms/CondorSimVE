@@ -31,6 +31,7 @@ from app.engine import azar as azar_mod
 from app.engine import catalogo, combat, geo, logistica, movimiento, relieve, vision
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
+from app.engine import infraestructura as infra_mod
 from app.engine import misiles as misiles_mod
 from app.engine import misiones as misiones_mod
 from app.engine import transporte as transporte_mod
@@ -141,7 +142,7 @@ class _Bitacora:
 REPOSICION_PORTAAVIONES = 100.0  # puntos por variable que un portaaviones recarga por turno junto a un puerto propio
 
 
-def _reabastecer(unidades: list[Unidad], bit: _Bitacora) -> None:
+def _reabastecer(unidades: list[Unidad], bit: _Bitacora, factor_combustible: dict | None = None) -> None:
     """Las bases reabastecen (+50 %) desde sus existencias; los convoyes reabastecen en marcha (+40 %), se recargan
     en los depositos y descargan en las bases aereas y puertos; los depositos reponen existencias cada turno. Un
     portaaviones reabastece a sus aeronaves embarcadas desde sus propias existencias y las repone junto a un puerto
@@ -228,7 +229,7 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora) -> None:
             break
 
     for b in bases:
-        logistica.reponer(b)
+        logistica.reponer(b, (factor_combustible or {}).get(b.bando, 1.0))
         for variable in logistica.VARIABLES:
             if antes[b.id][variable] > 0 and logistica.stock(b, variable) <= 0:
                 bit.db.add(Evento(
@@ -243,9 +244,10 @@ DEMORA_INTERFERENCIA_PCT = 40  # puntos que suma estar dentro de una interferenc
 DEMORA_MAXIMA_PCT = 90
 
 
-def prob_demora(escenario: Escenario, unidad, ge) -> float:
-    """Probabilidad de que la orden a `unidad` no llegue a tiempo (0 si el instructor no activo la demora)."""
-    base = getattr(escenario, "com_ordenes_pct", 0) or 0
+def prob_demora(escenario: Escenario, unidad, ge, extra_pct: float = 0.0) -> float:
+    """Probabilidad de que la orden a `unidad` no llegue a tiempo: la demora que fijo el instructor mas la que causan
+    los centros de comunicaciones caidos del bando (`extra_pct`, engine/infraestructura.py)."""
+    base = (getattr(escenario, "com_ordenes_pct", 0) or 0) + extra_pct
     if base <= 0:
         return 0.0
     extra = DEMORA_INTERFERENCIA_PCT if unidad is not None and ge.interferido(unidad) else 0
@@ -258,7 +260,9 @@ def demorar_por_comunicaciones(db: Session, escenario: Escenario, ordenes: list,
     Solo las emitidas en este turno; los despegues (ordenes a una base, por linea fija) siempre llegan. El sorteo es
     reproducible (semilla del escenario, turno y orden). Las zonas de interferencia que rigen son las del turno
     anterior, vigentes mientras se transmitian las ordenes."""
-    if not (getattr(escenario, "com_ordenes_pct", 0) or 0):
+    lista = list(unidades.values())
+    extra = {b: infra_mod.demora_extra_pct(lista, b) for b in ("azul", "rojo")}
+    if not (getattr(escenario, "com_ordenes_pct", 0) or 0) and not any(extra.values()):
         return ordenes
     ge = ge_mod.contexto(db, escenario)
     quedan = []
@@ -268,7 +272,7 @@ def demorar_por_comunicaciones(db: Session, escenario: Escenario, ordenes: list,
             quedan.append(orden)
             continue
         h = hashlib.sha256(f"{escenario.semilla}:{turno}:orden:{orden.id}".encode()).digest()
-        if random.Random(int.from_bytes(h[:8], "big")).random() >= prob_demora(escenario, u, ge):
+        if random.Random(int.from_bytes(h[:8], "big")).random() >= prob_demora(escenario, u, ge, extra.get(u.bando, 0) if u else 0):
             quedan.append(orden)
             continue
         interferida = u is not None and ge.interferido(u)
@@ -297,6 +301,9 @@ def procesar_ordenes(
     unidades = {u.id: u for u in db.query(Unidad).filter(Unidad.escenario_id == escenario.id)}
     lista_unidades = list(unidades.values())
     obras = db.query(Obra).filter(Obra.escenario_id == escenario.id, Obra.expira_turno >= turno).all()
+    # puentes de infraestructura cortados: anulan el puente de la carretera en el movimiento terrestre
+    cortes = infra_mod.cortes(lista_unidades)
+    infra_antes = infra_mod.estado(lista_unidades)
     movidas: set[int] = set()
     dispararon: set[int] = set()
 
@@ -459,7 +466,7 @@ def procesar_ordenes(
                 aeronaves_mod.despegar_unidad(u)  # una orden de vuelo a una aeronave lista en tierra es el despegue
             if orden.tipo != "patrullar":
                 u.mision, u.mision_lat, u.mision_lon = "", None, None
-            mov = movimiento.simular(u, waypoints, terreno, clima, obras)
+            mov = movimiento.simular(u, waypoints, terreno, clima, obras + cortes)
             if mov.km_reales > 0:
                 movidas.add(u.id)
             con_orden_de_vuelo.add(u.id)
@@ -875,7 +882,8 @@ def procesar_ordenes(
                     escenario_id=escenario.id, turno=turno, tipo="logistica", bando_destino=u.bando,
                     descripcion=f"{u.nombre} aterrizo de emergencia en {base.nombre} sin combustible.",
                 ))
-    _reabastecer(lista_unidades, bit)
+    _reabastecer(lista_unidades, bit,
+                 {b: infra_mod.factor_combustible(lista_unidades, b) for b in ("azul", "rojo")})
     for u in lista_unidades:
         if u.tipo == "aerea" and u.estado == "activa" and not u.en_tierra and u.combustible <= 0:
             u.estado = "destruida"
@@ -931,5 +939,10 @@ def procesar_ordenes(
     for o in obras:
         if o.expira_turno <= turno:
             db.delete(o) if o in db else None
+
+    # la infraestructura que cambio en el turno (centrales, refinerias, comunicaciones, puentes): aviso a su bando
+    for bando, texto in infra_mod.avisos(infra_antes, infra_mod.estado(lista_unidades), lista_unidades):
+        db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="infraestructura", bando_destino=bando,
+                      descripcion=texto))
 
     return ordenes

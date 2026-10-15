@@ -65,6 +65,9 @@ class Clase:
     # ---- bases: existencias (ver engine/logistica.py) ----
     stock_max: float = 0.0  # existencias maximas de combustible y de municion (puntos; 100 = llenar una unidad)
     reposicion_turno: float = 0.0  # puntos que repone cada turno (depositos: la linea de abastecimiento)
+    # ---- infraestructura no militar (ver engine/infraestructura.py): "energia" | "combustible" | "comunicaciones" |
+    # "puente". Fija, sin armas ni sensores ni personal militar; su estado pesa en lo que el bando puede hacer ----
+    infraestructura: str = ""
 
 
 def _atk(t=1.0, a=1.0, n=1.0):
@@ -172,6 +175,24 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
           ("terrestre",), movilidad="fija", stock_max=3000.0, reposicion_turno=150.0),
     Clase("puerto", "Puerto / base naval", "base", "G", "IBN---", 0, 25, 6, 0, _atk(0.0, 0.0, 0.0), 1.0, "",
           ("naval",), movilidad="fija", stock_max=2000.0),
+    # ---- infraestructura no militar (objetivos que pesan en la conduccion; ver engine/infraestructura.py) ----
+    Clase("termoelectrica", "Central termoelectrica", "base", "G", "IUEF--", 0, 0, 0, 0, _atk(0.0, 0.0, 0.0), 0.9, "",
+          movilidad="fija", infraestructura="energia",
+          armamento="Genera electricidad con gas o fueloil. Si se la daña, los radares fijos del bando pierden alcance "
+                    "(trabajan con generadores de respaldo)"),
+    Clase("hidroelectrica", "Central hidroelectrica", "base", "G", "IUED--", 0, 0, 0, 0, _atk(0.0, 0.0, 0.0), 1.6, "",
+          movilidad="fija", infraestructura="energia",
+          armamento="Presa y casa de maquinas: genera electricidad. Muy robusta. Si se la daña, los radares fijos del "
+                    "bando pierden alcance"),
+    Clase("refineria", "Refineria", "base", "G", "IRP---", 0, 0, 0, 0, _atk(0.0, 0.0, 0.0), 0.8, "",
+          movilidad="fija", infraestructura="combustible",
+          armamento="Produce combustible. Si se la daña, los depositos del bando reponen menos combustible cada turno"),
+    Clase("centro_comunicaciones", "Centro de comunicaciones", "base", "G", "IUT---", 0, 0, 0, 0, _atk(0.0, 0.0, 0.0),
+          0.8, "", movilidad="fija", infraestructura="comunicaciones",
+          armamento="Antenas, enlaces y centrales. Si se lo daña, mas ordenes del bando no llegan a tiempo"),
+    Clase("puente", "Puente estrategico", "base", "G", "IT----", 0, 0, 0, 0, _atk(0.0, 0.0, 0.0), 1.2, "",
+          movilidad="fija", infraestructura="puente",
+          armamento="Por debajo del 50 % de fuerza queda cortado: ninguna unidad terrestre cruza por el"),
 ]}
 
 # Clase por defecto de cada tipo (compatibilidad con unidades creadas sin clase).
@@ -527,7 +548,7 @@ def como_dict(c: Clase) -> dict:
         "emisor": c.emisor, "escucha_km": c.escucha_km, "interferencia_km": c.interferencia_km, "dron": c.dron,
         "se_consume": c.se_consume, "celula": c.celula, "defensa_aerea": c.defensa_aerea, "stock_max": c.stock_max,
         "reposicion_turno": c.reposicion_turno, "misil": c.misil, "lanza_misiles": c.lanza_misiles,
-        "plazas_aeronaves": c.plazas_aeronaves, "embarcable": c.embarcable,
+        "plazas_aeronaves": c.plazas_aeronaves, "embarcable": c.embarcable, "infraestructura": c.infraestructura,
         "ataque_vs": dict(c.ataque_vs), "defensa": c.defensa,
         "foto": (FOTOS_CLASE.get(c.id) or {}).get("foto"), "credito": (FOTOS_CLASE.get(c.id) or {}).get("credito"),
     }

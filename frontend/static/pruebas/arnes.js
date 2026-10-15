@@ -112,6 +112,10 @@
     base(25, "Submarino Carite", "azul", "submarino", 10.58, -67.98, { velocidad_kmh: 35, alcance_km: 30, deteccion_km: 25 }),
     base(26, "Buque de desembarco Capana", "azul", "buque_desembarco", 10.60, -68.10, { velocidad_kmh: 35, alcance_km: 10, deteccion_km: 25 }),
     base(27, "Infantería de Marina 1", "azul", "infanteria", 10.60, -68.10, { transporte_id: 26 }),
+    // infraestructura (engine/infraestructura.py): una central dañada, un puente cortado y una central enemiga
+    base(30, "Hidroeléctrica José Antonio Páez", "azul", "hidroelectrica", 8.827, -70.523, { fuerza: 60 }),
+    base(31, "Puente sobre el río (ejemplo)", "azul", "puente", 8.6055, -70.585, { fuerza: 30, radio_km: 1 }),
+    base(32, "Central termoeléctrica roja (ejemplo)", "rojo", "termoelectrica", 8.78, -70.66),
   ];
   // perfil de vuelo de las aeronaves (engine/relieve.py): helicopteros rasantes, misiles siempre rasantes, el resto
   // medio; para variar el ejemplo, Flecha 1 patrulla en perfil alto y el caza rojo entra rasante
@@ -207,6 +211,7 @@
   ];
   let proximoGrafico = 5;
   let eventos = [
+    { id: 3, escenario_id: 1, turno: 3, tipo: "radar", descripcion: "AA Pesada 1 informa 1 contacto(s) nuevo(s): caza rasante a 19 km, rumbo 024°.", bando_destino: "azul" },
     { id: 2, escenario_id: 1, turno: 3, tipo: "clima", descripcion: "El clima cambia a lluvia.", bando_destino: "todos" },
     { id: 1, escenario_id: 1, turno: 2, tipo: "logistica", descripcion: "Caza R se quedo sin combustible lejos de una base aerea y se perdio.", bando_destino: "rojo" },
   ];
@@ -217,14 +222,88 @@
 
   // ------------------------------------------------------------------ vista por rol (como el servidor)
   const FACTOR_DET = { despejado: 1, nublado: 0.9, lluvia: 0.7, tormenta: 0.5 };
-  const OCULTOS = ["fuerza", "velocidad_kmh", "alcance_km", "deteccion_km", "combustible", "municion", "autonomia_km", "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves", "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id", "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios", "transporte_id"];
+  const OCULTOS = ["fuerza", "velocidad_kmh", "alcance_km", "deteccion_km", "combustible", "municion", "autonomia_km", "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves", "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id", "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios", "transporte_id", "personal_inicial", "personal_actual"];
   const km = (a, b) => Logica.distanciaKm(a.lat, a.lon, b.lat, b.lon);
 
+  // personal (backend/app/engine/personal.py), simplificado
+  const DOTACION = { equipo: 4, escuadra: 9, seccion: 30, peloton: 40, compania: 120, batallon: 500, regimiento: 1500, brigada: 3500 };
+  const POR_CLASE_P = { fragata: 180, patrullero: 35, destructor: 280, portaaviones: 4500, submarino: 35, buque_desembarco: 250, radar: 25, base_aerea: 600, deposito: 120, puerto: 500 };
+  const POR_AERONAVE = { caza: 1, ataque: 2, helicoptero: 4, helicoptero_artillado: 4, avion_ge: 6, alerta_temprana: 15, cisterna: 4 };
+  function dotacion(u, c) {
+    if (c.infraestructura || c.misil || c.dron) return 0;
+    if (c.tipo === "aerea") return (POR_AERONAVE[c.id] || 1) * (u.aeronaves || 1);
+    return POR_CLASE_P[c.id] ?? DOTACION[u.echelon || c.escalon] ?? 30;
+  }
   function completar(u) {
     const c = CAT.clases.find((x) => x.id === u.clase);
-    const rama = { terrestre: 0, aerea: 0, naval: 0, base: 0 };
-    void rama;
-    return { ...u, tipo: c.tipo, sidc: u.bando === "azul" ? c.sidc_azul : c.sidc_rojo, velocidad_kmh: c.velocidad_kmh, alcance_km: c.alcance_km, deteccion_km: c.deteccion_km, autonomia_km: c.autonomia_km };
+    const ini = dotacion(u, c);
+    return { ...u, tipo: c.tipo, sidc: u.bando === "azul" ? c.sidc_azul : c.sidc_rojo, velocidad_kmh: c.velocidad_kmh, alcance_km: c.alcance_km, deteccion_km: c.deteccion_km, autonomia_km: c.autonomia_km,
+      personal_inicial: ini, personal_actual: u.estado === "destruida" ? 0 : Math.round((ini * (u.fuerza ?? 100)) / 100), radio_km: u.radio_km ?? null };
+  }
+  const RAMA_P = { terrestre: "Fuerzas terrestres", aerea: "Aviación (tripulaciones)", naval: "Fuerzas navales", base: "Bases y sensores" };
+  function personalDe(todas, bando) {
+    const ramas = {};
+    for (const u of todas) {
+      if (u.bando !== bando || !u.personal_inicial) continue;
+      const r = (ramas[u.tipo] ||= { rama: u.tipo, nombre: RAMA_P[u.tipo], inicial: 0, actual: 0, unidades: 0 });
+      r.inicial += u.personal_inicial; r.actual += u.personal_actual; r.unidades += 1;
+    }
+    const filas = ["terrestre", "aerea", "naval", "base"].filter((k) => ramas[k]).map((k) => {
+      const r = ramas[k]; return { ...r, bajas: r.inicial - r.actual, operativo_pct: Math.round((1000 * r.actual) / r.inicial) / 10 };
+    });
+    const ini = filas.reduce((a, r) => a + r.inicial, 0), act = filas.reduce((a, r) => a + r.actual, 0);
+    return { ramas: filas, inicial: ini, actual: act, bajas: ini - act, operativo_pct: ini ? Math.round((1000 * act) / ini) / 10 : null };
+  }
+  // infraestructura (engine/infraestructura.py), simplificada
+  const CATS = [["energia", "Energía eléctrica"], ["combustible", "Refinación de combustible"], ["comunicaciones", "Comunicaciones"], ["puente", "Puentes"]];
+  function infraDe(todas, bando) {
+    const filas = [];
+    for (const [cat, nombre] of CATS) {
+      const propias = todas.filter((u) => u.bando === bando && (CAT.clases.find((c) => c.id === u.clase) || {}).infraestructura === cat);
+      if (!propias.length) continue;
+      const cap = propias.reduce((a, u) => a + (u.estado === "destruida" ? 0 : u.fuerza), 0) / propias.length;
+      const cortados = propias.filter((u) => cat === "puente" && u.fuerza < 50);
+      const efecto = cat === "energia" ? `radares fijos al ${Math.round(50 + cap / 2)} % de su alcance`
+        : cat === "combustible" ? `los depósitos reponen el ${Math.round(25 + (cap * 3) / 4)} % del combustible`
+        : cat === "comunicaciones" ? `+${Math.round(30 * (1 - cap / 100))} % de órdenes que no llegan a tiempo`
+        : cortados.length ? `${cortados.length} cortado(s): ${cortados.map((u) => u.nombre).join(", ")}` : "todos transitables";
+      filas.push({ categoria: cat, nombre, capacidad_pct: Math.round(cap * 10) / 10, efecto,
+        instalaciones: propias.map((u) => ({ id: u.id, nombre: u.nombre, clase: u.clase, fuerza: u.fuerza, estado: cortados.includes(u) ? "cortado" : u.estado })) });
+    }
+    return filas;
+  }
+  // cuadro radar (engine/vision.py, cuadro_sensores), simplificado: lo que cae dentro de la deteccion o la escucha
+  function rumbo(a, b) {
+    const r = Math.PI / 180;
+    const y = Math.sin((b.lon - a.lon) * r) * Math.cos(b.lat * r);
+    const x = Math.cos(a.lat * r) * Math.sin(b.lat * r) - Math.sin(a.lat * r) * Math.cos(b.lat * r) * Math.cos((b.lon - a.lon) * r);
+    return Math.round(((Math.atan2(y, x) / r) + 360) % 360);
+  }
+  function sensoresDe(todas, bando) {
+    const f = FACTOR_DET[ESC.clima];
+    return todas.filter((s) => s.bando === bando && s.estado === "activa" && !s.transporte_id && (() => {
+      const c = CAT.clases.find((x) => x.id === s.clase); return c.emisor || c.solo_aereo || c.escucha_km > 0;
+    })()).map((s) => {
+      const c = CAT.clases.find((x) => x.id === s.clase);
+      const contactos = todas.filter((e) => e.bando !== bando && e.estado !== "destruida" && e.id !== 14 && !e.transporte_id
+        && (km(s, e) <= s.deteccion_km * f || (c.escucha_km && (CAT.clases.find((x) => x.id === e.clase) || {}).emisor && km(s, e) <= c.escucha_km)))
+        .map((e) => ({ unidad_id: e.id, nombre: e.nombre, tipo: e.tipo, clase: e.clase, distancia_km: Math.round(km(s, e) * 10) / 10,
+          rumbo: rumbo(s, e), en_vuelo: e.tipo === "aerea" && !e.en_tierra, perfil: e.tipo === "aerea" && !e.en_tierra ? e.perfil_actual : null,
+          por_escucha: km(s, e) > s.deteccion_km * f }))
+        .sort((a, b) => a.distancia_km - b.distancia_km);
+      return { unidad_id: s.id, nombre: s.nombre, clase: s.clase, lat: s.lat, lon: s.lon, bando, emisor: !!c.emisor, emitiendo: s.emitiendo !== false,
+        interferido: false, energia_pct: s.clase === "radar" ? 100 : null, contactos };
+    });
+  }
+  function marcadorDe() {
+    const m = { azul: { objetivos: 30, bajas: 4, total: 34 }, rojo: { objetivos: 0, bajas: 3, total: 3 } };
+    for (const b of BANDOS) {
+      const propios = objetivos.filter((o) => o.bando === b);
+      const cumplidos = propios.filter((o) => o.estado === "cumplido").length;
+      Object.assign(m[b], { asignados: propios.length, cumplidos, fallidos: propios.filter((o) => o.estado === "fallido").length,
+        cumplidos_pct: propios.length ? Math.round((1000 * cumplidos) / propios.length) / 10 : null });
+    }
+    return m;
   }
 
   function claseTerreno(lat) { return lat >= 8.60 && lat <= 8.61 ? "rio" : lat < 8.4 ? "agua" : "llano"; }
@@ -260,7 +339,10 @@
       misiones: misiones.filter((mi) => !esBando || mi.bando === rol),
       graficos: graficos.filter((g) => g.bando === "todos" || !esBando || g.bando === rol),
       objetivos: objetivos.filter((o) => !esBando || o.bando === rol),
-      marcador: { azul: { objetivos: 30, bajas: 4, total: 34 }, rojo: { objetivos: 0, bajas: 3, total: 3 } },
+      marcador: marcadorDe(),
+      personal: Object.fromEntries((esBando ? [rol] : BANDOS).map((b) => [b, personalDe(todas, b)])),
+      infraestructura: Object.fromEntries((esBando ? [rol] : BANDOS).map((b) => [b, infraDe(todas, b)])),
+      sensores: (esBando ? [rol] : BANDOS).flatMap((b) => sensoresDe(todas, b)),
       ordenes: ordenes.filter((o) => propiasIds.has(o.unidad_id) && ids.has(o.unidad_id)),
       eventos: eventos.filter((e) => !esBando || e.bando_destino === "todos" || e.bando_destino === rol),
     };
@@ -575,7 +657,15 @@
     if (path === "/api/escenarios/1/ordenes/previsualizar") {
       const u = UNIDADES.find((x) => x.id === cuerpo.unidad_id);
       const ult = cuerpo.waypoints[cuerpo.waypoints.length - 1];
-      return json({ ruta: [[u.lat, u.lon], ...cuerpo.waypoints], destino: ult, km: 14.2, combustible_restante: 41.3, llega: true, nota: "" });
+      // tiempo de todo el recorrido (engine/movimiento.py, tiempo_recorrido), en linea recta sobre llano
+      let total = 0, desde = u;
+      for (const [la, lo] of cuerpo.waypoints) { total += km(desde, { lat: la, lon: lo }); desde = { lat: la, lon: lo }; }
+      const vel = (CAT.clases.find((c) => c.id === u.clase) || {}).velocidad_kmh || 30;
+      const horas = total / vel;
+      const llegada = ESC.hora_inicio_min + (ESC.turno_actual - 1) * 60 + Math.round(horas * 60);
+      const tiempo = { km: Math.round(total * 10) / 10, horas: Math.round(horas * 100) / 100, turnos: Math.max(1, Math.ceil(horas - 1e-9)), bloqueo: "",
+        km_combustible: 250, llegada: `${String(Math.floor((llegada % 1440) / 60)).padStart(2, "0")}:${String(llegada % 60).padStart(2, "0")}`, llegada_dias: 0 };
+      return json({ ruta: [[u.lat, u.lon], ...cuerpo.waypoints], destino: ult, km: 14.2, combustible_restante: 41.3, llega: horas <= 1, nota: "", tiempo });
     }
     if (path === "/api/escenarios/1/ordenes/lote" && metodo === "POST") {
       const resultados = [];

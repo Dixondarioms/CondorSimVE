@@ -62,12 +62,22 @@ def evaluar(db: Session, escenario: Escenario) -> list[Objetivo]:
 
 
 def marcador(db: Session, escenario: Escenario) -> dict:
-    """{"azul": {"objetivos", "bajas", "total"}, "rojo": {...}}"""
+    """{"azul": {"objetivos", "bajas", "total", "cumplidos", "fallidos", "asignados", "cumplidos_pct"}, "rojo": {...}}
+
+    "objetivos" son los puntos de los objetivos cumplidos; "cumplidos_pct", el porcentaje de los objetivos asignados
+    al bando que ya cumplio (None si no tiene objetivos)."""
     objetivos = {b: 0 for b in BANDOS}
+    cuenta = {b: {"cumplidos": 0, "fallidos": 0, "asignados": 0} for b in BANDOS}
     infligido = {b: 0.0 for b in BANDOS}
-    for o in db.query(Objetivo).filter(Objetivo.escenario_id == escenario.id, Objetivo.estado == "cumplido"):
-        if o.bando in objetivos:
+    for o in db.query(Objetivo).filter(Objetivo.escenario_id == escenario.id):
+        if o.bando not in objetivos:
+            continue
+        cuenta[o.bando]["asignados"] += 1
+        if o.estado == "cumplido":
             objetivos[o.bando] += o.puntos
+            cuenta[o.bando]["cumplidos"] += 1
+        elif o.estado == "fallido":
+            cuenta[o.bando]["fallidos"] += 1
     for c in db.query(Combate).filter(Combate.escenario_id == escenario.id):
         if c.atacante_bando in infligido and c.defensor_bando != c.atacante_bando:
             infligido[c.atacante_bando] += c.perdida_defensor
@@ -77,6 +87,8 @@ def marcador(db: Session, escenario: Escenario) -> dict:
         b: {
             "objetivos": objetivos[b], "bajas": int(infligido[b] // FUERZA_POR_PUNTO),
             "total": objetivos[b] + int(infligido[b] // FUERZA_POR_PUNTO),
+            **cuenta[b],
+            "cumplidos_pct": round(100 * cuenta[b]["cumplidos"] / cuenta[b]["asignados"], 1) if cuenta[b]["asignados"] else None,
         }
         for b in BANDOS
     }

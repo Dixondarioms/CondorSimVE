@@ -151,11 +151,13 @@
     fragata: "naval", patrullero: "naval", destructor: "naval", portaaviones: "naval", submarino: "naval",
     buque_desembarco: "naval", lanzador_misiles: "artilleria", misil_crucero: "artilleria",
     base_aerea: "bases", deposito: "bases", puerto: "bases",
+    termoelectrica: "infraestructura", hidroelectrica: "infraestructura", refineria: "infraestructura",
+    centro_comunicaciones: "infraestructura", puente: "infraestructura",
   };
   const RAMA_DE_TIPO = { terrestre: "infanteria", aerea: "aviacion", naval: "naval", base: "bases" };
   const RAMAS = [
     ["infanteria", "Infantería"], ["blindados", "Blindados"], ["artilleria", "Artillería"],
-    ["aviacion", "Aviación"], ["naval", "Naval"], ["bases", "Bases y logística"],
+    ["aviacion", "Aviación"], ["naval", "Naval"], ["bases", "Bases y logística"], ["infraestructura", "Infraestructura"],
   ];
   const ramaDe = (u) => RAMA_DE_CLASE[u.clase] || RAMA_DE_TIPO[u.tipo] || "infanteria";
 
@@ -216,6 +218,9 @@
   const claseBarra = (v) => (v === null || v === undefined ? "oculto" : v < 30 ? "critico" : v < 60 ? "bajo" : "");
 
   /** Estado legible de una unidad segun sus datos y las ordenes pendientes de este turno. */
+  // infraestructura no militar (backend/app/engine/infraestructura.py): un puente bajo el 50 % queda cortado
+  const INFRAESTRUCTURA = ["termoelectrica", "hidroelectrica", "refineria", "centro_comunicaciones", "puente"];
+
   function estadoUnidad(u, ordenesPendientes = []) {
     if (esMisil(u) && u.estado === "activa") return { texto: "Misil en vuelo", clase: "ok" };
     if (embarcada(u) && u.estado === "activa") return { texto: "A bordo", clase: "ok" };
@@ -229,6 +234,11 @@
         patrullar: ["Orden: patrullar", "mov"], aterrizar: ["Orden: aterrizar", "ok"], despegar: ["Orden: despegar", "mov"],
       }[orden.tipo];
       if (t) return { texto: t[0], clase: t[1] };
+    }
+    if (INFRAESTRUCTURA.includes(u.clase)) {
+      if (u.clase === "puente" && u.fuerza < 50) return { texto: "Cortado", clase: "fuego" };
+      if (u.fuerza < 100) return { texto: `Dañada (${Math.round(u.fuerza)} %)`, clase: "mov" };
+      return { texto: "Operativa", clase: "ok" };
     }
     if (u.tipo === "base") {
       if (u.stock_combustible === 0 || u.stock_municion === 0) return { texto: "Base sin existencias", clase: "fuego" };

@@ -281,7 +281,7 @@ def construir(salida: Path, img: Path) -> None:
           Paragraph("MANUAL DE REFERENCIA", ParagraphStyle("mu", parent=S["subtitulo"], fontName="Texto-B", fontSize=18, textColor=AZUL)),
           Spacer(1, 8), Paragraph("Qué es · cómo se hizo · instalación · cómo funciona", S["subtitulo"]), Spacer(1, 28)]
     h += credito_portada()
-    h += [Spacer(1, 10), Paragraph(f"{fecha} · versión del manual 1.5", S["subtitulo"])]
+    h += [Spacer(1, 10), Paragraph(f"{fecha} · versión del manual 1.6", S["subtitulo"])]
     h.append(PageBreak())
 
     # ---- indice
@@ -638,6 +638,34 @@ def construir(salida: Path, img: Path) -> None:
             "interdicción en los llanos y defensa de la costa oriental), con el bando rojo conducido por el simulador; la lista de "
             "<i>Desde plantilla…</i> las distingue con una etiqueta. Es una conducta didáctica y legible, no óptima: sirve de oponente, no "
             "reemplaza al análisis del instructor.")]
+    h += [H2("8.8 Infraestructura no militar"),
+          P("Cinco clases fijas de un bando (<font face='Mono'>backend/app/engine/infraestructura.py</font>): central termoeléctrica, "
+            "central hidroeléctrica, refinería, centro de comunicaciones y puente estratégico. No se mueven, no combaten ni detectan y no "
+            "tienen personal militar; se las ataca como a una base y pueden ser objetivo. La <b>capacidad</b> de cada categoría es la fuerza "
+            "media de las instalaciones del bando (destruida = 0); si el bando no tiene ninguna, la categoría no le afecta."),
+          Tbl(["Categoría", "Efecto con capacidad c (0 a 1)", "Mínimo"], [
+              ["Energía (centrales)", "Alcance de los radares de vigilancia fijos × (0,5 + 0,5·c)", "×0,5"],
+              ["Combustible (refinerías)", "Reposición de combustible de los depósitos × (0,25 + 0,75·c)", "×0,25"],
+              ["Comunicaciones", "Probabilidad de demora de cada orden + 30·(1 − c) puntos (se suma a la del instructor)", "+30 %"],
+              ["Puentes", "Con fuerza < 50 el puente queda cortado en su radio: la carretera no da paso sobre río o agua", "cortado"],
+          ], [3.8 * cm, ANCHO_TEXTO - 5.8 * cm, 2.0 * cm]),
+          P("Los cambios de capacidad de 5 puntos o más y cada puente que se corta se informan al bando al cerrar el turno. La capa "
+            "<b>Infraestructura</b> del mapa trae 40 instalaciones reales de Venezuela ubicadas con OpenStreetMap "
+            "(<font face='Mono'>tools/preparar_infraestructura.py</font>): 21 centrales, 4 refinerías, 4 centros de comunicaciones y 11 "
+            "puentes, con su capacidad y, en los puentes, el largo; el instructor las coloca en el ejercicio con un clic."),
+          H2("8.9 Personal"),
+          P("Cada unidad tiene una dotación (<font face='Mono'>engine/personal.py</font>): la que fija el instructor o, por defecto, por "
+            "escalón en las terrestres (compañía 120, batallón 500, brigada 3 500…), por tripulación en las aeronaves (caza 1, ataque 2, "
+            "helicóptero 4, alerta temprana 15) y por buque o instalación (fragata 180, destructor 280, portaaviones 4 500, base aérea "
+            "600). Los efectivos actuales siguen a la fuerza; la diferencia son las bajas. Los drones, los misiles y la infraestructura "
+            "civil no llevan personal. La pestaña Situación resume efectivos, bajas y porcentaje operativo por rama; los del enemigo no se "
+            "conocen."),
+          H2("8.10 Cuadro radar y aviso de contactos"),
+          P("Para cada sensor activo del bando (clases con radar, vigilancia aérea o escucha) el estado incluye lo que detecta en ese "
+            "momento con las mismas reglas de la niebla de guerra: distancia, rumbo desde el sensor, cota si vuela y si lo localizó por su "
+            "emisión. Al cerrar cada turno, cada sensor informa al bando los enemigos que este no tenía a la vista el turno anterior "
+            "(evento «radar»). La previsualización de una orden de mover también da el <b>tiempo de todo el recorrido</b> (mismas "
+            "reglas de terreno, carreteras, ríos, clima y peso), los turnos y la hora simulada de llegada.")]
     h += Img(img, "cap_ia_noche.jpg", "Figura 4. Un alumno del bando azul contra la IA a las 23:00: el mapa oscurecido, la hora y el periodo en Estado del escenario y el bando rojo «IA · LISTO».")
 
     # ---- 9 aviacion
@@ -751,7 +779,7 @@ def construir(salida: Path, img: Path) -> None:
           Bul(["Más plantillas de escenario por curso.", "Carreteras terciarias y puentes etiquetados de OpenStreetMap."])]
 
     # ---- 14 novedades
-    h += H1("14. Novedades de las versiones 1.1 a 1.5")
+    h += H1("14. Novedades de las versiones 1.1 a 1.6")
     h += [P("Resumen de lo incorporado después de la primera edición del manual; cada punto está explicado en su capítulo."),
           Tbl(["Novedad", "Dónde", "Qué aporta"], [
               ["Meteorología por zonas", "Consola → Meteorología por zonas; capa Meteorología",
@@ -813,6 +841,14 @@ def construir(salida: Path, img: Path) -> None:
                "El instructor define los tipos de unidad de la AMB (nombre, clase y valores de juego) y los usa al instante al agregar unidades."],
               ["Indicadores doctrinales y calificación", "Informe → Rúbrica; Comparar con otros ejercicios",
                "Reacción, conocimiento del enemigo, logística, coordinación, economía de fuerzas, objetivos e iniciativa, con nota de 1 a 20 y comparación entre ejercicios y por alumno."],
+              ["Infraestructura no militar", "Capa Infraestructura; pestaña Situación; plantillas contra la IA",
+               "Centrales, refinerías, centros de comunicaciones y puentes reales que se atacan o protegen y pesan en la operación: radares, combustible, órdenes y movilidad."],
+              ["Personal", "Pestaña Situación; ficha de la unidad; Agregar unidad → Efectivos",
+               "Dotación de cada unidad, efectivos actuales y bajas por rama."],
+              ["Cuadro radar y aviso automático", "Pestaña Situación; alertas",
+               "Lo que detecta cada sensor, con distancia y rumbo; los contactos nuevos se informan solos al bando y se pueden difundir a la red."],
+              ["Porcentaje de objetivos y tiempo de recorrido", "Tarjeta Objetivos y puntaje; vista previa de Mover",
+               "Objetivos cumplidos sobre asignados de cada bando; duración total, turnos y hora de llegada de una ruta."],
               ["Satélite de Venezuela a zoom 13", "Capa Satélite; tools/preparar_satelite.py",
                "El doble de nitidez al acercar el mapa (unos 19 m por píxel): calles, pistas y plataformas se distinguen mejor."],
           ], [3.6 * cm, 5.2 * cm, ANCHO_TEXTO - 8.8 * cm])]

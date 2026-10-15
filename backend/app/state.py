@@ -19,7 +19,9 @@ from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import misiones as misiones_mod
 from app.engine import objetivos as objetivos_mod
-from app.engine.vision import unidades_visibles
+from app.engine import infraestructura as infra_mod
+from app.engine import personal as personal_mod
+from app.engine.vision import cuadro_sensores, unidades_visibles
 from app.models.contacto import Contacto
 from app.models.escenario import Escenario
 from app.models.evento import Evento
@@ -38,7 +40,7 @@ CAMPOS_OCULTOS = (
     "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves",
     "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id",
     "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios",
-    "transporte_id",
+    "transporte_id", "personal_inicial", "personal_actual",
 )
 CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct", "com_ordenes_pct")
 
@@ -138,6 +140,17 @@ def estado_para(
                 d[oculto] = None
         unidades_out.append(d)
 
+    # personal, infraestructura y cuadro radar: cada bando ve los suyos; instructor y observador, los de ambos
+    todas = db.query(Unidad).filter(Unidad.escenario_id == escenario.id).all()
+    bandos_propios = [rol] if es_bando(rol) else list(BANDOS)
+    clima_ctx = clima_mod.contexto(db, escenario)
+    ge_ctx = ge_mod.contexto(db, escenario)
+    sensores = []
+    for b in bandos_propios:
+        for fila in cuadro_sensores(todas, b, terreno, clima_ctx, ge_ctx):
+            fila["bando"] = b
+            sensores.append(fila)
+
     esc = EscenarioOut.model_validate(escenario).model_dump(mode="json")
     if rol != "instructor":
         for k in CAMPOS_SOLO_INSTRUCTOR:
@@ -164,6 +177,9 @@ def estado_para(
         "misiones": [misiones_mod.serializar(m) for m in misiones_mod.visibles_para(db, escenario, rol)],
         "graficos": [serializar_grafico(g) for g in graficos],
         "objetivos": objetivos_para(db, escenario, rol),
+        "personal": {b: personal_mod.resumen(todas, b) for b in bandos_propios},
+        "infraestructura": {b: infra_mod.resumen(todas, b) for b in bandos_propios},
+        "sensores": sensores,
         "marcador": objetivos_mod.marcador(db, escenario),
         "ordenes": [OrdenOut.model_validate(o).model_dump() for o in ordenes],
         "eventos": [EventoOut.model_validate(e).model_dump() for e in eventos],

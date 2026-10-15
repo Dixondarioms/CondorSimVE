@@ -63,6 +63,8 @@ class UnidadPlantilla:
     en_tierra: bool = False
     base: str | None = None
     perfil_vuelo: str | None = None  # aeronaves: "alto" | "medio" | "rasante" (None = el de su clase)
+    personal: int | None = None  # efectivos al inicio (None = los de su clase; ver engine/personal.py)
+    radio_km: float | None = None  # puentes: tramo que corta su destruccion
 
 
 @dataclass(frozen=True)
@@ -269,8 +271,10 @@ _DEFENSA_CENTRAL = Plantilla(
         "El bando azul defiende la Base Aérea El Libertador y la región Maracay-Valencia de un ataque aeronaval que "
         "llega desde el Caribe: un portaaviones con su escolta, cazas embarcados, guerra electrónica y drones armados. "
         "Ejercita la alerta temprana con el radar de montaña, el empleo de los Su-30 y F-16, la defensa antiaérea por "
-        "capas y la protección de la base. El bando rojo lo conduce el adversario automático (puede apagarse en "
-        "Consola → Dirección del ejercicio). Fuerzas genéricas, sin pretensión de representar a un país real."
+        "capas y la protección de la base y de la infraestructura de la región: si el enemigo daña Planta Centro, los "
+        "radares fijos pierden alcance; si daña la refinería El Palito, los depósitos reponen menos combustible. El "
+        "bando rojo lo conduce el adversario automático (puede apagarse en Consola → Dirección del ejercicio). Fuerzas "
+        "genéricas, sin pretensión de representar a un país real."
     ),
     clima="despejado", hora_inicio_min=300, nacion_azul="venezuela", nacion_rojo="", ia_rojo=True, dia_noche=True,
     unidades=(
@@ -283,6 +287,10 @@ _DEFENSA_CENTRAL = Plantilla(
         UnidadPlantilla("Guerra electrónica central", "azul", "guerra_electronica", 10.22, -67.48),
         UnidadPlantilla("Puerto Cabello", "azul", "puerto", 10.48, -68.01),
         UnidadPlantilla("Patrullero (Puerto Cabello)", "azul", "patrullero", 10.62, -68.05),
+        # infraestructura real de la region (OpenStreetMap; ver engine/infraestructura.py)
+        UnidadPlantilla("Planta Centro (Morón)", "azul", "termoelectrica", 10.49125, -68.15567),
+        UnidadPlantilla("Refinería El Palito", "azul", "refineria", 10.48087, -68.12201),
+        UnidadPlantilla("Depósito logístico central", "azul", "deposito", 10.25, -67.60),
         UnidadPlantilla("Portaaviones rojo", "rojo", "portaaviones", 11.80, -67.90),
         UnidadPlantilla("Destructor de escolta rojo", "rojo", "destructor", 11.50, -68.30),
         _grupo("Cazas embarcados 1", "rojo", "caza_embarcado", 4, 11.20, -67.60),
@@ -296,6 +304,9 @@ _DEFENSA_CENTRAL = Plantilla(
                           unidad="Radar de montaña (Cordillera de la Costa)", hasta_turno=8),
         ObjetivoPlantilla("azul", "destruir", "Hundir el portaaviones", 40, unidad="Portaaviones rojo"),
         ObjetivoPlantilla("rojo", "destruir", "Neutralizar El Libertador", 40, unidad="Base Aérea El Libertador"),
+        ObjetivoPlantilla("rojo", "destruir", "Dejar sin energía la región: Planta Centro", 25, unidad="Planta Centro (Morón)"),
+        ObjetivoPlantilla("rojo", "destruir", "Cortar el combustible: refinería El Palito", 20, unidad="Refinería El Palito"),
+        ObjetivoPlantilla("azul", "proteger", "Mantener Planta Centro", 20, unidad="Planta Centro (Morón)", hasta_turno=8),
         ObjetivoPlantilla("rojo", "destruir", "Cegar el radar de montaña", 20, unidad="Radar de montaña (Cordillera de la Costa)"),
     ),
 )
@@ -342,8 +353,9 @@ _COSTA_ORIENTAL = Plantilla(
         "Una fuerza anfibia roja (dos buques de desembarco con fragatas de escolta y helicópteros) se aproxima a "
         "Barcelona y Puerto La Cruz. El bando azul defiende la costa con misiles costeros, patrulleros, infantería "
         "de marina, un radar y aviación desde Barcelona. Ejercita la defensa de costa, el ataque a la fuerza naval "
-        "antes del desembarco y la defensa de la playa. El bando rojo lo conduce el adversario automático. Fuerzas "
-        "genéricas, sin pretensión de representar a un país real."
+        "antes del desembarco y la defensa de la playa y de la refinería de Puerto La Cruz, cuyo daño deja a los "
+        "depósitos con menos combustible. El bando rojo lo conduce el adversario automático. Fuerzas genéricas, sin "
+        "pretensión de representar a un país real."
     ),
     clima="despejado", hora_inicio_min=240, nacion_azul="venezuela", nacion_rojo="", ia_rojo=True, dia_noche=True,
     unidades=(
@@ -356,6 +368,8 @@ _COSTA_ORIENTAL = Plantilla(
         UnidadPlantilla("Antiaérea costera", "azul", "antiaerea", 10.08, -64.70),
         UnidadPlantilla("Puerto de Puerto La Cruz", "azul", "puerto", 10.21, -64.63),
         UnidadPlantilla("Patrullero oriental", "azul", "patrullero", 10.35, -64.50),
+        UnidadPlantilla("Refinería de Puerto La Cruz", "azul", "refineria", 10.22075, -64.62064),
+        UnidadPlantilla("Depósito logístico oriental", "azul", "deposito", 10.10, -64.60),
         UnidadPlantilla("Buque de desembarco rojo 1", "rojo", "buque_desembarco", 10.45, -64.55),
         UnidadPlantilla("Buque de desembarco rojo 2", "rojo", "buque_desembarco", 10.55, -64.30),
         UnidadPlantilla("Fragata de escolta roja 1", "rojo", "fragata", 10.70, -64.70),
@@ -369,6 +383,10 @@ _COSTA_ORIENTAL = Plantilla(
         ObjetivoPlantilla("azul", "destruir", "Hundir el buque de desembarco 1", 30, unidad="Buque de desembarco rojo 1"),
         ObjetivoPlantilla("azul", "destruir", "Hundir el buque de desembarco 2", 30, unidad="Buque de desembarco rojo 2"),
         ObjetivoPlantilla("azul", "proteger", "Mantener la batería costera", 20, unidad="Batería de misiles costeros", hasta_turno=8),
+        ObjetivoPlantilla("rojo", "destruir", "Cortar el combustible: refinería de Puerto La Cruz", 20,
+                          unidad="Refinería de Puerto La Cruz"),
+        ObjetivoPlantilla("azul", "proteger", "Mantener la refinería de Puerto La Cruz", 15,
+                          unidad="Refinería de Puerto La Cruz", hasta_turno=8),
     ),
 )
 
@@ -412,6 +430,7 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
         )
         if u.perfil_vuelo and u.perfil_vuelo in relieve.perfiles_permitidos(unidad):
             unidad.perfil_vuelo = u.perfil_vuelo
+        unidad.personal, unidad.radio_km = u.personal, u.radio_km
         for campo in ("combustible", "municion", "stock_combustible", "stock_municion"):
             valor = getattr(u, campo)
             if valor is not None:
@@ -515,6 +534,10 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
         }
         if u.tipo == "aerea" and u.perfil_vuelo:
             d["perfil_vuelo"] = u.perfil_vuelo
+        if u.personal is not None:
+            d["personal"] = int(u.personal)
+        if u.radio_km is not None:
+            d["radio_km"] = round(float(u.radio_km), 3)
         if con_estado:
             d.update({c: round(float(getattr(u, c)), 2) for c in _CAMPOS_ESTADO})
         if u.en_tierra and u.base_id in {f.id for f in filas}:
@@ -542,6 +565,20 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
         "ia_azul": bool(esc.ia_azul), "ia_rojo": bool(esc.ia_rojo), "dia_noche": bool(esc.dia_noche),
         "unidades": unidades, "objetivos": objetivos,
     }
+
+
+def _entero_opcional(v) -> int | None:
+    try:
+        return None if v is None else max(0, min(200000, int(v)))
+    except (TypeError, ValueError):
+        raise PlantillaInvalida("personal: indique un numero entero") from None
+
+
+def _radio_opcional(v) -> float | None:
+    try:
+        return None if v is None else max(0.05, min(20.0, float(v)))
+    except (TypeError, ValueError):
+        raise PlantillaInvalida("radio_km: indique un numero") from None
 
 
 def desde_dict(datos: dict) -> Plantilla:
@@ -582,6 +619,7 @@ def desde_dict(datos: dict) -> Plantilla:
             stock_combustible=pct("stock_combustible"), stock_municion=pct("stock_municion"),
             en_tierra=bool(d.get("en_tierra")), base=d.get("base") or None,
             perfil_vuelo=d.get("perfil_vuelo") if d.get("perfil_vuelo") in relieve.PERFILES else None,
+            personal=_entero_opcional(d.get("personal")), radio_km=_radio_opcional(d.get("radio_km")),
         ))
     objetivos: list[ObjetivoPlantilla] = []
     for d in datos.get("objetivos") or []:

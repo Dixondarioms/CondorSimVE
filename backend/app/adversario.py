@@ -65,7 +65,9 @@ NIVELES = {
 }
 PRIORIDAD = {"antiaerea": 1.6, "radar": 1.5, "guerra_electronica": 1.4, "lanzador_misiles": 1.4, "base_aerea": 1.3,
              "portaaviones": 1.3, "destructor": 1.2, "fragata": 1.2, "artilleria": 1.2, "caza": 1.2,
-             "avion_ge": 1.3, "alerta_temprana": 1.4, "cisterna": 1.3}
+             "avion_ge": 1.3, "alerta_temprana": 1.4, "cisterna": 1.3,
+             # infraestructura: pesa en la conduccion del enemigo (engine/infraestructura.py)
+             "centro_comunicaciones": 1.3, "termoelectrica": 1.2, "refineria": 1.2, "puente": 1.1, "hidroelectrica": 1.0}
 
 
 def _rumbo(lat1, lon1, lat2, lon2) -> float:

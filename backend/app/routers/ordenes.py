@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app import auth, schemas, state
 from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
-from app.engine import catalogo, geo, movimiento, puestos
+from app.engine import catalogo, geo, infraestructura, movimiento, puestos
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import misiles as misiles_mod
@@ -271,8 +271,18 @@ def previsualizar(
     combustible incluidos), sin emitir la orden."""
     unidad = _unidad_propia(db, esc, payload.unidad_id, usuario)
     _validar_waypoints(payload.waypoints)
-    mov = movimiento.simular(unidad, [list(w) for w in payload.waypoints], get_terreno(), clima_mod.contexto(db, esc))
+    obras = _obras_y_cortes(db, esc)
+    clima = clima_mod.contexto(db, esc)
+    wps = [list(w) for w in payload.waypoints]
+    mov = movimiento.simular(unidad, wps, get_terreno(), clima, obras)
+    # tiempo de TODO el recorrido (no solo este turno): horas, turnos y hora simulada de llegada
+    tiempo = movimiento.tiempo_recorrido(unidad, wps, get_terreno(), clima, obras)
+    if tiempo["horas"] and not tiempo["bloqueo"]:
+        llegada = (esc.hora_inicio_min or 0) + (esc.turno_actual - 1) * 60 + round(tiempo["horas"] * 60)
+        tiempo["llegada"] = f"{llegada % 1440 // 60:02d}:{llegada % 60:02d}"
+        tiempo["llegada_dias"] = llegada // 1440 - ((esc.hora_inicio_min or 0) + (esc.turno_actual - 1) * 60) // 1440
     return {
+        "tiempo": tiempo,
         "ruta": mov.ruta,
         "destino": [mov.lat, mov.lon],
         "km": round(mov.km_reales, 1),
@@ -294,8 +304,14 @@ def trazar_ruta(
     vigentes del bando, sin emitir la orden (el alumno la revisa y la emite como un "mover")."""
     unidad = _unidad_propia(db, esc, payload.unidad_id, usuario)
     _validar_waypoints([payload.destino])
+    return rutas_mod.ruta(unidad, list(payload.destino), get_terreno(), _obras_y_cortes(db, esc))
+
+
+def _obras_y_cortes(db: Session, esc: Escenario) -> list:
+    """Obras vigentes de los ingenieros y puentes de infraestructura cortados (los conoce todo el mundo)."""
     obras = db.query(Obra).filter(Obra.escenario_id == esc.id, Obra.expira_turno >= esc.turno_actual).all()
-    return rutas_mod.ruta(unidad, list(payload.destino), get_terreno(), obras)
+    unidades = db.query(Unidad).filter(Unidad.escenario_id == esc.id, Unidad.tipo == "base").all()
+    return obras + infraestructura.cortes(unidades)
 
 
 @router.delete("/{orden_id}")

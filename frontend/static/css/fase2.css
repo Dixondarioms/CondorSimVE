@@ -428,3 +428,39 @@ table tr.fila-nota td { font-weight: 700; }
 #esc-hora.periodo-crepusculo { color: #ffb86b; }
 /* plantillas contra la IA: etiqueta visible en la lista de Desde plantilla */
 .etiqueta-ia { display: inline-block; margin: 4px 0 0 6px; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; color: #ffd27a; background: rgba(255, 183, 3, .14); border: 1px solid rgba(255, 183, 3, .45); }
+
+/* pestañas: Fuerzas, Situación y (instructor) Consola */
+.pestanas { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 1fr; }
+.pestanas button[hidden] { display: none; }
+/* pestaña Situación: cuadro radar, personal e infraestructura */
+#pest-situacion .sensor { border: 1px solid var(--borde); border-radius: var(--radio); padding: 6px 8px; margin: 6px 0; background: rgba(255, 255, 255, .02); }
+#pest-situacion .sensor.rojo { border-left: 3px solid var(--rojo); }
+#pest-situacion .sensor.azul { border-left: 3px solid var(--azul); }
+#pest-situacion .sensor small, #pest-situacion .infra-cat small { display: block; color: var(--texto-sec); font-size: 11px; margin: 2px 0 4px; }
+#pest-situacion .sensor ul, #pest-situacion .infra-cat ul { list-style: none; margin: 0; padding: 0; }
+#pest-situacion .sensor li.vacio { color: var(--texto-sec); font-size: 12px; }
+.sensor-titulo, .contacto-radar { background: none; border: 0; padding: 2px 0; margin: 0; text-align: left; color: inherit; cursor: pointer; width: 100%; }
+.sensor-titulo { font-weight: 700; }
+.contacto-radar { font-size: 12px; color: #ffb4a8; }
+.contacto-radar:hover, .sensor-titulo:hover { text-decoration: underline; }
+#pest-situacion .infra-cat .contacto-radar { color: var(--texto); }
+#pest-situacion h4 { margin: 8px 0 4px; font-size: 12px; letter-spacing: .05em; }
+#pest-situacion h4.azul { color: var(--azul); } #pest-situacion h4.rojo { color: var(--rojo); }
+.tabla-personal { width: 100%; border-collapse: collapse; font-size: 12px; }
+.tabla-personal th, .tabla-personal td { padding: 3px 4px; border-bottom: 1px solid var(--borde); text-align: right; }
+.tabla-personal th:first-child, .tabla-personal td:first-child { text-align: left; }
+.tabla-personal tr.total td { font-weight: 700; }
+.infra-cat { margin: 8px 0; }
+/* avance de los objetivos y capacidad de la infraestructura */
+.avance-objetivos { margin: 4px 0 8px; display: grid; gap: 4px; font-size: 12px; }
+.avance-objetivos .avance span { display: block; color: var(--texto-sec); }
+.barra-avance { height: 6px; background: rgba(255, 255, 255, .08); border-radius: 3px; overflow: hidden; margin: 2px 0; }
+.barra-avance i { display: block; height: 100%; background: #2a9d8f; }
+.avance.azul .barra-avance i { background: var(--azul); } .avance.rojo .barra-avance i { background: var(--rojo); }
+.barra-avance i.baja { background: #e76f51; }
+/* hora estimada de llegada al final de la ruta de una orden de mover */
+.eta-ruta span { display: inline-block; transform: translate(10px, -50%); white-space: nowrap; background: rgba(2, 136, 209, .92);
+  color: #fff; font: 600 11px/1.2 system-ui, sans-serif; padding: 2px 6px; border-radius: 3px; pointer-events: none; }
+/* capa de infraestructura */
+.icono-infra svg { border-radius: 50%; padding: 4px; fill: #fff; box-shadow: 0 0 0 1.5px #fff, 0 1px 3px rgba(0, 0, 0, .6); }
+.popup-infra .credito { font-size: 10px; color: #888; margin: 4px 0 0; }

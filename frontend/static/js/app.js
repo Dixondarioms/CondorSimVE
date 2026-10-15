@@ -290,7 +290,9 @@
   function activarPestana(nombre) {
     document.querySelectorAll(".pestanas button").forEach((b) => b.classList.toggle("activa", b.dataset.pestana === nombre));
     $("pest-fuerzas").hidden = nombre !== "fuerzas";
+    $("pest-situacion").hidden = nombre !== "situacion";
     $("pest-consola").hidden = nombre !== "consola" || !esInstructor();
+    if (nombre === "situacion" && app.data) renderSituacion(app.data);
   }
   document.querySelectorAll(".pestanas button").forEach((b) => b.addEventListener("click", () => activarPestana(b.dataset.pestana)));
 
@@ -508,6 +510,7 @@
 
     c.referencias = L.layerGroup().addTo(map);
     c.bases_ven = L.layerGroup().addTo(map);
+    c.infraestructura = L.layerGroup().addTo(map);
     // plano real de los aerodromos (OpenStreetMap): debajo de las unidades y los graficos, encima del fondo
     map.createPane("aerodromos").style.zIndex = 350;
     map.createPane("aerodromos-rotulos").style.zIndex = 390;
@@ -556,7 +559,7 @@
     c.ge = L.layerGroup().addTo(map);
     c.meteorologia = L.layerGroup().addTo(map);
     c.misiones = L.layerGroup().addTo(map);
-    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, alcances: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, ge: true, meteorologia: true, misiones: true };
+    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, alcances: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, infraestructura: true, ge: true, meteorologia: true, misiones: true };
     if (app.capaActiva.niebla) c.niebla.addTo(map);
 
     let pendiente = null;
@@ -633,6 +636,7 @@
           aeronaves: app.modeloUnidad ? app.modeloUnidad.aeronaves : undefined,
           lat, lon: lng, fuerza: num("u-fuerza") ?? 100, velocidad_kmh: num("u-velocidad"),
           alcance_km: num("u-alcance"), deteccion_km: num("u-deteccion"), autonomia_km: num("u-autonomia"),
+          personal: num("u-personal") === undefined ? undefined : Math.round(num("u-personal")),
         });
         app.modoAgregar = false;
         $("btn-modo-agregar").textContent = "Ubicar en mapa";
@@ -697,6 +701,15 @@
         L.polyline(p.ruta, { color: "#81d4fa", weight: 4, opacity: 0.9, interactive: false }).addTo(g);
         L.circleMarker(p.destino, { radius: 7, color: "#81d4fa", fillColor: "#0288d1", fillOpacity: 0.9 }).bindTooltip("Posición al final del turno").addTo(g);
         $("o-preview").textContent = `${p.llega ? "Llega al último waypoint" : "No llega al destino este turno"}: recorre ${p.km} km, combustible restante ${p.combustible_restante}%. ${p.nota}`;
+        const tiempo = Situacion.textoTiempo(p.tiempo);
+        if (tiempo) {
+          $("o-preview").textContent += ` ${tiempo}`;
+          const fin = app.waypoints[app.waypoints.length - 1];
+          if (p.tiempo.llegada && !p.tiempo.bloqueo) {
+            L.marker(fin, { interactive: false, icon: L.divIcon({ className: "eta-ruta", iconSize: null,
+              html: `<span>ETA ${p.tiempo.llegada}h · ${Situacion.duracion(p.tiempo.horas)}</span>` }) }).addTo(g);
+          }
+        }
       } catch (_) { /* p. ej. fase de decision cerrada */ }
     }, 250);
   }
@@ -1296,7 +1309,8 @@
     else if (cl && cl.armamento) notas.push(cl.armamento);
     if (cl && cl.vulnerable_emboscada) notas.push("Vulnerable a emboscadas: recibe mucho más daño si el atacante no fue detectado.");
     if (cl && cl.nodo_movil_km) notas.push(`Nodo móvil de reabastecimiento (radio ${cl.nodo_movil_km} km). Gasta suministros por cada unidad que abastece.`);
-    const interferida = app.porId.get(app.seleccion) ? Logica.textoInterferido(u, cl, app.data && app.data.interferencias) : "";
+    const interferida = app.porId.get(app.seleccion) && !(cl && cl.infraestructura)
+      ? Logica.textoInterferido(u, cl, app.data && app.data.interferencias) : "";
     if (interferida) notas.push(interferida);
     if (oculto) notas.push("Niebla de guerra: de las unidades enemigas solo se conoce su posición y clase.");
     // Foto del modelo (aeronaves) o, si no tiene, la de referencia de su clase (buques). La "obra" solo la
@@ -1311,14 +1325,20 @@
     cont.innerHTML = foto + `<div class="det-titulo"><span class="simbolo">${simboloSvg(u.sidc, 30)}</span>`
       + `<div><h3>${escapar(u.nombre)}</h3><small>Bando ${nombreBando} · ${rama}${u.echelon ? " · " + escapar(u.echelon) : ""}</small></div></div>`
       + `<span class="insignia ${est.clase}">${escapar(est.texto)}</span>`
-      + barra("Fuerza", u.fuerza) + barra("Combustible", u.combustible) + barra("Munición", u.municion)
+      + (cl && cl.infraestructura
+        ? barra("Capacidad operativa", u.fuerza)
+        : barra("Fuerza", u.fuerza) + barra("Combustible", u.combustible) + barra("Munición", u.municion))
       + (cl && cl.carga_max ? barra("Suministros del convoy", u.carga) : "")
       + (cl && cl.stock_max && !oculto && u.stock_combustible !== null && u.stock_combustible !== undefined
         ? barra("Combustible en depósito", Logica.pctStock(u.stock_combustible, cl)) + barra("Munición en depósito", Logica.pctStock(u.stock_municion, cl))
         : "")
       + `<dl class="det-datos">${dato("Clase", u.clase || u.tipo)}${dato("Terreno", u.terreno || "?")}`
-      + `${dato("Velocidad", u.velocidad_kmh === null ? "?" : u.velocidad_kmh + " km/h")}${dato("Alcance", km(u.alcance_km))}`
-      + `${dato("Detección", km(u.deteccion_km))}${dato("Autonomía", km(u.autonomia_km))}${extra.join("")}</dl>`
+      + (cl && cl.infraestructura ? ""
+        : `${dato("Velocidad", u.velocidad_kmh === null ? "?" : u.velocidad_kmh + " km/h")}${dato("Alcance", km(u.alcance_km))}`
+        + `${dato("Detección", km(u.deteccion_km))}${dato("Autonomía", km(u.autonomia_km))}`)
+      + (u.personal_inicial ? dato("Personal", `${u.personal_actual} de ${u.personal_inicial} efectivos`) : "")
+      + `${extra.join("")}</dl>`
+
       + notas.map((n) => `<p class="nota">${escapar(n)}</p>`).join("")
       + (!oculto && app.porId.get(app.seleccion) && cl && u.estado === "activa" && puedeDefensa(u)
         ? (cl.emisor ? `<button id="btn-emision" class="mini ${u.emitiendo === false ? "primario" : "secundario"}" type="button">${u.emitiendo === false ? "Encender radar" : "Apagar radar (silencio de emisiones)"}</button>` : "")
@@ -1762,6 +1782,117 @@
   $("tarjeta-alertas").addEventListener("click", () => { app.alertasSinLeer = 0; renderAlertas(); });
 
   // ---------- render principal ----------
+  // ---------- pestaña Situación: cuadro radar, personal e infraestructura ----------
+  function renderSituacion(data) {
+    if ($("pest-situacion").hidden) return;
+    const nombreClase = (id) => { const c = claseDe({ clase: id }); return c ? c.nombre : id; };
+    const varios = !esBando(app.usuario.rol);
+    // cuadro radar
+    const cont = $("cuadro-radar");
+    limpiar(cont);
+    const sensores = data.sensores || [];
+    $("radar-contador").textContent = String(new Set(sensores.flatMap((s) => s.contactos.map((c) => c.unidad_id))).size);
+    if (!sensores.length) cont.appendChild(Object.assign(document.createElement("p"), { className: "vacio", textContent: "El bando no tiene radares ni sensores activos." }));
+    for (const s of sensores) {
+      const caja = document.createElement("div");
+      caja.className = `sensor ${s.bando || ""}`;
+      const tit = document.createElement("button");
+      tit.type = "button";
+      tit.className = "sensor-titulo";
+      tit.textContent = `${varios ? `[${nombreDeBando(s.bando)}] ` : ""}${s.nombre}`;
+      tit.title = "Seleccionar el sensor";
+      tit.addEventListener("click", () => seleccionar(s.unidad_id, "lista"));
+      const est = document.createElement("small");
+      est.textContent = `${nombreClase(s.clase)} · ${Situacion.estadoSensor(s)}`;
+      caja.append(tit, est);
+      const ul = document.createElement("ul");
+      if (!s.contactos.length) ul.appendChild(Object.assign(document.createElement("li"), { className: "vacio", textContent: "Sin contactos." }));
+      for (const c of s.contactos) {
+        const li = document.createElement("li");
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "contacto-radar";
+        b.textContent = Situacion.lineaContacto(c, nombreClase(c.clase));
+        b.addEventListener("click", () => {
+          const u = app.porId.get(c.unidad_id);
+          if (u) seleccionar(u.id, "lista");
+        });
+        li.appendChild(b);
+        ul.appendChild(li);
+      }
+      caja.appendChild(ul);
+      cont.appendChild(caja);
+    }
+    // personal
+    const per = $("cuadro-personal");
+    limpiar(per);
+    for (const [b, r] of Object.entries(data.personal || {})) {
+      if (!r.inicial) continue;
+      if (varios) per.appendChild(Object.assign(document.createElement("h4"), { className: b, textContent: nombreDeBando(b) }));
+      const t = document.createElement("table");
+      t.className = "tabla-personal";
+      t.innerHTML = "<thead><tr><th>Rama</th><th>Efectivos</th><th>Bajas</th><th>Operativo</th></tr></thead>";
+      const tb = document.createElement("tbody");
+      for (const f of [...r.ramas, { nombre: "Total", inicial: r.inicial, actual: r.actual, bajas: r.bajas, operativo_pct: r.operativo_pct, total: true }]) {
+        const tr = document.createElement("tr");
+        if (f.total) tr.className = "total";
+        for (const v of [f.nombre, `${f.actual.toLocaleString("es-VE")} / ${f.inicial.toLocaleString("es-VE")}`, f.bajas.toLocaleString("es-VE"), `${f.operativo_pct} %`]) {
+          tr.appendChild(Object.assign(document.createElement("td"), { textContent: v }));
+        }
+        tb.appendChild(tr);
+      }
+      t.appendChild(tb);
+      per.appendChild(t);
+    }
+    if (!per.childNodes.length) per.appendChild(Object.assign(document.createElement("p"), { className: "vacio", textContent: "Sin unidades con personal." }));
+    // infraestructura
+    const inf = $("cuadro-infra");
+    limpiar(inf);
+    for (const [b, filas] of Object.entries(data.infraestructura || {})) {
+      if (!filas.length) continue;
+      if (varios) inf.appendChild(Object.assign(document.createElement("h4"), { className: b, textContent: nombreDeBando(b) }));
+      for (const f of filas) {
+        const caja = document.createElement("div");
+        caja.className = "infra-cat";
+        const t = document.createElement("b");
+        t.textContent = `${f.nombre}: ${Math.round(f.capacidad_pct)} %`;
+        const barra = document.createElement("div");
+        barra.className = "barra-avance";
+        const i = document.createElement("i");
+        i.style.width = `${f.capacidad_pct}%`;
+        i.className = f.capacidad_pct < 50 ? "baja" : "";
+        barra.appendChild(i);
+        const e = document.createElement("small");
+        e.textContent = f.efecto;
+        const ul = document.createElement("ul");
+        for (const x of f.instalaciones) {
+          const li = document.createElement("li");
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "contacto-radar";
+          btn.textContent = `${x.nombre} · ${Math.round(x.fuerza)} %${x.estado === "cortado" ? " · CORTADO" : x.estado === "destruida" ? " · DESTRUIDA" : ""}`;
+          btn.addEventListener("click", () => seleccionar(x.id, "lista"));
+          li.appendChild(btn);
+          ul.appendChild(li);
+        }
+        caja.append(t, barra, e, ul);
+        inf.appendChild(caja);
+      }
+    }
+    if (!inf.childNodes.length) {
+      inf.appendChild(Object.assign(document.createElement("p"), { className: "vacio",
+        textContent: "No hay infraestructura en el ejercicio. El instructor la coloca desde la capa Infraestructura del mapa." }));
+    }
+  }
+  $("btn-difundir-radar").addEventListener("click", () => {
+    if (!app.data) return;
+    const esc = app.data.escenario;
+    const texto = Situacion.mensajeRadar(app.data.sensores || [], esc.turno_actual, horaDelTurno(esc.turno_actual),
+      (id) => { const c = claseDe({ clase: id }); return c ? c.nombre : id; });
+    if (!enviarWs({ tipo: "chat", canal: app.usuario.rol, texto })) return toast("Sin conexión con el servidor: el mensaje no se envió.");
+    toast("Cuadro radar enviado a la red del bando.", true);
+  });
+
   function render(data) {
     app.data = data;
     app.recibidoEn = Date.now();
@@ -1781,6 +1912,7 @@
     renderDetalle();
     renderCola(data);
     renderObjetivos(data);
+    renderSituacion(data);
     actualizarNuevaOrden(data);
     actualizarAviacion(data);
     if (app.misiones) app.misiones.render(data);
@@ -1919,6 +2051,11 @@
       datos: () => app.data, escenarioId: () => app.escenarioId, capa: app.capas.bases_ven, naciones: () => app.naciones,
     });
     app.aviacion.conectar();
+    app.infraestructura = Infraestructura.crear({
+      map: () => app.map, api, toast, rutaEsc, usuario: () => app.usuario, datos: () => app.data,
+      escenarioId: () => app.escenarioId, capa: () => app.capas.infraestructura,
+    });
+    app.infraestructura.cargar();
     app.misiones = Misiones.crear({
       api, toast, rutaEsc, usuario: () => app.usuario, datos: () => app.data, catalogo: () => app.catalogo,
       capaBorrador: app.capas.preview, capaRutas: app.capas.misiones, puede: puedeFuncion, claseDe,
@@ -1938,6 +2075,25 @@
     for (const b of ["azul", "rojo"]) {
       $(`marcador-${b}`).textContent = String(m[b].total);
       $(`marcador-${b}-det`).textContent = ` (${m[b].objetivos} obj. + ${m[b].bajas} bajas)`;
+    }
+    // avance de los objetivos de cada bando (cada bando ve el suyo; instructor y observador, los dos)
+    const avance = $("avance-objetivos");
+    limpiar(avance);
+    for (const b of esBando(app.usuario.rol) ? [app.usuario.rol] : ["azul", "rojo"]) {
+      const x = m[b];
+      if (!x || !x.asignados) continue;
+      const fila = document.createElement("div");
+      fila.className = `avance ${b}`;
+      fila.title = `${x.cumplidos} cumplidos, ${x.fallidos} fallidos y ${x.asignados - x.cumplidos - x.fallidos} pendientes`;
+      const t = document.createElement("span");
+      t.textContent = `${nombreDeBando(b)}: ${Situacion.textoObjetivos(x)}`;
+      const barra = document.createElement("div");
+      barra.className = "barra-avance";
+      const relleno = document.createElement("i");
+      relleno.style.width = `${Math.max(0, Math.min(100, x.cumplidos_pct || 0))}%`;
+      barra.appendChild(relleno);
+      fila.append(t, barra);
+      avance.appendChild(fila);
     }
     const lista = $("objetivos-lista");
     limpiar(lista);

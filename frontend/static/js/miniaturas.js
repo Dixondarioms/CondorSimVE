@@ -780,6 +780,103 @@
     };
   }
 
+  // ================================================================ infraestructura civil
+  /** Chimenea con banda roja y blanca. */
+  const chimeneaFabrica = (x, y, alto, r = 0.06) => enCapa([
+    cilindro("z", [x, y, alto / 2], r, alto, "concreto", 10),
+    cilindro("z", [x, y, alto - 0.04], r * 1.03, 0.05, "ladrillo", 10),
+  ], 3);
+
+  function termoelectrica() {
+    const torre = (x, y) => enCapa(cilindro("z", [x, y, 0.2], 0.17, 0.4, "concreto", 14, 0.12), 2);
+    return {
+      piezas: [
+        placa([[-0.95, -0.85], [0.95, -0.85], [0.95, 0.85], [-0.95, 0.85]], 0.02, "xy", 0.0, "concreto"),
+        enCapa(caja([-0.75, 0.05], [-0.35, 0.25], [0.02, 0.3], "techo"), 2),
+        enCapa(caja([-0.75, 0.05], [0.25, 0.45], [0.02, 0.22], "techo"), 2),
+        chimeneaFabrica(-0.55, 0.65, 0.95), chimeneaFabrica(-0.3, 0.65, 0.95),
+        torre(0.5, 0.4), torre(0.5, -0.25),
+        ...[[0.15, -0.65], [-0.15, -0.65]].map(([x, y]) => enCapa(cilindro("z", [x, y, 0.07], 0.11, 0.12, "tanque", 10), 2)),
+        bandera(0.85, -0.75),
+      ],
+    };
+  }
+
+  function hidroelectrica() {
+    // embalse arriba (y > 0), presa en arco, casa de maquinas y rio aguas abajo
+    const arco = [];
+    for (let i = 0; i <= 8; i++) {
+      const a = (-60 + i * 15) * Math.PI / 180;
+      arco.push([Math.sin(a) * 0.9, Math.cos(a) * 0.35 - 0.05]);
+    }
+    return {
+      piezas: [
+        placa([[-1.0, 0.0], [1.0, 0.0], [1.0, 1.0], [-1.0, 1.0]], 0.02, "xy", 0.0, "agua"),
+        placa([[-0.18, -1.0], [0.18, -1.0], [0.18, -0.2], [-0.18, -0.2]], 0.02, "xy", 0.0, "agua"),
+        placa([[-1.0, -1.0], [-0.18, -1.0], [-0.18, 0.0], [-1.0, 0.0]], 0.02, "xy", 0.0, "cesped"),
+        placa([[0.18, -1.0], [1.0, -1.0], [1.0, 0.0], [0.18, 0.0]], 0.02, "xy", 0.0, "cesped"),
+        ...arco.slice(0, -1).map((p, i) => {
+          const q = arco[i + 1];
+          return enCapa(placa([[p[0], p[1]], [q[0], q[1]], [q[0], q[1] - 0.09], [p[0], p[1] - 0.09]], 0.42, "xy", 0.02, "concreto"), 2);
+        }),
+        enCapa(caja([-0.32, 0.32], [-0.38, -0.12], [0.02, 0.26], "techo"), 3),
+        ...[-0.2, 0, 0.2].map((x) => enCapa(cilindro("y", [x, -0.12, 0.2], 0.04, 0.2, "metal", 8), 3)),
+        bandera(-0.85, -0.8),
+      ],
+    };
+  }
+
+  function refineria() {
+    const columna = (x, y, alto, r) => enCapa(cilindro("z", [x, y, alto / 2], r, alto, "metal", 10), 3);
+    return {
+      piezas: [
+        placa([[-0.95, -0.95], [0.95, -0.95], [0.95, 0.95], [-0.95, 0.95]], 0.02, "xy", 0.0, "concreto"),
+        ...[[0.45, 0.55], [0.75, 0.55], [0.45, 0.2], [0.75, 0.2], [0.45, -0.15], [0.75, -0.15]]
+          .map(([x, y]) => enCapa(cilindro("z", [x, y, 0.08], 0.14, 0.14, "tanque", 12), 2)),
+        columna(-0.45, 0.4, 0.8, 0.06), columna(-0.25, 0.45, 0.65, 0.07), columna(-0.55, 0.05, 0.55, 0.05),
+        enCapa(caja([-0.75, -0.05], [-0.25, -0.05], [0.25, 0.28], "grua"), 2),
+        enCapa(caja([-0.7, -0.1], [-0.6, 0.15], [0.02, 0.18], "techo"), 2),
+        chimeneaFabrica(-0.05, -0.55, 0.9, 0.045),
+        enCapa(esfera([-0.05, -0.55, 0.95], 0.07, "llama", 8, 1.4), 4),
+        bandera(0.85, -0.85),
+      ],
+    };
+  }
+
+  function centroComunicaciones() {
+    // torre de antenas (tramos que se angostan) y un edificio de equipos con parabolas en el techo
+    const torre = [[0.02, 0.55, 0.07], [0.55, 1.05, 0.045], [1.05, 1.5, 0.025]]
+      .map(([z0, z1, a]) => enCapa(caja([-0.35 - a, -0.35 + a], [0.3 - a, 0.3 + a], [z0, z1], "metal"), 2));
+    return {
+      piezas: [
+        placa([[-0.9, -0.9], [0.9, -0.9], [0.9, 0.9], [-0.9, 0.9]], 0.02, "xy", 0.0, "concreto"),
+        ...torre,
+        ...[0.8, 1.1, 1.38].map((z) => enCapa(caja([-0.5, -0.2], [0.27, 0.33], [z, z + 0.035], "antena"), 3)),
+        enCapa(cilindro("z", [-0.35, 0.3, 1.6], 0.008, 0.2, "negro", 5), 3),
+        enCapa(caja([0.05, 0.75], [-0.6, 0.0], [0.02, 0.24], "techo"), 2),
+        enCapa(disco([0.25, -0.3, 0.32], 0.12, "radomo", "xz", 14), 3),
+        enCapa(disco([0.55, -0.3, 0.32], 0.09, "radomo", "xz", 14), 3),
+        bandera(0.8, 0.7),
+      ],
+    };
+  }
+
+  function puente() {
+    // tablero sobre pilas, cruzando un rio (a lo largo de x)
+    return {
+      piezas: [
+        placa([[-1.0, -0.35], [1.0, -0.35], [1.0, 0.35], [-1.0, 0.35]], 0.02, "xy", 0.0, "agua"),
+        placa([[-1.0, -1.0], [1.0, -1.0], [1.0, -0.35], [-1.0, -0.35]], 0.02, "xy", 0.0, "cesped"),
+        placa([[-1.0, 0.35], [1.0, 0.35], [1.0, 1.0], [-1.0, 1.0]], 0.02, "xy", 0.0, "cesped"),
+        ...[-0.25, 0, 0.25].map((y) => enCapa(caja([-0.1, 0.1], [y - 0.04, y + 0.04], [0.02, 0.2], "concreto"), 2)),
+        enCapa(caja([-0.14, 0.14], [-0.95, 0.95], [0.2, 0.26], "pista"), 3),
+        enCapa(caja([-0.15, -0.13], [-0.95, 0.95], [0.26, 0.32], "concreto"), 3),
+        enCapa(caja([0.13, 0.15], [-0.95, 0.95], [0.26, 0.32], "concreto"), 3),
+        bandera(0.7, -0.85),
+      ],
+    };
+  }
+
   // ================================================================ registro
   // tam: tamaño en pantalla respecto de un caza. Los buques y las instalaciones son mas grandes; el personal, menor.
   const R = M.registrar;
@@ -832,6 +929,11 @@
   R("base_aerea", baseAerea, { tam: 1.9, suelo: true, rumbo: 25, clases: ["base_aerea"] });
   R("deposito", deposito, { tam: 1.45, suelo: true, rumbo: 25, clases: ["deposito"] });
   R("puerto", puerto, { tam: 1.7, suelo: true, rumbo: 25, clases: ["puerto"] });
+  R("termoelectrica", termoelectrica, { tam: 1.6, suelo: true, rumbo: 25, clases: ["termoelectrica"] });
+  R("hidroelectrica", hidroelectrica, { tam: 1.7, suelo: true, rumbo: 0, clases: ["hidroelectrica"] });
+  R("refineria", refineria, { tam: 1.6, suelo: true, rumbo: 25, clases: ["refineria"] });
+  R("centro_comunicaciones", centroComunicaciones, { tam: 1.3, suelo: true, rumbo: 25, clases: ["centro_comunicaciones"] });
+  R("puente", puente, { tam: 1.5, suelo: true, rumbo: 0, clases: ["puente"] });
 
   const api = { registradas: () => M.MALLAS };
   raiz.Miniaturas = api;

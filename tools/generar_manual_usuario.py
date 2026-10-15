@@ -111,7 +111,7 @@ def construir(salida: Path) -> None:
           Spacer(1, 8), Paragraph("Guía paso a paso para el instructor, los alumnos de cada puesto y el observador", S["subtitulo"]),
           Spacer(1, 24)]
     h += credito_portada()
-    h += [Spacer(1, 10), Paragraph(f"{fecha} · versión 1.1", S["subtitulo"]), PageBreak()]
+    h += [Spacer(1, 10), Paragraph(f"{fecha} · versión 1.2", S["subtitulo"]), PageBreak()]
 
     toc = TableOfContents()
     toc.levelStyles = [S["toc1"], S["toc2"]]
@@ -151,6 +151,10 @@ def construir(salida: Path) -> None:
               ["Fotos reales de las aeronaves, drones y buques, con el mismo encuadre", "6.3"],
               ["Satélite de Venezuela más nítido al acercar el mapa", "4.1"],
               ["Escenario del 3 de enero de 2026 (reconstrucción)", "7.2"],
+              ["Infraestructura no militar: centrales, refinerías, comunicaciones y puentes que pesan en la operación", "4.11 y 7.14"],
+              ["Pestaña Situación: cuadro radar con aviso automático de contactos, personal e infraestructura", "6.14"],
+              ["Porcentaje de objetivos cumplidos de cada bando", "5.2"],
+              ["Tiempo de todo el recorrido y hora de llegada de las órdenes de mover", "6.5"],
           ], [ANCHO_TEXTO - 3.2 * cm, 3.2 * cm])]
 
     # ---------------------------------------------------------------- 2 acceso
@@ -210,7 +214,8 @@ def construir(salida: Path) -> None:
     h += figura("pantalla_general", "Pantalla del instructor con el ejercicio de ejemplo.")
     h += [leyenda([
         ("1", "Cabecera", "Escenario activo, botones de escenario, conexión, reloj, videowall, informe y perfil (3.1)."),
-        ("2", "Panel izquierdo", "Pestaña Fuerzas (orden de batalla, ficha de la unidad, órdenes, misiones, cola) y, para el instructor, Consola."),
+        ("2", "Panel izquierdo", "Pestaña Fuerzas (orden de batalla, ficha de la unidad, órdenes, misiones, cola), pestaña Situación "
+                                    "(cuadro radar, personal e infraestructura, 6.14) y, para el instructor, Consola."),
         ("3", "Mapa táctico", "Terreno, unidades, rutas, ataques, gráficos, objetivos, zonas de clima y de interferencia (capítulo 4)."),
         ("4", "Panel derecho", "Estado del escenario, objetivos y puntaje, capas, comunicaciones y alertas (capítulo 5)."),
         ("5", "Barra inferior", "«Estoy listo» (alumnos) o «Resolver y avanzar turno» (instructor) y el estado de cada bando (3.2)."),
@@ -315,6 +320,18 @@ def construir(salida: Path) -> None:
           P(f"Para aprovecharlas al mover, use {B('Seguir carreteras')} (6.5): el simulador traza el camino más rápido por la red vial.")]
     h += figura("mapa_carreteras", "Carreteras alrededor de Barinas: la troncal que cruza la ciudad y las vías que salen hacia el piedemonte.",
                 ancho=ANCHO_TEXTO * 0.82)
+    h += [H2("4.11 Infraestructura en el mapa"),
+          P("La capa <b>Infraestructura</b> muestra con un icono de color la infraestructura crítica real de Venezuela, ubicada con "
+            "OpenStreetMap: las principales <b>centrales termoeléctricas</b> (rayo naranja) e <b>hidroeléctricas</b> (gota celeste) —Guri, "
+            "Caruachi, Macagua, Tocoma, Planta Centro, Tacoa, Termozulia…—, las <b>refinerías</b> (llama) de Amuay, Cardón, El Palito y "
+            "Puerto La Cruz, los <b>centros de comunicaciones</b> (antena) como el cerro El Volcán y las estaciones terrenas de control "
+            "satelital, y los <b>puentes estratégicos</b> (puente gris): el Rafael Urdaneta, los del Orinoco y del Caroní, el María "
+            "Nieves y los pasos fronterizos con Colombia."),
+          P("Es una capa de referencia: la instalación solo forma parte del ejercicio si el instructor la coloca (7.14). Ya en el "
+            "ejercicio se ve con su miniatura (central con chimeneas, presa, refinería, antena o puente) en el color de su bando.")]
+    h += figura("mapa_infraestructura", "Infraestructura en el piedemonte andino: la hidroeléctrica José Antonio Páez y un puente del bando azul "
+                "y una central del bando rojo en el ejercicio; a la derecha, iconos de la capa (Masparro y otras centrales).",
+                ancho=ANCHO_TEXTO * 0.82)
 
     # ---------------------------------------------------------------- 5 panel derecho
     h += H1("5. El panel derecho")
@@ -329,6 +346,11 @@ def construir(salida: Path) -> None:
           "objetivos de su bando con su avance: ocupar una zona varios turnos, destruir una unidad o proteger una propia. Cada bando ve solo "
           "los suyos."),
     ])
+    h += al_lado("objetivos_avance", "Objetivos y puntaje, con el porcentaje cumplido.", [
+        P("Debajo del marcador, una barra muestra el <b>porcentaje de objetivos cumplidos</b>: «1 de 3 cumplidos (33 %)». El alumno ve "
+          "la de su bando; el instructor y el observador, la de los dos. Al pasar el cursor se ven también los fallidos y los pendientes. "
+          "El mismo porcentaje está en el informe y en el indicador doctrinal «Cumplimiento de objetivos» (9.4)."),
+    ], ancho_img=6.6 * cm)
     h += al_lado("panel_der_abajo", "Comunicaciones y alertas.", [
         H2("5.3 Comunicaciones"),
         P("Chat de texto del ejercicio. El alumno elige el canal: <b>Red del bando</b> (todos los puestos de su bando) o <b>Al mando "
@@ -416,6 +438,11 @@ def construir(salida: Path) -> None:
           P(f"{B('Seguir carreteras')} toma el último punto como destino y traza solo el camino más rápido por las carreteras y sus "
             "puentes (en la capa de carreteras, al acercar el mapa). Por carretera las unidades terrestres avanzan más y cruzan los ríos "
             "por los puentes reales."),
+          P("<b>Tiempo del recorrido.</b> Además de dónde termina este turno, la vista previa calcula <b>cuánto tarda la unidad en hacer "
+            "toda la ruta</b> —con el mismo terreno, carreteras, ríos, clima y peso que el movimiento real—, cuántos turnos le lleva y a qué "
+            "hora simulada llega: «Recorrido completo: 87 km en 3 h 20 min (4 turnos); llegada estimada 14:20h». En el mapa, el último "
+            "punto lleva el rótulo «ETA». Si en la ruta hay un río que la unidad no puede cruzar, lo avisa; si el combustible no alcanza, "
+            "indica para cuántos kilómetros da."),
           P("Si la ruta es más larga que lo que la unidad avanza en un turno, sigue en los turnos siguientes. Los vehículos pesados solo cruzan "
             "los ríos por un puente o vado.")]
     h += [H2("6.6 Atacar y apoyar")]
@@ -512,6 +539,32 @@ def construir(salida: Path) -> None:
                "Al perder de vista a un enemigo queda su <b>último contacto</b>, en gris translúcido, con el turno en que se lo vio.",
                "Un caza enemigo se ve como caza genérico: su modelo exacto no se conoce.",
                "Las órdenes, gráficos, mensajes y alertas del otro bando nunca se ven."])]
+    h += al_lado("situacion_radar", "Pestaña Situación: cuadro radar.", [
+        H2("6.14 La pestaña Situación"),
+        P("La pestaña <b>Situación</b>, junto a Fuerzas, reúne lo que el bando sabe de un vistazo: lo que detectan sus radares, su personal "
+          "y su infraestructura. La ven todos los puestos; el instructor y el observador, la de los dos bandos."),
+        H3("Cuadro radar"),
+        P("Cada radar y sensor del bando —radares de vigilancia, antiaérea guiada por radar, buques con radar, aviones de alerta "
+          "temprana y unidades de escucha electrónica— con su estado (emitiendo, en silencio, interferido, con energía de respaldo) y "
+          "<b>lo que detecta ahora</b>: cada contacto con su distancia y su rumbo desde el sensor y, si vuela, su cota (alta, media o "
+          "rasante). «Por su emisión» indica que la escucha lo localizó por el radar que tiene encendido."),
+        Bul(["Un clic en un contacto lo selecciona y lo muestra en el mapa; un clic en el sensor, lo mismo con el sensor.",
+             "<b>Aviso automático:</b> al cerrar cada turno, cada sensor que detecta un enemigo que el bando no tenía a la vista lo "
+             "informa solo, como alerta: «Radar Norte informa 1 contacto(s) nuevo(s): caza rasante a 85 km, rumbo 040°».",
+             f"{B('Difundir el cuadro a la red del bando')} envía al chat del bando un resumen de todos los contactos (para el A2 que "
+             "informa al Estado Mayor)."]),
+    ], ancho_img=6.4 * cm)
+    h += al_lado("situacion_personal", "Pestaña Situación: personal e infraestructura.", [
+        H3("Personal"),
+        P("Los efectivos de cada rama al inicio y los que quedan, las <b>bajas</b> y el porcentaje operativo. Cada unidad tiene su "
+          "dotación: por escalón en las terrestres (una compañía, 120; un batallón, 500; una brigada, 3 500), por tripulación en las "
+          "aeronaves (un caza, 1; un helicóptero, 4) y por buque o instalación en el resto. El instructor puede fijar otra al agregar la "
+          "unidad (campo <b>Efectivos</b>, 7.4). Los efectivos siguen a la fuerza: una compañía al 60 % conserva 72 de sus 120 hombres. "
+          "La ficha de cada unidad propia muestra los suyos; los del enemigo no se conocen."),
+        H3("Infraestructura"),
+        P("Cada categoría de infraestructura que el bando tiene en el ejercicio —energía, refinación, comunicaciones, puentes—, con su "
+          "capacidad y lo que significa en ese momento (por ejemplo «radares fijos al 80 % de su alcance» o «1 cortado»). Ver 7.14."),
+    ], ancho_img=6.4 * cm)
 
     # ---------------------------------------------------------------- 7 instructor
     h += H1("7. Guía del instructor")
@@ -553,6 +606,7 @@ def construir(salida: Path) -> None:
               "Los valores (velocidad, alcance, detección, autonomía) se llenan con los de la clase; puede ajustarlos.",
               f"Para aeronaves, {B('Elegir aeronave…')} abre las fichas de los modelos; para las demás clases, la lista "
               "<b>Tipo</b> ofrece los del catálogo propio.",
+              "Opcional: <b>Efectivos</b>, si la unidad no tiene la dotación de su escalón (vacío = la de la tabla, 6.14).",
               f"Pulse {B('Ubicar en mapa')} y haga clic en el lugar: la unidad aparece allí."),
         P("Las unidades navales solo pueden ir sobre el agua. Para colocar una <b>base aérea real</b>, haga clic en el aeródromo en el mapa "
           "(capa Bases aéreas y aeródromos) y elija «Base azul» o «Base roja»."),
@@ -639,6 +693,41 @@ def construir(salida: Path) -> None:
           P(f"{B('Videowall')} (o la tecla <b>V</b>) muestra el mapa a pantalla completa para la pantalla grande o el proyector del centro de "
             "operaciones, con un rótulo del turno, la hora, el reloj, el estado de los bandos, el marcador y las últimas alertas. Esc sale. "
             "Se puede abrir directamente con la dirección <font face='Mono'>?modo=videowall&amp;vista=azul</font> (o rojo, o completa).")]
+    h += [H2("7.14 Infraestructura y objetivos que pesan en la guerra"),
+          P("Además de las unidades militares, el ejercicio puede incluir <b>infraestructura no militar</b>: centrales termoeléctricas e "
+            "hidroeléctricas, refinerías, centros de comunicaciones y puentes estratégicos. No se mueven ni combaten, pero se las puede "
+            "atacar, proteger o fijar como objetivo, y <b>su estado cambia lo que el bando puede hacer</b>:"),
+          Tbl(["Infraestructura", "Si se la daña…", "Al máximo daño"], [
+              ["Centrales eléctricas (energía)", "Los radares fijos del bando trabajan con generadores de respaldo y pierden alcance.",
+               "Radares fijos al 50 %"],
+              ["Refinerías (combustible)", "Los depósitos del bando reponen menos combustible cada turno (la munición no cambia).",
+               "Reposición al 25 % (reservas)"],
+              ["Centros de comunicaciones", "Más órdenes del bando no llegan a tiempo y se cumplen un turno después, aunque el instructor "
+               "no haya activado la demora (7.7).", "+30 % de órdenes demoradas"],
+              ["Puentes", "Con menos del 50 % de fuerza el puente queda <b>cortado</b>: ninguna unidad terrestre cruza por él. La "
+               "infantería puede vadear un río; los vehículos, no. Los ingenieros pueden tender un vado o un puente al lado (6.8).",
+               "Cortado"],
+          ], [4.0 * cm, ANCHO_TEXTO - 7.4 * cm, 3.4 * cm], tam=8),
+          P("La capacidad de cada categoría es la fuerza media de sus instalaciones. Si un bando no tiene instalaciones de una categoría, "
+            "esa categoría no le afecta: el instructor decide qué infraestructura importa en el ejercicio colocándola en el mapa. Cuando "
+            "una cae o se recupera, el bando recibe el aviso («Energía eléctrica: la capacidad cae al 40 %: radares fijos al 70 % de su "
+            "alcance»), y la IA también la tiene en cuenta como blanco.")]
+    h += al_lado("ficha_infraestructura", "Ficha de una instalación de la capa Infraestructura.", [
+        H3("Colocarla en el ejercicio"),
+        pasos("Encienda la capa <b>Infraestructura</b> en la tarjeta Capas (4.11) y acérquese a la zona del ejercicio.",
+              "Haga clic en el icono de la instalación: la ficha muestra su tipo, su capacidad (megavatios o barriles por día), su "
+              "operador, su efecto en el juego y las coordenadas.",
+              f"Pulse {B('Bando Azul')} o {B('Bando Rojo')}, según a quién sirve: aparece en el ejercicio como una unidad fija con su "
+              "miniatura, en el orden de batalla bajo <b>Infraestructura</b>.",
+              "Fije los objetivos (7.5): por ejemplo, para el rojo <b>destruir</b> la central y para el azul <b>protegerla</b>."),
+        P("Las plantillas contra la IA de la región central y de la costa oriental ya traen Planta Centro, la refinería El Palito y la "
+          "de Puerto La Cruz con sus objetivos (8.2)."),
+    ], ancho_img=7.0 * cm)
+    h += al_lado("ficha_puente", "Ficha de un puente cortado.", [
+        P("La ficha de una instalación muestra su <b>capacidad operativa</b> (su fuerza) y su estado: <b>Operativa</b>, <b>Dañada</b> "
+          "con su porcentaje o, en un puente por debajo del 50 %, <b>Cortado</b>. El instructor puede repararla o dañarla con el "
+          "<b>Ajuste manual</b> (7.9), por ejemplo para empezar el ejercicio con un puente ya volado."),
+    ], ancho_img=6.0 * cm)
 
     # ---------------------------------------------------------------- 8 combate contra la IA
     h += H1("8. Combate contra la IA")
@@ -671,12 +760,13 @@ def construir(salida: Path) -> None:
           Tbl(["Ejercicio", "Situación", "Qué ejercita", "Comienza"], [
               ["Defensa aérea de la región central", "Un ataque aeronaval desde el Caribe (portaaviones, cazas embarcados, guerra electrónica y "
                "drones) contra la Base Aérea El Libertador y Maracay-Valencia.", "Alerta temprana con el radar de montaña, empleo de los Su-30 "
-               "y F-16, defensa antiaérea por capas, protección de la base.", "05:00 (de noche)"],
+               "y F-16, defensa antiaérea por capas, protección de la base, de Planta Centro y de la refinería El Palito.", "05:00 (de noche)"],
               ["Interdicción en los llanos", "Una columna mecanizada roja con sus convoyes avanza de Guasdualito hacia Barinas.",
                "Interdicción de la logística (los convoyes son vulnerables), apoyo aéreo cercano con K-8W, Mi-35 y drones, coordinación entre "
                "puestos.", "06:00 (crepúsculo)"],
               ["Defensa de la costa oriental", "Una fuerza anfibia roja (buques de desembarco con fragatas y helicópteros) se acerca a "
-               "Barcelona y Puerto La Cruz.", "Defensa de costa, ataque a la fuerza naval antes del desembarco, defensa de la playa.",
+               "Barcelona y Puerto La Cruz.", "Defensa de costa, ataque a la fuerza naval antes del desembarco, defensa de la playa y de "
+               "la refinería de Puerto La Cruz.",
                "04:00 (de noche)"],
           ], [3.4 * cm, 5.0 * cm, ANCHO_TEXTO - 11.2 * cm, 2.8 * cm], tam=8),
           P("La reconstrucción del <b>3 de enero de 2026</b> se crea sin IA, para jugarla con dos grupos de alumnos. Para jugarla contra el "
@@ -839,6 +929,10 @@ def construir(salida: Path) -> None:
         ["El mapa sale gris o vacío.", "Faltan los datos de mapa en el servidor (avise al instructor) o se eligió una región sin datos."],
         ["El chat no llega o llega tarde.", "El instructor activó las comunicaciones simuladas (7.7): es parte del ejercicio."],
         ["El punto de conexión está rojo.", "Se perdió la conexión con el servidor; el simulador se reconecta solo. Si no, recargue la página (F5)."],
+        ["La unidad no cruza el río por el puente.", "El puente está cortado (menos del 50 % de fuerza; 7.14). Busque otro paso con "
+         "«Seguir carreteras», vadee con infantería o pida a los ingenieros un vado o un puente."],
+        ["Mis radares ven menos que antes.", "Revise la pestaña Situación: si la energía del bando cayó, los radares fijos trabajan con "
+         "generadores de respaldo (7.14). También los reduce la interferencia enemiga y, de noche, nada (el radar no depende de la luz)."],
         ["No puedo abrir el informe.", "Los alumnos lo ven cuando el instructor finaliza el escenario."],
         ["No hay alumnos para el otro bando.", "Que lo conduzca el simulador: active el adversario automático (8.3) o use una plantilla Contra la IA (8.2)."],
         ["La IA no hace nada.", "Solo actúa con lo que detecta y con sus objetivos: si no ve al enemigo ni tiene objetivos, espera. Revise "
@@ -860,9 +954,12 @@ def construir(salida: Path) -> None:
               ["APP-6", "Norma de simbología militar; alternativa a las miniaturas."],
               ["CAP, CAS, SEAD", "Roles de misión aérea: patrulla de combate, apoyo aéreo cercano, supresión de defensas antiaéreas."],
               ["Crepúsculo", "Las horas de las 06:00 y las 18:00, con luz escasa: la detección a simple vista baja al 75 %."],
+              ["Cuadro radar", "Lo que detecta ahora cada sensor del bando, con distancia y rumbo (6.14)."],
+              ["ETA", "Hora estimada de llegada al final de una ruta."],
               ["Escalón", "Nivel de la unidad (equipo, sección, compañía, batallón, brigada)."],
               ["Fase de decisión / resolución", "Parte del turno en que se dan órdenes / en que el simulador las ejecuta."],
               ["Indicadores doctrinales", "Puntajes de 0 a 100 de la conducción de un bando que dan la calificación de 1 a 20 (9.4)."],
+              ["Infraestructura crítica", "Centrales eléctricas, refinerías, centros de comunicaciones y puentes cuyo estado pesa en la operación (7.14)."],
               ["Niebla de guerra", "Cada bando solo ve lo que detecta."],
               ["Último contacto", "Última posición conocida de un enemigo que se dejó de ver."],
               ["Waypoint", "Punto de paso de una ruta."],

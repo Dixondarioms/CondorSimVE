@@ -85,6 +85,23 @@ class Unidad(Base):
     stock_combustible: Mapped[float] = mapped_column(Float, default=1000.0, server_default="1000")
     stock_municion: Mapped[float] = mapped_column(Float, default=1000.0, server_default="1000")
 
+    # personal: dotacion inicial fijada por el instructor (None = la de engine/personal.py)
+    personal: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # puentes: radio del tramo que corta su destruccion (None = el de engine/infraestructura.py)
+    radio_km: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    @property
+    def personal_inicial(self) -> int:
+        from app.engine import personal
+
+        return personal.inicial(self)
+
+    @property
+    def personal_actual(self) -> int:
+        from app.engine import personal
+
+        return personal.actual(self)
+
     # codigo de simbolo (SIDC) para milsymbol.js
     sidc: Mapped[str] = mapped_column(String(20), default="")
 

@@ -109,9 +109,10 @@
     <main id="principal">
       <!-- ============ 2. panel lateral izquierdo ============ -->
       <aside id="panel-izq" aria-label="Órdenes y estado de fuerzas">
-        <div class="pestanas solo-instructor" role="tablist">
+        <div class="pestanas" role="tablist">
           <button type="button" role="tab" class="activa" data-pestana="fuerzas">FUERZAS</button>
-          <button type="button" role="tab" data-pestana="consola">CONSOLA</button>
+          <button type="button" role="tab" data-pestana="situacion" title="Cuadro radar, personal e infraestructura">SITUACIÓN</button>
+          <button type="button" role="tab" data-pestana="consola" class="solo-instructor">CONSOLA</button>
         </div>
 
         <div id="pest-fuerzas" class="pestana">
@@ -227,6 +228,30 @@
           </section>
         </div>
 
+        <!-- situacion: cuadro radar, personal e infraestructura (js/situacion.js) -->
+        <div id="pest-situacion" class="pestana" hidden>
+          <section class="bloque" id="sec-radar">
+            <h2>Cuadro radar <span id="radar-contador" class="contador"></span></h2>
+            <p class="ayuda">Lo que detecta ahora cada radar y sensor de su bando (radares, antiaérea guiada, buques con
+              radar, alerta temprana y escucha electrónica), con distancia y rumbo desde el sensor. Cada contacto nuevo
+              se informa solo al bando al cerrar el turno (alertas). Un clic en un contacto lo muestra en el mapa.</p>
+            <div id="cuadro-radar"></div>
+            <button id="btn-difundir-radar" class="secundario solo-alumno" type="button">Difundir el cuadro a la red del bando</button>
+          </section>
+          <section class="bloque" id="sec-personal">
+            <h2>Personal</h2>
+            <p class="ayuda">Efectivos al inicio y los que quedan, por rama. Las bajas siguen a la fuerza de cada unidad
+              (muertos, heridos y desaparecidos).</p>
+            <div id="cuadro-personal"></div>
+          </section>
+          <section class="bloque" id="sec-infra">
+            <h2>Infraestructura</h2>
+            <p class="ayuda">Centrales eléctricas, refinerías, centros de comunicaciones y puentes del bando en el
+              ejercicio, y lo que su estado significa para la operación.</p>
+            <div id="cuadro-infra"></div>
+          </section>
+        </div>
+
         <!-- consola del instructor -->
         <div id="pest-consola" class="pestana solo-instructor" hidden>
           <details open>
@@ -320,6 +345,7 @@
               <label class="mini">Detección km<input id="u-deteccion" type="number" min="0"></label>
               <label class="mini">Autonomía km<input id="u-autonomia" type="number" min="1"></label>
               <label class="mini">Fuerza %<input id="u-fuerza" type="number" value="100" min="1" max="100"></label>
+              <label class="mini" title="Vacío: la dotación de su clase y escalón">Efectivos<input id="u-personal" type="number" min="0" placeholder="según escalón"></label>
             </div>
             <div id="u-aeronave-fila" class="aeronave-elegida" hidden>
               <img id="u-modelo-foto" alt="" width="72" height="52" hidden>
@@ -632,6 +658,7 @@
               <span class="azul">AZUL <b id="marcador-azul">0</b><small id="marcador-azul-det"></small></span>
               <span class="rojo">ROJO <b id="marcador-rojo">0</b><small id="marcador-rojo-det"></small></span>
             </div>
+            <div class="avance-objetivos" id="avance-objetivos"></div>
             <ul id="objetivos-lista"></ul>
           </section>
 
@@ -655,6 +682,7 @@
               <label><input type="checkbox" data-capa="aerodromos" checked><span>Plano de los aeródromos (pistas y hangares)</span></label>
               <label><input type="checkbox" id="ver-app6"><span>Símbolos militares (APP-6) en lugar de miniaturas</span></label>
               <label><input type="checkbox" data-capa="objetivos" checked><span>Objetivos</span></label>
+              <label title="Centrales eléctricas, refinerías, centros de comunicaciones y puentes de Venezuela (OpenStreetMap)"><input type="checkbox" data-capa="infraestructura" checked><span>Infraestructura (energía, refinerías, comunicaciones, puentes)</span></label>
               <label><input type="checkbox" data-capa="ge" checked><span>Guerra electrónica</span></label>
               <label><input type="checkbox" data-capa="meteorologia" checked><span>Meteorología (zonas)</span></label>
               <label><input type="checkbox" data-capa="misiones" checked><span>Misiones aéreas</span></label>
@@ -822,6 +850,8 @@
   <script src="/static/js/replay.js"></script>
   <script src="/static/js/informe.js"></script>
   <script src="/static/js/plantillas.js"></script>
+  <script src="/static/js/situacion.js"></script>
+  <script src="/static/js/infraestructura.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
 </html>

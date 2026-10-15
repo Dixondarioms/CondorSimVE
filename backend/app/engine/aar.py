@@ -179,10 +179,18 @@ def _marcador_hasta(objetivos: list[Objetivo], combates: list[Combate], turno: i
     """Marcador acumulado al terminar `turno`: puntos de objetivos cumplidos hasta ese turno mas un punto por
     cada FUERZA_POR_PUNTO de fuerza infligida al enemigo (misma regla que engine/objetivos.marcador)."""
     puntos = {b: 0 for b in objetivos_mod.BANDOS}
+    cuenta = {b: {"cumplidos": 0, "fallidos": 0, "asignados": 0} for b in objetivos_mod.BANDOS}
     infligido = {b: 0.0 for b in objetivos_mod.BANDOS}
     for o in objetivos:
-        if o.estado == "cumplido" and o.bando in puntos and (o.turno_resuelto is None or o.turno_resuelto <= turno):
+        if o.bando not in puntos:
+            continue
+        cuenta[o.bando]["asignados"] += 1
+        resuelto = o.turno_resuelto is None or o.turno_resuelto <= turno
+        if o.estado == "cumplido" and resuelto:
             puntos[o.bando] += o.puntos
+            cuenta[o.bando]["cumplidos"] += 1
+        elif o.estado == "fallido" and resuelto:
+            cuenta[o.bando]["fallidos"] += 1
     for c in combates:
         if c.turno > turno or c.atacante_bando == c.defensor_bando:
             continue
@@ -192,7 +200,8 @@ def _marcador_hasta(objetivos: list[Objetivo], combates: list[Combate], turno: i
             infligido[c.defensor_bando] += c.perdida_atacante
     return {
         b: {"objetivos": puntos[b], "bajas": int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO),
-            "total": puntos[b] + int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO)}
+            "total": puntos[b] + int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO), **cuenta[b],
+            "cumplidos_pct": round(100 * cuenta[b]["cumplidos"] / cuenta[b]["asignados"], 1) if cuenta[b]["asignados"] else None}
         for b in objetivos_mod.BANDOS
     }
 

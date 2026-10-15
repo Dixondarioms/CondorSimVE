@@ -34,9 +34,14 @@ MOTIVO_SIN_ENLACE = (
 class Contexto:
     """Zonas de interferencia vigentes y unidades que estan emitiendo."""
 
-    def __init__(self, zonas=()):
+    def __init__(self, zonas=(), energia=None):
         self.zonas = list(zonas)
         self.emisores = {z.unidad_id for z in self.zonas if z.unidad_id is not None}
+        # alcance de los radares fijos de cada bando segun su generacion electrica (engine/infraestructura.py)
+        self.energia = dict(energia or {})
+
+    def factor_energia(self, bando: str) -> float:
+        return self.energia.get(bando, 1.0)
 
     def zonas_sobre(self, u) -> list:
         """Zonas del bando contrario a `u` que la cubren."""
@@ -54,12 +59,17 @@ class Contexto:
 
 def contexto(db, escenario, en_resolucion: bool = False) -> Contexto:
     """Durante la resolucion rigen las zonas creadas en este turno; en la planificacion, las del turno anterior."""
+    from app.engine import infraestructura
+    from app.models.unidad import Unidad
+
     turno = escenario.turno_actual if en_resolucion else escenario.turno_actual - 1
+    unidades = db.query(Unidad).filter(Unidad.escenario_id == escenario.id, Unidad.tipo == "base").all()
     return Contexto(
         db.query(Interferencia)
         .filter(Interferencia.escenario_id == escenario.id, Interferencia.turno == turno)
         .order_by(Interferencia.id)
-        .all()
+        .all(),
+        {b: infraestructura.factor_radar(unidades, b) for b in ("azul", "rojo")},
     )
 
 
