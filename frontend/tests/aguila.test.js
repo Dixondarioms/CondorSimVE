@@ -8,7 +8,7 @@ const Aguila = require("../static/js/aguila.js");
 const ESTATICO = path.join(__dirname, "..", "static");
 
 test("el vuelo es breve: abre las alas en su lugar y termina grande y transparente sobre la pantalla", () => {
-  assert.ok(Aguila.VUELO_MS >= 1000 && Aguila.VUELO_MS <= 2000);
+  assert.ok(Aguila.VUELO_MS >= 1000 && Aguila.VUELO_MS <= 3000);
   const c = Aguila.cuadrosVuelo(100, 200);
   assert.strictEqual(c[0].offset, 0);
   assert.strictEqual(c[c.length - 1].offset, 1);

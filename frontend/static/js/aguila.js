@@ -1,12 +1,12 @@
 /* Aguila del SIETE en la pantalla de acceso. En reposo esta posada con las alas recogidas (siete_aguila_posada.png,
- * que es el primer cuadro del video); al aprobarse el ingreso se reproduce aguila_vuelo.webm (1,8 s, con
- * transparencia: abre las alas, las sube y da una batida; tools/manual/aguila_video.py) mientras la figura levanta
+ * que es el primer cuadro del video); al aprobarse el ingreso se reproduce aguila_vuelo.webm (2,8 s, con
+ * transparencia: abre las alas, las sube y da dos batidas; tools/manual/aguila_video.py) mientras la figura levanta
  * el vuelo y viene hacia la pantalla hasta desaparecer. Recien entonces se muestra el simulador.
  * Si el video no se puede reproducir, vuela la imagen posada; con "reducir movimiento" del sistema se entra directo. */
 (function (raiz) {
   "use strict";
 
-  const VUELO_MS = 1800;       // lo que dura el video y el vuelo
+  const VUELO_MS = 2800;       // lo que dura el video y el vuelo
   const ESPERA_VIDEO_MS = 400; // reproducir(): si el video no arranca en este tiempo, se da por perdido
 
   const sinMovimiento = () => !!(raiz.matchMedia && raiz.matchMedia("(prefers-reduced-motion: reduce)").matches);

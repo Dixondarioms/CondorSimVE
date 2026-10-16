@@ -1,8 +1,8 @@
 """Convierte el video del aguila (generado con Gemini, fondo cuadriculado gris pintado) en la animacion de la
-pantalla de acceso: frontend/static/img/aguila_vuelo.webm (VP9 con transparencia, 1,8 s) y
+pantalla de acceso: frontend/static/img/aguila_vuelo.webm (VP9 con transparencia, 2,8 s) y
 frontend/static/img/siete_aguila_posada.png (el primer cuadro: el aguila posada con las alas recogidas).
 
-Del video se toma desde que el aguila esta posada hasta que termina la primera batida, y se reduce a 1,8 segundos
+Del video se toma desde que el aguila esta posada hasta que termina la segunda batida, y se reduce a 2,8 segundos
 acelerando poco la apertura y la batida y mas el momento en que sostiene las alas arriba (TRAMOS). A cada cuadro
 se le quita el fondo como a las imagenes (quitar_fondo_aguila.py) y todos se recortan al mismo recuadro.
 
@@ -23,9 +23,9 @@ from quitar_fondo_aguila import IMG, quitar_fondo_rgb  # noqa: E402
 FFMPEG = shutil.which("ffmpeg") or str(next(Path.home().glob(
     "AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft*/*/bin/ffmpeg.exe")))
 FPS = 30
-DURACION = 1.8
-# (fraccion del segundo final, segundo del video original): posada -> abre las alas -> arriba -> batida
-TRAMOS = [(0.0, 1.30), (0.39, 2.40), (0.53, 3.00), (1.0, 4.10)]
+DURACION = 2.8
+# (fraccion del tiempo final, segundo del video original): posada -> abre las alas -> arriba -> dos batidas
+TRAMOS = [(0.0, 1.30), (0.25, 2.40), (0.341, 3.00), (0.643, 4.10), (1.0, 5.40)]
 ANCHO = 960  # ancho de trabajo (el original es 1280x720)
 
 
