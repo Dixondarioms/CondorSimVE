@@ -1,8 +1,11 @@
 # Genera los esquemas del manual como HTML (SVG) y los captura con Chrome headless a PNG.
+import os
 import subprocess
 from pathlib import Path
 
-AQUI = Path(__file__).resolve().parent / "salida"  # PNG/JPG generados (no se versionan)
+# PNG/JPG generados (no se versionan); SIETE_CAPTURAS: otra carpeta; SIETE_ESCALA=2: al doble de resolucion
+AQUI = Path(os.environ.get("SIETE_CAPTURAS") or Path(__file__).resolve().parent / "salida").resolve()
+ESCALA = os.environ.get("SIETE_ESCALA", "1")
 AQUI.mkdir(exist_ok=True)
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 
@@ -139,7 +142,7 @@ def capturar(nombre, html, w, h):
     f = AQUI / f"{nombre}.html"
     f.write_text(f"<!doctype html><html><head><meta charset='utf-8'></head><body>{html}</body></html>", encoding="utf-8")
     subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run",
-                    f"--user-data-dir={AQUI / 'perfil'}", f"--window-size={w},{h}", "--virtual-time-budget=2000",
+                    f"--user-data-dir={AQUI / 'perfil'}", f"--window-size={w},{h}", f"--force-device-scale-factor={ESCALA}", "--virtual-time-budget=2000",
                     f"--screenshot={AQUI / (nombre + '.png')}", f.as_uri()], capture_output=True)
     print(nombre, (AQUI / f"{nombre}.png").stat().st_size)
 

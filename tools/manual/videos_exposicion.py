@@ -1,4 +1,4 @@
-"""Videos narrados de S.I.E.T.E. para exposiciones (MP4 1920x1080, voz natural y subtitulos).
+"""Videos narrados de S.I.E.T.E. para exposiciones (MP4 1920x1080, o 2560x1440 con --2k; voz natural y subtitulos).
 
   1. SIETE_1_que_es.mp4       Que es el SIETE, como esta hecho y que puede hacer (voz: Sebastian, Venezuela).
   2. SIETE_2_como_se_usa.mp4  Como se usa: roles, reparticiones del TIEM y que hace cada uno (voz: Jorge, Mexico).
@@ -8,10 +8,19 @@ diagramas.py) con su titulo y la frase que se narra como subtitulo. La voz es ne
 naturales de Edge, paquete edge-tts; necesita internet). Sin internet, o con --offline, usa las voces instaladas en
 Windows (voz.ps1), que suenan mas roboticas. ffmpeg arma cada frase como un clip y los une, con fundidos entre escenas.
 
+En 2K (2560x1440, dist/video/2K/) conviene sacar antes las capturas al doble de resolucion, en una carpeta aparte
+para no tocar las del manual (el video las prefiere; si falta alguna usa la normal):
+
+    set SIETE_URL=http://127.0.0.1:8002& set SIETE_ESCALA=2& set SIETE_CAPTURAS=tools\\manual\\salida\\video_2x\\guia
+    backend\\venv\\Scripts\\python tools/manual/capturas_guia.py
+    set SIETE_CAPTURAS=tools\\manual\\salida\\video_2x& backend\\venv\\Scripts\\python tools/manual/diagramas.py
+    backend\\venv\\Scripts\\python tools/manual/videos_exposicion.py --2k
+
     backend\\venv\\Scripts\\python -m pip install edge-tts                    # una vez
     backend\\venv\\Scripts\\python tools/manual/videos_exposicion.py          # los dos
     backend\\venv\\Scripts\\python tools/manual/videos_exposicion.py 2        # solo el segundo
     backend\\venv\\Scripts\\python tools/manual/videos_exposicion.py --voz2=es-CO-GonzaloNeural --velocidad=+10%
+    backend\\venv\\Scripts\\python tools/manual/videos_exposicion.py --2k     # 2560x1440
 """
 
 import asyncio
@@ -28,18 +37,20 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 RAIZ = Path(__file__).resolve().parents[2]
 SALIDA_CAPT = RAIZ / "tools" / "manual" / "salida"
+CAPTURAS_2X = SALIDA_CAPT / "video_2x"  # capturas al doble de resolucion para --2k
 TRABAJO = RAIZ / "dist" / "video" / "trabajo"
 DESTINO = RAIZ / "dist" / "video"
 IMG = RAIZ / "frontend" / "static" / "img"
 FUENTES = Path(r"C:\Windows\Fonts")
 ANCHO, ALTO, FPS = 1920, 1080, 25
+E = 1.0  # escala del dibujo respecto de 1080p (--2k: 4/3)
 AMBAR = (255, 196, 0)
 FFMPEG = shutil.which("ffmpeg") or str(next(Path.home().glob(
     "AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg*/*/bin/ffmpeg.exe")))
 
 
 def fuente(tam, negrita=False):
-    return ImageFont.truetype(str(FUENTES / ("arialbd.ttf" if negrita else "arial.ttf")), tam)
+    return ImageFont.truetype(str(FUENTES / ("arialbd.ttf" if negrita else "arial.ttf")), round(tam * E))
 
 
 # ------------------------------------------------------------------ guiones
@@ -319,6 +330,11 @@ def _escrito(frase: str) -> str:
 
 
 # ------------------------------------------------------------------ cuadros
+# Todo se dibuja en coordenadas de 1920x1080 multiplicadas por E (px): con --2k sale a 2560x1440 con el mismo diseno.
+def px(v: float) -> int:
+    return round(v * E)
+
+
 def fondo() -> Image.Image:
     im = Image.new("RGB", (ANCHO, ALTO))
     d = ImageDraw.Draw(im)
@@ -329,8 +345,10 @@ def fondo() -> Image.Image:
 
 
 def logo(nombre: str, alto: int) -> Image.Image:
+    """`alto` en pixeles de 1080p (se escala con E)."""
     im = Image.open(IMG / nombre)
     im = im.convert("RGBA" if im.mode in ("RGBA", "LA", "P") else "RGB")
+    alto = px(alto)
     return im.resize((int(im.width * alto / im.height), alto), Image.LANCZOS)
 
 
@@ -340,23 +358,24 @@ def pegar(fondo_im: Image.Image, im: Image.Image, xy) -> None:
 
 
 def centrado(d, y, texto, f, color=(255, 255, 255)):
-    d.text((ANCHO / 2, y), texto, font=f, fill=color, anchor="mm")
+    d.text((ANCHO / 2, px(y)), texto, font=f, fill=color, anchor="mm")
 
 
 def portada(subtitulo: str) -> Image.Image:
     im = fondo()
     aguila = logo("siete_aguila.png", 330)
-    pegar(im, aguila, ((ANCHO - aguila.width) // 2, 36))
+    pegar(im, aguila, ((ANCHO - aguila.width) // 2, px(36)))
     d = ImageDraw.Draw(im)
     centrado(d, 435, "S.I.E.T.E.", fuente(80, True))
     centrado(d, 510, "Sistema Integral de Entrenamiento Táctico y Estratégico", fuente(38), (200, 214, 235))
     centrado(d, 572, subtitulo, fuente(40, True), AMBAR)
     dida = logo("dida_logo_redondo.png", 180)
-    x = ANCHO // 2 - 470
-    pegar(im, dida, (x, 640))
-    d.text((x + dida.width + 36, 668), "División de Ingeniería y Desarrollo Aeroespacial (DIDA)", font=fuente(30, True), fill=(255, 255, 255))
-    d.text((x + dida.width + 36, 714), "Aviación Militar Bolivariana · Fuerza Armada Nacional Bolivariana", font=fuente(28), fill=(200, 214, 235))
-    d.text((x + dida.width + 36, 760), "Simulador de operaciones aéreas orientado al TIEM", font=fuente(30, True), fill=AMBAR)
+    x = ANCHO // 2 - px(470)
+    pegar(im, dida, (x, px(640)))
+    xt = x + dida.width + px(36)
+    d.text((xt, px(668)), "División de Ingeniería y Desarrollo Aeroespacial (DIDA)", font=fuente(30, True), fill=(255, 255, 255))
+    d.text((xt, px(714)), "Aviación Militar Bolivariana · Fuerza Armada Nacional Bolivariana", font=fuente(28), fill=(200, 214, 235))
+    d.text((xt, px(760)), "Simulador de operaciones aéreas orientado al TIEM", font=fuente(30, True), fill=AMBAR)
     return im
 
 
@@ -364,10 +383,10 @@ def cierre() -> Image.Image:
     im = fondo()
     aguila = logo("siete_aguila.png", 300)
     dida = logo("dida_logo_redondo.png", 300)
-    hueco = 70
+    hueco = px(70)
     x = (ANCHO - aguila.width - dida.width - hueco) // 2
-    pegar(im, aguila, (x, 50))
-    pegar(im, dida, (x + aguila.width + hueco, 50))
+    pegar(im, aguila, (x, px(50)))
+    pegar(im, dida, (x + aguila.width + hueco, px(50)))
     d = ImageDraw.Draw(im)
     centrado(d, 450, "S.I.E.T.E.", fuente(72, True))
     centrado(d, 518, "Sistema Integral de Entrenamiento Táctico y Estratégico", fuente(36), (200, 214, 235))
@@ -380,16 +399,19 @@ def cierre() -> Image.Image:
 def separador(titulo: str, subtitulo: str) -> Image.Image:
     im = fondo()
     aguila = logo("siete_aguila.png", 200)
-    pegar(im, aguila, ((ANCHO - aguila.width) // 2, 100))
+    pegar(im, aguila, ((ANCHO - aguila.width) // 2, px(100)))
     d = ImageDraw.Draw(im)
     centrado(d, 380, titulo, fuente(66, True))
     centrado(d, 465, subtitulo, fuente(36), (200, 214, 235))
-    d.line([(ANCHO / 2 - 240, 520), (ANCHO / 2 + 240, 520)], fill=AMBAR, width=4)
+    d.line([(ANCHO / 2 - px(240), px(520)), (ANCHO / 2 + px(240), px(520))], fill=AMBAR, width=px(4))
     return im
 
 
 def _captura(nombre: str) -> Image.Image:
-    for ruta in (SALIDA_CAPT / "guia" / f"{nombre}.png", SALIDA_CAPT / f"{nombre}.png"):
+    """Con --2k se prefieren las capturas al doble de resolucion (salida/video_2x, ver CAPTURAS_2X)."""
+    carpetas = ([CAPTURAS_2X / "guia", CAPTURAS_2X] if E > 1 else []) + [SALIDA_CAPT / "guia", SALIDA_CAPT]
+    for carpeta in carpetas:
+        ruta = carpeta / f"{nombre}.png"
         if ruta.exists():
             return Image.open(ruta).convert("RGB")
     raise FileNotFoundError(nombre)
@@ -403,7 +425,7 @@ def _lineas(frase: str) -> list[str]:
 
 
 def _alto_sub(n_lineas: int) -> int:
-    return 24 + SUB_LINEA * n_lineas
+    return px(24 + SUB_LINEA * n_lineas)
 
 
 def escena_base(clave: str, titulo: str, subtitulo_portada: str, max_lineas: int = 3) -> Image.Image:
@@ -417,24 +439,25 @@ def escena_base(clave: str, titulo: str, subtitulo_portada: str, max_lineas: int
         return separador(t, sub)
     im = fondo()
     d = ImageDraw.Draw(im)
-    d.rectangle([0, 0, ANCHO, 96], fill=(14, 22, 44))
-    d.line([(0, 96), (ANCHO, 96)], fill=AMBAR, width=3)
+    d.rectangle([0, 0, ANCHO, px(96)], fill=(14, 22, 44))
+    d.line([(0, px(96)), (ANCHO, px(96))], fill=AMBAR, width=px(3))
     icono = logo("siete_icono_128.png", 64)
-    pegar(im, icono, (36, 16))
-    d.text((120, 48), titulo, font=fuente(44, True), fill=(255, 255, 255), anchor="lm")
-    d.text((ANCHO - 40, 48), "S.I.E.T.E. · DIDA", font=fuente(26), fill=(200, 214, 235), anchor="rm")
+    pegar(im, icono, (px(36), px(16)))
+    d.text((px(120), px(48)), titulo, font=fuente(44, True), fill=(255, 255, 255), anchor="lm")
+    d.text((ANCHO - px(40), px(48)), "S.I.E.T.E. · DIDA", font=fuente(26), fill=(200, 214, 235), anchor="rm")
     cap = _captura(clave)
-    arriba = 116
-    caja_w, caja_h = ANCHO - 160, ALTO - 26 - _alto_sub(max_lineas) - 22 - arriba
-    escala = min(caja_w / cap.width, caja_h / cap.height, 2.2)
+    arriba = px(116)
+    caja_w, caja_h = ANCHO - px(160), ALTO - px(26) - _alto_sub(max_lineas) - px(22) - arriba
+    escala = min(caja_w / cap.width, caja_h / cap.height, 2.2 * E)
     cap = cap.resize((int(cap.width * escala), int(cap.height * escala)), Image.LANCZOS)
     x, y = (ANCHO - cap.width) // 2, arriba + (caja_h - cap.height) // 2
-    sombra = Image.new("RGBA", (cap.width + 40, cap.height + 40), (0, 0, 0, 0))
-    ImageDraw.Draw(sombra).rectangle([20, 20, cap.width + 20, cap.height + 20], fill=(0, 0, 0, 150))
-    sombra = sombra.filter(ImageFilter.GaussianBlur(12))
-    im.paste(sombra, (x - 14, y - 6), sombra)
+    m = px(20)
+    sombra = Image.new("RGBA", (cap.width + 2 * m, cap.height + 2 * m), (0, 0, 0, 0))
+    ImageDraw.Draw(sombra).rectangle([m, m, cap.width + m, cap.height + m], fill=(0, 0, 0, 150))
+    sombra = sombra.filter(ImageFilter.GaussianBlur(px(12)))
+    im.paste(sombra, (x - px(14), y - px(6)), sombra)
     im.paste(cap, (x, y))
-    d.rectangle([x - 1, y - 1, x + cap.width, y + cap.height], outline=(90, 110, 150), width=2)
+    d.rectangle([x - 1, y - 1, x + cap.width, y + cap.height], outline=(90, 110, 150), width=px(2))
     return im
 
 
@@ -443,10 +466,10 @@ def con_subtitulo(base: Image.Image, frase: str) -> Image.Image:
     d = ImageDraw.Draw(im, "RGBA")
     lineas = _lineas(_escrito(frase))
     f = fuente(SUB_FUENTE)
-    y0 = ALTO - 26 - _alto_sub(len(lineas))
-    d.rounded_rectangle([70, y0, ANCHO - 70, ALTO - 26], radius=14, fill=(0, 0, 0, 200))
+    y0 = ALTO - px(26) - _alto_sub(len(lineas))
+    d.rounded_rectangle([px(70), y0, ANCHO - px(70), ALTO - px(26)], radius=px(14), fill=(0, 0, 0, 200))
     for i, linea in enumerate(lineas):
-        d.text((ANCHO / 2, y0 + 12 + SUB_LINEA // 2 + SUB_LINEA * i), linea, font=f, fill=(255, 255, 255), anchor="mm")
+        d.text((ANCHO / 2, y0 + px(12 + SUB_LINEA // 2 + SUB_LINEA * i)), linea, font=f, fill=(255, 255, 255), anchor="mm")
     return im
 
 
@@ -487,7 +510,7 @@ def _duracion(wav: Path) -> float:
 
 
 def generar(video: dict, n: int, offline: bool = False) -> Path:
-    carpeta = TRABAJO / f"video{n}"
+    carpeta = TRABAJO / (f"video{n}_2k" if E > 1 else f"video{n}")
     if carpeta.exists():
         shutil.rmtree(carpeta)
     carpeta.mkdir(parents=True)
@@ -521,12 +544,13 @@ def generar(video: dict, n: int, offline: bool = False) -> Path:
                         "-i", str(f["wav"]), "-t", f"{dur:.2f}",
                         "-vf", ",".join(filtros + ["format=yuv420p"]),
                         "-af", f"{retraso}aresample=44100,apad", "-ac", "2",
-                        "-c:v", "libx264", "-preset", "medium", "-tune", "stillimage", "-crf", "20", "-r", str(FPS),
+                        "-c:v", "libx264", "-preset", "medium", "-tune", "stillimage", "-crf", "18" if E > 1 else "20", "-r", str(FPS),
                         "-c:a", "aac", "-b:a", "160k", str(clip)], check=True)
         clips.append(clip)
     concat = carpeta / "lista.txt"
     concat.write_text("".join(f"file '{c.as_posix()}'\n" for c in clips), encoding="utf-8")
-    salida = DESTINO / video["archivo"]
+    salida = (DESTINO / "2K" / video["archivo"].replace(".mp4", "_2K.mp4")) if E > 1 else DESTINO / video["archivo"]
+    salida.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(concat),
                     "-c:v", "copy", "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-ar", "44100", "-c:a", "aac", "-b:a", "160k",
                     "-movflags", "+faststart", str(salida)], check=True)
@@ -536,8 +560,10 @@ def generar(video: dict, n: int, offline: bool = False) -> Path:
 
 
 def main() -> None:
-    """Opciones: 1 o 2 (solo ese video), --offline, --voz1=es-VE-SebastianNeural, --voz2=..., --velocidad=+8%."""
-    global VELOCIDAD
+    """Opciones: 1 o 2 (solo ese video), --2k, --offline, --voz1=es-VE-SebastianNeural, --voz2=..., --velocidad=+8%."""
+    global VELOCIDAD, ANCHO, ALTO, E
+    if "--2k" in sys.argv:
+        ANCHO, ALTO, E = 2560, 1440, 2560 / 1920
     opciones = dict(a[2:].split("=", 1) for a in sys.argv[1:] if a.startswith("--") and "=" in a)
     VIDEO_1["voz"] = opciones.get("voz1", VIDEO_1["voz"])
     VIDEO_2["voz"] = opciones.get("voz2", VIDEO_2["voz"])

@@ -20,7 +20,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from navegador import Navegador, anotar  # noqa: E402
 
 BASE = os.environ.get("SIETE_URL", "http://127.0.0.1:8000")  # otro puerto: SIETE_URL=http://127.0.0.1:8002
-SALIDA = Path(__file__).resolve().parent / "salida" / "guia"
+# SIETE_CAPTURAS: otra carpeta de salida; SIETE_ESCALA=2: capturas al doble de resolucion (videos en 2K)
+SALIDA = Path(os.environ.get("SIETE_CAPTURAS") or Path(__file__).resolve().parent / "salida" / "guia")
+ESCALA = int(os.environ.get("SIETE_ESCALA", "1"))
 LISTA_APP = "!document.getElementById('app').hidden && document.querySelectorAll('#oob .oob-item').length > 0 && window.__mapa"
 LLANOS = (8.6, -70.57)  # despliegue de ejemplo en el piedemonte andino
 CARIBE = (10.66, -67.98)  # grupo naval frente a Puerto Cabello
@@ -37,7 +39,7 @@ def guardar(n: Navegador, nombre: str, recorte=None, marcas=None, margen=6) -> N
     ruta = n.captura(SALIDA / f"{nombre}.png", recorte, margen)
     if marcas:
         origen = (max(0, recorte["x"] - margen), max(0, recorte["y"] - margen)) if recorte else (0, 0)
-        anotar(ruta, marcas, origen)
+        anotar(ruta, marcas, origen, ESCALA)
     Image.open(ruta).convert("RGB").save(ruta.with_suffix(".jpg"), "JPEG", quality=86)
 
 
@@ -857,7 +859,7 @@ CAPTURAS = [
 
 def main() -> None:
     pedidas = set(sys.argv[1:])
-    n = Navegador()
+    n = Navegador(escala=ESCALA)
     fallos = []
     try:
         for f in CAPTURAS:

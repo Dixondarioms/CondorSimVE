@@ -197,16 +197,17 @@ class Navegador:
             self.perfil.cleanup()
 
 
-def anotar(ruta: Path, marcas: list[tuple[float, float, str]], origen=(0, 0)) -> Path:
-    """Dibuja circulos numerados (x, y, texto) sobre la captura. `origen`: esquina de la captura en la pagina."""
+def anotar(ruta: Path, marcas: list[tuple[float, float, str]], origen=(0, 0), escala=1) -> Path:
+    """Dibuja circulos numerados (x, y, texto) sobre la captura. `origen`: esquina de la captura en la pagina (en px
+    CSS); `escala`: pixeles de la captura por px CSS (2 si el navegador captura al doble de resolucion)."""
     from PIL import Image, ImageDraw, ImageFont
 
     im = Image.open(ruta).convert("RGB")
     d = ImageDraw.Draw(im)
-    fuente = ImageFont.truetype(r"C:\Windows\Fonts\arialbd.ttf", 17)
+    fuente = ImageFont.truetype(r"C:\Windows\Fonts\arialbd.ttf", round(17 * escala))
     for x, y, texto in marcas:
-        cx, cy, r = x - origen[0], y - origen[1], 15
-        d.ellipse([cx - r - 2, cy - r - 2, cx + r + 2, cy + r + 2], fill="#ffffff")
+        cx, cy, r, b = (x - origen[0]) * escala, (y - origen[1]) * escala, 15 * escala, 2 * escala
+        d.ellipse([cx - r - b, cy - r - b, cx + r + b, cy + r + b], fill="#ffffff")
         d.ellipse([cx - r, cy - r, cx + r, cy + r], fill="#d62828")
         d.text((cx, cy), texto, fill="#ffffff", font=fuente, anchor="mm")
     im.save(ruta)
