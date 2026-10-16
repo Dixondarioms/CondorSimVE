@@ -945,7 +945,26 @@
     }
   }
 
-  // cobertura de deteccion y niebla de guerra (agujeros donde el bando ve)
+  /** Cobertura de un sensor segun el relieve (GET .../cobertura), cacheada por posicion, emision y clima (un radar
+   * fijo se pide una sola vez); devuelve lo que ya hay en cache o null, y si falta la pide y llama `listo` al llegar. */
+  function coberturaRelieve(u, listo) {
+    const clave = `${u.id}|${u.lat}|${u.lon}|${u.emitiendo}|${app.data ? app.data.escenario.clima : ""}`;
+    app.coberturas = app.coberturas || new Map();
+    app.coberturasPedidas = app.coberturasPedidas || new Set();
+    if (app.coberturas.has(clave)) return app.coberturas.get(clave);
+    if (!app.coberturasPedidas.has(clave)) {
+      app.coberturasPedidas.add(clave);
+      api("GET", rutaEsc(`/unidades/${u.id}/cobertura`), undefined, true)
+        .then((c) => { app.coberturas.set(clave, c); if (listo) listo(c); })
+        .catch(() => {})
+        .finally(() => app.coberturasPedidas.delete(clave));
+    }
+    return null;
+  }
+
+  // cobertura de deteccion y niebla de guerra (agujeros donde el bando ve). Los radares y demas sensores que lo
+  // admiten se dibujan con su alcance real segun el relieve (a cota media, y a baja cota en naranja): las entradas
+  // del poligono son las sombras de las montanas. El resto, y mientras llega el calculo, con un circulo.
   function dibujarCoberturaYNiebla(unidades, clima) {
     app.capas.cobertura.clearLayers();
     app.capas.niebla.clearLayers();
@@ -953,14 +972,36 @@
     const factor = Logica.efectosClima(clima).deteccion;
     const det = (u) => Logica.deteccionEfectiva(u, claseDe(u)); // un radar apagado solo ve a ojo
     const detectores = unidades.filter((u) => u.estado === "activa" && det(u) && (!vista || u.bando === vista));
+    const redibujar = () => {
+      clearTimeout(app.redibujoCobertura);
+      app.redibujoCobertura = setTimeout(() => { if (app.data) dibujarCoberturaYNiebla(app.data.unidades, app.data.escenario.clima); }, 150);
+    };
+    const huecos = [];
     for (const u of detectores) {
-      L.polygon(anillo(u.lat, u.lon, det(u) * factor), {
-        color: COLOR[u.bando], weight: 1, dashArray: "4 4", fillColor: COLOR[u.bando], fillOpacity: 0.07, interactive: false,
-      }).addTo(app.capas.cobertura);
+      const c = Logica.muestraCobertura(u, claseDe(u)) ? coberturaRelieve(u, redibujar) : null;
+      const medio = c && c.disponible && c.perfiles && c.perfiles.medio;
+      if (medio) {
+        L.polygon(medio.poligono, {
+          color: COLOR[u.bando], weight: 1.5, dashArray: "4 4", fillColor: COLOR[u.bando], fillOpacity: 0.08, interactive: true,
+        }).bindTooltip(`${u.nombre}: ve aeronaves a cota media (1 500 m) hasta aquí (máx. ${medio.alcance_km} km). Las entradas son sombras del relieve.`, { sticky: true })
+          .addTo(app.capas.cobertura);
+        const bajo = c.perfiles.rasante;
+        if (bajo) {
+          L.polygon(bajo.poligono, { color: "#ff9f1c", weight: 1, dashArray: "2 4", fill: false, interactive: false })
+            .addTo(app.capas.cobertura);
+        }
+        huecos.push(medio.poligono);
+      } else {
+        const anilloU = anillo(u.lat, u.lon, det(u) * factor);
+        L.polygon(anilloU, {
+          color: COLOR[u.bando], weight: 1, dashArray: "4 4", fillColor: COLOR[u.bando], fillOpacity: 0.07, interactive: false,
+        }).addTo(app.capas.cobertura);
+        huecos.push(anilloU);
+      }
     }
     if (vista) {
-      const exterior = [[0.6, -73.4], [12.4, -73.4], [12.4, -59.6], [0.6, -59.6]];
-      L.polygon([exterior, ...detectores.map((u) => anillo(u.lat, u.lon, det(u) * factor))], {
+      const exterior = [[-85, -180], [85, -180], [85, 180], [-85, 180]]; // el mundo entero (sirve en cualquier mapa)
+      L.polygon([exterior, ...huecos], {
         stroke: false, fillColor: "#0b1020", fillOpacity: 0.38, interactive: false,
       }).addTo(app.capas.niebla);
     }

@@ -300,6 +300,9 @@ def construir(salida: Path) -> None:
              "<b>Últimos contactos</b>, <b>Gráficos tácticos</b>, <b>Límites y poblaciones</b>, <b>Bases aéreas y aeródromos</b>, "
              "<b>Plano de los aeródromos</b>, <b>Objetivos</b>, <b>Guerra electrónica</b>, <b>Meteorología</b> y <b>Misiones aéreas</b>: "
              "cada casilla muestra u oculta esa información.",
+             "<b>Cobertura (detección)</b> dibuja lo que ve cada sensor del bando. Los radares (y los sensores que emiten) "
+             "muestran su alcance real según el relieve: el área azul es hasta dónde ven una aeronave a cota media y la "
+             "línea naranja, a baja cota (rasante); las entradas son las sombras de las montañas. El resto, con un círculo.",
              "<b>Símbolos militares (APP-6) en lugar de miniaturas</b>: cambia las miniaturas por la simbología militar; se recuerda en ese equipo."]),
     ])
     h += figura("mapa_relieve", "Fondo de relieve: el color indica el tipo de terreno, que afecta al movimiento, la defensa y la detección.", ancho=ANCHO_TEXTO * 0.82)
