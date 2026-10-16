@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Float, ForeignKey, Integer, String, true
+from sqlalchemy import Boolean, Float, ForeignKey, Integer, String, Text, true
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -66,6 +66,16 @@ class Unidad(Base):
     # sensores y defensa aerea: radar emitiendo (control de emisiones) y fuego automatico de la antiaerea
     emitiendo: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
     fuego_libre: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+    # sistemas de defensa aerea (engine/defensa_aerea.py): misiles listos de cada arma (JSON; None = lanzadores
+    # llenos) y arma que fijo el operador (None = automatica)
+    cargas_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    arma_elegida: Mapped[str | None] = mapped_column(String(30), nullable=True)
+
+    @property
+    def sistema_da(self) -> dict | None:
+        from app.engine import defensa_aerea
+
+        return defensa_aerea.estado_dict(self)
     # aeronaves: perfil de vuelo "alto" | "medio" | "rasante" (None = el de su clase; ver engine/relieve.py)
     perfil_vuelo: Mapped[str | None] = mapped_column(String(10), nullable=True)
 

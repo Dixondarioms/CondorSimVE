@@ -30,7 +30,8 @@ def _despegar(cliente, base, base_aerea, modelo="f16", aeronaves_=4, indicativo=
 def test_cada_modelo_tiene_clase_valida_foto_en_disco_y_credito():
     assert {"f16", "su30"} <= set(catalogo.MODELOS)
     for m in catalogo.MODELOS.values():
-        assert m.clase in catalogo.CLASES and catalogo.CLASES[m.clase].tipo == "aerea"
+        clase = catalogo.CLASES[m.clase]
+        assert clase.tipo == "aerea" or clase.defensa_aerea  # aeronaves y sistemas de defensa aerea
         assert (FRONTEND / m.foto.lstrip("/")).is_file(), m.foto
         assert m.credito["autor"]
         if m.foto.endswith(".svg"):  # ilustracion propia: dominio publico, creditos en fotos/CREDITOS.md

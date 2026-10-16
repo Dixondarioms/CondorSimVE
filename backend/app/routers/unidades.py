@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app import auth, schemas, state
 from app.db import get_db
-from app.engine import aar, catalogo, puestos, relieve, vision
+from app.engine import aar, catalogo, defensa_aerea, puestos, relieve, vision
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.models.aar import Combate, RegistroLogistico
@@ -161,6 +161,12 @@ async def configurar_defensa(
         raise HTTPException(status_code=400, detail="Esta unidad no tiene radar")
     if payload.fuego_libre is not None and not clase.defensa_aerea:
         raise HTTPException(status_code=400, detail="Solo la defensa antiaerea tiene fuego automatico")
+    sistema = defensa_aerea.sistema(unidad)
+    if payload.arma is not None:
+        if sistema is None:
+            raise HTTPException(status_code=400, detail="Esta unidad no tiene un sistema de armas antiaereo")
+        if payload.arma and sistema.arma(payload.arma) is None:
+            raise HTTPException(status_code=400, detail="Ese arma no es de este sistema")
     if unidad.estado != "activa":
         raise HTTPException(status_code=400, detail="La unidad ya no esta activa")
     if usuario.rol != "instructor":
@@ -171,6 +177,8 @@ async def configurar_defensa(
         unidad.emitiendo = payload.emitiendo
     if payload.fuego_libre is not None:
         unidad.fuego_libre = payload.fuego_libre
+    if payload.arma is not None:
+        unidad.arma_elegida = payload.arma or None
     db.commit()
     db.refresh(unidad)
     await manager.difundir_estado(db, esc)

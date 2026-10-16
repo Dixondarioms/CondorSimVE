@@ -187,6 +187,13 @@ summary { cursor: pointer; font-weight: 700; padding: 7px 0; font-size: 12px; le
 .barra .relleno.critico { background: linear-gradient(90deg, #a5162a, var(--rojo)); }
 .barra .relleno.oculto { background: repeating-linear-gradient(45deg, #3B3E5A, #3B3E5A 6px, #2f3250 6px, #2f3250 12px); }
 .det-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin: 10px 0 0; }
+/* sistemas de defensa aerea: armas de la bateria y arma a emplear (js/app.js, renderDetalle) */
+.tabla-armas { width: 100%; margin: 10px 0 4px; border-collapse: collapse; font-size: 10.5px; table-layout: fixed; }
+.tabla-armas th, .tabla-armas td { padding: 3px 4px; border-bottom: 1px solid var(--borde); text-align: left; overflow-wrap: anywhere; }
+.tabla-armas th:first-child, .tabla-armas td:first-child { width: 32%; }
+.tabla-armas th { color: var(--texto-sec); font-weight: 600; text-transform: uppercase; font-size: 9.5px; letter-spacing: .05em; }
+.arma-da { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; font-size: 11px; color: var(--texto-sec); }
+.arma-da select { width: 100%; }
 .det-datos div { background: var(--panel-2); border: 1px solid var(--borde); border-radius: var(--radio); padding: 5px 8px; min-width: 0; }
 .det-datos dt { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--texto-sec); }
 .det-datos dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }

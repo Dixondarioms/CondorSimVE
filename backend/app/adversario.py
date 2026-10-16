@@ -29,7 +29,7 @@ from sqlalchemy.orm import Session
 
 from app import schemas, state
 from app.engine import aeronaves as aeronaves_mod
-from app.engine import catalogo, geo
+from app.engine import catalogo, defensa_aerea, geo
 from app.engine import guerra_electronica as ge_mod
 from app.engine import misiles as misiles_mod
 from app.engine import transporte as transporte_mod
@@ -181,12 +181,14 @@ class _Turno:
         return None
 
     def amenazas(self):
-        """Defensas antiaereas y cazas enemigos visibles con el alcance de su clase (lo que se puede saber de ellos)."""
+        """Defensas antiaereas y cazas enemigos visibles con el alcance de su clase (lo que se puede saber de ellos);
+        de un sistema de defensa aerea identificado (Buk, Pechora...) se conoce su alcance real."""
         lista = []
         for e in self.enemigos:
             c = catalogo.obtener(e.clase, e.tipo)
             if c.defensa_aerea or (e.tipo == "aerea" and not e.en_tierra and c.ataque_vs.get("aerea", 0) >= 1.0):
-                lista.append((e.lat, e.lon, c.alcance_km))
+                s = defensa_aerea.sistema(e)
+                lista.append((e.lat, e.lon, max(a.alcance_max_km for a in s.armas) if s else c.alcance_km))
         return lista
 
     def en_peligro(self, lat, lon, margen=1.3) -> bool:

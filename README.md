@@ -690,6 +690,14 @@ drones de reconocimiento, **A-2**; los armados, como toda aeronave de ataque, **
   en vuelo más cercana a su alcance que su bando detecte (aparece como "defensa aérea" en la cola de órdenes). La
   guiada por radar necesita el radar encendido; con el radar apagado solo tira **por orden y a ojo** (×0,3). La
   portátil infrarroja no necesita radar, pero sí estar desplegada. Se puede **retener el fuego** para no delatarse.
+- **Sistemas de defensa aérea con sus armas** (`engine/defensa_aerea.py`): ZU-23-2 (clase `artilleria_antiaerea`,
+  sin radar), S-125 Pechora-2M y Buk-M2E (modelos de `antiaerea`). Cada uno con sus armas (alcance mínimo y máximo,
+  franja de altura, probabilidad de derribo por misil, misiles por salva, listos y reserva, tiempo de recarga), radar
+  de vigilancia y de tiro, reacción, canales, despliegue/repliegue, movilidad, vehículos y personal. En el turno, la
+  batería calcula el tiempo que cada aeronave pasa en su alcance según su rumbo (de frente, de través o alejándose),
+  tira las salvas que le caben, recarga desde la reserva quedando inoperativa ese tiempo, y su probabilidad baja con
+  la interferencia enemiga, la maniobra evasiva, la firma radar, la cota muy baja y la noche (cañones). El operador
+  elige el arma (automática o una fija) desde la ficha. Migración `0031`.
 - **Existencias de las bases:** cada base guarda combustible y munición (100 puntos = llenar una unidad; bases
   aéreas y puertos hasta 2000, depósitos hasta 3000). El reabastecimiento (+50 % por turno) sale de ahí; cada
   aeronave que despega consume 25 de cada uno y, sin existencias, la base no lanza el grupo (**sin logística**).

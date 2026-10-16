@@ -463,6 +463,52 @@
     };
   }
 
+  /** Misil tierra-aire en su riel: cuerpo largo y fino con la ojiva adelante. */
+  const misilSam = (x, largo, z) => [
+    caja([x - 0.05, x + 0.05], [-largo / 2, largo / 2 - 0.12], [z, z + 0.1], "metal"),
+    caja([x - 0.03, x + 0.03], [largo / 2 - 0.12, largo / 2], [z + 0.02, z + 0.08], "metal"),
+  ];
+
+  /** Buk-M2E (TELAR 9A317E): chasis de orugas, radar de tiro al frente y 4 misiles elevados sobre la torre. */
+  function buk() {
+    return {
+      piezas: [
+        ...orugas(0.42, 0.6, 1.0, 0.3),
+        secciones([[-1.0, rect(-0.5, 0.5, 0.12, 0.42)], [0.85, rect(-0.5, 0.5, 0.12, 0.42)], [1.02, rect(-0.5, 0.5, 0.15, 0.3)]], "oliva"),
+        enCapa(caja([-0.32, 0.32], [-0.35, 0.35], [0.42, 0.58], "oliva2"), 1),
+        enCapa(caja([-0.22, 0.22], [0.36, 0.5], [0.5, 0.95], "oliva2"), 2),  // radar de tiro
+        panel(0, 0.51, 0.72, 3, 0.36, 0.02),
+        enCapa(transformar([...misilSam(-0.26, 1.1, 0.6), ...misilSam(-0.12, 1.1, 0.6), ...misilSam(0.12, 1.1, 0.6), ...misilSam(0.26, 1.1, 0.6)],
+          { rx: 22, pivote: [0, -0.3, 0.6] }), 3),
+      ],
+    };
+  }
+
+  /** S-125 Pechora-2M: lanzador sobre camion con 2 misiles en sus rieles, elevados. */
+  function pechora() {
+    return {
+      piezas: [
+        ...camion({ largo: 1.0, ancho: 0.4, ejes: [-0.72, -0.35, 0.6] }),
+        enCapa(caja([-0.26, 0.26], [-0.6, -0.1], [0.24, 0.44], "oliva2"), 1),
+        enCapa(transformar([...misilSam(-0.13, 1.25, 0.46), ...misilSam(0.13, 1.25, 0.46)], { rx: 32, pivote: [0, -0.35, 0.46] }), 2),
+        panel(0, 0.75, 0.62, 2, 0.26, 0.2),
+      ],
+    };
+  }
+
+  /** ZU-23-2: cureña de dos ruedas con el cañón bitubo de 23 mm apuntando hacia arriba. */
+  function canonAntiaereo() {
+    const tubo = (x) => caja([x - 0.035, x + 0.035], [-0.15, 0.85], [0.4, 0.47], "metal");
+    return {
+      piezas: [
+        ...ruedas([0], 0.42, 0.17, 0.1),
+        caja([-0.36, 0.36], [-0.5, 0.35], [0.14, 0.24], "oliva2"),
+        enCapa(caja([-0.22, 0.22], [-0.3, 0.2], [0.24, 0.44], "oliva"), 1),
+        enCapa(transformar([tubo(-0.08), tubo(0.08)], { rx: 30, pivote: [0, -0.1, 0.42] }), 2),
+      ],
+    };
+  }
+
   function ingenieros() {
     return {
       piezas: [
@@ -913,6 +959,9 @@
   R("artilleria", artilleria, { tam: 0.9, suelo: true, clases: ["artilleria"] });
   R("reconocimiento", reconocimiento, { tam: 0.82, suelo: true, clases: ["reconocimiento"] });
   R("antiaerea", antiaerea, { tam: 0.88, suelo: true, clases: ["antiaerea"] });
+  R("artilleria_antiaerea", canonAntiaereo, { tam: 0.72, suelo: true, clases: ["artilleria_antiaerea"] });
+  R("buk_m2e", buk, { tam: 0.95, suelo: true, modelos: ["buk_m2e"] });
+  R("pechora_2m", pechora, { tam: 0.92, suelo: true, modelos: ["pechora_2m"] });
   R("ingenieros", ingenieros, { tam: 0.88, suelo: true, clases: ["ingenieros"] });
   R("convoy", convoy, { tam: 1.05, suelo: true, clases: ["transporte"] });
   R("radar", radar, { tam: 0.95, suelo: true, clases: ["radar"] });

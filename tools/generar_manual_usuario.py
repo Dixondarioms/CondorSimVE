@@ -475,8 +475,31 @@ def construir(salida: Path) -> None:
         Bul([f"{B('Apagar radar')} / {B('Encender radar')} (radares, antiaérea guiada por radar, destructores): apagado solo ve 5 km, pero la "
              "escucha enemiga no lo puede localizar (A-3 D/A).",
              f"{B('Retener el fuego')} / {B('Fuego libre')} (antiaérea, destructores): con fuego libre dispara sola contra la aeronave enemiga "
-             "más cercana a su alcance."]),
+             "más cercana a su alcance.",
+             f"{B('Arma a emplear')} (sistemas de defensa aérea): automática o un arma fija; ver abajo."]),
     ])
+    h += [H3("Sistemas de defensa aérea: ZU-23-2, S-125 Pechora-2M y Buk-M2E"),
+          P("Estas baterías (A-3 D/A) se ubican desde la consola eligiendo su <b>tipo</b> en la clase <i>Defensa antiaérea</i> (Pechora, "
+            "Buk) o <i>Artillería antiaérea</i> (ZU-23-2). Su ficha muestra:"),
+          Bul(["<b>Radares</b>: el de <b>vigilancia</b> ve lejos y alimenta el cuadro del bando; el de <b>tiro</b> guía los misiles y "
+               "fija hasta dónde se puede tirar. El ZU-23-2 no tiene radar: apunta a ojo, no lo encuentra la escucha enemiga, pero de "
+               "noche tira peor y depende de lo que vean los demás sensores.",
+               "<b>Reacción y canales</b>: segundos desde que detecta hasta que dispara, y cuántos blancos bate a la vez.",
+               "<b>Despliegue / repliegue</b> en minutos, la <b>movilidad</b> y la lista de <b>vehículos</b> que forman la batería.",
+               "La tabla de <b>armas</b>: alcance mínimo y máximo, franja de altura, probabilidad de derribo de cada misil, y los "
+               "<b>listos</b> en los lanzadores con la <b>reserva</b> para recargar (pase el cursor para ver el tiempo de recarga)."]),
+          P("<b>Arma a emplear.</b> En <i>Automática</i> la batería usa, contra cada blanco, el arma de mayor probabilidad que lo "
+            "alcance (por ejemplo, el 9M317E del Buk de lejos y la Igla-S de cerca). Si el operador fija un arma, solo tira con esa. "
+            "Con el radar apagado solo tiran las armas que no lo necesitan (Igla-S, ZU-23-2): sirve para emboscar sin delatarse."),
+          P("<b>Cómo se resuelve el tiro.</b> En la hora del turno la batería calcula cuánto tiempo pasó cada aeronave dentro de su "
+            "alcance, que depende de su rumbo: <b>de frente</b> el misil llega a todo su alcance, <b>de través</b> a menos y "
+            "<b>alejándose</b> (el misil la persigue) a poco más de la mitad. En ese tiempo caben tantas <b>salvas</b> (dos misiles "
+            "por blanco) como permita su reacción y el vuelo del misil. Si los lanzadores se vacían, recarga desde la reserva y "
+            "queda <b>inoperativa</b> ese tiempo (13 min el Buk-M2E, 30 min el Pechora-2M). Bajan la probabilidad: la "
+            "<b>interferencia</b> enemiga sobre la batería (además, su radar de tiro alcanza menos), la <b>maniobra evasiva</b> de "
+            "las aeronaves tripuladas (que además ataca peor ese turno), la <b>firma radar</b> reducida de los furtivos, la cota "
+            "muy baja para los misiles guiados por radar, y la noche para los cañones. Cada resultado queda en la cola de órdenes "
+            "con las salvas, el rumbo, el tiempo en alcance y la probabilidad.")]
     h += [H2("6.4 Dar una orden: los pasos de siempre"),
           pasos("Seleccione la unidad (en el orden de batalla o con un clic en el mapa).",
                 "En <b>Nueva orden</b>, elija el tipo de orden: los botones que aparecen dependen de la unidad y de su repartición.",

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app import auth, state
 from app.engine import catalogo, clima, misiones
+from app.engine import defensa_aerea
 from app.engine import modelos_usuario
 from app.models.usuario import Usuario
 
@@ -18,6 +19,7 @@ def obtener_catalogo(_: Usuario = Depends(auth.usuario_actual)):
         "escalones": [e for e in catalogo.ESCALONES if e],
         "climas": list(clima.CLIMAS),
         "misiones": misiones.roles_publicos(),
+        "sistemas_da": {k: defensa_aerea.sistema_dict(v) for k, v in defensa_aerea.SISTEMAS.items()},
     }
 
 

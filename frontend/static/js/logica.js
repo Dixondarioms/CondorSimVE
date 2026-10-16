@@ -734,7 +734,7 @@
   const puestosResponsables = (funcion) => PUESTOS.filter((p) => !GENERALES.includes(p.id) && p.funciones.includes(funcion));
   const etiquetaPuesto = (id) => { const p = puestoDe(id); return `${p.nombre} (${p.sigla})`; };
 
-  const CLASES_DEFENSA_AEREA = ["antiaerea", "antiaerea_portatil", "radar", "alerta_temprana"];
+  const CLASES_DEFENSA_AEREA = ["antiaerea", "antiaerea_portatil", "artilleria_antiaerea", "radar", "alerta_temprana"];
   const CLASES_GUERRA_ELECTRONICA = ["guerra_electronica", "avion_ge"];
   const CLASES_RECONOCIMIENTO = ["reconocimiento", "dron_reconocimiento"];
 
@@ -802,6 +802,35 @@
     return p ? `${p.nombre} (${p.altura})` : "";
   }
   /** Si conviene pedir y dibujar la cobertura por relieve de esta unidad: sensores en tierra o en el mar. */
+  /** Sistema de defensa aerea (engine/defensa_aerea.py): filas de sus armas con lo listo y en reserva, y datos de la
+   * bateria para la ficha. `sistema` viene del catalogo (sistemas_da) y `estado` de la unidad (sistema_da). */
+  function resumenSistemaDA(sistema, estado) {
+    if (!sistema) return null;
+    const porId = new Map(((estado && estado.armas) || []).map((a) => [a.id, a]));
+    const km = (v) => (Number.isInteger(v) ? String(v) : String(v).replace(".", ","));
+    const armas = sistema.armas.map((a) => {
+      const e = porId.get(a.id);
+      return {
+        id: a.id, nombre: a.nombre, tipo: a.tipo_nombre, categoria: a.categoria === "largo" ? "Largo alcance" : "Corto alcance",
+        alcance: `${km(a.alcance_min_km)}–${km(a.alcance_max_km)} km`,
+        altura: `${Math.round(a.altura_min_m)}–${Math.round(a.altura_max_m).toLocaleString("es")} m`,
+        pk: `${Math.round(a.pk * 100)} %`, salva: `${a.por_blanco} por blanco`,
+        listos: e ? `${e.listos} de ${a.cargados}` : `${a.cargados}`, reserva: e ? `${e.reserva} de ${a.reserva}` : `${a.reserva}`,
+        carga: e ? `${e.listos}/${a.cargados} (+${e.reserva})` : `${a.cargados} (+${a.reserva})`,
+        recarga: `${km(a.recarga_min)} min`,
+      };
+    });
+    const radar = sistema.radar_tiro_km
+      ? `Vigilancia ${sistema.radar_vigilancia_km || "—"} km · tiro ${sistema.radar_tiro_km} km`
+      : sistema.radar_vigilancia_km ? `Vigilancia ${sistema.radar_vigilancia_km} km · puntería óptica` : "Sin radar: puntería óptica (depende del cuadro aéreo)";
+    return {
+      armas, radar, reaccion: `${sistema.reaccion_s} s · ${sistema.canales} canal${sistema.canales === 1 ? "" : "es"} de tiro`,
+      despliegue: `${km(sistema.despliegue_min)} min / ${km(sistema.repliegue_min)} min`, movilidad: sistema.movilidad,
+      vehiculos: `${sistema.total_vehiculos}: ${sistema.vehiculos.map((v) => `${v.cantidad} ${v.descripcion}`).join(", ")}`,
+      personal: sistema.personal, nota: sistema.nota, elegida: (estado && estado.arma_elegida) || "",
+    };
+  }
+
   function muestraCobertura(u, clase) {
     return !!u && u.tipo !== "aerea" && u.estado === "activa" && (u.deteccion_km || 0) >= 15 && !!clase && (clase.emisor || u.tipo === "naval" || (u.deteccion_km || 0) >= 20);
   }
@@ -832,7 +861,7 @@
 
   const api = {
     MAPA_VENEZUELA, ordenarMapas, limitesDe, limitesDeMapas, textoMapa, ZOOM_ROTULOS, ZOOM_ALCANCES, ZOOM_CARRETERAS, escalaUnidad, unidadesConAlcance,
-    PERFILES_VUELO, textoPerfil, muestraCobertura,
+    PERFILES_VUELO, textoPerfil, muestraCobertura, resumenSistemaDA,
     NIVELES_OBJETIVO, arbolObjetivos, superioresPosibles, textoCalendario, nombreFase, CONDUCCION,
     PUESTOS, puestoDe, puestoPuede, puestoPuedeAereo, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,

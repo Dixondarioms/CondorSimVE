@@ -1353,7 +1353,15 @@
     if (modelo) {
       const op = Logica.aeronavesOperativas(u);
       extra.push(dato("Modelo", modelo.nombre));
-      extra.push(dato("Grupo", op === null ? `${u.aeronaves} aeronaves` : `${op} de ${u.aeronaves} operativas`));
+      if (u.tipo === "aerea") extra.push(dato("Grupo", op === null ? `${u.aeronaves} aeronaves` : `${op} de ${u.aeronaves} operativas`));
+    }
+    // sistema de defensa aerea: radares, tiempos, vehiculos y armas con lo listo y en reserva
+    const sistemaDA = modelo && app.catalogo && app.catalogo.sistemas_da ? app.catalogo.sistemas_da[modelo.id] : null;
+    const da = sistemaDA ? Logica.resumenSistemaDA(sistemaDA, oculto ? null : u.sistema_da) : null;
+    if (da) {
+      extra.push(dato("Radares", da.radar), dato("Reacción", da.reaccion), dato("Despliegue / repliegue", da.despliegue));
+      extra.push(`<div class="ancho-completo"><dt>Movilidad del sistema</dt><dd>${escapar(da.movilidad)}</dd></div>`);
+      extra.push(`<div class="ancho-completo"><dt>Vehículos</dt><dd>${escapar(da.vehiculos)}</dd></div>`);
     }
     const notas = [];
     if (modelo) notas.push(modelo.armamento);
@@ -1389,11 +1397,20 @@
         + `${dato("Detección", km(u.deteccion_km))}${dato("Autonomía", km(u.autonomia_km))}`)
       + (u.personal_inicial ? dato("Personal", `${u.personal_actual} de ${u.personal_inicial} efectivos`) : "")
       + `${extra.join("")}</dl>`
+      + (da ? `<table class="tabla-armas"><thead><tr><th>Arma</th><th>Alcance</th><th>Altura</th><th>Prob.</th>`
+        + `${oculto ? "" : '<th title="Listos en los lanzadores / capacidad (+ reserva para recargar)">Listos</th>'}</tr></thead><tbody>`
+        + da.armas.map((a) => `<tr title="${escapar(`${a.tipo} · ${a.categoria} · ${a.salva} · recarga ${a.recarga}`)}"><td>${escapar(a.nombre)}</td>`
+          + `<td>${escapar(a.alcance)}</td><td>${escapar(a.altura)}</td><td>${escapar(a.pk)}</td>`
+          + (oculto ? "" : `<td>${escapar(a.carga)}</td>`) + "</tr>").join("")
+        + "</tbody></table>" + `<p class="nota">${escapar(da.nota)}</p>` : "")
 
       + notas.map((n) => `<p class="nota">${escapar(n)}</p>`).join("")
       + (!oculto && app.porId.get(app.seleccion) && cl && u.estado === "activa" && puedeDefensa(u)
         ? (cl.emisor ? `<button id="btn-emision" class="mini ${u.emitiendo === false ? "primario" : "secundario"}" type="button">${u.emitiendo === false ? "Encender radar" : "Apagar radar (silencio de emisiones)"}</button>` : "")
           + (cl.defensa_aerea ? `<button id="btn-fuego" class="mini secundario" type="button">${u.fuego_libre === false ? "Liberar el fuego automático" : "Retener el fuego automático"}</button>` : "")
+          + (da ? `<label class="arma-da">Arma a emplear <select id="sel-arma-da"><option value="">Automática (la de mayor probabilidad que alcance)</option>`
+            + da.armas.map((a) => `<option value="${escapar(a.id)}"${a.id === da.elegida ? " selected" : ""}>${escapar(`${a.nombre} — ${a.categoria.toLowerCase()}`)}</option>`).join("")
+            + "</select></label>" : "")
         : "")
       + (!oculto && app.porId.get(app.seleccion) && u.estado === "activa" && (u.perfiles_permitidos || []).length > 1 && puedeDefensa(u)
         ? `<div class="perfil-vuelo" role="group" aria-label="Perfil de vuelo"><span>Perfil de vuelo</span>${u.perfiles_permitidos.map((p) =>
@@ -1405,6 +1422,8 @@
     if (emision) emision.addEventListener("click", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { emitiendo: u.emitiendo === false })));
     const fuego = $("btn-fuego");
     if (fuego) fuego.addEventListener("click", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { fuego_libre: u.fuego_libre === false })));
+    const selArma = $("sel-arma-da");
+    if (selArma) selArma.addEventListener("change", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { arma: selArma.value })));
     cont.querySelectorAll("[data-perfil]").forEach((b) => b.addEventListener("click", () => {
       if (b.dataset.perfil !== u.perfil_actual) enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/perfil`), { perfil_vuelo: b.dataset.perfil }));
     }));

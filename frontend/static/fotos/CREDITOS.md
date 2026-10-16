@@ -28,6 +28,9 @@ usan fotos: son ilustraciones vectoriales hechas para este proyecto y se ceden a
 | `helo_ataque.svg` | `helo_ataque` · Helicóptero de ataque (genérico) |
 | `helo_transporte.svg` | `helo_transporte` · Helicóptero de transporte artillado (genérico) |
 | `ataque_ligero.svg` | `ataque_ligero` · Avión de ataque ligero (genérico) |
+| `zu23_2.svg` | `zu23_2` · ZU-23-2 (sección de 2 montajes), de la miniatura 3D del simulador |
+| `pechora_2m.svg` | `pechora_2m` · S-125 Pechora-2M (batería), de la miniatura 3D del simulador |
+| `buk_m2e.svg` | `buk_m2e` · Buk-M2E (batería), de la miniatura 3D del simulador |
 | `crucero.svg` | `crucero` · Misil de crucero (genérico) |
 
 Las ilustraciones se reemplazan por fotos reales, y los buques reciben la suya, con

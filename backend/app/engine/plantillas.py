@@ -197,9 +197,9 @@ _ATAQUE_3_ENERO = Plantilla(
     unidades=(
         # ---- Venezuela (azul) ----
         UnidadPlantilla("Base Aérea Generalísimo Francisco de Miranda (La Carlota)", "azul", "base_aerea", 10.4850, -66.8436),
-        UnidadPlantilla("Buk-M2E La Carlota", "azul", "antiaerea", 10.4812, -66.8540),
+        UnidadPlantilla("Buk-M2E La Carlota", "azul", "antiaerea", 10.4812, -66.8540, modelo="buk_m2e"),
         UnidadPlantilla("Aeropuerto de Charallave (Óscar Machado Zuloaga)", "azul", "base_aerea", 10.2869, -66.8158),
-        UnidadPlantilla("Buk-M2E Higuerote", "azul", "antiaerea", 10.4625, -66.0928),
+        UnidadPlantilla("Buk-M2E Higuerote", "azul", "antiaerea", 10.4625, -66.0928, modelo="buk_m2e"),
         UnidadPlantilla("Radar JY-27A (Barlovento, ubicación aproximada)", "azul", "radar", 10.3500, -66.2500),
         UnidadPlantilla("Radar JYL-1 (Paraguaná, ubicación aproximada)", "azul", "radar", 11.8200, -69.9500),
         UnidadPlantilla("Cerro El Volcán (antenas y enlaces de mando)", "azul", "radar", 10.4050, -66.8350),
@@ -439,10 +439,10 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
         unidad = Unidad(
             escenario_id=esc.id, nombre=u.nombre, bando=u.bando, tipo=c.tipo, clase=c.id,
             modelo=modelo.id if modelo else "", aeronaves=u.aeronaves if modelo else 1,
-            echelon=u.escalon or (catalogo.escalon_grupo(u.aeronaves) if modelo else c.escalon),
+            echelon=u.escalon or (catalogo.escalon_grupo(u.aeronaves) if modelo and c.tipo == "aerea" else c.escalon),
             lat=u.lat, lon=u.lon, fuerza=u.fuerza, velocidad_kmh=ref.velocidad_kmh, alcance_km=ref.alcance_km,
             deteccion_km=ref.deteccion_km, autonomia_km=ref.autonomia_km, carga=c.carga_max,
-            sidc=catalogo.generar_sidc(u.bando, c, u.escalon or (catalogo.escalon_grupo(u.aeronaves) if modelo else "")),
+            sidc=catalogo.generar_sidc(u.bando, c, u.escalon or (catalogo.escalon_grupo(u.aeronaves) if modelo and c.tipo == "aerea" else "")),
         )
         if u.perfil_vuelo and u.perfil_vuelo in relieve.perfiles_permitidos(unidad):
             unidad.perfil_vuelo = u.perfil_vuelo

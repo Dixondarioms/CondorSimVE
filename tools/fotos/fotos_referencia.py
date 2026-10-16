@@ -64,6 +64,10 @@ UNIDADES = [
     ("modelos", "ge_aereo", "Avion de guerra electronica", ["EC-130H Compass Call", "EA-18G Growler"]),
     ("modelos", "caza_embarcado", "Caza embarcado", ["F/A-18E Super Hornet aircraft carrier", "Rafale M carrier"]),
     ("modelos", "crucero", "Misil de crucero", ["Tomahawk cruise missile launch", "Kalibr cruise missile"]),
+    # sistemas de defensa aerea (engine/defensa_aerea.py)
+    ("modelos", "zu23_2", "Canon antiaereo ZU-23-2", ["ZU-23-2 Venezuela", "ZU-23-2"]),
+    ("modelos", "pechora_2m", "S-125 Pechora-2M", ["Pechora-2M Venezuela", "S-125 Pechora-2M", "S-125 Neva"]),
+    ("modelos", "buk_m2e", "Buk-M2E", ["Buk-M2E Venezuela", "Buk-M2E", "9A317 Buk-M2"]),
     # aeronaves de EE. UU. de la plantilla del 3 de enero de 2026 (fotos oficiales de dominio publico, en su mayoria)
     ("modelos", "f22", "F-22A Raptor", ["F-22 Raptor flight", "F-22A Raptor"]),
     ("modelos", "f35a", "F-35A Lightning II", ["F-35A Lightning II flight", "F-35A Lightning II"]),

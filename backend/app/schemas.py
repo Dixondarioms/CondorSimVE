@@ -236,10 +236,12 @@ class PerfilVueloIn(BaseModel):
 
 
 class DefensaIn(BaseModel):
-    """Control de emisiones (radar) y fuego automatico (antiaerea) de una unidad propia."""
+    """Control de emisiones (radar), fuego automatico (antiaerea) y arma a emplear (sistemas de defensa aerea:
+    el id del arma, o "" para la eleccion automatica) de una unidad propia."""
 
     emitiendo: bool | None = None
     fuego_libre: bool | None = None
+    arma: str | None = Field(default=None, max_length=30)
 
 
 class UnidadOut(BaseModel):
@@ -293,6 +295,8 @@ class UnidadOut(BaseModel):
     personal_inicial: int | None = None
     personal_actual: int | None = None
     radio_km: float | None = None
+    # sistemas de defensa aerea: misiles listos y en reserva de cada arma y el arma elegida (engine/defensa_aerea.py)
+    sistema_da: dict | None = None
 
 
 class OrdenCreate(BaseModel):

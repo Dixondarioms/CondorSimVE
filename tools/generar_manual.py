@@ -785,6 +785,25 @@ def construir(salida: Path, img: Path) -> None:
                "(WordprocessingML en un zip, sin dependencias; tablas con fila de títulos repetida) o como página HTML "
                "imprimible. Rutas <font face='Mono'>/tiem/{bando}/legajo.docx</font>, <font face='Mono'>legajo.html</font>, "
                "<font face='Mono'>/tiem/{bando}/{tipo}/documento.docx</font> y <font face='Mono'>documento.html</font>."])]
+    h += [H2("8.17 Sistemas de defensa aérea con sus armas"),
+          Bul(["<b>Datos</b> (<font face='Mono'>engine/defensa_aerea.py</font>): ZU-23-2 (clase nueva <font face='Mono'>artilleria_antiaerea</font>, "
+               "sin emisión), S-125 Pechora-2M y Buk-M2E (modelos de <font face='Mono'>antiaerea</font>). Cada sistema: armas (misil "
+               "guiado por radar, infrarrojo o cañón) con alcance mínimo y máximo, franja de altura, pk por misil, misiles por "
+               "salva, velocidad, cargados y reserva, y tiempo de recarga; radar de vigilancia y de tiro, reacción, canales, "
+               "despliegue, repliegue, movilidad, vehículos y personal. Valores de referencia de fuentes abiertas, ajustables.",
+               "<b>Enfrentamiento</b> (<font face='Mono'>enfrentar</font>, fase 2c de <font face='Mono'>orders.py</font>): por cada "
+               "aeronave detectada por el bando y en línea de vista, arma elegida (la del operador o la de mayor pk que alcance), "
+               "factor de aspecto 0,775 + 0,225·cos θ sobre el alcance (1 de frente, 0,55 alejándose), exposición = cuerda de la "
+               "trayectoria del turno dentro del alcance útil, salvas = tiempo disponible / (reacción + vuelo del misil + 10 s) "
+               "limitadas por canales y misiles; recarga desde la reserva con su tiempo de inoperatividad. Probabilidad por salva "
+               "1 − (1 − pk)^n; derribos esperados por grupo (× azar si está activo) que restan fuerza a la aeronave. Modificadores: "
+               "interferencia (pk ×0,6 y radar de tiro ×0,6), evasión de tripuladas (×0,8 misiles, ×0,7 cañón; su ataque ×0,85 ese "
+               "turno), firma radar (×(0,5 + 0,5·firma)), cota < 100 m para guiados por radar (×0,85), noche para cañones (×0,6), y "
+               "factor por tipo de blanco (helicópteros y drones más fáciles, misiles de crucero más difíciles).",
+               "<b>Estado</b>: columnas <font face='Mono'>cargas_json</font> (listos y reserva de cada arma) y "
+               "<font face='Mono'>arma_elegida</font> (migración 0031); la munición de la unidad es el total de la reserva y el "
+               "reabastecimiento se reparte entre las armas a las que les falta. <font face='Mono'>POST /unidades/{id}/defensa</font> "
+               "acepta <font face='Mono'>arma</font>; <font face='Mono'>GET /api/catalogo</font> trae <font face='Mono'>sistemas_da</font>."])]
     h += Img(img, "cap_ia_noche.jpg", "Figura 4. Un alumno del bando azul contra la IA a las 23:00: el mapa oscurecido, la hora y el periodo en Estado del escenario y el bando rojo «IA · LISTO».")
 
     # ---- 9 aviacion
@@ -976,6 +995,10 @@ def construir(salida: Path, img: Path) -> None:
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
               ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña TIEM; engine/pmo.py",
                "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["Defensa aérea: ZU-23-2, S-125 Pechora-2M y Buk-M2E", "Consola → Agregar (tipo); ficha de la batería",
+               "Armas con alcance, techo y probabilidad; radar de vigilancia y de tiro; reacción, canales, recarga con "
+               "inoperatividad, despliegue y vehículos; elección del arma; tiro según el rumbo y el tiempo en alcance; "
+               "interferencia y maniobra evasiva (8.17)."],
               ["Águila animada en la pantalla de acceso", "Pantalla de acceso; js/aguila.js; tools/manual/aguila_video.py",
                "Al ingresar, el águila posada abre las alas, bate dos veces y vuela hacia la pantalla (video WebM con transparencia, "
                "cargado en memoria); luego aparece el simulador. Ningún formulario se envía sin JavaScript (CSP form-action 'none')."],

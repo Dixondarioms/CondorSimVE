@@ -92,6 +92,10 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
           _atk(0.0, 2.6, 0.0), 0.6, "equipo", movilidad="ligera", municion_por_ataque=50.0,
           despliegue_turnos=1, recarga_turnos=1, defensa_aerea=True,
           armamento="Sistema portatil antiaereo: debe desplegarse (1 turno quieto) y recargar (1 turno) entre disparos"),
+    Clase("artilleria_antiaerea", "Artilleria antiaerea (canones)", "terrestre", "G", "UCDG--", 40, 2.5, 8, 300,
+          _atk(0.6, 1.6, 0.3), 0.7, "seccion", defensa_aerea=True,
+          armamento="Canones antiaereos de punteria optica: muy baja cota y corto alcance; no emiten (la escucha "
+                    "enemiga no los encuentra) pero dependen del cuadro aereo de su bando y de noche tiran peor"),
     Clase("ingenieros", "Ingenieros", "terrestre", "G", "UCEC--", 25, 5, 8, 250, _atk(0.5, 0.1, 0.2), 0.9,
           "compania", movilidad="ligera", construye=True,
           armamento="Tiende vados (rapidos, precarios) y puentes (mas lentos, permiten pasar a los vehiculos)"),
@@ -473,6 +477,27 @@ MODELOS: dict[str, Modelo] = {m.id: m for m in [
          "Armamento individual de los operadores.",
          250, 3, 12, 450, _atk(0.3, 0.1, 0.1), 0.5, None, None),
       ]],
+    # ---- defensa aerea: sistemas con sus armas, radares, tiempos y vehiculos (ver engine/defensa_aerea.py) ----
+    Modelo("zu23_2", "artilleria_antiaerea", "ZU-23-2 (sección de 2 montajes)", "ZU-23-2", "Rusia (fabricación bajo licencia)",
+           "Rusia", "Artillería antiaérea de muy baja cota",
+           "Cañón antiaéreo bitubo de 23 mm remolcado, de puntería óptica. Defensa cercana de bases, puentes y "
+           "baterías de misiles contra helicópteros, drones y aviones a muy baja cota.",
+           "2 montajes ZU-23-2 (23 mm, 2 tubos cada uno); alcance eficaz 2,5 km y 1 500 m de altura.",
+           40, 2.5, 8, 300, _atk(0.6, 1.6, 0.3), 0.7, "/static/fotos/zu23_2.svg", _CREDITO_PROPIO),
+    Modelo("pechora_2m", "antiaerea", "S-125 Pechora-2M (batería)", "Pechora-2M", "Almaz-Antey / Defense Systems", "Rusia / Bielorrusia",
+           "Sistema de misiles tierra-aire de mediano alcance",
+           "Modernización móvil del S-125 Neva/Pechora, operada por la Defensa Antiaérea venezolana. Radar de "
+           "vigilancia P-18-2 y radar de tiro SNR-125-2M; misil 5V27DE guiado por radar.",
+           "8 misiles 5V27DE en 4 lanzadores (32 km, de 20 m a 20 km de altura) y 8 de recarga; 2 ZU-23-2 de defensa "
+           "cercana.",
+           30, 32, 160, 400, _atk(0.1, 2.4, 0.1), 0.85, "/static/fotos/pechora_2m.svg", _CREDITO_PROPIO),
+    Modelo("buk_m2e", "antiaerea", "Buk-M2E (batería)", "Buk-M2E", "Almaz-Antey", "Rusia",
+           "Sistema de misiles tierra-aire de mediano alcance autopropulsado",
+           "Sistema autopropulsado sobre orugas, operado por la Defensa Antiaérea venezolana. Cada TELAR lleva su "
+           "radar de tiro y 4 misiles; el radar de vigilancia 9S18M1-3E alimenta a la batería.",
+           "12 misiles 9M317E listos (45 km, de 15 m a 25 km de altura) y 8 de recarga en el TEL; sección Igla-S de "
+           "defensa cercana.",
+           45, 45, 160, 500, _atk(0.1, 2.8, 0.2), 0.95, "/static/fotos/buk_m2e.svg", _CREDITO_PROPIO),
 ]}
 
 
@@ -523,8 +548,10 @@ def modelo_dict(m: Modelo) -> dict:
         "id": m.id, "clase": m.clase, "nombre": m.nombre, "corto": m.corto, "fabricante": m.fabricante,
         "pais": m.pais, "funcion": m.funcion, "descripcion": m.descripcion, "armamento": m.armamento,
         "velocidad_kmh": m.velocidad_kmh, "alcance_km": m.alcance_km, "deteccion_km": m.deteccion_km,
-        "autonomia_km": m.autonomia_km, "ataque_vs": m.ataque_vs, "defensa": m.defensa, "foto": m.foto,
-        "credito": m.credito, "embarcable": modelo_embarcable(m), "misil": CLASES[m.clase].misil,
+        "autonomia_km": m.autonomia_km, "ataque_vs": m.ataque_vs, "defensa": m.defensa,
+        "foto": m.foto or (FOTOS_CLASE.get(m.clase) or {}).get("foto"),
+        "credito": m.credito or (FOTOS_CLASE.get(m.clase) or {}).get("credito"),
+        "embarcable": modelo_embarcable(m), "misil": CLASES[m.clase].misil,
         "firma": m.firma if m.firma is not None else CLASES[m.clase].firma,
         "propio": m.id.startswith("u_"),  # tipo del catalogo propio del instructor (engine/modelos_usuario.py)
     }

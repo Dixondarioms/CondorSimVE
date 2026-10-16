@@ -29,6 +29,7 @@ from app.engine import aeronaves as aeronaves_mod
 from app.engine import bases as bases_mod
 from app.engine import azar as azar_mod
 from app.engine import catalogo, combat, geo, logistica, movimiento, relieve, vision
+from app.engine import defensa_aerea as da_mod
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import infraestructura as infra_mod
@@ -48,6 +49,7 @@ from app.terreno import Terreno, get_terreno
 COBERTURA_AEREA_KM = 40.0
 BONO_APOYO_MAX_POR_UNIDAD = 0.30  # +30% con la unidad de apoyo a plena fuerza
 BONO_APOYO_TOPE = 0.60
+FACTOR_ATAQUE_TRAS_EVASION = 0.85  # la aeronave que esquivo misiles ataca con menos precision ese turno
 MUNICION_POR_ATAQUE = {"terrestre": 25.0, "aerea": 34.0, "naval": 20.0}
 MUNICION_POR_APOYO = 10.0
 REABASTECIMIENTO_POR_TURNO = 50.0  # puntos de combustible y de municion que da una base
@@ -417,6 +419,7 @@ def procesar_ordenes(
         _aviso_interferencia(db, escenario, turno, u.bando, lat, lon, radio)
     ge = ge_mod.Contexto(zonas)
 
+    pos_inicio = {u.id: (u.lat, u.lon) for u in lista_unidades}
     # ---- Fase 1: movimiento, vuelo, patrulla y aterrizaje ----
     con_orden_de_vuelo: set[int] = set()
     aterrizajes_del_turno: dict[int, int] = defaultdict(int)
@@ -643,8 +646,68 @@ def procesar_ordenes(
     # ---- Fase 2c: defensa antiaerea automatica. Cada pieza con fuego libre y sin orden de ataque dispara contra la
     # aeronave enemiga en vuelo mas cercana a su alcance que su bando detecte; la guiada por radar necesita el radar
     # encendido. Se registra como una orden de ataque "defensa aerea".
+    # Los sistemas con armas propias (engine/defensa_aerea.py) baten varios blancos por turno segun su tiempo de
+    # reaccion, la trayectoria de cada aeronave, sus canales y sus misiles; cada blanco batido es una orden de ataque.
+    enfrentamientos: dict[int, tuple] = {}  # orden.id -> (Disparo, bateria)
+    evadieron: set[int] = set()  # aeronaves que maniobraron para evadir misiles: su propio ataque pierde precision
+    noche = clima.periodo == "noche"
+
+    def blancos_da(u, alcance_km: float) -> list[dict]:
+        aliados = [x for x in lista_unidades if x.bando == u.bando and x.estado == "activa" and x.deteccion_km]
+        lista = []
+        for x in lista_unidades:
+            if x.bando == u.bando or not aeronaves_mod.en_vuelo(x):
+                continue
+            if geo.distancia_km(u.lat, u.lon, x.lat, x.lon) > alcance_km or not relieve.linea_de_vista(terreno, u, x):
+                continue
+            if not any(vision.detecta(d, x, terreno, clima, ge) for d in aliados):
+                continue
+            lista.append(blanco_da(u, x))
+        return sorted(lista, key=lambda b: geo.distancia_km(u.lat, u.lon, b["unidad"].lat, b["unidad"].lon))
+
+    def blanco_da(u, x) -> dict:
+        cx = catalogo.obtener(x.clase, x.tipo)
+        desde = pos_inicio.get(x.id)
+        n = max(1, int(getattr(x, "aeronaves", 1) or 1)) if x.tipo == "aerea" else 1
+        return {"unidad": x, "desde": desde if desde != (x.lat, x.lon) else None, "hasta": (x.lat, x.lon),
+                "altura_m": relieve.altura_sobre_terreno(x), "firma": catalogo.firma(x),
+                "tripulada": not (cx.dron or cx.misil or cx.se_consume), "aeronaves": n * max(0.0, x.fuerza) / 100.0,
+                "traza_propia": vision.detecta(u, x, terreno, clima, ge)}
+
+    def registrar_enfrentamiento(u, res) -> None:
+        for texto in res.recargas:
+            db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="combate", bando_destino=u.bando,
+                          descripcion=texto + "."))
+        for disp in res.disparos:
+            orden_da = Orden(escenario_id=escenario.id, unidad_id=u.id, tipo="atacar", objetivo_unidad_id=disp.blanco_id,
+                             detalle="defensa aerea", turno_emitida=turno, estado="pendiente")
+            db.add(orden_da)
+            db.flush()
+            ordenes.append(orden_da)
+            enfrentamientos[orden_da.id] = (disp, u)
+            if disp.evasion:
+                evadieron.add(disp.blanco_id)
+
+    for u in lista_unidades:
+        sistema_da = da_mod.sistema(u)
+        if sistema_da is None:
+            continue
+        clase_aa = catalogo.obtener(u.clase, u.tipo)
+        if not fuego_auto or u.estado != "activa" or u.fuego_libre is False or u.id in atacan:
+            continue
+        blancos = blancos_da(u, max(a.alcance_max_km for a in sistema_da.armas))
+        if not blancos:
+            continue
+        res = da_mod.enfrentar(u, blancos, se_movio=u.id in movidas, radar_ok=not clase_aa.emisor or ge_mod.emite_radar(u),
+                               interferida=ge.interferido(u), noche=noche)
+        registrar_enfrentamiento(u, res)
+        if res.disparos:
+            atacan.add(u.id)
+
     for u in lista_unidades:
         clase_aa = catalogo.obtener(u.clase, u.tipo)
+        if da_mod.sistema(u) is not None:
+            continue  # ya tiro arriba con sus armas
         if not fuego_auto or not clase_aa.defensa_aerea or u.estado != "activa" or u.fuego_libre is False or u.id in atacan:
             continue
         if u.municion <= 0 or u.recarga_restante > 0:
@@ -707,6 +770,47 @@ def procesar_ordenes(
             return
         t_a, t_d = tipo_efectivo(a), tipo_efectivo(d)
         clase_a, clase_d = catalogo.perfil(a), catalogo.perfil(d)
+        sistema_a = da_mod.sistema(a)
+        if sistema_a is not None and t_d == "aerea" and relieve.en_vuelo(d):
+            if orden.id not in enfrentamientos:  # orden del operador: tira contra ese blanco con el arma elegida
+                if not relieve.linea_de_vista(terreno, a, d):
+                    rechazar(orden, "Sin linea de vista: el relieve o el horizonte ocultan la aeronave.")
+                    return
+                res = da_mod.enfrentar(a, [blanco_da(a, d)], se_movio=a.id in movidas,
+                                       radar_ok=not clase_a.emisor or ge_mod.emite_radar(a),
+                                       interferida=ge.interferido(a), noche=noche,
+                                       arma_forzada=orden.detalle if sistema_a.arma(orden.detalle) else None)
+                if not res.disparos:
+                    rechazar(orden, res.sin_fuego or res.motivos.get(d.id) or "No pudo batir el blanco.")
+                    return
+                for texto in res.recargas:
+                    db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="combate", bando_destino=a.bando,
+                                  descripcion=texto + "."))
+                enfrentamientos[orden.id] = (res.disparos[0], a)
+                if res.disparos[0].evasion:
+                    evadieron.add(d.id)
+            disp = enfrentamientos[orden.id][0]
+            total = max(1, int(getattr(d, "aeronaves", 1) or 1))
+            factor = azar_mod.factor_azar(escenario.semilla, turno, a.id, d.id) if escenario.azar else 1.0
+            perdida = min(fuerza_inicial[d.id], disp.derribos * factor / total * 100.0)
+            perdidas[d.id] += perdida
+            orden_de_ataque[a.id] = orden.id
+            dispararon.add(a.id)
+            orden.estado = "resuelta"
+            orden.resultado = disp.texto(d.nombre) + "."
+            db.add(Combate(
+                escenario_id=escenario.id, turno=turno, orden_id=orden.id,
+                atacante_id=a.id, defensor_id=d.id, atacante_nombre=a.nombre, defensor_nombre=d.nombre,
+                atacante_bando=a.bando, defensor_bando=d.bando, ratio=round(disp.p_salva, 3),
+                fuerza_ini_atacante=fuerza_inicial[a.id], fuerza_ini_defensor=fuerza_inicial[d.id],
+                perdida_atacante=0.0, perdida_defensor=perdida, terreno=terreno.clase(d.lat, d.lon),
+                efectos="; ".join([f"{disp.arma.nombre}: {disp.salvas} salva(s), {disp.misiles} disparo(s), {disp.aspecto}"]
+                                  + disp.efectos), lat=d.lat, lon=d.lon,
+            ))
+            if disp.evasion:
+                db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="combate", bando_destino=d.bando,
+                              descripcion=f"{d.nombre} fue atacado con {disp.arma.nombre} y realizo maniobras evasivas."))
+            return
         # la antiaerea guiada por radar pierde efecto contra aeronaves si esta interferida, y mas aun si tira a ojo
         # con el radar apagado (solo por orden: sola no dispara)
         aaa_optica = clase_a.emisor and t_d == "aerea" and a.emitiendo is False
@@ -747,6 +851,7 @@ def procesar_ordenes(
             bono_atacante=_bono_apoyo(a, apoyos, unidades),
             bono_defensor=_bono_apoyo(d, apoyos, unidades),
             factor_ataque=clase_a.ataque_vs.get(t_d, 1.0) * catalogo.factor_grupo(a)
+            * (FACTOR_ATAQUE_TRAS_EVASION if a.id in evadieron else 1.0)
             * (ge_mod.FACTOR_ANTIAEREA if aaa_interferida else 1.0) * (ge_mod.FACTOR_TIRO_OPTICO if aaa_optica else 1.0)
             * relieve.factor_portatil(a, d),
             factor_defensa=clase_d.defensa * catalogo.factor_grupo(d),
@@ -758,6 +863,8 @@ def procesar_ordenes(
         )
         if aaa_interferida:
             res.efectos.append(f"antiaerea interferida por guerra electronica x{ge_mod.FACTOR_ANTIAEREA:.2f}")
+        if a.id in evadieron:
+            res.efectos.append(f"ataque tras maniobrar para evadir misiles x{FACTOR_ATAQUE_TRAS_EVASION:.2f}")
         if relieve.factor_portatil(a, d) != 1.0:
             res.efectos.append(f"aeronave a baja cota (rasante) expuesta a la antiaerea portatil x{relieve.FACTOR_PORTATIL_RASANTE:.2f}")
         perdidas[a.id] += fuerza_inicial[a.id] - res.fuerza_atacante_resultante
