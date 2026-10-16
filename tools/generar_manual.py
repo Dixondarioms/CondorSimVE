@@ -976,6 +976,9 @@ def construir(salida: Path, img: Path) -> None:
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
               ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña TIEM; engine/pmo.py",
                "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["Águila animada en la pantalla de acceso", "Pantalla de acceso; js/aguila.js; tools/manual/aguila_video.py",
+               "Al ingresar, el águila posada abre las alas, bate dos veces y vuela hacia la pantalla (video WebM con transparencia, "
+               "cargado en memoria); luego aparece el simulador. Ningún formulario se envía sin JavaScript (CSP form-action 'none')."],
               ["TIEM, etapa 6: evaluación y exportación", "Pestaña TIEM → Evaluación y legajo; Informe → Rúbrica",
                "Evaluación del trabajo de Estado Mayor con nota de 1 a 20 y legajo de documentos en Word o PDF (8.16)."],
               ["TIEM, etapa 5: supervisión de la ejecución", "Pestaña TIEM → Supervisión de la ejecución; engine/supervision.py",

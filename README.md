@@ -289,7 +289,15 @@ Alumnos y observadores solo acceden a los **escenarios que el instructor les asi
 
 Autorización en el servidor: cookie de sesión HttpOnly + SameSite=Strict, contraseñas PBKDF2-SHA256,
 bloqueo tras 5 intentos fallidos (persistente en la base), sesiones de 12 h revocables, WebSocket
-autenticado con verificación de origen, y cabeceras CSP / nosniff / frame-deny.
+autenticado con verificación de origen, y cabeceras CSP / nosniff / frame-deny. La CSP incluye
+`form-action 'none'` (ningún formulario se envía sin JavaScript: si se pulsa *Ingresar* antes de que cargue la
+página, usuario y contraseña nunca van en la dirección) y `media-src 'self' blob:` (el video del águila).
+
+Pantalla de acceso: el águila del SIETE espera posada con las alas recogidas
+(`static/img/siete_aguila_posada.png`); al aprobarse el ingreso se reproduce `static/img/aguila_vuelo.webm`
+(2,8 s, VP9 con transparencia: abre las alas, bate dos veces y vuela hacia la pantalla; `js/aguila.js`) y
+recién entonces se muestra el simulador. El video se arma desde el video original del águila con
+`tools/manual/aguila_video.py`, que le quita el fondo cuadro por cuadro y ajusta su duración.
 
 ## Flujo de un turno (1 turno = 1 hora simulada)
 

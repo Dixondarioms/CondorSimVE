@@ -187,6 +187,9 @@ def construir(salida: Path) -> None:
         H2("2.2 Iniciar sesión"),
         pasos("Escriba su <b>Usuario</b> y su <b>Contraseña</b>.", f"Pulse {B('Ingresar')} (o Intro)."),
         P("Si la contraseña es incorrecta aparece un aviso en rojo. Tras <b>5 intentos fallidos</b> la cuenta se bloquea 5 minutos."),
+        P("Al aprobarse el ingreso, el águila del S.I.E.T.E., posada con las alas recogidas, las abre, levanta el vuelo con dos "
+          "batidas y viene hacia la pantalla (unos 3 segundos); cuando desaparece se muestra el simulador. Si en Windows está "
+          "desactivada la opción <i>Efectos de animación</i>, se entra directo."),
         P("<b>Primer uso del simulador.</b> El administrador entra con el usuario <b>admin</b> y la contraseña inicial <b>siete1234</b>; "
           "el simulador le pedirá cambiarla de inmediato (2.4)."),
     ])
