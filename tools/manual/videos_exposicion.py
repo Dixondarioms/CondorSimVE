@@ -63,8 +63,8 @@ VIDEO_1 = {
         ]),
         ("titulo:Orientado al TIEM|Planeamiento y conducción de operaciones aéreas según el Trabajo Integral de Estado Mayor", "", [
             "Su eje es el Trabajo Integral de Estado Mayor, la metodología oficial para planificar y conducir operaciones.",
-            "El simulador no solo resuelve combates: hace que el Estado Mayor aprecie la situación, decida, planifique, "
-            "ordene y supervise la ejecución, paso a paso, como lo establece el TIEM.",
+            "El simulador no solo resuelve combates: con él, el Estado Mayor aprecia la situación, decide, planifica, "
+            "ordena y supervisa la ejecución, paso a paso, como lo establece el TIEM.",
         ]),
         ("diag_puestos", "Un Estado Mayor completo", [
             "Cada alumno ocupa una repartición: el Comandante, el Jefe de Estado Mayor, personal, inteligencia, "
