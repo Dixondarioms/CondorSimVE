@@ -7,6 +7,7 @@ const Aguila = require("../static/js/aguila.js");
 
 test("el vuelo dura un segundo: abre las alas posada y termina grande y transparente sobre la pantalla", () => {
   assert.ok(Aguila.VUELO_MS <= 1000);
+  assert.strictEqual(Aguila.DESPLIEGUE_MS + Aguila.ALETEO_MS, Aguila.VUELO_MS);  // un solo aleteo
   const c = Aguila.cuadrosVuelo(100, 200);
   assert.strictEqual(c[0].offset, 0);
   assert.strictEqual(c[c.length - 1].offset, 1);

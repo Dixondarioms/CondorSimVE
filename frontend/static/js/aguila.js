@@ -1,5 +1,5 @@
 /* Aguila del SIETE en la pantalla de acceso. En reposo esta posada con las alas recogidas (imagen propia); al
- * aprobarse el ingreso se funde en la desplegada, abre las alas, aletea y levanta el vuelo hacia la pantalla.
+ * aprobarse el ingreso se funde en la desplegada, abre las alas, da un aleteo y levanta el vuelo hacia la pantalla.
  *
  * La desplegada se arma con piezas de la misma imagen (recortadas con clip-path en style.css): el cuerpo y, en cada
  * ala, el brazo (gira en el hombro) y la mano con las plumas largas (gira en la muneca, dentro del brazo). El aleteo
@@ -12,7 +12,7 @@
   const VUELO_MS = 1000;      // todo: de posada hasta desaparecer sobre la pantalla
   const DESPLIEGUE_MS = 260;  // abre las alas hasta arriba
   const FUNDIDO_MS = 180;     // de la imagen posada a la desplegada
-  const ALETEO_MS = 520;      // un ciclo de aleteo (arriba -> abajo -> arriba)
+  const ALETEO_MS = VUELO_MS - DESPLIEGUE_MS;  // un solo aleteo (arriba -> abajo -> arriba) hasta desaparecer
   const MUESTRAS = 16;        // cuadros por ciclo (entre ellos se interpola linealmente: la curva queda suave)
   // brazo: angulo medio y amplitud (grados, positivo = punta arriba); mano: amplitud y retraso (fraccion de ciclo)
   const BRAZO_MEDIO = 6, BRAZO_AMPL = 30, MANO_AMPL = 18, MANO_RETRASO = 0.14, ACORTE = 0.08, BATIDA_PX = 6;
@@ -52,8 +52,7 @@
   }
 
   function animarAlas(figura) {
-    const vueltas = (VUELO_MS - DESPLIEGUE_MS) / ALETEO_MS;
-    const ciclo = { duration: ALETEO_MS, delay: DESPLIEGUE_MS, iterations: vueltas, easing: "linear" };
+    const ciclo = { duration: ALETEO_MS, delay: DESPLIEGUE_MS, iterations: 1, easing: "linear" };
     const abrir = { duration: DESPLIEGUE_MS, easing: "cubic-bezier(.3,0,.25,1)", fill: "forwards" };
     const fundido = (sel, de, a, ms) => {
       const el = figura.querySelector(sel);

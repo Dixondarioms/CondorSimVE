@@ -388,7 +388,8 @@ path.ruta-anim { animation: marcha 1.2s linear infinite; }
 .aguila .ala-izq .mano img { clip-path: polygon(0 0, 24% 0, 19% 74%, 0 74%); }
 .aguila .ala-der .brazo { clip-path: polygon(57% 0, 78% 0, 83% 74%, 63% 74%, 57% 58%); }
 .aguila .ala-der .mano img { clip-path: polygon(76% 0, 100% 0, 100% 74%, 81% 74%); }
-.aguila .cuerpo { clip-path: polygon(43% 0, 57% 0, 57% 58%, 63% 74%, 100% 74%, 100% 100%, 0 100%, 0 74%, 37% 74%, 43% 58%); z-index: 1; }
+/* el cuerpo (encima) se ensancha sobre la raiz de las alas, donde todo es opaco, para tapar la union al girar */
+.aguila .cuerpo { clip-path: polygon(43% 0, 57% 0, 57% 16%, 59.5% 22%, 59.5% 58%, 63% 74%, 100% 74%, 100% 100%, 0 100%, 0 74%, 37% 74%, 40.5% 58%, 40.5% 22%, 43% 16%); z-index: 1; }
 .aguila img.posada { inset: auto; left: 22.49%; top: 5.07%; width: 54.48%; height: 94.4%; z-index: 2; opacity: 0; }
 .aguila.plegada img.posada { opacity: 1; }
 .aguila.plegada .ala-izq, .aguila.plegada .ala-der, .aguila.plegada .cuerpo { opacity: 0; }
