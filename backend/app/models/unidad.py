@@ -71,6 +71,21 @@ class Unidad(Base):
     cargas_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     arma_elegida: Mapped[str | None] = mapped_column(String(30), nullable=True)
 
+    # bases aereas: largo de la pista fijado por el instructor (None = el del plano del aerodromo o el por defecto)
+    pista_m: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    @property
+    def pista_largo_m(self) -> float | None:
+        from app.engine import plataformas
+
+        return plataformas.largo_pista(self)
+
+    @property
+    def pista_util_m(self) -> float | None:
+        from app.engine import plataformas
+
+        return plataformas.pista_util(self)
+
     @property
     def sistema_da(self) -> dict | None:
         from app.engine import defensa_aerea

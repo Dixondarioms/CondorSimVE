@@ -478,7 +478,24 @@ def construir(salida: Path) -> None:
              "más cercana a su alcance.",
              f"{B('Arma a emplear')} (sistemas de defensa aérea): automática o un arma fija; ver abajo."]),
     ])
-    h += [H3("Sistemas de defensa aérea: ZU-23-2, S-125 Pechora-2M y Buk-M2E"),
+    h += [H3("Unidades de medida y convertidor"),
+          P("La ficha muestra a la <b>aviación</b>, la <b>defensa aérea</b> y la <b>armada</b> en unidades aeronáuticas y navales "
+            "(velocidad en <b>nudos</b>, distancias en <b>millas náuticas</b>, alturas en <b>pies</b>, con el valor en km o metros "
+            "entre paréntesis) y a las <b>fuerzas terrestres</b> en km. El botón <b>Convertir</b> de la barra del mapa (junto a la "
+            "Regla) pasa entre unidades de distancia, velocidad, altura (incluido el nivel de vuelo, FL), masa y volumen."),
+          H3("Ficha técnica de las aeronaves y largo de pista"),
+          P("La ficha de cada grupo aéreo trae la <b>ficha técnica</b> de su modelo: roles que puede cumplir, velocidad en ruta y "
+            "máxima, radio de acción, techo, combustible interno y consumo (con las horas que alcanza), oxígeno líquido "
+            "(o «OBOGS» si lo genera a bordo), carrera de despegue y de aterrizaje, y tripulación. Los tipos del catálogo propio "
+            "se cargan con la suya desde el catálogo propio."),
+          P("La ficha de una base aérea muestra su <b>pista</b>: el largo sale del plano del aeródromo (o lo fija el instructor en "
+            "el ajuste manual) y los cráteres la acortan. Un avión <b>no despega ni aterriza</b> donde su carrera no entra: el "
+            "diálogo de despegue avisa qué modelos no caben, las misiones lo rechazan, y al regresar los aviones buscan una "
+            "base con pista suficiente. Los helicópteros y el F-35B no necesitan pista."),
+          P("Al planificar una misión, la estimación suma la <b>logística</b>: kilos de combustible para toda la ruta y litros de "
+            "oxígeno líquido, por aeronave y en total, con un 20 % de reserva, y avisa si no alcanzan los de a bordo. El perfil "
+            "de vuelo cuenta: rasante gasta 30 % más; alto, 15 % menos."),
+          H3("Sistemas de defensa aérea: ZU-23-2, S-125 Pechora-2M y Buk-M2E"),
           P("Estas baterías (A-3 D/A) se ubican desde la consola eligiendo su <b>tipo</b> en la clase <i>Defensa antiaérea</i> (Pechora, "
             "Buk) o <i>Artillería antiaérea</i> (ZU-23-2). Su ficha muestra:"),
           Bul(["<b>Radares</b>: el de <b>vigilancia</b> ve lejos y alimenta el cuadro del bando; el de <b>tiro</b> guía los misiles y "

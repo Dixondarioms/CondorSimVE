@@ -690,6 +690,13 @@ drones de reconocimiento, **A-2**; los armados, como toda aeronave de ataque, **
   en vuelo más cercana a su alcance que su bando detecte (aparece como "defensa aérea" en la cola de órdenes). La
   guiada por radar necesita el radar encendido; con el radar apagado solo tira **por orden y a ojo** (×0,3). La
   portátil infrarroja no necesita radar, pero sí estar desplegada. Se puede **retener el fuego** para no delatarse.
+- **Plataformas aéreas** (`engine/plataformas.py`): ficha técnica de cada aeronave (roles, velocidad en ruta y
+  máxima en nudos, radio de acción en millas náuticas, techo en pies, combustible y consumo, oxígeno líquido, carrera
+  de despegue y aterrizaje, tripulación), también para los tipos del catálogo propio. Largo de pista de cada base
+  aérea (del plano del aeródromo o fijado por el instructor, `pista_m`, migración `0032`) y pista útil según su daño:
+  una aeronave no despega ni aterriza donde su carrera no entra. Las misiones estiman combustible (kg) y oxígeno
+  líquido (l) con la reserva, y el perfil de vuelo. La interfaz muestra aviación, defensa aérea y armada en kt, NM y
+  ft (tierra en km), con un convertidor de unidades en la barra del mapa.
 - **Sistemas de defensa aérea con sus armas** (`engine/defensa_aerea.py`): ZU-23-2 (clase `artilleria_antiaerea`,
   sin radar), S-125 Pechora-2M y Buk-M2E (modelos de `antiaerea`). Cada uno con sus armas (alcance mínimo y máximo,
   franja de altura, probabilidad de derribo por misil, misiles por salva, listos y reserva, tiempo de recarga), radar

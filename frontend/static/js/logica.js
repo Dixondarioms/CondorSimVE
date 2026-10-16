@@ -802,6 +802,71 @@
     return p ? `${p.nombre} (${p.altura})` : "";
   }
   /** Si conviene pedir y dibujar la cobertura por relieve de esta unidad: sensores en tierra o en el mar. */
+  // ---- unidades de medida: la aviacion, la defensa aerea y la armada en nudos, millas nauticas y pies; las fuerzas
+  // terrestres en km. El motor trabaja siempre en km, km/h y metros. ----
+  const UNIDADES = {
+    distancia: { nombre: "Distancia", base: "km", unidades: { km: ["km", 1], nm: ["NM (milla náutica)", 1.852], mi: ["mi (milla terrestre)", 1.609344], m: ["m", 0.001], ft: ["ft (pie)", 0.0003048] } },
+    velocidad: { nombre: "Velocidad", base: "kmh", unidades: { kmh: ["km/h", 1], kt: ["kt (nudo)", 1.852], mph: ["mph", 1.609344], ms: ["m/s", 3.6], mach: ["Mach (nivel del mar)", 1225.04] } },
+    altura: { nombre: "Altura", base: "m", unidades: { m: ["m", 1], ft: ["ft (pie)", 0.3048], km: ["km", 1000], fl: ["FL (nivel de vuelo)", 30.48] } },
+    masa: { nombre: "Masa", base: "kg", unidades: { kg: ["kg", 1], lb: ["lb (libra)", 0.45359237], t: ["t", 1000] } },
+    volumen: { nombre: "Volumen", base: "l", unidades: { l: ["l", 1], gal: ["gal (galón EE. UU.)", 3.785411784], m3: ["m³", 1000] } },
+  };
+
+  /** Convierte `valor` de la unidad `de` a la unidad `a` dentro de una magnitud de UNIDADES. */
+  function convertir(magnitud, valor, de, a) {
+    const m = UNIDADES[magnitud];
+    if (!m || !m.unidades[de] || !m.unidades[a]) return null;
+    return (Number(valor) * m.unidades[de][1]) / m.unidades[a][1];
+  }
+
+  /** "aeronautico" (aviacion y defensa aerea), "naval" (armada) o "metrico" (fuerzas terrestres). */
+  function sistemaMedidas(u, clase) {
+    if (!u) return "metrico";
+    if (u.tipo === "aerea") return "aeronautico";
+    if (u.tipo === "naval") return "naval";
+    if (clase && (clase.defensa_aerea || (clase.emisor && clase.solo_aereo))) return "aeronautico";
+    return "metrico";
+  }
+
+  const numeroEs = (v, dec = 0) => Number(v).toLocaleString("es", { maximumFractionDigits: dec, minimumFractionDigits: 0 });
+
+  /** Texto de una medida (el motor da km, km/h o m) en el sistema de la unidad: "486 kt (900 km/h)", "24 NM (45 km)",
+   * "20.000 ft (6.000 m)"; en el metrico, solo "45 km". */
+  function medida(sistema, magnitud, valor) {
+    if (valor === null || valor === undefined) return "?";
+    const v = Number(valor);
+    if (sistema === "metrico") {
+      return magnitud === "velocidad" ? `${numeroEs(v)} km/h` : magnitud === "altura" ? `${numeroEs(v)} m` : `${numeroEs(v, 1)} km`;
+    }
+    if (magnitud === "velocidad") return `${numeroEs(v / 1.852)} kt (${numeroEs(v)} km/h)`;
+    if (magnitud === "altura") return `${numeroEs(v / 0.3048, 0)} ft (${numeroEs(v)} m)`;
+    const nm = v / 1.852;
+    return `${numeroEs(nm, nm < 100 ? 1 : 0)} NM (${numeroEs(v, v < 100 ? 1 : 0)} km)`;
+  }
+
+  /** Filas de la ficha tecnica de una aeronave (engine/plataformas.py) para la interfaz. */
+  function filasFicha(f) {
+    if (!f) return [];
+    const ft = (m) => `${numeroEs(m)} m (${numeroEs(m / 0.3048)} ft)`;
+    return [
+      ["Roles", f.roles_nombres.join(", ")],
+      ["Velocidad en ruta / máx.", `${numeroEs(f.crucero_kt)} kt / ${numeroEs(f.max_kt)} kt`],
+      ["Radio de acción", `${numeroEs(f.radio_nm)} NM (${numeroEs(f.radio_nm * 1.852)} km)`],
+      ["Techo", `${numeroEs(f.techo_ft)} ft`],
+      ["Combustible interno", `${numeroEs(f.combustible_kg)} kg · ${numeroEs(f.consumo_kg_h)} kg/h${f.autonomia_h ? ` (${numeroEs(f.autonomia_h, 1)} h)` : ""}`],
+      ["Oxígeno líquido", f.lox_l ? `${numeroEs(f.lox_l, 1)} l · ${numeroEs(f.lox_l_h, 1)} l/h${f.lox_horas ? ` (${numeroEs(f.lox_horas, 1)} h)` : ""}` : (f.tripulacion ? "Genera su oxígeno a bordo (OBOGS)" : "No tripulada")],
+      ["Despegue / aterrizaje", f.despegue_m || f.aterrizaje_m ? `${f.despegue_m ? ft(f.despegue_m) : "vertical"} / ${f.aterrizaje_m ? ft(f.aterrizaje_m) : "vertical"}` : "Vertical (no necesita pista)"],
+      ["Tripulación", f.tripulacion ? `${f.tripulacion} por aeronave` : "No tripulada (se opera desde tierra)"],
+    ];
+  }
+
+  /** La aeronave puede despegar de la pista util de la base (sin ficha o sin pista: si). */
+  function entraEnPista(modelo, base) {
+    const f = modelo && modelo.ficha;
+    if (!f || !base || base.pista_util_m === null || base.pista_util_m === undefined) return true;
+    return !f.despegue_m || f.despegue_m <= base.pista_util_m;
+  }
+
   /** Sistema de defensa aerea (engine/defensa_aerea.py): filas de sus armas con lo listo y en reserva, y datos de la
    * bateria para la ficha. `sistema` viene del catalogo (sistemas_da) y `estado` de la unidad (sistema_da). */
   function resumenSistemaDA(sistema, estado) {
@@ -861,7 +926,8 @@
 
   const api = {
     MAPA_VENEZUELA, ordenarMapas, limitesDe, limitesDeMapas, textoMapa, ZOOM_ROTULOS, ZOOM_ALCANCES, ZOOM_CARRETERAS, escalaUnidad, unidadesConAlcance,
-    PERFILES_VUELO, textoPerfil, muestraCobertura, resumenSistemaDA,
+    PERFILES_VUELO, textoPerfil, muestraCobertura, resumenSistemaDA, UNIDADES, convertir, sistemaMedidas, medida,
+    filasFicha, entraEnPista,
     NIVELES_OBJETIVO, arbolObjetivos, superioresPosibles, textoCalendario, nombreFase, CONDUCCION,
     PUESTOS, puestoDe, puestoPuede, puestoPuedeAereo, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,

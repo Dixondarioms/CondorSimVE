@@ -804,6 +804,23 @@ def construir(salida: Path, img: Path) -> None:
                "<font face='Mono'>arma_elegida</font> (migración 0031); la munición de la unidad es el total de la reserva y el "
                "reabastecimiento se reparte entre las armas a las que les falta. <font face='Mono'>POST /unidades/{id}/defensa</font> "
                "acepta <font face='Mono'>arma</font>; <font face='Mono'>GET /api/catalogo</font> trae <font face='Mono'>sistemas_da</font>."])]
+    h += [H2("8.18 Plataformas aéreas, pistas y unidades de medida"),
+          Bul(["<b>Ficha técnica</b> (<font face='Mono'>engine/plataformas.py</font>, <font face='Mono'>FICHAS</font>): roles, velocidad "
+               "en ruta y máxima (kt), radio de acción (NM), techo (ft), combustible interno y consumo (kg, kg/h), oxígeno líquido "
+               "(l, l/h; 0 = OBOGS), carrera de despegue y de aterrizaje (m), tripulación y combustible transferible (cisternas). "
+               "Sin ficha (tipos propios), se deriva de la clase y de su velocidad y autonomía; el instructor puede cargarla "
+               "(<font face='Mono'>ficha</font> en <font face='Mono'>POST /api/catalogo/modelos</font>). La tripulación de la ficha fija "
+               "el personal de los grupos aéreos.",
+               "<b>Pistas</b>: largo = <font face='Mono'>Unidad.pista_m</font> (instructor, migración 0032) o la pista más larga del "
+               "plano del aeródromo a ≤ 4 km (<font face='Mono'>frontend/static/geo/aerodromos</font>), o 3 000 m; pista útil = largo × "
+               "(1 − daño de pista). <font face='Mono'>aeronaves.error_de_despegue</font>, <font face='Mono'>error_de_aterrizaje</font>, "
+               "<font face='Mono'>puede_operar_en</font> y las misiones exigen carrera ≤ pista útil (portaaviones: rige lo embarcable).",
+               "<b>Logística de misión</b>: <font face='Mono'>requerimientos</font> = consumo × horas × factor del perfil × 1,2 (reserva) "
+               "en kg y l de LOX, por aeronave y total; el plan de la misión lo trae en <font face='Mono'>plan.logistica</font>. La "
+               "estimación de combustible (%) ahora aplica el factor del perfil de vuelo, como la resolución.",
+               "<b>Unidades</b>: el motor usa km, km/h y m; la interfaz (<font face='Mono'>Logica.medida</font>) muestra aviación, "
+               "defensa aérea y armada en kt, NM y ft, y las fuerzas terrestres en km. Convertidor: <font face='Mono'>Logica.convertir</font> "
+               "y el botón Convertir de la barra del mapa."])]
     h += Img(img, "cap_ia_noche.jpg", "Figura 4. Un alumno del bando azul contra la IA a las 23:00: el mapa oscurecido, la hora y el periodo en Estado del escenario y el bando rojo «IA · LISTO».")
 
     # ---- 9 aviacion
@@ -995,6 +1012,9 @@ def construir(salida: Path, img: Path) -> None:
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
               ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña TIEM; engine/pmo.py",
                "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["Plataformas aéreas, pistas y unidades aeronáuticas", "Ficha de la aeronave y de la base; Despegar; misiones; Convertir",
+               "Ficha técnica de cada aeronave, largo y pista útil de las bases (despegue y aterrizaje según la carrera), "
+               "combustible y oxígeno de la misión, nudos, millas náuticas y pies, y convertidor (8.18)."],
               ["Defensa aérea: ZU-23-2, S-125 Pechora-2M y Buk-M2E", "Consola → Agregar (tipo); ficha de la batería",
                "Armas con alcance, techo y probabilidad; radar de vigilancia y de tiro; reacción, canales, recarga con "
                "inoperatividad, despliegue y vehículos; elección del arma; tiro según el rumbo y el tiempo en alcance; "

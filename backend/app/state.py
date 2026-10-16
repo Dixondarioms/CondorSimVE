@@ -40,7 +40,7 @@ CAMPOS_OCULTOS = (
     "carga", "recarga_restante", "despliegue_restante", "modelo", "aeronaves",
     "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id",
     "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios",
-    "transporte_id", "personal_inicial", "personal_actual", "sistema_da",
+    "transporte_id", "personal_inicial", "personal_actual", "sistema_da", "pista_largo_m", "pista_util_m",
 )
 CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct", "com_ordenes_pct")
 
@@ -197,4 +197,7 @@ def catalogo_publico() -> list[dict]:
 
 
 def modelos_publicos() -> list[dict]:
-    return [catalogo.modelo_dict(m) for m in catalogo.MODELOS.values()]
+    from app.engine import plataformas
+
+    return [{**catalogo.modelo_dict(m), "ficha": plataformas.ficha_dict(plataformas.ficha_de_modelo(m))}
+            for m in catalogo.MODELOS.values()]

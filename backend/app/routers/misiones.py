@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app import auth, schemas, state
 from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
-from app.engine import catalogo, puestos
+from app.engine import catalogo, plataformas, puestos, relieve
 from app.engine import clima as clima_mod
 from app.engine import misiones as misiones_mod
 from app.models.escenario import Escenario
@@ -38,6 +38,8 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
         auth.exigir_funcion(usuario, puestos.funcion_de_orden(u, "mision", clase))
         origen = (u.lat, u.lon, misiones_mod.velocidad_efectiva(u.velocidad_kmh, clase, clima_mod.contexto(db, esc), u.lat, u.lon), u.autonomia_km, u.combustible)
         turno, modelo, n = esc.turno_actual, u.modelo, u.aeronaves
+        factor = relieve.FACTOR_CONSUMO.get(relieve.perfil_de(u), 1.0)
+        base = None
     else:
         base = db.get(Unidad, payload.base_id)
         if base is None or base.escenario_id != esc.id or base.bando != usuario.rol:
@@ -69,6 +71,7 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
         clase = misiones_mod.clase_de_modelo(m.id)
         origen = (base.lat, base.lon, misiones_mod.velocidad_efectiva(m.velocidad_kmh, clase, clima_mod.contexto(db, esc), base.lat, base.lon), m.autonomia_km, 100.0)
         modelo = m.id
+        factor = relieve.FACTOR_CONSUMO.get(relieve.perfil_de(Unidad(tipo="aerea", clase=m.clase, modelo=m.id)), 1.0)
 
     puntos, visibles = [], None
     for p in payload.puntos:
@@ -84,6 +87,9 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
                 raise HTTPException(status_code=400, detail="El aterrizaje debe ser en una base aerea propia (o un portaaviones propio) en servicio")
             if catalogo.es_portaaviones(b) and not catalogo.es_embarcable(clase.id if clase else None, modelo):
                 raise HTTPException(status_code=400, detail=f"No puede aterrizar en un portaaviones: {aeronaves_mod.MOTIVO_NO_EMBARCABLE}")
+            corta = plataformas.error_de_pista(catalogo.MODELOS.get(modelo or ""), b, aterrizar=True)
+            if corta:
+                raise HTTPException(status_code=400, detail=corta)
             d.update(lat=b.lat, lon=b.lon, base_id=b.id)
         elif p.tipo == "blanco" and p.objetivo_unidad_id:
             if visibles is None:
@@ -94,7 +100,17 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
             d["objetivo_unidad_id"] = x.id
         puntos.append(d)
     errores = misiones_mod.validar(payload.rol, puntos, clase)
-    plan = misiones_mod.estimar(*origen, puntos)
+    if base is not None:
+        corta = plataformas.error_de_pista(catalogo.MODELOS.get(modelo or ""), base)
+        if corta:
+            errores.append(corta)
+    plan = misiones_mod.estimar(*origen, puntos, factor)
+    # logistica de la mision: combustible (kg) y oxigeno liquido (l) para toda la ruta, con la reserva
+    plan["logistica"] = plataformas.requerimientos(catalogo.MODELOS.get(modelo or ""), n, plan["duracion_h"], factor)
+    if plan["logistica"] and plan["logistica"]["excede_lox"]:
+        plan["advertencias"].append(
+            f"El oxigeno liquido de a bordo ({plan['logistica']['lox_a_bordo_l']:g} l) no alcanza para "
+            f"{plan['duracion_h']:.1f} h de vuelo con la reserva.")
     if payload.rol == "ESCOLTA":
         e = db.get(Mision, payload.escolta_de) if payload.escolta_de else None
         if e is None or e.escenario_id != esc.id or e.bando != usuario.rol or e.estado not in misiones_mod.ACTIVAS:

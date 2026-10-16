@@ -7,7 +7,7 @@ son las bajas (muertos, heridos y desaparecidos, sin distinguir). Las cifras son
 La infraestructura civil (centrales, refinerias, puentes) no lleva personal militar.
 """
 
-from app.engine import catalogo, defensa_aerea
+from app.engine import catalogo, defensa_aerea, plataformas
 
 # unidades terrestres: efectivos por escalon
 POR_ESCALON = {
@@ -38,7 +38,8 @@ def dotacion_por_defecto(u) -> int:
         return 0
     if u.tipo == "aerea":
         modelo = catalogo.MODELOS.get(getattr(u, "modelo", "") or "")
-        por = POR_AERONAVE.get(modelo.clase if modelo else clase.id, 1)
+        ficha = plataformas.ficha_de_modelo(modelo)
+        por = ficha.tripulacion if ficha is not None else POR_AERONAVE.get(modelo.clase if modelo else clase.id, 1)
         return por * max(1, int(getattr(u, "aeronaves", 1) or 1))
     if clase.id in POR_CLASE:
         return POR_CLASE[clase.id]

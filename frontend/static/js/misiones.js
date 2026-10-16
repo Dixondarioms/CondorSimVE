@@ -315,6 +315,15 @@
       if (!r.errores.length && !r.plan.advertencias.length) {
         avisos.appendChild(el("li", "ok", `Duración estimada ${r.plan.duracion_h.toFixed(1)} h · combustible final ${Math.round(r.plan.combustible_final)} %.`));
       }
+      const lg = r.plan.logistica;
+      if (lg) {
+        const n = (v, d = 0) => Number(v).toLocaleString("es", { maximumFractionDigits: d });
+        avisos.appendChild(el("li", "logistica",
+          `Logística: ${n(lg.combustible_kg)} kg de combustible (${n(lg.combustible_por_aeronave_kg)} kg por aeronave, con ${lg.reserva_pct} % de reserva; `
+          + `interno ${n(lg.combustible_interno_kg)} kg)`
+          + (lg.lox_a_bordo_l ? ` · ${n(lg.lox_l, 1)} l de oxígeno líquido (${n(lg.lox_por_aeronave_l, 1)} l por aeronave de ${n(lg.lox_a_bordo_l, 1)} l a bordo)` : "")
+          + (lg.tripulantes ? ` · ${lg.tripulantes} tripulantes.` : ".")));
+      }
       $("pm-crear").disabled = r.errores.length > 0;
     }
 

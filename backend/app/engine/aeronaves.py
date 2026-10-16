@@ -14,7 +14,7 @@ import json
 from sqlalchemy.orm import Session
 
 from app.engine import bases as bases_mod
-from app.engine import catalogo, geo, logistica, relieve
+from app.engine import catalogo, geo, logistica, plataformas, relieve
 from app.models.orden import Orden
 from app.models.unidad import Unidad
 
@@ -86,6 +86,9 @@ def error_de_despegue(base: Unidad, modelo_id: str | None, aeronaves: int | None
         return "Los misiles de crucero no despegan de una base: se lanzan con la orden lanzar."
     if catalogo.es_portaaviones(base) and not catalogo.modelo_embarcable(modelo):
         return f"{modelo.nombre} no puede despegar de un portaaviones: {MOTIVO_NO_EMBARCABLE}."
+    pista = plataformas.error_de_pista(modelo, base)
+    if pista:
+        return pista
     if not aeronaves or not 1 <= aeronaves <= catalogo.MAX_AERONAVES_GRUPO:
         return f"Un grupo tiene entre 1 y {catalogo.MAX_AERONAVES_GRUPO} aeronaves."
     falta = logistica.falta_para_despegue(base, aeronaves)
@@ -156,7 +159,9 @@ def puede_operar_en(u, base) -> bool:
     solo a las embarcables. Los misiles no aterrizan."""
     if catalogo.es_misil(u) or not catalogo.opera_aeronaves(base):
         return False
-    return not catalogo.es_portaaviones(base) or catalogo.es_embarcable(u.clase, u.modelo)
+    if catalogo.es_portaaviones(base):
+        return catalogo.es_embarcable(u.clase, u.modelo)
+    return plataformas.error_de_pista(catalogo.MODELOS.get(u.modelo or ""), base, aterrizar=True) is None
 
 
 def error_de_aterrizaje(u, base, unidades) -> str | None:
@@ -169,6 +174,9 @@ def error_de_aterrizaje(u, base, unidades) -> str | None:
         return "La aeronave ya esta en tierra."
     if base is None or base.bando != u.bando or not catalogo.opera_aeronaves(base):
         return "Elija una base aerea propia o un portaaviones propio."
+    pista = plataformas.error_de_pista(catalogo.MODELOS.get(u.modelo or ""), base, aterrizar=True)
+    if pista and not catalogo.es_portaaviones(base):
+        return pista
     if not puede_operar_en(u, base):
         return f"{u.nombre} no puede aterrizar en {base.nombre}: {MOTIVO_NO_EMBARCABLE}."
     if base.estado != "activa" or base.fuerza < FUERZA_MINIMA_BASE:

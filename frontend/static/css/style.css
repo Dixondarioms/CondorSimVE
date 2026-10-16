@@ -461,3 +461,11 @@ dialog td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .simbolo { display: inline-block; }
 .simbolo svg { width: 100%; height: 100%; display: block; }
 .fila-instructor { display: contents; }
+
+/* convertidor de unidades (js/herramientas.js) */
+.convertidor { margin-top: 6px; padding: 8px; background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio);
+  display: flex; flex-direction: column; gap: 6px; font-size: 12px; min-width: 210px; }
+.convertidor .cv-fila { display: flex; gap: 6px; }
+.convertidor .cv-fila input { width: 90px; }
+.convertidor ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+#pm-avisos li.logistica { color: var(--texto-sec); }

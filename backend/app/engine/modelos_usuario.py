@@ -14,7 +14,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-from app.engine import catalogo
+from app.engine import catalogo, plataformas
 
 log = logging.getLogger("uvicorn.error")
 
@@ -31,6 +31,8 @@ FOTO_CLASE = {
     "misil_crucero": "crucero.svg",
 }
 LIMITES = {"velocidad_kmh": 3000, "alcance_km": 2000, "deteccion_km": 1000, "autonomia_km": 20000, "defensa": 5.0}
+# ficha tecnica de los tipos propios de aeronave (engine/plataformas.py): lo que cargo el instructor, ya validado
+_FICHAS: dict[str, dict] = {}
 
 
 class TipoInvalido(ValueError):
@@ -80,6 +82,18 @@ def construir(d: dict) -> catalogo.Modelo:
     if defensa < 0.05:
         raise TipoInvalido("La defensa debe ser al menos 0,05 (1 = la de una unidad tipica)")
     foto = FOTO_CLASE.get(clase.id)
+    ficha = d.get("ficha")
+    if ficha:
+        if clase.tipo != "aerea" or not isinstance(ficha, dict):
+            raise TipoInvalido("La ficha tecnica es solo para aeronaves")
+        limpia = {k: ficha[k] for k in plataformas.CAMPOS_FICHA if ficha.get(k) not in (None, "")}
+        try:
+            plataformas.ficha_desde_dict(limpia, plataformas.FICHAS["f16"])
+        except (TypeError, ValueError):
+            raise TipoInvalido("Ficha tecnica: revise que los valores sean numeros") from None
+        _FICHAS[id_] = limpia
+    else:
+        _FICHAS.pop(id_, None)
     return catalogo.Modelo(
         id_, clase.id, nombre, str(d.get("corto") or nombre)[:14], str(d.get("fabricante") or "")[:60] or "-",
         str(d.get("pais") or "")[:40] or "-", str(d.get("funcion") or clase.nombre)[:80],
@@ -99,7 +113,8 @@ def _como_dict(m: catalogo.Modelo) -> dict:
     return {"id": m.id, "clase": m.clase, "nombre": m.nombre, "corto": m.corto, "fabricante": m.fabricante,
             "pais": m.pais, "funcion": m.funcion, "descripcion": m.descripcion, "armamento": m.armamento,
             "velocidad_kmh": m.velocidad_kmh, "alcance_km": m.alcance_km, "deteccion_km": m.deteccion_km,
-            "autonomia_km": m.autonomia_km, "ataque_vs": m.ataque_vs, "defensa": m.defensa}
+            "autonomia_km": m.autonomia_km, "ataque_vs": m.ataque_vs, "defensa": m.defensa,
+            **({"ficha": _FICHAS[m.id]} if m.id in _FICHAS else {})}
 
 
 def leer() -> list[catalogo.Modelo]:
@@ -123,9 +138,14 @@ def aplicar() -> list[str]:
     """Reemplaza en catalogo.MODELOS los tipos propios por los del archivo. Devuelve sus ids."""
     for id_ in [k for k in catalogo.MODELOS if k.startswith(PREFIJO)]:
         del catalogo.MODELOS[id_]
+    for id_ in [k for k in plataformas.FICHAS_PROPIAS if k.startswith(PREFIJO)]:
+        del plataformas.FICHAS_PROPIAS[id_]
     tipos = leer()
     for m in tipos:
         catalogo.MODELOS[m.id] = m
+        if m.id in _FICHAS:  # la ficha del instructor, completada con lo que se deriva de su clase
+            base = plataformas.ficha_de_modelo(m)
+            plataformas.FICHAS_PROPIAS[m.id] = plataformas.ficha_desde_dict(_FICHAS[m.id], base)
     return [m.id for m in tipos]
 
 

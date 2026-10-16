@@ -226,6 +226,7 @@ class UnidadAjuste(BaseModel):
     dano_plataforma: float | None = Field(default=None, ge=0, le=100)
     dano_combustible: float | None = Field(default=None, ge=0, le=100)
     refugios: int | None = Field(default=None, ge=0, le=24)
+    pista_m: float | None = Field(default=None, ge=0, le=6000)  # 0 = la del plano del aerodromo
     personal: int | None = Field(default=None, ge=0, le=200000)
 
 
@@ -297,6 +298,9 @@ class UnidadOut(BaseModel):
     radio_km: float | None = None
     # sistemas de defensa aerea: misiles listos y en reserva de cada arma y el arma elegida (engine/defensa_aerea.py)
     sistema_da: dict | None = None
+    # bases aereas: largo de la pista y pista util con su dano (engine/plataformas.py)
+    pista_largo_m: float | None = None
+    pista_util_m: float | None = None
 
 
 class OrdenCreate(BaseModel):

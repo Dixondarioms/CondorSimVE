@@ -694,6 +694,12 @@
           <button id="btn-regla" type="button" class="mini secundario" title="Medir distancias y rumbos: clic para cada punto; doble clic o Esc para terminar">Regla</button>
           <button id="btn-regla-limpiar" type="button" class="mini secundario" hidden>Limpiar</button>
           <span id="regla-info" class="regla-info"></span>
+          <button id="btn-convertir" type="button" class="mini secundario" aria-expanded="false" title="Convertidor de unidades: distancia, velocidad, altura, masa y volumen">Convertir</button>
+          <div id="convertidor" class="convertidor" hidden>
+            <label>Magnitud <select id="cv-magnitud"></select></label>
+            <div class="cv-fila"><input id="cv-valor" type="number" step="any" value="1" aria-label="Valor a convertir"><select id="cv-unidad" aria-label="Unidad"></select></div>
+            <ul id="cv-resultados" aria-live="polite"></ul>
+          </div>
         </div>
 
         <div id="hud-vw" aria-live="off">
@@ -934,6 +940,7 @@
       <div class="aer-campos">
         <label class="mini" id="aer-base-fila">Base de origen<select id="aer-base"></select></label>
             <p id="aer-nota-base" class="ayuda" hidden>Desde un portaaviones solo despegan helicópteros, drones y cazas embarcados.</p>
+            <p id="aer-nota-pista" class="nota" hidden></p>
         <label class="mini">Aeronaves en el grupo<select id="aer-cantidad"></select></label>
         <label class="mini" id="aer-indicativo-fila">Indicativo (opcional)<input id="aer-indicativo" maxlength="40" placeholder="Ej. Halcón 1"></label>
       </div>

@@ -102,7 +102,42 @@
     return { conectar, terminar, limpiar, activa: () => activa };
   }
 
-  const api = { medir, distanciaKm, rumbo, cardinal, textoTramo, crear };
+  /** Convertidor de unidades (#btn-convertir, #convertidor): distancia, velocidad, altura, masa y volumen. */
+  function crearConvertidor() {
+    const $ = (id) => document.getElementById(id);
+    const boton = $("btn-convertir");
+    if (!boton || !raiz.Logica) return;
+    const U = raiz.Logica.UNIDADES;
+    const magnitud = $("cv-magnitud");
+    const unidad = $("cv-unidad");
+    const valor = $("cv-valor");
+    const lista = $("cv-resultados");
+    magnitud.innerHTML = Object.entries(U).map(([k, m]) => `<option value="${k}">${m.nombre}</option>`).join("");
+    const llenarUnidades = () => {
+      unidad.innerHTML = Object.entries(U[magnitud.value].unidades).map(([k, u]) => `<option value="${k}">${u[0]}</option>`).join("");
+    };
+    const calcular = () => {
+      const m = magnitud.value;
+      const v = parseFloat(String(valor.value).replace(",", "."));
+      lista.innerHTML = Number.isFinite(v)
+        ? Object.entries(U[m].unidades).filter(([k]) => k !== unidad.value)
+          .map(([k, u]) => `<li><b>${raiz.Logica.convertir(m, v, unidad.value, k).toLocaleString("es", { maximumFractionDigits: 3 })}</b> ${u[0]}</li>`).join("")
+        : "";
+    };
+    magnitud.addEventListener("change", () => { llenarUnidades(); calcular(); });
+    unidad.addEventListener("change", calcular);
+    valor.addEventListener("input", calcular);
+    boton.addEventListener("click", () => {
+      const panel = $("convertidor");
+      panel.hidden = !panel.hidden;
+      boton.setAttribute("aria-expanded", String(!panel.hidden));
+      if (!panel.hidden) valor.focus();
+    });
+    llenarUnidades();
+    calcular();
+  }
+
+  const api = { medir, distanciaKm, rumbo, cardinal, textoTramo, crear, crearConvertidor };
   raiz.Herramientas = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

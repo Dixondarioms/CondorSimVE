@@ -130,11 +130,13 @@ def validar(rol_id: str, puntos: list, clase) -> list[str]:
     return errores
 
 
-def estimar(lat: float, lon: float, velocidad_kmh: float, autonomia_km: float, combustible: float, puntos: list) -> dict:
+def estimar(lat: float, lon: float, velocidad_kmh: float, autonomia_km: float, combustible: float, puntos: list,
+            factor_consumo: float = 1.0) -> dict:
     """Hora (horas desde el despegue) y combustible (%) estimados en cada punto de la ruta.
 
     Igual que en la resolucion: el grupo se detiene en cada orbita o blanco el resto del turno en que llega; la
-    orbita dura N turnos completos y gasta el combustible de espera; el vuelo gasta segun la autonomia."""
+    orbita dura N turnos completos y gasta el combustible de espera; el vuelo gasta segun la autonomia, y ambos,
+    segun el perfil de vuelo (`factor_consumo`: alto 0,85, medio 1, rasante 1,3)."""
     vel, aut = max(velocidad_kmh, 1e-6), max(autonomia_km, 1e-6)
     horas, comb = 0.0, float(combustible)
     filas, avisos = [], []
@@ -142,12 +144,12 @@ def estimar(lat: float, lon: float, velocidad_kmh: float, autonomia_km: float, c
     for i, p in enumerate(puntos):
         d = geo.distancia_km(prev[0], prev[1], p["lat"], p["lon"])
         horas += d / vel
-        comb -= d / aut * 100.0
+        comb -= d / aut * 100.0 * factor_consumo
         fila = {"tipo": p["tipo"], "km": round(d, 1), "llegada_h": round(horas, 2), "combustible_llegada": round(comb, 1)}
         if p["tipo"] == "orbita":
             t = int(p.get("turnos") or 1)
             horas = math.floor(horas + 1e-9) + 1 + t
-            comb -= t * aeronaves_mod.COMBUSTIBLE_LOITER
+            comb -= t * aeronaves_mod.COMBUSTIBLE_LOITER * factor_consumo
             fila.update(salida_h=round(horas, 2), combustible_salida=round(comb, 1))
         elif p["tipo"] == "blanco":
             horas = math.floor(horas + 1e-9) + 1

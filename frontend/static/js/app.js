@@ -1327,6 +1327,11 @@
       }
     }
     const modelo = Logica.modeloDe(u, app.catalogo && app.catalogo.modelos);
+    const medidas = Logica.sistemaMedidas(u, cl);
+    if (u.pista_largo_m && !oculto) {
+      extra.push(dato("Pista", u.pista_util_m < u.pista_largo_m
+        ? `${Math.round(u.pista_util_m)} m útiles de ${Math.round(u.pista_largo_m)} m` : `${Math.round(u.pista_largo_m)} m (${Math.round(u.pista_largo_m / 0.3048)} ft)`));
+    }
     if (app.data && (app.data.clima_zonas || []).length) {
       const local = Logica.climaEn(u.lat, u.lon, app.data.escenario.clima, app.data.clima_zonas);
       if (local !== app.data.escenario.clima) extra.push(dato("Clima local", `${Logica.etiquetaClima(local)} (zona meteorológica)`));
@@ -1354,6 +1359,10 @@
       const op = Logica.aeronavesOperativas(u);
       extra.push(dato("Modelo", modelo.nombre));
       if (u.tipo === "aerea") extra.push(dato("Grupo", op === null ? `${u.aeronaves} aeronaves` : `${op} de ${u.aeronaves} operativas`));
+    }
+    // ficha tecnica de la aeronave (engine/plataformas.py)
+    if (modelo && modelo.ficha && u.tipo === "aerea" && !oculto) {
+      for (const [k, v] of Logica.filasFicha(modelo.ficha)) extra.push(`<div class="ancho-completo"><dt>${escapar(k)}</dt><dd>${escapar(v)}</dd></div>`);
     }
     // sistema de defensa aerea: radares, tiempos, vehiculos y armas con lo listo y en reserva
     const sistemaDA = modelo && app.catalogo && app.catalogo.sistemas_da ? app.catalogo.sistemas_da[modelo.id] : null;
@@ -1393,8 +1402,10 @@
         : "")
       + `<dl class="det-datos">${dato("Clase", u.clase || u.tipo)}${dato("Terreno", u.terreno || "?")}`
       + (cl && cl.infraestructura ? ""
-        : `${dato("Velocidad", u.velocidad_kmh === null ? "?" : u.velocidad_kmh + " km/h")}${dato("Alcance", km(u.alcance_km))}`
-        + `${dato("Detección", km(u.deteccion_km))}${dato("Autonomía", km(u.autonomia_km))}`)
+        : `${dato("Velocidad", u.velocidad_kmh === null ? "?" : Logica.medida(medidas, "velocidad", u.velocidad_kmh))}`
+        + `${dato("Alcance", u.alcance_km === null ? "?" : Logica.medida(medidas, "distancia", u.alcance_km))}`
+        + `${dato("Detección", u.deteccion_km === null ? "?" : Logica.medida(medidas, "distancia", u.deteccion_km))}`
+        + `${dato("Autonomía", u.autonomia_km === null ? "?" : Logica.medida(medidas, "distancia", u.autonomia_km))}`)
       + (u.personal_inicial ? dato("Personal", `${u.personal_actual} de ${u.personal_inicial} efectivos`) : "")
       + `${extra.join("")}</dl>`
       + (da ? `<table class="tabla-armas"><thead><tr><th>Arma</th><th>Alcance</th><th>Altura</th><th>Prob.</th>`
@@ -2159,6 +2170,7 @@
     });
     app.misiones.conectar();
     app.herramientas = Herramientas.crear({ map: () => app.map, alMedir: (b) => { app.dibujando = b; } });
+    Herramientas.crearConvertidor();
     app.herramientas.conectar();
     $("btn-regla").addEventListener("click", () => { if (app.herramientas.activa()) app.graficos.cancelar(); });
   }
