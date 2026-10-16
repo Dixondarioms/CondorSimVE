@@ -20,9 +20,10 @@ log = logging.getLogger("uvicorn.error")
 # Todo se sirve desde el mismo origen (sin CDN): la CSP bloquea cualquier recurso externo.
 CSP = (
     "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
-    "script-src 'self'; connect-src 'self' ws: wss:; frame-ancestors 'none'; "
+    "script-src 'self'; connect-src 'self' ws: wss:; media-src 'self' blob:; frame-ancestors 'none'; "
     "base-uri 'none'; form-action 'none'"
 )
+# media-src blob: el video del aguila de acceso se carga entero en memoria (js/aguila.js) para poder repetirlo.
 # form-action 'none': ningun formulario se envia sin JavaScript (si se pulsa Ingresar antes de que cargue la pagina,
 # el navegador no manda usuario y contrasena en la direccion); los dialogos (method="dialog") no navegan y siguen igual.
 

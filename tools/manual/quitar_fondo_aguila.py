@@ -1,11 +1,11 @@
 """Quita el fondo cuadriculado gris (falsa transparencia) de una imagen del aguila del SIETE y la deja en PNG
-con transparencia real en frontend/static/img/ (por omision siete_aguila.png, alas desplegadas; la de alas
-recogidas es siete_aguila_plegada.png).
+con transparencia real en frontend/static/img/ (por omision siete_aguila.png, alas desplegadas, la de los videos de
+exposicion). quitar_fondo_rgb() hace lo mismo con cada cuadro del video del aguila (aguila_video.py).
 
 El fondo es gris neutro (R = G = B) y el aguila es verde y amarilla, asi que la opacidad sale del croma
 (max - min de los canales); el interior del aguila se rellena entero y el halo se limpia del gris de fondo.
 
-    backend\\venv\\Scripts\\python tools/manual/quitar_fondo_aguila.py ruta\\imagen.jpg [siete_aguila_plegada.png]
+    backend\\venv\\Scripts\\python tools/manual/quitar_fondo_aguila.py ruta\\imagen.jpg [nombre.png]
 """
 
 import sys
@@ -19,7 +19,13 @@ IMG = Path(__file__).resolve().parents[2] / "frontend" / "static" / "img"
 
 
 def quitar_fondo(origen: Path) -> Image.Image:
-    c = np.asarray(Image.open(origen).convert("RGB")).astype(np.float32)
+    im = quitar_fondo_rgb(Image.open(origen))
+    return im.crop(im.getbbox())
+
+
+def quitar_fondo_rgb(imagen: Image.Image, nucleo_px: int = 10) -> Image.Image:
+    """La misma imagen (sin recortar) en RGBA con el fondo transparente; tambien sirve para cada cuadro de un video."""
+    c = np.asarray(imagen.convert("RGB")).astype(np.float32)
     croma = c.max(axis=2) - c.min(axis=2)
     croma = ndimage.uniform_filter(croma, 3)  # ruido del JPEG
     alfa = np.clip((croma - 8.0) / 45.0, 0.0, 1.0)
@@ -30,7 +36,7 @@ def quitar_fondo(origen: Path) -> Image.Image:
     if n > 1:  # solo la pieza grande (el aguila)
         tam = ndimage.sum(silueta, etiquetas, range(1, n + 1))
         silueta = etiquetas == (1 + int(np.argmax(tam)))
-    nucleo = ndimage.binary_erosion(silueta, iterations=10)
+    nucleo = ndimage.binary_erosion(silueta, iterations=nucleo_px)
     nucleo = ndimage.gaussian_filter(nucleo.astype(np.float32), 3)
     alfa = np.maximum(alfa, nucleo)
     # halo: se resta el gris del fondo (el canal minimo) en proporcion a la transparencia
@@ -39,8 +45,7 @@ def quitar_fondo(origen: Path) -> Image.Image:
     color = np.where(a > 0.02, (c - fondo * (1.0 - a)) / np.maximum(a, 0.02), 0.0)
     color = np.clip(color, 0, 255)
     rgba = np.dstack([color, alfa * 255.0]).astype(np.uint8)
-    im = Image.fromarray(rgba, "RGBA")
-    return im.crop(im.getbbox())
+    return Image.fromarray(rgba, "RGBA")
 
 
 if __name__ == "__main__":

@@ -365,40 +365,26 @@ path.ruta-anim { animation: marcha 1.2s linear infinite; }
 .estado.listo b { color: var(--verde); }
 
 /* ---------- acceso ---------- */
-#login { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 30%, #1c2748, #0e1120 70%); z-index: 2000; }
+#login { position: fixed; inset: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 30%, #1c2748, #0e1120 70%); z-index: 2000; }
 #login form {
   width: 440px; max-width: 94vw; padding: 24px 28px 28px; background: var(--panel); border: 1px solid var(--borde); border-radius: 8px;
   box-shadow: var(--sombra); display: flex; flex-direction: column; gap: 8px; text-align: center;
 }
 #login .logo { width: 44px; height: 44px; margin: 0 auto; }
-/* Aguila del SIETE (js/aguila.js). En reposo (.plegada) se ve la imagen del aguila posada con las alas recogidas
- * (.posada, ubicada para que cabeza y patas coincidan con la desplegada) y respira. Al ingresar se funde en la
- * desplegada, armada con piezas de la misma imagen: el cuerpo y, en cada ala, el brazo (gira en el hombro) y la mano
- * (las plumas largas, gira en la muneca). Las alas salen de la posicion recogida (los mismos valores que plegada()
- * en aguila.js), aletean y el aguila despega (.en-vuelo). */
-.aguila { position: relative; width: 100%; max-width: 380px; aspect-ratio: 2219 / 947; margin: 4px auto 10px; pointer-events: none; user-select: none; }
-.aguila img { position: absolute; inset: 0; width: 100%; height: 100%; }
-.aguila .ala, .aguila .mano { position: absolute; inset: 0; }
-.aguila .ala-izq { transform-origin: 44% 27%; }
-.aguila .ala-der { transform-origin: 56% 27%; }
-.aguila .ala-izq .mano { transform-origin: 21.5% 10%; }
-.aguila .ala-der .mano { transform-origin: 78.5% 10%; }
-/* brazo y mano se solapan una franja angosta para que no se abra una ranura al doblar la muneca */
-.aguila .ala-izq .brazo { clip-path: polygon(22% 0, 43% 0, 43% 58%, 37% 74%, 17% 74%); }
-.aguila .ala-izq .mano img { clip-path: polygon(0 0, 24% 0, 19% 74%, 0 74%); }
-.aguila .ala-der .brazo { clip-path: polygon(57% 0, 78% 0, 83% 74%, 63% 74%, 57% 58%); }
-.aguila .ala-der .mano img { clip-path: polygon(76% 0, 100% 0, 100% 74%, 81% 74%); }
-/* el cuerpo (encima) se ensancha sobre la raiz de las alas, donde todo es opaco, para tapar la union al girar */
-.aguila .cuerpo { clip-path: polygon(43% 0, 57% 0, 57% 16%, 59.5% 22%, 59.5% 58%, 63% 74%, 100% 74%, 100% 100%, 0 100%, 0 74%, 37% 74%, 40.5% 58%, 40.5% 22%, 43% 16%); z-index: 1; }
-.aguila img.posada { inset: auto; left: 22.49%; top: 5.07%; width: 54.48%; height: 94.4%; z-index: 2; opacity: 0; }
-.aguila.plegada img.posada { opacity: 1; }
-.aguila.plegada .ala-izq, .aguila.plegada .ala-der, .aguila.plegada .cuerpo { opacity: 0; }
-.aguila.en-reposo { animation: aguila-flota 4.6s ease-in-out infinite; filter: drop-shadow(0 0 12px rgba(90, 255, 150, .22)); }
-.aguila.plegada .ala-izq { transform: rotate(-84deg) scaleX(.3) scaleY(.85); }
-.aguila.plegada .ala-der { transform: rotate(84deg) scaleX(.3) scaleY(.85); }
-.aguila.en-vuelo { position: fixed; z-index: 5000; margin: 0; max-width: none; filter: drop-shadow(0 0 18px rgba(90, 255, 150, .35)); }
+/* Aguila del SIETE (js/aguila.js). En reposo se ve posada con las alas recogidas (.posada) y respira; al ingresar
+ * corre el video con transparencia (.vuelo: abre las alas y da una batida) mientras la figura (.en-vuelo) viene
+ * hacia la pantalla. El lienzo es el cuadro entero del video (16:9) y es mas grande que la figura: se ubica para
+ * que el aguila posada (x 31-69 %, y 21-84 % del cuadro) llene la figura; lo transparente desborda sin molestar. */
+.aguila { position: relative; width: 100%; height: 183px; margin: 2px auto 10px; pointer-events: none; user-select: none; }
+.aguila .lienzo { position: absolute; left: 50%; top: -62px; width: 520px; height: 292.5px; margin-left: -260px; }
+.aguila .lienzo img, .aguila .lienzo video { position: absolute; inset: 0; width: 100%; height: 100%; }
+.aguila video.vuelo { opacity: 0; }
+.aguila.volando video.vuelo { opacity: 1; }
+.aguila.volando img.posada { opacity: 0; }
+.aguila.en-reposo .lienzo { animation: aguila-flota 4.6s ease-in-out infinite; transform-origin: 50% 80%; }
+.aguila.en-vuelo { position: fixed; z-index: 5000; margin: 0; }
 @keyframes aguila-flota { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3px) scale(1.015); } }
-@media (prefers-reduced-motion: reduce) { .aguila.en-reposo, .aguila.en-reposo img { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .aguila.en-reposo .lienzo { animation: none; } }
 #login.despegando form { opacity: 0; transition: opacity .3s ease; }
 #login h2 { font-size: 20px; letter-spacing: .12em; }
 #login input, #login select { padding: 10px; }
