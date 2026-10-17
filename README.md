@@ -703,7 +703,8 @@ drones de reconocimiento, **A-2**; los armados, como toda aeronave de ataque, **
   líquido (l) con la reserva, y el perfil de vuelo. La interfaz muestra aviación, defensa aérea y armada en kt, NM y
   ft (tierra en km), con un convertidor de unidades en la barra del mapa.
 - **Sistemas de defensa aérea con sus armas** (`engine/defensa_aerea.py`): ZU-23-2 (clase `artilleria_antiaerea`,
-  sin radar), S-125 Pechora-2M y Buk-M2E (modelos de `antiaerea`). Cada uno con sus armas (alcance mínimo y máximo,
+  sin radar), Mistral (`antiaerea_portatil`, infrarrojo), RBS 70 (guiado por haz láser, con radar Giraffe), S-125
+  Pechora-2M, Buk-M2E y S-300VM Antey-2500 (modelos de `antiaerea`). Cada uno con sus armas (alcance mínimo y máximo,
   franja de altura, probabilidad de derribo por misil, misiles por salva, listos y reserva, tiempo de recarga), radar
   de vigilancia y de tiro, reacción, canales, despliegue/repliegue, movilidad, vehículos y personal. En el turno, la
   batería calcula el tiempo que cada aeronave pasa en su alcance según su rumbo (de frente, de través o alejándose),
@@ -770,7 +771,8 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
 - **Apresto Operacional y PCAO** (`engine/apresto.py`, migración `0039`; fuente: *Manual de Apresto Operacional de
   la FANB y Milicia Bolivariana*, CEO-MC-159, CEOFANB, 2015): cada unidad tiene o no tiene apresto según los mínimos
   de la tabla (personal 75 %, armamento y munición 90 %, equipamiento 85 %, adiestramiento 85 %, comando, control y
-  comunicaciones 90 %) y las exigencias de su tipo (escuadrón, ZU-23-2, Pechora, Buk, radar). El instructor fija el
+  comunicaciones 90 %) y las exigencias de su tipo (escuadrón, ZU-23-2, Pechora, Buk, Mistral, S-300, RBS 70, radar
+  y buques). El instructor fija el
   grado de cada bando (paz, elevado con fases amarilla, naranja y roja, o completo); el Comandante o el JEM ordenan
   la Puesta en Completo Apresto Operacional, que corre en 5 eventos con plazos en turnos (los del Plan de PCAO del
   TIEM, si lo hay). Hasta cumplirlos, parte de las aeronaves está preservada, las reservas y la milicia no se

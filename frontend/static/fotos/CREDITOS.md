@@ -107,3 +107,6 @@ Ilustraciones propias, estilizadas a partir de las miniaturas 3D del simulador (
 | `mh60dap.svg` | `mh60dap` · MH-60M DAP (Direct Action Penetrator) |
 | `ah6m.svg` | `ah6m` · AH-6M Little Bird (160.º SOAR) |
 | `mh6m.svg` | `mh6m` · MH-6M Little Bird (160.º SOAR) |
+| `s300vm.svg` | `s300vm` · S-300VM Antey-2500 (batería) |
+| `mistral.svg` | `mistral` · Mistral (sección de 4 puestos) |
+| `rbs70.svg` | `rbs70` · RBS 70 (sección con radar Giraffe) |

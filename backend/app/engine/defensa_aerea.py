@@ -1,4 +1,4 @@
-"""Sistemas de defensa aerea con sus armas: ZU-23-2, S-125 Pechora-2M y Buk-M2E.
+"""Sistemas de defensa aerea con sus armas: ZU-23-2, Mistral, RBS 70, S-125 Pechora-2M, Buk-M2E y S-300VM.
 
 Cada sistema es un modelo del catalogo (clase "antiaerea" o "artilleria_antiaerea") con lo que el resto de la
 antiaerea no tiene: sus armas (misiles guiados por radar o infrarrojos, y canones), con alcance minimo y maximo,
@@ -35,7 +35,7 @@ REACCION_CUE_S = 20.0  # si el radar propio no tenia la traza (avisa otro sensor
 # modificadores de la probabilidad de derribo
 FACTOR_INTERFERENCIA_PK = 0.6  # misiles guiados por radar dentro de una interferencia enemiga
 FACTOR_INTERFERENCIA_ALCANCE = 0.6  # el radar de tiro interferido solo "quema" la interferencia mas cerca
-FACTOR_EVASION = {"misil_radar": 0.8, "misil_ir": 0.8, "canon": 0.7}  # aeronave tripulada que maniobra
+FACTOR_EVASION = {"misil_radar": 0.8, "misil_ir": 0.8, "misil_laser": 0.85, "canon": 0.7}  # aeronave tripulada que maniobra
 FACTOR_NOCHE_CANON = 0.6  # punteria optica de noche
 FACTOR_COTA_BAJA_RADAR = 0.85  # a pocos metros sobre el suelo el radar de tiro sufre el eco del terreno
 # las armas rinden distinto segun el blanco: helicopteros y drones son lentos y bajos (canones), los misiles de
@@ -44,14 +44,16 @@ FACTOR_BLANCO = {
     "helicoptero": 1.5, "helicoptero_artillado": 1.5, "dron_reconocimiento": 1.3, "dron_ataque": 1.3,
     "municion_merodeadora": 1.2, "misil_crucero": 0.6, "alerta_temprana": 1.3, "cisterna": 1.3, "avion_ge": 1.1,
 }
-TIPOS_ARMA = {"misil_radar": "Misil guiado por radar", "misil_ir": "Misil infrarrojo", "canon": "Cañón (puntería óptica)"}
+TIPOS_ARMA = {"misil_radar": "Misil guiado por radar", "misil_ir": "Misil infrarrojo",
+              "misil_laser": "Misil guiado por haz láser (no lo engañan las bengalas ni la interferencia de radar)",
+              "canon": "Cañón (puntería óptica)"}
 
 
 @dataclass(frozen=True)
 class Arma:
     id: str
     nombre: str
-    tipo: str  # "misil_radar" | "misil_ir" | "canon"
+    tipo: str  # "misil_radar" | "misil_ir" | "misil_laser" | "canon"
     categoria: str  # "largo" | "corto": para que el operador elija
     alcance_min_km: float
     alcance_max_km: float
@@ -131,6 +133,42 @@ SISTEMAS: dict[str, Sistema] = {s.modelo: s for s in [
         nota="Batería de mediano alcance con radar de tiro en cada TELAR: hasta 8 blancos a la vez. Recargar los "
              "TELAR desde el TEL toma unos 13 min sin poder tirar con 9M317E. La sección Igla-S cubre la cota baja "
              "cercana sin emitir."),
+    Sistema(
+        "mistral", (
+            Arma("mistral", "Mistral (infrarrojo)", "misil_ir", "corto", 0.5, 6.0, 5.0, 3000.0, 0.6, 1, 800.0, 4, 8, 1.0),
+        ), radar_vigilancia_km=0.0, radar_tiro_km=0.0, reaccion_s=5.0, canales=4,
+        despliegue_min=1.0, repliegue_min=1.0, movilidad="Portátil sobre trípode o en vehículo ligero",
+        vehiculos=((4, "puestos de tiro Mistral sobre trípode"), (2, "vehículos ligeros con los misiles de recarga")),
+        personal=16,
+        nota="Sección de misiles portátiles de muy corto alcance, de guiado infrarrojo (dispara y olvida): no emite y "
+             "la escucha enemiga no la detecta, pero depende del cuadro aéreo de su bando. Cada puesto tira un misil "
+             "por blanco; recargar el tubo toma un minuto."),
+    Sistema(
+        "rbs70", (
+            Arma("rbs70", "RBS 70 Mk2 (guiado por láser)", "misil_laser", "corto", 0.2, 8.0, 5.0, 5000.0, 0.6, 1, 600.0,
+                 3, 9, 1.0),
+        ), radar_vigilancia_km=40.0, radar_tiro_km=0.0, reaccion_s=5.0, canales=3,
+        despliegue_min=2.0, repliegue_min=2.0, movilidad="Portátil sobre trípode; radar Giraffe en camión",
+        vehiculos=((3, "puestos de tiro RBS 70"), (1, "radar de vigilancia Giraffe"), (2, "vehículos de transporte")),
+        personal=18,
+        nota="Sección de muy corto alcance guiada por haz láser: el misil sigue el haz que el apuntador mantiene "
+             "sobre el blanco, por eso no lo engañan las bengalas ni la interferencia de radar. El radar Giraffe de "
+             "la sección la alimenta (y emite: la escucha enemiga lo localiza)."),
+    Sistema(
+        "s300vm", (
+            Arma("9m83me", "9M83ME (largo alcance)", "misil_radar", "largo", 6.0, 150.0, 25.0, 30000.0, 0.8, 2, 1800.0,
+                 8, 8, 40.0),
+            Arma("9m82me", "9M82ME (muy largo alcance)", "misil_radar", "largo", 13.0, 200.0, 25.0, 30000.0, 0.8, 2,
+                 2400.0, 2, 4, 40.0),
+        ), radar_vigilancia_km=250.0, radar_tiro_km=200.0, reaccion_s=10.0, canales=6,
+        despliegue_min=5.0, repliegue_min=5.0, movilidad="Autopropulsado sobre orugas (pesado)",
+        vehiculos=((2, "lanzadores 9A83ME de 4 misiles"), (1, "lanzador 9A82ME de 2 misiles"),
+                   (2, "cargadores-lanzadores 9A84ME / 9A85ME"), (1, "radar de vigilancia 9S15M2"),
+                   (1, "radar de tiro 9S32ME"), (1, "puesto de mando 9S457ME")),
+        personal=60,
+        nota="Batería de largo alcance (S-300VM Antey-2500): el radar de tiro 9S32ME guía varios misiles a la vez "
+             "hasta 200 km. Recargar los lanzadores desde los cargadores toma unos 40 min sin poder tirar. Muy "
+             "visible para la escucha enemiga mientras emite; necesita su defensa cercana."),
 ]}
 
 

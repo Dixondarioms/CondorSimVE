@@ -502,6 +502,25 @@ MODELOS: dict[str, Modelo] = {m.id: m for m in [
            "12 misiles 9M317E listos (45 km, de 15 m a 25 km de altura) y 8 de recarga en el TEL; sección Igla-S de "
            "defensa cercana.",
            45, 45, 160, 500, _atk(0.1, 2.8, 0.2), 0.95, "/static/fotos/buk_m2e.svg", _CREDITO_PROPIO),
+    Modelo("mistral", "antiaerea_portatil", "Mistral (sección de 4 puestos)", "Mistral", "MBDA", "Francia",
+           "Misil tierra-aire portátil de muy corto alcance",
+           "Misil infrarrojo de dispara y olvida lanzado desde un trípode (MPCV, ATLAS) o un vehículo ligero. Defensa "
+           "cercana contra helicópteros, drones y aviones a baja cota.",
+           "4 puestos de tiro con 4 misiles listos y 8 de recarga (6 km, de 5 a 3 000 m de altura).",
+           40, 6, 8, 300, _atk(0.1, 1.5, 0.1), 0.6, "/static/fotos/mistral.svg", _CREDITO_PROPIO),
+    Modelo("rbs70", "antiaerea", "RBS 70 (sección con radar Giraffe)", "RBS 70", "Saab", "Suecia",
+           "Misil tierra-aire de muy corto alcance guiado por láser",
+           "Misil guiado por haz láser desde un trípode, operado por la Defensa Antiaérea venezolana. El radar de "
+           "vigilancia Giraffe alerta a los puestos de tiro.",
+           "3 puestos de tiro con 3 misiles listos y 9 de recarga (8 km, de 5 a 5 000 m de altura); radar Giraffe de 40 km.",
+           40, 8, 40, 300, _atk(0.1, 1.7, 0.1), 0.65, "/static/fotos/rbs70.svg", _CREDITO_PROPIO),
+    Modelo("s300vm", "antiaerea", "S-300VM Antey-2500 (batería)", "S-300VM", "Almaz-Antey", "Rusia",
+           "Sistema de misiles tierra-aire de largo alcance autopropulsado",
+           "Sistema autopropulsado sobre orugas, operado por la Defensa Antiaérea venezolana. Radar de vigilancia "
+           "9S15M2 y radar de tiro 9S32ME; misiles 9M83ME y 9M82ME.",
+           "8 misiles 9M83ME (150 km) y 2 9M82ME (200 km) listos, de 25 m a 30 km de altura, con su recarga en los "
+           "cargadores-lanzadores.",
+           40, 200, 250, 500, _atk(0.1, 3.2, 0.2), 1.0, "/static/fotos/s300vm.svg", _CREDITO_PROPIO),
 ]}
 
 

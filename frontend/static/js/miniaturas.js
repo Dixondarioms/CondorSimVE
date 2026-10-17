@@ -496,6 +496,40 @@
     };
   }
 
+  /** S-300VM (lanzador 9A83ME): chasis de orugas con 4 contenedores grandes de misiles casi verticales. */
+  function s300() {
+    const tuboGrande = (x, z) => cilindro("y", [x, -0.05, z], 0.1, 1.25, "oliva2", 8);
+    return {
+      piezas: [
+        ...orugas(0.44, 0.62, 1.05, 0.32),
+        secciones([[-1.05, rect(-0.52, 0.52, 0.12, 0.44)], [0.85, rect(-0.52, 0.52, 0.12, 0.44)], [1.05, rect(-0.52, 0.52, 0.15, 0.3)]], "oliva"),
+        enCapa(caja([-0.36, 0.36], [0.55, 0.95], [0.44, 0.72], "oliva2"), 1),  // cabina adelante
+        enCapa(transformar([tuboGrande(-0.13, 0.62), tuboGrande(0.13, 0.62), tuboGrande(-0.13, 0.86), tuboGrande(0.13, 0.86)],
+          { rx: 40, pivote: [0, -0.68, 0.55] }), 2),
+        panel(0, 0.75, 0.73, 3, 0.3, 0.2),
+      ],
+    };
+  }
+
+  /** Puesto de tiro sobre tripode (Mistral, RBS 70): base en cruz, columna, cabezal, tubo elevado y el apuntador;
+   *  el RBS 70 suma el mastil con la antena del radar Giraffe. */
+  function puestoTripode(tubos, conRadar) {
+    const tubo = (x) => cilindro("y", [x, 0.12, 0.62], tubos > 1 ? 0.06 : 0.07, 0.85, "oliva2", 7);
+    const xs = tubos > 1 ? [-0.08, 0.08] : [0];
+    return {
+      piezas: [
+        caja([-0.34, 0.34], [-0.03, 0.03], [0.02, 0.06], "metal"),
+        caja([-0.03, 0.03], [-0.34, 0.34], [0.02, 0.06], "metal"),
+        caja([-0.04, 0.04], [-0.04, 0.04], [0.06, 0.48], "metal"),
+        enCapa(caja([-0.12, 0.12], [-0.14, 0.12], [0.46, 0.6], "oliva"), 1),
+        enCapa(transformar(xs.map(tubo), { rx: 18, pivote: [0, 0, 0.6] }), 2),
+        soldado(-0.42, -0.2, { rodilla: true }),
+        ...(conRadar ? [caja([0.56, 0.6], [-0.03, 0.03], [0.02, 0.72], "metal"),
+          enCapa(caja([0.44, 0.72], [-0.02, 0.02], [0.66, 0.92], "oliva2"), 1)] : []),
+      ].flat(),
+    };
+  }
+
   /** ZU-23-2: cureña de dos ruedas con el cañón bitubo de 23 mm apuntando hacia arriba. */
   function canonAntiaereo() {
     const tubo = (x) => caja([x - 0.035, x + 0.035], [-0.15, 0.85], [0.4, 0.47], "metal");
@@ -962,6 +996,9 @@
   R("artilleria_antiaerea", canonAntiaereo, { tam: 0.72, suelo: true, clases: ["artilleria_antiaerea"] });
   R("buk_m2e", buk, { tam: 0.95, suelo: true, modelos: ["buk_m2e"] });
   R("pechora_2m", pechora, { tam: 0.92, suelo: true, modelos: ["pechora_2m"] });
+  R("s300vm", s300, { tam: 1.0, suelo: true, modelos: ["s300vm"] });
+  R("mistral", () => puestoTripode(2, false), { tam: 0.62, suelo: true, modelos: ["mistral"] });
+  R("rbs70", () => puestoTripode(1, true), { tam: 0.66, suelo: true, modelos: ["rbs70"] });
   R("ingenieros", ingenieros, { tam: 0.88, suelo: true, clases: ["ingenieros"] });
   R("convoy", convoy, { tam: 1.05, suelo: true, clases: ["transporte"] });
   R("radar", radar, { tam: 0.95, suelo: true, clases: ["radar"] });

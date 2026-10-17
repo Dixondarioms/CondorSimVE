@@ -68,6 +68,9 @@ UNIDADES = [
     ("modelos", "zu23_2", "Canon antiaereo ZU-23-2", ["ZU-23-2 Venezuela", "ZU-23-2"]),
     ("modelos", "pechora_2m", "S-125 Pechora-2M", ["Pechora-2M Venezuela", "S-125 Pechora-2M", "S-125 Neva"]),
     ("modelos", "buk_m2e", "Buk-M2E", ["Buk-M2E Venezuela", "Buk-M2E", "9A317 Buk-M2"]),
+    ("modelos", "s300vm", "S-300VM Antey-2500", ["S-300VM Venezuela", "S-300VM Antey-2500", "9A83 launcher"]),
+    ("modelos", "mistral", "Misil Mistral", ["Mistral missile Venezuela", "Mistral MANPADS", "Mistral ATLAS"]),
+    ("modelos", "rbs70", "RBS 70", ["RBS 70 Venezuela", "RBS 70", "RBS-70 missile"]),
     # aeronaves de EE. UU. de la plantilla del 3 de enero de 2026 (fotos oficiales de dominio publico, en su mayoria)
     ("modelos", "f22", "F-22A Raptor", ["F-22 Raptor flight", "F-22A Raptor"]),
     ("modelos", "f35a", "F-35A Lightning II", ["F-35A Lightning II flight", "F-35A Lightning II"]),

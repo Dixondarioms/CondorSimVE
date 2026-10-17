@@ -11,7 +11,10 @@ para cada tipo de unidad, cuyos indices eliminatorios se aplican aqui:
     de mantenimiento; por apreciacion, el 50 % de la primera carga basica de armamento listo;
   - GADAA ZU-23-2 (A.15): 75 % del personal y 75 % del equipo de combate operativo, con su carga basica;
   - CMDAA (A.16): 75 % del personal; S-125 Pechora con al menos 2 rampas listas; Buk con el 75 % de rampas y
-    cargadores operativos;
+    cargadores operativos; Mistral con el 75 % de sus instalaciones de lanzamiento; S-300 con su puesto de comando y
+    el 75 % de sus rampas; RBS-70 con el 75 % de sus radares e instalaciones;
+  - buque (A.22): personal al 85 % de la TOE, cargas liquidas al 95 %, 75 % de la tripulacion adiestrada, 100 % de la
+    dotacion de guerra en municiones y misiles y medios de comunicacion al 85 %;
   - escuadron de vigilancia y control (A.17): 75 % del personal y radares operativos con el 80 % de repuestos.
 
 Grados (Cap. II): Apresto en tiempo de paz, Elevado Apresto (fases amarilla, naranja y roja) y Completo Apresto. La
@@ -187,9 +190,12 @@ def _tipo(u) -> str:
         return "aviacion"
     s = defensa_aerea.sistema(u)
     if s is not None:
-        return {"zu23_2": "gadaa", "pechora_2m": "pechora", "buk_m2e": "buk"}.get(getattr(u, "modelo", "") or "", "gadaa")
+        return {"zu23_2": "gadaa", "pechora_2m": "pechora", "buk_m2e": "buk", "mistral": "mistral", "rbs70": "rbs70",
+                "s300vm": "s300"}.get(getattr(u, "modelo", "") or "", "gadaa")
     if clase.id == "radar":
         return "radar"
+    if u.tipo == "naval":
+        return "buque"
     return "general"
 
 
@@ -240,6 +246,22 @@ def calificar(u, fila_toe: dict | None, escenario, unidades, turno: int) -> dict
     elif tipo == "radar":
         exigencias += [("Personal presente (A.17.a)", aspectos["personal"], 75, True),
                        ("Radares operativos con repuestos (A.17.b)", fuerza, 80, True)]
+    elif tipo == "mistral":
+        exigencias += [("Personal presente (A.16.a)", aspectos["personal"], 75, True),
+                       ("Instalaciones de lanzamiento operativas (A.16.c.2)", fuerza, 75, True)]
+    elif tipo == "s300":
+        exigencias += [("Personal presente (A.16.a)", aspectos["personal"], 75, True),
+                       ("Puesto de comando listo (A.16.c.3)", 100.0 if fuerza > 0 and aspectos["c3"] >= 50 else 0.0, 100, True),
+                       ("Rampas de lanzamiento operativas (A.16.c.3)", fuerza, 75, True)]
+    elif tipo == "rbs70":
+        exigencias += [("Personal presente (A.16.a)", aspectos["personal"], 75, True),
+                       ("Radares e instalaciones operativos (A.16.c.5)", fuerza, 75, True)]
+    elif tipo == "buque":
+        exigencias += [("Personal al 85 % de la TOE (A.22.a)", aspectos["personal"], 85, True),
+                       ("Cargas líquidas (A.22.b)", _pct(getattr(u, "combustible", 100.0)), 95, True),
+                       ("Tripulación adiestrada (A.22.c)", aspectos["adiestramiento"], 75, True),
+                       ("Dotación de guerra en municiones y misiles (A.22.e)", municion, 100, True),
+                       ("Medios de comunicación en las diferentes bandas (A.22.j)", aspectos["c3"], 85, True)]
     motivos = [f"{NOMBRE_ASPECTO[k]}: {v:g} % (mínimo {MINIMOS[k]} %)" for k, v in aspectos.items() if v < MINIMOS[k]]
     motivos += [f"{t}: {v:g} (mínimo {m})" for t, v, m, elim in exigencias if elim and v < m]
     observaciones = [f"{t}: {v:g} (mínimo {m}; se califica por apreciación)" for t, v, m, elim in exigencias

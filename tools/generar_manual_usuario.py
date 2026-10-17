@@ -484,7 +484,9 @@ def construir(salida: Path) -> None:
             "cada literal (A personal 75 %, B armamento y munición 90 %, C equipamiento 85 %, D adiestramiento 85 %, "
             "E comando, control y comunicaciones 90 %) y las exigencias de su tipo: un escuadrón necesita el 75 % de su "
             "personal de vuelo, el 80 % de sus aeronaves disponibles y el 75 % de sus técnicos; una batería ZU-23-2, el 75 % "
-            "de su equipo de combate; un Pechora, al menos 2 rampas listas; un radar, el 80 % operativo. Al pasar el ratón "
+            "de su equipo de combate; un Pechora, al menos 2 rampas listas; un Mistral, un S-300 o un RBS 70, el 75 % de sus "
+            "lanzadores; un radar, el 80 % operativo; un buque, el 85 % de su personal, el 95 % de sus cargas líquidas y el "
+            "100 % de su dotación de guerra en municiones y misiles. Al pasar el ratón "
             "sobre la fila se ve qué le falta."),
           P("El instructor fija el <b>grado</b> de cada bando (tiempo de paz, elevado con sus fases amarilla, naranja y "
             "roja, o completo). Mientras el bando no completa la <b>Puesta en Completo Apresto Operacional (PCAO)</b>, "
@@ -549,9 +551,10 @@ def construir(salida: Path) -> None:
           P("Al planificar una misión, la estimación suma la <b>logística</b>: kilos de combustible para toda la ruta y litros de "
             "oxígeno líquido, por aeronave y en total, con un 20 % de reserva, y avisa si no alcanzan los de a bordo. El perfil "
             "de vuelo cuenta: rasante gasta 30 % más; alto, 15 % menos."),
-          H3("Sistemas de defensa aérea: ZU-23-2, S-125 Pechora-2M y Buk-M2E"),
-          P("Estas baterías (A-3 D/A) se ubican desde la consola eligiendo su <b>tipo</b> en la clase <i>Defensa antiaérea</i> (Pechora, "
-            "Buk) o <i>Artillería antiaérea</i> (ZU-23-2). Su ficha muestra:"),
+          H3("Sistemas de defensa aérea: ZU-23-2, Mistral, RBS 70, Pechora-2M, Buk-M2E y S-300VM"),
+          P("Estas baterías (A-3 D/A) se ubican desde la consola eligiendo su <b>tipo</b> en la clase <i>Defensa antiaérea</i> (RBS 70, "
+            "Pechora, Buk, S-300VM), <i>Antiaérea portátil</i> (Mistral) o <i>Artillería antiaérea</i> (ZU-23-2). El S-300VM alcanza "
+            "200 km; el RBS 70 guía su misil con un haz láser, por eso no lo afecta la interferencia de radar. Su ficha muestra:"),
           Bul(["<b>Radares</b>: el de <b>vigilancia</b> ve lejos y alimenta el cuadro del bando; el de <b>tiro</b> guía los misiles y "
                "fija hasta dónde se puede tirar. El ZU-23-2 no tiene radar: apunta a ojo, no lo encuentra la escucha enemiga, pero de "
                "noche tira peor y depende de lo que vean los demás sensores.",

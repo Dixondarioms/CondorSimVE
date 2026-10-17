@@ -787,8 +787,9 @@ def construir(salida: Path, img: Path) -> None:
                "<font face='Mono'>/tiem/{bando}/{tipo}/documento.docx</font> y <font face='Mono'>documento.html</font>."])]
     h += [H2("8.17 Sistemas de defensa aérea con sus armas"),
           Bul(["<b>Datos</b> (<font face='Mono'>engine/defensa_aerea.py</font>): ZU-23-2 (clase nueva <font face='Mono'>artilleria_antiaerea</font>, "
-               "sin emisión), S-125 Pechora-2M y Buk-M2E (modelos de <font face='Mono'>antiaerea</font>). Cada sistema: armas (misil "
-               "guiado por radar, infrarrojo o cañón) con alcance mínimo y máximo, franja de altura, pk por misil, misiles por "
+               "sin emisión), Mistral (<font face='Mono'>antiaerea_portatil</font>), RBS 70, S-125 Pechora-2M, Buk-M2E y S-300VM "
+               "(modelos de <font face='Mono'>antiaerea</font>). Cada sistema: armas (misil guiado por radar, infrarrojo, por haz "
+               "láser —el RBS 70: no le afecta la interferencia de radar— o cañón) con alcance mínimo y máximo, franja de altura, pk por misil, misiles por "
                "salva, velocidad, cargados y reserva, y tiempo de recarga; radar de vigilancia y de tiro, reacción, canales, "
                "despliegue, repliegue, movilidad, vehículos y personal. Valores de referencia de fuentes abiertas, ajustables.",
                "<b>Enfrentamiento</b> (<font face='Mono'>enfrentar</font>, fase 2c de <font face='Mono'>orders.py</font>): por cada "
@@ -814,7 +815,9 @@ def construir(salida: Path, img: Path) -> None:
                "munición; C = fuerza (aviación: aeronaves listas); D = adiestramiento del bando; E = centros de "
                "comunicaciones en pie × 0,85 si el plan de transmisiones tiene errores. Índices eliminatorios del Anexo A: "
                "escuadrón (A.20: pilotos 75, aeronaves 80, técnicos 75; carga básica 50 por apreciación), GADAA ZU-23-2 "
-               "(A.15), CMDAA Pechora y Buk (A.16) y escuadrón de vigilancia y control (A.17).",
+               "(A.15), CMDAA Pechora, Buk, Mistral, S-300 y RBS 70 (A.16), escuadrón de vigilancia y control (A.17) y "
+               "buques (A.22: personal 85, cargas líquidas 95, tripulación adiestrada 75, dotación de guerra 100, "
+               "comunicaciones 85).",
                "<b>Grados y PCAO</b> (Cap. II y III): paz, elevado (fases 1-3), completo; 5 eventos con plazos en turnos "
                "(por defecto 2, 24, 24, 24 y 72; o los de la tabla del documento TIEM «plan_pcao» al ordenarla con "
                "<font face='Mono'>POST /pcao</font>, comandante o JEM). Efectos hasta cada evento: reservas y milicia fuera "
@@ -1136,7 +1139,7 @@ def construir(salida: Path, img: Path) -> None:
               ["Plataformas aéreas, pistas y unidades aeronáuticas", "Ficha de la aeronave y de la base; Despegar; misiones; Convertir",
                "Ficha técnica de cada aeronave, largo y pista útil de las bases (despegue y aterrizaje según la carrera), "
                "combustible y oxígeno de la misión, nudos, millas náuticas y pies, y convertidor (8.18)."],
-              ["Defensa aérea: ZU-23-2, S-125 Pechora-2M y Buk-M2E", "Consola → Agregar (tipo); ficha de la batería",
+              ["Defensa aérea: ZU-23-2, Mistral, RBS 70, Pechora-2M, Buk-M2E y S-300VM", "Consola → Agregar (tipo); ficha de la batería",
                "Armas con alcance, techo y probabilidad; radar de vigilancia y de tiro; reacción, canales, recarga con "
                "inoperatividad, despliegue y vehículos; elección del arma; tiro según el rumbo y el tiempo en alcance; "
                "interferencia y maniobra evasiva (8.17)."],

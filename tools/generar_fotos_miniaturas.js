@@ -40,6 +40,10 @@ const MODELOS = {
   mh60dap: { malla: "helo_transporte", nombre: "MH-60M DAP", rumbo: 225, fondo: "mar" },
   ah6m: { malla: "ah6m", nombre: "AH-6M Little Bird", rumbo: 230, fondo: "cielo", escala: 0.85 },
   mh6m: { malla: "mh6m", nombre: "MH-6M Little Bird", rumbo: 230, fondo: "cielo", escala: 0.85 },
+  // defensa aerea venezolana
+  s300vm: { malla: "s300vm", nombre: "S-300VM Antey-2500 (batería)", rumbo: 215, fondo: "cielo" },
+  mistral: { malla: "mistral", nombre: "Mistral (sección de 4 puestos)", rumbo: 210, fondo: "cielo", escala: 0.8 },
+  rbs70: { malla: "rbs70", nombre: "RBS 70 (sección con radar Giraffe)", rumbo: 210, fondo: "cielo", escala: 0.8 },
 };
 
 const FONDOS = {
@@ -69,7 +73,9 @@ function ilustracion(id, cfg) {
 }
 
 const destino = path.join(__dirname, "..", "frontend", "static", "fotos");
-for (const [id, cfg] of Object.entries(MODELOS)) {
+// sin argumentos, todas; con ids (p. ej. "s300vm mistral"), solo esas
+const pedidos = process.argv.slice(2);
+for (const [id, cfg] of Object.entries(MODELOS).filter(([id]) => !pedidos.length || pedidos.includes(id))) {
   fs.writeFileSync(path.join(destino, `${id}.svg`), ilustracion(id, cfg), "utf8");
   console.log(`${id}.svg`);
 }
