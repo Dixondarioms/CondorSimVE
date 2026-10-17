@@ -76,13 +76,14 @@ def test_el_manifiesto_del_repositorio_es_valido():
             assert catalogo._referencia_valida(e, id_, catalogo.RUTA_FOTOS), id_
 
 
-def test_la_herramienta_cubre_todas_las_aeronaves_y_buques(herramienta):
+def test_la_herramienta_cubre_aeronaves_buques_y_clases_terrestres(herramienta):
     claves = {(s, c) for s, c, _, _ in herramienta.UNIDADES}
     # los que tienen ilustracion o ya la cambiaron por una foto de referencia (los del catalogo propio no van)
     sin_foto_real = {("modelos", m.id) for m in catalogo.MODELOS.values() if not m.id.startswith("u_")
                      and (m.foto.endswith(".svg") or m.foto.startswith("/static/fotos/ref_"))}
     buques = {("clases", c.id) for c in catalogo.CLASES.values() if c.tipo == "naval"}
-    assert claves == sin_foto_real | buques
+    terrestres = {("clases", c.id) for c in catalogo.CLASES.values() if c.tipo == "terrestre"}  # foto de la clase
+    assert claves == sin_foto_real | buques | terrestres
 
 
 def test_solo_acepta_licencias_libres(herramienta):
