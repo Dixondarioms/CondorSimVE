@@ -187,9 +187,11 @@ _ATAQUE_3_ENERO = Plantilla(
         "USS Gerald R. Ford (F/A-18E/F, EA-18G, E-2D), bombarderos B-1B, E-3G, RC-135V/W, EC-130H, P-8A, aviones "
         "cisterna, RQ-170, MQ-9, drones de ataque de un solo uso y los helicópteros del 160.º SOAR (MH-47G, MH-60M, "
         "MH-60 DAP, AH-6M y MH-6M) que operan desde el USS Iwo Jima. Azul = Venezuela: La Carlota y Charallave, los "
-        "Buk-M2E de La Carlota e Higuerote, Fuerte Tiuna con sus Igla-S, El Volcán, La Guaira y los Su-30MK2 en tierra "
+        "Buk-M2E de La Carlota e Higuerote, una batería S-300VM en el litoral (Catia La Mar), secciones RBS 70 en Fuerte Tiuna y "
+        "La Guaira, Fuerte Tiuna con sus Igla-S, El Volcán, La Guaira y los Su-30MK2 en tierra "
         "en El Libertador. Comienza a la 01:00; los ataques se informaron hacia las 02:00. Representa 73 "
-        "aeronaves de las más de 150 que se informaron; las posiciones de los buques, de los radares y de los grupos "
+        "aeronaves de las más de 150 que se informaron; las posiciones de los buques, de los radares, del S-300VM, de los "
+        "RBS 70 y de los grupos "
         "aéreos son aproximadas, y las cifras de los modelos son didácticas. El desenlace político (la captura del "
         "jefe de Estado) queda fuera del alcance de este ejercicio táctico."
     ),
@@ -200,6 +202,10 @@ _ATAQUE_3_ENERO = Plantilla(
         UnidadPlantilla("Buk-M2E La Carlota", "azul", "antiaerea", 10.4812, -66.8540, modelo="buk_m2e"),
         UnidadPlantilla("Aeropuerto de Charallave (Óscar Machado Zuloaga)", "azul", "base_aerea", 10.2869, -66.8158),
         UnidadPlantilla("Buk-M2E Higuerote", "azul", "antiaerea", 10.4625, -66.0928, modelo="buk_m2e"),
+        UnidadPlantilla("S-300VM Antey-2500 (litoral, Catia La Mar, ubicación aproximada)", "azul", "antiaerea", 10.5900,
+                        -67.0600, modelo="s300vm"),
+        UnidadPlantilla("RBS 70 Fuerte Tiuna (ubicación aproximada)", "azul", "antiaerea", 10.4500, -66.9030, modelo="rbs70"),
+        UnidadPlantilla("RBS 70 La Guaira (ubicación aproximada)", "azul", "antiaerea", 10.5990, -66.9480, modelo="rbs70"),
         UnidadPlantilla("Radar JY-27A (Barlovento, ubicación aproximada)", "azul", "radar", 10.3500, -66.2500),
         UnidadPlantilla("Radar JYL-1 (Paraguaná, ubicación aproximada)", "azul", "radar", 11.8200, -69.9500),
         UnidadPlantilla("Cerro El Volcán (antenas y enlaces de mando)", "azul", "radar", 10.4050, -66.8350),
