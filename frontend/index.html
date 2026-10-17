@@ -499,8 +499,8 @@
             <label id="u-tipo-fila" class="mini" hidden>Tipo (catálogo propio)<select id="u-tipo"></select></label>
             <div id="u-pista-fila" hidden>
               <label class="mini">Pista (m; vacío o 0 = solo helicópteros)<input id="u-pista" type="number" min="0" max="6000" step="100" placeholder="0"></label>
-              <p class="ayuda">Con pista, el PRO solo se ubica sobre un tramo de carretera apto como ORI (capa «Tramos aptos
-                para ORI», en verde: recto, pavimentado, ancho, casi plano, sin puentes) o en un aeródromo.</p>
+              <p class="ayuda">Con pista, el PRO solo se ubica sobre un tramo de carretera apto (capa «Tramos aptos
+                para PRO», en verde: recto, pavimentado, ancho, casi plano, sin puentes) o en un aeródromo.</p>
             </div>
             <button id="btn-modo-agregar" type="button">Ubicar en mapa</button>
           </details>
@@ -726,7 +726,7 @@
               <input id="adj-dano-plat" type="number" placeholder="Daño de la plataforma %" min="0" max="100">
               <input id="adj-dano-comb" type="number" placeholder="Daño del depósito de combustible %" min="0" max="100">
               <input id="adj-refugios" type="number" placeholder="Refugios reforzados (grupos protegidos)" min="0" max="24">
-              <input id="adj-pista" type="number" placeholder="Pista m (bases y PRO; PRO solo en un ORI)" min="0" max="6000" step="100">
+              <input id="adj-pista" type="number" placeholder="Pista m (bases y PRO; PRO solo en un tramo apto)" min="0" max="6000" step="100">
             </div>
             <button id="btn-ajustar" type="button">Aplicar ajuste</button>
           </details>
@@ -972,7 +972,7 @@
               <label><input type="checkbox" data-capa="referencias" checked><span>Límites y poblaciones</span></label>
               <label><input type="checkbox" data-capa="bases_ven" checked><span>Bases aéreas y aeródromos (América)</span></label>
               <label><input type="checkbox" data-capa="aerodromos" checked><span>Plano de los aeródromos (pistas y hangares)</span></label>
-              <label title="Tramos rectos de carreteras principales pavimentadas, anchos, casi planos y sin puentes, donde puede ir un PRO con pista (OpenStreetMap)"><input type="checkbox" data-capa="ori"><span>Tramos aptos para ORI (pistas en carretera)</span></label>
+              <label title="Tramos rectos de carreteras principales pavimentadas, anchos, casi planos y sin puentes, donde puede ir un PRO con pista (OpenStreetMap)"><input type="checkbox" data-capa="tramos_pro"><span>Tramos aptos para PRO (pistas en carretera)</span></label>
               <label><input type="checkbox" id="ver-app6"><span>Símbolos militares (APP-6) en lugar de miniaturas</span></label>
               <label><input type="checkbox" data-capa="objetivos" checked><span>Objetivos</span></label>
               <label title="Centrales eléctricas, refinerías, centros de comunicaciones y puentes de Venezuela (OpenStreetMap)"><input type="checkbox" data-capa="infraestructura" checked><span>Infraestructura (energía, refinerías, comunicaciones, puentes)</span></label>

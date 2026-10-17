@@ -365,10 +365,10 @@
     $("u-autonomia").disabled = c.tipo === "base";
     const pro = c.id === "punto_recobre";
     $("u-pista-fila").hidden = !pro;
-    if (pro && !app.capaActiva.ori) { // para ubicarlo hay que ver los tramos aptos
-      const chk = document.querySelector('[data-capa="ori"]');
+    if (pro && !app.capaActiva.tramos_pro) { // para ubicarlo hay que ver los tramos aptos
+      const chk = document.querySelector('[data-capa="tramos_pro"]');
       if (chk) chk.checked = true;
-      alternarCapa("ori", true);
+      alternarCapa("tramos_pro", true);
     }
     actualizarFilaModelo();
   }
@@ -606,10 +606,10 @@
       style: (f) => (f.properties.nivel === 2 ? { color: "#e8b04a", weight: 2, opacity: 0.9 } : { color: "#c99a55", weight: 1.1, opacity: 0.75 }),
       interactive: false,
     });
-    // tramos de carretera aptos como pista (ORI; tools/preparar_ori.py): donde puede ir un PRO con pista
-    c.ori = L.geoJSON(null, {
+    // tramos de carretera aptos como pista (tools/preparar_tramos_pro.py): donde puede ir un PRO con pista
+    c.tramos_pro = L.geoJSON(null, {
       style: { color: "#2ecc71", weight: 6, opacity: 0.85, lineCap: "butt" },
-      onEachFeature: (f, capa) => capa.bindTooltip(Logica.textoOri(f.properties), { sticky: true }),
+      onEachFeature: (f, capa) => capa.bindTooltip(Logica.textoTramoPro(f.properties), { sticky: true }),
     });
     const lagos = L.geoJSON(null, { style: { color: "#2f6fb0", weight: 1, fillColor: "#78aacd", fillOpacity: 0.7 } }).addTo(c.referencias);
     const lugares = L.geoJSON(null, {
@@ -622,7 +622,7 @@
       },
     }).addTo(c.referencias);
     for (const m of mapas) {
-      for (const [archivo, capa] of [["fronteras", fronteras], ["estados", estados], ["rios", rios], ["lagos", lagos], ["lugares", lugares], ["carreteras", c.carreteras], ["ori", c.ori]]) {
+      for (const [archivo, capa] of [["fronteras", fronteras], ["estados", estados], ["rios", rios], ["lagos", lagos], ["lugares", lugares], ["carreteras", c.carreteras], ["tramos_pro", c.tramos_pro]]) {
         fetch(`/static/geo/${m.id}/${archivo}.geojson`).then((r) => (r.ok ? r.json() : null)).then((g) => { if (g) capa.addData(g); }).catch(() => {});
       }
     }
@@ -643,7 +643,7 @@
     c.ge = L.layerGroup().addTo(map);
     c.meteorologia = L.layerGroup().addTo(map);
     c.misiones = L.layerGroup().addTo(map);
-    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, alcances: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, infraestructura: true, ge: true, meteorologia: true, misiones: true, ori: false };
+    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, alcances: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, infraestructura: true, ge: true, meteorologia: true, misiones: true, tramos_pro: false };
     if (app.capaActiva.niebla) c.niebla.addTo(map);
 
     let pendiente = null;

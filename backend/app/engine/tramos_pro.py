@@ -1,9 +1,9 @@
-"""ORI: tramos de carretera aptos como pista de aterrizaje. Un Punto de Recobre Operacional (PRO) con pista solo puede
+"""Tramos de carretera aptos como pista de aterrizaje de un PRO. Un Punto de Recobre Operacional (PRO) con pista solo puede
 estar en uno de ellos (o en un aerodromo con pista suficiente); sin pista (helicopteros) puede ir en cualquier sitio.
 
-Los tramos los calcula tools/preparar_ori.py a partir de las carreteras reales (OpenStreetMap) con los minimos de un
-ORI: carretera principal pavimentada, recta, con ancho suficiente, sin puentes ni tuneles, casi plana y fuera de zona
-urbana. Se guardan en frontend/static/geo/<region>/ori.geojson (tambien los dibuja el mapa, capa ORI). Donde no hay
+Los tramos los calcula tools/preparar_tramos_pro.py a partir de las carreteras reales (OpenStreetMap) con los minimos de una
+pista en carretera: carretera principal pavimentada, recta, con ancho suficiente, sin puentes ni tuneles, casi plana y fuera de zona
+urbana. Se guardan en frontend/static/geo/<region>/tramos_pro.geojson (tambien los dibuja el mapa, capa Tramos aptos para PRO). Donde no hay
 datos de carreteras (regiones sin ese archivo) no se puede verificar y el PRO queda con el aviso.
 """
 
@@ -27,7 +27,7 @@ BUSQUEDA_KM = 60.0  # para sugerir el tramo apto mas cercano
 def _datos() -> tuple[list[dict], dict, list[tuple[float, float, float, float]], dict]:
     """(tramos, indice por celda, bbox de las regiones con datos, criterios)."""
     tramos, indice, cajas, criterios = [], {}, [], {}
-    for archivo in sorted(GEO.glob("*/ori.geojson")):
+    for archivo in sorted(GEO.glob("*/tramos_pro.geojson")):
         try:
             d = json.loads(archivo.read_text(encoding="utf-8"))
             meta = json.loads((DATOS_TERRENO / archivo.parent.name / "meta.json").read_text(encoding="utf-8"))
@@ -47,7 +47,7 @@ def _datos() -> tuple[list[dict], dict, list[tuple[float, float, float, float]],
 
 
 def cubierto(lat: float, lon: float) -> bool:
-    """Si hay datos de carreteras para verificar un ORI en el punto."""
+    """Si hay datos de carreteras para verificar un tramo apto en el punto."""
     return any(o <= lon <= e and s <= lat <= n for o, s, e, n in _datos()[2])
 
 
@@ -88,10 +88,10 @@ def _sitio(lat: float, lon: float, pista_m: float) -> tuple[str, dict | None, st
     cerca = cercanos(lat, lon)
     aptos = [t for _, t in cerca if t["largo_m"] >= pista_m]
     if aptos:
-        return "ori", aptos[0], ""
+        return "tramo", aptos[0], ""
     crit = _datos()[3]
     pista = f"{pista_m:,.0f}".replace(",", ".")
-    texto = (f"Un PRO con pista de {pista} m solo puede ir en un tramo de carretera apto como ORI (recto, pavimentado, "
+    texto = (f"Un PRO con pista de {pista} m solo puede ir en un tramo de carretera apto (recto, pavimentado, "
              f"de {crit.get('ancho_minimo_m', 12):.0f} m de ancho o más, pendiente de {crit.get('pendiente_max_pct', 2):.0f} % "
              f"o menos, sin puentes ni túneles, fuera de zona urbana) a {RADIO_M / 1000:.0f} km o menos, o en un aeródromo "
              "con esa pista.")
@@ -100,13 +100,13 @@ def _sitio(lat: float, lon: float, pista_m: float) -> tuple[str, dict | None, st
         texto += f" El tramo de aquí, {resumen(t)}, es más corto: baje la pista a {t['largo_m']:,} m o busque otro.".replace(",", ".")
     else:
         lejos = [(d, t) for d, t in cercanos(lat, lon, BUSQUEDA_KM * 1000) if t["largo_m"] >= pista_m]
-        texto += (f" El más cercano: {resumen(lejos[0][1])}, a {lejos[0][0] / 1000:.0f} km (capa ORI del mapa)."
-                  if lejos else " Vea la capa ORI del mapa.")
+        texto += (f" El más cercano: {resumen(lejos[0][1])}, a {lejos[0][0] / 1000:.0f} km (capa «Tramos aptos para PRO» del mapa)."
+                  if lejos else " Vea la capa «Tramos aptos para PRO» del mapa.")
     return "no_apto", None, texto
 
 
 def sitio(lat: float, lon: float, pista_m: float) -> tuple[str, dict | None, str]:
-    """(tipo, tramo o aerodromo, motivo): tipo "ori", "aerodromo", "sin_datos" (no se puede verificar) o "no_apto"
+    """(tipo, tramo o aerodromo, motivo): tipo "tramo", "aerodromo", "sin_datos" (no se puede verificar) o "no_apto"
     (con el motivo y una sugerencia). Sin pista siempre es apto ("sin_pista")."""
     if not pista_m or pista_m <= 0:
         return "sin_pista", None, ""

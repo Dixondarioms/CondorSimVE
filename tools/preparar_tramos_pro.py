@@ -1,6 +1,6 @@
-"""Tramos de carretera aptos para ORI (pista de aterrizaje en carretera) de una region del mapa:
-frontend/static/geo/<region>/ori.geojson. Lo usa el motor (backend/app/engine/ori.py) para no dejar poner un Punto de
-Recobre Operacional (PRO) con pista en cualquier sitio, y el mapa (capa ORI).
+"""Tramos de carretera aptos como pista de un Punto de Recobre Operacional (PRO) de una region del mapa:
+frontend/static/geo/<region>/tramos_pro.geojson. Lo usa el motor (backend/app/engine/tramos_pro.py) para no dejar poner
+un PRO con pista en cualquier sitio, y el mapa (capa Tramos aptos para PRO).
 
 No toda carretera sirve. Un tramo es apto si cumple TODOS estos minimos (se pueden cambiar abajo):
   - carretera principal (autopista, troncal o principal) pavimentada (OSM `surface`; sin dato se asume pavimento);
@@ -15,8 +15,8 @@ No toda carretera sirve. Un tramo es apto si cumple TODOS estos minimos (se pued
 Fuentes: Venezuela, el cache de OpenStreetMap de tools/preparar_vias.py (tools/cache/osm_vias, geometria completa y
 etiquetas); el teatro ficticio, su carreteras.geojson (sin etiquetas: troncal de 2 canales pavimentada).
 
-    python tools/preparar_ori.py                 # venezuela y teatro_ficticio
-    python tools/preparar_ori.py --region venezuela
+    python tools/preparar_tramos_pro.py                 # venezuela y teatro_ficticio
+    python tools/preparar_tramos_pro.py --region venezuela
 """
 
 import argparse
@@ -192,10 +192,10 @@ def generar(region: str) -> None:
                                                                    [round(b[0], 5), round(b[1], 5)]]}})
     features.sort(key=lambda f: -f["properties"]["largo_m"])
     for k, f in enumerate(features, 1):
-        f["properties"]["id"] = f"ORI-{k:03d}"
+        f["properties"]["id"] = f"Tramo {k:03d}"
     criterios = {"largo_minimo_m": LARGO_MINIMO_M, "ancho_minimo_m": ANCHO_MINIMO_M, "recta_tol_m": RECTA_TOL_M,
                  "pendiente_max_pct": PENDIENTE_MAX * 100, "urbano_max": URBANO_MAX}
-    destino = GEO / region / "ori.geojson"
+    destino = GEO / region / "tramos_pro.geojson"
     destino.write_text(json.dumps({"type": "FeatureCollection", "fuente": fuente, "criterios": criterios,
                                    "features": features}, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
     largos = [f["properties"]["largo_m"] for f in features]

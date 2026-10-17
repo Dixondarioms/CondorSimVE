@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app import auth, schemas, state
 from app.db import get_db
-from app.engine import aar, catalogo, defensa_aerea, ori, puestos, relieve, vision
+from app.engine import aar, catalogo, defensa_aerea, puestos, relieve, tramos_pro, vision
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.models.aar import Combate, RegistroLogistico
@@ -33,10 +33,10 @@ def validar_ubicacion(tipo: str, lat: float, lon: float, clase_unidad: str = "")
 
 
 def validar_pista_pro(clase: str, lat: float, lon: float, pista_m: float | None) -> None:
-    """Un PRO con pista solo va en un tramo de carretera apto como ORI o en un aerodromo (engine/ori.py)."""
+    """Un PRO con pista solo va en un tramo de carretera apto o en un aerodromo (engine/tramos_pro.py)."""
     if clase != "punto_recobre":
         return
-    motivo = ori.error_de_ubicacion(lat, lon, pista_m)
+    motivo = tramos_pro.error_de_ubicacion(lat, lon, pista_m)
     if motivo:
         raise HTTPException(status_code=400, detail=motivo)
 

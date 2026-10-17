@@ -207,8 +207,8 @@ def largo_pista(base) -> float | None:
     if getattr(base, "clase", "") == "punto_recobre":  # PRO: la pista que tenga (sin ella, solo helicopteros)
         pista = float(getattr(base, "pista_m", None) or 0.0)
         if pista and getattr(base, "lat", None) is not None and getattr(base, "lon", None) is not None:
-            from app.engine import ori  # fuera de un tramo apto (ORI) o de un aerodromo la pista no sirve
-            if ori.error_de_ubicacion(base.lat, base.lon, pista):
+            from app.engine import tramos_pro  # fuera de un tramo apto o de un aerodromo la pista no sirve
+            if tramos_pro.error_de_ubicacion(base.lat, base.lon, pista):
                 return 0.0
         return pista
     if getattr(base, "clase", "") != "base_aerea":

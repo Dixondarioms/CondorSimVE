@@ -766,14 +766,14 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   AEW mejora las intercepciones. Un punto AER en la ruta es el punto de reabastecimiento. Las tripulaciones
   derribadas quedan aisladas hasta que las rescata una misión CSAR, las captura el enemigo o se pierden. Los PRO
   son bases livianas de 4 plazas que rearman en 1 turno si cumplen sus requisitos mínimos.
-- **ORI: pistas en carretera** (`engine/ori.py`, `tools/preparar_ori.py`): no toda carretera sirve de pista. Un PRO
-  con pista solo se ubica (al agregarlo, moverlo o cambiarle la pista) a 1 km o menos de un tramo apto como ORI con
-  ese largo, o en un aeródromo con pista suficiente; sin pista (helicópteros) va en cualquier sitio. Los tramos aptos
+- **PRO: pistas en carretera** (`engine/tramos_pro.py`, `tools/preparar_tramos_pro.py`): no toda carretera sirve de pista. Un PRO
+  con pista solo se ubica (al agregarlo, moverlo o cambiarle la pista) a 1 km o menos de un tramo de carretera apto
+  con ese largo, o en un aeródromo con pista suficiente; sin pista (helicópteros) va en cualquier sitio. Los tramos aptos
   salen de las carreteras reales de OpenStreetMap: principal pavimentada, recta (desvío ≤ 15 m) en 800 m o más, ancho
   estimado ≥ 12 m (`width`, o canales × 3,5 m más hombrillos), sin puentes ni túneles ni agua, ≤ 20 % en zona urbana
-  y pendiente ≤ 2 % (relieve SRTM). Se guardan en `frontend/static/geo/<region>/ori.geojson` (Venezuela: 2 429 tramos,
-  928 de 2 km o más; teatro ficticio: 280) y el mapa los dibuja en verde (capa «Tramos aptos para ORI», que se
-  enciende sola al elegir la clase PRO). Si se cambian los mínimos: `python tools/preparar_ori.py`. Un PRO fuera de
+  y pendiente ≤ 2 % (relieve SRTM). Se guardan en `frontend/static/geo/<region>/tramos_pro.geojson` (Venezuela: 2 429 tramos,
+  928 de 2 km o más; teatro ficticio: 280) y el mapa los dibuja en verde (capa «Tramos aptos para PRO», que se
+  enciende sola al elegir la clase PRO). Si se cambian los mínimos: `python tools/preparar_tramos_pro.py`. Un PRO fuera de
   un tramo apto pierde la pista (solo helicópteros) y lo dice en sus deficiencias; donde no hay datos de carreteras
   queda «sin verificar».
 - **Cálculo de armamento, BDA, Warden e inteligencia** (`engine/weaponeering.py`, `engine/warden.py`,

@@ -27,8 +27,8 @@ test("el PRO opera aeronaves", () => {
   assert.strictEqual(Logica.plazasDe({ clase: "punto_recobre" }), 4);
 });
 
-test("rotulo de un tramo apto como ORI", () => {
-  const p = { id: "ORI-030", ref: "T-13", nombre: "Carretera Nacional de Los Llanos", largo_m: 10577, ancho_m: 12, pendiente_pct: 0.2 };
-  assert.strictEqual(Logica.textoOri(p), "ORI-030 · T-13 Carretera Nacional de Los Llanos: tramo recto de 10.577 m, ancho 12 m, pendiente 0.2 %");
-  assert.ok(Logica.textoOri({ ...p, ref: "", nombre: "" }).startsWith("ORI-030 · Carretera: "));
+test("rotulo de un tramo de carretera apto para PRO", () => {
+  const p = { id: "Tramo 030", ref: "T-13", nombre: "Carretera Nacional de Los Llanos", largo_m: 10577, ancho_m: 12, pendiente_pct: 0.2 };
+  assert.strictEqual(Logica.textoTramoPro(p), "Tramo 030 · T-13 Carretera Nacional de Los Llanos: tramo recto de 10.577 m, ancho 12 m, pendiente 0.2 %");
+  assert.ok(Logica.textoTramoPro({ ...p, ref: "", nombre: "" }).startsWith("Tramo 030 · Carretera: "));
 });

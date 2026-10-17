@@ -694,8 +694,8 @@ def construir(salida: Path) -> None:
                                  "coloca sobre ella) y la rescatan al llegar."],
               ["PRO", "Punto de recobre operacional: base liviana de 4 plazas cerca del frente que reabastece y rearma en 1 "
                       "turno si tiene su personal (20 como mínimo), existencias y seguridad; sin pista, solo helicópteros."],
-              ["ORI", "Tramo de carretera apto como pista: recto, pavimentado, ancho, casi plano y sin puentes. Un PRO con "
-                      "pista solo se coloca sobre uno (en verde con la capa «Tramos aptos para ORI») o en un aeródromo; "
+              ["Pista en carretera", "Tramo de carretera apto como pista de un PRO: recto, pavimentado, ancho, casi plano y sin puentes. Un PRO con "
+                      "pista solo se coloca sobre uno (en verde con la capa «Tramos aptos para PRO») o en un aeródromo; "
                       "al elegir la clase PRO en Agregar unidad la capa se enciende sola y aparece el campo Pista."],
           ], [3.6 * cm, ANCHO_TEXTO - 3.6 * cm]),
           P("Cuando se derriba una aeronave en vuelo, sus tripulantes se eyectan y quedan <b>aislados</b>. La pestaña "

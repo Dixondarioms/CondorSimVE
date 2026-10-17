@@ -3,7 +3,7 @@ reabastecerse y rearmarse cerca del frente (en la OTA, el campo "punto de recobr
 
 Un PRO es una base liviana: pocas plazas (4), existencias chicas que solo reponen los convoyes y una pista corta (la
 que fije el instructor; sin pista, solo helicopteros y aeronaves de despegue vertical). Con pista solo puede estar en un
-tramo de carretera apto como ORI o en un aerodromo (engine/ori.py). Requisitos minimos para operar
+tramo de carretera apto o en un aerodromo (engine/tramos_pro.py). Requisitos minimos para operar
 bien: PERSONAL_MINIMO efectivos (seguridad, combustible, armamento, comunicaciones y sanidad), existencias de
 combustible y municion, y una unidad propia de seguridad o defensa aerea a <= RADIO_SEGURIDAD_KM. Con su personal
 completo, una aeronave queda lista en REARME_TURNOS (1 turno, frente a los 2 de una base aerea).
@@ -11,7 +11,7 @@ completo, una aeronave queda lista en REARME_TURNOS (1 turno, frente a los 2 de 
 
 from __future__ import annotations
 
-from app.engine import catalogo, geo, logistica, ori, personal
+from app.engine import catalogo, geo, logistica, personal, tramos_pro
 
 CLASE = "punto_recobre"
 PERSONAL_MINIMO = 20
@@ -45,22 +45,22 @@ def deficiencias(pro, unidades=()) -> list[str]:
     if not pista:
         out.append("Sin pista: solo helicópteros y aeronaves de despegue vertical.")
     elif getattr(pro, "lat", None) is not None:
-        tipo, _, motivo = ori.sitio(pro.lat, pro.lon, pista)
+        tipo, _, motivo = tramos_pro.sitio(pro.lat, pro.lon, pista)
         if tipo == "no_apto":
             out.append(f"Pista no apta: {motivo} Mientras tanto, solo helicópteros.")
         elif tipo == "sin_datos":
-            out.append("Pista sin verificar: no hay datos de carreteras de esta zona para comprobar el ORI.")
+            out.append("Pista sin verificar: no hay datos de carreteras de esta zona para comprobar el tramo.")
     return out
 
 
 def sitio_texto(pro) -> str:
-    """Donde esta la pista del PRO: el tramo ORI o el aerodromo (vacio si no tiene pista o no es apto)."""
+    """Donde esta la pista del PRO: el tramo de carretera o el aerodromo (vacio si no tiene pista o no es apto)."""
     pista = getattr(pro, "pista_m", None) or 0
     if not pista or getattr(pro, "lat", None) is None:
         return ""
-    tipo, t, _ = ori.sitio(pro.lat, pro.lon, pista)
-    if tipo == "ori":
-        return f"ORI {ori.resumen(t)}"
+    tipo, t, _ = tramos_pro.sitio(pro.lat, pro.lon, pista)
+    if tipo == "tramo":
+        return tramos_pro.resumen(t)
     if tipo == "aerodromo":
         return f"aeródromo {t['nombre']}"
     return ""

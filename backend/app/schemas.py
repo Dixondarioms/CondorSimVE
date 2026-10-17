@@ -273,7 +273,7 @@ class UnidadCreate(BaseModel):
     personal: int | None = Field(default=None, ge=0, le=200000)
     # puentes: radio del tramo que corta su destruccion
     radio_km: float | None = Field(default=None, gt=0, le=20)
-    # bases aereas y PRO: largo de la pista (PRO: solo en un tramo apto como ORI o en un aerodromo; 0 = sin pista)
+    # bases aereas y PRO: largo de la pista (PRO: solo en un tramo de carretera apto o en un aerodromo; 0 = sin pista)
     pista_m: float | None = Field(default=None, ge=0, le=6000)
 
 
