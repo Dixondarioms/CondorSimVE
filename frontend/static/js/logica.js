@@ -1082,6 +1082,13 @@
   const ZOOM_ALCANCES = 9; // desde aca, cada unidad desplegada muestra el anillo de su alcance
   const ZOOM_CARRETERAS = 7; // desde aca se dibujan las carreteras reales
 
+  /** Rotulo de un tramo apto como ORI (pista en carretera; tools/preparar_ori.py). */
+  function textoOri(p) {
+    const via = [p.ref, p.nombre].filter(Boolean).join(" ") || "Carretera";
+    const miles = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return `${p.id} · ${via}: tramo recto de ${miles(p.largo_m)} m, ancho ${p.ancho_m} m, pendiente ${p.pendiente_pct} %`;
+  }
+
   /** Factor de tamaño de miniaturas y simbolos: 0,35 de lejos (pais entero), 1 hacia el zoom 10, hasta 1,5 de cerca. */
   function escalaUnidad(zoom) {
     return Math.max(0.35, Math.min(1.5, 0.75 + 0.15 * (zoom - 8)));
@@ -1102,7 +1109,7 @@
   }
 
   const api = {
-    MAPA_VENEZUELA, ordenarMapas, limitesDe, limitesDeMapas, textoMapa, ZOOM_ROTULOS, ZOOM_ALCANCES, ZOOM_CARRETERAS, escalaUnidad, unidadesConAlcance,
+    MAPA_VENEZUELA, ordenarMapas, limitesDe, limitesDeMapas, textoMapa, ZOOM_ROTULOS, ZOOM_ALCANCES, ZOOM_CARRETERAS, textoOri, escalaUnidad, unidadesConAlcance,
     PERFILES_VUELO, textoPerfil, muestraCobertura, resumenSistemaDA, UNIDADES, convertir, sistemaMedidas, medida,
     filasFicha, entraEnPista,
     NIVELES_OBJETIVO, arbolObjetivos, superioresPosibles, textoCalendario, nombreFase, CONDUCCION,

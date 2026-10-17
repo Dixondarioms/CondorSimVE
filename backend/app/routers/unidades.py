@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app import auth, schemas, state
 from app.db import get_db
-from app.engine import aar, catalogo, defensa_aerea, puestos, relieve, vision
+from app.engine import aar, catalogo, defensa_aerea, ori, puestos, relieve, vision
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.models.aar import Combate, RegistroLogistico
@@ -30,6 +30,15 @@ def validar_ubicacion(tipo: str, lat: float, lon: float, clase_unidad: str = "")
         raise HTTPException(status_code=400, detail="Esta unidad no puede ubicarse en el agua")
     if tipo == "naval" and clase != "agua":
         raise HTTPException(status_code=400, detail="Una unidad naval solo puede ubicarse en el agua")
+
+
+def validar_pista_pro(clase: str, lat: float, lon: float, pista_m: float | None) -> None:
+    """Un PRO con pista solo va en un tramo de carretera apto como ORI o en un aerodromo (engine/ori.py)."""
+    if clase != "punto_recobre":
+        return
+    motivo = ori.error_de_ubicacion(lat, lon, pista_m)
+    if motivo:
+        raise HTTPException(status_code=400, detail=motivo)
 
 
 @router.post("", response_model=schemas.UnidadOut)
@@ -65,6 +74,9 @@ async def crear_unidad(
     escalon = payload.echelon or (catalogo.escalon_grupo(aeronaves) if modelo and clase.tipo == "aerea" else clase.escalon)
 
     validar_ubicacion(clase.tipo, payload.lat, payload.lon, clase.id)
+    if payload.pista_m and clase.id not in ("punto_recobre", "base_aerea"):
+        raise HTTPException(status_code=400, detail="Solo una base aérea o un PRO tienen pista")
+    validar_pista_pro(clase.id, payload.lat, payload.lon, payload.pista_m)
 
     def valor(indicado, defecto):
         return defecto if indicado is None else indicado
@@ -92,6 +104,7 @@ async def crear_unidad(
         sidc=catalogo.generar_sidc(payload.bando, clase, escalon),
         personal=payload.personal,
         radio_km=payload.radio_km if clase.infraestructura == "puente" else None,
+        pista_m=payload.pista_m or None,
     )
     db.add(unidad)
     db.commit()
@@ -257,6 +270,9 @@ async def ajustar_unidad(
     cambios = payload.model_dump(exclude_none=True)
     if "lat" in cambios or "lon" in cambios:
         validar_ubicacion(unidad.tipo, cambios.get("lat", unidad.lat), cambios.get("lon", unidad.lon))
+    if {"lat", "lon", "pista_m"} & set(cambios):
+        validar_pista_pro(unidad.clase or "", cambios.get("lat", unidad.lat), cambios.get("lon", unidad.lon),
+                          cambios.get("pista_m", unidad.pista_m))
     detalle = []
     for campo, valor in cambios.items():
         anterior = getattr(unidad, campo)

@@ -891,7 +891,14 @@ def construir(salida: Path, img: Path) -> None:
                "<b>PRO</b> (<font face='Mono'>engine/recobre.py</font>, clase <font face='Mono'>punto_recobre</font>): 4 plazas, "
                "existencias máximas 400, pista = <font face='Mono'>pista_m</font> (0: solo helicópteros), rearme en 1 turno con "
                "20 efectivos o más; deficiencias de personal, existencias y seguridad en <font face='Mono'>recobre</font> del estado. "
-               "Aterrizar en un PRO genera la línea ABA TER (PR01…)."])]
+               "Aterrizar en un PRO genera la línea ABA TER (PR01…).",
+               "<b>ORI</b> (<font face='Mono'>engine/ori.py</font>): un PRO con pista solo va a ≤ 1 km de un tramo de carretera "
+               "apto con ese largo o en un aerodromo con pista suficiente (400 al crear o ajustar; fuera de él, "
+               "<font face='Mono'>largo_pista</font> = 0 y la deficiencia «Pista no apta»). <font face='Mono'>tools/preparar_ori.py</font> "
+               "calcula los tramos de OpenStreetMap: autopista, troncal o principal pavimentada sin puentes ni túneles, recta "
+               "(desvío ≤ 15 m) en ≥ 800 m, ancho ≥ 12 m (<font face='Mono'>width</font> o canales × 3,5 m + hombrillos), sin "
+               "agua, ≤ 20 % urbana y pendiente ≤ 2 %; quedan en <font face='Mono'>frontend/static/geo/&lt;region&gt;/ori.geojson</font> "
+               "(capa ORI del mapa)."])]
     h += [H2("8.20 Orden de Tareas Aéreas (AV/D 5-47), paquetes, TOT y punto de reunión"),
           Bul(["<b>Datos OTA</b> (<font face='Mono'>engine/ota.py</font>, <font face='Mono'>Mision.ota_json</font>, migración "
                "0034; <font face='Mono'>ota</font> en <font face='Mono'>POST /misiones</font>): paquete, función CM/ACM (uno "
@@ -1146,6 +1153,8 @@ def construir(salida: Path, img: Path) -> None:
               ["Cisternas, AEW, rescate y puntos de recobre", "Planificar misión (AAR, AEW, CSAR, punto AER); Situación → Recuperación",
                "Reabastecimiento en vuelo por tiempo, escolta de los activos de alto valor, tripulaciones derribadas y su rescate, "
                "y puntos de recobre operacional con requisitos mínimos (8.21)."],
+              ["ORI: pistas en carretera", "Agregar unidad → PRO (Pista); capa Tramos aptos para ORI",
+               "Un PRO con pista solo se ubica en un tramo de carretera apto (recto, pavimentado, ancho, casi plano, sin puentes) o en un aeródromo; el mapa muestra los tramos aptos en verde."],
               ["Orden de Tareas Aéreas (OTA)", "Planificar misión → Datos de la OTA; Misiones aéreas → OTA en Word",
                "Paquete con comandante de misión, código de misión, armamento, IFF, TOT, altura por tramo, punto de reunión "
                "y la OTA en el formato de la AV/D 5-47 (8.20)."],

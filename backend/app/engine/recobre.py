@@ -2,7 +2,8 @@
 reabastecerse y rearmarse cerca del frente (en la OTA, el campo "punto de recobre" de la linea ABA: PR01, PR02...).
 
 Un PRO es una base liviana: pocas plazas (4), existencias chicas que solo reponen los convoyes y una pista corta (la
-que fije el instructor; sin pista, solo helicopteros y aeronaves de despegue vertical). Requisitos minimos para operar
+que fije el instructor; sin pista, solo helicopteros y aeronaves de despegue vertical). Con pista solo puede estar en un
+tramo de carretera apto como ORI o en un aerodromo (engine/ori.py). Requisitos minimos para operar
 bien: PERSONAL_MINIMO efectivos (seguridad, combustible, armamento, comunicaciones y sanidad), existencias de
 combustible y municion, y una unidad propia de seguridad o defensa aerea a <= RADIO_SEGURIDAD_KM. Con su personal
 completo, una aeronave queda lista en REARME_TURNOS (1 turno, frente a los 2 de una base aerea).
@@ -10,7 +11,7 @@ completo, una aeronave queda lista en REARME_TURNOS (1 turno, frente a los 2 de 
 
 from __future__ import annotations
 
-from app.engine import catalogo, geo, logistica, personal
+from app.engine import catalogo, geo, logistica, ori, personal
 
 CLASE = "punto_recobre"
 PERSONAL_MINIMO = 20
@@ -40,9 +41,29 @@ def deficiencias(pro, unidades=()) -> list[str]:
             x.bando == pro.bando and x.estado == "activa" and x.tipo == "terrestre"
             and geo.distancia_km(x.lat, x.lon, pro.lat, pro.lon) <= RADIO_SEGURIDAD_KM for x in unidades):
         out.append(f"Seguridad: ninguna unidad propia a {RADIO_SEGURIDAD_KM:.0f} km o menos.")
-    if not (getattr(pro, "pista_m", None) or 0):
+    pista = getattr(pro, "pista_m", None) or 0
+    if not pista:
         out.append("Sin pista: solo helicópteros y aeronaves de despegue vertical.")
+    elif getattr(pro, "lat", None) is not None:
+        tipo, _, motivo = ori.sitio(pro.lat, pro.lon, pista)
+        if tipo == "no_apto":
+            out.append(f"Pista no apta: {motivo} Mientras tanto, solo helicópteros.")
+        elif tipo == "sin_datos":
+            out.append("Pista sin verificar: no hay datos de carreteras de esta zona para comprobar el ORI.")
     return out
+
+
+def sitio_texto(pro) -> str:
+    """Donde esta la pista del PRO: el tramo ORI o el aerodromo (vacio si no tiene pista o no es apto)."""
+    pista = getattr(pro, "pista_m", None) or 0
+    if not pista or getattr(pro, "lat", None) is None:
+        return ""
+    tipo, t, _ = ori.sitio(pro.lat, pro.lon, pista)
+    if tipo == "ori":
+        return f"ORI {ori.resumen(t)}"
+    if tipo == "aerodromo":
+        return f"aeródromo {t['nombre']}"
+    return ""
 
 
 def turnos_rearme(base, por_defecto: int) -> int:
@@ -55,7 +76,7 @@ def estado(unidades, bando: str) -> list[dict]:
     """PRO del bando con sus plazas, existencias y deficiencias (para la pestaña Situación)."""
     out = []
     for p in sorted((u for u in unidades if es_pro(u) and u.bando == bando and u.estado != "destruida"), key=lambda u: u.id):
-        out.append({"id": p.id, "nombre": p.nombre, "pista_m": getattr(p, "pista_m", None) or 0,
+        out.append({"id": p.id, "nombre": p.nombre, "pista_m": getattr(p, "pista_m", None) or 0, "sitio": sitio_texto(p),
                     "plazas": catalogo.plazas_aeronaves(p), "personal": personal.actual(p),
                     "combustible": round(logistica.stock(p, "combustible")), "municion": round(logistica.stock(p, "municion")),
                     "deficiencias": deficiencias(p, unidades)})

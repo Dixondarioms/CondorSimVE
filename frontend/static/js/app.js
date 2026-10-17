@@ -363,6 +363,13 @@
     $("u-autonomia").value = ref.autonomia_km || 1;
     $("u-velocidad").disabled = c.tipo === "base";
     $("u-autonomia").disabled = c.tipo === "base";
+    const pro = c.id === "punto_recobre";
+    $("u-pista-fila").hidden = !pro;
+    if (pro && !app.capaActiva.ori) { // para ubicarlo hay que ver los tramos aptos
+      const chk = document.querySelector('[data-capa="ori"]');
+      if (chk) chk.checked = true;
+      alternarCapa("ori", true);
+    }
     actualizarFilaModelo();
   }
   $("u-clase").addEventListener("change", aplicarDefectosClase);
@@ -599,6 +606,11 @@
       style: (f) => (f.properties.nivel === 2 ? { color: "#e8b04a", weight: 2, opacity: 0.9 } : { color: "#c99a55", weight: 1.1, opacity: 0.75 }),
       interactive: false,
     });
+    // tramos de carretera aptos como pista (ORI; tools/preparar_ori.py): donde puede ir un PRO con pista
+    c.ori = L.geoJSON(null, {
+      style: { color: "#2ecc71", weight: 6, opacity: 0.85, lineCap: "butt" },
+      onEachFeature: (f, capa) => capa.bindTooltip(Logica.textoOri(f.properties), { sticky: true }),
+    });
     const lagos = L.geoJSON(null, { style: { color: "#2f6fb0", weight: 1, fillColor: "#78aacd", fillOpacity: 0.7 } }).addTo(c.referencias);
     const lugares = L.geoJSON(null, {
       pointToLayer: (f, ll) => {
@@ -610,7 +622,7 @@
       },
     }).addTo(c.referencias);
     for (const m of mapas) {
-      for (const [archivo, capa] of [["fronteras", fronteras], ["estados", estados], ["rios", rios], ["lagos", lagos], ["lugares", lugares], ["carreteras", c.carreteras]]) {
+      for (const [archivo, capa] of [["fronteras", fronteras], ["estados", estados], ["rios", rios], ["lagos", lagos], ["lugares", lugares], ["carreteras", c.carreteras], ["ori", c.ori]]) {
         fetch(`/static/geo/${m.id}/${archivo}.geojson`).then((r) => (r.ok ? r.json() : null)).then((g) => { if (g) capa.addData(g); }).catch(() => {});
       }
     }
@@ -631,7 +643,7 @@
     c.ge = L.layerGroup().addTo(map);
     c.meteorologia = L.layerGroup().addTo(map);
     c.misiones = L.layerGroup().addTo(map);
-    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, alcances: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, infraestructura: true, ge: true, meteorologia: true, misiones: true };
+    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, alcances: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, infraestructura: true, ge: true, meteorologia: true, misiones: true, ori: false };
     if (app.capaActiva.niebla) c.niebla.addTo(map);
 
     let pendiente = null;
@@ -709,6 +721,7 @@
           lat, lon: lng, fuerza: num("u-fuerza") ?? 100, velocidad_kmh: num("u-velocidad"),
           alcance_km: num("u-alcance"), deteccion_km: num("u-deteccion"), autonomia_km: num("u-autonomia"),
           personal: num("u-personal") === undefined ? undefined : Math.round(num("u-personal")),
+          pista_m: $("u-pista-fila").hidden ? undefined : num("u-pista"),
         });
         app.modoAgregar = false;
         $("btn-modo-agregar").textContent = "Ubicar en mapa";
@@ -2214,7 +2227,7 @@
         div.className = "ficha-pro";
         div.appendChild(Object.assign(document.createElement("b"), { textContent: `${varios ? nombreDeBando(b) + " · " : ""}${p.nombre}` }));
         div.appendChild(Object.assign(document.createElement("span"), {
-          textContent: ` · ${p.pista_m ? `pista de ${p.pista_m} m` : "sin pista"} · ${p.plazas} plazas · ${p.personal} efectivos · combustible ${p.combustible} · munición ${p.municion}` }));
+          textContent: ` · ${p.pista_m ? `pista de ${p.pista_m} m${p.sitio ? ` (${p.sitio})` : ""}` : "sin pista"} · ${p.plazas} plazas · ${p.personal} efectivos · combustible ${p.combustible} · munición ${p.municion}` }));
         const ul = document.createElement("ul");
         for (const f of p.deficiencias) ul.appendChild(Object.assign(document.createElement("li"), { textContent: f }));
         if (!p.deficiencias.length) ul.appendChild(Object.assign(document.createElement("li"), { className: "ok", textContent: "Cumple los requisitos mínimos." }));
@@ -3201,7 +3214,8 @@
     const cuerpo = {};
     const campos = [["fuerza", "adj-fuerza"], ["combustible", "adj-combustible"], ["municion", "adj-municion"],
       ["stock_combustible", "adj-stock-comb"], ["stock_municion", "adj-stock-mun"], ["dano_pista", "adj-dano-pista"],
-      ["dano_plataforma", "adj-dano-plat"], ["dano_combustible", "adj-dano-comb"], ["refugios", "adj-refugios"]];
+      ["dano_plataforma", "adj-dano-plat"], ["dano_combustible", "adj-dano-comb"], ["refugios", "adj-refugios"],
+      ["pista_m", "adj-pista"]];
     for (const [campo, el] of campos) {
       const v = parseFloat($(el).value);
       if (!Number.isNaN(v)) cuerpo[campo] = v;
