@@ -67,6 +67,7 @@ class Escenario(Base):
     personal_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     derribados_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # engine/rescate.py
     inteligencia_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # engine/inteligencia.py
+    transmisiones_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # engine/transmisiones.py
     esfuerzo_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # identidad nacional de cada bando (ver engine/naciones.py); "" = sin especificar (se muestra "Azul"/"Rojo")

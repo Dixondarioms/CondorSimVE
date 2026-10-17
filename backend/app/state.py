@@ -27,6 +27,7 @@ from app.engine import recobre as recobre_mod
 from app.engine import rescate as rescate_mod
 from app.engine import inteligencia as intel_mod
 from app.engine import warden as warden_mod
+from app.engine import transmisiones as trans_mod
 from app.engine.vision import cuadro_sensores, unidades_visibles
 from app.models.contacto import Contacto
 from app.models.escenario import Escenario
@@ -48,6 +49,7 @@ CAMPOS_OCULTOS = (
     "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios",
     "transporte_id", "personal_inicial", "personal_actual", "sistema_da", "pista_largo_m", "pista_util_m",
 )
+TURNOS_ORDENES = 3  # ordenes ya resueltas que viajan con el estado (el historial completo esta en el AAR)
 CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct", "com_ordenes_pct", "inteligencia")
 
 
@@ -135,7 +137,8 @@ def estado_para(
                 "unidad_id": u.id, "nombre": u.nombre, "tipo": u.tipo, "clase": u.clase,
                 "sidc": u.sidc, "lat": c.lat, "lon": c.lon, "turno_visto": c.turno_visto,
             })
-    ordenes = q_ordenes.order_by(Orden.id).all()
+    ordenes = (q_ordenes.filter(or_(Orden.estado == "pendiente", Orden.turno_emitida >= escenario.turno_actual - TURNOS_ORDENES))
+               .order_by(Orden.id).all())
     eventos = q_eventos.order_by(Evento.id.desc()).limit(20).all()
     obras = _obras_visibles(db, escenario, rol, unidades)
     graficos = [
@@ -199,6 +202,7 @@ def estado_para(
         "recobre": {b: recobre_mod.estado(todas, b) for b in bandos_propios},
         # inteligencia: satelites e imagenes en proceso, y los objetivos enemigos conocidos por anillo de Warden
         "inteligencia": {b: intel_mod.resumen(escenario, b) for b in bandos_propios},
+        "transmisiones": {b: trans_mod.resumen(escenario, b, escenario.turno_actual) for b in bandos_propios},
         "warden": {b: warden_mod.resumen(_conocidos(db, escenario, todas, b, terreno, clima_ctx, ge_ctx), b)
                    for b in bandos_propios},
         "infraestructura": {b: infra_mod.resumen(todas, b) for b in bandos_propios},

@@ -278,6 +278,20 @@
             <div id="cuadro-rescate"></div>
             <div id="cuadro-pro"></div>
           </section>
+          <section class="bloque" id="sec-transmisiones">
+            <h2>Plan de transmisiones (C-E)</h2>
+            <p class="ayuda">Frecuencia primaria y secundaria de cada red (MHz). Cada una dentro de su banda (HF 2-30, VHF 30-174,
+              UHF 225-400), sin repetirse ni quedar a menos de 25 kHz de otra, sin usar las de guardia (121,5 y 243,0) y
+              renovadas cada 24 turnos. Un plan con errores o vencido demora más las órdenes; uno válido permite saltar a la
+              secundaria ante la interferencia enemiga. Las frecuencias van en los SPINS de la OTA.</p>
+            <select id="tx-bando" aria-label="Bando del plan de transmisiones" hidden></select>
+            <table id="tabla-transmisiones" class="tabla-personal-cfg tabla-transmisiones">
+              <thead><tr><th>Red</th><th>Banda</th><th>Primaria</th><th>Secundaria</th><th>Indicativo</th></tr></thead>
+              <tbody></tbody>
+            </table>
+            <ul id="tx-estado" class="pm-avisos"></ul>
+            <button id="btn-transmisiones" type="button">Guardar plan de transmisiones</button>
+          </section>
           <section class="bloque" id="sec-warden">
             <h2>Análisis de sistemas del enemigo (anillos de Warden)</h2>
             <p class="ayuda">Los objetivos enemigos que su bando conoce, del centro hacia afuera: 1 liderazgo (mando y control),
@@ -602,6 +616,12 @@
             <label class="chk"><input type="checkbox" id="dir-fuego" checked><span>Fuego automático (patrullas, antiaérea, destructores)</span></label>
             <label class="chk"><input type="checkbox" id="dir-noche"><span>Ciclo de día y noche (de noche se detecta menos a simple vista; el radar no cambia)</span></label>
             <label class="chk"><input type="checkbox" id="dir-fallas"><span>Disponibilidad y fallas de las aeronaves (no todas están listas para despegar y pueden fallar en vuelo)</span></label>
+            <div class="fila avanzar-varios">
+              <label class="mini">Ejercicios largos: resolver varios turnos seguidos<select id="dir-avanzar-n">
+                <option value="3">3 turnos</option><option value="6" selected>6 turnos</option><option value="12">12 turnos (medio día)</option><option value="24">24 turnos (un día)</option>
+              </select></label>
+              <button id="btn-avanzar-varios" type="button" class="secundario">Avanzar</button>
+            </div>
             <label class="mini">Conduce el bando Azul<select id="dir-cond-azul">
               <option value="alumnos">Grupo de alumnos</option><option value="instructor">El instructor</option><option value="ia">Adversario automático (IA)</option>
             </select></label>

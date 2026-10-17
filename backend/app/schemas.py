@@ -128,6 +128,21 @@ class FaseIn(BaseModel):
     hasta: int | None = Field(default=None, ge=1, le=9999)
 
 
+class RedTransmisionIn(BaseModel):
+    """Una red del plan de transmisiones (engine/transmisiones.py)."""
+
+    red: Literal["mando", "gci", "ataque", "defensa", "logistica"]
+    banda: Literal["HF", "VHF", "UHF"]
+    primaria: float = Field(ge=0, le=1000)
+    secundaria: float = Field(ge=0, le=1000)
+    indicativo: str = Field(default="", max_length=12)
+
+
+class PlanTransmisionesIn(BaseModel):
+    bando: Literal["azul", "rojo"] | None = None  # solo el instructor elige el bando
+    redes: list[RedTransmisionIn] = Field(min_length=1, max_length=8)
+
+
 class InteligenciaBandoIn(BaseModel):
     """Satelites de reconocimiento de un bando (engine/inteligencia.py)."""
 

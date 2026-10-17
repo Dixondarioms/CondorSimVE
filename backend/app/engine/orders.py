@@ -36,6 +36,7 @@ from app.engine import ota as ota_mod
 from app.engine import apoyo_aereo as apoyo_mod
 from app.engine import rescate as rescate_mod
 from app.engine import weaponeering as weap_mod
+from app.engine import transmisiones as trans_mod
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import infraestructura as infra_mod
@@ -259,6 +260,8 @@ def prob_demora(escenario: Escenario, unidad, ge, extra_pct: float = 0.0) -> flo
     if base <= 0:
         return 0.0
     extra = DEMORA_INTERFERENCIA_PCT if unidad is not None and ge.interferido(unidad) else 0
+    if extra:  # con un plan de transmisiones valido salta a la frecuencia secundaria
+        extra *= trans_mod.factor_interferencia(escenario, unidad.bando, getattr(escenario, "turno_actual", 1))
     return min(DEMORA_MAXIMA_PCT, base + extra) / 100.0
 
 
@@ -269,7 +272,7 @@ def demorar_por_comunicaciones(db: Session, escenario: Escenario, ordenes: list,
     reproducible (semilla del escenario, turno y orden). Las zonas de interferencia que rigen son las del turno
     anterior, vigentes mientras se transmitian las ordenes."""
     lista = list(unidades.values())
-    extra = {b: infra_mod.demora_extra_pct(lista, b) for b in ("azul", "rojo")}
+    extra = {b: infra_mod.demora_extra_pct(lista, b) + trans_mod.demora_extra_pct(escenario, b, turno) for b in ("azul", "rojo")}
     if not (getattr(escenario, "com_ordenes_pct", 0) or 0) and not any(extra.values()):
         return ordenes
     ge = ge_mod.contexto(db, escenario)

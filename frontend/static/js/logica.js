@@ -548,6 +548,43 @@
     return [f.nombre, String(f.objetivos), estado || (f.objetivos ? "operativos" : "—"), (f.ejemplos || []).join(", ")];
   }
 
+  // ---------------------------------------------------------------- tarjeta tactica dinamica de una unidad
+  const NOMBRE_PERFIL_CORTO = { alto: "alto", medio: "medio", rasante: "rasante" };
+
+  /** Estado de la unidad para su simbolo: "critico" (fuerza < 30), "degradado" (< 70), "sin-combustible" (aeronave propia
+   *  con 25 % o menos) o "" (sin novedad; la fuerza enemiga no se conoce). */
+  function estadoSimbolo(u) {
+    if (!u || u.fuerza === null || u.fuerza === undefined) return "";
+    if (u.fuerza < 30) return "critico";
+    if (u.fuerza < 70) return "degradado";
+    if (u.tipo === "aerea" && u.combustible !== null && u.combustible !== undefined && u.combustible <= 25 && !u.en_tierra) return "sin-combustible";
+    return "";
+  }
+
+  /** Lineas de la tarjeta tactica: lo que se sabe de la unidad ahora (las propias, todo; las enemigas, lo visible). */
+  function lineasTarjeta(u, orden) {
+    if (!u) return [];
+    const out = [];
+    const conocido = u.fuerza !== null && u.fuerza !== undefined;
+    out.push(conocido ? `Fuerza ${Math.round(u.fuerza)} %` : "Fuerza desconocida (enemigo)");
+    if (conocido && u.tipo !== "base" && u.combustible !== null && u.combustible !== undefined) {
+      out.push(`Combustible ${Math.round(u.combustible)} % · Munición ${Math.round(u.municion ?? 0)} %`);
+    }
+    if (u.tipo === "aerea" && !esMisil(u)) {
+      const n = u.aeronaves ? `${u.aeronaves} aeronave${u.aeronaves === 1 ? "" : "s"} · ` : "";
+      const vuelo = u.en_tierra
+        ? `en tierra${u.espera_restante ? `, lista en ${u.espera_restante} turno${u.espera_restante === 1 ? "" : "s"}` : ", lista"}`
+        : `en vuelo${u.perfil_actual ? `, perfil ${NOMBRE_PERFIL_CORTO[u.perfil_actual] || u.perfil_actual}` : ""}`;
+      out.push(n + vuelo);
+    }
+    if (u.mision === "patrulla") out.push("Patrulla: intercepta lo que entre a su alcance");
+    if (orden) out.push(`Orden pendiente: ${orden.tipo}${orden.detalle ? ` (${orden.detalle})` : ""}`);
+    const e = estadoSimbolo(u);
+    if (e === "critico") out.push("Situación crítica: casi sin capacidad de combate");
+    else if (e === "sin-combustible") out.push("Combustible bajo: debe regresar");
+    return out;
+  }
+
   /** Paquete y funcion de una mision en la OTA: "paq. TELA (CM)" ("" si no va en un paquete). */
   function textoPaquete(m) {
     const o = (m && m.ota) || {};
@@ -1000,7 +1037,7 @@
     PUESTOS, puestoDe, puestoPuede, puestoPuedeAereo, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,
     ESTADOS_MISION, TIPOS_PUNTO_MISION, misionActiva, horaEstimada, textoMision, tramosCronograma, armasParaRol, textoTramo, textoPaquete,
-    ESTADOS_DERRIBADO, textoDerribado, derribadoCercano, textoWeaponeering, filaWarden,
+    ESTADOS_DERRIBADO, textoDerribado, derribadoCercano, textoWeaponeering, filaWarden, estadoSimbolo, lineasTarjeta,
     RADIO_SIN_EMISION_KM, deteccionEfectiva, pctStock,
     nacionDe, etiquetaBandoNacion, filtrarUnidades, textoObjetivo, avanceObjetivo, ETIQUETA_OBJETIVO, CAPACIDAD_BASE, RADIO_ATERRIZAJE_KM, estacionadasEn, plazasLibres, opcionesDeAterrizaje, situacionDeVuelo,
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,

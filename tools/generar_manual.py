@@ -804,6 +804,18 @@ def construir(salida: Path, img: Path) -> None:
                "<font face='Mono'>arma_elegida</font> (migración 0031); la munición de la unidad es el total de la reserva y el "
                "reabastecimiento se reparte entre las armas a las que les falta. <font face='Mono'>POST /unidades/{id}/defensa</font> "
                "acepta <font face='Mono'>arma</font>; <font face='Mono'>GET /api/catalogo</font> trae <font face='Mono'>sistemas_da</font>."])]
+    h += [H2("8.23 Plan de transmisiones, ejercicios largos y tarjetas tácticas"),
+          Bul(["<b>Plan de transmisiones</b> (<font face='Mono'>engine/transmisiones.py</font>, <font face='Mono'>Escenario.transmisiones_json</font>, "
+               "migración 0037; <font face='Mono'>PUT /transmisiones</font>, el alumno solo el de su bando): 5 redes con banda, "
+               "primaria, secundaria e indicativo; errores de banda, guardia, separación &lt; 25 kHz, red faltante y vigencia de "
+               "24 turnos. En <font face='Mono'>orders.prob_demora</font>: un plan con errores suma 10 puntos a la demora del "
+               "bando y uno válido reduce a la mitad la demora por interferencia. SPINS con las frecuencias.",
+               "<b>Ejercicios largos</b>: <font face='Mono'>POST /avanzar_turno?n=</font> resuelve hasta 24 turnos seguidos; el "
+               "estado solo trae las órdenes pendientes y las de los últimos <font face='Mono'>TURNOS_ORDENES</font> = 3 turnos "
+               "(el historial completo queda en el AAR); los historiales de inteligencia y rescate están acotados.",
+               "<b>Tarjeta táctica y simbología dinámica</b> (<font face='Mono'>Logica.lineasTarjeta</font>, "
+               "<font face='Mono'>Logica.estadoSimbolo</font>): la tarjeta del símbolo y su marco (degradado &lt; 70 %, "
+               "crítico &lt; 30 %, sin combustible ≤ 25 % en vuelo) se recalculan con cada estado."])]
     h += [H2("8.22 Cálculo de armamento, BDA, anillos de Warden, cortes de carretera e inteligencia de imágenes"),
           Bul(["<b>Weaponeering</b> (<font face='Mono'>engine/weaponeering.py</font>): MAE en ft² de la tabla del documento de "
                "targeting (MK-81 a MK-84; aviones estacionados, piezas antiaéreas, radar; 30/45/60°), armas rusas y guiadas "
@@ -1087,6 +1099,8 @@ def construir(salida: Path, img: Path) -> None:
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
               ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña TIEM; engine/pmo.py",
                "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["Plan de transmisiones, ejercicios largos y tarjetas tácticas", "Situación → Plan de transmisiones; Consola → Dirección; el mapa",
+               "Frecuencias primaria y secundaria verificadas, varios turnos seguidos y tarjeta y símbolo según el estado (8.23)."],
               ["Cálculo de armamento, BDA, Warden e inteligencia", "Planificar misión (armamento, CORTE); Situación → Warden e Inteligencia; Consola → Satélites",
                "Weaponeering con la tabla de áreas de efecto, daño colateral, BDA en 3 niveles, anillos de Warden, cortes de "
                "carretera, satélites con procesamiento e INTSUM (8.22)."],

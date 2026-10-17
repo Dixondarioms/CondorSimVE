@@ -478,6 +478,20 @@ def construir(salida: Path) -> None:
              "más cercana a su alcance.",
              f"{B('Arma a emplear')} (sistemas de defensa aérea): automática o un arma fija; ver abajo."]),
     ])
+    h += [H3("Plan de transmisiones (C-E)"),
+          P("Cada bando carga en <b>Situación → Plan de transmisiones</b> la frecuencia primaria y la secundaria de sus redes "
+            "(mando y control, control de interceptación, ataque y apoyo aéreo cercano, defensa aérea, logística). El "
+            "simulador lo verifica: cada frecuencia dentro de su banda (HF 2-30, VHF 30-174, UHF 225-400 MHz), sin repetirse "
+            "ni quedar a menos de 25 kHz de otra, sin usar las de guardia (121,5 y 243,0 MHz) y renovado cada 24 turnos. Un "
+            "plan con errores o vencido demora más las órdenes; uno válido permite saltar a la secundaria ante la "
+            "interferencia enemiga (la mitad de la demora). Las frecuencias se imprimen en los SPINS de la OTA."),
+          H3("Tarjetas tácticas y ejercicios largos"),
+          P("Al pasar el ratón sobre una unidad aparece su <b>tarjeta táctica</b>, que cambia cada turno: fuerza, combustible y "
+            "munición, aeronaves y si están en tierra o en vuelo (con su perfil), la patrulla y la orden pendiente. El símbolo "
+            "se rodea de ámbar si la unidad está degradada (menos de 70 %), de rojo si está en situación crítica (menos de "
+            "30 %) y parpadea si una aeronave en vuelo se queda sin combustible."),
+          P("Para ejercicios de un mes, el instructor puede <b>resolver varios turnos seguidos</b> (3, 6, 12 o 24) desde "
+            "Consola → Dirección del ejercicio; las misiones, las órdenes y el adversario automático siguen solos.")]
     h += [H3("Anillos de Warden e inteligencia de imágenes (A-2)"),
           P("<b>Análisis de sistemas del enemigo</b>: los objetivos enemigos que el bando conoce, en los cinco anillos de Warden "
             "(1 liderazgo, 2 elementos orgánicos esenciales, 3 infraestructura, 4 población —no es objetivo— y 5 fuerzas "

@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from pathlib import Path
 
-from app.engine import calendario, catalogo, geo, relieve
+from app.engine import calendario, catalogo, geo, relieve, transmisiones
 
 # ---------------------------------------------------------------------------------------------------- codigos
 # rol del simulador -> (codigo de conflicto, codigo de paz, nombre en la tabla de la AV/D 5-47)
@@ -438,7 +438,7 @@ def lineas_ota(db, esc, bando: str, misiones: list, unidades: dict, nombre_opera
                       "indicativo": indicativo, "datmi": datmi, "ruta": ruta, "locob": locob, "reco": reco,
                       "aba": aba,
                       "despegue": despegue.strftime("%H:%M"), "tot": o.get("tot_turno")})
-    return {"encabezado": encabezado, "asignacion": asignacion_txt, "misiones": filas, "spins": spins(esc, ms)}
+    return {"encabezado": encabezado, "asignacion": asignacion_txt, "misiones": filas, "spins": spins(esc, ms, bando)}
 
 
 def _unidad_aerea(m, grupo, base, unidades: dict) -> str:
@@ -453,7 +453,7 @@ def _unidad_aerea(m, grupo, base, unidades: dict) -> str:
     return f"GA {codigo_base(base)}" if base is not None else "-"
 
 
-def spins(esc, misiones: list) -> list[str]:
+def spins(esc, misiones: list, bando: str = "azul") -> list[str]:
     """Linea de mensajes (SPINS): informacion general, procedimientos y medidas de coordinacion del dia."""
     paquetes = sorted({(datos(m).get("paquete") or "").upper() for m in misiones} - {""})
     cms = [f"{(datos(m).get('paquete') or '').upper()}: M{m.id} {m.nombre or ''}".strip()
@@ -468,6 +468,7 @@ def spins(esc, misiones: list) -> list[str]:
         f"{ESPERA_REUNION_MAX} turnos; luego sigue cada uno su ruta.",
         "RECUPERACIÓN DE PERSONAL: tripulación derribada informa posición en la frecuencia de guardia; SAR/CSAR en alerta.",
         "REABASTECIMIENTO: según línea ABA de cada misión; autenticación reto-respuesta antes del contacto.",
+        transmisiones.lineas_spins(esc, bando),
     ]
     return out
 

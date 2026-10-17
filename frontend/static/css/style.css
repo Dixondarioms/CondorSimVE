@@ -490,3 +490,22 @@ dialog td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .pm-derribado span { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%;
   background: rgba(255, 190, 11, .9); color: #111; font-size: 12px; box-shadow: 0 0 0 2px rgba(0, 0, 0, .5); }
 .pm-derribado.rojo span { background: rgba(239, 71, 111, .9); }
+
+/* tarjeta tactica dinamica y simbologia segun el estado de la unidad */
+.tarjeta-tactica { display: flex; flex-direction: column; gap: 1px; font-size: 11px; line-height: 1.3; }
+.tarjeta-tactica b { font-size: 12px; }
+.tarjeta-tactica .sub { color: #8a93a6; }
+.tarjeta-tactica.degradado b { color: #ffb347; }
+.tarjeta-tactica.critico b, .tarjeta-tactica.sin-combustible b { color: #ef476f; }
+.leaflet-marker-icon.degradado { filter: drop-shadow(0 0 3px #ffb347) drop-shadow(0 0 1px #ffb347); }
+.leaflet-marker-icon.critico { filter: drop-shadow(0 0 4px #ef476f) drop-shadow(0 0 2px #ef476f); }
+.leaflet-marker-icon.sin-combustible { filter: drop-shadow(0 0 4px #ffd166); animation: parpadeo-combustible 1.2s ease-in-out infinite; }
+@keyframes parpadeo-combustible { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .leaflet-marker-icon.sin-combustible { animation: none; } }
+/* plan de transmisiones */
+.tabla-transmisiones { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.tabla-transmisiones th, .tabla-transmisiones td { font-size: 11px; padding: 2px; }
+.tabla-transmisiones thead th:nth-child(1) { width: 27%; }
+.tabla-transmisiones thead th:nth-child(2) { width: 17%; }
+.tabla-transmisiones input, .tabla-transmisiones select { width: 100%; box-sizing: border-box; min-width: 0; font-size: 11px; padding: 2px; }
+.avanzar-varios { align-items: flex-end; gap: 6px; }

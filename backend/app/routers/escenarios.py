@@ -9,6 +9,7 @@ from app import adversario, auth, diapositivas_html, informe_html, schemas, stat
 from app.db import get_db
 from app.engine import toe
 from app.engine import inteligencia
+from app.engine import transmisiones
 from app.engine import aar, calendario, clock, naciones, plantillas, timeline
 from app.models.aar import Instantanea
 from app.models.objetivo import Objetivo
@@ -74,16 +75,51 @@ def obtener_escenario(
     return state.estado_para(db, esc, _rol_vista(usuario, vista))
 
 
+MAX_TURNOS_DE_UNA_VEZ = 24
+
+
 @router.post("/{escenario_id}/avanzar_turno")
 async def avanzar_turno(
+    n: int = 1,
     esc: Escenario = Depends(auth.escenario_dep),
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(solo_instructor),
 ):
+    """Resuelve el turno; con `n`, varios seguidos (hasta un dia: para recorrer los periodos tranquilos de un
+    ejercicio largo). Se detiene si el escenario deja de estar activo."""
     if esc.estado != "activo":
         raise HTTPException(status_code=400, detail="El escenario no esta activo")
-    await turnos.resolver_y_difundir(db, esc)
+    if not 1 <= n <= MAX_TURNOS_DE_UNA_VEZ:
+        raise HTTPException(status_code=400, detail=f"Se avanzan entre 1 y {MAX_TURNOS_DE_UNA_VEZ} turnos de una vez")
+    for _ in range(n):
+        if esc.estado != "activo":
+            break
+        await turnos.resolver_y_difundir(db, esc)
     return state.estado_para(db, esc, usuario.rol)
+
+
+@router.put("/{escenario_id}/transmisiones")
+async def guardar_transmisiones(
+    payload: schemas.PlanTransmisionesIn,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.usuario_actual),
+):
+    """Plan de transmisiones del bando: cada alumno, el de su bando; el instructor, el que indique."""
+    if usuario.rol in ("azul", "rojo"):
+        bando = usuario.rol
+    elif usuario.rol == "instructor" and payload.bando:
+        bando = payload.bando
+    else:
+        raise HTTPException(status_code=403, detail="Solo los alumnos de un bando o el instructor editan el plan")
+    transmisiones.guardar(esc, bando, [r.model_dump() for r in payload.redes], esc.turno_actual)
+    errores = transmisiones.errores(transmisiones.plan(esc, bando), esc.turno_actual)
+    db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="comunicaciones", bando_destino=bando,
+                  descripcion=f"Plan de transmisiones actualizado por {usuario.username}"
+                              + (f" con {len(errores)} observación(es)." if errores else ": sin observaciones.")))
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return transmisiones.resumen(esc, bando, esc.turno_actual)
 
 
 @router.post("/{escenario_id}/pausar")

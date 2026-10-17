@@ -837,10 +837,15 @@
   }
 
   function tooltipUnidad(u) {
-    const el = document.createElement("span");
+    // tarjeta tactica dinamica: nombre, clase y lo que se sabe de la unidad en este turno
+    const el = document.createElement("div");
+    el.className = `tarjeta-tactica ${Logica.estadoSimbolo(u)}`;
     const modelo = Logica.modeloDe(u, app.catalogo && app.catalogo.modelos);
     const grupo = modelo ? ` · ${rotuloModelo(u)}` : "";
-    el.textContent = `${u.nombre} (${u.clase || u.tipo}${grupo}, ${u.terreno}) fuerza ${pct(u.fuerza)}`;
+    el.appendChild(Object.assign(document.createElement("b"), { textContent: u.nombre }));
+    el.appendChild(Object.assign(document.createElement("span"), { className: "sub", textContent: `${u.clase || u.tipo}${grupo}${u.terreno ? ` · ${u.terreno}` : ""}` }));
+    const orden = app.data && (app.data.ordenes || []).find((o) => o.unidad_id === u.id && o.estado === "pendiente");
+    for (const linea of Logica.lineasTarjeta(u, orden)) el.appendChild(Object.assign(document.createElement("span"), { textContent: linea }));
     const cl = modelo ? null : claseDe(u);
     const ref = modelo || (cl && cl.foto ? cl : null); // buques: foto de referencia de su clase
     if (!ref) return el;
@@ -906,6 +911,13 @@
       }
       m.unbindTooltip();
       m.bindTooltip(tooltipUnidad(u), { direction: "top", offset: [0, -14] });
+      // simbologia dinamica: el marco del simbolo cambia con la fuerza y el combustible
+      const nodo = m.getElement && m.getElement();
+      if (nodo) {
+        nodo.classList.remove("critico", "degradado", "sin-combustible");
+        const e = Logica.estadoSimbolo(u);
+        if (e) nodo.classList.add(e);
+      }
     }
     for (const [id, m] of app.markers) {
       if (!vivas.has(id)) { app.capas.unidades.removeLayer(m); app.markers.delete(id); }
@@ -1981,6 +1993,7 @@
       }
       esf.appendChild(dl);
     }
+    renderTransmisiones(data, false);
     // analisis de sistemas del enemigo: anillos de Warden
     const wd = $("cuadro-warden");
     limpiar(wd);
@@ -2137,6 +2150,47 @@
       else app.map.fitBounds(data.unidades.map((u) => [u.lat, u.lon]), { padding: [80, 80], maxZoom: 10 });
       app.encuadrado = true;
     }
+  }
+
+  // ---------- plan de transmisiones (C-E) ----------
+  function renderTransmisiones(data, forzar) {
+    const sel = $("tx-bando");
+    const bandos = Object.keys(data.transmisiones || {});
+    sel.hidden = bandos.length < 2;
+    if (!bandos.includes(sel.value)) {
+      limpiar(sel);
+      for (const b of bandos) sel.appendChild(Object.assign(document.createElement("option"), { value: b, textContent: nombreDeBando(b) }));
+    }
+    const r = (data.transmisiones || {})[sel.value];
+    const tabla = $("tabla-transmisiones");
+    if (!r) { tabla.hidden = true; return; }
+    tabla.hidden = false;
+    const cuerpo = tabla.querySelector("tbody");
+    const plan = r.plan || r.sugerido;
+    const firma = JSON.stringify([sel.value, r.plan]);
+    if (forzar || cuerpo.dataset.firma !== firma) {  // no pisa lo que el alumno esta escribiendo si el plan no cambio
+      cuerpo.dataset.firma = firma;
+      limpiar(cuerpo);
+      for (const red of plan.redes) {
+        const tr = document.createElement("tr");
+        tr.dataset.red = red.red;
+        tr.innerHTML = `<th></th><td><select class="tx-banda"><option>HF</option><option>VHF</option><option>UHF</option></select></td>`
+          + '<td><input class="tx-pri" type="number" step="0.025"></td><td><input class="tx-sec" type="number" step="0.025"></td>'
+          + '<td><input class="tx-ind" maxlength="12"></td>';
+        tr.querySelector("th").textContent = red.nombre;
+        tr.querySelector(".tx-banda").value = red.banda;
+        tr.querySelector(".tx-pri").value = red.primaria;
+        tr.querySelector(".tx-sec").value = red.secundaria;
+        tr.querySelector(".tx-ind").value = red.indicativo || "";
+        cuerpo.appendChild(tr);
+      }
+    }
+    const est = $("tx-estado");
+    limpiar(est);
+    const nota = r.plan ? `Vigente desde el turno ${r.plan.desde} hasta el ${r.vence}.` : "Sin plan: se muestra uno sugerido; guárdelo para usarlo.";
+    est.appendChild(Object.assign(document.createElement("li"), { className: "ayuda", textContent: nota }));
+    for (const e of r.errores) est.appendChild(Object.assign(document.createElement("li"), { className: "error", textContent: e }));
+    if (r.plan && !r.errores.length) est.appendChild(Object.assign(document.createElement("li"), { className: "ok", textContent: "Plan válido: ante la interferencia enemiga se salta a la frecuencia secundaria." }));
   }
 
   // ---------- obras (puentes y vados) ----------
@@ -2763,6 +2817,22 @@
       dia_noche: $("dir-noche").checked, ia_nivel: $("dir-ia-nivel").value, fallas: $("dir-fallas").checked,
     }).then(() => toast("Interruptores aplicados", true)));
   });
+  $("btn-avanzar-varios").addEventListener("click", () => {
+    if (!app.escenarioId) return;
+    const n = parseInt($("dir-avanzar-n").value, 10) || 1;
+    if (!confirm(`¿Resolver ${n} turnos seguidos? Las órdenes y misiones vigentes se cumplen solas; el adversario automático juega cada turno.`)) return;
+    enSilencio(api("POST", rutaEsc(`/avanzar_turno?n=${n}`)).then(() => toast(`Se resolvieron ${n} turnos`, true)));
+  });
+  $("btn-transmisiones").addEventListener("click", () => {
+    const b = $("tx-bando").value;
+    const redes = [...document.querySelectorAll("#tabla-transmisiones tbody tr")].map((tr) => ({
+      red: tr.dataset.red, banda: tr.querySelector(".tx-banda").value,
+      primaria: parseFloat(tr.querySelector(".tx-pri").value) || 0, secundaria: parseFloat(tr.querySelector(".tx-sec").value) || 0,
+      indicativo: tr.querySelector(".tx-ind").value.trim().toUpperCase(),
+    }));
+    enSilencio(api("PUT", rutaEsc("/transmisiones"), { bando: b, redes }).then((r) => toast(r.errores.length ? `Plan guardado con ${r.errores.length} observación(es)` : "Plan de transmisiones guardado", !r.errores.length)));
+  });
+  $("tx-bando").addEventListener("change", () => { if (app.data) renderTransmisiones(app.data, true); });
   $("btn-satelites").addEventListener("click", () => {
     if (!app.escenarioId) return;
     const inteligencia = Object.fromEntries(["azul", "rojo"].map((b) => [b, {

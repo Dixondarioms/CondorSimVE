@@ -767,6 +767,11 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   re-ataque; la pestaña Situación muestra los objetivos enemigos conocidos por anillo de Warden. Un punto CORTE corta
   una carretera (cráter por 12 turnos). Los satélites (ópticos o radar, los asigna el instructor) pasan dos veces
   por día, sus imágenes tardan un turno en procesarse y el A-2 recibe un INTSUM cada 6 turnos.
+- **Plan de transmisiones, ejercicios largos y tarjetas tácticas** (`engine/transmisiones.py`, migración `0037`):
+  cada bando carga las frecuencias primaria y secundaria de sus redes; el simulador verifica banda, guardia,
+  separación y vigencia (24 turnos), y el plan pesa en la demora de las órdenes y ante la interferencia. Para
+  ejercicios de un mes el instructor resuelve hasta 24 turnos seguidos y el estado solo trae las órdenes recientes.
+  La tarjeta de cada unidad en el mapa y el marco de su símbolo cambian con su fuerza y su combustible.
 
 ## Ejercicios con o contra los países vecinos
 
