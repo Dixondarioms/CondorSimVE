@@ -572,8 +572,11 @@ def modelo_dict(m: Modelo) -> dict:
         "pais": m.pais, "funcion": m.funcion, "descripcion": m.descripcion, "armamento": m.armamento,
         "velocidad_kmh": m.velocidad_kmh, "alcance_km": m.alcance_km, "deteccion_km": m.deteccion_km,
         "autonomia_km": m.autonomia_km, "ataque_vs": m.ataque_vs, "defensa": m.defensa,
-        "foto": m.foto or (FOTOS_CLASE.get(m.clase) or {}).get("foto"),
-        "credito": m.credito or (FOTOS_CLASE.get(m.clase) or {}).get("credito"),
+        "foto": (FOTOS_PROPIAS.get(f"modelos:{m.id}") or {}).get("foto") or m.foto
+        or (FOTOS_PROPIAS.get(f"clases:{m.clase}") or FOTOS_CLASE.get(m.clase) or {}).get("foto"),
+        "credito": (FOTOS_PROPIAS.get(f"modelos:{m.id}") or {}).get("credito") or m.credito
+        or (FOTOS_PROPIAS.get(f"clases:{m.clase}") or FOTOS_CLASE.get(m.clase) or {}).get("credito"),
+        "foto_propia": f"modelos:{m.id}" in FOTOS_PROPIAS,
         "embarcable": modelo_embarcable(m), "misil": CLASES[m.clase].misil,
         "firma": m.firma if m.firma is not None else CLASES[m.clase].firma,
         "propio": m.id.startswith("u_"),  # tipo del catalogo propio del instructor (engine/modelos_usuario.py)
@@ -600,7 +603,9 @@ def como_dict(c: Clase) -> dict:
         "reposicion_turno": c.reposicion_turno, "misil": c.misil, "lanza_misiles": c.lanza_misiles,
         "plazas_aeronaves": c.plazas_aeronaves, "embarcable": c.embarcable, "infraestructura": c.infraestructura,
         "ataque_vs": dict(c.ataque_vs), "defensa": c.defensa,
-        "foto": (FOTOS_CLASE.get(c.id) or {}).get("foto"), "credito": (FOTOS_CLASE.get(c.id) or {}).get("credito"),
+        "foto": (FOTOS_PROPIAS.get(f"clases:{c.id}") or FOTOS_CLASE.get(c.id) or {}).get("foto"),
+        "credito": (FOTOS_PROPIAS.get(f"clases:{c.id}") or FOTOS_CLASE.get(c.id) or {}).get("credito"),
+        "foto_propia": f"clases:{c.id}" in FOTOS_PROPIAS,
     }
 
 
@@ -768,6 +773,9 @@ aplicar_ajustes()
 RUTA_FOTOS = _Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "static"
 RUTA_REFERENCIAS = RUTA_FOTOS / "fotos" / "referencias.json"
 FOTOS_CLASE: dict[str, dict] = {}  # clase -> {"foto": url, "credito": {...}}
+# fotos que cargo el instructor ("modelos:<id>" o "clases:<id>" -> {"foto", "credito"}; engine/fotos_usuario.py):
+# tienen prioridad sobre la foto de referencia y la ilustracion
+FOTOS_PROPIAS: dict[str, dict] = {}
 _CAMPOS_CREDITO = ("obra", "autor", "licencia", "url_licencia", "pagina")
 
 

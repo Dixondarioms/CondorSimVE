@@ -144,6 +144,17 @@ class PlanTransmisionesIn(BaseModel):
     redes: list[RedTransmisionIn] = Field(min_length=1, max_length=8)
 
 
+class FotoIn(BaseModel):
+    """Foto que el instructor carga para un tipo de unidad (modelo) o una clase (engine/fotos_usuario.py)."""
+
+    seccion: Literal["modelos", "clases"]
+    id: str = Field(min_length=1, max_length=60)
+    imagen: str = Field(min_length=10, max_length=17_000_000)  # data URL o base64 (hasta 12 MB de imagen)
+    autor: str = Field(default="", max_length=120)
+    fuente: str = Field(default="", max_length=300)
+    recortar: bool = True  # recortar la unidad del fondo (si rembg esta instalado)
+
+
 class AprestoBandoIn(BaseModel):
     """Grado de Apresto Operacional de un bando y plazos de la PCAO (engine/apresto.py)."""
 

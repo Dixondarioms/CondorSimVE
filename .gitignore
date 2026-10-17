@@ -34,3 +34,5 @@ tools/fotos/salida/
 
 # catalogo propio del instructor (Consola -> Catalogo propio): datos de cada instalacion
 backend/data/modelos_usuario.json
+# fotos que carga el instructor (Consola -> Catalogo propio): datos de cada instalacion
+backend/data/fotos_usuario/

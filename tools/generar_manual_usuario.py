@@ -1033,6 +1033,13 @@ def construir(salida: Path) -> None:
               f"Pulse {B('Guardar tipo')}: ya aparece en la lista <b>Tipo</b> al agregar unidades."),
         P(f"La lista de abajo muestra los tipos propios con {B('Editar')} y {B('Eliminar')}. Las unidades que ya usan un tipo conservan "
           f"sus valores aunque se elimine. {B('Nuevo')} limpia el formulario."),
+        H3("Foto de un tipo de unidad"),
+        pasos("En <b>Foto de un tipo de unidad</b> elija el tipo (aeronave, buque o terrestre; del simulador o propio) o la clase.",
+              "Pulse <b>Seleccionar archivo</b> y elija la foto en su equipo (JPG, PNG o WEBP, hasta 12 MB). Opcional: el autor o la fuente.",
+              f"Pulse {B('Subir foto')}. El simulador recorta la unidad, la centra sobre el fondo de las demás fotos y la deja del mismo "
+              "tamaño; aparece al instante en la ficha."),
+        P(f"Si la foto tiene mucho alrededor o el recorte no queda bien, desmarque <b>Recortar la unidad del fondo</b> y súbala de "
+          f"nuevo: entra entera en el marco. {B('Volver a la original')} quita la foto cargada."),
     ])
     h += figura("elegir_aeronave", "Elegir el modelo de aeronave: foto, prestaciones y armamento de cada uno.", ancho=ANCHO_TEXTO * 0.85)
     h += al_lado("consola_objetivos", "Consola: objetivos y puntaje.", [

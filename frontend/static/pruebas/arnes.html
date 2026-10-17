@@ -527,6 +527,24 @@
               <button id="btn-mp-nuevo" type="button" class="secundario">Nuevo</button>
             </div>
             <ul id="mp-lista" class="lista-propios"></ul>
+            <h4>Foto de un tipo de unidad</h4>
+            <p class="ayuda">Elija cualquier tipo (aéreo, naval o terrestre; del simulador o propio) o una clase y suba una
+              foto desde su equipo (JPG, PNG o WEBP, hasta 12 MB). El simulador recorta la unidad, la centra sobre el
+              fondo de las demás fotos y la deja en el mismo tamaño; aparece al instante en su ficha.</p>
+            <select id="ft-objetivo" aria-label="Tipo de unidad o clase de la foto"></select>
+            <div class="foto-carga">
+              <img id="ft-vista" alt="Foto actual del tipo elegido">
+              <div>
+                <input id="ft-archivo" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Archivo de la foto">
+                <input id="ft-autor" placeholder="Autor o fuente de la foto" maxlength="120">
+                <label class="chk"><input type="checkbox" id="ft-recortar" checked><span>Recortar la unidad del fondo</span></label>
+                <div class="fila-botones">
+                  <button id="btn-ft-subir" type="button">Subir foto</button>
+                  <button id="btn-ft-quitar" type="button" class="secundario">Volver a la original</button>
+                </div>
+                <p id="ft-estado" class="ayuda" aria-live="polite"></p>
+              </div>
+            </div>
           </details>
 
           <details>

@@ -339,6 +339,7 @@
     llenarSelect($("u-escalon"), [["", "Escalón: el de la clase"], ...cat.escalones.map((e) => [e, e])]);
     aplicarDefectosClase();
     prepararCatalogoPropio();
+    prepararFotos();
   }
 
   const modeloPorId = (id) => (app.catalogo && app.catalogo.modelos ? app.catalogo.modelos.find((m) => m.id === id) : null) || null;
@@ -433,6 +434,64 @@
     app.catalogo = await api("GET", "/api/catalogo");
     prepararCatalogo();
   }
+
+  // ---------- fotos de los tipos de unidad (las encuadra el servidor) ----------
+  function prepararFotos() {
+    const sel = $("ft-objetivo");
+    if (!sel || !app.catalogo) return;
+    const actual = sel.value;
+    limpiar(sel);
+    const cat = app.catalogo;
+    const grupos = [["aerea", "Aeronaves"], ["naval", "Buques"], ["terrestre", "Terrestres"]];
+    for (const [tipo, titulo] of grupos) {
+      const og = document.createElement("optgroup");
+      og.label = titulo;
+      const clases = cat.clases.filter((c) => c.tipo === tipo && !c.misil);
+      for (const c of clases) {
+        const modelos = (cat.modelos || []).filter((m) => m.clase === c.id);
+        for (const m of modelos) og.appendChild(Object.assign(document.createElement("option"), { value: `modelos:${m.id}`, textContent: `${m.nombre}${m.propio ? " (propio)" : ""}` }));
+        og.appendChild(Object.assign(document.createElement("option"), { value: `clases:${c.id}`, textContent: `Clase: ${c.nombre}` }));
+      }
+      sel.appendChild(og);
+    }
+    if ([...sel.options].some((o) => o.value === actual)) sel.value = actual;
+    mostrarFotoElegida();
+  }
+  function fotoElegida() {
+    const [seccion, id] = ($("ft-objetivo").value || "").split(":");
+    const cat = app.catalogo || {};
+    const x = seccion === "modelos" ? (cat.modelos || []).find((m) => m.id === id) : (cat.clases || []).find((c) => c.id === id);
+    return { seccion, id, x };
+  }
+  function mostrarFotoElegida() {
+    const { x } = fotoElegida();
+    const img = $("ft-vista");
+    img.hidden = !(x && x.foto);
+    if (x && x.foto) img.src = x.foto;
+    $("btn-ft-quitar").disabled = !(x && x.foto_propia);
+    $("ft-estado").textContent = x && x.foto_propia ? "Tiene una foto cargada por el instructor." : "";
+  }
+  $("ft-objetivo").addEventListener("change", mostrarFotoElegida);
+  $("btn-ft-subir").addEventListener("click", async () => {
+    const archivo = $("ft-archivo").files[0];
+    if (!archivo) { toast("Elija primero el archivo de la foto"); return; }
+    if (archivo.size > 12 * 1024 * 1024) { toast("La foto pesa más de 12 MB"); return; }
+    const { seccion, id } = fotoElegida();
+    const imagen = await new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = mal; r.readAsDataURL(archivo); });
+    $("ft-estado").textContent = "Procesando la foto (recorte y encuadre)…";
+    $("btn-ft-subir").disabled = true;
+    try {
+      const r = await api("POST", "/api/catalogo/fotos", { seccion, id, imagen, autor: $("ft-autor").value.trim(), recortar: $("ft-recortar").checked });
+      await recargarCatalogo();
+      $("ft-archivo").value = "";
+      toast(r.metodo === "recorte" ? `Foto de «${r.nombre}» recortada y encuadrada` : `Foto de «${r.nombre}» encuadrada (sin recorte)`, true);
+    } catch (e) { $("ft-estado").textContent = e.message; } finally { $("btn-ft-subir").disabled = false; }
+  });
+  $("btn-ft-quitar").addEventListener("click", async () => {
+    const { seccion, id, x } = fotoElegida();
+    if (!x || !confirm(`¿Quitar la foto cargada de «${x.nombre}»? Vuelve la foto original.`)) return;
+    try { await api("DELETE", `/api/catalogo/fotos/${seccion}/${encodeURIComponent(id)}`); await recargarCatalogo(); toast("Foto quitada", true); } catch (e) { toast(e.message); }
+  });
   $("mp-clase").addEventListener("change", () => { if (!app.mpEditando && mpClase()) mpLlenarDesde(mpClase()); });
   $("btn-mp-nuevo").addEventListener("click", mpNuevo);
   $("btn-mp-guardar").addEventListener("click", async () => {

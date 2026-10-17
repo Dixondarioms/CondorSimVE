@@ -22,7 +22,8 @@ recortado, sin el fondo: `dida_logo_recortado.png`, que genera `python tools/rec
   regenera con `python tools/generar_manual.py --imagenes <carpeta de capturas>` (capturas: `tools/manual/capturas.py`).
 - **Video de presentación en 4K con locución** (voces neuronales de Microsoft, español de Venezuela): doble clic en
   `tools\video\generar_video.cmd`; detalles en `tools/video/README.md`.
-- **Fotos de referencia** de aeronaves, drones y buques (Wikimedia Commons, licencias libres, con su crédito): doble
+- **Fotos de referencia** de aeronaves, drones, buques, sistemas antiaéreos y clases terrestres (Wikimedia Commons,
+  licencias libres, con su crédito): doble
   clic en `tools\fotos\descargar_fotos.cmd` en un equipo con internet y reinicie el servidor. Prefiere el equipo
   venezolano (Mi-35M, Mi-17V-5, K-8W, fragatas Mariscal Sucre, Sábalo, Capana...); para lo que la FANB no tiene usa
   un ejemplo real. Abre una hoja con las candidatas; para cambiar una: `descargar_fotos.cmd --elegir fragata=2`.
@@ -1037,6 +1038,16 @@ con fotos), sin tocar el código ni reiniciar. Se guardan en `backend/data/model
 repositorio; `SIMULADOR_MODELOS_USUARIO` cambia el archivo) con ids `u_…` que nunca pisan los del sistema. API:
 `POST /api/catalogo/modelos` (crea o reemplaza) y `DELETE /api/catalogo/modelos/{id}` (instructor);
 `engine/modelos_usuario.py`.
+
+**Foto de un tipo de unidad.** En la misma sección el instructor elige cualquier tipo (aéreo, naval o terrestre; del
+sistema o propio) o una clase y sube una foto desde su equipo (JPG, PNG o WEBP, hasta 12 MB). El simulador la deja en
+el formato de las demás: recorta la unidad del fondo (con `rembg`, si está instalado: `tools/fotos/requirements.txt`),
+la centra sobre el fondo común con su sombra y la guarda en 720 × 405; sin `rembg`, o si se desmarca «Recortar», la
+foto entera se encaja en el mismo marco. Aparece al instante en la ficha y en el selector de aeronaves, por encima de
+la foto de referencia o la ilustración; «Volver a la original» la quita. Se guardan en `backend/data/fotos_usuario/`
+(fuera del repositorio; `SIMULADOR_FOTOS_USUARIO` cambia la carpeta), con el original en `originales/`. API:
+`POST /api/catalogo/fotos`, `DELETE /api/catalogo/fotos/{modelos|clases}/{id}` (instructor) y
+`GET /api/catalogo/fotos/archivo/{nombre}`; `engine/fotos_usuario.py`.
 
 ### Ajustar los valores de juego
 

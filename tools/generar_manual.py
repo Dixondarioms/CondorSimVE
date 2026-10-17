@@ -805,6 +805,22 @@ def construir(salida: Path, img: Path) -> None:
                "<font face='Mono'>arma_elegida</font> (migración 0031); la munición de la unidad es el total de la reserva y el "
                "reabastecimiento se reparte entre las armas a las que les falta. <font face='Mono'>POST /unidades/{id}/defensa</font> "
                "acepta <font face='Mono'>arma</font>; <font face='Mono'>GET /api/catalogo</font> trae <font face='Mono'>sistemas_da</font>."])]
+    h += [H2("8.25 Fotos cargadas por el instructor"),
+          Bul(["<b>Qué hace</b>: Consola → Catálogo propio → Foto de un tipo de unidad. El instructor elige un modelo (del "
+               "sistema o propio, aéreo, naval o terrestre) o una clase y sube una foto (JPG, PNG o WEBP, hasta 12 MB). "
+               "<font face='Mono'>engine/fotos_usuario.py</font> la reduce a 1600 px, recorta la unidad con "
+               "<font face='Mono'>rembg</font> (sesión «isnet-general-use»; se queda con la pieza principal de la máscara), la "
+               "centra sobre el fondo común de las ilustraciones con su sombra y la guarda en 720 × 405, igual que "
+               "<font face='Mono'>tools/fotos/fotos_referencia.py</font>. Sin <font face='Mono'>rembg</font>, si el recorte "
+               "es menor que el 2 % de la imagen o si el instructor lo desmarca, la foto entera se encaja en el mismo marco.",
+               "<b>Prioridad</b>: <font face='Mono'>catalogo.FOTOS_PROPIAS</font> va antes que la foto de referencia, la "
+               "ilustración y la foto de la clase; <font face='Mono'>foto_propia</font> lo indica en "
+               "<font face='Mono'>GET /api/catalogo</font>. Quitarla devuelve la anterior; eliminar un tipo propio quita su foto.",
+               "<b>Datos</b>: <font face='Mono'>backend/data/fotos_usuario/</font> (fuera del repositorio; variable "
+               "<font face='Mono'>SIMULADOR_FOTOS_USUARIO</font>) con <font face='Mono'>fotos.json</font> de índice y el original "
+               "en <font face='Mono'>originales/</font>. API: <font face='Mono'>POST /api/catalogo/fotos</font> y "
+               "<font face='Mono'>DELETE /api/catalogo/fotos/{seccion}/{id}</font> (instructor); "
+               "<font face='Mono'>GET /api/catalogo/fotos/archivo/{nombre}</font> (cualquier usuario con sesión)."])]
     h += [H2("8.24 Apresto Operacional y Puesta en Completo Apresto Operacional (PCAO)"),
           Bul(["<b>Fuente</b>: Manual de Apresto Operacional de la FANB y Milicia Bolivariana (CEO-MC-159, CEOFANB, "
                "Dirección Conjunta de Operaciones, 25MAR2015). <font face='Mono'>engine/apresto.py</font>, "
@@ -1102,7 +1118,7 @@ def construir(salida: Path, img: Path) -> None:
               ["Carreteras, puentes y rutas", "Capa de carreteras; orden Mover → Seguir carreteras",
                "Carreteras reales (OpenStreetMap y Natural Earth): las unidades terrestres van más rápido por ellas y cruzan ríos por sus puentes; el botón traza el camino más rápido."],
               ["Catálogo propio", "Consola → Catálogo propio",
-               "El instructor define los tipos de unidad de la AMB (nombre, clase y valores de juego) y los usa al instante al agregar unidades."],
+               "El instructor define los tipos de unidad de la AMB (nombre, clase y valores de juego) y los usa al instante al agregar unidades. También sube la foto de cualquier tipo o clase: el simulador la recorta y la encuadra como las demás."],
               ["Indicadores doctrinales y calificación", "Informe → Rúbrica; Comparar con otros ejercicios",
                "Reacción, conocimiento del enemigo, logística, coordinación, economía de fuerzas, objetivos e iniciativa, con nota de 1 a 20 y comparación entre ejercicios y por alumno."],
               ["Infraestructura no militar", "Capa Infraestructura; pestaña Situación; plantillas contra la IA",
