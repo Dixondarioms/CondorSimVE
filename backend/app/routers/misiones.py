@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app import auth, legajo, schemas, state
 from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
-from app.engine import catalogo, ota, plataformas, puestos, relieve
+from app.engine import apoyo_aereo, catalogo, ota, plataformas, puestos, relieve
 from app.engine import clima as clima_mod
 from app.engine import misiones as misiones_mod
 from app.models.escenario import Escenario
@@ -88,6 +88,10 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
             if p.tipo != "paso":
                 errores_ruta.append(f"Punto {i + 1}: el punto de reunión debe ser un punto de paso.")
             d["reunion"] = True
+        if p.reabastecimiento:
+            if p.tipo != "paso":
+                errores_ruta.append(f"Punto {i + 1}: el punto de reabastecimiento en vuelo debe ser un punto de paso.")
+            d["reabastecimiento"] = True
         if p.tipo == "orbita":
             d["turnos"] = p.turnos
             if p.centro is not None:
@@ -150,6 +154,18 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
             plan["advertencias"].append(f"Llegaría al blanco en T{plan['tot_turno']}, no en el TOT pedido (T{tot_pedido}).")
     elif tot_pedido is not None:
         errores.append("El TOT (hora sobre el blanco) solo se fija en misiones con un punto de blanco.")
+    k_aer = next((i for i, p in enumerate(puntos) if p.get("reabastecimiento")), None)
+    if k_aer is not None:
+        plan["aar"] = apoyo_aereo.estimar_aar(catalogo.MODELOS.get(modelo or ""), n, plan["puntos"][k_aer]["combustible_llegada"])
+        plan["aar"]["turno"] = turno + int(math.floor(plan["puntos"][k_aer]["llegada_h"] + 1e-9))
+    if payload.rol in ("AAR", "AEW"):
+        n_esc = 0
+        if payload.escolta is not None:
+            g = db.get(Unidad, payload.escolta.unidad_id) if payload.escolta.unidad_id else None
+            n_esc = (g.aeronaves or 0) if g is not None else (payload.escolta.aeronaves or 2)
+        if n_esc < apoyo_aereo.ESCOLTAS_MINIMAS:
+            errores.append(f"{misiones_mod.ROLES[payload.rol].nombre}: es un activo de alto valor y va con "
+                           f"{apoyo_aereo.ESCOLTAS_MINIMAS} cazas de escolta (agregue la escolta del paquete).")
     reunion = next((i for i, p in enumerate(puntos) if p.get("reunion")), None)
     if reunion is not None:
         plan["reunion_turno"] = turno + int(math.floor(plan["puntos"][reunion]["llegada_h"] + 1e-9))

@@ -175,6 +175,10 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
     # ---- bases ----
     Clase("base_aerea", "Base aerea", "base", "G", "IBA---", 0, 25, 6, 0, _atk(0.0, 0.0, 0.0), 1.0, "",
           ("aerea",), movilidad="fija", stock_max=2000.0, plazas_aeronaves=12),
+    Clase("punto_recobre", "Punto de recobre operacional (PRO)", "base", "G", "IBA---", 0, 10, 4, 0,
+          _atk(0.0, 0.0, 0.0), 0.8, "", ("aerea",), movilidad="fija", stock_max=400.0, plazas_aeronaves=4,
+          armamento="Aerodromo avanzado o tramo de carretera: reabastece y rearma a 4 aeronaves cerca del frente (1 turno "
+                    "con su personal completo); pista corta o ninguna (solo helicopteros); existencias que reponen los convoyes"),
     Clase("deposito", "Deposito logistico", "base", "G", "UUS---", 0, 20, 5, 0, _atk(0.0, 0.0, 0.0), 1.0, "",
           ("terrestre",), movilidad="fija", stock_max=3000.0, reposicion_turno=150.0),
     Clase("puerto", "Puerto / base naval", "base", "G", "IBN---", 0, 25, 6, 0, _atk(0.0, 0.0, 0.0), 1.0, "",

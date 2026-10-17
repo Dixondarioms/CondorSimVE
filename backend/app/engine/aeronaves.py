@@ -201,9 +201,11 @@ def base_mas_cercana(u, unidades):
 
 def aterrizar(u, base, estacionados_antes: int = 0) -> None:
     """La aeronave queda estacionada junto a la base y empieza el reabastecimiento."""
+    from app.engine import recobre  # importacion tardia: evita un ciclo
+
     u.en_tierra = True
     u.base_id = base.id
-    u.espera_restante = TIEMPO_REARME_TURNOS
+    u.espera_restante = recobre.turnos_rearme(base, TIEMPO_REARME_TURNOS)
     u.mision, u.mision_lat, u.mision_lon = "", None, None
     u.lat = base.lat + DESPLAZAMIENTO_ESTACIONADO * (1 + estacionados_antes)
     u.lon = base.lon + DESPLAZAMIENTO_ESTACIONADO

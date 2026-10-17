@@ -804,6 +804,26 @@ def construir(salida: Path, img: Path) -> None:
                "<font face='Mono'>arma_elegida</font> (migración 0031); la munición de la unidad es el total de la reserva y el "
                "reabastecimiento se reparte entre las armas a las que les falta. <font face='Mono'>POST /unidades/{id}/defensa</font> "
                "acepta <font face='Mono'>arma</font>; <font face='Mono'>GET /api/catalogo</font> trae <font face='Mono'>sistemas_da</font>."])]
+    h += [H2("8.21 Reabastecimiento en vuelo, AEW, rescate de tripulaciones y puntos de recobre"),
+          Bul(["<b>Cisterna</b> (<font face='Mono'>engine/apoyo_aereo.py</font>): por turno, 60 min de servicio; cada aeronave "
+               "receptora ocupa CONTACTO_MIN = 6 min más kg / tasa (pértiga 2900 kg/min, manguera 1100 kg/min), por orden de "
+               "combustible; lo transferido sale de <font face='Mono'>carga</font> (100 % = transferible de la ficha). "
+               "Reemplaza el +40 % fijo de antes.",
+               "<b>Escolta de los HVA</b>: ESCOLTAS_MINIMAS = 2 cazas a ≤ 30 km; sin ella y con un caza enemigo detectado a ≤ 150 km, "
+               "la cisterna no transfiere y el AEW no da su FACTOR_CONTROL_AEW = 1,1 a las intercepciones a ≤ 300 km. Los roles "
+               "AAR y AEW exigen la escolta del paquete al planificarse.",
+               "<b>Punto AER</b> (<font face='Mono'>reabastecimiento</font> en un punto de paso): la estimación supone el tanque "
+               "lleno al salir y da <font face='Mono'>plan.aar</font> (kg y minutos); el grupo espera un turno "
+               "(<font face='Mono'>espera = -3</font>). La OTA trae la línea ABA AER con reto y respuesta.",
+               "<b>Tripulaciones derribadas</b> (<font face='Mono'>engine/rescate.py</font>, <font face='Mono'>Escenario.derribados_json</font>, "
+               "migración 0035): pérdidas en vuelo × tripulación × 0,8; aisladas hasta que una misión CSAR (helicópteros) las "
+               "rescata a ≤ 5 km, una unidad terrestre enemiga a ≤ 10 km las captura (35 % por turno, la mitad con cazas propios "
+               "cubriendo) o pasa su supervivencia (12 turnos en el agua, 72 en tierra). El estado trae "
+               "<font face='Mono'>derribados</font> y <font face='Mono'>recuperacion</font>.",
+               "<b>PRO</b> (<font face='Mono'>engine/recobre.py</font>, clase <font face='Mono'>punto_recobre</font>): 4 plazas, "
+               "existencias máximas 400, pista = <font face='Mono'>pista_m</font> (0: solo helicópteros), rearme en 1 turno con "
+               "20 efectivos o más; deficiencias de personal, existencias y seguridad en <font face='Mono'>recobre</font> del estado. "
+               "Aterrizar en un PRO genera la línea ABA TER (PR01…)."])]
     h += [H2("8.20 Orden de Tareas Aéreas (AV/D 5-47), paquetes, TOT y punto de reunión"),
           Bul(["<b>Datos OTA</b> (<font face='Mono'>engine/ota.py</font>, <font face='Mono'>Mision.ota_json</font>, migración "
                "0034; <font face='Mono'>ota</font> en <font face='Mono'>POST /misiones</font>): paquete, función CM/ACM (uno "
@@ -1047,6 +1067,9 @@ def construir(salida: Path, img: Path) -> None:
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
               ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña TIEM; engine/pmo.py",
                "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["Cisternas, AEW, rescate y puntos de recobre", "Planificar misión (AAR, AEW, CSAR, punto AER); Situación → Recuperación",
+               "Reabastecimiento en vuelo por tiempo, escolta de los activos de alto valor, tripulaciones derribadas y su rescate, "
+               "y puntos de recobre operacional con requisitos mínimos (8.21)."],
               ["Orden de Tareas Aéreas (OTA)", "Planificar misión → Datos de la OTA; Misiones aéreas → OTA en Word",
                "Paquete con comandante de misión, código de misión, armamento, IFF, TOT, altura por tramo, punto de reunión "
                "y la OTA en el formato de la AV/D 5-47 (8.20)."],

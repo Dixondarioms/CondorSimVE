@@ -84,9 +84,10 @@ def test_el_avion_cisterna_reabastece_combustible_en_vuelo(db_session):
     _avanzar(db_session, esc)
     for u in (kc, cerca, lejos):
         db_session.refresh(u)
-    assert cerca.combustible == pytest.approx(lejos.combustible + 40.0)
+    # con la pertiga del KC-135 (2900 kg/min) llena al caza en el turno; el lejano no recibe nada
+    assert cerca.combustible == pytest.approx(100.0) and lejos.combustible <= 50
     assert cerca.municion == lejos.municion  # el cisterna no da municion
-    assert kc.carga == pytest.approx(85.0)
+    assert 95.0 < kc.carga < 100.0  # gasto unos 2500 kg de sus 68 000 transferibles
 
 
 def test_el_cisterna_lo_conduce_operaciones_y_la_alerta_temprana_defensa_aerea():

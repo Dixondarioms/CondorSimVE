@@ -33,6 +33,8 @@ from app.engine import defensa_aerea as da_mod
 from app.engine import disponibilidad as disp_mod
 from app.engine import toe as toe_mod
 from app.engine import ota as ota_mod
+from app.engine import apoyo_aereo as apoyo_mod
+from app.engine import rescate as rescate_mod
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import infraestructura as infra_mod
@@ -190,9 +192,9 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora, factor_combustible: dic
                 break
             if r is conv or r.estado != "activa" or r.bando != conv.bando or r.tipo not in clase.suministra:
                 continue
-            cisterna = conv.tipo == "aerea"  # avion cisterna: solo combustible, y a aeronaves en vuelo
-            if cisterna and (r.en_tierra or r.combustible >= 100):
-                continue
+            cisterna = conv.tipo == "aerea"  # el avion cisterna lo resuelve engine/apoyo_aereo.py (con tiempos)
+            if cisterna:
+                break
             if r.combustible >= 100 and r.municion >= 100:
                 continue
             if geo.distancia_km(conv.lat, conv.lon, r.lat, r.lon) <= clase.nodo_movil_km:
@@ -322,6 +324,7 @@ def procesar_ordenes(
     # ---- Fase 0: despegue de grupos aereos ----
     lanzados_en_base: dict[int, int] = defaultdict(int)
     estado_inicio = {u.id: (u.fuerza, u.aeronaves) for u in lista_unidades}  # para las perdidas del turno
+    en_vuelo_inicio = {u.id for u in lista_unidades if aeronaves_mod.en_vuelo(u)}  # sus tripulaciones se eyectan
     cobertura_aerea: dict[str, tuple] = {}
 
     def disponibles(base, modelo_id: str, n: int, clave) -> tuple[int, str]:
@@ -877,7 +880,8 @@ def procesar_ordenes(
             factor_ataque=clase_a.ataque_vs.get(t_d, 1.0) * catalogo.factor_grupo(a)
             * (FACTOR_ATAQUE_TRAS_EVASION if a.id in evadieron else 1.0)
             * (ge_mod.FACTOR_ANTIAEREA if aaa_interferida else 1.0) * (ge_mod.FACTOR_TIRO_OPTICO if aaa_optica else 1.0)
-            * relieve.factor_portatil(a, d) * ota_mod.factor_ataque(a, d),
+            * relieve.factor_portatil(a, d) * ota_mod.factor_ataque(a, d)
+            * apoyo_mod.factor_control(a, d, lista_unidades, lambda x, b: misiones_mod._visible(x, b, lista_unidades, terreno, clima, ge)),
             factor_defensa=clase_d.defensa * catalogo.factor_grupo(d),
             factor_clima=clima_mod.factor_ataque_aereo(clima, d.lat, d.lon) if a.tipo == "aerea" else 1.0,
             factor_municion=min(1.0, a.municion / consumo),
@@ -1015,6 +1019,18 @@ def procesar_ordenes(
                 ))
     _reabastecer(lista_unidades, bit,
                  {b: infra_mod.factor_combustible(lista_unidades, b) for b in ("azul", "rojo")})
+    # reabastecimiento en vuelo: cada cisterna atiende a los receptores a su alcance segun el tiempo del turno
+    for t in lista_unidades:
+        if t.estado != "activa" or not apoyo_mod.es_cisterna(t) or t.en_tierra:
+            continue
+        r = apoyo_mod.reabastecer(t, lista_unidades, bit, lambda x, b: misiones_mod._visible(x, b, lista_unidades, terreno, clima, ge))
+        if r["receptores"]:
+            detalle = ", ".join(f"{n} ({k} aeronave{'s' if k != 1 else ''}, {kg:,} kg)".replace(",", ".") for n, k, kg in r["receptores"])
+            db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="logistica", bando_destino=t.bando,
+                          descripcion=f"{t.nombre} reabasteció en vuelo a {detalle} en {r['minutos']} min."))
+        elif r["motivo"]:
+            db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="logistica", bando_destino=t.bando,
+                          descripcion=r["motivo"]))
     for u in lista_unidades:
         if u.tipo == "aerea" and u.estado == "activa" and not u.en_tierra and u.combustible <= 0:
             u.estado = "destruida"
@@ -1061,6 +1077,13 @@ def procesar_ordenes(
         perdidas_u = (n0 or 1) * max(0.0, f0 - (u.fuerza if u.estado != "destruida" else 0.0)) / 100.0
         if perdidas_u > 0:
             disp_mod.sumar(escenario, u.bando, perdidas=perdidas_u)
+        if perdidas_u >= 0.5 and u.id in en_vuelo_inicio:
+            d = rescate_mod.registrar(escenario, u, perdidas_u, turno, terreno)
+            if d is not None:
+                db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="combate", bando_destino=u.bando,
+                              lat=d["lat"], lon=d["lon"], hasta_turno=turno + 6,
+                              descripcion=f"{d['tripulantes']} tripulante(s) de {u.nombre} se eyectaron "
+                                          f"({'en el agua' if d['medio'] == 'agua' else 'en tierra'}): esperan rescate (CSAR)."))
         if u.estado != "activa" or not aeronaves_mod.en_vuelo(u):
             continue
         operativas = (u.aeronaves or 1) * max(0.0, u.fuerza) / 100.0
@@ -1085,6 +1108,17 @@ def procesar_ordenes(
             db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="logistica", bando_destino=u.bando,
                           descripcion=f"{k} aeronave(s) de {u.nombre} regresan a su base por falla técnica; "
                                       f"el grupo sigue con {u.aeronaves}."))
+
+    # tripulaciones aisladas: captura por el enemigo cercano o perdida al pasar su tiempo de supervivencia
+    for d, nuevo in rescate_mod.avanzar(escenario, lista_unidades, turno):
+        if nuevo == "capturado":
+            texto = f"{d['tripulantes']} tripulante(s) derribados del bando {d['bando']} fueron capturados por {d['por']}."
+            for b in ("azul", "rojo"):
+                db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="combate", bando_destino=b, descripcion=texto))
+        else:
+            db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="combate", bando_destino=d["bando"],
+                          descripcion=f"Se perdió el contacto con {d['tripulantes']} tripulante(s) de {d['grupo']}: "
+                                      "pasó su tiempo de supervivencia sin rescate."))
 
     # reparacion de las partes de las bases (sola la pista; todo con ingenieros propios al lado)
     for u in lista_unidades:

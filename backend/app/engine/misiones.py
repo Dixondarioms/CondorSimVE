@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 
 from app.engine import aeronaves as aeronaves_mod
-from app.engine import catalogo, geo, logistica, movimiento, ota, relieve, vision
+from app.engine import apoyo_aereo, catalogo, geo, logistica, movimiento, ota, relieve, rescate, vision
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.models.evento import Evento
@@ -57,6 +57,18 @@ ROLES: dict[str, Rol] = {r.id: r for r in [
         ("orbita",), ("blanco",), "interferencia"),
     Rol("TRASLADO", "Traslado a otra base",
         "Vuela la ruta y aterriza en la base indicada.", (), ("orbita", "blanco"), ""),
+    Rol("AAR", "Reabastecimiento en vuelo (cisterna)",
+        "Vuela a una orbita y reabastece a las aeronaves propias a su alcance (40 km), una por una, con el tiempo de "
+        "enganche y transferencia de cada una. Es un activo de alto valor: va con 2 cazas de escolta.",
+        ("orbita",), ("blanco",), "cisterna"),
+    Rol("AEW", "Alerta temprana y control (AEW)",
+        "Mantiene una orbita con su radar: ve aeronaves muy lejos y dirige a los cazas propios (las intercepciones a "
+        "300 km o menos son mas efectivas). Es un activo de alto valor: va con 2 cazas de escolta.",
+        ("orbita",), ("blanco",), "aew"),
+    Rol("CSAR", "Rescate en combate (CSAR)",
+        "Helicopteros que vuelan a una orbita sobre una tripulacion propia derribada y la rescatan al llegar (a 5 km o "
+        "menos); luego regresan a la base. Conviene escoltarlos.",
+        ("orbita",), ("blanco",), "rescate"),
     Rol("ESCOLTA", "Escolta de otra mision",
         "Vuela junto al grupo de la mision escoltada e intercepta a los aviones enemigos que lo amenacen; cuando esa "
         "mision termina, regresa a la base indicada.", ("aterrizaje",), ("orbita", "blanco"), "aire"),
@@ -127,6 +139,14 @@ def validar(rol_id: str, puntos: list, clase) -> list[str]:
         errores.append(f"{clase.nombre} no puede atacar blancos de superficie: no sirve para {rol.nombre}.")
     if rol.capacidad == "interferencia" and clase.interferencia_km <= 0:
         errores.append(f"{clase.nombre} no puede interferir: no sirve para {rol.nombre}.")
+    if rol.capacidad == "cisterna" and not (clase.nodo_movil_km and "aerea" in clase.suministra):
+        errores.append(f"{clase.nombre} no es un avion cisterna: no sirve para {rol.nombre}.")
+    if rol.capacidad == "aew" and clase.id != "alerta_temprana":
+        errores.append(f"{clase.nombre} no es un avion de alerta temprana: no sirve para {rol.nombre}.")
+    if rol.capacidad == "rescate" and clase.id not in rescate.CLASES_RESCATE:
+        errores.append(f"{clase.nombre} no es un helicoptero: no sirve para {rol.nombre}.")
+    if any(p.get("reunion") and p.get("reabastecimiento") for p in puntos):
+        errores.append("Un punto no puede ser a la vez de reunion y de reabastecimiento.")
     return errores
 
 
@@ -148,6 +168,10 @@ def estimar(lat: float, lon: float, velocidad_kmh: float, autonomia_km: float, c
         horas += d / vel
         comb -= d / aut * 100.0 * factor_consumo
         fila = {"tipo": p["tipo"], "km": round(d, 1), "llegada_h": round(horas, 2), "combustible_llegada": round(comb, 1)}
+        if p.get("reabastecimiento"):  # la cisterna lo llena: espera el resto del turno y sigue con el tanque lleno
+            horas = math.floor(horas + 1e-9) + 1
+            fila.update(salida_h=round(horas, 2), reabastece=True)
+            comb = 100.0
         if p.get("reunion"):  # el grupo espera en el punto de reunion el resto del turno
             horas = math.floor(horas + 1e-9) + 1
             comb -= aeronaves_mod.COMBUSTIBLE_LOITER * factor_consumo * 0.5
@@ -422,6 +446,11 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
                 u.mision, u.mision_lat, u.mision_lon = "", None, None
                 _evento(db, m, turno, f"Combustible critico ({u.combustible:.0f} %): abandona la ruta y regresa a {base.nombre}.")
 
+        if m.espera == -3 and pts[m.indice].get("reabastecimiento"):  # ya paso un turno junto a la cisterna
+            m.indice, m.espera = m.indice + 1, -1
+            if m.indice >= len(pts):
+                _terminar(db, m, "cumplida", "Ruta completada.", turno)
+                continue
         p = pts[m.indice]
         # ---- en orbita: actua segun el rol ----
         if p["tipo"] == "orbita" and m.espera > 0:
@@ -432,6 +461,8 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
                 blanco = _blanco_automatico(u, "CAS", lista, terreno, clima, ge)
                 if blanco is not None:
                     ataques.append((u.id, blanco.id))
+            elif m.rol == "CSAR":
+                _rescatar(db, escenario, m, u, turno)
             m.espera -= 1
             if m.espera <= 0:  # sigue patrullando este ultimo turno; deja la zona al reanudar el vuelo
                 m.indice, m.espera = m.indice + 1, -1
@@ -444,7 +475,7 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
         if u.mision == "patrulla":  # dejo la orbita: ya no vigila la zona
             u.mision, u.mision_lat, u.mision_lon = "", None, None
         i0 = j = m.indice
-        while j < len(pts) - 1 and pts[j]["tipo"] == "paso" and not pts[j].get("reunion"):
+        while j < len(pts) - 1 and pts[j]["tipo"] == "paso" and not pts[j].get("reunion") and not pts[j].get("reabastecimiento"):
             j += 1
         destino = pts[j]
         perfil = next((q.get("perfil") for q in reversed(pts[:i0 + 1]) if q.get("perfil")), None)
@@ -471,7 +502,19 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
         faltan = geo.distancia_km(u.lat, u.lon, wps[-1][0], wps[-1][1])
         llego = faltan <= LLEGADA_KM
 
-        if destino.get("reunion"):
+        if destino.get("reabastecimiento"):
+            if llego:
+                m.indice, m.espera = j, -3
+                hay = any(apoyo_aereo.es_cisterna(x) and x.bando == u.bando and apoyo_aereo.en_vuelo(x)
+                          and geo.distancia_km(x.lat, x.lon, u.lat, u.lon) <= catalogo.obtener(x.clase, x.tipo).nodo_movil_km
+                          for x in lista)
+                m.resultado = ("En el punto de reabastecimiento: la cisterna lo atiende este turno." if hay
+                               else "En el punto de reabastecimiento, pero no hay una cisterna propia a su alcance.")
+                if not hay:
+                    _evento(db, m, turno, m.resultado)
+            else:
+                m.resultado = f"Vuela al punto de reabastecimiento: faltan {faltan:.0f} km."
+        elif destino.get("reunion"):
             if llego:
                 m.indice = j
                 if _reunion_completa(db, m, j, unidades):
@@ -495,6 +538,8 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
                 m.indice, m.espera = j, int(destino.get("turnos") or 1)
                 if m.rol == "CAP":
                     u.mision, u.mision_lat, u.mision_lon = "patrulla", destino["lat"], destino["lon"]
+                if m.rol == "CSAR":
+                    _rescatar(db, escenario, m, u, turno)
                 m.resultado = f"Llega a la orbita; la mantiene {m.espera} turno(s)."
             else:
                 m.resultado = f"Vuela hacia la orbita: faltan {faltan:.0f} km."
@@ -531,6 +576,13 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
             else:
                 m.resultado = f"Regresa a {base.nombre if base else 'la base'}: faltan {faltan:.0f} km."
     return ataques, bajo_mision
+
+
+def _rescatar(db, escenario, m: Mision, u, turno: int) -> None:
+    for d in rescate.rescatar(escenario, u, turno):
+        texto = f"{u.nombre} rescató a {d['tripulantes']} tripulante(s) de {d['grupo']}."
+        _evento(db, m, turno, texto)
+        m.resultado = texto
 
 
 def _esperas(m: Mision) -> int:

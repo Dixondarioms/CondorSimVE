@@ -30,6 +30,9 @@ CODIGOS_MISION = {
     "RECO": ("33RA", "33RA", "Reconocimiento aerofotográfico"),
     "GE": ("EW", "EW", "Guerra electrónica (sigla OTAN)"),
     "TRASLADO": ("TAT", "TAT", "Transporte aéreo táctico (sigla OTAN)"),
+    "AAR": ("AAR", "AAR", "Reabastecimiento aéreo (sigla OTAN)"),
+    "AEW": ("AEW", "AEW", "Alerta temprana aerotransportada (sigla OTAN)"),
+    "CSAR": ("CSAR", "CSAR", "Búsqueda y rescate en combate (sigla OTAN)"),
 }
 # otras misiones de la tabla, que el instructor o el alumno pueden elegir en lugar del codigo del rol
 CODIGOS_OPCIONALES = {
@@ -45,8 +48,11 @@ NOMBRE_CODIGO = {
     "10IC": "Interdicción en el campo de batalla", "11RA": "Reconocimiento armado", "12AC": "Apoyo aéreo cercano",
     "13CC": "Cobertura aérea de columnas o convoyes", "14AA": "Ataque aeronaval", "17IM": "Interdicción marítima",
     "18DD": "Apoyo aéreo directo en desembarcos", "33RA": "Reconocimiento aerofotográfico",
-    "EW": "Guerra electrónica", "TAT": "Transporte aéreo táctico",
+    "EW": "Guerra electrónica", "TAT": "Transporte aéreo táctico", "AAR": "Reabastecimiento aéreo",
+    "AEW": "Alerta temprana aerotransportada", "CSAR": "Búsqueda y rescate en combate",
 }
+RETOS = ("ORO", "PLATA", "CONDOR", "TURPIAL", "ARAGUANEY", "SABANA", "TEPUY", "CAIMAN")
+RESPUESTAS = ("DIAMANTE", "ESMERALDA", "TRUENO", "RELAMPAGO", "CEIBA", "MORICHE", "ORINOCO", "JAGUAR")
 # modelo -> codigo de aeronave (el de la directiva; los demas, formados con el nombre)
 CODIGOS_AERONAVE = {
     "su30": "CMK", "f16": "CFA", "ataque_ligero": "ETA", "helo_transporte": "TMI", "helo_ataque": "ECR",
@@ -412,9 +418,25 @@ def lineas_ota(db, esc, bando: str, misiones: list, unidades: dict, nombre_opera
                 reco.append(linea("RECO", f"{codigo_base(salida) if salida is not None else 'GRP'}{i:02d}",
                                   f_ventana(despegue + timedelta(hours=llegada)), f_coord(primero["lat"], primero["lon"]),
                                   "33RA", codigo_base(aterr) if aterr else "-", "01"))
+        # ABA: reabastecimiento en vuelo (AER) en el punto marcado y en tierra (TER) si aterriza en un PRO
+        aba = []
+        k_aer = next((k for k, p in enumerate(pts) if p.get("reabastecimiento")), None)
+        reto, resp = RETOS[(m.id * 7) % len(RETOS)], RESPUESTAS[(m.id * 5) % len(RESPUESTAS)]
+        cant = f"{m.aeronaves or 0:02d}{codigo_aeronave(m.modelo)}"
+        if k_aer is not None and k_aer < len(plan.get("puntos") or []):
+            ini = despegue + timedelta(hours=float(plan["puntos"][k_aer]["llegada_h"]))
+            kg = (plan.get("aar") or {}).get("kg")
+            nombre_aer = nombres[[q for q in pts if q["tipo"] != "aterrizaje"].index(pts[k_aer])] if pts[k_aer]["tipo"] != "aterrizaje" else "AER"
+            aba.append(linea("ABA", cant, "AER", f_ventana(ini), f_ventana(ini + timedelta(minutes=59)), f"{nombre_aer}+AER",
+                             f_coord(pts[k_aer]["lat"], pts[k_aer]["lon"]), reto, resp, f"{kg}K JP1" if kg else None))
+        if aterr is not None and (aterr.clase or "") == "punto_recobre" and plan.get("puntos"):
+            pros = sorted(x.id for x in unidades.values() if (x.clase or "") == "punto_recobre" and x.bando == m.bando)
+            ini = despegue + timedelta(hours=float(plan["puntos"][-1]["llegada_h"]))
+            aba.append(linea("ABA", cant, "TER", f_ventana(ini), f_ventana(ini + timedelta(hours=1, minutes=59)),
+                             f"PR{pros.index(aterr.id) + 1:02d}", f_coord(aterr.lat, aterr.lon), reto, resp, None))
         filas.append({"mision_id": m.id, "numero": numero, "rol": m.rol, "paquete": paquete, "funcion": o.get("funcion") or "-",
                       "indicativo": indicativo, "datmi": datmi, "ruta": ruta, "locob": locob, "reco": reco,
-                      "aba": o.get("aba_lineas") or [],
+                      "aba": aba,
                       "despegue": despegue.strftime("%H:%M"), "tot": o.get("tot_turno")})
     return {"encabezado": encabezado, "asignacion": asignacion_txt, "misiones": filas, "spins": spins(esc, ms)}
 

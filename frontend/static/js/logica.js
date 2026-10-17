@@ -51,7 +51,7 @@
   }
 
   // ---------------------------------------------------------------- buques, portaaviones y misiles de crucero
-  const PLAZAS_AERONAVES = { base_aerea: 12, portaaviones: 10 }; // igual que el catalogo del servidor
+  const PLAZAS_AERONAVES = { base_aerea: 12, portaaviones: 10, punto_recobre: 4 }; // igual que el catalogo del servidor
   const PISTA_INOPERATIVA = 60; // % de daño de la pista (engine/bases.py)
   const PARTES_BASE = [["", "Ataque general"], ["pista", "La pista (sin despegues ni aterrizajes al 60 % de daño)"], ["plataforma", "La plataforma (expone a los aviones estacionados)"], ["combustible", "El depósito de combustible (reduce las existencias)"]];
   /** "Pista 40 % · Plataforma 10 % · Depósito 0 %" */
@@ -150,7 +150,7 @@
     antiaerea: "artilleria", caza: "aviacion", ataque: "aviacion", helicoptero: "aviacion",
     fragata: "naval", patrullero: "naval", destructor: "naval", portaaviones: "naval", submarino: "naval",
     buque_desembarco: "naval", lanzador_misiles: "artilleria", misil_crucero: "artilleria",
-    base_aerea: "bases", deposito: "bases", puerto: "bases",
+    base_aerea: "bases", deposito: "bases", puerto: "bases", punto_recobre: "bases",
     termoelectrica: "infraestructura", hidroelectrica: "infraestructura", refineria: "infraestructura",
     centro_comunicaciones: "infraestructura", puente: "infraestructura",
   };
@@ -505,6 +505,30 @@
   function textoTramo(t) {
     if (!t) return "";
     return `${String(t.rumbo).padStart(3, "0")}° · ${t.nm} NM` + (t.altitud_ft ? ` · ${t.altitud_ft} ft` : "");
+  }
+
+  // ---------------------------------------------------------------- recuperacion de personal (engine/rescate.py)
+  const ESTADOS_DERRIBADO = { aislado: "Aislados: esperan rescate", rescatado: "Rescatados", capturado: "Capturados", perdido: "Perdidos" };
+
+  /** "2 tripulantes de Halcón · aislados desde T5 (en el agua)". */
+  function textoDerribado(d) {
+    if (!d) return "";
+    const quien = `${d.tripulantes} tripulante${d.tripulantes === 1 ? "" : "s"}${d.grupo ? ` de ${d.grupo}` : ""}`;
+    const donde = d.medio === "agua" ? " (en el agua)" : "";
+    if (d.estado === "aislado") return `${quien} · aislados desde T${d.turno}${donde}`;
+    const por = d.por ? ` por ${d.por}` : "";
+    return `${quien} · ${(ESTADOS_DERRIBADO[d.estado] || d.estado).toLowerCase()}${d.estado === "perdido" ? "" : por} en T${d.turno_fin}`;
+  }
+
+  /** Tripulacion propia aislada mas cercana a un punto (para el rescate), o null. */
+  function derribadoCercano(derribados, bando, lat, lon, km = 15) {
+    let mejor = null;
+    for (const d of derribados || []) {
+      if (d.estado !== "aislado" || d.bando !== bando) continue;
+      const dist = distanciaKm(lat, lon, d.lat, d.lon);
+      if (dist <= km && (!mejor || dist < mejor.dist)) mejor = { d, dist };
+    }
+    return mejor ? mejor.d : null;
   }
 
   /** Paquete y funcion de una mision en la OTA: "paq. TELA (CM)" ("" si no va en un paquete). */
@@ -959,6 +983,7 @@
     PUESTOS, puestoDe, puestoPuede, puestoPuedeAereo, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,
     ESTADOS_MISION, TIPOS_PUNTO_MISION, misionActiva, horaEstimada, textoMision, tramosCronograma, armasParaRol, textoTramo, textoPaquete,
+    ESTADOS_DERRIBADO, textoDerribado, derribadoCercano,
     RADIO_SIN_EMISION_KM, deteccionEfectiva, pctStock,
     nacionDe, etiquetaBandoNacion, filtrarUnidades, textoObjetivo, avanceObjetivo, ETIQUETA_OBJETIVO, CAPACIDAD_BASE, RADIO_ATERRIZAJE_KM, estacionadasEn, plazasLibres, opcionesDeAterrizaje, situacionDeVuelo,
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,

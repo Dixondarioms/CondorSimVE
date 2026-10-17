@@ -23,6 +23,8 @@ from app.engine import infraestructura as infra_mod
 from app.engine import personal as personal_mod
 from app.engine import disponibilidad as disp_mod
 from app.engine import toe as toe_mod
+from app.engine import recobre as recobre_mod
+from app.engine import rescate as rescate_mod
 from app.engine.vision import cuadro_sensores, unidades_visibles
 from app.models.contacto import Contacto
 from app.models.escenario import Escenario
@@ -189,6 +191,10 @@ def estado_para(
         # plantilla de personal por unidad con reservas y milicia, y esfuerzo aereo (engine/toe.py, disponibilidad.py)
         "personal_toe": {b: toe_mod.partes(todas, escenario, b) for b in bandos_propios},
         "esfuerzo": {b: disp_mod.resumen(escenario, b, todas) for b in bandos_propios},
+        # recuperacion de personal (tripulaciones derribadas) y puntos de recobre operacional
+        "derribados": rescate_mod.visibles(escenario, rol, todas),
+        "recuperacion": {b: rescate_mod.resumen(escenario, b) for b in bandos_propios},
+        "recobre": {b: recobre_mod.estado(todas, b) for b in bandos_propios},
         "infraestructura": {b: infra_mod.resumen(todas, b) for b in bandos_propios},
         "sensores": sensores,
         "marcador": objetivos_mod.marcador(db, escenario),

@@ -633,6 +633,26 @@ def construir(salida: Path) -> None:
           P(f"Debajo de la lista, {B('OTA en Word')} y {B('OTA para imprimir')} generan la orden del día con sus líneas: "
             "encabezado, asignación de medios (unidad, base OACI, cantidad, aeronave y CM/ACM), DATMI, ruta (ingreso, "
             "corredor, egreso, aterrizaje), LOCOB (ventana sobre el objetivo y coordenadas), RECO y SPINS.")]
+    h += [H3("Cisternas, alerta temprana, rescate y puntos de recobre"),
+          Tbl(["Rol o elemento", "Cómo funciona"], [
+              ["AAR (cisterna)", "Orbita y reabastece a las aeronaves propias a 40 km o menos, una por una: 6 min de enganche más el "
+                                 "tiempo de transferir lo que le falta a cada una (pértiga del KC-135: unos 2900 kg/min; manguera: "
+                                 "unos 1100 kg/min). En 60 min por turno atiende primero a las de menos combustible."],
+              ["AEW (alerta temprana)", "Orbita con su radar y dirige a los cazas propios: sus intercepciones a 300 km o menos del "
+                                        "AEW son más efectivas."],
+              ["Escolta de los activos de alto valor", "La cisterna y el AEW se planifican con 2 cazas de escolta. Sin ella, ante "
+                                                       "cazas enemigos detectados a 150 km o menos, la cisterna suspende el "
+                                                       "reabastecimiento y el AEW no dirige."],
+              ["Punto AER", "Un punto de paso marcado AER es el punto de reabastecimiento: el grupo espera allí un turno junto a "
+                            "la cisterna y sigue con el tanque lleno. La estimación da los kg y los minutos de cisterna."],
+              ["CSAR (rescate)", "Helicópteros que orbitan sobre una tripulación propia derribada (⛑ en el mapa; la órbita se "
+                                 "coloca sobre ella) y la rescatan al llegar."],
+              ["PRO", "Punto de recobre operacional: base liviana de 4 plazas cerca del frente que reabastece y rearma en 1 "
+                      "turno si tiene su personal (20 como mínimo), existencias y seguridad; sin pista, solo helicópteros."],
+          ], [3.6 * cm, ANCHO_TEXTO - 3.6 * cm]),
+          P("Cuando se derriba una aeronave en vuelo, sus tripulantes se eyectan y quedan <b>aislados</b>. La pestaña "
+            "<b>Situación → Recuperación de personal</b> los lista: si no llega el rescate, el enemigo cercano puede capturarlos "
+            "o se pierden al pasar su tiempo de supervivencia (12 turnos en el agua, 72 en tierra).")]
     h += al_lado("misiones_lista", "Lista de misiones del bando.", [
         P("La lista <b>Misiones aéreas</b> muestra cada misión de su bando con su estado (programada, en curso, cumplida, abortada) y lo que "
           "está haciendo. Una orden directa al grupo reemplaza la misión; la «×» la cancela."),

@@ -1978,6 +1978,36 @@
       }
       esf.appendChild(dl);
     }
+    // recuperacion de personal (tripulaciones derribadas) y puntos de recobre operacional
+    const res = $("cuadro-rescate");
+    limpiar(res);
+    for (const [b, r] of Object.entries(data.recuperacion || {})) {
+      if (varios) res.appendChild(Object.assign(document.createElement("h4"), { className: b, textContent: nombreDeBando(b) }));
+      res.appendChild(Object.assign(document.createElement("p"), { className: "ayuda",
+        textContent: `Tripulantes aislados ${r.aislado} · rescatados ${r.rescatado} · capturados ${r.capturado} · perdidos ${r.perdido}.` }));
+      const ul = document.createElement("ul");
+      ul.className = "lista-derribados";
+      for (const d of (data.derribados || []).filter((x) => x.bando === b)) {
+        ul.appendChild(Object.assign(document.createElement("li"), { className: d.estado, textContent: Logica.textoDerribado(d) }));
+      }
+      if (ul.childNodes.length) res.appendChild(ul);
+    }
+    const pro = $("cuadro-pro");
+    limpiar(pro);
+    for (const [b, lista] of Object.entries(data.recobre || {})) {
+      for (const p of lista) {
+        const div = document.createElement("div");
+        div.className = "ficha-pro";
+        div.appendChild(Object.assign(document.createElement("b"), { textContent: `${varios ? nombreDeBando(b) + " · " : ""}${p.nombre}` }));
+        div.appendChild(Object.assign(document.createElement("span"), {
+          textContent: ` · ${p.pista_m ? `pista de ${p.pista_m} m` : "sin pista"} · ${p.plazas} plazas · ${p.personal} efectivos · combustible ${p.combustible} · munición ${p.municion}` }));
+        const ul = document.createElement("ul");
+        for (const f of p.deficiencias) ul.appendChild(Object.assign(document.createElement("li"), { textContent: f }));
+        if (!p.deficiencias.length) ul.appendChild(Object.assign(document.createElement("li"), { className: "ok", textContent: "Cumple los requisitos mínimos." }));
+        div.appendChild(ul);
+        pro.appendChild(div);
+      }
+    }
     // infraestructura
     const inf = $("cuadro-infra");
     limpiar(inf);

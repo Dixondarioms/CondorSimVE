@@ -754,6 +754,12 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   del tramo (rumbo, NM y pies en la estimación) y un punto de paso puede ser el **punto de reunión** del paquete.
   El armamento guiado o antirradiación pesa en el ataque. *OTA en Word* / *OTA para imprimir* generan la orden con
   encabezado, asignación de medios (con el código OACI de la base), DATMI, ruta, LOCOB, RECO y SPINS.
+- **Cisternas, AEW, rescate y PRO** (`engine/apoyo_aereo.py`, `engine/rescate.py`, `engine/recobre.py`, migración
+  `0035`): la cisterna reabastece por tiempo (6 min de enganche más la transferencia a la tasa de su pértiga o
+  manguera, 60 min por turno); la cisterna y el AEW van con 2 cazas de escolta o se repliegan ante cazas enemigos; el
+  AEW mejora las intercepciones. Un punto AER en la ruta es el punto de reabastecimiento. Las tripulaciones
+  derribadas quedan aisladas hasta que las rescata una misión CSAR, las captura el enemigo o se pierden. Los PRO
+  son bases livianas de 4 plazas que rearman en 1 turno si cumplen sus requisitos mínimos.
 
 ## Ejercicios con o contra los países vecinos
 

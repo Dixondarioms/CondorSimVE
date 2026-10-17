@@ -204,6 +204,8 @@ def pista_del_plano(lat: float, lon: float) -> tuple[float, str] | None:
 
 def largo_pista(base) -> float | None:
     """Largo de la pista de una base aerea (None si no es una base aerea: el portaaviones tiene catapulta)."""
+    if getattr(base, "clase", "") == "punto_recobre":  # PRO: la pista que tenga (sin ella, solo helicopteros)
+        return float(getattr(base, "pista_m", None) or 0.0)
     if getattr(base, "clase", "") != "base_aerea":
         return None
     if getattr(base, "pista_m", None):
@@ -229,6 +231,8 @@ def error_de_pista(modelo, base, aterrizar: bool = False) -> str | None:
     if f is None or util is None:
         return None
     necesita = f.aterrizaje_m if aterrizar else f.despegue_m
+    if necesita and util <= 0:
+        return f"{base.nombre} no tiene pista: solo operan helicópteros y aeronaves de despegue vertical."
     if necesita and util < necesita:
         accion = "aterrizar" if aterrizar else "despegar"
         return (f"La pista útil de {base.nombre} ({util:.0f} m) es más corta que la carrera para {accion} de "

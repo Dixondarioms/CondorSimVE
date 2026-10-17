@@ -976,6 +976,7 @@
   R("buque_desembarco", buqueDesembarco, { tam: 1.65, suelo: true, clases: ["buque_desembarco"] });
 
   R("base_aerea", baseAerea, { tam: 1.9, suelo: true, rumbo: 25, clases: ["base_aerea"] });
+  R("punto_recobre", baseAerea, { tam: 1.3, suelo: true, rumbo: 25, clases: ["punto_recobre"] });
   R("deposito", deposito, { tam: 1.45, suelo: true, rumbo: 25, clases: ["deposito"] });
   R("puerto", puerto, { tam: 1.7, suelo: true, rumbo: 25, clases: ["puerto"] });
   R("termoelectrica", termoelectrica, { tam: 1.6, suelo: true, rumbo: 25, clases: ["termoelectrica"] });

@@ -5,7 +5,8 @@
   "use strict";
 
   const TIPO = Logica.TIPOS_PUNTO_MISION;
-  const COLOR_ROL = { CAP: "#4cc9f0", INTERDICCION: "#f77f00", CAS: "#fcbf49", SEAD: "#ef476f", RECO: "#90be6d", GE: "#c77dff", TRASLADO: "#adb5bd" };
+  const COLOR_ROL = { CAP: "#4cc9f0", INTERDICCION: "#f77f00", CAS: "#fcbf49", SEAD: "#ef476f", RECO: "#90be6d", GE: "#c77dff", TRASLADO: "#adb5bd",
+    AAR: "#80ed99", AEW: "#48cae4", CSAR: "#ffbe0b" };
   const LETRA = { orbita: "O", blanco: "✕", aterrizaje: "▼" };
   const NS = "http://www.w3.org/2000/svg";
 
@@ -40,7 +41,7 @@
     const conduce = (u) => !esAlumno() || ctx.puede(Logica.funcionDeOrden(u, "mision", ctx.claseDe(u)));
     const grupos = () => delBando((u) => u.tipo === "aerea" && conduce(u));
     const conduceId = (id) => { const u = datos() && datos().unidades.find((x) => x.id === id); return !!u && conduce(u); };
-    const bases = () => delBando((u) => u.clase === "base_aerea");
+    const bases = () => delBando((u) => u.tipo === "base" && Logica.operaAeronaves(u)); // bases aereas y PRO
     const enemigos = () => (datos() ? datos().unidades.filter((u) => u.bando !== bando() && u.estado === "activa" && (u.tipo !== "aerea" || u.en_tierra)) : []);
     const puedeGrupos = () => esAlumno() && grupos().length > 0;
     const puedeBases = () => esAlumno() && ctx.puede("despegar");
@@ -183,6 +184,9 @@
       }
       const p = { tipo: tipoPorDefecto(lat, lon), lat, lon, turnos: 2, objetivo_unidad_id: null };
       if (p.tipo === "blanco") apuntar(p, enemigoMasCercano(lat, lon));
+      // rescate: la orbita se coloca sobre la tripulacion propia derribada mas cercana
+      const d = borrador.rol === "CSAR" && p.tipo === "orbita" ? Logica.derribadoCercano(datos().derribados, bando(), lat, lon) : null;
+      if (d) { p.lat = d.lat; p.lon = d.lon; p.turnos = 1; }
       borrador.puntos.push(p);
       refrescar();
       return true;
@@ -235,11 +239,25 @@
           c.addEventListener("change", () => {
             for (const q of borrador.puntos) q.reunion = false;
             p.reunion = c.checked;
+            if (c.checked) p.reabastecimiento = false;
             refrescar();
           });
           rv.title = "Punto de reunión del paquete";
           rv.append(c, el("span", "", "RV"));
           li.appendChild(rv);
+          const aer = el("label", "pm-rv");
+          const ca = el("input");
+          ca.type = "checkbox";
+          ca.checked = !!p.reabastecimiento;
+          ca.addEventListener("change", () => {
+            for (const q of borrador.puntos) q.reabastecimiento = false;
+            p.reabastecimiento = ca.checked;
+            if (ca.checked) p.reunion = false;
+            refrescar();
+          });
+          aer.title = "Punto de reabastecimiento en vuelo: espera un turno junto a la cisterna";
+          aer.append(ca, el("span", "", "AER"));
+          li.appendChild(aer);
         }
         if (p.tipo === "orbita") {
           const t = el("select");
@@ -274,6 +292,7 @@
         const d = { tipo: p.tipo, lat: p.lat, lon: p.lon };
         if (p.perfil) d.perfil = p.perfil;
         if (p.tipo === "paso" && p.reunion) d.reunion = true;
+        if (p.tipo === "paso" && p.reabastecimiento) d.reabastecimiento = true;
         if (p.tipo === "orbita") d.turnos = p.turnos;
         if (p.tipo === "blanco" && p.objetivo_unidad_id) d.objetivo_unidad_id = p.objetivo_unidad_id;
         return d;
@@ -299,7 +318,7 @@
       if (!borrador) return;
       $("pm-rol-desc").textContent = (rolDe(borrador.rol) || {}).descripcion || "";
       $("pm-escolta-de-fila").hidden = borrador.rol !== "ESCOLTA";
-      $("pm-paquete").hidden = !["INTERDICCION", "CAS", "SEAD", "RECO", "GE"].includes(borrador.rol);
+      $("pm-paquete").hidden = !["INTERDICCION", "CAS", "SEAD", "RECO", "GE", "AAR", "AEW", "CSAR"].includes(borrador.rol);
       renderPuntos();
       dibujarBorrador();
       clearTimeout(temporizador);
@@ -343,7 +362,7 @@
         const tr = el("tr");
         const pt = r.puntos[i] || {};
         tr.append(
-          el("td", "", String(i + 1)), el("td", "", (pt.reunion ? "RV " : "") + (TIPO[tipo] || tipo)),
+          el("td", "", String(i + 1)), el("td", "", (pt.reunion ? "RV " : "") + (pt.reabastecimiento ? "AER " : "") + (TIPO[tipo] || tipo)),
           el("td", "", Logica.textoTramo((r.plan.tramos || [])[i])),
           el("td", "", hora(f.llegada_h) + (tipo === "orbita" && f.salida_h !== undefined ? ` → ${hora(f.salida_h)}` : "")),
           el("td", Logica.claseBarra(Math.min(f.combustible_llegada, f.combustible_salida ?? 100)),
@@ -374,6 +393,12 @@
       if (r.plan.reunion_turno) tiempos.push(`reunión ${hora(r.plan.reunion_turno)}`);
       if (r.plan.tot_turno) tiempos.push(`sobre el blanco (TOT) ${hora(r.plan.tot_turno)}`);
       avisos.appendChild(el("li", "logistica", tiempos.join(" · ") + "."));
+      const aar = r.plan.aar;
+      if (aar) {
+        avisos.appendChild(el("li", "logistica", `Reabastecimiento en vuelo (${hora(aar.turno)}): ${aar.kg.toLocaleString("es-VE")} kg `
+          + `(${aar.kg_por_aeronave.toLocaleString("es-VE")} kg por aeronave), unos ${aar.minutos} min de la cisterna `
+          + `(${aar.contacto_min} min de enganche por aeronave). La cisterna atiende 60 min por turno.`));
+      }
       const lg = r.plan.logistica;
       if (lg) {
         const n = (v, d = 0) => Number(v).toLocaleString("es", { maximumFractionDigits: d });
@@ -431,6 +456,13 @@
           color, weight: 2.5, dashArray: m.estado === "programada" ? "3 7" : "10 6", opacity: 0.9,
         }).bindTooltip(`M${m.id} · ${m.rol_nombre} · ${Logica.textoMision(m)}`, { sticky: true }).addTo(g);
         pts.forEach((p, i) => marcador(p, inicio + i, color).addTo(g));
+      }
+      // tripulaciones derribadas a la espera de rescate (las propias y las enemigas que se ven)
+      for (const d of (data.derribados || []).filter((x) => x.estado === "aislado")) {
+        L.marker([d.lat, d.lon], {
+          icon: L.divIcon({ className: `pm-derribado ${d.bando}`, iconSize: [20, 20], iconAnchor: [10, 10], html: "<span>⛑</span>" }),
+          keyboard: false,
+        }).bindTooltip(`${d.bando === bando() || !esAlumno() ? "" : "Enemigos: "}${Logica.textoDerribado(d)}`, { sticky: true }).addTo(g);
       }
     }
 

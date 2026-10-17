@@ -20,7 +20,9 @@ VARIABLES = ("combustible", "municion")
 
 def stock(b, variable: str) -> float:
     v = getattr(b, f"stock_{variable}", None)
-    return STOCK_INICIAL if v is None else float(v)
+    if v is None:  # sin existencias registradas: las iniciales (no mas que su maximo, p. ej. un PRO)
+        return min(STOCK_INICIAL, catalogo.obtener(getattr(b, "clase", None), b.tipo).stock_max or STOCK_INICIAL)
+    return float(v)
 
 
 def maximo(b) -> float:

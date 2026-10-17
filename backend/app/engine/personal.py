@@ -22,7 +22,7 @@ POR_AERONAVE = {
 # buques, sensores e instalaciones: dotacion fija
 POR_CLASE = {
     "fragata": 180, "patrullero": 35, "destructor": 280, "portaaviones": 4500, "submarino": 35,
-    "buque_desembarco": 250, "radar": 25, "base_aerea": 600, "deposito": 120, "puerto": 500,
+    "buque_desembarco": 250, "radar": 25, "base_aerea": 600, "deposito": 120, "puerto": 500, "punto_recobre": 30,
 }
 RAMAS = ("terrestre", "aerea", "naval", "base")
 NOMBRE_RAMA = {"terrestre": "Fuerzas terrestres", "aerea": "Aviación (tripulaciones)", "naval": "Fuerzas navales",

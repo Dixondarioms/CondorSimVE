@@ -65,6 +65,7 @@ class Escenario(Base):
     # (engine/toe.py: cobertura, reservas activas, milicianos, tripulaciones por aeronave) y esfuerzo aereo
     fallas: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     personal_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    derribados_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # engine/rescate.py
     esfuerzo_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # identidad nacional de cada bando (ver engine/naciones.py); "" = sin especificar (se muestra "Azul"/"Rojo")

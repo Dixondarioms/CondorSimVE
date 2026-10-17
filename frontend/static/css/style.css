@@ -478,3 +478,15 @@ dialog td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .lista-esfuerzo dd { margin: 0; text-align: right; font-weight: 600; }
 .tabla-personal-cfg input { width: 70px; }
 .tabla-personal-cfg th { text-align: left; font-weight: 600; }
+
+/* recuperacion de personal y puntos de recobre (pestaña Situación) y tripulaciones en el mapa */
+.lista-derribados { margin: 2px 0 8px 16px; padding: 0; font-size: 12px; }
+.lista-derribados li.aislado { color: var(--naranja, #ffb347); }
+.lista-derribados li.capturado, .lista-derribados li.perdido { color: #ef476f; }
+.lista-derribados li.rescatado { color: #2ec4b6; }
+.ficha-pro { font-size: 12px; margin: 4px 0 8px; }
+.ficha-pro ul { margin: 2px 0 0 16px; padding: 0; color: #ffd166; }
+.ficha-pro li.ok { color: #2ec4b6; }
+.pm-derribado span { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(255, 190, 11, .9); color: #111; font-size: 12px; box-shadow: 0 0 0 2px rgba(0, 0, 0, .5); }
+.pm-derribado.rojo span { background: rgba(239, 71, 111, .9); }

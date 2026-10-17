@@ -373,6 +373,7 @@ class PuntoMisionIn(BaseModel):
     centro: tuple[float, float] | None = None  # orbita de guerra electronica: punto que interfiere
     perfil: Literal["alto", "medio", "rasante"] | None = None  # altura del tramo que llega a este punto
     reunion: bool = False  # solo paso: punto de reunion del paquete (espera a los demas grupos)
+    reabastecimiento: bool = False  # solo paso: punto de reabastecimiento en vuelo (espera un turno a la cisterna)
 
 
 class OtaMisionIn(BaseModel):
