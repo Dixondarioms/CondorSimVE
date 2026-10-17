@@ -711,7 +711,11 @@ drones de reconocimiento, **A-2**; los armados, como toda aeronave de ataque, **
   batería calcula el tiempo que cada aeronave pasa en su alcance según su rumbo (de frente, de través o alejándose),
   tira las salvas que le caben, recarga desde la reserva quedando inoperativa ese tiempo, y su probabilidad baja con
   la interferencia enemiga, la maniobra evasiva, la firma radar, la cota muy baja y la noche (cañones). El operador
-  elige el arma (automática o una fija) desde la ficha. Migración `0031`.
+  elige el arma (automática o una fija) desde la ficha. Migración `0031`. **Disciplina de fuego:** disparo-observación-
+  disparo (a lo sumo una salva por aeronave del grupo en el turno; las que sobreviven, el turno siguiente), un solo
+  misil por salva más allá de la mitad del alcance del arma (la salva completa más cerca) y una reserva del 25 % de la
+  dotación de misiles para la autodefensa, que solo se gasta contra blancos cercanos. Una batería sin reserva pero
+  con misiles en los lanzadores figura «Sin reserva · N misiles listos», no «Sin munición».
 - **Existencias de las bases:** cada base guarda combustible y munición (100 puntos = llenar una unidad; bases
   aéreas y puertos hasta 2000, depósitos hasta 3000). El reabastecimiento (+50 % por turno) sale de ahí; cada
   aeronave que despega consume 25 de cada uno y, sin existencias, la base no lanza el grupo (**sin logística**).

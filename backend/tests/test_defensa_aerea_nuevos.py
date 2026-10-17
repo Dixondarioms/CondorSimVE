@@ -1,6 +1,7 @@
 """Mistral, RBS 70 y S-300VM (engine/defensa_aerea.py) y su apresto (Anexo A.16), y el apresto de los buques (A.22)."""
 
 import json
+import math
 from types import SimpleNamespace
 
 from app.engine import apresto, catalogo, toe
@@ -85,3 +86,27 @@ def test_apresto_de_los_buques():
     r = _calificar(_u(tipo="naval", clase="patrullero", municion=95.0))  # el 100 % de la dotacion de guerra
     assert any("Dotación de guerra" in m for m in r["motivos"])
     assert json.dumps(r)
+
+
+def test_disciplina_de_fuego_del_s300():
+    """Una salva por aeronave en el turno, un misil por salva lejos y una reserva para la autodefensa."""
+    b = _bateria("s300vm")
+    lejos = _blanco(1, 170, n=4, altura=8000.0)
+    [d] = da.enfrentar(b, [lejos], se_movio=False, radar_ok=True, interferida=False, noche=False).disparos
+    assert d.salvas <= 4 and d.misiles == d.salvas  # lejos: 1 misil por salva, sin "rematar" al grupo
+    cerca = da.enfrentar(_bateria("s300vm"), [_blanco(2, 40, n=2, altura=8000.0)], se_movio=False, radar_ok=True,
+                         interferida=False, noche=False).disparos[0]
+    assert cerca.salvas <= 2 and cerca.misiles == 2 * cerca.salvas  # cerca: salva completa
+    # contra muchos grupos lejanos gasta hasta la reserva de autodefensa y la guarda para los cercanos
+    s = da.SISTEMAS["s300vm"]
+    minimo = math.ceil(da.RESERVA_AUTODEFENSA * sum(a.cargados + a.reserva for a in s.armas))
+    for _ in range(4):
+        da.enfrentar(b, [_blanco(i, 90 + 5 * i, n=4, altura=8000.0) for i in range(3, 9)], se_movio=False,
+                     radar_ok=True, interferida=False, noche=False)
+    g = json.loads(b.cargas_json)
+    assert sum(g["listos"].values()) + sum(g["reserva"].values()) >= minimo
+    res = da.enfrentar(b, [_blanco(9, 120, n=4, altura=8000.0)], se_movio=False, radar_ok=True, interferida=False,
+                       noche=False)
+    assert not res.disparos and "autodefensa" in res.motivos[9]
+    assert da.enfrentar(b, [_blanco(10, 40, n=2, altura=8000.0)], se_movio=False, radar_ok=True, interferida=False,
+                        noche=False).disparos

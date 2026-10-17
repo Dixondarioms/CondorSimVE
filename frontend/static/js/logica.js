@@ -298,6 +298,10 @@
     }
     if (u.mision === "patrulla") return { texto: "Patrullando", clase: "mov" };
     if (u.combustible !== null && u.combustible <= 0) return { texto: "Sin combustible", clase: "fuego" };
+    // defensa aerea: la municion es la reserva; con misiles aun en los lanzadores no esta "sin municion"
+    const armasDA = u.sistema_da && Array.isArray(u.sistema_da.armas) ? u.sistema_da.armas : null;
+    const listosDA = armasDA ? armasDA.reduce((t, a) => t + (a.listos || 0), 0) : 0;
+    if (u.municion !== null && u.municion <= 0 && listosDA > 0) return { texto: `Sin reserva · ${listosDA} misiles listos`, clase: "mov" };
     if (u.municion !== null && u.municion <= 0) return { texto: "Sin munición", clase: "fuego" };
     if (u.emitiendo === false) return { texto: "Radar apagado", clase: "mov" };
     if (u.fuego_libre === false) return { texto: "Fuego retenido", clase: "mov" };

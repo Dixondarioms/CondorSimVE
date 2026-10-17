@@ -34,6 +34,11 @@ EVALUACION_S = 10.0  # tras cada salva, evaluar el resultado antes de la siguien
 REACCION_CUE_S = 20.0  # si el radar propio no tenia la traza (avisa otro sensor del bando), se suma a la reaccion
 # modificadores de la probabilidad de derribo
 FACTOR_INTERFERENCIA_PK = 0.6  # misiles guiados por radar dentro de una interferencia enemiga
+# disciplina de fuego: disparo-observacion-disparo (una salva por aeronave del grupo en el turno; las que sobreviven se
+# baten el turno siguiente), un solo misil por salva lejos (hay tiempo de evaluar y repetir) y una reserva para la
+# autodefensa que solo se gasta contra blancos cercanos
+ZONA_CERCANA = 0.5  # fraccion del alcance maximo del arma: dentro, salva completa y se puede usar la reserva
+RESERVA_AUTODEFENSA = 0.25  # fraccion de la dotacion de misiles que se guarda para blancos cercanos
 FACTOR_INTERFERENCIA_ALCANCE = 0.6  # el radar de tiro interferido solo "quema" la interferencia mas cerca
 FACTOR_EVASION = {"misil_radar": 0.8, "misil_ir": 0.8, "misil_laser": 0.85, "canon": 0.7}  # aeronave tripulada que maniobra
 FACTOR_NOCHE_CANON = 0.6  # punteria optica de noche
@@ -402,6 +407,11 @@ def enfrentar(bat, blancos: list[dict], *, se_movio: bool, radar_ok: bool, inter
     forzada = s.arma(arma_forzada) if arma_forzada else arma_elegida(bat, s)
     radio_radar = s.radar_tiro_km * (FACTOR_INTERFERENCIA_ALCANCE if interferida else 1.0)
     canales_tiempo = [tiempo] * max(1, s.canales)  # cada canal de tiro tiene su propia hora
+    misiles = [a for a in s.armas if a.tipo != "canon"]
+    minimo = math.ceil(RESERVA_AUTODEFENSA * sum(a.cargados + a.reserva for a in misiles))
+
+    def quedan_misiles() -> int:
+        return sum(listos[a.id] + reserva[a.id] for a in misiles)
     disparos: list[Disparo] = []
     recargas: list[str] = []
     motivos: dict[int, str] = {}
@@ -429,14 +439,21 @@ def enfrentar(bat, blancos: list[dict], *, se_movio: bool, radar_ok: bool, inter
             continue
         pk, efectos, evasion = pk_efectivo(arma, d, interferida=interferida, noche=noche, tripulada=b["tripulada"],
                                            firma=b["firma"], altura_m=b["altura_m"])
-        p_salva = 1.0 - (1.0 - pk) ** arma.por_blanco
+        cercano = distancia <= arma.alcance_max_km * ZONA_CERCANA
+        por_salva = arma.por_blanco if cercano or arma.tipo == "canon" else 1
+        p_salva = 1.0 - (1.0 - pk) ** por_salva
         quedan = max(0.0, float(b["aeronaves"]))
+        max_salvas = max(1, math.ceil(quedan - 0.05))  # una por aeronave: las que sobreviven, el turno siguiente
         salvas = 0
         usado = 0.0
         derribos = 0.0
-        while usado + ciclo <= disponible and quedan - derribos > 0.05:
-            if listos[arma.id] < arma.por_blanco:  # recargar los lanzadores desde la reserva: inoperativa
-                if reserva[arma.id] < arma.por_blanco or usado + arma.recarga_min * 60.0 + ciclo > disponible:
+        conserva = False
+        while usado + ciclo <= disponible and quedan - derribos > 0.05 and salvas < max_salvas:
+            if arma.tipo != "canon" and not cercano and quedan_misiles() - por_salva < minimo:
+                conserva = True  # guarda la reserva de autodefensa para blancos cercanos
+                break
+            if listos[arma.id] < por_salva:  # recargar los lanzadores desde la reserva: inoperativa
+                if reserva[arma.id] < por_salva or usado + arma.recarga_min * 60.0 + ciclo > disponible:
                     break
                 n = min(arma.cargados - listos[arma.id], reserva[arma.id])
                 listos[arma.id] += n
@@ -444,15 +461,17 @@ def enfrentar(bat, blancos: list[dict], *, se_movio: bool, radar_ok: bool, inter
                 usado += arma.recarga_min * 60.0
                 recargas.append(f"{bat.nombre} recargó {n} {arma.nombre} desde su reserva: {arma.recarga_min:.0f} min "
                                 f"sin poder tirar con ese misil")
-            listos[arma.id] -= arma.por_blanco
+            listos[arma.id] -= por_salva
             salvas += 1
             usado += ciclo
             derribos += min(p_salva, quedan - derribos)  # cada salva va por una aeronave del grupo
         if not salvas:
-            motivos[d.id] = f"{arma.nombre}: sin misiles listos ni tiempo para recargar"
+            motivos[d.id] = (f"{arma.nombre}: conserva sus últimos {quedan_misiles()} misiles para su autodefensa "
+                             f"(blancos a {arma.alcance_max_km * ZONA_CERCANA:.0f} km o menos)" if conserva
+                             else f"{arma.nombre}: sin misiles listos ni tiempo para recargar")
             continue
         canales_tiempo[canal] -= usado
-        disparos.append(Disparo(d.id, arma, salvas, salvas * arma.por_blanco, pk, p_salva, min(quedan, derribos),
+        disparos.append(Disparo(d.id, arma, salvas, salvas * por_salva, pk, p_salva, min(quedan, derribos),
                                 aspecto, distancia, expo, efectos, evasion))
 
     # en el tiempo libre del turno, los lanzadores que quedaron a medias se recargan

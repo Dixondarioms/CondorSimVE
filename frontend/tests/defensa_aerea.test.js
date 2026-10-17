@@ -40,3 +40,9 @@ test("sin estado (enemigo) muestra la dotacion de referencia y un canon sin rada
   assert.match(zu.reaccion, /1 canal de tiro/);
   assert.equal(L.resumenSistemaDA(null, null), null);
 });
+
+test("una bateria sin reserva pero con misiles en los lanzadores no figura sin municion", () => {
+  const u = { id: 1, tipo: "terrestre", clase: "antiaerea", fuerza: 100, municion: 0, combustible: 100, estado: "activa", sistema_da: { armas: [{ id: "9m83me", listos: 4, reserva: 0 }, { id: "9m82me", listos: 2, reserva: 0 }] } };
+  assert.deepStrictEqual(L.estadoUnidad(u), { texto: "Sin reserva · 6 misiles listos", clase: "mov" });
+  assert.strictEqual(L.estadoUnidad({ ...u, sistema_da: { armas: [{ id: "9m83me", listos: 0, reserva: 0 }] } }).texto, "Sin munición");
+});
