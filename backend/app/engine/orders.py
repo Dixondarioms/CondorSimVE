@@ -30,6 +30,8 @@ from app.engine import bases as bases_mod
 from app.engine import azar as azar_mod
 from app.engine import catalogo, combat, geo, logistica, movimiento, relieve, vision
 from app.engine import defensa_aerea as da_mod
+from app.engine import disponibilidad as disp_mod
+from app.engine import toe as toe_mod
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import infraestructura as infra_mod
@@ -318,6 +320,20 @@ def procesar_ordenes(
 
     # ---- Fase 0: despegue de grupos aereos ----
     lanzados_en_base: dict[int, int] = defaultdict(int)
+    estado_inicio = {u.id: (u.fuerza, u.aeronaves) for u in lista_unidades}  # para las perdidas del turno
+    cobertura_aerea: dict[str, tuple] = {}
+
+    def disponibles(base, modelo_id: str, n: int, clave) -> tuple[int, str]:
+        """Aeronaves listas para despegar (todas, si el escenario no simula la disponibilidad)."""
+        if not getattr(escenario, "fallas", False):
+            return n, ""
+        if base.bando not in cobertura_aerea:
+            cobertura_aerea[base.bando] = toe_mod.cobertura_aerea(lista_unidades, escenario, base.bando)
+        pilotos, tecnicos, tripulaciones = cobertura_aerea[base.bando]
+        listas, motivo = disp_mod.listas_para_despegar(escenario, base, modelo_id, n, tecnicos, pilotos, tripulaciones, clave)
+        if listas < n:
+            disp_mod.sumar(escenario, base.bando, no_disponibles=n - listas)
+        return listas, motivo
     for orden in [o for o in ordenes if o.tipo == "despegar"]:
         base = unidades.get(orden.unidad_id)
         datos = aeronaves_mod.decodificar(orden.detalle)
@@ -332,6 +348,12 @@ def procesar_ordenes(
         if motivo:
             rechazar(orden, motivo)
             continue
+        listas, falta = disponibles(base, modelo_id, n, f"orden{orden.id}")
+        if listas <= 0:
+            rechazar(orden, f"Ninguna aeronave lista para despegar: {falta}.")
+            continue
+        n = listas
+        disp_mod.sumar(escenario, base.bando, salidas=n)
         grupo = aeronaves_mod.crear_grupo(base, modelo_id, n, datos.get("indicativo", ""), lanzados_en_base[base.id])
         lanzados_en_base[base.id] += 1
         logistica.descontar_despegue(base, n)
@@ -341,13 +363,14 @@ def procesar_ordenes(
         lista_unidades.append(grupo)
         modelo = catalogo.MODELOS[modelo_id]
         orden.estado = "resuelta"
-        orden.resultado = f"{grupo.nombre} ({modelo.corto} x{n}) despego de {base.nombre}; podra recibir ordenes el proximo turno."
+        orden.resultado = (f"{grupo.nombre} ({modelo.corto} x{n}) despego de {base.nombre}; podra recibir ordenes el proximo turno."
+                           + (f" Salieron {n} de {datos.get('aeronaves')}: {falta}." if falta else ""))
         db.add(Evento(
             escenario_id=escenario.id, turno=turno, tipo="despegue", bando_destino=base.bando,
             descripcion=f"Despego {grupo.nombre} ({modelo.corto} x{n}) desde {base.nombre}.",
         ))
     # misiones aereas programadas para este turno: despegan de su base o se ponen en ruta
-    misiones_mod.activar(db, escenario, unidades, lista_unidades, turno, lanzados_en_base)
+    misiones_mod.activar(db, escenario, unidades, lista_unidades, turno, lanzados_en_base, disponibles)
 
     # salvas de misiles de crucero: nacen sobre el lanzador y vuelan desde este mismo turno
     salvas_de: dict[int, int] = defaultdict(int)
@@ -1028,6 +1051,39 @@ def procesar_ordenes(
             u.despliegue_restante = max(0, u.despliegue_restante - 1)
 
     misiones_mod.cerrar(db, escenario, unidades, turno)
+
+    # esfuerzo aereo: horas de vuelo, aeronaves perdidas y fallas en vuelo (con la opcion de disponibilidad y fallas)
+    for u in lista_unidades:
+        if u.tipo != "aerea" or catalogo.es_misil(u) or catalogo.obtener(u.clase, u.tipo).se_consume:
+            continue
+        f0, n0 = estado_inicio.get(u.id, (100.0, u.aeronaves))
+        perdidas_u = (n0 or 1) * max(0.0, f0 - (u.fuerza if u.estado != "destruida" else 0.0)) / 100.0
+        if perdidas_u > 0:
+            disp_mod.sumar(escenario, u.bando, perdidas=perdidas_u)
+        if u.estado != "activa" or not aeronaves_mod.en_vuelo(u):
+            continue
+        operativas = (u.aeronaves or 1) * max(0.0, u.fuerza) / 100.0
+        disp_mod.sumar(escenario, u.bando, horas=operativas)
+        if not getattr(escenario, "fallas", False):
+            continue
+        k = disp_mod.fallas_en_vuelo(escenario, u, turno)
+        if not k:
+            continue
+        disp_mod.sumar(escenario, u.bando, abortos=k)
+        if k >= max(1, round(operativas)):
+            base = aeronaves_mod.base_mas_cercana(u, lista_unidades)
+            u.mision, u.mision_lat, u.mision_lon = "", None, None
+            if base is not None:
+                db.add(Orden(escenario_id=escenario.id, unidad_id=u.id, tipo="aterrizar", objetivo_unidad_id=base.id,
+                             detalle="falla tecnica", turno_emitida=turno + 1, estado="pendiente"))
+            db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="logistica", bando_destino=u.bando,
+                          descripcion=f"{u.nombre} aborta por falla técnica y regresa"
+                                      + (f" a {base.nombre}." if base is not None else " (no hay base disponible).")))
+        else:
+            u.aeronaves = max(1, (u.aeronaves or 1) - k)
+            db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="logistica", bando_destino=u.bando,
+                          descripcion=f"{k} aeronave(s) de {u.nombre} regresan a su base por falla técnica; "
+                                      f"el grupo sigue con {u.aeronaves}."))
 
     # reparacion de las partes de las bases (sola la pista; todo con ingenieros propios al lado)
     for u in lista_unidades:

@@ -804,6 +804,22 @@ def construir(salida: Path, img: Path) -> None:
                "<font face='Mono'>arma_elegida</font> (migración 0031); la munición de la unidad es el total de la reserva y el "
                "reabastecimiento se reparte entre las armas a las que les falta. <font face='Mono'>POST /unidades/{id}/defensa</font> "
                "acepta <font face='Mono'>arma</font>; <font face='Mono'>GET /api/catalogo</font> trae <font face='Mono'>sistemas_da</font>."])]
+    h += [H2("8.19 Personal (plantilla, reservas y milicia), disponibilidad, fallas y esfuerzo"),
+          Bul(["<b>Plantilla</b> (<font face='Mono'>engine/toe.py</font>): grupos aéreos = por aeronave, tripulaciones (3 o 4) × "
+               "tripulantes de su ficha, 7 técnicos por especialidad (motores 2, célula, aviónica, armamento, electricidad, equipo "
+               "de vuelo) y 3 de apoyo; el resto, su dotación repartida en oficiales, técnicos y tropa según su tipo. Existencia = "
+               "plantilla × cobertura del bando × fuerza; el déficit se cubre en orden pilotos, técnicos, oficiales, tropa con las "
+               "reservas activas (todas las categorías) y la milicia (solo tropa), primero aviación, luego defensa aérea. "
+               "Configuración por bando en <font face='Mono'>Escenario.personal_json</font> (migración 0033; "
+               "<font face='Mono'>PATCH /config</font> con <font face='Mono'>personal</font>).",
+               "<b>Disponibilidad y fallas</b> (<font face='Mono'>engine/disponibilidad.py</font>, <font face='Mono'>Escenario.fallas</font>): "
+               "al despegar, cada aeronave está lista con p = disponibilidad del modelo o la clase × (0,5 + 0,5 × cobertura de "
+               "técnicos), y no salen más que tripulaciones × aeronaves × cobertura de pilotos; en vuelo, falla con la "
+               "probabilidad por hora de su clase (vuelve y deja el grupo; si fallan todas, aborta). Sorteos reproducibles con la "
+               "semilla del escenario.",
+               "<b>Esfuerzo</b> (<font face='Mono'>Escenario.esfuerzo_json</font>): salidas, horas de vuelo, pérdidas, abortos y no "
+               "disponibles por bando; atrición = pérdidas / salidas × 100. El estado trae <font face='Mono'>personal_toe</font> y "
+               "<font face='Mono'>esfuerzo</font>."])]
     h += [H2("8.18 Plataformas aéreas, pistas y unidades de medida"),
           Bul(["<b>Ficha técnica</b> (<font face='Mono'>engine/plataformas.py</font>, <font face='Mono'>FICHAS</font>): roles, velocidad "
                "en ruta y máxima (kt), radio de acción (NM), techo (ft), combustible interno y consumo (kg, kg/h), oxígeno líquido "
@@ -1012,6 +1028,9 @@ def construir(salida: Path, img: Path) -> None:
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
               ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña TIEM; engine/pmo.py",
                "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["Personal, disponibilidad, fallas y esfuerzo aéreo", "Situación → Parte de personal y Esfuerzo; Consola → Personal",
+               "Plantilla por unidad (3-4 tripulaciones y 7 técnicos por aeronave), reservas activas y milicia, disponibilidad "
+               "y fallas en vuelo, salidas, horas y atrición (8.19)."],
               ["Plataformas aéreas, pistas y unidades aeronáuticas", "Ficha de la aeronave y de la base; Despegar; misiones; Convertir",
                "Ficha técnica de cada aeronave, largo y pista útil de las bases (despegue y aterrizaje según la carrera), "
                "combustible y oxígeno de la misión, nudos, millas náuticas y pies, y convertidor (8.18)."],

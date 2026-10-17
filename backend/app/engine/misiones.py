@@ -304,7 +304,7 @@ def _blanco_automatico(u, rol_id: str, lista, terreno, clima, ge):
     return min(candidatos, key=lambda x: geo.distancia_km(u.lat, u.lon, x.lat, x.lon), default=None)
 
 
-def activar(db, escenario, unidades: dict, lista: list, turno: int, lanzados_en_base: dict) -> None:
+def activar(db, escenario, unidades: dict, lista: list, turno: int, lanzados_en_base: dict, disponibles=None) -> None:
     """Inicia las misiones programadas para este turno: hace despegar los grupos nuevos desde su base y pone en
     ruta a los grupos existentes (los que estan en tierra, si ya terminaron de reabastecerse)."""
     pendientes = db.query(Mision).filter(
@@ -320,6 +320,16 @@ def activar(db, escenario, unidades: dict, lista: list, turno: int, lanzados_en_
             if motivo:
                 _terminar(db, m, "cancelada", f"No pudo despegar: {motivo}", turno)
                 continue
+            listas, falta = disponibles(base, m.modelo, m.aeronaves, f"mision{m.id}") if disponibles else (m.aeronaves, "")
+            if listas <= 0:
+                _terminar(db, m, "cancelada", f"No pudo despegar: ninguna aeronave lista ({falta}).", turno)
+                continue
+            if listas < m.aeronaves:
+                _evento(db, m, turno, f"De {m.aeronaves} aeronaves salen {listas}: {falta}.")
+                m.aeronaves = listas
+            from app.engine import disponibilidad as disp_mod  # importacion tardia: evita un ciclo
+
+            disp_mod.sumar(escenario, base.bando, salidas=m.aeronaves)
             grupo = aeronaves_mod.crear_grupo(base, m.modelo, m.aeronaves, m.nombre, lanzados_en_base[base.id])
             lanzados_en_base[base.id] += 1
             logistica.descontar_despegue(base, m.aeronaves)

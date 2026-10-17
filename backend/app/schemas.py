@@ -104,6 +104,9 @@ class EscenarioOut(BaseModel):
     ia_nivel: str = "normal"
     dia_noche: bool = False
     periodo: str = "dia"  # dia | crepusculo | noche del turno en curso (solo informa si dia_noche)
+    # disponibilidad y fallas de las aeronaves y personal de cada bando (engine/disponibilidad.py, engine/toe.py)
+    fallas: bool = False
+    personal: dict | None = None
     # quien conduce cada bando: alumnos | instructor | ia
     conduccion_azul: str = "alumnos"
     conduccion_rojo: str = "alumnos"
@@ -122,6 +125,16 @@ class FaseIn(BaseModel):
     nombre: str = Field(min_length=1, max_length=60)
     desde: int = Field(ge=1, le=9999)
     hasta: int | None = Field(default=None, ge=1, le=9999)
+
+
+class PersonalBandoIn(BaseModel):
+    """Personal de un bando (engine/toe.py): % de la plantilla que tiene, reservas activas y milicianos disponibles
+    para cubrir el deficit, y tripulaciones por aeronave (3 normal, 4 operaciones intensas)."""
+
+    cobertura: int | None = Field(default=None, ge=0, le=100)
+    reserva: int | None = Field(default=None, ge=0, le=1000000)
+    milicia: int | None = Field(default=None, ge=0, le=1000000)
+    tripulaciones: Literal[3, 4] | None = None
 
 
 class EscenarioConfig(BaseModel):
@@ -151,6 +164,10 @@ class EscenarioConfig(BaseModel):
     ia_nivel: Literal["prudente", "normal", "agresiva"] | None = None
     # ciclo de dia y noche: de noche se detecta menos a simple vista
     dia_noche: bool | None = None
+    # disponibilidad y fallas de las aeronaves, y personal de cada bando: {"azul": {cobertura, reserva, milicia,
+    # tripulaciones}, "rojo": {...}}
+    fallas: bool | None = None
+    personal: dict[Literal["azul", "rojo"], PersonalBandoIn] | None = None
     # identidad nacional de cada bando (ver /api/naciones); "" quita la identidad y deja "Azul"/"Rojo"
     nacion_azul: str | None = None
     nacion_rojo: str | None = None

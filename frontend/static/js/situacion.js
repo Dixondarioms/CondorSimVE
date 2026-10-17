@@ -72,7 +72,50 @@
     return texto;
   }
 
-  const api = { duracion, textoTiempo, textoObjetivos, lineaContacto, estadoSensor, mensajeRadar };
+  const CATEGORIAS = [["pilotos", "Pilotos"], ["tecnicos", "Técnicos"], ["oficiales", "Oficiales"], ["tropa", "Tropa y apoyo"]];
+  const n = (v) => Number(v || 0).toLocaleString("es-VE");
+
+  /** Celda del parte de personal de una categoria: "6 + 5 res. / 12 · faltan 1" ("—" si no tiene plantilla). */
+  function celdaParte(c) {
+    if (!c || !c.autorizado) return "—";
+    const extra = [c.reserva ? `${n(c.reserva)} res.` : "", c.milicia ? `${n(c.milicia)} mil.` : ""].filter(Boolean);
+    return `${n(c.existente)}${extra.length ? " + " + extra.join(" + ") : ""} / ${n(c.autorizado)}`
+      + (c.deficit ? ` · faltan ${n(c.deficit)}` : "");
+  }
+
+  /** Filas del parte de personal (engine/toe.py): una por unidad y la del total del bando. */
+  function filasParte(parte) {
+    if (!parte) return [];
+    const fila = (nombre, cats, total) => ({ nombre, total, celdas: CATEGORIAS.map(([k]) => celdaParte(cats[k])),
+      deficit: CATEGORIAS.reduce((s, [k]) => s + ((cats[k] && cats[k].deficit) || 0), 0) });
+    return [...parte.unidades.map((u) => fila(u.nombre, u.categorias, false)), fila("Total del bando", parte.total, true)];
+  }
+
+  /** Texto de la configuracion de personal del bando y de lo que queda de reservas y milicia. */
+  function textoConfigPersonal(parte) {
+    if (!parte) return "";
+    const c = parte.config;
+    return `Plantilla al ${c.cobertura} %, ${c.tripulaciones} tripulaciones por aeronave, 7 técnicos por aeronave. `
+      + `Reservas activas sin asignar: ${n(parte.reserva_restante)} de ${n(c.reserva)}; milicianos sin asignar: ${n(parte.milicia_restante)} de ${n(c.milicia)}.`;
+  }
+
+  /** Lineas del esfuerzo aereo y la atricion del bando (engine/disponibilidad.py). */
+  function lineasEsfuerzo(e) {
+    if (!e) return [];
+    const d = (v) => Number(v || 0).toLocaleString("es-VE", { maximumFractionDigits: 1 });
+    return [
+      ["Salidas (aeronaves que despegaron)", d(e.salidas)],
+      ["Horas de vuelo", d(e.horas)],
+      ["Salidas por aeronave y por día", d(e.salidas_por_aeronave_dia)],
+      ["Aeronaves perdidas", d(e.perdidas)],
+      ["Atrición (pérdidas cada 100 salidas)", `${d(e.atricion_pct)} %`],
+      ["No disponibles al despegar (mantenimiento o tripulación)", e.fallas ? d(e.no_disponibles) : "— (fallas desactivadas)"],
+      ["Abortos por falla en vuelo", e.fallas ? d(e.abortos) : "— (fallas desactivadas)"],
+    ];
+  }
+
+  const api = { duracion, textoTiempo, textoObjetivos, lineaContacto, estadoSensor, mensajeRadar, celdaParte, filasParte,
+    textoConfigPersonal, lineasEsfuerzo };
   if (typeof module !== "undefined" && module.exports) { module.exports = api; return; }
   raiz.Situacion = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -258,6 +258,17 @@
               (muertos, heridos y desaparecidos).</p>
             <div id="cuadro-personal"></div>
           </section>
+          <section class="bloque" id="sec-toe">
+            <h2>Parte de personal por unidad</h2>
+            <p class="ayuda">Plantilla (lo autorizado) frente a lo existente, con lo que cubren las reservas activas (res.) y los
+              milicianos (mil.). Por aeronave: 3 o 4 tripulaciones y 7 técnicos (motores, célula, aviónica, armamento,
+              electricidad, equipo de vuelo); la falta de pilotos y técnicos baja la disponibilidad de las aeronaves (A-1).</p>
+            <div id="cuadro-toe"></div>
+          </section>
+          <section class="bloque" id="sec-esfuerzo">
+            <h2>Esfuerzo aéreo y atrición</h2>
+            <div id="cuadro-esfuerzo"></div>
+          </section>
           <section class="bloque" id="sec-infra">
             <h2>Infraestructura</h2>
             <p class="ayuda">Centrales eléctricas, refinerías, centros de comunicaciones y puentes del bando en el
@@ -531,6 +542,23 @@
           </details>
 
           <details>
+            <summary>Personal de cada bando (plantilla, reservas y milicia)</summary>
+            <p class="ayuda">Qué parte de su plantilla tiene cada bando, las reservas activas y los milicianos que cubren el
+              déficit (las reservas cubren pilotos, técnicos y oficiales; la milicia, solo tropa y apoyo) y las tripulaciones
+              por aeronave (3 normal, 4 operaciones intensas). El parte de cada unidad está en la pestaña Situación.</p>
+            <table class="tabla-personal-cfg">
+              <thead><tr><th></th><th>Plantilla %</th><th>Reservas</th><th>Milicianos</th><th>Tripulaciones</th></tr></thead>
+              <tbody>
+                <tr><th>Azul</th><td><input id="per-azul-cob" type="number" min="0" max="100"></td><td><input id="per-azul-res" type="number" min="0"></td>
+                  <td><input id="per-azul-mil" type="number" min="0"></td><td><select id="per-azul-tri"><option value="3">3</option><option value="4">4</option></select></td></tr>
+                <tr><th>Rojo</th><td><input id="per-rojo-cob" type="number" min="0" max="100"></td><td><input id="per-rojo-res" type="number" min="0"></td>
+                  <td><input id="per-rojo-mil" type="number" min="0"></td><td><select id="per-rojo-tri"><option value="3">3</option><option value="4">4</option></select></td></tr>
+              </tbody>
+            </table>
+            <button id="btn-personal" type="button">Aplicar personal</button>
+          </details>
+
+          <details>
             <summary>Dirección del ejercicio (interruptores del motor)</summary>
             <p class="ayuda">Simplifican el ejercicio con fines didácticos. Cada cambio queda registrado como evento y en el informe.</p>
             <label class="chk"><input type="checkbox" id="dir-niebla" checked><span>Niebla de guerra (apagada: ambos bandos ven todo)</span></label>
@@ -538,6 +566,7 @@
             <label class="chk"><input type="checkbox" id="dir-clima" checked><span>Efectos del clima y de las zonas meteorológicas</span></label>
             <label class="chk"><input type="checkbox" id="dir-fuego" checked><span>Fuego automático (patrullas, antiaérea, destructores)</span></label>
             <label class="chk"><input type="checkbox" id="dir-noche"><span>Ciclo de día y noche (de noche se detecta menos a simple vista; el radar no cambia)</span></label>
+            <label class="chk"><input type="checkbox" id="dir-fallas"><span>Disponibilidad y fallas de las aeronaves (no todas están listas para despegar y pueden fallar en vuelo)</span></label>
             <label class="mini">Conduce el bando Azul<select id="dir-cond-azul">
               <option value="alumnos">Grupo de alumnos</option><option value="instructor">El instructor</option><option value="ia">Adversario automático (IA)</option>
             </select></label>

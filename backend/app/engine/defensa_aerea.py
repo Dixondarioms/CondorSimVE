@@ -120,7 +120,7 @@ SISTEMAS: dict[str, Sistema] = {s.modelo: s for s in [
         "buk_m2e", (
             Arma("9m317e", "9M317E (largo alcance)", "misil_radar", "largo", 3.0, 45.0, 15.0, 25000.0, 0.75, 2, 1200.0,
                  12, 8, 13.0),
-            Arma("igla_s", "Igla-S (defensa cercana)", "misil_ir", "corto", 0.5, 6.0, 10.0, 3500.0, 0.4, 1, 570.0,
+            Arma("igla_s", "Igla-S (defensa cercana)", "misil_ir", "corto", 0.5, 6.0, 10.0, 3500.0, 0.4, 1, 600.0,
                  4, 8, 1.0),
         ), radar_vigilancia_km=160.0, radar_tiro_km=45.0, reaccion_s=12.0, canales=8,
         despliegue_min=5.0, repliegue_min=5.0, movilidad="Autopropulsada sobre orugas (pesada)",

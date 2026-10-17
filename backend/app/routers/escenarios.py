@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app import adversario, auth, diapositivas_html, informe_html, schemas, state, turnos
 from app.db import get_db
+from app.engine import toe
 from app.engine import aar, calendario, clock, naciones, plantillas, timeline
 from app.models.aar import Instantanea
 from app.models.objetivo import Objetivo
@@ -161,6 +162,20 @@ async def configurar(
     if payload.ia_nivel is not None and payload.ia_nivel != esc.ia_nivel:
         esc.ia_nivel = payload.ia_nivel
         cambios.append(f"nivel del adversario automatico: {payload.ia_nivel}")
+    if payload.fallas is not None and payload.fallas != esc.fallas:
+        esc.fallas = payload.fallas
+        cambios.append(f"disponibilidad y fallas de las aeronaves {'activadas' if payload.fallas else 'desactivadas'}")
+        db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino="todos",
+                      descripcion="Direccion del ejercicio: disponibilidad y fallas de las aeronaves "
+                                  f"{'activadas' if payload.fallas else 'desactivadas'}."))
+    if payload.personal is not None:
+        actual = {b: toe.config(esc, b) for b in ("azul", "rojo")}
+        for bando, datos in payload.personal.items():
+            nuevos = {k: v for k, v in datos.model_dump().items() if v is not None}
+            if nuevos:
+                actual[bando] = {**actual[bando], **nuevos}
+                cambios.append(f"personal del bando {bando.capitalize()}: " + ", ".join(f"{k} {v}" for k, v in nuevos.items()))
+        esc.personal_json = json.dumps(actual)
     if payload.dia_noche is not None and payload.dia_noche != esc.dia_noche:
         esc.dia_noche = payload.dia_noche
         cambios.append(f"ciclo de dia y noche {'activado' if payload.dia_noche else 'desactivado'}")

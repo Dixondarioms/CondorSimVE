@@ -469,3 +469,12 @@ dialog td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .convertidor .cv-fila input { width: 90px; }
 .convertidor ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
 #pm-avisos li.logistica { color: var(--texto-sec); }
+
+/* parte de personal por unidad y esfuerzo aereo (pestaña Situación) */
+.tabla-toe td { font-size: 11px; }
+.tabla-toe tr.con-deficit td:first-child { color: var(--naranja, #ffb347); }
+.lista-esfuerzo { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; margin: 4px 0 10px; font-size: 12px; }
+.lista-esfuerzo dt { color: var(--texto-sec); }
+.lista-esfuerzo dd { margin: 0; text-align: right; font-weight: 600; }
+.tabla-personal-cfg input { width: 70px; }
+.tabla-personal-cfg th { text-align: left; font-weight: 600; }

@@ -61,6 +61,11 @@ class Escenario(Base):
     ia_nivel: Mapped[str] = mapped_column(String(10), default="normal", server_default="normal")
     # ciclo de dia y noche: de noche se detecta menos a simple vista (ver engine/clima.py, periodo_del_dia)
     dia_noche: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    # disponibilidad y fallas de las aeronaves (engine/disponibilidad.py), plantilla de personal de cada bando
+    # (engine/toe.py: cobertura, reservas activas, milicianos, tripulaciones por aeronave) y esfuerzo aereo
+    fallas: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    personal_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    esfuerzo_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # identidad nacional de cada bando (ver engine/naciones.py); "" = sin especificar (se muestra "Azul"/"Rojo")
     nacion_azul: Mapped[str] = mapped_column(String(20), default="venezuela")
@@ -91,6 +96,13 @@ class Escenario(Base):
         if getattr(self, f"ia_{bando}", False):
             return "ia"
         return "instructor" if getattr(self, f"conduce_{bando}", "") == "instructor" else "alumnos"
+
+    @property
+    def personal(self) -> dict:
+        """Configuracion de personal de cada bando (engine/toe.py)."""
+        from app.engine import toe
+
+        return {b: toe.config(self, b) for b in ("azul", "rojo")}
 
     @property
     def periodo(self) -> str:

@@ -478,7 +478,19 @@ def construir(salida: Path) -> None:
              "más cercana a su alcance.",
              f"{B('Arma a emplear')} (sistemas de defensa aérea): automática o un arma fija; ver abajo."]),
     ])
-    h += [H3("Unidades de medida y convertidor"),
+    h += [H3("Parte de personal y esfuerzo aéreo (A-1)"),
+          P("En la pestaña <b>Situación</b>, el <b>parte de personal por unidad</b> compara la plantilla (lo autorizado) con lo "
+            "existente. Por aeronave, la plantilla tiene 3 tripulaciones de pilotos (4 en operaciones intensas), 7 técnicos "
+            "(2 de motores y uno de célula, aviónica, armamento, electricidad y equipo de vuelo) y 3 de apoyo; las demás unidades "
+            "se dividen en oficiales, técnicos y tropa. Lo existente es el porcentaje de la plantilla que fijó el instructor, "
+            "menos las bajas. El déficit lo cubren las <b>reservas activas</b> (pilotos, técnicos y oficiales) y los <b>milicianos</b> "
+            "(solo tropa y apoyo), primero en la aviación y la defensa aérea. Cada celda dice «existentes + reservas + milicia / "
+            "plantilla · lo que falta»."),
+          P("<b>Esfuerzo aéreo y atrición</b>: salidas, horas de vuelo, salidas por aeronave y por día, aeronaves perdidas y la "
+            "atrición (pérdidas cada 100 salidas). Si el instructor activa <b>Disponibilidad y fallas</b>, al despegar no todas las "
+            "aeronaves están listas (según la disponibilidad de su modelo y la falta de técnicos, y no más que las tripulaciones "
+            "disponibles) y en vuelo puede fallar alguna: vuelve a su base y deja el grupo, y si fallan todas el grupo aborta."),
+          H3("Unidades de medida y convertidor"),
           P("La ficha muestra a la <b>aviación</b>, la <b>defensa aérea</b> y la <b>armada</b> en unidades aeronáuticas y navales "
             "(velocidad en <b>nudos</b>, distancias en <b>millas náuticas</b>, alturas en <b>pies</b>, con el valor en km o metros "
             "entre paréntesis) y a las <b>fuerzas terrestres</b> en km. El botón <b>Convertir</b> de la barra del mapa (junto a la "

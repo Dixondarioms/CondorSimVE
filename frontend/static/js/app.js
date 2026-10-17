@@ -1781,6 +1781,14 @@
       set("cal-final", (e) => { e.value = esc.turno_final || ""; });
       pintarFasesConfig(esc.calendario);
       set("dir-noche", (e) => { e.checked = !!esc.dia_noche; });
+      set("dir-fallas", (e) => { e.checked = !!esc.fallas; });
+      for (const b of ["azul", "rojo"]) {
+        const p = (esc.personal || {})[b] || {};
+        set(`per-${b}-cob`, (e) => { e.value = p.cobertura ?? 100; });
+        set(`per-${b}-res`, (e) => { e.value = p.reserva ?? 0; });
+        set(`per-${b}-mil`, (e) => { e.value = p.milicia ?? 0; });
+        set(`per-${b}-tri`, (e) => { e.value = String(p.tripulaciones || 3); });
+      }
       set("dir-ia-nivel", (e) => { e.value = esc.ia_nivel || "normal"; });
       set("cfg-limite", (e) => { e.value = esc.limite_decision_seg || 0; });
       set("cfg-hora", (e) => { e.value = `${String(Math.floor(esc.hora_inicio_min / 60)).padStart(2, "0")}:${String(esc.hora_inicio_min % 60).padStart(2, "0")}`; });
@@ -1936,6 +1944,40 @@
       per.appendChild(t);
     }
     if (!per.childNodes.length) per.appendChild(Object.assign(document.createElement("p"), { className: "vacio", textContent: "Sin unidades con personal." }));
+    // parte de personal por unidad (plantilla, reservas y milicia)
+    const toe = $("cuadro-toe");
+    limpiar(toe);
+    for (const [b, parte] of Object.entries(data.personal_toe || {})) {
+      if (!parte.unidades.length) continue;
+      if (varios) toe.appendChild(Object.assign(document.createElement("h4"), { className: b, textContent: nombreDeBando(b) }));
+      toe.appendChild(Object.assign(document.createElement("p"), { className: "ayuda", textContent: Situacion.textoConfigPersonal(parte) }));
+      const t = document.createElement("table");
+      t.className = "tabla-personal tabla-toe";
+      t.innerHTML = "<thead><tr><th>Unidad</th><th>Pilotos</th><th>Técnicos</th><th>Oficiales</th><th>Tropa y apoyo</th></tr></thead>";
+      const tb = document.createElement("tbody");
+      for (const f of Situacion.filasParte(parte)) {
+        const tr = document.createElement("tr");
+        if (f.total) tr.className = "total";
+        if (f.deficit) tr.classList.add("con-deficit");
+        for (const v of [f.nombre, ...f.celdas]) tr.appendChild(Object.assign(document.createElement("td"), { textContent: v }));
+        tb.appendChild(tr);
+      }
+      t.appendChild(tb);
+      toe.appendChild(t);
+    }
+    if (!toe.childNodes.length) toe.appendChild(Object.assign(document.createElement("p"), { className: "vacio", textContent: "Sin unidades con plantilla." }));
+    // esfuerzo aereo y atricion
+    const esf = $("cuadro-esfuerzo");
+    limpiar(esf);
+    for (const [b, e] of Object.entries(data.esfuerzo || {})) {
+      if (varios) esf.appendChild(Object.assign(document.createElement("h4"), { className: b, textContent: nombreDeBando(b) }));
+      const dl = document.createElement("dl");
+      dl.className = "lista-esfuerzo";
+      for (const [k, v] of Situacion.lineasEsfuerzo(e)) {
+        dl.append(Object.assign(document.createElement("dt"), { textContent: k }), Object.assign(document.createElement("dd"), { textContent: v }));
+      }
+      esf.appendChild(dl);
+    }
     // infraestructura
     const inf = $("cuadro-infra");
     limpiar(inf);
@@ -2654,8 +2696,17 @@
       niebla: $("dir-niebla").checked, logistica: $("dir-logistica").checked,
       efectos_clima: $("dir-clima").checked, fuego_automatico: $("dir-fuego").checked,
       conduccion_azul: $("dir-cond-azul").value, conduccion_rojo: $("dir-cond-rojo").value,
-      dia_noche: $("dir-noche").checked, ia_nivel: $("dir-ia-nivel").value,
+      dia_noche: $("dir-noche").checked, ia_nivel: $("dir-ia-nivel").value, fallas: $("dir-fallas").checked,
     }).then(() => toast("Interruptores aplicados", true)));
+  });
+  $("btn-personal").addEventListener("click", () => {
+    if (!app.escenarioId) return;
+    const num = (id) => Math.max(0, parseInt($(id).value, 10) || 0);
+    const personal = Object.fromEntries(["azul", "rojo"].map((b) => [b, {
+      cobertura: Math.min(100, num(`per-${b}-cob`)), reserva: num(`per-${b}-res`), milicia: num(`per-${b}-mil`),
+      tripulaciones: parseInt($(`per-${b}-tri`).value, 10) === 4 ? 4 : 3,
+    }]));
+    enSilencio(api("PATCH", rutaEsc("/config"), { personal }).then(() => toast("Personal aplicado", true)));
   });
   // ---------- calendario de la operacion (TIEM) ----------
   /** Filas editables de las fases; se repintan solo si cambiaron en el servidor y nadie esta escribiendo en ellas. */

@@ -690,6 +690,11 @@ drones de reconocimiento, **A-2**; los armados, como toda aeronave de ataque, **
   en vuelo más cercana a su alcance que su bando detecte (aparece como "defensa aérea" en la cola de órdenes). La
   guiada por radar necesita el radar encendido; con el radar apagado solo tira **por orden y a ojo** (×0,3). La
   portátil infrarroja no necesita radar, pero sí estar desplegada. Se puede **retener el fuego** para no delatarse.
+- **Personal, disponibilidad y esfuerzo** (`engine/toe.py`, `engine/disponibilidad.py`, migración `0033`): parte de
+  personal por unidad (plantilla con 3 o 4 tripulaciones y 7 técnicos por especialidad por aeronave; oficiales,
+  técnicos y tropa en el resto), con la cobertura de cada bando y el déficit cubierto por reservas activas y
+  milicianos. Con "Disponibilidad y fallas", no todas las aeronaves salen (disponibilidad del modelo y técnicos,
+  tripulaciones) y pueden fallar en vuelo. Esfuerzo aéreo y atrición por bando en la pestaña Situación.
 - **Plataformas aéreas** (`engine/plataformas.py`): ficha técnica de cada aeronave (roles, velocidad en ruta y
   máxima en nudos, radio de acción en millas náuticas, techo en pies, combustible y consumo, oxígeno líquido, carrera
   de despegue y aterrizaje, tripulación), también para los tipos del catálogo propio. Largo de pista de cada base

@@ -52,6 +52,8 @@ class Ficha:
     tripulacion: int  # por aeronave (0 = no tripulada)
     transferible_kg: float = 0.0  # cisternas: combustible que puede entregar
     nota: str = ""
+    disponibilidad: float = 0.0  # fraccion de la flota lista para volar (0 = la de su clase; engine/disponibilidad.py)
+    falla_h: float = 0.0  # probabilidad de falla de una aeronave por hora de vuelo (0 = la de su clase)
 
 
 def _f(roles, crucero, maxima, radio, techo, comb, consumo, lox, lox_h, desp, aterr, trip, **kw) -> Ficha:
@@ -72,12 +74,12 @@ FICHAS: dict[str, Ficha] = {
     "caza_embarcado": _f("CAP INTERDICCION ESCOLTA", 480, 1000, 390, 50000, 6000, 3200, 10, 0.5, 900, 900, 1,
                          nota="En el portaaviones despega con catapulta y aterriza con cable"),
     # aeronaves de EE. UU. de la plantilla del 3 de enero de 2026
-    "f22": _f("CAP ESCOLTA", 520, 1300, 460, 65000, 8200, 3500, 0, 0, 450, 900, 1),
-    "f35a": _f("CAP INTERDICCION SEAD ESCOLTA", 480, 1050, 590, 50000, 8280, 3000, 0, 0, 900, 1000, 1),
-    "f35b": _f("CAP INTERDICCION CAS SEAD ESCOLTA", 480, 1050, 450, 50000, 6125, 3000, 0, 0, 150, 0, 1,
+    "f22": _f("CAP ESCOLTA", 520, 1300, 590, 65000, 8200, 3500, 0, 0, 450, 900, 1),
+    "f35a": _f("CAP INTERDICCION SEAD ESCOLTA", 480, 920, 590, 50000, 8280, 3000, 0, 0, 900, 1000, 1),
+    "f35b": _f("CAP INTERDICCION CAS SEAD ESCOLTA", 480, 920, 450, 50000, 6125, 3000, 0, 0, 150, 0, 1,
                nota="STOVL: despega en carrera corta y aterriza en vertical"),
-    "fa18ef": _f("CAP INTERDICCION CAS ESCOLTA AAR", 490, 1030, 390, 50000, 6780, 3300, 0, 0, 1000, 1000, 1),
-    "ea18g": _f("GE SEAD ESCOLTA", 470, 1030, 390, 50000, 6780, 3500, 0, 0, 1000, 1000, 2),
+    "fa18ef": _f("CAP INTERDICCION CAS ESCOLTA AAR", 490, 1030, 390, 50000, 6530, 3300, 0, 0, 1000, 1000, 1),
+    "ea18g": _f("GE SEAD ESCOLTA", 470, 1030, 390, 50000, 6530, 3500, 0, 0, 1000, 1000, 2),
     "b1b": _f("INTERDICCION", 490, 720, 2500, 60000, 120000, 9000, 25, 4.0, 2000, 1400, 4),
     "p8a": _f("RECO INTERDICCION", 440, 490, 1200, 41000, 34000, 3000, 0, 0, 2200, 1500, 9),
     "e2d": _f("AEW", 300, 350, 750, 34700, 5600, 800, 0, 0, 600, 600, 5),
@@ -88,11 +90,11 @@ FICHAS: dict[str, Ficha] = {
     "rq170": _f("RECO", 380, 450, 1000, 50000, 4000, 600, 0, 0, 1500, 1500, 0),
     "mq9": _f("RECO CAS INTERDICCION", 170, 240, 1000, 50000, 1800, 120, 0, 0, 700, 700, 0),
     "lucas": _f("INTERDICCION", 95, 100, 430, 10000, 30, 8, 0, 0, 0, 0, 0, nota="Se lanza desde un riel o una catapulta"),
-    "mh47g": _f("TRANSPORTE SAR TRASLADO", 140, 170, 400, 20000, 7900, 1400, 0, 0, 0, 0, 4),
-    "mh60m": _f("TRANSPORTE SAR TRASLADO", 140, 160, 300, 19000, 2600, 600, 0, 0, 0, 0, 4),
-    "mh60dap": _f("CAS ESCOLTA", 140, 160, 250, 19000, 2600, 650, 0, 0, 0, 0, 4),
-    "ah6m": _f("CAS ESCOLTA", 110, 150, 130, 18000, 230, 110, 0, 0, 0, 0, 2),
-    "mh6m": _f("TRANSPORTE TRASLADO", 110, 150, 130, 18000, 230, 110, 0, 0, 0, 0, 2),
+    "mh47g": _f("TRANSPORTE SAR TRASLADO", 140, 170, 370, 18000, 3640, 1300, 0, 0, 0, 0, 4),
+    "mh60m": _f("TRANSPORTE SAR TRASLADO", 150, 175, 275, 19000, 2420, 600, 0, 0, 0, 0, 4),
+    "mh60dap": _f("CAS ESCOLTA", 150, 175, 250, 19000, 2420, 650, 0, 0, 0, 0, 4),
+    "ah6m": _f("CAS ESCOLTA", 120, 160, 100, 18000, 230, 110, 0, 0, 0, 0, 2),
+    "mh6m": _f("TRANSPORTE TRASLADO", 120, 160, 100, 18000, 230, 110, 0, 0, 0, 0, 2),
 }
 
 # para los tipos del catalogo propio sin ficha: lo propio de su clase
@@ -130,10 +132,12 @@ def ficha_de_modelo(modelo) -> Ficha | None:
                  nota="Valores estimados a partir de su clase")
 
 
+# Fuentes: valores de referencia de fuentes abiertas; F-22, F-35, F/A-18, MH-47G, MH-60M y AH/MH-6M revisados con
+# los documentos de capacidades que aporto el usuario (radio de accion, velocidad maxima, combustible interno, techo).
 # fichas cargadas por el instructor para sus tipos propios (engine/modelos_usuario.py las llena)
 FICHAS_PROPIAS: dict[str, Ficha] = {}
 CAMPOS_FICHA = ("roles", "crucero_kt", "max_kt", "radio_nm", "techo_ft", "combustible_kg", "consumo_kg_h", "lox_l",
-                "lox_l_h", "despegue_m", "aterrizaje_m", "tripulacion")
+                "lox_l_h", "despegue_m", "aterrizaje_m", "tripulacion", "disponibilidad", "falla_h")
 
 
 def ficha_desde_dict(datos: dict, base: Ficha) -> Ficha:
@@ -147,6 +151,8 @@ def ficha_desde_dict(datos: dict, base: Ficha) -> Ficha:
             cambios["roles"] = tuple(r for r in (x.upper() for x in roles) if r in ROLES)
         elif campo == "tripulacion":
             cambios[campo] = max(0, min(60, int(datos[campo])))
+        elif campo in ("disponibilidad", "falla_h"):
+            cambios[campo] = max(0.0, min(1.0, float(datos[campo])))
         else:
             cambios[campo] = max(0.0, min(200000.0, float(datos[campo])))
     return replace(base, **cambios)
