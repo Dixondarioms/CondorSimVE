@@ -12,7 +12,8 @@ def test_los_sistemas_nuevos_estan_en_el_catalogo():
     for modelo, clase in (("mistral", "antiaerea_portatil"), ("rbs70", "antiaerea"), ("s300vm", "antiaerea")):
         s, m = da.SISTEMAS[modelo], catalogo.MODELOS[modelo]
         assert m.clase == clase and m.alcance_km == max(a.alcance_max_km for a in s.armas)
-        assert m.foto == f"/static/fotos/{modelo}.svg" and s.personal > 0
+        # la ilustracion propia o, si se descargo, la foto de referencia (tools/fotos/fotos_referencia.py)
+        assert m.foto in (f"/static/fotos/{modelo}.svg", f"/static/fotos/ref_{modelo}.jpg") and s.personal > 0
     assert da.SISTEMAS["mistral"].radar_vigilancia_km == 0  # no emite
     assert da.SISTEMAS["s300vm"].arma("9m82me").alcance_max_km == 200
 
