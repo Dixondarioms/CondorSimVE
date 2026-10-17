@@ -47,7 +47,8 @@ def test_sobre_un_tramo_apto_si_y_lejos_de_el_no():
     assert tipo == "no_apto" and "es más corto" in motivo
     tipo, _, motivo = ori.sitio(*CARACAS, 1500)
     assert tipo == "no_apto" and "ORI" in motivo
-    assert ori.sitio(*MAIQUETIA, 3000)[0] == "aerodromo"
+    if plataformas._indice_aerodromos():  # planos de los aerodromos instalados (datos de mapa, fuera del repositorio)
+        assert ori.sitio(*MAIQUETIA, 3000)[0] == "aerodromo"
     assert ori.sitio(*CARACAS, 0)[0] == "sin_pista"  # sin pista (helicopteros) va en cualquier sitio
     assert ori.sitio(0.0, 0.0, 1500)[0] == "sin_datos"  # sin carreteras cargadas no se puede verificar
 

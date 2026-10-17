@@ -28,7 +28,9 @@ def test_formato_de_fechas_coordenadas_y_lineas():
     assert ota.codigo_mision("INTERDICCION") == "1OT" and ota.codigo_mision("CAP", elegido="2BC") == "2BC"
     assert ota.rumbo(0, 0, 1, 0) == 0 and ota.rumbo(0, 0, 0, 1) == 90
     # el codigo OACI del aerodromo donde esta la base; si no hay ninguno cerca, el formado con su nombre
-    assert ota.codigo_base(SimpleNamespace(lat=10.485, lon=-66.843, nombre="Base La Carlota")) == "SVFM"
+    # (los planos de los aerodromos son datos de mapa que no estan en el repositorio: sin ellos, el codigo del nombre)
+    oaci = "SVFM" if ota._oaci() else "CARL"
+    assert ota.codigo_base(SimpleNamespace(lat=10.485, lon=-66.843, nombre="Base La Carlota")) == oaci
     assert ota.codigo_base(SimpleNamespace(lat=0.0, lon=0.0, nombre="Base Azul")) == "AZUL"
 
 
