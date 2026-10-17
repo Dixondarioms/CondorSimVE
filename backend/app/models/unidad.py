@@ -69,6 +69,8 @@ class Unidad(Base):
     # sistemas de defensa aerea (engine/defensa_aerea.py): misiles listos de cada arma (JSON; None = lanzadores
     # llenos) y arma que fijo el operador (None = automatica)
     cargas_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # camino que recorrio en el ultimo turno ([[lat, lon], ...]; por la carretera si su ruta la seguia)
+    recorrido_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     arma_elegida: Mapped[str | None] = mapped_column(String(30), nullable=True)
 
     # bases aereas: largo de la pista fijado por el instructor (None = el del plano del aerodromo o el por defecto)
@@ -85,6 +87,15 @@ class Unidad(Base):
         from app.engine import plataformas
 
         return plataformas.pista_util(self)
+
+    @property
+    def recorrido(self) -> list | None:
+        import json
+
+        try:
+            return json.loads(self.recorrido_json) if self.recorrido_json else None
+        except ValueError:
+            return None
 
     @property
     def sistema_da(self) -> dict | None:

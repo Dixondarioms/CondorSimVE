@@ -491,7 +491,9 @@ def construir(salida: Path) -> None:
             "se rodea de ámbar si la unidad está degradada (menos de 70 %), de rojo si está en situación crítica (menos de "
             "30 %) y parpadea si una aeronave en vuelo se queda sin combustible."),
           P("Al resolverse cada turno, las unidades que se movieron <b>se deslizan por el mapa</b> en 2,5 segundos desde donde "
-            "estaban hasta su nueva posición y dejan un rastro punteado que se desvanece. Si el equipo tiene activada la "
+            "estaban hasta su nueva posición, por el camino que siguieron (por la carretera, si su ruta se armó con "
+            "«Seguir carreteras»), y dejan un rastro punteado que se desvanece. Las enemigas que se ven, en línea recta: "
+            "de ellas solo se sabe dónde estaban y dónde están. Si el equipo tiene activada la "
             "opción de reducir animaciones, saltan directamente."),
           P("Para ejercicios de un mes, el instructor puede <b>resolver varios turnos seguidos</b> (3, 6, 12 o 24) desde "
             "Consola → Dirección del ejercicio; las misiones, las órdenes y el adversario automático siguen solos.")]

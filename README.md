@@ -772,7 +772,9 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   separación y vigencia (24 turnos), y el plan pesa en la demora de las órdenes y ante la interferencia. Para
   ejercicios de un mes el instructor resuelve hasta 24 turnos seguidos y el estado solo trae las órdenes recientes.
   La tarjeta de cada unidad en el mapa y el marco de su símbolo cambian con su fuerza y su combustible. Al resolverse
-  cada turno, las unidades se deslizan por el mapa hasta su nueva posición y dejan un rastro que se desvanece.
+  cada turno, las unidades se deslizan por el mapa hasta su nueva posición por el camino que recorrieron (por la
+  carretera si la seguían; `Unidad.recorrido_json`, migración `0038`, solo para el propio bando) y dejan un rastro
+  que se desvanece.
 
 ## Ejercicios con o contra los países vecinos
 

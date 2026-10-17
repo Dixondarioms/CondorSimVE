@@ -339,6 +339,8 @@ class UnidadOut(BaseModel):
     radio_km: float | None = None
     # sistemas de defensa aerea: misiles listos y en reserva de cada arma y el arma elegida (engine/defensa_aerea.py)
     sistema_da: dict | None = None
+    # camino del ultimo turno (solo el propio bando: el del enemigo no se conoce)
+    recorrido: list | None = None
     # bases aereas: largo de la pista y pista util con su dano (engine/plataformas.py)
     pista_largo_m: float | None = None
     pista_util_m: float | None = None

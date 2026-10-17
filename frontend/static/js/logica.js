@@ -133,10 +133,41 @@
       const p = previas.get(u.id);
       if (!p || u.estado === "destruida") continue;
       if (Math.abs(p[0] - u.lat) > umbral || Math.abs(p[1] - u.lon) > umbral) {
-        salida.push({ id: u.id, bando: u.bando, tipo: u.tipo, desde: p, hasta: [u.lat, u.lon] });
+        // el camino real del turno (por la carretera, si la seguia) cuando el servidor lo manda: el de las propias
+        const r = Array.isArray(u.recorrido) && u.recorrido.length >= 2 ? u.recorrido : null;
+        const ruta = r ? [p, ...r.slice(1, -1), [u.lat, u.lon]] : [p, [u.lat, u.lon]];
+        salida.push({ id: u.id, bando: u.bando, tipo: u.tipo, desde: p, hasta: [u.lat, u.lon], ruta });
       }
     }
     return salida;
+  }
+
+  /** Punto de la ruta [[lat, lon], ...] a la fraccion `f` (0 a 1) de su largo: la unidad avanza a velocidad pareja
+   *  por cada tramo de la carretera, no en linea recta. */
+  function puntoEnRuta(ruta, f) {
+    if (!ruta || !ruta.length) return null;
+    if (ruta.length === 1 || f <= 0) return ruta[0];
+    if (f >= 1) return ruta[ruta.length - 1];
+    const largos = [];
+    let total = 0;
+    for (let i = 1; i < ruta.length; i++) {
+      const [a, b] = [ruta[i - 1], ruta[i]];
+      const c = Math.cos(((a[0] + b[0]) / 2) * Math.PI / 180);
+      const d = Math.hypot(b[0] - a[0], (b[1] - a[1]) * c);
+      largos.push(d);
+      total += d;
+    }
+    if (total <= 0) return ruta[ruta.length - 1];
+    let falta = f * total;
+    for (let i = 0; i < largos.length; i++) {
+      if (falta <= largos[i] || i === largos.length - 1) {
+        const t = largos[i] ? Math.min(1, falta / largos[i]) : 1;
+        const [a, b] = [ruta[i], ruta[i + 1]];
+        return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      }
+      falta -= largos[i];
+    }
+    return ruta[ruta.length - 1];
   }
 
   /** Lineas atacante -> defensor de los combates de un turno, con las posiciones de la instantanea. */
@@ -1063,7 +1094,7 @@
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
     distanciaKm, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
-    unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, lineasCombate, describirCombate,
+    unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,
     etiquetaBando, claseBarra, estadoUnidad, memoriaVacia, alertasNuevas, climaEn, textoZonaClima,
   };

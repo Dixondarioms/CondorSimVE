@@ -898,8 +898,7 @@
   function pasoAnimacion(ahora) {
     app.animaciones = app.animaciones.filter((a) => {
       const f = Math.min(1, (ahora - a.t0) / DURACION_DESPLAZAMIENTO_MS);
-      const p = Replay.interpolar({ lat: a.desde[0], lon: a.desde[1] }, { lat: a.hasta[0], lon: a.hasta[1] }, f);
-      a.m.setLatLng(p);
+      a.m.setLatLng(f >= 1 ? a.hasta : Logica.puntoEnRuta(a.ruta, Replay.suavizar(f)));
       return f < 1;
     });
     app.cuadroAnimacion = app.animaciones.length ? requestAnimationFrame(pasoAnimacion) : null;
@@ -907,7 +906,7 @@
 
   /** Rastro punteado del desplazamiento, que se desvanece en unos segundos. */
   function dibujarRastro(mov) {
-    const linea = L.polyline([mov.desde, mov.hasta], {
+    const linea = L.polyline(mov.ruta, {
       color: COLOR[mov.bando] || "#ffd166", weight: mov.tipo === "aerea" ? 2 : 3, dashArray: "4 6", opacity: 0.9, interactive: false,
     }).addTo(app.capas.rastros);
     const t0 = performance.now();
@@ -963,7 +962,7 @@
       const mov = movimientos.get(u.id);
       if (mov && !estacionada) {  // avanzo el turno: se desliza desde donde estaba
         m.setLatLng(mov.desde);
-        app.animaciones.push({ m, desde: mov.desde, hasta: pos, t0: performance.now() });
+        app.animaciones.push({ m, desde: mov.desde, hasta: pos, ruta: [...mov.ruta.slice(0, -1), pos], t0: performance.now() });
         dibujarRastro(mov);
       }
       m.unbindTooltip();

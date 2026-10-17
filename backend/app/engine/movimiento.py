@@ -9,6 +9,7 @@ la resolucion de ordenes y la previsualizacion.
   limita la distancia real.
 """
 
+import json
 import math
 from dataclasses import dataclass, field
 
@@ -31,6 +32,20 @@ class Movimiento:
     ruta: list = field(default_factory=list)  # [[lat, lon], ...] desde el origen
     nota: str = ""
     combustible_gastado: float = 0.0  # puntos porcentuales
+
+
+MAX_PUNTOS_RECORRIDO = 150
+
+
+def recorrido_json(mov: "Movimiento") -> str | None:
+    """El camino del turno para guardarlo en la unidad (None si no se movio); a lo sumo MAX_PUNTOS_RECORRIDO puntos."""
+    if mov.km_reales <= 0 or len(mov.ruta) < 2:
+        return None
+    ruta = mov.ruta
+    if len(ruta) > MAX_PUNTOS_RECORRIDO:
+        paso = (len(ruta) - 1) / (MAX_PUNTOS_RECORRIDO - 1)
+        ruta = [ruta[round(i * paso)] for i in range(MAX_PUNTOS_RECORRIDO)]
+    return json.dumps([[round(a, 5), round(b, 5)] for a, b in ruta])
 
 
 def obra_en(obras, lat: float, lon: float):

@@ -311,6 +311,8 @@ def procesar_ordenes(
     )
     unidades = {u.id: u for u in db.query(Unidad).filter(Unidad.escenario_id == escenario.id)}
     lista_unidades = list(unidades.values())
+    for u in lista_unidades:
+        u.recorrido_json = None  # el camino del turno anterior ya se mostro
     obras = db.query(Obra).filter(Obra.escenario_id == escenario.id, Obra.expira_turno >= turno).all()
     # puentes de infraestructura cortados: anulan el puente de la carretera en el movimiento terrestre
     cortes = infra_mod.cortes(lista_unidades)
@@ -501,6 +503,7 @@ def procesar_ordenes(
             if orden.tipo != "patrullar":
                 u.mision, u.mision_lat, u.mision_lon = "", None, None
             mov = movimiento.simular(u, waypoints, terreno, clima, obras + cortes)
+            u.recorrido_json = movimiento.recorrido_json(mov)
             if mov.km_reales > 0:
                 movidas.add(u.id)
             con_orden_de_vuelo.add(u.id)
@@ -545,6 +548,7 @@ def procesar_ordenes(
         restante = geo.distancia_km(u.lat, u.lon, u.mision_lat, u.mision_lon)
         if restante > 1.0:
             mov = movimiento.simular(u, [[u.mision_lat, u.mision_lon]], terreno, clima, obras)
+            u.recorrido_json = movimiento.recorrido_json(mov)
             u.lat, u.lon = mov.lat, mov.lon
             bit.poner(u, "combustible", u.combustible - mov.combustible_gastado, "movimiento")
         else:

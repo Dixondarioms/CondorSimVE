@@ -491,6 +491,7 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
             wps[-1] = [objetivo.lat, objetivo.lon]  # el blanco se movio y se lo sigue viendo: se lo persigue
         origen = (u.lat, u.lon)
         mov = movimiento.simular(u, wps, terreno, clima, obras)
+        u.recorrido_json = movimiento.recorrido_json(mov)
         u.lat, u.lon = mov.lat, mov.lon
         bit.poner(u, "combustible", u.combustible - mov.combustible_gastado, "mision")
         acumulado, previo = 0.0, origen
