@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 
 from app.engine import aeronaves as aeronaves_mod
-from app.engine import catalogo, geo, logistica, movimiento, vision
+from app.engine import catalogo, geo, logistica, movimiento, ota, relieve, vision
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.models.evento import Evento
@@ -142,10 +142,16 @@ def estimar(lat: float, lon: float, velocidad_kmh: float, autonomia_km: float, c
     filas, avisos = [], []
     prev = (lat, lon)
     for i, p in enumerate(puntos):
+        if p.get("perfil") in relieve.FACTOR_CONSUMO:  # cambio de altura: rige desde este tramo
+            factor_consumo = relieve.FACTOR_CONSUMO[p["perfil"]]
         d = geo.distancia_km(prev[0], prev[1], p["lat"], p["lon"])
         horas += d / vel
         comb -= d / aut * 100.0 * factor_consumo
         fila = {"tipo": p["tipo"], "km": round(d, 1), "llegada_h": round(horas, 2), "combustible_llegada": round(comb, 1)}
+        if p.get("reunion"):  # el grupo espera en el punto de reunion el resto del turno
+            horas = math.floor(horas + 1e-9) + 1
+            comb -= aeronaves_mod.COMBUSTIBLE_LOITER * factor_consumo * 0.5
+            fila["salida_h"] = round(horas, 2)
         if p["tipo"] == "orbita":
             t = int(p.get("turnos") or 1)
             horas = math.floor(horas + 1e-9) + 1 + t
@@ -234,6 +240,7 @@ def serializar(m: Mision) -> dict:
         "aeronaves": m.aeronaves, "turno_despegue": m.turno_despegue, "creada_turno": m.creada_turno,
         "puntos": puntos_de(m), "plan": json.loads(m.plan_json or "{}"), "indice": m.indice, "espera": m.espera,
         "resultado": m.resultado, "escolta_de": escolta_de(m), "autor": m.autor or "", "autor_puesto": m.autor_puesto,
+        "ota": ota.datos(m),
     }
 
 
@@ -352,6 +359,10 @@ def activar(db, escenario, unidades: dict, lista: list, turno: int, lanzados_en_
             u.mision, u.mision_lat, u.mision_lon = "", None, None
         m.estado, m.indice, m.espera = "en_curso", 0, -1
         m.resultado = "En ruta."
+        arma = ota.datos(m).get("armamento_primario")
+        g = unidades.get(m.unidad_id)
+        if g is not None and arma:
+            g.arma_elegida = arma
 
 
 def interferencias(db, escenario, unidades: dict) -> list[tuple]:
@@ -433,9 +444,12 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
         if u.mision == "patrulla":  # dejo la orbita: ya no vigila la zona
             u.mision, u.mision_lat, u.mision_lon = "", None, None
         i0 = j = m.indice
-        while j < len(pts) - 1 and pts[j]["tipo"] == "paso":
+        while j < len(pts) - 1 and pts[j]["tipo"] == "paso" and not pts[j].get("reunion"):
             j += 1
         destino = pts[j]
+        perfil = next((q.get("perfil") for q in reversed(pts[:i0 + 1]) if q.get("perfil")), None)
+        if perfil and perfil in relieve.perfiles_permitidos(u) and u.perfil_vuelo != perfil:
+            u.perfil_vuelo = perfil
         objetivo = None
         if destino["tipo"] == "blanco" and destino.get("objetivo_unidad_id"):
             x = unidades.get(destino["objetivo_unidad_id"])
@@ -457,7 +471,26 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
         faltan = geo.distancia_km(u.lat, u.lon, wps[-1][0], wps[-1][1])
         llego = faltan <= LLEGADA_KM
 
-        if destino["tipo"] == "orbita":
+        if destino.get("reunion"):
+            if llego:
+                m.indice = j
+                if _reunion_completa(db, m, j, unidades):
+                    m.indice, m.espera = j + 1, -1
+                    m.resultado = "Paquete reunido: sigue la ruta."
+                    _evento(db, m, turno, "El paquete se reunió en el punto de reunión y sigue la ruta.")
+                else:
+                    esperas = _esperas(m) + 1
+                    _guardar_espera(m, esperas)
+                    if esperas > ota.ESPERA_REUNION_MAX:
+                        m.indice = j + 1
+                        m.resultado = "No se completó la reunión: sigue la ruta sin los demás grupos."
+                        _evento(db, m, turno, m.resultado)
+                    else:
+                        bit.poner(u, "combustible", u.combustible - aeronaves_mod.combustible_loiter(u) * 0.5, "mision")
+                        m.resultado = f"En el punto de reunión: espera a los demás grupos del paquete ({esperas}/{ota.ESPERA_REUNION_MAX})."
+            else:
+                m.resultado = f"Vuela al punto de reunión: faltan {faltan:.0f} km."
+        elif destino["tipo"] == "orbita":
             if llego:
                 m.indice, m.espera = j, int(destino.get("turnos") or 1)
                 if m.rol == "CAP":
@@ -498,6 +531,38 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
             else:
                 m.resultado = f"Regresa a {base.nombre if base else 'la base'}: faltan {faltan:.0f} km."
     return ataques, bajo_mision
+
+
+def _esperas(m: Mision) -> int:
+    return int(ota.datos(m).get("_espera_reunion") or 0)
+
+
+def _guardar_espera(m: Mision, n: int) -> None:
+    d = ota.datos(m)
+    d["_espera_reunion"] = n
+    m.ota_json = json.dumps(d)
+
+
+def _reunion_completa(db, m: Mision, j: int, unidades: dict) -> bool:
+    """Todos los grupos del paquete que tienen un punto de reunion ya llegaron a el (o lo pasaron); los que no
+    despegaron todavia, terminaron o fueron derribados no se esperan."""
+    paquete = (ota.datos(m).get("paquete") or "").upper()
+    if not paquete:
+        return True
+    for o in db.query(Mision).filter(Mision.escenario_id == m.escenario_id, Mision.bando == m.bando,
+                                     Mision.estado == "en_curso", Mision.id != m.id):
+        if (ota.datos(o).get("paquete") or "").upper() != paquete:
+            continue
+        pts = puntos_de(o)
+        k = next((i for i, p in enumerate(pts) if p.get("reunion")), None)
+        if k is None or o.indice > k:
+            continue
+        g = unidades.get(o.unidad_id)
+        if g is None or g.estado != "activa":
+            continue
+        if o.indice < k or geo.distancia_km(g.lat, g.lon, pts[k]["lat"], pts[k]["lon"]) > LLEGADA_KM:
+            return False
+    return True
 
 
 def cerrar(db, escenario, unidades: dict, turno: int) -> None:

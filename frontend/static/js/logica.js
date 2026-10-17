@@ -487,6 +487,33 @@
     return m.resultado || ESTADOS_MISION[m.estado] || m.estado;
   }
 
+  /** Armamento de la OTA que lleva el modelo, como [[codigo, "codigo · nombre"]]. Para el armamento primario, solo el
+   *  que sirve al rol: aire-aire para CAP y escolta, aire-superficie para interdiccion, CAS y SEAD. */
+  function armasParaRol(catOta, modeloId, rolId, primario = true) {
+    if (!catOta || !catOta.armamento) return [];
+    const lista = (catOta.por_modelo || {})[modeloId] || ["M120", "M9X", "MPB", "BMK", "BBU"];
+    const aa = ["CAP", "ESCOLTA"].includes(rolId);
+    const sup = ["INTERDICCION", "CAS", "SEAD"].includes(rolId);
+    return lista.filter((c) => catOta.armamento[c]).filter((c) => {
+      if (!primario) return true;
+      const t = catOta.armamento[c].tipo;
+      return aa ? t === "aa" : sup ? t !== "aa" : true;
+    }).map((c) => [c, `${c} · ${catOta.armamento[c].nombre}`]);
+  }
+
+  /** Rumbo, distancia y altitud de un tramo de la ruta: "045° · 54 NM · 5000 ft". */
+  function textoTramo(t) {
+    if (!t) return "";
+    return `${String(t.rumbo).padStart(3, "0")}° · ${t.nm} NM` + (t.altitud_ft ? ` · ${t.altitud_ft} ft` : "");
+  }
+
+  /** Paquete y funcion de una mision en la OTA: "paq. TELA (CM)" ("" si no va en un paquete). */
+  function textoPaquete(m) {
+    const o = (m && m.ota) || {};
+    if (!o.paquete) return "";
+    return `paq. ${o.paquete}${o.funcion && o.funcion !== "-" ? ` (${o.funcion})` : ""}`;
+  }
+
   /** Tramos del cronograma (flow sheet) de una mision segun su plan: horas desde el inicio del turno 1.
    *  segmentos: vuelo u orbita; marcas: ataque (blanco) o aterrizaje. */
   function tramosCronograma(m) {
@@ -931,7 +958,7 @@
     NIVELES_OBJETIVO, arbolObjetivos, superioresPosibles, textoCalendario, nombreFase, CONDUCCION,
     PUESTOS, puestoDe, puestoPuede, puestoPuedeAereo, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,
-    ESTADOS_MISION, TIPOS_PUNTO_MISION, misionActiva, horaEstimada, textoMision, tramosCronograma,
+    ESTADOS_MISION, TIPOS_PUNTO_MISION, misionActiva, horaEstimada, textoMision, tramosCronograma, armasParaRol, textoTramo, textoPaquete,
     RADIO_SIN_EMISION_KM, deteccionEfectiva, pctStock,
     nacionDe, etiquetaBandoNacion, filtrarUnidades, textoObjetivo, avanceObjetivo, ETIQUETA_OBJETIVO, CAPACIDAD_BASE, RADIO_ATERRIZAJE_KM, estacionadasEn, plazasLibres, opcionesDeAterrizaje, situacionDeVuelo,
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,

@@ -32,3 +32,5 @@ class Mision(Base):
     # id del autor y puesto que ocupaba al planificarla (nulos en las misiones anteriores a la migracion 0018)
     autor_id: Mapped[int | None] = mapped_column(ForeignKey("usuarios.id"), nullable=True)
     autor_puesto: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # datos de la OTA (engine/ota.py): paquete, funcion (CM/ACM), alerta, armamento, IFF, TOT pedido, PDI
+    ota_json: Mapped[str | None] = mapped_column(Text, nullable=True)

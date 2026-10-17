@@ -1,14 +1,16 @@
 """Misiones aereas: planificar (rol + ruta), previsualizar la estimacion, listar y cancelar/abortar."""
 
 import json
+import math
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import HTMLResponse, Response
 from sqlalchemy.orm import Session
 
-from app import auth, schemas, state
+from app import auth, legajo, schemas, state
 from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
-from app.engine import catalogo, plataformas, puestos, relieve
+from app.engine import catalogo, ota, plataformas, puestos, relieve
 from app.engine import clima as clima_mod
 from app.engine import misiones as misiones_mod
 from app.models.escenario import Escenario
@@ -39,7 +41,7 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
         origen = (u.lat, u.lon, misiones_mod.velocidad_efectiva(u.velocidad_kmh, clase, clima_mod.contexto(db, esc), u.lat, u.lon), u.autonomia_km, u.combustible)
         turno, modelo, n = esc.turno_actual, u.modelo, u.aeronaves
         factor = relieve.FACTOR_CONSUMO.get(relieve.perfil_de(u), 1.0)
-        base = None
+        base, volador = None, u
     else:
         base = db.get(Unidad, payload.base_id)
         if base is None or base.escenario_id != esc.id or base.bando != usuario.rol:
@@ -71,11 +73,21 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
         clase = misiones_mod.clase_de_modelo(m.id)
         origen = (base.lat, base.lon, misiones_mod.velocidad_efectiva(m.velocidad_kmh, clase, clima_mod.contexto(db, esc), base.lat, base.lon), m.autonomia_km, 100.0)
         modelo = m.id
-        factor = relieve.FACTOR_CONSUMO.get(relieve.perfil_de(Unidad(tipo="aerea", clase=m.clase, modelo=m.id)), 1.0)
+        volador = Unidad(tipo="aerea", clase=m.clase, modelo=m.id)
+        factor = relieve.FACTOR_CONSUMO.get(relieve.perfil_de(volador), 1.0)
 
-    puntos, visibles = [], None
-    for p in payload.puntos:
+    puntos, visibles, errores_ruta = [], None, []
+    permitidos = relieve.perfiles_permitidos(volador)
+    for i, p in enumerate(payload.puntos):
         d = {"tipo": p.tipo, "lat": round(p.lat, 5), "lon": round(p.lon, 5)}
+        if p.perfil:
+            if p.perfil not in permitidos:
+                errores_ruta.append(f"Punto {i + 1}: esta aeronave no vuela en perfil {p.perfil}.")
+            d["perfil"] = p.perfil
+        if p.reunion:
+            if p.tipo != "paso":
+                errores_ruta.append(f"Punto {i + 1}: el punto de reunión debe ser un punto de paso.")
+            d["reunion"] = True
         if p.tipo == "orbita":
             d["turnos"] = p.turnos
             if p.centro is not None:
@@ -99,12 +111,48 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
                 raise HTTPException(status_code=400, detail="El blanco elegido no es un enemigo detectado por su bando")
             d["objetivo_unidad_id"] = x.id
         puntos.append(d)
-    errores = misiones_mod.validar(payload.rol, puntos, clase)
+    errores = misiones_mod.validar(payload.rol, puntos, clase) + errores_ruta
+    if sum(1 for p in puntos if p.get("reunion")) > 1:
+        errores.append("La ruta admite un solo punto de reunión.")
+    datos_ota = None
+    if payload.ota is not None:
+        datos_ota = payload.ota.model_dump()
+        datos_ota["paquete"] = datos_ota["paquete"].strip().upper()
+        if datos_ota["codigo"] and datos_ota["codigo"] not in ota.NOMBRE_CODIGO:
+            errores.append(f"Código de misión desconocido: {datos_ota['codigo']}.")
+        errores += ota.validar(payload.rol, modelo, clase, datos_ota)
+        errores += ota.errores_del_paquete(db, esc.id, usuario.rol, datos_ota)
+        if any(p.get("reunion") for p in puntos) and not datos_ota["paquete"]:
+            errores.append("El punto de reunión es para los grupos de un paquete: indique el paquete.")
+    elif any(p.get("reunion") for p in puntos):
+        errores.append("El punto de reunión es para los grupos de un paquete: indique el paquete.")
     if base is not None:
         corta = plataformas.error_de_pista(catalogo.MODELOS.get(modelo or ""), base)
         if corta:
             errores.append(corta)
     plan = misiones_mod.estimar(*origen, puntos, factor)
+    plan["tramos"] = ota.tramos(origen[0], origen[1], puntos, relieve.perfil_de(volador))
+    # TOT: turno en que el grupo esta sobre el (primer) blanco; con un TOT pedido y despegue desde una base, el
+    # turno de despegue se calcula hacia atras desde el
+    k = next((i for i, p in enumerate(puntos) if p["tipo"] == "blanco"), None)
+    tot_pedido = datos_ota.get("tot_turno") if datos_ota else None
+    if k is not None:
+        llegada = plan["puntos"][k]["llegada_h"]
+        if tot_pedido is not None and base is not None:
+            t = ota.turno_de_despegue_para_tot(int(tot_pedido), llegada)
+            if not esc.turno_actual <= t <= esc.turno_actual + misiones_mod.MAX_ANTICIPACION_TURNOS:
+                errores.append(f"Para estar sobre el blanco en T{tot_pedido} debería despegar en T{t}: el despegue se "
+                               f"programa entre T{esc.turno_actual} y T{esc.turno_actual + misiones_mod.MAX_ANTICIPACION_TURNOS}.")
+            else:
+                turno = t
+        plan["tot_turno"] = turno + int(math.floor(llegada + 1e-9))
+        if tot_pedido is not None and plan["tot_turno"] != int(tot_pedido) and base is None:
+            plan["advertencias"].append(f"Llegaría al blanco en T{plan['tot_turno']}, no en el TOT pedido (T{tot_pedido}).")
+    elif tot_pedido is not None:
+        errores.append("El TOT (hora sobre el blanco) solo se fija en misiones con un punto de blanco.")
+    reunion = next((i for i, p in enumerate(puntos) if p.get("reunion")), None)
+    if reunion is not None:
+        plan["reunion_turno"] = turno + int(math.floor(plan["puntos"][reunion]["llegada_h"] + 1e-9))
     # logistica de la mision: combustible (kg) y oxigeno liquido (l) para toda la ruta, con la reserva
     plan["logistica"] = plataformas.requerimientos(catalogo.MODELOS.get(modelo or ""), n, plan["duracion_h"], factor)
     if plan["logistica"] and plan["logistica"]["excede_lox"]:
@@ -121,7 +169,19 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
             plan["escolta_de"] = e.id
     return {
         "puntos": puntos, "turno": turno, "modelo": modelo, "aeronaves": n, "errores": errores, "plan": plan,
+        "ota": datos_ota,
     }
+
+
+def _ota_escolta(datos_ota: dict | None, modelo: str | None, unidad_id: int | None, db: Session) -> dict:
+    """La escolta va en el paquete de la mision escoltada, con un misil aire-aire como armamento primario."""
+    if unidad_id:
+        g = db.get(Unidad, unidad_id)
+        modelo = g.modelo if g is not None else modelo
+    aa = [a for a in ota.armas_de(modelo, misiones_mod.clase_de_modelo(modelo or "")) if ota.ARMAMENTO[a][1] == "aa"]
+    return {"paquete": (datos_ota or {}).get("paquete", ""), "funcion": "-", "alerta": (datos_ota or {}).get("alerta", 1),
+            "armamento_primario": aa[0] if aa else "", "armamento_secundario": aa[-1] if len(aa) > 1 else "",
+            "iff": "", "codigo": "3EA", "pdi": "", "tot_turno": None}
 
 
 @router.post("/previsualizar")
@@ -130,6 +190,49 @@ def previsualizar(payload: schemas.MisionIn, esc: Escenario = Depends(auth.escen
     """Estimacion (hora y combustible en cada punto) y errores de la mision, sin crearla."""
     r = _preparar(payload, esc, db, usuario)
     return {"plan": r["plan"], "errores": r["errores"], "turno_despegue": r["turno"], "puntos": r["puntos"]}
+
+
+# ---------------------------------------------------------------- Orden de Tareas Aereas (AV/D 5-47)
+def _ota(esc: Escenario, db: Session, usuario: Usuario, bando: str | None, tipo: str) -> tuple[str, list, dict]:
+    if usuario.rol in ("azul", "rojo"):
+        bando = usuario.rol  # cada bando ve solo su OTA
+    elif bando not in ("azul", "rojo"):
+        bando = "azul"
+    tipo = tipo.upper() if tipo and tipo.upper() in ota.TIPOS_OPERACION else "ENT"
+    docs, _ = legajo._contexto(db, esc, bando)
+    info = legajo.informacion(db, esc, bando, docs)
+    nombre = info["nombre_clave"] if not info["nombre_clave"].startswith("(") else esc.nombre
+    misiones = db.query(Mision).filter(Mision.escenario_id == esc.id, Mision.bando == bando,
+                                       Mision.estado.in_(misiones_mod.ACTIVAS)).all()
+    unidades = {u.id: u for u in db.query(Unidad).filter(Unidad.escenario_id == esc.id)}
+    lineas = ota.lineas_ota(db, esc, bando, misiones, unidades, nombre, "CAO", tipo)
+    titulo = "Orden de Tareas Aéreas (OTA)"
+    bloques = legajo._encabezado(info, titulo) + ota.bloques(lineas) + legajo._final(info)
+    return f"{titulo} · {bando.capitalize()}", bloques, {**lineas, "bando": bando}
+
+
+@router.get("/ota")
+def ota_lineas(bando: str | None = None, tipo: str = "ENT", esc: Escenario = Depends(auth.escenario_dep),
+               db: Session = Depends(get_db), usuario: Usuario = Depends(auth.usuario_actual)):
+    """Lineas de la OTA del bando (misiones programadas y en curso) en el formato de la AV/D 5-47."""
+    return _ota(esc, db, usuario, bando, tipo)[2]
+
+
+@router.get("/ota.docx")
+def ota_word(bando: str | None = None, tipo: str = "ENT", esc: Escenario = Depends(auth.escenario_dep),
+             db: Session = Depends(get_db), usuario: Usuario = Depends(auth.usuario_actual)):
+    titulo, bloques, d = _ota(esc, db, usuario, bando, tipo)
+    return Response(legajo.word(titulo, bloques),
+                    media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    headers={"Content-Disposition": f'attachment; filename="ota_{d["bando"]}_esc{esc.id}_t{esc.turno_actual}.docx"'})
+
+
+@router.get("/ota.html", response_class=HTMLResponse)
+def ota_html(bando: str | None = None, tipo: str = "ENT", esc: Escenario = Depends(auth.escenario_dep),
+             db: Session = Depends(get_db), usuario: Usuario = Depends(auth.usuario_actual)):
+    """La misma OTA como pagina imprimible (el navegador la guarda como PDF)."""
+    titulo, bloques, _ = _ota(esc, db, usuario, bando, tipo)
+    return HTMLResponse(legajo.pagina(titulo, bloques))
 
 
 @router.post("")
@@ -153,6 +256,7 @@ async def crear(payload: schemas.MisionIn, esc: Escenario = Depends(auth.escenar
         turno_despegue=r["turno"], creada_turno=esc.turno_actual, puntos_json=json.dumps(r["puntos"]),
         plan_json=json.dumps(r["plan"]), autor=usuario.username, **puestos.firma(usuario),
         resultado="Programada." if r["turno"] > esc.turno_actual else "Se inicia al resolverse este turno.",
+        ota_json=json.dumps(r["ota"]) if r["ota"] else None,
     )
     db.add(m)
     db.flush()
@@ -176,6 +280,7 @@ async def crear(payload: schemas.MisionIn, esc: Escenario = Depends(auth.escenar
             unidad_id=esc_payload.unidad_id, base_id=esc_payload.base_id, modelo=re["modelo"] or "", aeronaves=re["aeronaves"] or 0,
             turno_despegue=re["turno"], creada_turno=esc.turno_actual, puntos_json=json.dumps(re["puntos"]),
             plan_json=json.dumps(re["plan"]), autor=usuario.username, resultado="Escolta programada.",
+            ota_json=json.dumps(_ota_escolta(r["ota"], re["modelo"], esc_payload.unidad_id, db)),
             **puestos.firma(usuario),
         ))
     setattr(esc, f"listo_{usuario.rol}", False)  # como una orden nueva: el bando debe confirmar otra vez

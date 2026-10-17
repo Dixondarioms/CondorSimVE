@@ -158,6 +158,7 @@
               <button id="btn-planificar-mision" class="primario" type="button" hidden>✈ Planificar misión…</button>
               <button id="btn-cronograma" class="secundario" type="button" title="Flow sheet: horario de todas las misiones">Cronograma</button>
             </div>
+            <p class="ayuda ota-enlaces" id="ota-enlaces"></p>
             <ol id="lista-misiones" class="lista-misiones"></ol>
           </section>
 
@@ -689,6 +690,25 @@
             <label class="mini">Escolta del paquete<select id="pm-escolta"></select></label>
             <p class="ayuda">La escolta despega con la misión (o se une desde el aire si es un grupo existente), vuela junto al grupo, intercepta a los aviones enemigos que lo amenacen y regresa a la misma base cuando la misión termina.</p>
           </div>
+          <details id="pm-ota" class="pm-ota">
+            <summary>Datos de la OTA (paquete, armamento, IFF, TOT)</summary>
+            <div class="pm-grid">
+              <label class="mini">Paquete<input id="pm-paquete-nombre" maxlength="12" placeholder="Ej. TELA"></label>
+              <label class="mini">Función<select id="pm-funcion">
+                <option value="-">Ninguna</option><option value="CM">CM: comandante de misión</option><option value="ACM">ACM: alterno</option>
+              </select></label>
+              <label class="mini">Código de misión<select id="pm-codigo"></select></label>
+              <label class="mini">Alerta<select id="pm-alerta"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
+              <label class="mini">Armamento primario<select id="pm-arma1"></select></label>
+              <label class="mini">Armamento secundario<select id="pm-arma2"></select></label>
+              <label class="mini">IFF (modo y código)<input id="pm-iff" maxlength="5" inputmode="numeric" placeholder="31701"></label>
+              <label class="mini">PDI (punto de impacto)<input id="pm-pdi" maxlength="30" placeholder="PDI25-PDI30"></label>
+              <label class="mini pm-ancho">Sobre el blanco (TOT)<select id="pm-tot"></select></label>
+            </div>
+            <p class="ayuda">Con un TOT y despegue desde una base, el turno de despegue se calcula hacia atrás. Cada punto puede
+              cambiar la altura del tramo que llega a él; un punto de paso marcado <b>RV</b> es el punto de reunión: el grupo
+              espera allí a los demás del paquete (hasta 2 turnos).</p>
+          </details>
           <div id="pm-estimacion"></div>
           <ul id="pm-avisos" class="pm-avisos"></ul>
           <div class="fila">

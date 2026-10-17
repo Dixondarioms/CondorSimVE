@@ -279,7 +279,7 @@ body.videowall #barra-herramientas { opacity: 0; pointer-events: none; }
 /* ---- misiones aereas: planificador sobre el mapa, lista y cronograma ---- */
 body.planificando-mision #barra-graficos { display: none; }
 #panel-mision {
-  left: 12px; top: 56px; width: 330px; max-height: calc(100% - 90px); overflow: auto; z-index: 1000;
+  left: 12px; top: 56px; width: 360px; max-height: calc(100% - 90px); overflow: auto; z-index: 1000;
   display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; letter-spacing: 0; font-size: 12px; color: var(--texto);
 }
 #panel-mision[hidden] { display: none; }
@@ -290,10 +290,15 @@ body.planificando-mision #barra-graficos { display: none; }
 #panel-mision .pm-grid[hidden], #panel-mision label[hidden] { display: none; }
 #panel-mision .pm-ancho { grid-column: 1 / -1; }
 .pm-puntos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.pm-puntos li { display: flex; align-items: center; gap: 6px; }
+.pm-puntos li { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pm-puntos li select.pm-perfil { flex: 0 0 104px; }
+.pm-puntos li label.pm-rv { display: flex; align-items: center; gap: 2px; font-size: 11px; }
+.pm-ota summary { cursor: pointer; font-weight: 600; margin-bottom: 4px; }
+.pm-ota input { width: 100%; box-sizing: border-box; }
+.ota-enlaces a { margin-right: 10px; }
 .pm-puntos li b { width: 18px; text-align: center; }
 .pm-puntos li select { flex: 1; min-width: 0; margin: 0; }
-.pm-puntos li .sec { flex: 1; }
+.pm-puntos li .sec { flex: 1 1 100%; order: 9; padding-left: 24px; font-size: 10px; color: var(--texto-sec); }
 .pm-puntos li.vacio { color: var(--texto-sec); font-style: italic; }
 .pm-tabla { width: 100%; border-collapse: collapse; font-size: 11px; }
 .pm-tabla th, .pm-tabla td { padding: 2px 4px; border-bottom: 1px solid var(--borde); text-align: left; }

@@ -748,6 +748,12 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   `escolta_de`). Una escolta no escolta a otra escolta.
 - **Cronograma (flow sheet):** botón *Cronograma*: una fila por misión con vuelo, órbitas, ataques y aterrizajes
   sobre la línea de tiempo, y el turno actual marcado. Cada bando ve solo sus misiones; el instructor, todas.
+- **Orden de Tareas Aéreas** (`engine/ota.py`, migración `0034`): cada misión lleva sus datos de la OTA según la
+  directiva AV/D 5-47 (paquete, comandante de misión CM y alterno ACM, código de misión, alerta, armamento primario
+  y secundario, IFF, PDI y TOT). Con un TOT el despegue se calcula hacia atrás; cada punto puede cambiar la altura
+  del tramo (rumbo, NM y pies en la estimación) y un punto de paso puede ser el **punto de reunión** del paquete.
+  El armamento guiado o antirradiación pesa en el ataque. *OTA en Word* / *OTA para imprimir* generan la orden con
+  encabezado, asignación de medios (con el código OACI de la base), DATMI, ruta, LOCOB, RECO y SPINS.
 
 ## Ejercicios con o contra los países vecinos
 

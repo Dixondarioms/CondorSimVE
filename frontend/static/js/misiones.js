@@ -81,7 +81,11 @@
         baseId: (bases()[0] || {}).id ?? null, modelo: ((cat().modelos || [])[0] || {}).id ?? null, aeronaves: 2,
         turno: turnoActual(), nombre: "", rol: "CAP", puntos: [], aterrizajeId: (bases()[0] || {}).id ?? null,
         escoltaDe: null, escolta: "",
+        ota: { paquete: "", funcion: "-", alerta: 1, armamento_primario: "", armamento_secundario: "", iff: "", codigo: "", pdi: "", tot_turno: null },
       };
+      for (const id of ["pm-paquete-nombre", "pm-iff", "pm-pdi"]) $(id).value = "";
+      $("pm-funcion").value = "-";
+      $("pm-alerta").value = "1";
       $("pm-origen-grupo").disabled = !g;
       $("pm-origen-base").disabled = !b;
       $("pm-nombre").value = "";
@@ -126,6 +130,22 @@
       borrador.modelo = $("pm-modelo").value || null;
       borrador.aterrizajeId = parseInt($("pm-aterrizaje").value, 10) || null;
       borrador.rol = $("pm-rol").value || borrador.rol;
+      // datos de la OTA: codigo de mision, armamento que lleva la aeronave y TOT
+      const o = borrador.ota;
+      const catOta = cat().ota || {};
+      const propio = (catOta.codigos_mision || {})[borrador.rol];
+      const nombreCod = catOta.nombre_codigo || {};
+      opciones($("pm-codigo"), [["", propio ? `${propio[0]} · ${nombreCod[propio[0]] || ""}` : "—"],
+        ...((catOta.codigos_opcionales || {})[borrador.rol] || []).map((c) => [c, `${c} · ${nombreCod[c] || ""}`])], o.codigo);
+      const modelo = borrador.origen === "grupo" ? ((datos().unidades.find((x) => x.id === borrador.unidadId) || {}).modelo) : borrador.modelo;
+      opciones($("pm-arma1"), [["", "—"], ...Logica.armasParaRol(catOta, modelo, borrador.rol, true)], o.armamento_primario);
+      opciones($("pm-arma2"), [["", "—"], ...Logica.armasParaRol(catOta, modelo, borrador.rol, false)], o.armamento_secundario);
+      opciones($("pm-tot"), [["", "Sin TOT (según el despegue)"], ...Array.from({ length: 25 }, (_, i) => [t0 + i, `T${t0 + i} · ${ctx.horaDeTurno(t0 + i)}`])], o.tot_turno ?? "");
+      o.codigo = $("pm-codigo").value;
+      o.armamento_primario = $("pm-arma1").value;
+      o.armamento_secundario = $("pm-arma2").value;
+      o.tot_turno = parseInt($("pm-tot").value, 10) || null;
+      $("pm-turno").disabled = !!o.tot_turno && borrador.origen === "base";
     }
 
     // ------------------------------------------------------------------ puntos de la ruta
@@ -201,6 +221,26 @@
           refrescar();
         });
         li.appendChild(tipo);
+        const perfil = el("select", "pm-perfil");
+        perfil.setAttribute("aria-label", `Altura del tramo hasta el punto ${i + 1}`);
+        perfil.title = "Altura del tramo que llega a este punto (sin cambio: sigue la anterior)";
+        opciones(perfil, [["", "Altura: igual"], ["alto", "Alta 20 000 ft"], ["medio", "Media 5000 ft"], ["rasante", "Rasante 200 ft"]], p.perfil || "");
+        perfil.addEventListener("change", () => { p.perfil = perfil.value || null; refrescar(); });
+        li.appendChild(perfil);
+        if (p.tipo === "paso") {
+          const rv = el("label", "pm-rv");
+          const c = el("input");
+          c.type = "checkbox";
+          c.checked = !!p.reunion;
+          c.addEventListener("change", () => {
+            for (const q of borrador.puntos) q.reunion = false;
+            p.reunion = c.checked;
+            refrescar();
+          });
+          rv.title = "Punto de reunión del paquete";
+          rv.append(c, el("span", "", "RV"));
+          li.appendChild(rv);
+        }
         if (p.tipo === "orbita") {
           const t = el("select");
           t.setAttribute("aria-label", `Turnos de órbita del punto ${i + 1}`);
@@ -232,6 +272,8 @@
     function puntosParaEnviar() {
       const pts = borrador.puntos.map((p) => {
         const d = { tipo: p.tipo, lat: p.lat, lon: p.lon };
+        if (p.perfil) d.perfil = p.perfil;
+        if (p.tipo === "paso" && p.reunion) d.reunion = true;
         if (p.tipo === "orbita") d.turnos = p.turnos;
         if (p.tipo === "blanco" && p.objetivo_unidad_id) d.objetivo_unidad_id = p.objetivo_unidad_id;
         return d;
@@ -244,7 +286,7 @@
     }
 
     function cuerpo() {
-      const c = { rol: borrador.rol, nombre: borrador.nombre.trim(), puntos: puntosParaEnviar() };
+      const c = { rol: borrador.rol, nombre: borrador.nombre.trim(), puntos: puntosParaEnviar(), ota: { ...borrador.ota } };
       if (borrador.origen === "grupo") c.unidad_id = borrador.unidadId;
       else Object.assign(c, { base_id: borrador.baseId, modelo: borrador.modelo, aeronaves: borrador.aeronaves, turno_despegue: borrador.turno });
       if (borrador.rol === "ESCOLTA") c.escolta_de = borrador.escoltaDe;
@@ -293,14 +335,16 @@
       limpiar(tabla);
       const t = el("table", "pm-tabla");
       const cab = el("tr");
-      for (const h of ["#", "Punto", "Llega", "Combustible"]) cab.appendChild(el("th", "", h));
+      for (const h of ["#", "Punto", "Rumbo · distancia · altura", "Llega", "Combustible"]) cab.appendChild(el("th", "", h));
       t.appendChild(cab);
       r.plan.puntos.forEach((f, i) => {
         const tipo = f.tipo || (r.puntos[i] || {}).tipo;
         const hora = (h) => Logica.horaEstimada(inicioMin(), r.turno_despegue, h);
         const tr = el("tr");
+        const pt = r.puntos[i] || {};
         tr.append(
-          el("td", "", String(i + 1)), el("td", "", TIPO[tipo] || tipo),
+          el("td", "", String(i + 1)), el("td", "", (pt.reunion ? "RV " : "") + (TIPO[tipo] || tipo)),
+          el("td", "", Logica.textoTramo((r.plan.tramos || [])[i])),
           el("td", "", hora(f.llegada_h) + (tipo === "orbita" && f.salida_h !== undefined ? ` → ${hora(f.salida_h)}` : "")),
           el("td", Logica.claseBarra(Math.min(f.combustible_llegada, f.combustible_salida ?? 100)),
             `${Math.round(f.combustible_llegada)} %` + (f.combustible_salida !== undefined ? ` → ${Math.round(f.combustible_salida)} %` : "")),
@@ -315,6 +359,21 @@
       if (!r.errores.length && !r.plan.advertencias.length) {
         avisos.appendChild(el("li", "ok", `Duración estimada ${r.plan.duracion_h.toFixed(1)} h · combustible final ${Math.round(r.plan.combustible_final)} %.`));
       }
+      if (borrador.ota.tot_turno && borrador.origen === "base") {
+        // el turno de despegue lo calcula el servidor desde el TOT
+        if (![...$("pm-turno").options].some((o) => o.value === String(r.turno_despegue))) {
+          const o = el("option", "", `T${r.turno_despegue} · ${ctx.horaDeTurno(r.turno_despegue)}`);
+          o.value = String(r.turno_despegue);
+          $("pm-turno").appendChild(o);
+        }
+        $("pm-turno").value = String(r.turno_despegue);
+        borrador.turno = r.turno_despegue;
+      }
+      const hora = (t) => `T${t} · ${ctx.horaDeTurno(t)}`;
+      const tiempos = [`Despegue ${hora(r.turno_despegue)}`];
+      if (r.plan.reunion_turno) tiempos.push(`reunión ${hora(r.plan.reunion_turno)}`);
+      if (r.plan.tot_turno) tiempos.push(`sobre el blanco (TOT) ${hora(r.plan.tot_turno)}`);
+      avisos.appendChild(el("li", "logistica", tiempos.join(" · ") + "."));
       const lg = r.plan.logistica;
       if (lg) {
         const n = (v, d = 0) => Number(v).toLocaleString("es", { maximumFractionDigits: d });
@@ -383,6 +442,19 @@
       const activas = misiones.filter(Logica.misionActiva);
       $("misiones-contador").textContent = String(activas.length);
       $("btn-planificar-mision").hidden = !(puedeGrupos() || puedeBases());
+      // Orden de Tareas Aereas (AV/D 5-47) de las misiones programadas y en curso
+      const enlaces = $("ota-enlaces");
+      limpiar(enlaces);
+      for (const b of esAlumno() ? [bando()] : ["azul", "rojo"]) {
+        const q = esAlumno() ? "" : `?bando=${b}`;
+        const sufijo = esAlumno() ? "" : ` ${b === "azul" ? "Azul" : "Rojo"}`;
+        const w = el("a", "boton-enlace", `OTA${sufijo} en Word`);
+        w.href = ctx.rutaEsc(`/misiones/ota.docx${q}`);
+        const h = el("a", "boton-enlace", `OTA${sufijo} para imprimir`);
+        h.href = ctx.rutaEsc(`/misiones/ota.html${q}`);
+        h.target = "_blank";
+        enlaces.append(w, h);
+      }
       const orden = [...activas, ...misiones.filter((m) => !Logica.misionActiva(m))].slice(0, 20);
       if (!orden.length) lista.appendChild(el("li", "vacio", "Sin misiones aéreas."));
       for (const m of orden) {
@@ -392,7 +464,7 @@
         const t = el("div", "texto");
         t.append(
           el("b", "", `M${m.id} · ${m.rol} · ${m.nombre || (u ? u.nombre : "grupo nuevo")}`),
-          el("span", "", `${Logica.ESTADOS_MISION[m.estado] || m.estado} · ${Logica.textoMision(m)}`),
+          el("span", "", `${Logica.ESTADOS_MISION[m.estado] || m.estado} · ${Logica.textoMision(m)}${Logica.textoPaquete(m) ? " · " + Logica.textoPaquete(m) : ""}`),
         );
         li.appendChild(t);
         if (esAlumno() && Logica.misionActiva(m) && (m.unidad_id ? conduceId(m.unidad_id) : ctx.puede("despegar"))) {
@@ -490,6 +562,21 @@
       alCambiar("pm-escolta-de", (v) => { borrador.escoltaDe = parseInt(v, 10) || null; });
       alCambiar("pm-escolta", (v) => { borrador.escolta = v || ""; });
       $("pm-nombre").addEventListener("input", () => { if (borrador) borrador.nombre = $("pm-nombre").value; });
+      const alEscribir = (id, campo, f = (v) => v) => $(id).addEventListener("input", () => {
+        if (!borrador) return;
+        borrador.ota[campo] = f($(id).value);
+        clearTimeout(temporizador);
+        temporizador = setTimeout(estimar, 400);
+      });
+      alEscribir("pm-paquete-nombre", "paquete", (v) => v.trim().toUpperCase());
+      alEscribir("pm-iff", "iff", (v) => v.trim());
+      alEscribir("pm-pdi", "pdi", (v) => v.trim().toUpperCase());
+      alCambiar("pm-funcion", (v) => { borrador.ota.funcion = v; });
+      alCambiar("pm-alerta", (v) => { borrador.ota.alerta = parseInt(v, 10) || 1; });
+      alCambiar("pm-codigo", (v) => { borrador.ota.codigo = v; });
+      alCambiar("pm-arma1", (v) => { borrador.ota.armamento_primario = v; });
+      alCambiar("pm-arma2", (v) => { borrador.ota.armamento_secundario = v; });
+      alCambiar("pm-tot", (v) => { borrador.ota.tot_turno = parseInt(v, 10) || null; });
       $("pm-limpiar").addEventListener("click", () => { if (borrador) { borrador.puntos = []; refrescar(); } });
       $("pm-crear").addEventListener("click", crearMision);
     }

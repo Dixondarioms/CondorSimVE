@@ -617,6 +617,22 @@ def construir(salida: Path) -> None:
               ["Reconocimiento", "Vuela la ruta sin atacar."], ["Guerra electrónica", "Interfiere desde la órbita."],
               ["Traslado", "Vuela a otra base y aterriza."], ["Escolta", "Acompaña a otra misión y la protege de los cazas enemigos."],
           ], [3.4 * cm, ANCHO_TEXTO - 3.4 * cm])]
+    h += [H3("Orden de Tareas Aéreas (OTA): paquete, armamento, TOT y punto de reunión"),
+          P("En el planificador, <b>Datos de la OTA</b> completa la línea de la misión según la directiva AV/D 5-47: "
+            "<b>paquete</b> (los grupos que atacan juntos) y la <b>función</b> en él (CM, comandante de misión; ACM, su "
+            "alterno; un paquete tiene uno de cada uno), el <b>código de misión</b> (1OT ataque a objetivos en tierra, "
+            "4PC patrulla aérea de combate, 5SD supresión de defensa, 12AC apoyo aéreo cercano…), la <b>alerta</b>, el "
+            "<b>armamento primario y secundario</b> que lleva esa aeronave (el primario debe servir al rol: aire-aire para "
+            "la CAP, aire-superficie para el ataque), el <b>IFF</b> (modo y código, p. ej. 31701), el <b>PDI</b> y el "
+            "<b>TOT</b>, la hora sobre el blanco: con despegue desde una base, el simulador calcula el turno de despegue."),
+          P("Cada punto puede <b>cambiar la altura</b> del tramo que llega a él (alta, media o rasante: cambia el consumo y "
+            "lo que ve el radar enemigo) y la tabla muestra el <b>rumbo, la distancia en NM y la altura</b> de cada tramo. "
+            "Un punto de paso marcado <b>RV</b> es el <b>punto de reunión</b>: el grupo espera allí a los demás del paquete "
+            "(hasta 2 turnos) y siguen juntos. El armamento guiado pega más fuerte contra blancos de superficie y el "
+            "antirradiación, contra radares que emiten."),
+          P(f"Debajo de la lista, {B('OTA en Word')} y {B('OTA para imprimir')} generan la orden del día con sus líneas: "
+            "encabezado, asignación de medios (unidad, base OACI, cantidad, aeronave y CM/ACM), DATMI, ruta (ingreso, "
+            "corredor, egreso, aterrizaje), LOCOB (ventana sobre el objetivo y coordenadas), RECO y SPINS.")]
     h += al_lado("misiones_lista", "Lista de misiones del bando.", [
         P("La lista <b>Misiones aéreas</b> muestra cada misión de su bando con su estado (programada, en curso, cumplida, abortada) y lo que "
           "está haciendo. Una orden directa al grupo reemplaza la misión; la «×» la cancela."),

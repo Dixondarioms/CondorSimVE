@@ -32,6 +32,7 @@ from app.engine import catalogo, combat, geo, logistica, movimiento, relieve, vi
 from app.engine import defensa_aerea as da_mod
 from app.engine import disponibilidad as disp_mod
 from app.engine import toe as toe_mod
+from app.engine import ota as ota_mod
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import infraestructura as infra_mod
@@ -876,7 +877,7 @@ def procesar_ordenes(
             factor_ataque=clase_a.ataque_vs.get(t_d, 1.0) * catalogo.factor_grupo(a)
             * (FACTOR_ATAQUE_TRAS_EVASION if a.id in evadieron else 1.0)
             * (ge_mod.FACTOR_ANTIAEREA if aaa_interferida else 1.0) * (ge_mod.FACTOR_TIRO_OPTICO if aaa_optica else 1.0)
-            * relieve.factor_portatil(a, d),
+            * relieve.factor_portatil(a, d) * ota_mod.factor_ataque(a, d),
             factor_defensa=clase_d.defensa * catalogo.factor_grupo(d),
             factor_clima=clima_mod.factor_ataque_aereo(clima, d.lat, d.lon) if a.tipo == "aerea" else 1.0,
             factor_municion=min(1.0, a.municion / consumo),

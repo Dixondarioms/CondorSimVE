@@ -224,6 +224,10 @@ def _cuerpo_word(bloques: list) -> str:
             out.append(_par(f"• {b[1]}"))
         elif tipo == "mision":
             out.append(_par(b[1], negrita=True))
+        elif tipo == "mono":  # lineas con formato de mensaje (OTA): letra de ancho fijo, alineadas a la izquierda
+            out.append('<w:p><w:pPr><w:spacing w:after="20"/><w:jc w:val="left"/></w:pPr><w:r><w:rPr>'
+                       '<w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New"/><w:sz w:val="18"/>'
+                       f'</w:rPr><w:t xml:space="preserve">{_x(b[1])}</w:t></w:r></w:p>')
         elif tipo == "tabla":
             out.append(_tabla(b[1], b[2]))
         elif tipo == "salto":
@@ -293,6 +297,7 @@ h1 { text-align: center; font-size: 15pt; margin: 12px 0 18px; }
 h2 { font-size: 11.5pt; margin: 14px 0 4px; break-after: avoid; }
 p { margin: 3px 0; text-align: justify; }
 .mision { font-weight: bold; border-left: 3px solid #888; padding-left: 8px; }
+.mono { font-family: "Courier New", monospace; font-size: 9.5pt; text-align: left; margin: 1px 0; word-break: break-all; }
 table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; font-size: 9pt; }
 th, td { border: 1px solid #888; padding: 3px 5px; vertical-align: top; text-align: left; white-space: pre-wrap; }
 th { background: #d9e2f3; }
@@ -330,6 +335,8 @@ def pagina(titulo: str, bloques: list) -> str:
             out.append(f"<p>• {e(b[1])}</p>")
         elif tipo == "mision":
             out.append(f'<p class="mision">{e(b[1])}</p>')
+        elif tipo == "mono":
+            out.append(f'<p class="mono">{e(b[1])}</p>')
         elif tipo == "tabla":
             filas = "".join("<tr>" + "".join(f"<td>{e(v)}</td>" for v in f) + "</tr>" for f in b[2])
             out.append("<table><tr>" + "".join(f"<th>{e(h)}</th>" for h in b[1]) + f"</tr>{filas}</table>")

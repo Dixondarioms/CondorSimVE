@@ -804,6 +804,25 @@ def construir(salida: Path, img: Path) -> None:
                "<font face='Mono'>arma_elegida</font> (migración 0031); la munición de la unidad es el total de la reserva y el "
                "reabastecimiento se reparte entre las armas a las que les falta. <font face='Mono'>POST /unidades/{id}/defensa</font> "
                "acepta <font face='Mono'>arma</font>; <font face='Mono'>GET /api/catalogo</font> trae <font face='Mono'>sistemas_da</font>."])]
+    h += [H2("8.20 Orden de Tareas Aéreas (AV/D 5-47), paquetes, TOT y punto de reunión"),
+          Bul(["<b>Datos OTA</b> (<font face='Mono'>engine/ota.py</font>, <font face='Mono'>Mision.ota_json</font>, migración "
+               "0034; <font face='Mono'>ota</font> en <font face='Mono'>POST /misiones</font>): paquete, función CM/ACM (uno "
+               "de cada uno por paquete), alerta 1-3, armamento primario y secundario (códigos de la directiva por modelo; el "
+               "primario debe servir al rol), IFF (modo + 4 dígitos octales), código de misión (el del rol o uno de la tabla) "
+               "y PDI. La escolta del paquete entra en él con un misil aire-aire.",
+               "<b>TOT</b>: con despegue desde una base, turno de despegue = TOT − horas hasta el blanco (cada turno es una hora); "
+               "con un grupo existente, aviso si no llega en el TOT. <b>Altura por punto</b> (<font face='Mono'>perfil</font>): "
+               "rige desde ese tramo en la estimación del consumo y en el vuelo (<font face='Mono'>perfil_vuelo</font>); el plan "
+               "trae <font face='Mono'>tramos</font> con rumbo verdadero, NM y pies.",
+               "<b>Punto de reunión</b> (<font face='Mono'>reunion</font> en un punto de paso): el grupo se detiene hasta que "
+               "los demás grupos en curso del paquete con punto de reunión llegan al suyo, o hasta "
+               "<font face='Mono'>ESPERA_REUNION_MAX</font> = 2 turnos.",
+               "<b>Armamento en el combate</b>: al iniciar la misión el grupo carga el primario (<font face='Mono'>arma_elegida</font>); "
+               "guiado contra superficie ×1,15, antirradiación contra un radar que emite ×1,3, aire-aire de más de 50 km ×1,1.",
+               "<b>Documento</b>: <font face='Mono'>GET /misiones/ota</font> (líneas), <font face='Mono'>ota.docx</font> y "
+               "<font face='Mono'>ota.html</font> (<font face='Mono'>?bando=</font> para el instructor; el alumno, solo el suyo). "
+               "Campos separados con «/», línea terminada en «//», fechas DDHH:MMmmmAA y DDHHMM, coordenadas ggmmssN-gggmmssW, "
+               "bases con su código OACI (<font face='Mono'>frontend/static/geo/aerodromos/indice.json</font>)."])]
     h += [H2("8.19 Personal (plantilla, reservas y milicia), disponibilidad, fallas y esfuerzo"),
           Bul(["<b>Plantilla</b> (<font face='Mono'>engine/toe.py</font>): grupos aéreos = por aeronave, tripulaciones (3 o 4) × "
                "tripulantes de su ficha, 7 técnicos por especialidad (motores 2, célula, aviónica, armamento, electricidad, equipo "
@@ -1028,6 +1047,9 @@ def construir(salida: Path, img: Path) -> None:
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
               ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña TIEM; engine/pmo.py",
                "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["Orden de Tareas Aéreas (OTA)", "Planificar misión → Datos de la OTA; Misiones aéreas → OTA en Word",
+               "Paquete con comandante de misión, código de misión, armamento, IFF, TOT, altura por tramo, punto de reunión "
+               "y la OTA en el formato de la AV/D 5-47 (8.20)."],
               ["Personal, disponibilidad, fallas y esfuerzo aéreo", "Situación → Parte de personal y Esfuerzo; Consola → Personal",
                "Plantilla por unidad (3-4 tripulaciones y 7 técnicos por aeronave), reservas activas y milicia, disponibilidad "
                "y fallas en vuelo, salidas, horas y atrición (8.19)."],

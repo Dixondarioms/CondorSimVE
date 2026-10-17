@@ -371,6 +371,22 @@ class PuntoMisionIn(BaseModel):
     objetivo_unidad_id: int | None = None  # solo blanco (opcional: sin el, ataca al enemigo detectado mas cercano)
     base_id: int | None = None  # solo aterrizaje
     centro: tuple[float, float] | None = None  # orbita de guerra electronica: punto que interfiere
+    perfil: Literal["alto", "medio", "rasante"] | None = None  # altura del tramo que llega a este punto
+    reunion: bool = False  # solo paso: punto de reunion del paquete (espera a los demas grupos)
+
+
+class OtaMisionIn(BaseModel):
+    """Datos de la mision en la OTA (directiva AV/D 5-47)."""
+
+    paquete: str = Field(default="", max_length=12)
+    funcion: Literal["CM", "ACM", "-"] = "-"
+    alerta: int = Field(default=1, ge=1, le=3)
+    armamento_primario: str = Field(default="", max_length=5)
+    armamento_secundario: str = Field(default="", max_length=5)
+    iff: str = Field(default="", max_length=5)
+    codigo: str = Field(default="", max_length=5)  # codigo de mision de la tabla (vacio: el del rol)
+    pdi: str = Field(default="", max_length=30)
+    tot_turno: int | None = None  # turno sobre el blanco: con despegue desde una base, fija el turno de despegue
 
 
 class MisionIn(BaseModel):
@@ -387,6 +403,7 @@ class MisionIn(BaseModel):
     # rol ESCOLTA: mision que escolta; paquete: escolta que se crea junto con esta mision (mismo turno de despegue)
     escolta_de: int | None = None
     escolta: "EscoltaIn | None" = None
+    ota: OtaMisionIn | None = None
 
 
 class EscoltaIn(BaseModel):
