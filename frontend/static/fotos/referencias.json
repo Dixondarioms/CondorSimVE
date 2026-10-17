@@ -283,6 +283,46 @@
     }
   },
   "clases": {
+    "antiaerea": {
+      "foto": "/static/fotos/ref_pechora_2m.jpg",
+      "obra": "Pechora-2M - missile launcher 1",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Pechora-2M_-_missile_launcher_1.jpg"
+    },
+    "antiaerea_portatil": {
+      "foto": "/static/fotos/ref_antiaerea_portatil.jpg",
+      "obra": "9K338 Igla-S (NATO-Code - SA-24 Grinch)",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:9K338_Igla-S_(NATO-Code_-_SA-24_Grinch).jpg"
+    },
+    "artilleria": {
+      "foto": "/static/fotos/ref_artilleria.jpg",
+      "obra": "SPG 2S19M2 \"Msta-S\" on \"Oboronexpo\" in 2014 (front view)",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:SPG_2S19M2_%22Msta-S%22_on_%22Oboronexpo%22_in_2014_(front_view).jpg"
+    },
+    "artilleria_antiaerea": {
+      "foto": "/static/fotos/ref_zu23_2.jpg",
+      "obra": "ZU-23-2 in Saint Petersburg",
+      "autor": "One half 3544",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:ZU-23-2_in_Saint_Petersburg.jpg"
+    },
+    "blindado": {
+      "foto": "/static/fotos/ref_blindado.jpg",
+      "obra": "T-72B1 2",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:T-72B1_2.jpg"
+    },
     "buque_desembarco": {
       "foto": "/static/fotos/ref_buque_desembarco.jpg",
       "obra": "Buque de desembarque tipo LST clase Capana - T-63 Goajira",
@@ -307,6 +347,38 @@
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
       "pagina": "https://commons.wikimedia.org/wiki/File:ARV_Mariscal_Sucre_(F-21)_-_1987-09857.jpg"
     },
+    "guerra_electronica": {
+      "foto": "/static/fotos/ref_guerra_electronica.jpg",
+      "obra": "Electronic Warfare Vehicle Provides Signal Intelligence for Sky Soldiers (4738453)",
+      "autor": "U.S. Army 173IBCT-A by Capt. Joe Legros",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Electronic_Warfare_Vehicle_Provides_Signal_Intelligence_for_Sky_Soldiers_(4738453).jpg"
+    },
+    "infanteria": {
+      "foto": "/static/fotos/ref_infanteria.jpg",
+      "obra": "103-vdv-vitebsk-02",
+      "autor": "Serge Serebro, Vitebsk Popular News",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:103-vdv-vitebsk-02.jpg"
+    },
+    "ingenieros": {
+      "foto": "/static/fotos/ref_ingenieros.jpg",
+      "obra": "IMR engineering vehicle ( Military-historical Museum of Artillery, Engineer and Signal Corps)",
+      "autor": "Anna Chernichko from St. Petersburg, Russia",
+      "licencia": "CC BY 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:IMR_engineering_vehicle_(_Military-historical_Museum_of_Artillery,_Engineer_and_Signal_Corps).jpg"
+    },
+    "lanzador_misiles": {
+      "foto": "/static/fotos/ref_lanzador_misiles.jpg",
+      "obra": "Caracas, Canciller Ricardo Patiño participó en los actos de conmemoración de la muerte de Hugo Chávez (12960876943)",
+      "autor": "Cancillería del Ecuador from Ecuador",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Caracas,_Canciller_Ricardo_Pati%C3%B1o_particip%C3%B3_en_los_actos_de_conmemoraci%C3%B3n_de_la_muerte_de_Hugo_Ch%C3%A1vez_(12960876943).jpg"
+    },
     "patrullero": {
       "foto": "/static/fotos/ref_patrullero.jpg",
       "obra": "ANBV Yavire (GC-22)",
@@ -323,6 +395,22 @@
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
       "pagina": "https://commons.wikimedia.org/wiki/File:Flickr_-_Official_U.S._Navy_Imagery_-_The_Nimitz-class_aircraft_carrier_USS_Carl_Vinson_(CVN_70)_is_underway_in_the_Arabian_Sea..jpg"
     },
+    "radar": {
+      "foto": "/static/fotos/ref_radar.jpg",
+      "obra": "P-18PL radar",
+      "autor": "Unknown authorUnknown author",
+      "licencia": "CC BY 3.0 pl",
+      "url_licencia": "https://creativecommons.org/licenses/by/3.0/pl/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:P-18PL_radar.png"
+    },
+    "reconocimiento": {
+      "foto": "/static/fotos/ref_reconocimiento.jpg",
+      "obra": "BRDM-2 (1964) owned by James Stewart pic6",
+      "autor": "AlfvanBeem",
+      "licencia": "CC0",
+      "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:BRDM-2_(1964)_owned_by_James_Stewart_pic6.JPG"
+    },
     "submarino": {
       "foto": "/static/fotos/ref_submarino.jpg",
       "obra": "Submarino Oceánico Tipo U-209 S-31 Sabalo",
@@ -330,6 +418,14 @@
       "licencia": "CC BY-SA 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:Submarino_Oce%C3%A1nico_Tipo_U-209_S-31_Sabalo.JPG"
+    },
+    "transporte": {
+      "foto": "/static/fotos/ref_transporte.jpg",
+      "obra": "TB2015ExhibitionP1-58",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:TB2015ExhibitionP1-58.jpg"
     }
   }
 }

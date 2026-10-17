@@ -69,6 +69,19 @@ UNIDADES = [
     ("modelos", "pechora_2m", "S-125 Pechora-2M", ["Pechora-2M Venezuela", "S-125 Pechora-2M", "S-125 Neva"]),
     ("modelos", "buk_m2e", "Buk-M2E", ["Buk-M2E Venezuela", "Buk-M2E", "9A317 Buk-M2"]),
     ("modelos", "s300vm", "S-300VM Antey-2500", ["S-300VM Venezuela", "S-300VM Antey-2500", "9A83 launcher"]),
+    # clases terrestres sin modelo (la foto es la de la clase)
+    ("clases", "infanteria", "Infanteria", ["Venezuelan Army soldiers", "Ejercito Bolivariano soldados", "infantry soldiers rifle"]),
+    ("clases", "blindado", "Tanque", ["T-72B1 Venezuela", "T-72B1 tank", "T-72B tank"]),
+    ("clases", "artilleria", "Artilleria autopropulsada", ["2S19 Msta-S Venezuela", "2S19 Msta-S", "Msta-S howitzer"]),
+    ("clases", "reconocimiento", "Vehiculo de reconocimiento", ["BRDM-2 Venezuela", "BRDM-2"]),
+    ("clases", "ingenieros", "Ingenieros de combate", ["IMR-2 engineering vehicle", "combat engineering vehicle", "MT-55 bridge layer"]),
+    ("clases", "transporte", "Convoy logistico", ["Kamaz Venezuela", "Kamaz 6350 military truck", "Kamaz military truck"]),
+    ("clases", "lanzador_misiles", "Lanzacohetes", ["BM-30 Smerch Venezuela", "9A52-2 Smerch", "BM-30 Smerch"]),
+    ("clases", "radar", "Radar de vigilancia", ["JY-27 radar", "JYL-1 radar", "P-18 radar"]),
+    ("clases", "guerra_electronica", "Guerra electronica", ["electronic warfare vehicle", "Krasukha-4", "R-330Zh Zhitel"]),
+    ("clases", "antiaerea_portatil", "Antiaerea portatil", ["Igla-S Venezuela", "9K338 Igla-S", "Igla MANPADS"]),
+    ("clases", "antiaerea", "Antiaerea", ["Pechora-2M Venezuela", "surface-to-air missile launcher"]),
+    ("clases", "artilleria_antiaerea", "Artilleria antiaerea", ["ZU-23-2 Venezuela", "ZU-23-2"]),
     ("modelos", "mistral", "Misil Mistral", ["Mistral missile Venezuela", "Mistral MANPADS", "Mistral ATLAS"]),
     ("modelos", "rbs70", "RBS 70", ["RBS 70 Venezuela", "RBS 70", "RBS-70 missile"]),
     # aeronaves de EE. UU. de la plantilla del 3 de enero de 2026 (fotos oficiales de dominio publico, en su mayoria)
@@ -369,6 +382,7 @@ def main() -> int:
     ap.add_argument("--forzar", action="store_true", help="volver a elegir tambien las que ya tienen foto")
     ap.add_argument("--quitar", action="append", metavar="CLAVE", help="quitar la foto (vuelve a la ilustracion)")
     ap.add_argument("--uniformar", action="store_true", help="rehacer el encuadre de todas desde los originales")
+    ap.add_argument("--solo", action="append", metavar="CLAVE", help="procesar solo estas claves (se puede repetir)")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")  # consola de Windows: autores con caracteres fuera de su codificacion
     if args.uniformar:
@@ -390,6 +404,8 @@ def main() -> int:
     candidatas, faltan = {}, []
     for seccion, clave, que, busquedas in UNIDADES:
         if args.quitar and clave in args.quitar:
+            continue
+        if args.solo and clave not in args.solo:
             continue
         actual = m[seccion].get(clave)
         tiene = actual and (FOTOS / Path(actual["foto"]).name).is_file()
