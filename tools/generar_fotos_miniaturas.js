@@ -4,7 +4,8 @@
  *
  *     node tools/generar_fotos_miniaturas.js
  *
- * Escribe frontend/static/fotos/<modelo>.svg para cada entrada de MODELOS de abajo. */
+ * Escribe frontend/static/fotos/<modelo>.svg para cada entrada de MODELOS de abajo (los genericos y las
+ * aeronaves de EE. UU. de la plantilla del 3 de enero de 2026, estilizadas a partir de sus miniaturas). */
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -18,6 +19,31 @@ const MODELOS = {
   helo_transporte: { malla: "helo_transporte", nombre: "Helicóptero de transporte artillado (genérico)", rumbo: 225, fondo: "cielo" },
   ataque_ligero: { malla: "ataque_ligero", nombre: "Avión de ataque ligero (genérico)", rumbo: 220, fondo: "cielo" },
   crucero: { malla: "misil_crucero", nombre: "Misil de crucero (genérico)", rumbo: 250, fondo: "mar", escala: 0.9 },
+  // aeronaves de EE. UU. de la plantilla del 3 de enero de 2026
+  f22: { malla: "f22", nombre: "F-22A Raptor", rumbo: 215, fondo: "cielo" },
+  f35a: { malla: "f35a", nombre: "F-35A Lightning II", rumbo: 215, fondo: "cielo" },
+  f35b: { malla: "f35b", nombre: "F-35B Lightning II (STOVL)", rumbo: 220, fondo: "mar" },
+  fa18ef: { malla: "caza_embarcado", nombre: "F/A-18E/F Super Hornet", rumbo: 210, fondo: "mar" },
+  ea18g: { malla: "ea18g", nombre: "EA-18G Growler", rumbo: 215, fondo: "mar" },
+  b1b: { malla: "b1b", nombre: "B-1B Lancer", rumbo: 220, fondo: "cielo" },
+  p8a: { malla: "p8a", nombre: "P-8A Poseidon", rumbo: 225, fondo: "mar" },
+  e2d: { malla: "e2d", nombre: "E-2D Advanced Hawkeye", rumbo: 220, fondo: "mar" },
+  e3g: { malla: "e3g", nombre: "E-3G Sentry (AWACS)", rumbo: 225, fondo: "cielo" },
+  rc135: { malla: "rc135", nombre: "RC-135V/W Rivet Joint", rumbo: 225, fondo: "cielo" },
+  ec130h: { malla: "ec130h", nombre: "EC-130H Compass Call", rumbo: 225, fondo: "cielo" },
+  kc135: { malla: "kc135", nombre: "KC-135R Stratotanker", rumbo: 225, fondo: "cielo" },
+  rq170: { malla: "rq170", nombre: "RQ-170 Sentinel", rumbo: 210, fondo: "cielo" },
+  mq9: { malla: "dron_armado", nombre: "MQ-9A Reaper", rumbo: 220, fondo: "cielo" },
+  lucas: { malla: "merodeadora", nombre: "Dron de ataque de un solo uso (tipo LUCAS)", rumbo: 230, fondo: "cielo", escala: 0.8 },
+  mh47g: { malla: "mh47g", nombre: "MH-47G Chinook", rumbo: 230, fondo: "mar" },
+  mh60m: { malla: "mh60m", nombre: "MH-60M Black Hawk", rumbo: 225, fondo: "mar" },
+  mh60dap: { malla: "helo_transporte", nombre: "MH-60M DAP", rumbo: 225, fondo: "mar" },
+  ah6m: { malla: "ah6m", nombre: "AH-6M Little Bird", rumbo: 230, fondo: "cielo", escala: 0.85 },
+  mh6m: { malla: "mh6m", nombre: "MH-6M Little Bird", rumbo: 230, fondo: "cielo", escala: 0.85 },
+  // defensa aerea venezolana
+  s300vm: { malla: "s300vm", nombre: "S-300VM Antey-2500 (batería)", rumbo: 215, fondo: "cielo" },
+  mistral: { malla: "mistral", nombre: "Mistral (sección de 4 puestos)", rumbo: 210, fondo: "cielo", escala: 0.8 },
+  rbs70: { malla: "rbs70", nombre: "RBS 70 (sección con radar Giraffe)", rumbo: 210, fondo: "cielo", escala: 0.8 },
 };
 
 const FONDOS = {
@@ -47,7 +73,9 @@ function ilustracion(id, cfg) {
 }
 
 const destino = path.join(__dirname, "..", "frontend", "static", "fotos");
-for (const [id, cfg] of Object.entries(MODELOS)) {
+// sin argumentos, todas; con ids (p. ej. "s300vm mistral"), solo esas
+const pedidos = process.argv.slice(2);
+for (const [id, cfg] of Object.entries(MODELOS).filter(([id]) => !pedidos.length || pedidos.includes(id))) {
   fs.writeFileSync(path.join(destino, `${id}.svg`), ilustracion(id, cfg), "utf8");
   console.log(`${id}.svg`);
 }

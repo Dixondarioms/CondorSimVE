@@ -12,9 +12,9 @@ const bando = (extra = {}) => ({
   objetivos: { cumplidos: 1, fallidos: 0, pendientes: 2, puntos: 20 },
   misiones: { planificadas: 2, cumplidas: 1, abortadas: 1, fallidas: 0, canceladas: 0, en_curso: 0 },
   puestos: {
-    inteligencia: { sigla: "A2", nombre: "Inteligencia", ordenes: { emitidas: 0, resueltas: 0, rechazadas: 0, motivos_rechazo: [] }, misiones: 0, observaciones: [] },
-    planificacion: { sigla: "A5", nombre: "Planificacion", ordenes: { emitidas: 3, resueltas: 1, rechazadas: 2, motivos_rechazo: [{ motivo: "Objetivo fuera de alcance", veces: 2 }] }, misiones: 0,
-      observaciones: ["2 orden(es) rechazada(s) en A5 por 'Objetivo fuera de alcance': revisar la apreciacion de distancias antes de emitir la orden."] },
+    a2: { sigla: "A-2", nombre: "Inteligencia", ordenes: { emitidas: 0, resueltas: 0, rechazadas: 0, motivos_rechazo: [] }, misiones: 0, observaciones: [] },
+    a3: { sigla: "A-3", nombre: "Operaciones", ordenes: { emitidas: 3, resueltas: 1, rechazadas: 2, motivos_rechazo: [{ motivo: "Objetivo fuera de alcance", veces: 2 }] }, misiones: 0,
+      observaciones: ["2 orden(es) rechazada(s) en A-3 por 'Objetivo fuera de alcance': revisar la apreciacion de distancias antes de emitir la orden."] },
   },
   observaciones: ["Alta proporcion de ordenes rechazadas (67 % de 3): verificar alcance, municion y estado de la unidad antes de emitir."],
   ...extra,
@@ -49,16 +49,16 @@ test("filasIndicadores tolera un bando ausente", () => {
 
 test("filasPuestos omite los puestos sin actividad y muestra los motivos", () => {
   const filas = R.filasPuestos(bando());
-  assert.deepEqual(filas, [["A5 · Planificacion", 3, 1, 2, 0, "Objetivo fuera de alcance (2)"]]);
+  assert.deepEqual(filas, [["A-3 · Operaciones", 3, 1, 2, 0, "Objetivo fuera de alcance (2)"]]);
   assert.deepEqual(R.filasPuestos({ puestos: {} }), []);
 });
 
 test("observaciones reune las del bando y las de sus puestos sin repetir", () => {
   const b = bando();
-  b.puestos.planificacion.observaciones.push(b.observaciones[0]);
+  b.puestos.a3.observaciones.push(b.observaciones[0]);
   const obs = R.observaciones(b);
   assert.equal(obs.length, 2);
-  assert.match(obs[1], /^2 orden\(es\) rechazada\(s\) en A5/);
+  assert.match(obs[1], /^2 orden\(es\) rechazada\(s\) en A-3/);
 });
 
 test("resumen describe el escenario", () => {
@@ -95,6 +95,8 @@ test("filasAlumnos tolera una rubrica sin la seccion por alumno (respuestas anti
 
 test("etiquetaOrigen distingue plantillas del sistema y del instructor", () => {
   assert.equal(P.etiquetaOrigen({ origen: "codigo" }), "Plantilla del sistema");
+  assert.equal(P.etiquetaIA({ ia_rojo: true, dia_noche: true }), "Contra la IA (el simulador conduce el bando Rojo) · ciclo de día y noche");
+  assert.equal(P.etiquetaIA({ ia_azul: false, ia_rojo: false }), "");
   assert.equal(P.etiquetaOrigen({ origen: "usuario", guardada_en: "2026-09-30T05:31:16+00:00", con_estado: true }),
     "Guardada por un instructor el 2026-09-30 05:31 · conserva el estado");
   assert.equal(P.etiquetaOrigen({ origen: "usuario", guardada_en: "" }), "Guardada por un instructor");

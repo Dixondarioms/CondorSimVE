@@ -1,0 +1,431 @@
+{
+  "_comentario": "Generado por tools/fotos/fotos_referencia.py: fotos de referencia de Wikimedia Commons.",
+  "modelos": {
+    "ah6m": {
+      "foto": "/static/fotos/ref_ah6m.jpg",
+      "obra": "2 AH-6J Little Bird de l'US Army, 31 mars 2003, Irak",
+      "autor": "Desconocido",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:2_AH-6J_Little_Bird_de_l%27US_Army,_31_mars_2003,_Irak.jpg"
+    },
+    "ataque_ligero": {
+      "foto": "/static/fotos/ref_ataque_ligero.jpg",
+      "obra": "19334 Hongdu K-8W Karakorum Bangladesh - Air Force VGHS",
+      "autor": "Md Shaifuzzaman Ayon",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:19334_Hongdu_K-8W_Karakorum_Bangladesh_-_Air_Force_VGHS.jpg"
+    },
+    "b1b": {
+      "foto": "/static/fotos/ref_b1b.jpg",
+      "obra": "A B-1B Lancer",
+      "autor": "Master Sgt. Nicholas Priest",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:A_B-1B_Lancer.jpg"
+    },
+    "buk_m2e": {
+      "foto": "/static/fotos/ref_buk_m2e.jpg",
+      "obra": "BUK-M2E VEN",
+      "autor": "Cancillería del Ecuador",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:BUK-M2E_VEN.jpg"
+    },
+    "caza_embarcado": {
+      "foto": "/static/fotos/ref_caza_embarcado.jpg",
+      "obra": "F-18F after launch from USS Abraham Lincoln (CVN-72)",
+      "autor": "U.S. Navy photo by Mass Communication Specialist 2nd Class James R. Evans",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:F-18F_after_launch_from_USS_Abraham_Lincoln_(CVN-72).jpg"
+    },
+    "crucero": {
+      "foto": "/static/fotos/ref_crucero.jpg",
+      "obra": "Tomahawk Block IV cruise missile -crop",
+      "autor": "U.S. Navy derivative work: The High Fin Sperm Whale",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Tomahawk_Block_IV_cruise_missile_-crop.jpg"
+    },
+    "e2d": {
+      "foto": "/static/fotos/ref_e2d.jpg",
+      "obra": "E-2D Advanced Hawkeye aircraft conduct a test flight",
+      "autor": "US Navy",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:E-2D_Advanced_Hawkeye_aircraft_conduct_a_test_flight.jpg"
+    },
+    "e3g": {
+      "foto": "/static/fotos/ref_e3g.jpg",
+      "obra": "E-3 Sentry Airborne Warning and Control System (AWACS) conducts a mission",
+      "autor": "Senior Airman Roslyn Ward",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:E-3_Sentry_Airborne_Warning_and_Control_System_(AWACS)_conducts_a_mission.jpg"
+    },
+    "ea18g": {
+      "foto": "/static/fotos/ref_ea18g.jpg",
+      "obra": "Boeing EA-18G Growler of VAQ-141 in flight on 24 March 2012",
+      "autor": "ぽりたんく",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Boeing_EA-18G_Growler_of_VAQ-141_in_flight_on_24_March_2012.jpg"
+    },
+    "ec130h": {
+      "foto": "/static/fotos/ref_ec130h.jpg",
+      "obra": "EC-130H Compass Call 060617",
+      "autor": "Mil",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:EC-130H_Compass_Call_060617.jpg"
+    },
+    "f22": {
+      "foto": "/static/fotos/ref_f22.jpg",
+      "obra": "F-22 Raptor edit1",
+      "autor": "F-22_Raptor.JPG: Master Sgt. Andy Dunaway",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:F-22_Raptor_edit1.jpg"
+    },
+    "f35a": {
+      "foto": "/static/fotos/ref_f35a.jpg",
+      "obra": "F-35 Heritage Flight Team performs in Bell Fort Worth Alliance AirShow",
+      "autor": "Airman 1st Class Alexander Cook",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:F-35_Heritage_Flight_Team_performs_in_Bell_Fort_Worth_Alliance_AirShow.jpg"
+    },
+    "f35b": {
+      "foto": "/static/fotos/ref_f35b.jpg",
+      "obra": "Royal Air Force Lockheed Martin F-35B Lightning II ZM166 032 Royal International Air Tattoo 2025 02",
+      "autor": "Julian Herzog (Website)",
+      "licencia": "CC BY 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Royal_Air_Force_Lockheed_Martin_F-35B_Lightning_II_ZM166_032_Royal_International_Air_Tattoo_2025_02.jpg"
+    },
+    "fa18ef": {
+      "foto": "/static/fotos/ref_fa18ef.jpg",
+      "obra": "Boeing FA-18F Super Hornet at take off Danish Air Show 2014-06-22 aligned",
+      "autor": "Slaunger",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Boeing_FA-18F_Super_Hornet_at_take_off_Danish_Air_Show_2014-06-22_aligned.jpg"
+    },
+    "ge_aereo": {
+      "foto": "/static/fotos/ref_ge_aereo.jpg",
+      "obra": "EC-130H Compass Call 060617",
+      "autor": "Mil",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:EC-130H_Compass_Call_060617.jpg"
+    },
+    "helo_ataque": {
+      "foto": "/static/fotos/ref_helo_ataque.jpg",
+      "obra": "Mil Mi-35M (51 yellow)",
+      "autor": "Yevgeny Volkov",
+      "licencia": "CC BY 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Mil_Mi-35M_(51_yellow).jpg"
+    },
+    "helo_transporte": {
+      "foto": "/static/fotos/ref_helo_transporte.jpg",
+      "obra": "Mil Mi-17V5 (EV) (30895405051)",
+      "autor": "Carlos E. Pérez S.L. from Maracay, Venezuela",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Mil_Mi-17V5_(EV)_(30895405051).jpg"
+    },
+    "kc135": {
+      "foto": "/static/fotos/ref_kc135.jpg",
+      "obra": "931st Air Refueling Group - Boeing KC-135R-BN Stratotanker 60-0336",
+      "autor": "United States Air Force",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:931st_Air_Refueling_Group_-_Boeing_KC-135R-BN_Stratotanker_60-0336.jpg"
+    },
+    "lucas": {
+      "foto": "/static/fotos/ref_lucas.jpg",
+      "obra": "LUCAS the American reverse-engineered version of the Shahed-136 one-way attack drone",
+      "autor": "Cpl. Kayla Mc Guire",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:LUCAS_the_American_reverse-engineered_version_of_the_Shahed-136_one-way_attack_drone.jpg"
+    },
+    "merodeadora": {
+      "foto": "/static/fotos/ref_merodeadora.jpg",
+      "obra": "IAI Harop PAS 2013 02",
+      "autor": "Julian Herzog (Website)",
+      "licencia": "CC BY 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:IAI_Harop_PAS_2013_02.jpg"
+    },
+    "mh47g": {
+      "foto": "/static/fotos/ref_mh47g.jpg",
+      "obra": "Special Boat Team takes flight with Nightstalkers 140521-A-PP158-057",
+      "autor": "Sgt. Christopher Prows",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Special_Boat_Team_takes_flight_with_Nightstalkers_140521-A-PP158-057.jpg"
+    },
+    "mh60dap": {
+      "foto": "/static/fotos/ref_mh60dap.jpg",
+      "obra": "MH-60M DAP firing 2.75 inch rockets at a test ground",
+      "autor": "U.S. Army",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:MH-60M_DAP_firing_2.75_inch_rockets_at_a_test_ground.jpg"
+    },
+    "mh60m": {
+      "foto": "/static/fotos/ref_mh60m.jpg",
+      "obra": "Sikorsky UH-60 Black Hawk - 04",
+      "autor": "Oleg Yunakov",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Sikorsky_UH-60_Black_Hawk_-_04.jpg"
+    },
+    "mh6m": {
+      "foto": "/static/fotos/ref_mh6m.jpg",
+      "obra": "US Army 160th SOAR MH-6",
+      "autor": "U.S. Army",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:US_Army_160th_SOAR_MH-6.jpg"
+    },
+    "mistral": {
+      "foto": "/static/fotos/ref_mistral.jpg",
+      "obra": "Mistral Atlas launcher of the Hungarian Armed Forces cropped",
+      "autor": "Admiralis-generalis-Aladeen",
+      "licencia": "CC0",
+      "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Mistral_Atlas_launcher_of_the_Hungarian_Armed_Forces_cropped.jpg"
+    },
+    "mq9": {
+      "foto": "/static/fotos/ref_mq9.jpg",
+      "obra": "MQ-9 Reaper in flight 2",
+      "autor": "Desconocido",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:MQ-9_Reaper_in_flight_2.jpg"
+    },
+    "p8a": {
+      "foto": "/static/fotos/ref_p8a.jpg",
+      "obra": "P-8A Poseidon Executes Training Flight (9341127)",
+      "autor": "U.S. Navy photo by Lt. Sara Wedemeyer",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:P-8A_Poseidon_Executes_Training_Flight_(9341127).jpg"
+    },
+    "pechora_2m": {
+      "foto": "/static/fotos/ref_pechora_2m.jpg",
+      "obra": "Pechora-2M - missile launcher 1",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Pechora-2M_-_missile_launcher_1.jpg"
+    },
+    "rbs70": {
+      "foto": "/static/fotos/ref_rbs70.jpg",
+      "obra": "RBS 70 (3)",
+      "autor": "Reise Reise",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:RBS_70_(3).jpg"
+    },
+    "rc135": {
+      "foto": "/static/fotos/ref_rc135.jpg",
+      "obra": "20190206 RC-135 Rivet Joint Kadena AB-25",
+      "autor": "Balon Greyjoy",
+      "licencia": "CC0",
+      "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:20190206_RC-135_Rivet_Joint_Kadena_AB-25.jpg"
+    },
+    "rq170": {
+      "foto": "/static/fotos/ref_rq170.jpg",
+      "obra": "RQ-170 Wiki contributor 3Dartist",
+      "autor": "Truthdowser",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:RQ-170_Wiki_contributor_3Dartist.png"
+    },
+    "s300vm": {
+      "foto": "/static/fotos/ref_s300vm.jpg",
+      "obra": "9A83ME TEL - Antey-2500 SAM 02",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:9A83ME_TEL_-_Antey-2500_SAM_02.jpg"
+    },
+    "uav_armado": {
+      "foto": "/static/fotos/ref_uav_armado.jpg",
+      "obra": "7-(Drone Mohajer 6- Army ground force)-پهپاد مهاجر 6- نیروی زمینی ارتش",
+      "autor": "Mehr News Agency",
+      "licencia": "CC BY 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:7-(Drone_Mohajer_6-_Army_ground_force)-%D9%BE%D9%87%D9%BE%D8%A7%D8%AF_%D9%85%D9%87%D8%A7%D8%AC%D8%B1_6-_%D9%86%DB%8C%D8%B1%D9%88%DB%8C_%D8%B2%D9%85%DB%8C%D9%86%DB%8C_%D8%A7%D8%B1%D8%AA%D8%B4.jpg"
+    },
+    "uav_reco": {
+      "foto": "/static/fotos/ref_uav_reco.jpg",
+      "obra": "Insitu ScanEagle – 2017 Sola Airshow (28630372098)",
+      "autor": "Alan Wilson from Stilton, Peterborough, Cambs, UK",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Insitu_ScanEagle_%E2%80%93_2017_Sola_Airshow_(28630372098).jpg"
+    },
+    "zu23_2": {
+      "foto": "/static/fotos/ref_zu23_2.jpg",
+      "obra": "ZU-23-2 in Saint Petersburg",
+      "autor": "One half 3544",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:ZU-23-2_in_Saint_Petersburg.jpg"
+    }
+  },
+  "clases": {
+    "antiaerea": {
+      "foto": "/static/fotos/ref_pechora_2m.jpg",
+      "obra": "Pechora-2M - missile launcher 1",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Pechora-2M_-_missile_launcher_1.jpg"
+    },
+    "antiaerea_portatil": {
+      "foto": "/static/fotos/ref_antiaerea_portatil.jpg",
+      "obra": "9K338 Igla-S (NATO-Code - SA-24 Grinch)",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:9K338_Igla-S_(NATO-Code_-_SA-24_Grinch).jpg"
+    },
+    "artilleria": {
+      "foto": "/static/fotos/ref_artilleria.jpg",
+      "obra": "SPG 2S19M2 \"Msta-S\" on \"Oboronexpo\" in 2014 (front view)",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:SPG_2S19M2_%22Msta-S%22_on_%22Oboronexpo%22_in_2014_(front_view).jpg"
+    },
+    "artilleria_antiaerea": {
+      "foto": "/static/fotos/ref_zu23_2.jpg",
+      "obra": "ZU-23-2 in Saint Petersburg",
+      "autor": "One half 3544",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:ZU-23-2_in_Saint_Petersburg.jpg"
+    },
+    "blindado": {
+      "foto": "/static/fotos/ref_blindado.jpg",
+      "obra": "T-72B1 2",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:T-72B1_2.jpg"
+    },
+    "buque_desembarco": {
+      "foto": "/static/fotos/ref_buque_desembarco.jpg",
+      "obra": "Buque de desembarque tipo LST clase Capana - T-63 Goajira",
+      "autor": "Carlos E. Perez S.L",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Buque_de_desembarque_tipo_LST_clase_Capana_-_T-63_Goajira.JPG"
+    },
+    "destructor": {
+      "foto": "/static/fotos/ref_destructor.jpg",
+      "obra": "US Navy 110930-N-QN361-146 The Arleigh Burke-class guided-missile destroyer USS Sterett (DDG 104) is underway conducting a composite training unit",
+      "autor": "U.S. Navy photo by Mass Communication Specialist 3rd Class Jerine Lee",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:US_Navy_110930-N-QN361-146_The_Arleigh_Burke-class_guided-missile_destroyer_USS_Sterett_(DDG_104)_is_underway_conducting_a_composite_training_unit.jpg"
+    },
+    "fragata": {
+      "foto": "/static/fotos/ref_fragata.jpg",
+      "obra": "ARV Mariscal Sucre (F-21) - 1987-09857",
+      "autor": "PH3 JEFFREY W. LOSHAW",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:ARV_Mariscal_Sucre_(F-21)_-_1987-09857.jpg"
+    },
+    "guerra_electronica": {
+      "foto": "/static/fotos/ref_guerra_electronica.jpg",
+      "obra": "Electronic Warfare Vehicle Provides Signal Intelligence for Sky Soldiers (4738453)",
+      "autor": "U.S. Army 173IBCT-A by Capt. Joe Legros",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Electronic_Warfare_Vehicle_Provides_Signal_Intelligence_for_Sky_Soldiers_(4738453).jpg"
+    },
+    "infanteria": {
+      "foto": "/static/fotos/ref_infanteria.jpg",
+      "obra": "103-vdv-vitebsk-02",
+      "autor": "Serge Serebro, Vitebsk Popular News",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:103-vdv-vitebsk-02.jpg"
+    },
+    "ingenieros": {
+      "foto": "/static/fotos/ref_ingenieros.jpg",
+      "obra": "IMR engineering vehicle ( Military-historical Museum of Artillery, Engineer and Signal Corps)",
+      "autor": "Anna Chernichko from St. Petersburg, Russia",
+      "licencia": "CC BY 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:IMR_engineering_vehicle_(_Military-historical_Museum_of_Artillery,_Engineer_and_Signal_Corps).jpg"
+    },
+    "lanzador_misiles": {
+      "foto": "/static/fotos/ref_lanzador_misiles.jpg",
+      "obra": "Caracas, Canciller Ricardo Patiño participó en los actos de conmemoración de la muerte de Hugo Chávez (12960876943)",
+      "autor": "Cancillería del Ecuador from Ecuador",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Caracas,_Canciller_Ricardo_Pati%C3%B1o_particip%C3%B3_en_los_actos_de_conmemoraci%C3%B3n_de_la_muerte_de_Hugo_Ch%C3%A1vez_(12960876943).jpg"
+    },
+    "patrullero": {
+      "foto": "/static/fotos/ref_patrullero.jpg",
+      "obra": "ANBV Yavire (GC-22)",
+      "autor": "Luis García Curado, Cádiz",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:ANBV_Yavire_(GC-22).jpg"
+    },
+    "portaaviones": {
+      "foto": "/static/fotos/ref_portaaviones.jpg",
+      "obra": "Flickr - Official U.S. Navy Imagery - The Nimitz-class aircraft carrier USS Carl Vinson (CVN 70) is underway in the Arabian Sea.",
+      "autor": "Official Navy Page from United States of America MC2 James R. Evans/U.S. Navy",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Flickr_-_Official_U.S._Navy_Imagery_-_The_Nimitz-class_aircraft_carrier_USS_Carl_Vinson_(CVN_70)_is_underway_in_the_Arabian_Sea..jpg"
+    },
+    "radar": {
+      "foto": "/static/fotos/ref_radar.jpg",
+      "obra": "P-18PL radar",
+      "autor": "Unknown authorUnknown author",
+      "licencia": "CC BY 3.0 pl",
+      "url_licencia": "https://creativecommons.org/licenses/by/3.0/pl/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:P-18PL_radar.png"
+    },
+    "reconocimiento": {
+      "foto": "/static/fotos/ref_reconocimiento.jpg",
+      "obra": "BRDM-2 (1964) owned by James Stewart pic6",
+      "autor": "AlfvanBeem",
+      "licencia": "CC0",
+      "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:BRDM-2_(1964)_owned_by_James_Stewart_pic6.JPG"
+    },
+    "submarino": {
+      "foto": "/static/fotos/ref_submarino.jpg",
+      "obra": "Submarino Oceánico Tipo U-209 S-31 Sabalo",
+      "autor": "Carlos E. Perez S.L",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Submarino_Oce%C3%A1nico_Tipo_U-209_S-31_Sabalo.JPG"
+    },
+    "transporte": {
+      "foto": "/static/fotos/ref_transporte.jpg",
+      "obra": "TB2015ExhibitionP1-58",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:TB2015ExhibitionP1-58.jpg"
+    }
+  }
+}

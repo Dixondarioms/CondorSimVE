@@ -27,12 +27,45 @@ RADIO_ZONA_MIN_KM, RADIO_ZONA_MAX_KM = 5.0, 600.0
 DERIVA_MAX_KMH = 120.0
 
 
-class ClimaLocal:
-    """Clima general del escenario mas sus zonas (objetos con tipo, lat, lon, radio_km)."""
+# ---- ciclo de dia y noche (Venezuela, ~10 grados norte: el sol sale hacia las 06:00 y se pone hacia las 18:30) ----
+PERIODOS = ("dia", "crepusculo", "noche")
+# fraccion del radio de deteccion que conserva cada tipo de sensor; el radar no depende de la luz
+NOCHE_VISUAL = {"dia": 1.0, "crepusculo": 0.75, "noche": 0.5}  # a simple vista (tropas, vehiculos, buques)
+NOCHE_OPTRONICO = {"dia": 1.0, "crepusculo": 0.9, "noche": 0.8}  # camaras termicas de aeronaves, drones y reconocimiento
 
-    def __init__(self, general: str = "despejado", zonas=()):
+
+def periodo_del_dia(hora_inicio_min: int, turno: int) -> str:
+    """Periodo de la hora simulada del turno (cada turno = 1 h desde hora_inicio_min)."""
+    hora = ((hora_inicio_min or 0) + max(0, (turno or 1) - 1) * 60) % 1440 // 60
+    if 7 <= hora < 18:
+        return "dia"
+    if hora in (6, 18):
+        return "crepusculo"
+    return "noche"
+
+
+def periodo_de(escenario) -> str:
+    if not getattr(escenario, "dia_noche", False):
+        return "dia"
+    return periodo_del_dia(escenario.hora_inicio_min, escenario.turno_actual)
+
+
+def factor_nocturno(clase, periodo: str) -> float:
+    """Cuanto conserva de su deteccion un sensor de esa clase en ese periodo del dia."""
+    if periodo == "dia" or clase.emisor or clase.solo_aereo:
+        return 1.0
+    if clase.tipo == "aerea" or clase.dron or clase.id == "reconocimiento":
+        return NOCHE_OPTRONICO.get(periodo, 1.0)
+    return NOCHE_VISUAL.get(periodo, 1.0)
+
+
+class ClimaLocal:
+    """Clima general del escenario mas sus zonas (objetos con tipo, lat, lon, radio_km) y el periodo del dia."""
+
+    def __init__(self, general: str = "despejado", zonas=(), periodo: str = "dia"):
         self.general = general if general in SEVERIDAD else "despejado"
         self.zonas = list(zonas)
+        self.periodo = periodo if periodo in PERIODOS else "dia"
 
     def en(self, lat: float, lon: float) -> str:
         peor = self.general
@@ -81,9 +114,10 @@ def zonas_de(db, escenario) -> list:
 
 
 def contexto(db, escenario) -> ClimaLocal:
+    periodo = periodo_de(escenario)
     if not getattr(escenario, "efectos_clima", True):  # direccion: efectos del clima apagados
-        return ClimaLocal("despejado")
-    return ClimaLocal(escenario.clima, zonas_de(db, escenario))
+        return ClimaLocal("despejado", periodo=periodo)
+    return ClimaLocal(escenario.clima, zonas_de(db, escenario), periodo)
 
 
 def error_de_zona(tipo: str, radio_km: float, deriva_kmh: float) -> str | None:

@@ -5,7 +5,8 @@
   "use strict";
 
   const TIPO = Logica.TIPOS_PUNTO_MISION;
-  const COLOR_ROL = { CAP: "#4cc9f0", INTERDICCION: "#f77f00", CAS: "#fcbf49", SEAD: "#ef476f", RECO: "#90be6d", GE: "#c77dff", TRASLADO: "#adb5bd" };
+  const COLOR_ROL = { CAP: "#4cc9f0", INTERDICCION: "#f77f00", CAS: "#fcbf49", SEAD: "#ef476f", RECO: "#90be6d", GE: "#c77dff", TRASLADO: "#adb5bd",
+    AAR: "#80ed99", AEW: "#48cae4", CSAR: "#ffbe0b" };
   const LETRA = { orbita: "O", blanco: "✕", aterrizaje: "▼" };
   const NS = "http://www.w3.org/2000/svg";
 
@@ -36,10 +37,13 @@
     const bando = () => (ctx.usuario() || {}).rol;
     const esAlumno = () => Logica.esBando(bando());
     const delBando = (f) => (datos() ? datos().unidades.filter((u) => u.bando === bando() && u.estado === "activa" && f(u)) : []);
-    const grupos = () => delBando((u) => u.tipo === "aerea");
-    const bases = () => delBando((u) => u.clase === "base_aerea");
+    // aeronaves que la reparticion del alumno puede conducir (A-3, A-3 D/A, A-2 o C-E segun la clase)
+    const conduce = (u) => !esAlumno() || ctx.puede(Logica.funcionDeOrden(u, "mision", ctx.claseDe(u)));
+    const grupos = () => delBando((u) => u.tipo === "aerea" && conduce(u));
+    const conduceId = (id) => { const u = datos() && datos().unidades.find((x) => x.id === id); return !!u && conduce(u); };
+    const bases = () => delBando((u) => u.tipo === "base" && Logica.operaAeronaves(u)); // bases aereas y PRO
     const enemigos = () => (datos() ? datos().unidades.filter((u) => u.bando !== bando() && u.estado === "activa" && (u.tipo !== "aerea" || u.en_tierra)) : []);
-    const puedeGrupos = () => esAlumno() && ctx.puede("aereo");
+    const puedeGrupos = () => esAlumno() && grupos().length > 0;
     const puedeBases = () => esAlumno() && ctx.puede("despegar");
     const turnoActual = () => (datos() ? datos().escenario.turno_actual : 1);
     const inicioMin = () => (datos() ? datos().escenario.hora_inicio_min : 360);
@@ -78,7 +82,11 @@
         baseId: (bases()[0] || {}).id ?? null, modelo: ((cat().modelos || [])[0] || {}).id ?? null, aeronaves: 2,
         turno: turnoActual(), nombre: "", rol: "CAP", puntos: [], aterrizajeId: (bases()[0] || {}).id ?? null,
         escoltaDe: null, escolta: "",
+        ota: { paquete: "", funcion: "-", alerta: 1, armamento_primario: "", armamento_secundario: "", iff: "", codigo: "", pdi: "", tot_turno: null },
       };
+      for (const id of ["pm-paquete-nombre", "pm-iff", "pm-pdi"]) $(id).value = "";
+      $("pm-funcion").value = "-";
+      $("pm-alerta").value = "1";
       $("pm-origen-grupo").disabled = !g;
       $("pm-origen-base").disabled = !b;
       $("pm-nombre").value = "";
@@ -123,6 +131,22 @@
       borrador.modelo = $("pm-modelo").value || null;
       borrador.aterrizajeId = parseInt($("pm-aterrizaje").value, 10) || null;
       borrador.rol = $("pm-rol").value || borrador.rol;
+      // datos de la OTA: codigo de mision, armamento que lleva la aeronave y TOT
+      const o = borrador.ota;
+      const catOta = cat().ota || {};
+      const propio = (catOta.codigos_mision || {})[borrador.rol];
+      const nombreCod = catOta.nombre_codigo || {};
+      opciones($("pm-codigo"), [["", propio ? `${propio[0]} · ${nombreCod[propio[0]] || ""}` : "—"],
+        ...((catOta.codigos_opcionales || {})[borrador.rol] || []).map((c) => [c, `${c} · ${nombreCod[c] || ""}`])], o.codigo);
+      const modelo = borrador.origen === "grupo" ? ((datos().unidades.find((x) => x.id === borrador.unidadId) || {}).modelo) : borrador.modelo;
+      opciones($("pm-arma1"), [["", "—"], ...Logica.armasParaRol(catOta, modelo, borrador.rol, true)], o.armamento_primario);
+      opciones($("pm-arma2"), [["", "—"], ...Logica.armasParaRol(catOta, modelo, borrador.rol, false)], o.armamento_secundario);
+      opciones($("pm-tot"), [["", "Sin TOT (según el despegue)"], ...Array.from({ length: 25 }, (_, i) => [t0 + i, `T${t0 + i} · ${ctx.horaDeTurno(t0 + i)}`])], o.tot_turno ?? "");
+      o.codigo = $("pm-codigo").value;
+      o.armamento_primario = $("pm-arma1").value;
+      o.armamento_secundario = $("pm-arma2").value;
+      o.tot_turno = parseInt($("pm-tot").value, 10) || null;
+      $("pm-turno").disabled = !!o.tot_turno && borrador.origen === "base";
     }
 
     // ------------------------------------------------------------------ puntos de la ruta
@@ -160,6 +184,9 @@
       }
       const p = { tipo: tipoPorDefecto(lat, lon), lat, lon, turnos: 2, objetivo_unidad_id: null };
       if (p.tipo === "blanco") apuntar(p, enemigoMasCercano(lat, lon));
+      // rescate: la orbita se coloca sobre la tripulacion propia derribada mas cercana
+      const d = borrador.rol === "CSAR" && p.tipo === "orbita" ? Logica.derribadoCercano(datos().derribados, bando(), lat, lon) : null;
+      if (d) { p.lat = d.lat; p.lon = d.lon; p.turnos = 1; }
       borrador.puntos.push(p);
       refrescar();
       return true;
@@ -198,6 +225,40 @@
           refrescar();
         });
         li.appendChild(tipo);
+        const perfil = el("select", "pm-perfil");
+        perfil.setAttribute("aria-label", `Altura del tramo hasta el punto ${i + 1}`);
+        perfil.title = "Altura del tramo que llega a este punto (sin cambio: sigue la anterior)";
+        opciones(perfil, [["", "Altura: igual"], ["alto", "Alta 20 000 ft"], ["medio", "Media 5000 ft"], ["rasante", "Rasante 200 ft"]], p.perfil || "");
+        perfil.addEventListener("change", () => { p.perfil = perfil.value || null; refrescar(); });
+        li.appendChild(perfil);
+        if (p.tipo === "paso") {
+          const rv = el("label", "pm-rv");
+          const c = el("input");
+          c.type = "checkbox";
+          c.checked = !!p.reunion;
+          c.addEventListener("change", () => {
+            for (const q of borrador.puntos) q.reunion = false;
+            p.reunion = c.checked;
+            if (c.checked) p.reabastecimiento = false;
+            refrescar();
+          });
+          rv.title = "Punto de reunión del paquete";
+          rv.append(c, el("span", "", "RV"));
+          li.appendChild(rv);
+          const aer = el("label", "pm-rv");
+          const ca = el("input");
+          ca.type = "checkbox";
+          ca.checked = !!p.reabastecimiento;
+          ca.addEventListener("change", () => {
+            for (const q of borrador.puntos) q.reabastecimiento = false;
+            p.reabastecimiento = ca.checked;
+            if (ca.checked) p.reunion = false;
+            refrescar();
+          });
+          aer.title = "Punto de reabastecimiento en vuelo: espera un turno junto a la cisterna";
+          aer.append(ca, el("span", "", "AER"));
+          li.appendChild(aer);
+        }
         if (p.tipo === "orbita") {
           const t = el("select");
           t.setAttribute("aria-label", `Turnos de órbita del punto ${i + 1}`);
@@ -206,11 +267,20 @@
           t.addEventListener("change", () => { p.turnos = parseInt(t.value, 10); refrescar(); });
           li.appendChild(t);
         } else if (p.tipo === "blanco") {
+          const corte = el("label", "pm-rv");
+          const cc = el("input");
+          cc.type = "checkbox";
+          cc.checked = !!p.corte;
+          cc.addEventListener("change", () => { p.corte = cc.checked; if (cc.checked) apuntar(p, null); refrescar(); });
+          corte.title = "Corte de carretera: bombardea la carretera en este punto (cráter por 12 turnos)";
+          corte.append(cc, el("span", "", "CORTE"));
+          li.appendChild(corte);
           const o = el("select");
           o.setAttribute("aria-label", `Blanco del punto ${i + 1}`);
           const cerca = enemigos().map((e) => ({ e, d: Logica.distanciaKm(p.lat, p.lon, e.lat, e.lon) })).sort((a, b) => a.d - b.d).slice(0, 8);
           opciones(o, [["", "El enemigo detectado más cercano"], ...cerca.map(({ e, d }) => [e.id, `${e.nombre} · ${Math.round(d)} km`])], p.objetivo_unidad_id ?? "");
-          o.addEventListener("change", () => { apuntar(p, enemigos().find((e) => String(e.id) === o.value) || null); refrescar(); });
+          o.addEventListener("change", () => { apuntar(p, enemigos().find((e) => String(e.id) === o.value) || null); if (p.objetivo_unidad_id) p.corte = false; refrescar(); });
+          o.disabled = !!p.corte;
           li.appendChild(o);
         } else {
           li.appendChild(el("span", "sec", `${p.lat.toFixed(2)}, ${p.lon.toFixed(2)}`));
@@ -229,8 +299,12 @@
     function puntosParaEnviar() {
       const pts = borrador.puntos.map((p) => {
         const d = { tipo: p.tipo, lat: p.lat, lon: p.lon };
+        if (p.perfil) d.perfil = p.perfil;
+        if (p.tipo === "paso" && p.reunion) d.reunion = true;
+        if (p.tipo === "paso" && p.reabastecimiento) d.reabastecimiento = true;
         if (p.tipo === "orbita") d.turnos = p.turnos;
-        if (p.tipo === "blanco" && p.objetivo_unidad_id) d.objetivo_unidad_id = p.objetivo_unidad_id;
+        if (p.tipo === "blanco" && p.objetivo_unidad_id && !p.corte) d.objetivo_unidad_id = p.objetivo_unidad_id;
+        if (p.tipo === "blanco" && p.corte) d.corte = true;
         return d;
       });
       if (!esKamikaze() && borrador.aterrizajeId) {
@@ -241,7 +315,7 @@
     }
 
     function cuerpo() {
-      const c = { rol: borrador.rol, nombre: borrador.nombre.trim(), puntos: puntosParaEnviar() };
+      const c = { rol: borrador.rol, nombre: borrador.nombre.trim(), puntos: puntosParaEnviar(), ota: { ...borrador.ota } };
       if (borrador.origen === "grupo") c.unidad_id = borrador.unidadId;
       else Object.assign(c, { base_id: borrador.baseId, modelo: borrador.modelo, aeronaves: borrador.aeronaves, turno_despegue: borrador.turno });
       if (borrador.rol === "ESCOLTA") c.escolta_de = borrador.escoltaDe;
@@ -254,7 +328,7 @@
       if (!borrador) return;
       $("pm-rol-desc").textContent = (rolDe(borrador.rol) || {}).descripcion || "";
       $("pm-escolta-de-fila").hidden = borrador.rol !== "ESCOLTA";
-      $("pm-paquete").hidden = !["INTERDICCION", "CAS", "SEAD", "RECO", "GE"].includes(borrador.rol);
+      $("pm-paquete").hidden = !["INTERDICCION", "CAS", "SEAD", "RECO", "GE", "AAR", "AEW", "CSAR"].includes(borrador.rol);
       renderPuntos();
       dibujarBorrador();
       clearTimeout(temporizador);
@@ -290,14 +364,16 @@
       limpiar(tabla);
       const t = el("table", "pm-tabla");
       const cab = el("tr");
-      for (const h of ["#", "Punto", "Llega", "Combustible"]) cab.appendChild(el("th", "", h));
+      for (const h of ["#", "Punto", "Rumbo · distancia · altura", "Llega", "Combustible"]) cab.appendChild(el("th", "", h));
       t.appendChild(cab);
       r.plan.puntos.forEach((f, i) => {
         const tipo = f.tipo || (r.puntos[i] || {}).tipo;
         const hora = (h) => Logica.horaEstimada(inicioMin(), r.turno_despegue, h);
         const tr = el("tr");
+        const pt = r.puntos[i] || {};
         tr.append(
-          el("td", "", String(i + 1)), el("td", "", TIPO[tipo] || tipo),
+          el("td", "", String(i + 1)), el("td", "", (pt.reunion ? "RV " : "") + (pt.reabastecimiento ? "AER " : "") + (TIPO[tipo] || tipo)),
+          el("td", "", Logica.textoTramo((r.plan.tramos || [])[i])),
           el("td", "", hora(f.llegada_h) + (tipo === "orbita" && f.salida_h !== undefined ? ` → ${hora(f.salida_h)}` : "")),
           el("td", Logica.claseBarra(Math.min(f.combustible_llegada, f.combustible_salida ?? 100)),
             `${Math.round(f.combustible_llegada)} %` + (f.combustible_salida !== undefined ? ` → ${Math.round(f.combustible_salida)} %` : "")),
@@ -311,6 +387,37 @@
       for (const a of r.plan.advertencias) avisos.appendChild(el("li", "aviso", a));
       if (!r.errores.length && !r.plan.advertencias.length) {
         avisos.appendChild(el("li", "ok", `Duración estimada ${r.plan.duracion_h.toFixed(1)} h · combustible final ${Math.round(r.plan.combustible_final)} %.`));
+      }
+      if (borrador.ota.tot_turno && borrador.origen === "base") {
+        // el turno de despegue lo calcula el servidor desde el TOT
+        if (![...$("pm-turno").options].some((o) => o.value === String(r.turno_despegue))) {
+          const o = el("option", "", `T${r.turno_despegue} · ${ctx.horaDeTurno(r.turno_despegue)}`);
+          o.value = String(r.turno_despegue);
+          $("pm-turno").appendChild(o);
+        }
+        $("pm-turno").value = String(r.turno_despegue);
+        borrador.turno = r.turno_despegue;
+      }
+      const hora = (t) => `T${t} · ${ctx.horaDeTurno(t)}`;
+      const tiempos = [`Despegue ${hora(r.turno_despegue)}`];
+      if (r.plan.reunion_turno) tiempos.push(`reunión ${hora(r.plan.reunion_turno)}`);
+      if (r.plan.tot_turno) tiempos.push(`sobre el blanco (TOT) ${hora(r.plan.tot_turno)}`);
+      avisos.appendChild(el("li", "logistica", tiempos.join(" · ") + "."));
+      if (r.plan.weaponeering) avisos.appendChild(el("li", "logistica", Logica.textoWeaponeering(r.plan.weaponeering)));
+      const aar = r.plan.aar;
+      if (aar) {
+        avisos.appendChild(el("li", "logistica", `Reabastecimiento en vuelo (${hora(aar.turno)}): ${aar.kg.toLocaleString("es-VE")} kg `
+          + `(${aar.kg_por_aeronave.toLocaleString("es-VE")} kg por aeronave), unos ${aar.minutos} min de la cisterna `
+          + `(${aar.contacto_min} min de enganche por aeronave). La cisterna atiende 60 min por turno.`));
+      }
+      const lg = r.plan.logistica;
+      if (lg) {
+        const n = (v, d = 0) => Number(v).toLocaleString("es", { maximumFractionDigits: d });
+        avisos.appendChild(el("li", "logistica",
+          `Logística: ${n(lg.combustible_kg)} kg de combustible (${n(lg.combustible_por_aeronave_kg)} kg por aeronave, con ${lg.reserva_pct} % de reserva; `
+          + `interno ${n(lg.combustible_interno_kg)} kg)`
+          + (lg.lox_a_bordo_l ? ` · ${n(lg.lox_l, 1)} l de oxígeno líquido (${n(lg.lox_por_aeronave_l, 1)} l por aeronave de ${n(lg.lox_a_bordo_l, 1)} l a bordo)` : "")
+          + (lg.tripulantes ? ` · ${lg.tripulantes} tripulantes.` : ".")));
       }
       $("pm-crear").disabled = r.errores.length > 0;
     }
@@ -361,6 +468,13 @@
         }).bindTooltip(`M${m.id} · ${m.rol_nombre} · ${Logica.textoMision(m)}`, { sticky: true }).addTo(g);
         pts.forEach((p, i) => marcador(p, inicio + i, color).addTo(g));
       }
+      // tripulaciones derribadas a la espera de rescate (las propias y las enemigas que se ven)
+      for (const d of (data.derribados || []).filter((x) => x.estado === "aislado")) {
+        L.marker([d.lat, d.lon], {
+          icon: L.divIcon({ className: `pm-derribado ${d.bando}`, iconSize: [20, 20], iconAnchor: [10, 10], html: "<span>⛑</span>" }),
+          keyboard: false,
+        }).bindTooltip(`${d.bando === bando() || !esAlumno() ? "" : "Enemigos: "}${Logica.textoDerribado(d)}`, { sticky: true }).addTo(g);
+      }
     }
 
     // ------------------------------------------------------------------ lista de misiones
@@ -371,6 +485,19 @@
       const activas = misiones.filter(Logica.misionActiva);
       $("misiones-contador").textContent = String(activas.length);
       $("btn-planificar-mision").hidden = !(puedeGrupos() || puedeBases());
+      // Orden de Tareas Aereas (AV/D 5-47) de las misiones programadas y en curso
+      const enlaces = $("ota-enlaces");
+      limpiar(enlaces);
+      for (const b of esAlumno() ? [bando()] : ["azul", "rojo"]) {
+        const q = esAlumno() ? "" : `?bando=${b}`;
+        const sufijo = esAlumno() ? "" : ` ${b === "azul" ? "Azul" : "Rojo"}`;
+        const w = el("a", "boton-enlace", `OTA${sufijo} en Word`);
+        w.href = ctx.rutaEsc(`/misiones/ota.docx${q}`);
+        const h = el("a", "boton-enlace", `OTA${sufijo} para imprimir`);
+        h.href = ctx.rutaEsc(`/misiones/ota.html${q}`);
+        h.target = "_blank";
+        enlaces.append(w, h);
+      }
       const orden = [...activas, ...misiones.filter((m) => !Logica.misionActiva(m))].slice(0, 20);
       if (!orden.length) lista.appendChild(el("li", "vacio", "Sin misiones aéreas."));
       for (const m of orden) {
@@ -380,10 +507,10 @@
         const t = el("div", "texto");
         t.append(
           el("b", "", `M${m.id} · ${m.rol} · ${m.nombre || (u ? u.nombre : "grupo nuevo")}`),
-          el("span", "", `${Logica.ESTADOS_MISION[m.estado] || m.estado} · ${Logica.textoMision(m)}`),
+          el("span", "", `${Logica.ESTADOS_MISION[m.estado] || m.estado} · ${Logica.textoMision(m)}${Logica.textoPaquete(m) ? " · " + Logica.textoPaquete(m) : ""}`),
         );
         li.appendChild(t);
-        if (esAlumno() && Logica.misionActiva(m) && ctx.puede(m.unidad_id ? "aereo" : "despegar")) {
+        if (esAlumno() && Logica.misionActiva(m) && (m.unidad_id ? conduceId(m.unidad_id) : ctx.puede("despegar"))) {
           const x = el("button", "", "×");
           x.type = "button";
           x.title = m.estado === "en_curso" ? "Abortar: regresa a la base" : "Cancelar la misión";
@@ -478,6 +605,21 @@
       alCambiar("pm-escolta-de", (v) => { borrador.escoltaDe = parseInt(v, 10) || null; });
       alCambiar("pm-escolta", (v) => { borrador.escolta = v || ""; });
       $("pm-nombre").addEventListener("input", () => { if (borrador) borrador.nombre = $("pm-nombre").value; });
+      const alEscribir = (id, campo, f = (v) => v) => $(id).addEventListener("input", () => {
+        if (!borrador) return;
+        borrador.ota[campo] = f($(id).value);
+        clearTimeout(temporizador);
+        temporizador = setTimeout(estimar, 400);
+      });
+      alEscribir("pm-paquete-nombre", "paquete", (v) => v.trim().toUpperCase());
+      alEscribir("pm-iff", "iff", (v) => v.trim());
+      alEscribir("pm-pdi", "pdi", (v) => v.trim().toUpperCase());
+      alCambiar("pm-funcion", (v) => { borrador.ota.funcion = v; });
+      alCambiar("pm-alerta", (v) => { borrador.ota.alerta = parseInt(v, 10) || 1; });
+      alCambiar("pm-codigo", (v) => { borrador.ota.codigo = v; });
+      alCambiar("pm-arma1", (v) => { borrador.ota.armamento_primario = v; });
+      alCambiar("pm-arma2", (v) => { borrador.ota.armamento_secundario = v; });
+      alCambiar("pm-tot", (v) => { borrador.ota.tot_turno = parseInt(v, 10) || null; });
       $("pm-limpiar").addEventListener("click", () => { if (borrador) { borrador.puntos = []; refrescar(); } });
       $("pm-crear").addEventListener("click", crearMision);
     }

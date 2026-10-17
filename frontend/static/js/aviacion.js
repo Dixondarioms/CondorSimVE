@@ -49,9 +49,13 @@
       const cuerpo = el("div", "cuerpo");
       cuerpo.append(el("h4", "", m.nombre), el("small", "", `${m.fabricante} · ${m.pais}`), el("p", "funcion", m.funcion));
       const specs = el("dl", "specs");
+      const f = m.ficha;
       for (const [k, v] of [
-        ["Velocidad", `${m.velocidad_kmh} km/h`], ["Alcance de armas", `${m.alcance_km} km`],
-        ["Detección", `${m.deteccion_km} km`], ["Autonomía", `${m.autonomia_km} km`],
+        ["Velocidad", f ? `${f.crucero_kt} kt en ruta` : `${m.velocidad_kmh} km/h`],
+        ["Alcance de armas", `${Math.round(m.alcance_km / 1.852)} NM`],
+        ["Detección", `${Math.round(m.deteccion_km / 1.852)} NM`],
+        [f ? "Radio de acción" : "Autonomía", f ? `${f.radio_nm} NM` : `${m.autonomia_km} km`],
+        ...(f ? [["Despegue", f.despegue_m ? `${f.despegue_m} m de pista` : "vertical"], ["Roles", f.roles.join(" · ")]] : []),
       ]) {
         const d = el("div");
         d.append(el("dt", "", k), el("dd", "", v));
@@ -88,10 +92,20 @@
       const tarjetas = $("aer-tarjetas");
       limpiar(tarjetas);
       const base = baseElegida();
-      const lista = modelos().filter((m) => (modoActual && modoActual.tipo === "despegue" ? Logica.modeloDespegaDe(m, base) : !m.misil));
+      const despegue = modoActual && modoActual.tipo === "despegue";
+      const posibles = modelos().filter((m) => (despegue ? Logica.modeloDespegaDe(m, base) : !m.misil));
+      const lista = despegue ? posibles.filter((m) => Logica.entraEnPista(m, base)) : posibles;
+      const cortos = despegue ? posibles.filter((m) => !Logica.entraEnPista(m, base)) : [];
       lista.forEach((m) => tarjetas.appendChild(tarjeta(m)));
       if (elegido && !lista.some((m) => m.id === elegido)) elegido = null;
       $("aer-nota-base").hidden = !Logica.esPortaaviones(base);
+      const nota = $("aer-nota-pista");
+      if (nota) {
+        nota.hidden = !cortos.length;
+        nota.textContent = cortos.length
+          ? `La pista útil de ${base.nombre} (${Math.round(base.pista_util_m)} m) no alcanza para despegar: ${cortos.map((m) => `${m.corto} (${m.ficha.despegue_m} m)`).join(", ")}.`
+          : "";
+      }
     }
 
     function marcar(id) {

@@ -1,0 +1,443 @@
+{
+ "id": "teatro_ficticio",
+ "nombre": "País Azul contra País Rojo (mapa ficticio)",
+ "descripcion": "Ejercicio sobre el mapa ficticio, sin ningún país real: el País Azul (azul, capital Capital Azul) y el País Rojo (rojo, capital Capital Roja) se enfrentan a lo largo de su frontera. Cada bando tiene su base aérea con cazas, ataque y helicópteros, defensa antiaérea, radar, depósito, una fuerza de maniobra a 30-65 km de la frontera y su infraestructura: centrales, refinería, centro de comunicaciones y los puentes de las troncales. Objetivos: el paso de frontera central, la base aérea enemiga y la infraestructura que sostiene la guerra del otro bando. Para jugar contra el simulador, active el adversario automático en Consola → Dirección del ejercicio.",
+ "clima": "despejado",
+ "hora_inicio_min": 420,
+ "nacion_azul": "valdoria",
+ "nacion_rojo": "ostrania",
+ "ia_azul": false,
+ "ia_rojo": false,
+ "dia_noche": true,
+ "con_estado": false,
+ "unidades": [
+  {
+   "nombre": "Base Aérea de Capital Azul",
+   "bando": "azul",
+   "clase": "base_aerea",
+   "lat": 10.53507,
+   "lon": -26.27243
+  },
+  {
+   "nombre": "Cazas azules",
+   "bando": "azul",
+   "clase": "caza",
+   "lat": 10.53507,
+   "lon": -26.27243,
+   "modelo": "f16",
+   "aeronaves": 4,
+   "en_tierra": true,
+   "base": "Base Aérea de Capital Azul"
+  },
+  {
+   "nombre": "Aviación de ataque azul",
+   "bando": "azul",
+   "clase": "ataque",
+   "lat": 10.53507,
+   "lon": -26.27243,
+   "modelo": "ataque_ligero",
+   "aeronaves": 2,
+   "en_tierra": true,
+   "base": "Base Aérea de Capital Azul"
+  },
+  {
+   "nombre": "Helicópteros de ataque azules",
+   "bando": "azul",
+   "clase": "helicoptero",
+   "lat": 10.53507,
+   "lon": -26.27243,
+   "modelo": "helo_ataque",
+   "aeronaves": 2,
+   "en_tierra": true,
+   "base": "Base Aérea de Capital Azul"
+  },
+  {
+   "nombre": "Depósito logístico de Capital Azul",
+   "bando": "azul",
+   "clase": "deposito",
+   "lat": 10.67545,
+   "lon": -26.38229
+  },
+  {
+   "nombre": "Defensa antiaérea de Capital Azul",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "lat": 10.61067,
+   "lon": -26.2944
+  },
+  {
+   "nombre": "Radar de vigilancia azul",
+   "bando": "azul",
+   "clase": "radar",
+   "lat": 10.28384,
+   "lon": -26.06918
+  },
+  {
+   "nombre": "1.ª Brigada de Infantería azul",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 9.32306,
+   "lon": -24.22897,
+   "escalon": "brigada"
+  },
+  {
+   "nombre": "Brigada Blindada azul",
+   "bando": "azul",
+   "clase": "blindado",
+   "lat": 9.53981,
+   "lon": -24.32785,
+   "escalon": "brigada"
+  },
+  {
+   "nombre": "Grupo de Artillería azul",
+   "bando": "azul",
+   "clase": "artilleria",
+   "lat": 9.09532,
+   "lon": -24.25095
+  },
+  {
+   "nombre": "Escuadrón de Reconocimiento azul",
+   "bando": "azul",
+   "clase": "reconocimiento",
+   "lat": 9.40977,
+   "lon": -24.10812
+  },
+  {
+   "nombre": "Batallón de Ingenieros azul",
+   "bando": "azul",
+   "clase": "ingenieros",
+   "lat": 9.03022,
+   "lon": -24.09714
+  },
+  {
+   "nombre": "Convoy logístico azul",
+   "bando": "azul",
+   "clase": "transporte",
+   "lat": 9.76726,
+   "lon": -24.33884
+  },
+  {
+   "nombre": "Central Hidroeléctrica Las Piedras",
+   "bando": "azul",
+   "clase": "hidroelectrica",
+   "lat": 8.13945,
+   "lon": -25.61325
+  },
+  {
+   "nombre": "Central Hidroeléctrica Alto Tirel",
+   "bando": "azul",
+   "clase": "hidroelectrica",
+   "lat": 10.58907,
+   "lon": -25.85495
+  },
+  {
+   "nombre": "Planta Termoeléctrica de Capital Azul",
+   "bando": "azul",
+   "clase": "termoelectrica",
+   "lat": 10.57827,
+   "lon": -26.36032
+  },
+  {
+   "nombre": "Refinería de Puerto Albán",
+   "bando": "azul",
+   "clase": "refineria",
+   "lat": 10.91288,
+   "lon": -26.63498
+  },
+  {
+   "nombre": "Centro de comunicaciones de Capital Azul",
+   "bando": "azul",
+   "clase": "centro_comunicaciones",
+   "lat": 10.33789,
+   "lon": -26.11588
+  },
+  {
+   "nombre": "Base Aérea de Capital Roja",
+   "bando": "rojo",
+   "clase": "base_aerea",
+   "lat": 8.25906,
+   "lon": -21.79001
+  },
+  {
+   "nombre": "Cazas rojos",
+   "bando": "rojo",
+   "clase": "caza",
+   "lat": 8.25906,
+   "lon": -21.79001,
+   "modelo": "su30",
+   "aeronaves": 4,
+   "en_tierra": true,
+   "base": "Base Aérea de Capital Roja"
+  },
+  {
+   "nombre": "Aviación de ataque rojo",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": 8.25906,
+   "lon": -21.79001,
+   "modelo": "ataque_ligero",
+   "aeronaves": 2,
+   "en_tierra": true,
+   "base": "Base Aérea de Capital Roja"
+  },
+  {
+   "nombre": "Helicópteros de ataque rojos",
+   "bando": "rojo",
+   "clase": "helicoptero",
+   "lat": 8.25906,
+   "lon": -21.79001,
+   "modelo": "helo_ataque",
+   "aeronaves": 2,
+   "en_tierra": true,
+   "base": "Base Aérea de Capital Roja"
+  },
+  {
+   "nombre": "Depósito logístico de Capital Roja",
+   "bando": "rojo",
+   "clase": "deposito",
+   "lat": 8.11769,
+   "lon": -21.70212
+  },
+  {
+   "nombre": "Defensa antiaérea de Capital Roja",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 8.19382,
+   "lon": -21.76804
+  },
+  {
+   "nombre": "Radar de vigilancia rojo",
+   "bando": "rojo",
+   "clase": "radar",
+   "lat": 7.90827,
+   "lon": -21.89713
+  },
+  {
+   "nombre": "1.ª Brigada de Infantería rojo",
+   "bando": "rojo",
+   "clase": "infanteria",
+   "lat": 9.53981,
+   "lon": -23.43796,
+   "escalon": "brigada"
+  },
+  {
+   "nombre": "Brigada Blindada rojo",
+   "bando": "rojo",
+   "clase": "blindado",
+   "lat": 9.31221,
+   "lon": -23.36105,
+   "escalon": "brigada"
+  },
+  {
+   "nombre": "Grupo de Artillería rojo",
+   "bando": "rojo",
+   "clase": "artilleria",
+   "lat": 9.75643,
+   "lon": -23.39401
+  },
+  {
+   "nombre": "Escuadrón de Reconocimiento rojo",
+   "bando": "rojo",
+   "clase": "reconocimiento",
+   "lat": 9.45313,
+   "lon": -23.56979
+  },
+  {
+   "nombre": "Batallón de Ingenieros rojo",
+   "bando": "rojo",
+   "clase": "ingenieros",
+   "lat": 9.84304,
+   "lon": -23.53683
+  },
+  {
+   "nombre": "Convoy logístico rojo",
+   "bando": "rojo",
+   "clase": "transporte",
+   "lat": 9.08447,
+   "lon": -23.38303
+  },
+  {
+   "nombre": "Central Hidroeléctrica Coroma",
+   "bando": "rojo",
+   "clase": "hidroelectrica",
+   "lat": 8.11769,
+   "lon": -22.86667
+  },
+  {
+   "nombre": "Planta Termoeléctrica de Capital Roja",
+   "bando": "rojo",
+   "clase": "termoelectrica",
+   "lat": 8.20469,
+   "lon": -21.69113
+  },
+  {
+   "nombre": "Refinería de Puerto Varela",
+   "bando": "rojo",
+   "clase": "refineria",
+   "lat": 9.85386,
+   "lon": -23.31711
+  },
+  {
+   "nombre": "Centro de comunicaciones de Capital Roja",
+   "bando": "rojo",
+   "clase": "centro_comunicaciones",
+   "lat": 7.96268,
+   "lon": -21.93832
+  },
+  {
+   "nombre": "Puente de la troncal Capital Azul–Puerto Albán",
+   "bando": "azul",
+   "clase": "puente",
+   "lat": 10.82521,
+   "lon": -26.49078,
+   "radio_km": 0.8
+  },
+  {
+   "nombre": "Puente de la troncal San Telmo–Río Claro",
+   "bando": "azul",
+   "clase": "puente",
+   "lat": 7.25826,
+   "lon": -24.72198,
+   "radio_km": 0.8
+  }
+ ],
+ "objetivos": [
+  {
+   "bando": "rojo",
+   "tipo": "destruir",
+   "nombre": "Dejar sin energía: Central Hidroeléctrica Las Piedras",
+   "puntos": 20,
+   "unidad": "Central Hidroeléctrica Las Piedras"
+  },
+  {
+   "bando": "azul",
+   "tipo": "proteger",
+   "nombre": "Mantener Central Hidroeléctrica Las Piedras",
+   "puntos": 15,
+   "unidad": "Central Hidroeléctrica Las Piedras",
+   "hasta_turno": 10
+  },
+  {
+   "bando": "rojo",
+   "tipo": "destruir",
+   "nombre": "Dejar sin energía: Central Hidroeléctrica Alto Tirel",
+   "puntos": 20,
+   "unidad": "Central Hidroeléctrica Alto Tirel"
+  },
+  {
+   "bando": "azul",
+   "tipo": "proteger",
+   "nombre": "Mantener Central Hidroeléctrica Alto Tirel",
+   "puntos": 15,
+   "unidad": "Central Hidroeléctrica Alto Tirel",
+   "hasta_turno": 10
+  },
+  {
+   "bando": "rojo",
+   "tipo": "destruir",
+   "nombre": "Dejar sin energía: Planta Termoeléctrica de Capital Azul",
+   "puntos": 20,
+   "unidad": "Planta Termoeléctrica de Capital Azul"
+  },
+  {
+   "bando": "azul",
+   "tipo": "proteger",
+   "nombre": "Mantener Planta Termoeléctrica de Capital Azul",
+   "puntos": 15,
+   "unidad": "Planta Termoeléctrica de Capital Azul",
+   "hasta_turno": 10
+  },
+  {
+   "bando": "rojo",
+   "tipo": "destruir",
+   "nombre": "Cortar el combustible: Refinería de Puerto Albán",
+   "puntos": 15,
+   "unidad": "Refinería de Puerto Albán"
+  },
+  {
+   "bando": "rojo",
+   "tipo": "destruir",
+   "nombre": "Cortar los enlaces: Centro de comunicaciones de Capital Azul",
+   "puntos": 15,
+   "unidad": "Centro de comunicaciones de Capital Azul"
+  },
+  {
+   "bando": "rojo",
+   "tipo": "destruir",
+   "nombre": "Neutralizar Base Aérea de Capital Azul",
+   "puntos": 30,
+   "unidad": "Base Aérea de Capital Azul"
+  },
+  {
+   "bando": "azul",
+   "tipo": "destruir",
+   "nombre": "Dejar sin energía: Central Hidroeléctrica Coroma",
+   "puntos": 20,
+   "unidad": "Central Hidroeléctrica Coroma"
+  },
+  {
+   "bando": "rojo",
+   "tipo": "proteger",
+   "nombre": "Mantener Central Hidroeléctrica Coroma",
+   "puntos": 15,
+   "unidad": "Central Hidroeléctrica Coroma",
+   "hasta_turno": 10
+  },
+  {
+   "bando": "azul",
+   "tipo": "destruir",
+   "nombre": "Dejar sin energía: Planta Termoeléctrica de Capital Roja",
+   "puntos": 20,
+   "unidad": "Planta Termoeléctrica de Capital Roja"
+  },
+  {
+   "bando": "rojo",
+   "tipo": "proteger",
+   "nombre": "Mantener Planta Termoeléctrica de Capital Roja",
+   "puntos": 15,
+   "unidad": "Planta Termoeléctrica de Capital Roja",
+   "hasta_turno": 10
+  },
+  {
+   "bando": "azul",
+   "tipo": "destruir",
+   "nombre": "Cortar el combustible: Refinería de Puerto Varela",
+   "puntos": 15,
+   "unidad": "Refinería de Puerto Varela"
+  },
+  {
+   "bando": "azul",
+   "tipo": "destruir",
+   "nombre": "Cortar los enlaces: Centro de comunicaciones de Capital Roja",
+   "puntos": 15,
+   "unidad": "Centro de comunicaciones de Capital Roja"
+  },
+  {
+   "bando": "azul",
+   "tipo": "destruir",
+   "nombre": "Neutralizar Base Aérea de Capital Roja",
+   "puntos": 30,
+   "unidad": "Base Aérea de Capital Roja"
+  },
+  {
+   "bando": "azul",
+   "tipo": "ocupar",
+   "nombre": "Controlar el paso de frontera central",
+   "puntos": 30,
+   "lat": 9.44229,
+   "lon": -23.83347,
+   "radio_km": 8.0,
+   "turnos_requeridos": 3
+  },
+  {
+   "bando": "rojo",
+   "tipo": "ocupar",
+   "nombre": "Controlar el paso de frontera central",
+   "puntos": 30,
+   "lat": 9.44229,
+   "lon": -23.83347,
+   "radio_km": 8.0,
+   "turnos_requeridos": 3
+  }
+ ]
+}

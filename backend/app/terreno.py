@@ -30,6 +30,12 @@ FACTOR_DEFENSA = {
 FACTOR_MOVIMIENTO = {
     "agua": 0.0, "llano": 1.0, "bosque": 0.6, "urbano": 0.7, "montana": 0.4, "pantano": 0.5, "rio": 0.5,
 }
+# Carreteras (tools/preparar_vias.py): nivel de via por celda y velocidad que permiten a las unidades terrestres,
+# por encima de la del terreno que atraviesan. Donde una via cruza un rio o el agua hay un puente.
+VIA_SECUNDARIA, VIA_PRINCIPAL = 1, 2
+NOMBRES_VIA = {VIA_SECUNDARIA: "carretera secundaria", VIA_PRINCIPAL: "carretera principal"}
+FACTOR_VIA = {VIA_SECUNDARIA: 1.25, VIA_PRINCIPAL: 1.5}
+FACTOR_PUENTE = 0.9  # cruce de un rio o del agua por el puente de la carretera (como un puente de ingenieros)
 # Multiplicador del radio de deteccion enemigo sobre un objetivo terrestre.
 OCULTAMIENTO = {
     "agua": 1.0, "llano": 1.0, "bosque": 0.6, "urbano": 0.7, "montana": 0.75, "pantano": 0.9, "rio": 1.0,
@@ -39,9 +45,11 @@ OCULTAMIENTO = {
 class Grilla:
     """Grilla de clases de una region: teselas [x0, x0+ancho/256) x [y0, y0+alto/256) del zoom z."""
 
-    def __init__(self, meta: dict, clases: bytes, elevacion: memoryview | None = None):
+    def __init__(self, meta: dict, clases: bytes, elevacion: memoryview | None = None, vias: bytes | None = None):
         self.meta = meta
         self.clases = clases
+        # nivel de via por celda (0 ninguna, 1 secundaria, 2 principal), mismo indice que las clases
+        self.vias = vias
         # alturas (m, enteros de 16 bits) a 1/elev_paso de la resolucion de las clases (tools/preparar_elevacion.py)
         self.elevacion = elevacion
 
@@ -118,6 +126,16 @@ class Terreno:
     def regiones(self) -> list[dict]:
         return [g.resumen() for g in self.grillas]
 
+    def via(self, lat: float, lon: float) -> int:
+        """Nivel de carretera en (lat, lon): 0 ninguna, 1 secundaria, 2 principal (region mas detallada con vias)."""
+        for g in self.grillas:
+            if g.vias is None:
+                continue
+            i = g.indice(lat, lon)
+            if i is not None:
+                return g.vias[i]
+        return 0
+
     def clase(self, lat: float, lon: float) -> str:
         """Nombre de la clase de terreno en (lat, lon), segun la region mas detallada que cubra el punto.
         Fuera de toda grilla: llano."""
@@ -163,7 +181,9 @@ def _cargar_grilla(carpeta: Path) -> Grilla | None:
     elev_path = carpeta / "elevacion.bin.z"
     if elev_path.exists() and "elev_paso" in meta:
         elevacion = memoryview(zlib.decompress(elev_path.read_bytes())).cast("h")  # int16 little endian (Windows/Linux x86)
-    return Grilla(meta, zlib.decompress(datos_path.read_bytes()), elevacion)
+    vias_path = carpeta / "vias.bin.z"
+    vias = zlib.decompress(vias_path.read_bytes()) if vias_path.exists() else None
+    return Grilla(meta, zlib.decompress(datos_path.read_bytes()), elevacion, vias)
 
 
 @lru_cache(maxsize=1)

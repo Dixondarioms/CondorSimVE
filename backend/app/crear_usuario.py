@@ -1,7 +1,7 @@
 """Crea un usuario o restablece su contrasena desde la consola del servidor.
 
     python -m app.crear_usuario <usuario> --rol instructor
-    python -m app.crear_usuario a5azul --rol azul --puesto planificacion
+    python -m app.crear_usuario a5azul --rol azul --puesto a3da
     echo <contrasena> | python -m app.crear_usuario <usuario> --password-stdin   # sin consola (instalador)
 """
 

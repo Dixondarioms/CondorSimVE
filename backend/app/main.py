@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from app import auth as auth_mod
 from app import respaldo, turnos
 from app.db import SessionLocal, init_db
-from app.routers import auth, catalogo, clima, escenarios, graficos, misiones, naciones, objetivos, ordenes, plantillas, terreno, unidades, usuarios, ws
+from app.routers import auth, catalogo, clima, escenarios, evaluacion, graficos, misiones, naciones, objetivos, ordenes, plantillas, pmo, tiem, terreno, unidades, usuarios, ws
 from app.terreno import get_terreno
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
@@ -20,9 +20,12 @@ log = logging.getLogger("uvicorn.error")
 # Todo se sirve desde el mismo origen (sin CDN): la CSP bloquea cualquier recurso externo.
 CSP = (
     "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
-    "script-src 'self'; connect-src 'self' ws: wss:; frame-ancestors 'none'; "
-    "base-uri 'none'; form-action 'self'"
+    "script-src 'self'; connect-src 'self' ws: wss:; media-src 'self' blob:; frame-ancestors 'none'; "
+    "base-uri 'none'; form-action 'none'"
 )
+# media-src blob: el video del aguila de acceso se carga entero en memoria (js/aguila.js) para poder repetirlo.
+# form-action 'none': ningun formulario se envia sin JavaScript (si se pulsa Ingresar antes de que cargue la pagina,
+# el navegador no manda usuario y contrasena en la direccion); los dialogos (method="dialog") no navegan y siguen igual.
 
 
 @asynccontextmanager
@@ -84,9 +87,12 @@ app.include_router(misiones.router)
 app.include_router(terreno.router)
 app.include_router(graficos.router)
 app.include_router(objetivos.router)
+app.include_router(pmo.router)
+app.include_router(tiem.router)
 app.include_router(naciones.router)
 app.include_router(plantillas.router)
 app.include_router(catalogo.router)
+app.include_router(evaluacion.router)
 app.include_router(ws.router)
 
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR / "static"), name="static")

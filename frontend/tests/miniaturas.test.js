@@ -3,9 +3,10 @@ const assert = require("node:assert/strict");
 const M = require("../static/js/modelo3d.js");
 require("../static/js/miniaturas.js");
 
-const CLASES = ["infanteria", "blindado", "artilleria", "reconocimiento", "antiaerea", "antiaerea_portatil", "ingenieros",
-  "transporte", "radar", "guerra_electronica", "caza", "ataque", "helicoptero", "helicoptero_artillado", "avion_ge",
-  "dron_reconocimiento", "dron_ataque", "municion_merodeadora", "fragata", "patrullero", "base_aerea", "deposito", "puerto"];
+const CLASES = ["infanteria", "blindado", "artilleria", "reconocimiento", "antiaerea", "antiaerea_portatil", "artilleria_antiaerea", "ingenieros",
+  "transporte", "radar", "guerra_electronica", "caza", "ataque", "helicoptero", "helicoptero_artillado", "avion_ge", "alerta_temprana", "cisterna",
+  "dron_reconocimiento", "dron_ataque", "municion_merodeadora", "fragata", "patrullero", "base_aerea", "deposito", "puerto",
+  "termoelectrica", "hidroelectrica", "refineria", "centro_comunicaciones", "puente"];
 
 test("todas las clases del catalogo tienen miniatura", () => {
   for (const clase of CLASES) assert.ok(M.mallaPara({ clase }), clase);

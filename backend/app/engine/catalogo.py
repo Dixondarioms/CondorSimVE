@@ -55,7 +55,7 @@ class Clase:
     interferencia_km: float = 0.0  # radio de la zona que puede interferir (0 = no interfiere)
     dron: bool = False  # aeronave no tripulada: pierde el enlace dentro de una interferencia enemiga
     se_consume: bool = False  # municion merodeadora: se destruye al atacar
-    celula: str = ""  # "ge": radares y guerra electronica, que conduce el puesto A2
+    celula: str = ""  # "ge": radares (A-3 D/A) y guerra electronica (C-E)
     defensa_aerea: bool = False  # dispara sola contra aeronaves enemigas detectadas a su alcance (si su fuego esta libre)
     # ---- buques, portaaviones y misiles de crucero (ver engine/misiles.py y engine/aeronaves.py) ----
     misil: bool = False  # misil de crucero en vuelo: autonomo, guiado hacia su blanco, no admite ordenes
@@ -65,6 +65,9 @@ class Clase:
     # ---- bases: existencias (ver engine/logistica.py) ----
     stock_max: float = 0.0  # existencias maximas de combustible y de municion (puntos; 100 = llenar una unidad)
     reposicion_turno: float = 0.0  # puntos que repone cada turno (depositos: la linea de abastecimiento)
+    # ---- infraestructura no militar (ver engine/infraestructura.py): "energia" | "combustible" | "comunicaciones" |
+    # "puente". Fija, sin armas ni sensores ni personal militar; su estado pesa en lo que el bando puede hacer ----
+    infraestructura: str = ""
 
 
 def _atk(t=1.0, a=1.0, n=1.0):
@@ -89,6 +92,10 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
           _atk(0.0, 2.6, 0.0), 0.6, "equipo", movilidad="ligera", municion_por_ataque=50.0,
           despliegue_turnos=1, recarga_turnos=1, defensa_aerea=True,
           armamento="Sistema portatil antiaereo: debe desplegarse (1 turno quieto) y recargar (1 turno) entre disparos"),
+    Clase("artilleria_antiaerea", "Artilleria antiaerea (canones)", "terrestre", "G", "UCDG--", 40, 2.5, 8, 300,
+          _atk(0.6, 1.6, 0.3), 0.7, "seccion", defensa_aerea=True,
+          armamento="Canones antiaereos de punteria optica: muy baja cota y corto alcance; no emiten (la escucha "
+                    "enemiga no los encuentra) pero dependen del cuadro aereo de su bando y de noche tiran peor"),
     Clase("ingenieros", "Ingenieros", "terrestre", "G", "UCEC--", 25, 5, 8, 250, _atk(0.5, 0.1, 0.2), 0.9,
           "compania", movilidad="ligera", construye=True,
           armamento="Tiende vados (rapidos, precarios) y puentes (mas lentos, permiten pasar a los vehiculos)"),
@@ -100,7 +107,7 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
           10, 400, _atk(0.0, 0.0, 0.0), 0.7, "compania", despliegue_turnos=1, lanza_misiles=True,
           armamento="Sin fuego directo: lanza salvas de misiles de crucero contra blancos terrestres y navales; debe "
                     "desplegarse (1 turno quieto) tras moverse"),
-    # ---- sensores y guerra electronica terrestres (los conduce el puesto A2) ----
+    # ---- sensores (A-3 D/A) y guerra electronica (C-E) terrestres ----
     Clase("radar", "Radar de vigilancia aerea", "terrestre", "G", "ESR---", 15, 0, 150, 150, _atk(0.0, 0.0, 0.0), 0.5,
           "", movilidad="pesada", solo_aereo=True, emisor=True, celula="ge",
           armamento="Radar 3D: ve aeronaves en vuelo hasta 150 km, pero lo que esta en tierra solo a pocos km. "
@@ -132,6 +139,14 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
     Clase("municion_merodeadora", "Municion merodeadora (dron kamikaze)", "aerea", "A", "MFQA--", 180, 5, 15, 300,
           _atk(1.4, 0.0, 1.0), 0.2, movilidad="aerea", firma=0.4, dron=True, se_consume=True, embarcable=True,
           armamento="Merodea sobre la zona y se estrella contra el blanco: un solo ataque, se destruye al impactar"),
+    Clase("alerta_temprana", "Alerta temprana y control aerotransportado (AEW&C)", "aerea", "A", "MFRW--", 600, 0, 300,
+          4000, _atk(0.0, 0.0, 0.0), 0.5, movilidad="aerea", solo_aereo=True, emisor=True,
+          armamento="Radar aerotransportado de largo alcance: ve aeronaves en vuelo hasta 300 km por encima del relieve, "
+                    "pero lo que esta en tierra solo de cerca. Emite (la escucha enemiga lo localiza). Sin armas"),
+    Clase("cisterna", "Avion cisterna (reabastecimiento en vuelo)", "aerea", "A", "MFKB--", 800, 0, 30, 9000,
+          _atk(0.0, 0.0, 0.0), 0.5, movilidad="aerea", suministra=("aerea",), nodo_movil_km=40.0, carga_max=100.0,
+          armamento="Reabastece de combustible en vuelo (+40 %) a las aeronaves propias a <= 40 km de su orbita; recarga "
+                    "su carga en una base aerea propia. Sin armas"),
     Clase("misil_crucero", "Misil de crucero", "aerea", "A", "WMCM--", 850, 5, 0, 1000, _atk(1.5, 0.0, 1.6), 0.3,
           movilidad="aerea", firma=0.3, se_consume=True, misil=True,
           armamento="Salva de misiles guiados hacia su blanco: vuela sola, se estrella contra el blanco (un solo "
@@ -160,10 +175,32 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
     # ---- bases ----
     Clase("base_aerea", "Base aerea", "base", "G", "IBA---", 0, 25, 6, 0, _atk(0.0, 0.0, 0.0), 1.0, "",
           ("aerea",), movilidad="fija", stock_max=2000.0, plazas_aeronaves=12),
+    Clase("punto_recobre", "Punto de recobre operacional (PRO)", "base", "G", "IBA---", 0, 10, 4, 0,
+          _atk(0.0, 0.0, 0.0), 0.8, "", ("aerea",), movilidad="fija", stock_max=400.0, plazas_aeronaves=4,
+          armamento="Aerodromo avanzado o tramo de carretera: reabastece y rearma a 4 aeronaves cerca del frente (1 turno "
+                    "con su personal completo); pista corta o ninguna (solo helicopteros); existencias que reponen los convoyes"),
     Clase("deposito", "Deposito logistico", "base", "G", "UUS---", 0, 20, 5, 0, _atk(0.0, 0.0, 0.0), 1.0, "",
           ("terrestre",), movilidad="fija", stock_max=3000.0, reposicion_turno=150.0),
     Clase("puerto", "Puerto / base naval", "base", "G", "IBN---", 0, 25, 6, 0, _atk(0.0, 0.0, 0.0), 1.0, "",
           ("naval",), movilidad="fija", stock_max=2000.0),
+    # ---- infraestructura no militar (objetivos que pesan en la conduccion; ver engine/infraestructura.py) ----
+    Clase("termoelectrica", "Central termoelectrica", "base", "G", "IUEF--", 0, 0, 0, 0, _atk(0.0, 0.0, 0.0), 0.9, "",
+          movilidad="fija", infraestructura="energia",
+          armamento="Genera electricidad con gas o fueloil. Si se la daña, los radares fijos del bando pierden alcance "
+                    "(trabajan con generadores de respaldo)"),
+    Clase("hidroelectrica", "Central hidroelectrica", "base", "G", "IUED--", 0, 0, 0, 0, _atk(0.0, 0.0, 0.0), 1.6, "",
+          movilidad="fija", infraestructura="energia",
+          armamento="Presa y casa de maquinas: genera electricidad. Muy robusta. Si se la daña, los radares fijos del "
+                    "bando pierden alcance"),
+    Clase("refineria", "Refineria", "base", "G", "IRP---", 0, 0, 0, 0, _atk(0.0, 0.0, 0.0), 0.8, "",
+          movilidad="fija", infraestructura="combustible",
+          armamento="Produce combustible. Si se la daña, los depositos del bando reponen menos combustible cada turno"),
+    Clase("centro_comunicaciones", "Centro de comunicaciones", "base", "G", "IUT---", 0, 0, 0, 0, _atk(0.0, 0.0, 0.0),
+          0.8, "", movilidad="fija", infraestructura="comunicaciones",
+          armamento="Antenas, enlaces y centrales. Si se lo daña, mas ordenes del bando no llegan a tiempo"),
+    Clase("puente", "Puente estrategico", "base", "G", "IT----", 0, 0, 0, 0, _atk(0.0, 0.0, 0.0), 1.2, "",
+          movilidad="fija", infraestructura="puente",
+          armamento="Por debajo del 50 % de fuerza queda cortado: ninguna unidad terrestre cruza por el"),
 ]}
 
 # Clase por defecto de cada tipo (compatibilidad con unidades creadas sin clase).
@@ -226,6 +263,7 @@ class Modelo:
     foto: str
     credito: dict  # autor, licencia, url_licencia, pagina
     embarcable: bool | None = None  # opera desde un portaaviones (None = lo que diga su clase)
+    firma: float | None = None  # firma radar propia (furtivos); None = la de su clase
 
 
 _CREDITO_PROPIO = {"autor": "Simulador Fenix (ilustracion propia)", "licencia": "CC0",
@@ -339,6 +377,150 @@ MODELOS: dict[str, Modelo] = {m.id: m for m in [
         850, 5, 0, 1000, _atk(1.5, 0.0, 1.6), 0.3,
         "/static/fotos/crucero.svg", _CREDITO_PROPIO,
     ),
+    # ---- aeronaves de EE. UU. del 3 de enero de 2026 (plantilla ataque_3_enero_2026). Ilustraciones propias generadas
+    #      de las miniaturas 3D (tools/ilustraciones_aeronaves.js); cifras didacticas relativas, no datos oficiales ----
+    *[Modelo(i, c, n, k, f, "Estados Unidos", fu, d, a, v, al, de, au, atk, df, f"/static/fotos/{i}.svg", _CREDITO_PROPIO,
+             embarcable=e, firma=fi)
+      for (i, c, n, k, f, fu, d, a, v, al, de, au, atk, df, e, fi) in [
+        ("f22", "caza", "F-22A Raptor", "F-22", "Lockheed Martin / Boeing", "Caza furtivo de superioridad aerea",
+         "Caza furtivo de quinta generacion con supercrucero: escolta los paquetes de ataque y barre a los cazas "
+         "enemigos. Se lo detecta a menos de un tercio de la distancia normal.",
+         "Canon M61 de 20 mm, misiles AIM-120 y AIM-9 en bodegas internas, bombas guiadas GBU-32/39.",
+         1500, 120, 150, 3000, _atk(0.9, 1.6, 0.7), 1.3, None, 0.3),
+        ("f35a", "caza", "F-35A Lightning II", "F-35A", "Lockheed Martin", "Caza furtivo multirol (supresion de defensas)",
+         "Caza furtivo con sensores y guerra electronica integrados, empleado para suprimir y destruir defensas "
+         "antiaereas (SEAD/DEAD). Firma radar muy reducida.",
+         "Canon de 25 mm, misiles AIM-120, bombas guiadas, AGM-154 JSOW y misiles antirradiacion.",
+         1200, 120, 140, 2200, _atk(1.35, 1.2, 1.0), 1.2, None, 0.35),
+        ("f35b", "caza", "F-35B Lightning II (STOVL)", "F-35B", "Lockheed Martin", "Caza furtivo de despegue corto",
+         "Version de despegue corto y aterrizaje vertical del F-35, de la Infanteria de Marina: opera desde buques de "
+         "asalto y pistas cortas. Algo menos de autonomia que el F-35A.",
+         "Canon externo de 25 mm, misiles AIM-120 y bombas guiadas.",
+         1100, 110, 130, 1700, _atk(1.25, 1.15, 1.0), 1.15, True, 0.35),
+        ("fa18ef", "caza", "F/A-18E/F Super Hornet", "F/A-18", "Boeing", "Caza multirol embarcado",
+         "Caza naval del ala aerea del portaaviones: ataque a tierra y antibuque, escolta y reabastecimiento entre "
+         "aviones de su misma ala.",
+         "Canon M61 de 20 mm, misiles AIM-120/AIM-9, JSOW, bombas guiadas y misiles antibuque.",
+         1100, 100, 90, 2000, _atk(1.1, 1.25, 1.2), 1.0, True, None),
+        ("ea18g", "avion_ge", "EA-18G Growler", "EA-18G", "Boeing", "Ataque electronico embarcado",
+         "Version de guerra electronica del Super Hornet: interfiere radares y comunicaciones enemigas y ataca sus "
+         "emisores con misiles antirradiacion.",
+         "Pods de interferencia, misiles antirradiacion AGM-88 y AIM-120 de autodefensa.",
+         1100, 80, 90, 1800, _atk(0.8, 0.3, 0.2), 0.9, True, None),
+        ("b1b", "ataque", "B-1B Lancer", "B-1B", "Rockwell (hoy Boeing)", "Bombardero pesado supersonico",
+         "Bombardero de largo alcance de ala de geometria variable: lleva la mayor carga de armas guiadas de la fuerza "
+         "y llega desde el territorio continental de EE. UU. con reabastecimiento en vuelo.",
+         "Hasta 24 armas guiadas por salida: JDAM, JSOW y misiles de crucero JASSM.",
+         1100, 150, 60, 12000, _atk(1.8, 0.0, 1.4), 1.0, None, None),
+        ("p8a", "ataque", "P-8A Poseidon", "P-8A", "Boeing", "Patrulla maritima y antisubmarina",
+         "Avion de patrulla maritima con radar de busqueda de superficie: vigila el mar, sigue buques y submarinos y "
+         "puede atacarlos.",
+         "Torpedos Mk 54, misiles antibuque Harpoon, sonoboyas.",
+         800, 120, 180, 7500, _atk(0.3, 0.0, 1.5), 0.6, None, None),
+        ("e2d", "alerta_temprana", "E-2D Advanced Hawkeye", "E-2D", "Northrop Grumman", "Alerta temprana embarcada",
+         "Avion de alerta temprana del portaaviones con radar en domo giratorio: vigila el espacio aereo y dirige a "
+         "los cazas del ala aerea.",
+         "Sin armas: radar AN/APY-9 y enlaces de datos.",
+         550, 0, 300, 2700, _atk(0.0, 0.0, 0.0), 0.5, True, None),
+        ("e3g", "alerta_temprana", "E-3G Sentry (AWACS)", "E-3G", "Boeing", "Alerta temprana y control",
+         "Avion de alerta temprana y control de largo alcance: mantiene la imagen aerea de toda la zona y coordina "
+         "los paquetes de ataque.",
+         "Sin armas: radar de vigilancia en domo giratorio y enlaces de datos.",
+         800, 0, 400, 7400, _atk(0.0, 0.0, 0.0), 0.5, None, None),
+        ("rc135", "avion_ge", "RC-135V/W Rivet Joint", "RC-135", "Boeing", "Inteligencia de señales (SIGINT)",
+         "Avion de reconocimiento electronico: escucha y localiza radares y comunicaciones a gran distancia. En el "
+         "ejercicio, empleelo solo para escuchar (no interfiere en la realidad).",
+         "Sin armas: receptores de inteligencia de señales.",
+         850, 0, 60, 6500, _atk(0.0, 0.0, 0.0), 0.5, None, None),
+        ("ec130h", "avion_ge", "EC-130H Compass Call", "EC-130H", "Lockheed Martin", "Interferencia de comunicaciones",
+         "Avion de ataque electronico sobre celula de C-130: interfiere las comunicaciones de mando y los enlaces de "
+         "datos del adversario desde fuera del alcance de su defensa.",
+         "Sin armas: interferidores de comunicaciones.",
+         550, 0, 60, 4000, _atk(0.0, 0.0, 0.0), 0.45, None, None),
+        ("kc135", "cisterna", "KC-135R Stratotanker", "KC-135", "Boeing", "Reabastecimiento en vuelo",
+         "Avion cisterna: en orbita sobre el mar reabastece de combustible a los cazas y bombarderos propios para "
+         "que puedan llegar al blanco y volver.",
+         "Sin armas: pertiga de reabastecimiento.",
+         850, 0, 30, 9000, _atk(0.0, 0.0, 0.0), 0.5, None, None),
+        ("rq170", "dron_reconocimiento", "RQ-170 Sentinel", "RQ-170", "Lockheed Martin", "Reconocimiento furtivo no tripulado",
+         "Dron de ala volante furtivo de reconocimiento: vigila en profundidad sin ser detectado (su presencia fue "
+         "reportada por videos, no confirmada oficialmente).",
+         "Sin armas: sensores electroopticos y de señales.",
+         700, 0, 60, 3000, _atk(0.0, 0.0, 0.0), 0.4, None, 0.15),
+        ("mq9", "dron_ataque", "MQ-9A Reaper", "MQ-9", "General Atomics", "Dron armado de media altitud",
+         "Dron armado de gran autonomia: vigilancia persistente y ataques de precision contra vehiculos y "
+         "embarcaciones.",
+         "Misiles Hellfire y bombas guiadas GBU-12.",
+         370, 15, 50, 3000, _atk(1.0, 0.0, 0.7), 0.35, None, None),
+        ("lucas", "municion_merodeadora", "Dron de ataque de un solo uso (tipo LUCAS)", "LUCAS", "SpektreWorks",
+         "Ataque de un solo uso",
+         "Dron de ataque de bajo costo que se estrella contra el blanco. Se reporto el primer empleo operacional de "
+         "este tipo de arma por EE. UU.; el modelo exacto no esta confirmado.",
+         "Carga explosiva (un solo ataque).",
+         180, 5, 15, 800, _atk(1.4, 0.0, 1.0), 0.2, None, None),
+        ("mh47g", "helicoptero_artillado", "MH-47G Chinook (160.º SOAR)", "MH-47G", "Boeing", "Asalto de operaciones especiales",
+         "Helicoptero pesado de rotores en tandem del 160.º Regimiento de Aviacion de Operaciones Especiales: inserta "
+         "la fuerza de asalto volando rasante sobre el mar, con reabastecimiento en vuelo.",
+         "Ametralladoras de 7,62 mm (minigun) en las puertas.",
+         280, 6, 15, 1100, _atk(0.5, 0.15, 0.3), 0.8, None, None),
+        ("mh60m", "helicoptero_artillado", "MH-60M Black Hawk (160.º SOAR)", "MH-60M", "Sikorsky", "Asalto de operaciones especiales",
+         "Helicoptero medio de asalto del 160.º SOAR para la insercion y extraccion de equipos de operaciones especiales.",
+         "Ametralladoras de 7,62 mm (minigun) en las puertas.",
+         280, 6, 15, 900, _atk(0.5, 0.15, 0.3), 0.75, None, None),
+        ("mh60dap", "helicoptero", "MH-60M DAP (Direct Action Penetrator)", "MH-60 DAP", "Sikorsky", "Helicoptero de ataque y escolta",
+         "Black Hawk armado del 160.º SOAR: escolta a los helicopteros de asalto y neutraliza la defensa antiaerea "
+         "de corto alcance en la zona del objetivo.",
+         "Canon de 30 mm, cohetes de 70 mm, misiles Hellfire y miniguns.",
+         280, 8, 20, 800, _atk(1.3, 0.3, 0.9), 0.8, None, None),
+        ("ah6m", "helicoptero", "AH-6M Little Bird (160.º SOAR)", "AH-6M", "Boeing (MD Helicopters)", "Helicoptero ligero de ataque",
+         "Helicoptero ligero de ataque muy agil para el apoyo de fuego cercano a la fuerza de asalto en zona urbana.",
+         "Miniguns de 7,62 mm, cohetes de 70 mm y ametralladoras de 12,7 mm.",
+         250, 6, 15, 450, _atk(1.0, 0.2, 0.6), 0.55, None, None),
+        ("mh6m", "helicoptero_artillado", "MH-6M Little Bird (160.º SOAR)", "MH-6M", "Boeing (MD Helicopters)", "Insercion ligera",
+         "Helicoptero ligero que lleva equipos de asalto en bancos exteriores para posarlos en azoteas y espacios reducidos.",
+         "Armamento individual de los operadores.",
+         250, 3, 12, 450, _atk(0.3, 0.1, 0.1), 0.5, None, None),
+      ]],
+    # ---- defensa aerea: sistemas con sus armas, radares, tiempos y vehiculos (ver engine/defensa_aerea.py) ----
+    Modelo("zu23_2", "artilleria_antiaerea", "ZU-23-2 (sección de 2 montajes)", "ZU-23-2", "Rusia (fabricación bajo licencia)",
+           "Rusia", "Artillería antiaérea de muy baja cota",
+           "Cañón antiaéreo bitubo de 23 mm remolcado, de puntería óptica. Defensa cercana de bases, puentes y "
+           "baterías de misiles contra helicópteros, drones y aviones a muy baja cota.",
+           "2 montajes ZU-23-2 (23 mm, 2 tubos cada uno); alcance eficaz 2,5 km y 1 500 m de altura.",
+           40, 2.5, 8, 300, _atk(0.6, 1.6, 0.3), 0.7, "/static/fotos/zu23_2.svg", _CREDITO_PROPIO),
+    Modelo("pechora_2m", "antiaerea", "S-125 Pechora-2M (batería)", "Pechora-2M", "Almaz-Antey / Defense Systems", "Rusia / Bielorrusia",
+           "Sistema de misiles tierra-aire de mediano alcance",
+           "Modernización móvil del S-125 Neva/Pechora, operada por la Defensa Antiaérea venezolana. Radar de "
+           "vigilancia P-18-2 y radar de tiro SNR-125-2M; misil 5V27DE guiado por radar.",
+           "8 misiles 5V27DE en 4 lanzadores (32 km, de 20 m a 20 km de altura) y 8 de recarga; 2 ZU-23-2 de defensa "
+           "cercana.",
+           30, 32, 160, 400, _atk(0.1, 2.4, 0.1), 0.85, "/static/fotos/pechora_2m.svg", _CREDITO_PROPIO),
+    Modelo("buk_m2e", "antiaerea", "Buk-M2E (batería)", "Buk-M2E", "Almaz-Antey", "Rusia",
+           "Sistema de misiles tierra-aire de mediano alcance autopropulsado",
+           "Sistema autopropulsado sobre ruedas (chasis MZKT en la versión venezolana), operado por la Defensa Antiaérea venezolana. Cada TELAR lleva su "
+           "radar de tiro y 4 misiles; el radar de vigilancia 9S18M1-3E alimenta a la batería.",
+           "12 misiles 9M317E listos (45 km, de 15 m a 25 km de altura) y 8 de recarga en el TEL; sección Igla-S de "
+           "defensa cercana.",
+           45, 45, 160, 500, _atk(0.1, 2.8, 0.2), 0.95, "/static/fotos/buk_m2e.svg", _CREDITO_PROPIO),
+    Modelo("mistral", "antiaerea_portatil", "Mistral (sección de 4 puestos)", "Mistral", "MBDA", "Francia",
+           "Misil tierra-aire portátil de muy corto alcance",
+           "Misil infrarrojo de dispara y olvida lanzado desde un trípode (MPCV, ATLAS) o un vehículo ligero. Defensa "
+           "cercana contra helicópteros, drones y aviones a baja cota.",
+           "4 puestos de tiro con 4 misiles listos y 8 de recarga (6 km, de 5 a 3 000 m de altura).",
+           40, 6, 8, 300, _atk(0.1, 1.5, 0.1), 0.6, "/static/fotos/mistral.svg", _CREDITO_PROPIO),
+    Modelo("rbs70", "antiaerea", "RBS 70 (sección con radar Giraffe)", "RBS 70", "Saab", "Suecia",
+           "Misil tierra-aire de muy corto alcance guiado por láser",
+           "Misil guiado por haz láser desde un trípode, operado por la Defensa Antiaérea venezolana. El radar de "
+           "vigilancia Giraffe alerta a los puestos de tiro.",
+           "3 puestos de tiro con 3 misiles listos y 9 de recarga (8 km, de 5 a 5 000 m de altura); radar Giraffe de 40 km.",
+           40, 8, 40, 300, _atk(0.1, 1.7, 0.1), 0.65, "/static/fotos/rbs70.svg", _CREDITO_PROPIO),
+    Modelo("s300vm", "antiaerea", "S-300VM Antey-2500 (batería)", "S-300VM", "Almaz-Antey", "Rusia",
+           "Sistema de misiles tierra-aire de largo alcance autopropulsado",
+           "Sistema autopropulsado sobre orugas, operado por la Defensa Antiaérea venezolana. Radar de vigilancia "
+           "9S15M2 y radar de tiro 9S32ME; misiles 9M83ME y 9M82ME.",
+           "8 misiles 9M83ME (150 km) y 2 9M82ME (200 km) listos, de 25 m a 30 km de altura, con su recarga en los "
+           "cargadores-lanzadores.",
+           40, 200, 250, 500, _atk(0.1, 3.2, 0.2), 1.0, "/static/fotos/s300vm.svg", _CREDITO_PROPIO),
 ]}
 
 
@@ -353,6 +535,13 @@ def es_embarcable(clase_id: str | None, modelo_id: str | None = None) -> bool:
         return modelo_embarcable(m)
     c = CLASES.get(clase_id or "")
     return bool(c and c.embarcable)
+
+
+def firma(unidad) -> float:
+    """Firma radar de la unidad: la de su modelo (aeronaves furtivas) o, si no tiene, la de su clase."""
+    m = MODELOS.get(getattr(unidad, "modelo", "") or "")
+    clase = obtener(getattr(unidad, "clase", None), unidad.tipo)
+    return m.firma if m is not None and m.clase == clase.id and m.firma is not None else clase.firma
 
 
 def perfil(unidad) -> Clase:
@@ -382,8 +571,15 @@ def modelo_dict(m: Modelo) -> dict:
         "id": m.id, "clase": m.clase, "nombre": m.nombre, "corto": m.corto, "fabricante": m.fabricante,
         "pais": m.pais, "funcion": m.funcion, "descripcion": m.descripcion, "armamento": m.armamento,
         "velocidad_kmh": m.velocidad_kmh, "alcance_km": m.alcance_km, "deteccion_km": m.deteccion_km,
-        "autonomia_km": m.autonomia_km, "ataque_vs": m.ataque_vs, "defensa": m.defensa, "foto": m.foto,
-        "credito": m.credito, "embarcable": modelo_embarcable(m), "misil": CLASES[m.clase].misil,
+        "autonomia_km": m.autonomia_km, "ataque_vs": m.ataque_vs, "defensa": m.defensa,
+        "foto": (FOTOS_PROPIAS.get(f"modelos:{m.id}") or {}).get("foto") or m.foto
+        or (FOTOS_PROPIAS.get(f"clases:{m.clase}") or FOTOS_CLASE.get(m.clase) or {}).get("foto"),
+        "credito": (FOTOS_PROPIAS.get(f"modelos:{m.id}") or {}).get("credito") or m.credito
+        or (FOTOS_PROPIAS.get(f"clases:{m.clase}") or FOTOS_CLASE.get(m.clase) or {}).get("credito"),
+        "foto_propia": f"modelos:{m.id}" in FOTOS_PROPIAS,
+        "embarcable": modelo_embarcable(m), "misil": CLASES[m.clase].misil,
+        "firma": m.firma if m.firma is not None else CLASES[m.clase].firma,
+        "propio": m.id.startswith("u_"),  # tipo del catalogo propio del instructor (engine/modelos_usuario.py)
     }
 
 
@@ -405,8 +601,11 @@ def como_dict(c: Clase) -> dict:
         "emisor": c.emisor, "escucha_km": c.escucha_km, "interferencia_km": c.interferencia_km, "dron": c.dron,
         "se_consume": c.se_consume, "celula": c.celula, "defensa_aerea": c.defensa_aerea, "stock_max": c.stock_max,
         "reposicion_turno": c.reposicion_turno, "misil": c.misil, "lanza_misiles": c.lanza_misiles,
-        "plazas_aeronaves": c.plazas_aeronaves, "embarcable": c.embarcable,
-        "foto": (FOTOS_CLASE.get(c.id) or {}).get("foto"), "credito": (FOTOS_CLASE.get(c.id) or {}).get("credito"),
+        "plazas_aeronaves": c.plazas_aeronaves, "embarcable": c.embarcable, "infraestructura": c.infraestructura,
+        "ataque_vs": dict(c.ataque_vs), "defensa": c.defensa,
+        "foto": (FOTOS_PROPIAS.get(f"clases:{c.id}") or FOTOS_CLASE.get(c.id) or {}).get("foto"),
+        "credito": (FOTOS_PROPIAS.get(f"clases:{c.id}") or FOTOS_CLASE.get(c.id) or {}).get("credito"),
+        "foto_propia": f"clases:{c.id}" in FOTOS_PROPIAS,
     }
 
 
@@ -574,6 +773,9 @@ aplicar_ajustes()
 RUTA_FOTOS = _Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "static"
 RUTA_REFERENCIAS = RUTA_FOTOS / "fotos" / "referencias.json"
 FOTOS_CLASE: dict[str, dict] = {}  # clase -> {"foto": url, "credito": {...}}
+# fotos que cargo el instructor ("modelos:<id>" o "clases:<id>" -> {"foto", "credito"}; engine/fotos_usuario.py):
+# tienen prioridad sobre la foto de referencia y la ilustracion
+FOTOS_PROPIAS: dict[str, dict] = {}
 _CAMPOS_CREDITO = ("obra", "autor", "licencia", "url_licencia", "pagina")
 
 

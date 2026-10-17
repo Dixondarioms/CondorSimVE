@@ -13,6 +13,7 @@ from app.engine import objetivos as objetivos_mod
 from app.engine import orders as orders_mod
 from app.models.aar import Combate, Instantanea, RegistroLogistico
 from app.models.asignacion import Asignacion
+from app.models.contacto import Contacto
 from app.models.escenario import Escenario
 from app.models.evento import Evento
 from app.models.mision import Mision
@@ -178,10 +179,18 @@ def _marcador_hasta(objetivos: list[Objetivo], combates: list[Combate], turno: i
     """Marcador acumulado al terminar `turno`: puntos de objetivos cumplidos hasta ese turno mas un punto por
     cada FUERZA_POR_PUNTO de fuerza infligida al enemigo (misma regla que engine/objetivos.marcador)."""
     puntos = {b: 0 for b in objetivos_mod.BANDOS}
+    cuenta = {b: {"cumplidos": 0, "fallidos": 0, "asignados": 0} for b in objetivos_mod.BANDOS}
     infligido = {b: 0.0 for b in objetivos_mod.BANDOS}
     for o in objetivos:
-        if o.estado == "cumplido" and o.bando in puntos and (o.turno_resuelto is None or o.turno_resuelto <= turno):
+        if o.bando not in puntos:
+            continue
+        cuenta[o.bando]["asignados"] += 1
+        resuelto = o.turno_resuelto is None or o.turno_resuelto <= turno
+        if o.estado == "cumplido" and resuelto:
             puntos[o.bando] += o.puntos
+            cuenta[o.bando]["cumplidos"] += 1
+        elif o.estado == "fallido" and resuelto:
+            cuenta[o.bando]["fallidos"] += 1
     for c in combates:
         if c.turno > turno or c.atacante_bando == c.defensor_bando:
             continue
@@ -191,7 +200,8 @@ def _marcador_hasta(objetivos: list[Objetivo], combates: list[Combate], turno: i
             infligido[c.defensor_bando] += c.perdida_atacante
     return {
         b: {"objetivos": puntos[b], "bajas": int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO),
-            "total": puntos[b] + int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO)}
+            "total": puntos[b] + int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO), **cuenta[b],
+            "cumplidos_pct": round(100 * cuenta[b]["cumplidos"] / cuenta[b]["asignados"], 1) if cuenta[b]["asignados"] else None}
         for b in objetivos_mod.BANDOS
     }
 
@@ -235,10 +245,10 @@ def construir_replay(db: Session, escenario: Escenario) -> dict:
 UMBRAL_CRITICO = 25.0  # % de combustible o municion por debajo del cual la unidad esta al limite
 TOP_MOTIVOS = 3
 
-# El desglose por puesto se deriva de la FUNCION de cada orden (el puesto responsable segun engine/puestos.py),
+# El desglose por reparticion se deriva de la FUNCION de cada orden (la responsable segun engine/puestos.py),
 # no del alumno que la firmo; la evaluacion por alumno (seccion `alumnos`) si usa el autor registrado.
 NOTA_PUESTOS = (
-    "El desglose por puesto se deriva de la funcion de cada orden (puesto responsable: A2, A3, A4 o A5), "
+    "El desglose por reparticion se deriva de la funcion de cada orden (responsable: A-2, A-3, A-3 D/A, A-4 o C-E), "
     "no del alumno que la firmo; la evaluacion por alumno usa el autor registrado en cada orden y mision."
 )
 SIN_AUTOR = "sin autor registrado"
@@ -280,7 +290,7 @@ def _sugerencia(motivo: str) -> str:
 
 
 def _puesto_de(unidad: Unidad | None, tipo_orden: str) -> str:
-    """Puesto especializado responsable de una orden (mando queda fuera: reune a todos)."""
+    """Reparticion responsable de una orden (Comandante y JEM quedan fuera: reunen a todas)."""
     if unidad is None:
         funcion = "despegar" if tipo_orden in ("despegar", "mision") else "superficie"
     else:
@@ -344,7 +354,7 @@ def _observacion_misiones(mi: dict) -> str | None:
     malas = mi["abortadas"] + mi["fallidas"]
     if malas and malas >= mi["cumplidas"]:
         return (f"Misiones aereas abortadas o fallidas ({malas}) igualan o superan a las cumplidas "
-                f"({mi['cumplidas']}): revisar el combustible, las rutas y la ventana de aterrizaje (A3).")
+                f"({mi['cumplidas']}): revisar el combustible, las rutas y la ventana de aterrizaje (A-3).")
     return None
 
 
@@ -365,8 +375,10 @@ def _alumnos(db: Session, escenario: Escenario, unidades: dict, ordenes: list, m
     por_nombre = {u.username: u.id for u in usuarios.values()}
 
     fichas: dict[int, dict] = {}
+    # el instructor puede conducir un bando (conduccion "instructor"): sus ordenes cuentan para el bando, no se evaluan
+    instructores = {uid for uid, u in usuarios.items() if u.rol == "instructor"}
     for uid, u in usuarios.items():
-        if uid not in autores and u.username not in nombres and u.rol not in puestos.BANDOS:
+        if uid in instructores or (uid not in autores and u.username not in nombres and u.rol not in puestos.BANDOS):
             continue  # observadores e instructores asignados que no emitieron nada no se evaluan
         fichas[uid] = {
             "usuario_id": uid, "username": u.username, "bando": u.rol, "asignado": uid in asignados,
@@ -381,8 +393,8 @@ def _alumnos(db: Session, escenario: Escenario, unidades: dict, ordenes: list, m
             _contar_orden(f["ordenes"], o)
             f["_turnos"].add(o.turno_emitida)
             if o.autor_puesto:
-                f["_puestos"][o.autor_puesto] += 1
-        elif not orders_mod.es_automatica(o):
+                f["_puestos"][puestos.normalizar(o.autor_puesto)] += 1
+        elif not orders_mod.es_automatica(o) and o.autor_id not in instructores:
             u = unidades.get(o.unidad_id)
             if u is not None and u.bando in sin_autor:
                 sin_autor[u.bando]["ordenes"] += 1
@@ -392,8 +404,8 @@ def _alumnos(db: Session, escenario: Escenario, unidades: dict, ordenes: list, m
             _contar_mision(f["misiones"], m)
             f["_turnos"].add(m.creada_turno)
             if m.autor_puesto:
-                f["_puestos"][m.autor_puesto] += 1
-        elif m.bando in sin_autor:
+                f["_puestos"][puestos.normalizar(m.autor_puesto)] += 1
+        elif m.bando in sin_autor and m.autor_id not in instructores:
             sin_autor[m.bando]["misiones"] += 1
 
     lista = []
@@ -423,6 +435,119 @@ def _alumnos(db: Session, escenario: Escenario, unidades: dict, ordenes: list, m
     orden_bando = {b: i for i, b in enumerate(puestos.BANDOS)}
     lista.sort(key=lambda f: (orden_bando.get(f["bando"], len(orden_bando)), f["username"]))
     return lista, sin_autor
+
+
+# ---------------------------------------------------------------------------------------------------------
+# Indicadores doctrinales: cada uno puntua de 0 a 100 (None = no aplica en este ejercicio) y la calificacion es su
+# promedio en la escala venezolana de 1 a 20. Son criterios didacticos y transparentes: cada uno dice como se calcula.
+CLASES_SENSOR = ("radar", "alerta_temprana", "dron_reconocimiento", "guerra_electronica", "reconocimiento", "avion_ge")
+
+
+def _ind(id_, nombre, valor, puntaje, criterio) -> dict:
+    return {"id": id_, "nombre": nombre, "valor": valor,
+            "puntaje": None if puntaje is None else max(0, min(100, round(puntaje))), "criterio": criterio}
+
+
+def _doctrina(b: str, x: dict, unidades: dict, ordenes: list, combates: list, contactos: list,
+              turnos_resueltos: list) -> dict:
+    enemigo = "rojo" if b == "azul" else "azul"
+    inds = []
+
+    # 1. reaccion ante una amenaza: turnos desde que una unidad enemiga ataca hasta la primera orden propia contra ella
+    primer_ataque: dict[int, int] = {}
+    for c in combates:
+        atacante = unidades.get(c.atacante_id)
+        if c.defensor_bando == b and c.atacante_bando == enemigo and not (atacante and catalogo.es_misil(atacante)):
+            primer_ataque[c.atacante_id] = min(primer_ataque.get(c.atacante_id, c.turno), c.turno)
+    respuestas = []
+    sin_respuesta = 0
+    for atacante, t0 in primer_ataque.items():
+        t1 = min((o.turno_emitida for o in ordenes if o.objetivo_unidad_id == atacante and o.tipo in ("atacar", "lanzar")
+                  and o.turno_emitida > t0 and (unidades.get(o.unidad_id) and unidades[o.unidad_id].bando == b)),
+                 default=None)
+        if t1 is None:
+            sin_respuesta += 1
+        else:
+            respuestas.append(t1 - t0)
+    if primer_ataque:
+        media = sum(respuestas) / len(respuestas) if respuestas else None
+        base = 100 if media is not None and media <= 1 else 75 if media is not None and media <= 2 else \
+            50 if media is not None and media <= 3 else 25
+        puntaje = base * len(respuestas) / len(primer_ataque) if respuestas else 0
+        valor = (f"{media:.1f} turno(s) en promedio" if media is not None else "sin respuesta") + \
+            (f"; {sin_respuesta} amenaza(s) sin respuesta" if sin_respuesta else "")
+        inds.append(_ind("reaccion", "Reacción ante las amenazas", valor, puntaje,
+                         "Turnos entre el primer ataque de una unidad enemiga y la primera orden propia contra ella "
+                         "(1 turno = 100; 2 = 75; 3 = 50; más = 25), ponderado por las amenazas respondidas."))
+    else:
+        inds.append(_ind("reaccion", "Reacción ante las amenazas", "el enemigo no atacó", None,
+                         "Turnos entre el primer ataque de una unidad enemiga y la primera orden propia contra ella."))
+
+    # 2. conocimiento del enemigo: unidades enemigas detectadas alguna vez sobre el total
+    enemigas = [u for u in unidades.values() if u.bando == enemigo and not catalogo.es_misil(u)]
+    vistas = {c.unidad_id for c in contactos if c.bando == b}
+    sensores = sum(1 for u in unidades.values() if u.bando == b and (u.clase or "") in CLASES_SENSOR)
+    if enemigas:
+        pct = 100 * len(vistas & {u.id for u in enemigas}) / len(enemigas)
+        inds.append(_ind("inteligencia", "Conocimiento del enemigo",
+                         f"{pct:.0f} % de las unidades enemigas detectadas ({sensores} sensor(es) propio(s))", pct,
+                         "Porcentaje de las unidades enemigas que el bando llegó a detectar (radares, reconocimiento, "
+                         "guerra electrónica y contacto)."))
+
+    # 3. sostenimiento logistico
+    lg = x["logistica"]
+    criticas, reab = lg["unidades_en_nivel_critico"], lg["reabastecimientos"]
+    inds.append(_ind("logistica", "Sostenimiento logístico",
+                     f"{criticas} unidad(es) en nivel crítico; {reab} reabastecimiento(s)",
+                     100 if criticas == 0 else 100 * reab / (reab + criticas),
+                     "100 si ninguna unidad bajó del nivel crítico; si no, reabastecimientos / (reabastecimientos + "
+                     "unidades críticas)."))
+
+    # 4. coordinacion entre reparticiones (solo si el bando trabajo como estado mayor con varias reparticiones)
+    # se mide por el puesto de quien dio cada orden (autor), no por la unidad: un solo alumno como Comandante no cuenta
+    con_unidades = {_puesto_de(u, "mover") for u in unidades.values() if u.bando == b} & set(x["puestos"])
+    autores = {puestos.normalizar(o.autor_puesto) for o in ordenes
+               if o.autor_puesto and puestos.normalizar(o.autor_puesto) in x["puestos"] and unidades.get(o.unidad_id) and unidades[o.unidad_id].bando == b}
+    if autores:
+        activos = autores & con_unidades
+        inds.append(_ind("coordinacion", "Coordinación entre reparticiones",
+                         f"{len(activos)} de {len(con_unidades)} repartición(es) con unidades a cargo dieron órdenes",
+                         100 * len(activos) / max(1, len(con_unidades)),
+                         "Reparticiones (A-2, A-3, A-3 D/A, A-4, C-E) que dieron órdenes, sobre las que tenían unidades a "
+                         "cargo (según quién emitió cada orden)."))
+    else:
+        inds.append(_ind("coordinacion", "Coordinación entre reparticiones", "el Comandante o el JEM condujo todo",
+                         None, "Solo aplica cuando el bando trabaja con varias reparticiones (A-2 a C-E)."))
+
+    # 5. economia de fuerzas: relacion de intercambio
+    pd = x["perdidas"]
+    total = pd["infligidas"] + pd["sufridas"]
+    inds.append(_ind("economia", "Economía de fuerzas",
+                     f"{pd['infligidas']:.0f} pts infligidos / {pd['sufridas']:.0f} sufridos" if total else "sin combates",
+                     100 * pd["infligidas"] / total if total else None,
+                     "Pérdidas infligidas sobre el total de pérdidas de ambos lados en los combates del bando."))
+
+    # 6. objetivos
+    ob = x["objetivos"]
+    n_ob = ob["cumplidos"] + ob["fallidos"] + ob["pendientes"]
+    inds.append(_ind("objetivos", "Cumplimiento de objetivos",
+                     f"{ob['cumplidos']} de {n_ob} cumplido(s)" if n_ob else "sin objetivos asignados",
+                     100 * ob["cumplidos"] / n_ob if n_ob else None,
+                     "Objetivos cumplidos sobre los asignados al bando."))
+
+    # 7. iniciativa: turnos con al menos una orden o mision
+    if turnos_resueltos and any(u.bando == b for u in unidades.values()):
+        pasivos = x["turnos_pasivos"]["cantidad"]
+        inds.append(_ind("iniciativa", "Iniciativa", f"{len(turnos_resueltos) - pasivos} de {len(turnos_resueltos)} "
+                         "turno(s) con órdenes", 100 * (1 - pasivos / len(turnos_resueltos)),
+                         "Turnos en los que el bando dio al menos una orden o planificó una misión."))
+
+    puntajes = [i["puntaje"] for i in inds if i["puntaje"] is not None]
+    # sin turnos jugados no hay desempeno que calificar
+    promedio = sum(puntajes) / len(puntajes) if puntajes and turnos_resueltos else None
+    return {"indicadores": inds, "promedio": None if promedio is None else round(promedio, 1),
+            "nota": None if promedio is None else round(1 + 19 * promedio / 100),
+            "escala": "1 a 20 (promedio de los indicadores que aplican)"}
 
 
 def construir_rubrica(db: Session, escenario: Escenario) -> dict:
@@ -455,10 +580,9 @@ def construir_rubrica(db: Session, escenario: Escenario) -> dict:
             "puestos": OrderedDict(),
             "observaciones": [],
         }
-        for p in puestos.PUESTOS.values():
-            if p.id != puestos.POR_DEFECTO:
-                r[b]["puestos"][p.id] = {"sigla": p.sigla, "nombre": p.nombre, "ordenes": _bloque_ordenes(),
-                                         "misiones": 0, "observaciones": []}
+        for p in puestos.especializados():
+            r[b]["puestos"][p.id] = {"sigla": p.sigla, "nombre": p.nombre, "ordenes": _bloque_ordenes(),
+                                     "misiones": 0, "observaciones": []}
 
     # ---- ordenes (por bando y por puesto responsable) ----
     actividad: dict[str, set[int]] = {b: set() for b in bandos}
@@ -508,7 +632,7 @@ def construir_rubrica(db: Session, escenario: Escenario) -> dict:
             r[c["bando"]]["logistica"]["unidades_criticas"].append(c)
     reabastecidos: dict[str, set] = {b: set() for b in bandos}
     for f in registros:
-        if (f.bando in r and f.causa in ("reabastecimiento", "convoy") and f.variable in ("combustible", "municion")
+        if (f.bando in r and f.causa in ("reabastecimiento", "convoy", "reabastecimiento en vuelo") and f.variable in ("combustible", "municion")
                 and f.despues > f.antes):
             reabastecidos[f.bando].add((f.turno, f.unidad_id))
     for b in bandos:
@@ -562,7 +686,7 @@ def construir_rubrica(db: Session, escenario: Escenario) -> dict:
             cabeza = (f"{len(lg['unidades_criticas'])} unidad(es) llegaron a menos del {UMBRAL_CRITICO:.0f} % de "
                       f"combustible o municion ({nombres}{extra})")
             if lg["reabastecimientos"] == 0:
-                obs.append(cabeza + " y no hubo ningun reabastecimiento: coordinar los convoyes y las bases (A4) "
+                obs.append(cabeza + " y no hubo ningun reabastecimiento: coordinar los convoyes y las bases (A-4) "
                            "antes de que la unidad quede inmovil.")
             else:
                 obs.append(cabeza + f"; se hicieron {lg['reabastecimientos']} reabastecimiento(s): anticipar el "
@@ -587,6 +711,13 @@ def construir_rubrica(db: Session, escenario: Escenario) -> dict:
             pu["observaciones"] = _observaciones_ordenes(pu["ordenes"], f" en {pu['sigla']}")
         if not obs:
             obs.append("Sin observaciones destacables.")
+
+    contactos = db.query(Contacto).filter(Contacto.escenario_id == escenario.id).all()
+    for b in bandos:
+        r[b]["doctrina"] = _doctrina(b, r[b], unidades, ordenes, combates, contactos, turnos_resueltos)
+        from app.engine import tiem_evaluacion  # importacion tardia: evalua los documentos del TIEM
+
+        r[b]["tiem"] = tiem_evaluacion.evaluar(db, escenario, b)
 
     alumnos, sin_autor = _alumnos(db, escenario, unidades, ordenes, misiones, turnos_resueltos)
     return {

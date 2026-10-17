@@ -14,6 +14,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app import adversario as adversario_mod
 from app import auth
 from app import models  # noqa: F401  (registra todas las tablas)
 from app import state as state_mod
@@ -50,6 +51,7 @@ def terreno_llano(monkeypatch):
     monkeypatch.setattr(state_mod, "get_terreno", lambda: TerrenoFalso())
     monkeypatch.setattr(router_unidades, "get_terreno", lambda: TerrenoFalso())
     monkeypatch.setattr(router_ordenes, "get_terreno", lambda: TerrenoFalso())
+    monkeypatch.setattr(adversario_mod, "get_terreno", lambda: TerrenoFalso())
     monkeypatch.setattr(auth, "ITERACIONES", 1000)  # hash rapido solo en tests
 
 
@@ -59,6 +61,10 @@ def plantillas_usuario_temporales(monkeypatch, tmp_path):
     from app.engine import plantillas
 
     monkeypatch.setattr(plantillas, "RUTA_PLANTILLAS_USUARIO", tmp_path / "plantillas_usuario")
+    # el catalogo propio del instructor tambien: nunca se escribe backend/data/modelos_usuario.json en las pruebas
+    from app.engine import catalogo, modelos_usuario
+    monkeypatch.setattr(modelos_usuario, "RUTA", tmp_path / "modelos_usuario.json")
+    monkeypatch.setattr(catalogo, "MODELOS", {k: v for k, v in catalogo.MODELOS.items() if not k.startswith("u_")})
 
 
 # ---------------------------------------------------------------- PostgreSQL de prueba

@@ -1,15 +1,21 @@
 import json
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from sqlalchemy.orm import Session
 
-from app import auth, diapositivas_html, informe_html, schemas, state, turnos
+from app import adversario, auth, diapositivas_html, informe_html, schemas, state, turnos
 from app.db import get_db
-from app.engine import aar, clock, naciones, plantillas, timeline
+from app.engine import toe
+from app.engine import inteligencia
+from app.engine import transmisiones
+from app.engine import apresto
+from app.engine import aar, calendario, clock, naciones, plantillas, timeline
 from app.models.aar import Instantanea
 from app.models.objetivo import Objetivo
+from app.models.problema_militar import ProblemaMilitar
+from app.models.documento_tiem import DocumentoTiem
 from app.models.asignacion import Asignacion
 from app.models.escenario import Escenario
 from app.models.evento import Evento
@@ -19,7 +25,6 @@ from app.ws_manager import manager
 
 router = APIRouter(prefix="/api/escenarios", tags=["escenarios"])
 solo_instructor = auth.requiere_roles("instructor")
-solo_alumnos = auth.requiere_roles("azul", "rojo")
 
 
 async def _difundir_y_estado(db: Session, esc: Escenario, usuario: Usuario, vista: str | None = None):
@@ -71,16 +76,87 @@ def obtener_escenario(
     return state.estado_para(db, esc, _rol_vista(usuario, vista))
 
 
+MAX_TURNOS_DE_UNA_VEZ = 24
+
+
 @router.post("/{escenario_id}/avanzar_turno")
 async def avanzar_turno(
+    n: int = 1,
     esc: Escenario = Depends(auth.escenario_dep),
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(solo_instructor),
 ):
+    """Resuelve el turno; con `n`, varios seguidos (hasta un dia: para recorrer los periodos tranquilos de un
+    ejercicio largo). Se detiene si el escenario deja de estar activo."""
     if esc.estado != "activo":
         raise HTTPException(status_code=400, detail="El escenario no esta activo")
-    await turnos.resolver_y_difundir(db, esc)
+    if not 1 <= n <= MAX_TURNOS_DE_UNA_VEZ:
+        raise HTTPException(status_code=400, detail=f"Se avanzan entre 1 y {MAX_TURNOS_DE_UNA_VEZ} turnos de una vez")
+    for _ in range(n):
+        if esc.estado != "activo":
+            break
+        await turnos.resolver_y_difundir(db, esc)
     return state.estado_para(db, esc, usuario.rol)
+
+
+@router.post("/{escenario_id}/pcao")
+async def ordenar_pcao(
+    payload: schemas.PcaoIn,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.usuario_actual),
+):
+    """Ordena la Puesta en Completo Apresto Operacional: el comandante o el JEM del bando, o el instructor. Si el
+    bando tiene un Plan de PCAO con los plazos de los 5 eventos, rigen esos plazos."""
+    if usuario.rol in ("azul", "rojo"):
+        if (usuario.puesto or "comandante") not in ("comandante", "jem"):
+            raise HTTPException(status_code=403, detail="La PCAO la ordena el Comandante o el Jefe de Estado Mayor")
+        bando = usuario.rol
+    elif usuario.rol == "instructor" and payload.bando:
+        bando = payload.bando
+    else:
+        raise HTTPException(status_code=403, detail="Solo el comandante del bando o el instructor ordenan la PCAO")
+    c = apresto.config(esc, bando)
+    if c["grado"] == "completo":
+        raise HTTPException(status_code=400, detail="El bando ya está en Completo Apresto Operacional")
+    if c.get("pcao_inicio") is not None:
+        raise HTTPException(status_code=400, detail="La PCAO ya está en marcha")
+    doc = db.query(DocumentoTiem).filter(DocumentoTiem.escenario_id == esc.id, DocumentoTiem.bando == bando,
+                                         DocumentoTiem.tipo == "plan_pcao").one_or_none()
+    plazos = apresto.plazos_del_plan(json.loads(doc.contenido_json)) if doc is not None else None
+    apresto.iniciar_pcao(esc, bando, esc.turno_actual, plazos)
+    p = apresto.progreso(esc, bando, esc.turno_actual)
+    db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino=bando,
+                  descripcion=f"Se ordenó la Puesta en Completo Apresto Operacional (PCAO): {p['total']} turnos en 5 "
+                              f"eventos{' según el Plan de PCAO' if plazos else ''}; termina en el turno "
+                              f"{esc.turno_actual + p['total']}."))
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return apresto.resumen(esc, bando, db.query(Unidad).filter(Unidad.escenario_id == esc.id).all())
+
+
+@router.put("/{escenario_id}/transmisiones")
+async def guardar_transmisiones(
+    payload: schemas.PlanTransmisionesIn,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.usuario_actual),
+):
+    """Plan de transmisiones del bando: cada alumno, el de su bando; el instructor, el que indique."""
+    if usuario.rol in ("azul", "rojo"):
+        bando = usuario.rol
+    elif usuario.rol == "instructor" and payload.bando:
+        bando = payload.bando
+    else:
+        raise HTTPException(status_code=403, detail="Solo los alumnos de un bando o el instructor editan el plan")
+    transmisiones.guardar(esc, bando, [r.model_dump() for r in payload.redes], esc.turno_actual)
+    errores = transmisiones.errores(transmisiones.plan(esc, bando), esc.turno_actual)
+    db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="comunicaciones", bando_destino=bando,
+                  descripcion=f"Plan de transmisiones actualizado por {usuario.username}"
+                              + (f" con {len(errores)} observación(es)." if errores else ": sin observaciones.")))
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return transmisiones.resumen(esc, bando, esc.turno_actual)
 
 
 @router.post("/{escenario_id}/pausar")
@@ -138,7 +214,7 @@ async def configurar(
         clock.programar_limite(esc)
         cambios.append(f"limite de decision {esc.limite_decision_seg or 'sin limite'} s")
     for campo, etiqueta in (("com_latencia_ms", "latencia de radio"), ("com_jitter_ms", "variacion de latencia"),
-                            ("com_perdida_pct", "perdida de mensajes")):
+                            ("com_perdida_pct", "perdida de mensajes"), ("com_ordenes_pct", "ordenes demoradas")):
         nuevo = getattr(payload, campo)
         if nuevo is not None and nuevo != getattr(esc, campo):
             setattr(esc, campo, nuevo)
@@ -157,6 +233,73 @@ async def configurar(
             cambios.append(f"{etiqueta} {'activado' if nuevo else 'desactivado'}")
             db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino="todos",
                           descripcion=f"Direccion del ejercicio: {etiqueta} {'activado' if nuevo else 'desactivado'}."))
+    if payload.ia_nivel is not None and payload.ia_nivel != esc.ia_nivel:
+        esc.ia_nivel = payload.ia_nivel
+        cambios.append(f"nivel del adversario automatico: {payload.ia_nivel}")
+    if payload.fallas is not None and payload.fallas != esc.fallas:
+        esc.fallas = payload.fallas
+        cambios.append(f"disponibilidad y fallas de las aeronaves {'activadas' if payload.fallas else 'desactivadas'}")
+        db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino="todos",
+                      descripcion="Direccion del ejercicio: disponibilidad y fallas de las aeronaves "
+                                  f"{'activadas' if payload.fallas else 'desactivadas'}."))
+    if payload.personal is not None:
+        actual = {b: toe.config(esc, b) for b in ("azul", "rojo")}
+        for bando, datos in payload.personal.items():
+            nuevos = {k: v for k, v in datos.model_dump().items() if v is not None}
+            if nuevos:
+                actual[bando] = {**actual[bando], **nuevos}
+                cambios.append(f"personal del bando {bando.capitalize()}: " + ", ".join(f"{k} {v}" for k, v in nuevos.items()))
+        esc.personal_json = json.dumps(actual)
+    if payload.apresto is not None:
+        for bando, datos in payload.apresto.items():
+            d = datos.model_dump(exclude_none=True)
+            reiniciar = d.pop("reiniciar_pcao", False)
+            if reiniciar or d.get("grado") in ("paz", "elevado"):
+                d["pcao_inicio"] = None
+            c = apresto.guardar(esc, bando, **d)
+            cambios.append(f"apresto del bando {bando.capitalize()}: {apresto.NOMBRE_GRADO[c['grado']]}"
+                           + (f", fase {apresto.FASES[int(c['fase'])]}" if c["grado"] == "elevado" else ""))
+            db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino=bando,
+                          descripcion=f"El bando pasa a {apresto.NOMBRE_GRADO[c['grado']]}"
+                                      + (f" (fase {apresto.FASES[int(c['fase'])]})." if c["grado"] == "elevado" else ".")))
+    if payload.inteligencia is not None:
+        for bando, datos in payload.inteligencia.items():
+            c = inteligencia.configurar(esc, bando, datos.satelites, datos.tipo)
+            cambios.append(f"satélites del bando {bando.capitalize()}: {c['satelites']} ({c['tipo']})")
+    if payload.dia_noche is not None and payload.dia_noche != esc.dia_noche:
+        esc.dia_noche = payload.dia_noche
+        cambios.append(f"ciclo de dia y noche {'activado' if payload.dia_noche else 'desactivado'}")
+        db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino="todos",
+                      descripcion=f"Direccion del ejercicio: ciclo de dia y noche {'activado' if payload.dia_noche else 'desactivado'}."))
+    for bando in ("azul", "rojo"):
+        pedida = getattr(payload, f"conduccion_{bando}")
+        if pedida is None or pedida == esc.conduccion(bando):
+            continue
+        # "ia" enciende el adversario automatico; "alumnos" o "instructor" lo apagan
+        setattr(payload, f"ia_{bando}", pedida == "ia")
+        if pedida != "ia":
+            setattr(esc, f"conduce_{bando}", pedida)
+            if not getattr(esc, f"ia_{bando}"):
+                cambios.append(f"bando {bando.capitalize()} conducido por {'el instructor' if pedida == 'instructor' else 'los alumnos'}")
+                db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino="todos",
+                              descripcion=f"Direccion del ejercicio: el bando {bando.capitalize()} lo conduce "
+                                          f"{'el instructor' if pedida == 'instructor' else 'el grupo de alumnos'}."))
+    _aplicar_calendario(payload, esc, cambios)
+    ia_encendida = []
+    for campo, etiqueta in (("ia_azul", "adversario automatico del bando Azul"), ("ia_rojo", "adversario automatico del bando Rojo")):
+        nuevo = getattr(payload, campo)
+        if nuevo is not None and nuevo != getattr(esc, campo):
+            setattr(esc, campo, nuevo)
+            cambios.append(f"{etiqueta} {'activado' if nuevo else 'desactivado'}")
+            db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino="todos",
+                          descripcion=f"Direccion del ejercicio: {etiqueta} {'activado' if nuevo else 'desactivado'}."))
+            if nuevo:
+                ia_encendida.append(campo[3:])
+            else:
+                setattr(esc, f"listo_{campo[3:]}", False)
+    if ia_encendida and esc.estado == "activo" and esc.fase == "decision":
+        db.flush()
+        adversario.jugar_turno(db, esc, bandos=ia_encendida)  # juega ya el turno en curso
     for campo, etiqueta in (("nacion_azul", "Azul"), ("nacion_rojo", "Rojo")):
         nueva_nacion = getattr(payload, campo)
         if nueva_nacion is None or nueva_nacion == getattr(esc, campo):
@@ -171,12 +314,39 @@ async def configurar(
     return await _difundir_y_estado(db, esc, usuario)
 
 
+def _aplicar_calendario(payload: schemas.EscenarioConfig, esc: Escenario, cambios: list[str]) -> None:
+    """Fecha de inicio, hora H, ultimo turno y fases de la operacion (ver engine/calendario.py)."""
+    if payload.fecha_inicio is not None and (payload.fecha_inicio or None) != esc.fecha_inicio:
+        if payload.fecha_inicio:
+            try:
+                date.fromisoformat(payload.fecha_inicio)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Fecha de inicio invalida")
+        esc.fecha_inicio = payload.fecha_inicio or None
+        cambios.append(f"fecha del turno 1: {esc.fecha_inicio or 'sin fecha'}")
+    if payload.turno_h is not None and (payload.turno_h or None) != esc.turno_h:
+        esc.turno_h = payload.turno_h or None
+        cambios.append(f"hora H en el turno {esc.turno_h}" if esc.turno_h else "sin hora H")
+    if payload.turno_final is not None and (payload.turno_final or None) != esc.turno_final:
+        esc.turno_final = payload.turno_final or None
+        cambios.append(f"ultimo turno previsto {esc.turno_final}" if esc.turno_final else "sin ultimo turno previsto")
+    if esc.turno_h and esc.turno_final and esc.turno_final < esc.turno_h:
+        raise HTTPException(status_code=400, detail="El ultimo turno previsto no puede ser anterior a la hora H")
+    if payload.fases is not None:
+        try:
+            fases = calendario.validar_fases([f.model_dump() for f in payload.fases])
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        esc.fases_json = json.dumps(fases, ensure_ascii=False) if fases else None
+        cambios.append("fases de la operacion " + (", ".join(f["nombre"] for f in fases) if fases else "por defecto"))
+
+
 @router.post("/{escenario_id}/listo")
 async def marcar_listo(
     payload: schemas.ListoIn,
     esc: Escenario = Depends(auth.escenario_dep),
     db: Session = Depends(get_db),
-    usuario: Usuario = Depends(solo_alumnos),
+    usuario: Usuario = Depends(auth.conductor),
 ):
     auth.exigir_funcion(usuario, "listo")
     if esc.estado != "activo" or esc.fase != "decision":
@@ -238,8 +408,11 @@ def duplicar(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends
     copia = Escenario(nombre=f"{esc.nombre} (copia)", clima=esc.clima, azar=esc.azar,
                       auto_resolver=esc.auto_resolver, limite_decision_seg=esc.limite_decision_seg,
                       hora_inicio_min=esc.hora_inicio_min, com_latencia_ms=esc.com_latencia_ms,
-                      com_jitter_ms=esc.com_jitter_ms, com_perdida_pct=esc.com_perdida_pct,
-                      nacion_azul=esc.nacion_azul, nacion_rojo=esc.nacion_rojo)
+                      com_jitter_ms=esc.com_jitter_ms, com_perdida_pct=esc.com_perdida_pct, com_ordenes_pct=esc.com_ordenes_pct,
+                      dia_noche=esc.dia_noche, ia_nivel=esc.ia_nivel,
+                      nacion_azul=esc.nacion_azul, nacion_rojo=esc.nacion_rojo,
+                      conduce_azul=esc.conduce_azul, conduce_rojo=esc.conduce_rojo, fecha_inicio=esc.fecha_inicio,
+                      turno_h=esc.turno_h, turno_final=esc.turno_final, fases_json=esc.fases_json)
     db.add(copia)
     db.flush()
     campos = ("nombre", "bando", "tipo", "clase", "echelon", "modelo", "aeronaves", "velocidad_kmh", "alcance_km",
@@ -250,14 +423,24 @@ def duplicar(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends
         nuevas[u.id] = Unidad(escenario_id=copia.id, lat=lat, lon=lon, **{c: getattr(u, c) for c in campos})
         db.add(nuevas[u.id])
     db.flush()
-    for o in db.query(Objetivo).filter(Objetivo.escenario_id == esc.id).order_by(Objetivo.id):
+    copias: dict[int, Objetivo] = {}
+    originales = db.query(Objetivo).filter(Objetivo.escenario_id == esc.id).order_by(Objetivo.id).all()
+    for o in originales:
         if o.unidad_id is not None and o.unidad_id not in nuevas:
             continue
-        db.add(Objetivo(
+        copias[o.id] = Objetivo(
             escenario_id=copia.id, bando=o.bando, tipo=o.tipo, nombre=o.nombre, puntos=o.puntos, lat=o.lat, lon=o.lon,
             radio_km=o.radio_km, turnos_requeridos=o.turnos_requeridos, hasta_turno=o.hasta_turno,
             unidad_id=nuevas[o.unidad_id].id if o.unidad_id is not None else None,
-        ))
+            nivel=o.nivel, efecto=o.efecto, indicador=o.indicador, umbral=o.umbral,
+        )
+        db.add(copias[o.id])
+    db.flush()
+    for o in originales:  # la cadena de objetivos apunta a las copias
+        if o.id in copias and o.padre_id in copias:
+            copias[o.id].padre_id = copias[o.padre_id].id
+    for pm in db.query(ProblemaMilitar).filter(ProblemaMilitar.escenario_id == esc.id):
+        db.add(ProblemaMilitar(escenario_id=copia.id, bando=pm.bando, contenido_json=pm.contenido_json, origen=pm.origen))
     for a in db.query(Asignacion).filter(Asignacion.escenario_id == esc.id):
         db.add(Asignacion(usuario_id=a.usuario_id, escenario_id=copia.id))
     db.commit()
@@ -391,7 +574,19 @@ def exportar(esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends
             "nombre": esc.nombre, "clima": esc.clima, "azar": esc.azar, "semilla": esc.semilla,
             "auto_resolver": esc.auto_resolver, "limite_decision_seg": esc.limite_decision_seg,
             "nacion_azul": esc.nacion_azul, "nacion_rojo": esc.nacion_rojo,
+            "conduccion_azul": esc.conduccion_azul, "conduccion_rojo": esc.conduccion_rojo,
+            "calendario": esc.calendario,
         },
+        "problema_militar": {
+            pm.bando: json.loads(pm.contenido_json)
+            for pm in db.query(ProblemaMilitar).filter(ProblemaMilitar.escenario_id == esc.id)
+        },
+        "documentos_tiem": [
+            {"bando": d.bando, "tipo": d.tipo, "estado": d.estado, "observaciones": d.observaciones,
+             "editado_por": d.editado_por, "presentado_turno": d.presentado_turno, "revisado_turno": d.revisado_turno,
+             "contenido": json.loads(d.contenido_json)}
+            for d in db.query(DocumentoTiem).filter(DocumentoTiem.escenario_id == esc.id).order_by(DocumentoTiem.id)
+        ],
         "unidades": unidades,
         "objetivos": [
             {c.name: getattr(o, c.name) for c in Objetivo.__table__.columns if c.name not in ("id", "escenario_id")}

@@ -1,0 +1,3 @@
+# Fotos de referencia (tools/fotos): recorte del fondo para el encuadre uniforme
+rembg[cpu]>=2.0
+scipy

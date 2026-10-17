@@ -1,0 +1,46 @@
+# Revision automatica: corre las pruebas del servidor y del navegador en cada pull request y en cada cambio de main.
+name: Pruebas
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pruebas-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  servidor:
+    name: Servidor (pytest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            tools/fotos/requirements.txt
+      - name: Dependencias
+        run: |
+          python -m pip install -r backend/requirements.txt
+          python -m pip install scipy
+      - name: Pruebas del servidor
+        working-directory: backend
+        run: python -m pytest -q
+
+  navegador:
+    name: Navegador (node --test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Pruebas de la logica del cliente
+        run: node --test frontend/tests/*.test.js

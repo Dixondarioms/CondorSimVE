@@ -51,13 +51,13 @@
   }
 
   // ---------------------------------------------------------------- buques, portaaviones y misiles de crucero
-  const PLAZAS_AERONAVES = { base_aerea: 12, portaaviones: 10 }; // igual que el catalogo del servidor
+  const PLAZAS_AERONAVES = { base_aerea: 12, portaaviones: 10, punto_recobre: 4 }; // igual que el catalogo del servidor
   const PISTA_INOPERATIVA = 60; // % de daño de la pista (engine/bases.py)
   const PARTES_BASE = [["", "Ataque general"], ["pista", "La pista (sin despegues ni aterrizajes al 60 % de daño)"], ["plataforma", "La plataforma (expone a los aviones estacionados)"], ["combustible", "El depósito de combustible (reduce las existencias)"]];
   /** "Pista 40 % · Plataforma 10 % · Depósito 0 %" */
   const textoPartesBase = (u) => `Pista ${Math.round(u.dano_pista || 0)} % · Plataforma ${Math.round(u.dano_plataforma || 0)} % · Depósito ${Math.round(u.dano_combustible || 0)} %`;
   const CLASES_EMBARCABLES = ["helicoptero", "helicoptero_artillado", "dron_reconocimiento", "dron_ataque", "municion_merodeadora"];
-  const MODELOS_EMBARCABLES = ["caza_embarcado"];
+  const MODELOS_EMBARCABLES = ["caza_embarcado", "fa18ef", "ea18g", "e2d", "f35b"]; // como `embarcable` en catalogo.py
   const LANZAN_MISILES = ["fragata", "destructor", "submarino", "lanzador_misiles"];
   const MAX_MISILES_SALVA = 4;
   const MUNICION_POR_MISIL = 25;
@@ -123,6 +123,53 @@
     return salida;
   }
 
+  /** Movimientos a animar al recibir un estado: solo si es el mismo escenario y avanzo el turno (no al cambiar de
+   *  escenario, ni al arrastrar una unidad, ni en una actualizacion dentro del mismo turno). `previas`: Map id ->
+   *  [lat, lon] de lo que se dibujo antes. */
+  function movimientosDelTurno(previas, unidades, antes, ahora, umbral = 0.0005) {
+    if (!antes || !ahora || antes.escenario !== ahora.escenario || !(ahora.turno > antes.turno) || !previas) return [];
+    const salida = [];
+    for (const u of unidades) {
+      const p = previas.get(u.id);
+      if (!p || u.estado === "destruida") continue;
+      if (Math.abs(p[0] - u.lat) > umbral || Math.abs(p[1] - u.lon) > umbral) {
+        // el camino real del turno (por la carretera, si la seguia) cuando el servidor lo manda: el de las propias
+        const r = Array.isArray(u.recorrido) && u.recorrido.length >= 2 ? u.recorrido : null;
+        const ruta = r ? [p, ...r.slice(1, -1), [u.lat, u.lon]] : [p, [u.lat, u.lon]];
+        salida.push({ id: u.id, bando: u.bando, tipo: u.tipo, desde: p, hasta: [u.lat, u.lon], ruta });
+      }
+    }
+    return salida;
+  }
+
+  /** Punto de la ruta [[lat, lon], ...] a la fraccion `f` (0 a 1) de su largo: la unidad avanza a velocidad pareja
+   *  por cada tramo de la carretera, no en linea recta. */
+  function puntoEnRuta(ruta, f) {
+    if (!ruta || !ruta.length) return null;
+    if (ruta.length === 1 || f <= 0) return ruta[0];
+    if (f >= 1) return ruta[ruta.length - 1];
+    const largos = [];
+    let total = 0;
+    for (let i = 1; i < ruta.length; i++) {
+      const [a, b] = [ruta[i - 1], ruta[i]];
+      const c = Math.cos(((a[0] + b[0]) / 2) * Math.PI / 180);
+      const d = Math.hypot(b[0] - a[0], (b[1] - a[1]) * c);
+      largos.push(d);
+      total += d;
+    }
+    if (total <= 0) return ruta[ruta.length - 1];
+    let falta = f * total;
+    for (let i = 0; i < largos.length; i++) {
+      if (falta <= largos[i] || i === largos.length - 1) {
+        const t = largos[i] ? Math.min(1, falta / largos[i]) : 1;
+        const [a, b] = [ruta[i], ruta[i + 1]];
+        return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      }
+      falta -= largos[i];
+    }
+    return ruta[ruta.length - 1];
+  }
+
   /** Lineas atacante -> defensor de los combates de un turno, con las posiciones de la instantanea. */
   function lineasCombate(combates, unidades) {
     const por = new Map(unidades.map((u) => [u.id, u]));
@@ -150,12 +197,14 @@
     antiaerea: "artilleria", caza: "aviacion", ataque: "aviacion", helicoptero: "aviacion",
     fragata: "naval", patrullero: "naval", destructor: "naval", portaaviones: "naval", submarino: "naval",
     buque_desembarco: "naval", lanzador_misiles: "artilleria", misil_crucero: "artilleria",
-    base_aerea: "bases", deposito: "bases", puerto: "bases",
+    base_aerea: "bases", deposito: "bases", puerto: "bases", punto_recobre: "bases",
+    termoelectrica: "infraestructura", hidroelectrica: "infraestructura", refineria: "infraestructura",
+    centro_comunicaciones: "infraestructura", puente: "infraestructura",
   };
   const RAMA_DE_TIPO = { terrestre: "infanteria", aerea: "aviacion", naval: "naval", base: "bases" };
   const RAMAS = [
     ["infanteria", "Infantería"], ["blindados", "Blindados"], ["artilleria", "Artillería"],
-    ["aviacion", "Aviación"], ["naval", "Naval"], ["bases", "Bases y logística"],
+    ["aviacion", "Aviación"], ["naval", "Naval"], ["bases", "Bases y logística"], ["infraestructura", "Infraestructura"],
   ];
   const ramaDe = (u) => RAMA_DE_CLASE[u.clase] || RAMA_DE_TIPO[u.tipo] || "infanteria";
 
@@ -216,6 +265,9 @@
   const claseBarra = (v) => (v === null || v === undefined ? "oculto" : v < 30 ? "critico" : v < 60 ? "bajo" : "");
 
   /** Estado legible de una unidad segun sus datos y las ordenes pendientes de este turno. */
+  // infraestructura no militar (backend/app/engine/infraestructura.py): un puente bajo el 50 % queda cortado
+  const INFRAESTRUCTURA = ["termoelectrica", "hidroelectrica", "refineria", "centro_comunicaciones", "puente"];
+
   function estadoUnidad(u, ordenesPendientes = []) {
     if (esMisil(u) && u.estado === "activa") return { texto: "Misil en vuelo", clase: "ok" };
     if (embarcada(u) && u.estado === "activa") return { texto: "A bordo", clase: "ok" };
@@ -230,6 +282,11 @@
       }[orden.tipo];
       if (t) return { texto: t[0], clase: t[1] };
     }
+    if (INFRAESTRUCTURA.includes(u.clase)) {
+      if (u.clase === "puente" && u.fuerza < 50) return { texto: "Cortado", clase: "fuego" };
+      if (u.fuerza < 100) return { texto: `Dañada (${Math.round(u.fuerza)} %)`, clase: "mov" };
+      return { texto: "Operativa", clase: "ok" };
+    }
     if (u.tipo === "base") {
       if (u.stock_combustible === 0 || u.stock_municion === 0) return { texto: "Base sin existencias", clase: "fuego" };
       return { texto: "Base operativa", clase: "ok" };
@@ -241,6 +298,10 @@
     }
     if (u.mision === "patrulla") return { texto: "Patrullando", clase: "mov" };
     if (u.combustible !== null && u.combustible <= 0) return { texto: "Sin combustible", clase: "fuego" };
+    // defensa aerea: la municion es la reserva; con misiles aun en los lanzadores no esta "sin municion"
+    const armasDA = u.sistema_da && Array.isArray(u.sistema_da.armas) ? u.sistema_da.armas : null;
+    const listosDA = armasDA ? armasDA.reduce((t, a) => t + (a.listos || 0), 0) : 0;
+    if (u.municion !== null && u.municion <= 0 && listosDA > 0) return { texto: `Sin reserva · ${listosDA} misiles listos`, clase: "mov" };
     if (u.municion !== null && u.municion <= 0) return { texto: "Sin munición", clase: "fuego" };
     if (u.emitiendo === false) return { texto: "Radar apagado", clase: "mov" };
     if (u.fuego_libre === false) return { texto: "Fuego retenido", clase: "mov" };
@@ -477,6 +538,136 @@
     return m.resultado || ESTADOS_MISION[m.estado] || m.estado;
   }
 
+  /** Armamento de la OTA que lleva el modelo, como [[codigo, "codigo · nombre"]]. Para el armamento primario, solo el
+   *  que sirve al rol: aire-aire para CAP y escolta, aire-superficie para interdiccion, CAS y SEAD. */
+  function armasParaRol(catOta, modeloId, rolId, primario = true) {
+    if (!catOta || !catOta.armamento) return [];
+    const lista = (catOta.por_modelo || {})[modeloId] || ["M120", "M9X", "MPB", "BMK", "BBU"];
+    const aa = ["CAP", "ESCOLTA"].includes(rolId);
+    const sup = ["INTERDICCION", "CAS", "SEAD"].includes(rolId);
+    return lista.filter((c) => catOta.armamento[c]).filter((c) => {
+      if (!primario) return true;
+      const t = catOta.armamento[c].tipo;
+      return aa ? t === "aa" : sup ? t !== "aa" : true;
+    }).map((c) => [c, `${c} · ${catOta.armamento[c].nombre}`]);
+  }
+
+  /** Rumbo, distancia y altitud de un tramo de la ruta: "045° · 54 NM · 5000 ft". */
+  function textoTramo(t) {
+    if (!t) return "";
+    return `${String(t.rumbo).padStart(3, "0")}° · ${t.nm} NM` + (t.altitud_ft ? ` · ${t.altitud_ft} ft` : "");
+  }
+
+  // ---------------------------------------------------------------- recuperacion de personal (engine/rescate.py)
+  const ESTADOS_DERRIBADO = { aislado: "Aislados: esperan rescate", rescatado: "Rescatados", capturado: "Capturados", perdido: "Perdidos" };
+
+  /** "2 tripulantes de Halcón · aislados desde T5 (en el agua)". */
+  function textoDerribado(d) {
+    if (!d) return "";
+    const quien = `${d.tripulantes} tripulante${d.tripulantes === 1 ? "" : "s"}${d.grupo ? ` de ${d.grupo}` : ""}`;
+    const donde = d.medio === "agua" ? " (en el agua)" : "";
+    if (d.estado === "aislado") return `${quien} · aislados desde T${d.turno}${donde}`;
+    const por = d.por ? ` por ${d.por}` : "";
+    return `${quien} · ${(ESTADOS_DERRIBADO[d.estado] || d.estado).toLowerCase()}${d.estado === "perdido" ? "" : por} en T${d.turno_fin}`;
+  }
+
+  /** Tripulacion propia aislada mas cercana a un punto (para el rescate), o null. */
+  function derribadoCercano(derribados, bando, lat, lon, km = 15) {
+    let mejor = null;
+    for (const d of derribados || []) {
+      if (d.estado !== "aislado" || d.bando !== bando) continue;
+      const dist = distanciaKm(lat, lon, d.lat, d.lon);
+      if (dist <= km && (!mejor || dist < mejor.dist)) mejor = { d, dist };
+    }
+    return mejor ? mejor.d : null;
+  }
+
+  /** Calculo de armamento en una frase: "Para «neutraliza…» hacen falta 24 BMK (12 en el blanco, 4 DMPI): 4 aeronaves; lleva 12." */
+  function textoWeaponeering(w) {
+    if (!w) return "";
+    return `Cálculo de armamento (${w.blanco_nombre.toLowerCase()}, «${w.criterio_nombre.toLowerCase()}», ${w.angulo}°): `
+      + `${w.impactos} ${w.arma} en el blanco (${w.dmpi} DMPI) y ${w.lanzar} a lanzar${w.guiada ? " (guiadas)" : " (×3 por la dispersión)"}`
+      + `: ${w.aeronaves_necesarias} aeronave${w.aeronaves_necesarias === 1 ? "" : "s"} de ${w.por_aeronave}`
+      + (w.lleva !== undefined ? `; el grupo lleva ${w.lleva}${w.suficiente ? "" : " (no alcanza)"}` : "")
+      + `. Radio de escombros ${w.radio_escombros_m} m.`;
+  }
+
+  /** Fila del cuadro de anillos de Warden: [nombre, objetivos, "2 neutralizados · 1 destruido", ejemplos]. */
+  function filaWarden(f) {
+    const estado = [[f.degradados, "degradado"], [f.neutralizados, "neutralizado"], [f.destruidos, "destruido"], [f.sin_noticias, "sin noticias"]]
+      .filter(([n]) => n).map(([n, t]) => `${n} ${t}${n === 1 || t === "sin noticias" ? "" : "s"}`).join(" · ");
+    return [f.nombre, String(f.objetivos), estado || (f.objetivos ? "operativos" : "—"), (f.ejemplos || []).join(", ")];
+  }
+
+  // ---------------------------------------------------------------- apresto operacional (engine/apresto.py)
+  const ASPECTOS_APRESTO = ["personal", "armamento", "equipamiento", "adiestramiento", "c3"];
+
+  /** Linea del grado del bando: "Elevado Apresto Operacional (fase naranja) · aeronaves listas 80 % · ..." */
+  function textoGradoApresto(r) {
+    if (!r) return "";
+    const c = r.config || {};
+    return `${r.grado_nombre}${c.grado === "elevado" && r.fase_nombre ? ` (fase ${r.fase_nombre})` : ""}`
+      + ` · aeronaves listas ${r.aeronaves_listas_pct} %`
+      + ` · reservas y milicia ${r.reservas_incorporadas ? "incorporadas" : "sin incorporar (evento 2 de la PCAO)"}`
+      + ` · ${r.tienen} de ${r.total} unidad${r.total === 1 ? "" : "es"} con apresto.`;
+  }
+
+  /** Celdas de una unidad en el cuadro de apresto (en %): [nombre, {texto, bajo} x 5, "Sí" | "No"]. */
+  function filaApresto(f, minimos) {
+    return [f.nombre, ...ASPECTOS_APRESTO.map((k) => ({ texto: String(Math.round(f.aspectos[k])), bajo: f.aspectos[k] < minimos[k] })),
+      f.tiene ? "Sí" : "No"];
+  }
+
+  /** Estado de cada evento de la PCAO: "1. Activación ... · 2 turnos · cumplido". */
+  function lineasPcao(p) {
+    if (!p) return [];
+    return p.eventos.map((e) => `${e.nombre} · ${e.plazo} turno${e.plazo === 1 ? "" : "s"}${e.estado ? ` · ${e.estado}` : ""}`);
+  }
+
+  // ---------------------------------------------------------------- tarjeta tactica dinamica de una unidad
+  const NOMBRE_PERFIL_CORTO = { alto: "alto", medio: "medio", rasante: "rasante" };
+
+  /** Estado de la unidad para su simbolo: "critico" (fuerza < 30), "degradado" (< 70), "sin-combustible" (aeronave propia
+   *  con 25 % o menos) o "" (sin novedad; la fuerza enemiga no se conoce). */
+  function estadoSimbolo(u) {
+    if (!u || u.fuerza === null || u.fuerza === undefined) return "";
+    if (u.fuerza < 30) return "critico";
+    if (u.fuerza < 70) return "degradado";
+    if (u.tipo === "aerea" && u.combustible !== null && u.combustible !== undefined && u.combustible <= 25 && !u.en_tierra) return "sin-combustible";
+    return "";
+  }
+
+  /** Lineas de la tarjeta tactica: lo que se sabe de la unidad ahora (las propias, todo; las enemigas, lo visible). */
+  function lineasTarjeta(u, orden) {
+    if (!u) return [];
+    const out = [];
+    const conocido = u.fuerza !== null && u.fuerza !== undefined;
+    out.push(conocido ? `Fuerza ${Math.round(u.fuerza)} %` : "Fuerza desconocida (enemigo)");
+    if (conocido && u.tipo !== "base" && u.combustible !== null && u.combustible !== undefined) {
+      out.push(`Combustible ${Math.round(u.combustible)} % · Munición ${Math.round(u.municion ?? 0)} %`);
+    }
+    if (u.tipo === "aerea" && !esMisil(u)) {
+      const n = u.aeronaves ? `${u.aeronaves} aeronave${u.aeronaves === 1 ? "" : "s"} · ` : "";
+      const vuelo = u.en_tierra
+        ? `en tierra${u.espera_restante ? `, lista en ${u.espera_restante} turno${u.espera_restante === 1 ? "" : "s"}` : ", lista"}`
+        : `en vuelo${u.perfil_actual ? `, perfil ${NOMBRE_PERFIL_CORTO[u.perfil_actual] || u.perfil_actual}` : ""}`;
+      out.push(n + vuelo);
+    }
+    if (u.mision === "patrulla") out.push("Patrulla: intercepta lo que entre a su alcance");
+    if (orden) out.push(`Orden pendiente: ${orden.tipo}${orden.detalle ? ` (${orden.detalle})` : ""}`);
+    const e = estadoSimbolo(u);
+    if (e === "critico") out.push("Situación crítica: casi sin capacidad de combate");
+    else if (e === "sin-combustible") out.push("Combustible bajo: debe regresar");
+    return out;
+  }
+
+  /** Paquete y funcion de una mision en la OTA: "paq. TELA (CM)" ("" si no va en un paquete). */
+  function textoPaquete(m) {
+    const o = (m && m.ota) || {};
+    if (!o.paquete) return "";
+    return `paq. ${o.paquete}${o.funcion && o.funcion !== "-" ? ` (${o.funcion})` : ""}`;
+  }
+
   /** Tramos del cronograma (flow sheet) de una mision segun su plan: horas desde el inicio del turno 1.
    *  segmentos: vuelo u orbita; marcas: ataque (blanco) o aterrizaje. */
   function tramosCronograma(m) {
@@ -609,16 +800,21 @@
     return unidades.filter((u) => [u.nombre, u.clase, u.modelo, u.tipo].some((c) => sinAcentos(c).includes(q)));
   }
 
-  const ETIQUETA_OBJETIVO = { ocupar: "Ocupar", destruir: "Destruir", proteger: "Proteger" };
+  const ETIQUETA_OBJETIVO = { ocupar: "Ocupar", destruir: "Destruir", neutralizar: "Neutralizar", proteger: "Proteger", efecto: "Efecto" };
+  const NIVELES_OBJETIVO = { ulterior: "Objetivo ulterior", asignado: "Objetivo asignado", material: "Objetivo material" };
 
   /** Linea de resumen de un objetivo: que hay que hacer, cuanto vale y como va. */
   function textoObjetivo(o) {
+    const umbral = o.umbral ?? (o.tipo === "neutralizar" ? 50 : 100);
     const que = {
       ocupar: `Ocupar la zona (radio ${o.radio_km} km)${o.turnos_requeridos > 1 ? ` durante ${o.turnos_requeridos} turnos seguidos` : ""}`,
       destruir: `Destruir ${o.unidad_nombre || "la unidad"}`,
+      neutralizar: `Neutralizar ${o.unidad_nombre || "la unidad"} (fuerza ${umbral} % o menos)`,
       proteger: `Proteger ${o.unidad_nombre || "la unidad"}${o.hasta_turno ? ` hasta el turno ${o.hasta_turno}` : ""}`,
+      efecto: `Cumplir el ${umbral} % de los objetivos que dependen de él`,
     }[o.tipo] || o.tipo;
-    return `${que} · ${o.puntos} pts`;
+    const plazo = o.hasta_turno && o.tipo !== "proteger" ? ` · plazo: turno ${o.hasta_turno}` : "";
+    return `${que}${plazo}${o.puntos ? ` · ${o.puntos} pts` : ""}`;
   }
 
   /** {texto, clase} del avance de un objetivo. */
@@ -626,8 +822,59 @@
     if (o.estado === "cumplido") return { texto: `Cumplido (turno ${o.turno_resuelto})`, clase: "ok" };
     if (o.estado === "fallido") return { texto: `Fallido (turno ${o.turno_resuelto})`, clase: "fuego" };
     if (o.tipo === "ocupar") return { texto: `${o.progreso}/${o.turnos_requeridos} turnos`, clase: o.progreso > 0 ? "mov" : "" };
+    if (o.tipo === "efecto" && o.avance) {
+      const a = o.avance;
+      return { texto: a.total ? `${a.cumplidos}/${a.total} cumplidos` : "Sin objetivos dependientes", clase: a.cumplidos > 0 ? "mov" : "" };
+    }
     return { texto: "En curso", clase: "" };
   }
+
+  /** Cadena de objetivos como arbol: [{o, nivel}] con cada objetivo despues de su superior (nivel = sangria). Los
+   * que no tienen superior visible van primero: ulteriores, asignados y materiales, en ese orden. */
+  function arbolObjetivos(objetivos) {
+    const lista = objetivos || [];
+    const ids = new Set(lista.map((o) => o.id));
+    const hijos = new Map();
+    for (const o of lista) {
+      if (o.padre_id != null && ids.has(o.padre_id)) {
+        if (!hijos.has(o.padre_id)) hijos.set(o.padre_id, []);
+        hijos.get(o.padre_id).push(o);
+      }
+    }
+    const orden = { ulterior: 0, asignado: 1, material: 2 };
+    const raices = lista.filter((o) => o.padre_id == null || !ids.has(o.padre_id))
+      .sort((a, b) => (orden[a.nivel] ?? 2) - (orden[b.nivel] ?? 2) || a.id - b.id);
+    const salida = [];
+    const vistos = new Set();
+    const visitar = (o, nivel) => {
+      if (vistos.has(o.id)) return;
+      vistos.add(o.id);
+      salida.push({ o, nivel });
+      for (const h of hijos.get(o.id) || []) visitar(h, nivel + 1);
+    };
+    raices.forEach((o) => visitar(o, 0));
+    return salida;
+  }
+
+  /** Objetivos de efecto que pueden ser superiores de uno nuevo de ese bando y nivel. */
+  function superioresPosibles(objetivos, bando, nivel) {
+    const orden = { ulterior: 0, asignado: 1, material: 2 };
+    return (objetivos || []).filter((o) => o.tipo === "efecto" && o.bando === bando && (orden[o.nivel] ?? 2) < (orden[nivel] ?? 2));
+  }
+
+  // ---------------------------------------------------------------- calendario de la operacion (TIEM)
+  /** "D+1 · H+5 · Ejecución" del turno en curso, o "" si el escenario no tiene calendario. */
+  function textoCalendario(cal) {
+    if (!cal || !cal.actual) return "";
+    const a = cal.actual;
+    return [a.dia, a.hora_h, nombreFase(a.fase)].filter(Boolean).join(" · ");
+  }
+
+  const FASES_TILDES = { "Concentracion y despliegue": "Concentración y despliegue", Ejecucion: "Ejecución" };
+  const nombreFase = (f) => FASES_TILDES[f] || f || "";
+
+  /** Quien conduce un bando, en palabras. */
+  const CONDUCCION = { alumnos: "Grupo de alumnos", instructor: "Instructor", ia: "Adversario automático (IA)" };
 
   // ---------------------------------------------------------------- identidad nacional del bando
   /** Nacion (del catalogo /api/naciones) asignada a un bando en este escenario, o null si no tiene. */
@@ -644,26 +891,43 @@
     return n ? `${base} (${n.nombre})` : base;
   }
 
-  // ---------------------------------------------------------------- puestos por funcion dentro del bando
+  // ---------------------------------------------------------------- reparticiones del TIEM dentro del bando
   // Misma matriz que backend/app/engine/puestos.py: el servidor es quien decide; esto solo adapta la interfaz.
+  const FUNCIONES_PUESTO = ["superficie", "aereo", "caza", "despegar", "defensa_aerea", "reconocimiento", "logistica", "guerra_electronica", "listo"];
   const PUESTOS = [
-    { id: "mando", sigla: "EM", nombre: "Estado Mayor", descripcion: "Conduce todo el bando: reúne las funciones de los demás puestos.", funciones: ["superficie", "aereo", "despegar", "logistica", "guerra_electronica", "listo"] },
-    { id: "inteligencia", sigla: "A2", nombre: "Inteligencia", descripcion: "Sigue la situación enemiga (contactos, gráficos de blancos, mensajes) y conduce los radares y las unidades terrestres de guerra electrónica: escucha e interferencia.", funciones: ["guerra_electronica"] },
-    { id: "operaciones", sigla: "A3", nombre: "Operaciones en curso", descripcion: "Conduce las aeronaves: despegue desde la pista, rutas, patrullas, ataques y aterrizajes.", funciones: ["aereo"] },
-    { id: "logistica", sigla: "A4", nombre: "Logística", descripcion: "Conduce los convoyes de abastecimiento y a los ingenieros (puentes y vados).", funciones: ["logistica"] },
-    { id: "planificacion", sigla: "A5", nombre: "Planificación", descripcion: "Ordena a las unidades terrestres y navales, envía los grupos de caza desde las bases y confirma las órdenes del bando (LISTO).", funciones: ["superficie", "despegar", "listo"] },
+    { id: "comandante", sigla: "CMDTE", nombre: "Comandante", descripcion: "Decide y conduce el bando: reúne las funciones de todas las reparticiones y confirma las órdenes (LISTO).", funciones: FUNCIONES_PUESTO },
+    { id: "jem", sigla: "JEM", nombre: "Jefe de Estado Mayor", descripcion: "Coordina el trabajo de las reparticiones; reúne sus funciones y confirma las órdenes (LISTO) por el comandante.", funciones: FUNCIONES_PUESTO },
+    { id: "a1", sigla: "A-1", nombre: "Personal", descripcion: "Sigue los efectivos propios (dotación, bajas, reemplazos y moral) y prepara la apreciación de personal. No ordena unidades.", funciones: [] },
+    { id: "a2", sigla: "A-2", nombre: "Inteligencia", descripcion: "Sigue al enemigo (contactos, cuadro de radares, capacidades del ENO) y conduce el reconocimiento: unidades y drones de reconocimiento.", funciones: ["reconocimiento"] },
+    { id: "a3", sigla: "A-3", nombre: "Operaciones", descripcion: "Conduce la maniobra: despegues, caza, ataque, helicópteros, drones armados, cisternas, fuerzas de superficie y lanzadores de misiles.", funciones: ["superficie", "aereo", "caza", "despegar"] },
+    { id: "a3da", sigla: "A-3 D/A", nombre: "Defensa Aérea", descripcion: "Conduce la defensa aérea: radares, artillería y misiles antiaéreos, alerta temprana y la caza de intercepción con sus despegues.", funciones: ["defensa_aerea", "caza", "despegar"] },
+    { id: "a4", sigla: "A-4", nombre: "Logística", descripcion: "Conduce el abastecimiento: convoyes y depósitos, e ingenieros (puentes y vados).", funciones: ["logistica"] },
+    { id: "ce", sigla: "C-E", nombre: "Comunicaciones y Electrónica", descripcion: "Conduce la guerra electrónica: escucha e interferencia desde tierra y aviones de guerra electrónica.", funciones: ["guerra_electronica"] },
   ];
-  /** Puesto por id; vacio o desconocido = Estado Mayor (usuarios anteriores a los puestos). */
-  const puestoDe = (id) => PUESTOS.find((p) => p.id === id) || PUESTOS[0];
+  /** Ids anteriores al TIEM y la reparticion que los reemplaza. */
+  const EQUIVALENCIAS_PUESTO = { mando: "comandante", inteligencia: "a2", operaciones: "a3", logistica: "a4", planificacion: "a3" };
+  const GENERALES = ["comandante", "jem"];
+  /** Reparticion por id; vacio o desconocido = Comandante (los ids viejos se traducen). */
+  const puestoDe = (id) => { const k = EQUIVALENCIAS_PUESTO[id] || id; return PUESTOS.find((p) => p.id === k) || PUESTOS[0]; };
   const puestoPuede = (id, funcion) => puestoDe(id).funciones.includes(funcion);
-  const puestosResponsables = (funcion) => PUESTOS.filter((p) => p.id !== "mando" && p.funciones.includes(funcion));
+  /** Puede conducir aeronaves en vuelo (alguna funcion aerea). */
+  const puestoPuedeAereo = (id) => ["aereo", "caza", "defensa_aerea", "reconocimiento", "guerra_electronica"].some((f) => puestoPuede(id, f));
+  const puestosResponsables = (funcion) => PUESTOS.filter((p) => !GENERALES.includes(p.id) && p.funciones.includes(funcion));
   const etiquetaPuesto = (id) => { const p = puestoDe(id); return `${p.nombre} (${p.sigla})`; };
 
-  /** Funcion (puesto responsable) de una orden sobre una unidad; sin tipo, la de la unidad en general. */
+  const CLASES_DEFENSA_AEREA = ["antiaerea", "antiaerea_portatil", "artilleria_antiaerea", "radar", "alerta_temprana"];
+  const CLASES_GUERRA_ELECTRONICA = ["guerra_electronica", "avion_ge"];
+  const CLASES_RECONOCIMIENTO = ["reconocimiento", "dron_reconocimiento"];
+
+  /** Funcion (reparticion responsable) de una orden sobre una unidad; sin tipo, la de la unidad en general. */
   function funcionDeOrden(u, tipoOrden, clase) {
     if (tipoOrden === "despegar" || u.tipo === "base") return "despegar";
-    if (clase && clase.celula === "ge" && u.tipo !== "aerea") return "guerra_electronica";
-    if (tipoOrden === "construir" || (clase && (clase.construye || clase.carga_max > 0))) return "logistica";
+    const id = (clase && clase.id) || u.clase || "";
+    if (CLASES_DEFENSA_AEREA.includes(id) || (clase && (clase.defensa_aerea || (clase.emisor && clase.solo_aereo)))) return "defensa_aerea";
+    if (CLASES_GUERRA_ELECTRONICA.includes(id) || (clase && clase.interferencia_km > 0)) return "guerra_electronica";
+    if (CLASES_RECONOCIMIENTO.includes(id)) return "reconocimiento";
+    if (tipoOrden === "construir" || (clase && (clase.construye || (clase.carga_max > 0 && u.tipo !== "aerea")))) return "logistica";
+    if (id === "caza") return "caza";
     if (u.tipo === "aerea") return "aereo";
     return "superficie";
   }
@@ -676,7 +940,7 @@
   /** Aviso para una unidad propia que conduce otro puesto ("" si no corresponde a ninguno). */
   function textoPuestoAjeno(u, clase) {
     const r = puestosResponsables(funcionDeOrden(u, null, clase));
-    return r.length ? `Esta unidad la conduce el puesto ${r.map((p) => `${p.nombre} (${p.sigla})`).join(" o ")}.` : "";
+    return r.length ? `Esta unidad la conduce la repartición ${r.map((p) => `${p.nombre} (${p.sigla})`).join(" o ")}.` : "";
   }
 
   // ---------- mapas (regiones del terreno, ver tools/preparar_terreno.py) ----------
@@ -719,6 +983,100 @@
     return p ? `${p.nombre} (${p.altura})` : "";
   }
   /** Si conviene pedir y dibujar la cobertura por relieve de esta unidad: sensores en tierra o en el mar. */
+  // ---- unidades de medida: la aviacion, la defensa aerea y la armada en nudos, millas nauticas y pies; las fuerzas
+  // terrestres en km. El motor trabaja siempre en km, km/h y metros. ----
+  const UNIDADES = {
+    distancia: { nombre: "Distancia", base: "km", unidades: { km: ["km", 1], nm: ["NM (milla náutica)", 1.852], mi: ["mi (milla terrestre)", 1.609344], m: ["m", 0.001], ft: ["ft (pie)", 0.0003048] } },
+    velocidad: { nombre: "Velocidad", base: "kmh", unidades: { kmh: ["km/h", 1], kt: ["kt (nudo)", 1.852], mph: ["mph", 1.609344], ms: ["m/s", 3.6], mach: ["Mach (nivel del mar)", 1225.04] } },
+    altura: { nombre: "Altura", base: "m", unidades: { m: ["m", 1], ft: ["ft (pie)", 0.3048], km: ["km", 1000], fl: ["FL (nivel de vuelo)", 30.48] } },
+    masa: { nombre: "Masa", base: "kg", unidades: { kg: ["kg", 1], lb: ["lb (libra)", 0.45359237], t: ["t", 1000] } },
+    volumen: { nombre: "Volumen", base: "l", unidades: { l: ["l", 1], gal: ["gal (galón EE. UU.)", 3.785411784], m3: ["m³", 1000] } },
+  };
+
+  /** Convierte `valor` de la unidad `de` a la unidad `a` dentro de una magnitud de UNIDADES. */
+  function convertir(magnitud, valor, de, a) {
+    const m = UNIDADES[magnitud];
+    if (!m || !m.unidades[de] || !m.unidades[a]) return null;
+    return (Number(valor) * m.unidades[de][1]) / m.unidades[a][1];
+  }
+
+  /** "aeronautico" (aviacion y defensa aerea), "naval" (armada) o "metrico" (fuerzas terrestres). */
+  function sistemaMedidas(u, clase) {
+    if (!u) return "metrico";
+    if (u.tipo === "aerea") return "aeronautico";
+    if (u.tipo === "naval") return "naval";
+    if (clase && (clase.defensa_aerea || (clase.emisor && clase.solo_aereo))) return "aeronautico";
+    return "metrico";
+  }
+
+  const numeroEs = (v, dec = 0) => Number(v).toLocaleString("es", { maximumFractionDigits: dec, minimumFractionDigits: 0 });
+
+  /** Texto de una medida (el motor da km, km/h o m) en el sistema de la unidad: "486 kt (900 km/h)", "24 NM (45 km)",
+   * "20.000 ft (6.000 m)"; en el metrico, solo "45 km". */
+  function medida(sistema, magnitud, valor) {
+    if (valor === null || valor === undefined) return "?";
+    const v = Number(valor);
+    if (sistema === "metrico") {
+      return magnitud === "velocidad" ? `${numeroEs(v)} km/h` : magnitud === "altura" ? `${numeroEs(v)} m` : `${numeroEs(v, 1)} km`;
+    }
+    if (magnitud === "velocidad") return `${numeroEs(v / 1.852)} kt (${numeroEs(v)} km/h)`;
+    if (magnitud === "altura") return `${numeroEs(v / 0.3048, 0)} ft (${numeroEs(v)} m)`;
+    const nm = v / 1.852;
+    return `${numeroEs(nm, nm < 100 ? 1 : 0)} NM (${numeroEs(v, v < 100 ? 1 : 0)} km)`;
+  }
+
+  /** Filas de la ficha tecnica de una aeronave (engine/plataformas.py) para la interfaz. */
+  function filasFicha(f) {
+    if (!f) return [];
+    const ft = (m) => `${numeroEs(m)} m (${numeroEs(m / 0.3048)} ft)`;
+    return [
+      ["Roles", f.roles_nombres.join(", ")],
+      ["Velocidad en ruta / máx.", `${numeroEs(f.crucero_kt)} kt / ${numeroEs(f.max_kt)} kt`],
+      ["Radio de acción", `${numeroEs(f.radio_nm)} NM (${numeroEs(f.radio_nm * 1.852)} km)`],
+      ["Techo", `${numeroEs(f.techo_ft)} ft`],
+      ["Combustible interno", `${numeroEs(f.combustible_kg)} kg · ${numeroEs(f.consumo_kg_h)} kg/h${f.autonomia_h ? ` (${numeroEs(f.autonomia_h, 1)} h)` : ""}`],
+      ["Oxígeno líquido", f.lox_l ? `${numeroEs(f.lox_l, 1)} l · ${numeroEs(f.lox_l_h, 1)} l/h${f.lox_horas ? ` (${numeroEs(f.lox_horas, 1)} h)` : ""}` : (f.tripulacion ? "Genera su oxígeno a bordo (OBOGS)" : "No tripulada")],
+      ["Despegue / aterrizaje", f.despegue_m || f.aterrizaje_m ? `${f.despegue_m ? ft(f.despegue_m) : "vertical"} / ${f.aterrizaje_m ? ft(f.aterrizaje_m) : "vertical"}` : "Vertical (no necesita pista)"],
+      ["Tripulación", f.tripulacion ? `${f.tripulacion} por aeronave` : "No tripulada (se opera desde tierra)"],
+    ];
+  }
+
+  /** La aeronave puede despegar de la pista util de la base (sin ficha o sin pista: si). */
+  function entraEnPista(modelo, base) {
+    const f = modelo && modelo.ficha;
+    if (!f || !base || base.pista_util_m === null || base.pista_util_m === undefined) return true;
+    return !f.despegue_m || f.despegue_m <= base.pista_util_m;
+  }
+
+  /** Sistema de defensa aerea (engine/defensa_aerea.py): filas de sus armas con lo listo y en reserva, y datos de la
+   * bateria para la ficha. `sistema` viene del catalogo (sistemas_da) y `estado` de la unidad (sistema_da). */
+  function resumenSistemaDA(sistema, estado) {
+    if (!sistema) return null;
+    const porId = new Map(((estado && estado.armas) || []).map((a) => [a.id, a]));
+    const km = (v) => (Number.isInteger(v) ? String(v) : String(v).replace(".", ","));
+    const armas = sistema.armas.map((a) => {
+      const e = porId.get(a.id);
+      return {
+        id: a.id, nombre: a.nombre, tipo: a.tipo_nombre, categoria: a.categoria === "largo" ? "Largo alcance" : "Corto alcance",
+        alcance: `${km(a.alcance_min_km)}–${km(a.alcance_max_km)} km`,
+        altura: `${Math.round(a.altura_min_m)}–${Math.round(a.altura_max_m).toLocaleString("es")} m`,
+        pk: `${Math.round(a.pk * 100)} %`, salva: `${a.por_blanco} por blanco`,
+        listos: e ? `${e.listos} de ${a.cargados}` : `${a.cargados}`, reserva: e ? `${e.reserva} de ${a.reserva}` : `${a.reserva}`,
+        carga: e ? `${e.listos}/${a.cargados} (+${e.reserva})` : `${a.cargados} (+${a.reserva})`,
+        recarga: `${km(a.recarga_min)} min`,
+      };
+    });
+    const radar = sistema.radar_tiro_km
+      ? `Vigilancia ${sistema.radar_vigilancia_km || "—"} km · tiro ${sistema.radar_tiro_km} km`
+      : sistema.radar_vigilancia_km ? `Vigilancia ${sistema.radar_vigilancia_km} km · puntería óptica` : "Sin radar: puntería óptica (depende del cuadro aéreo)";
+    return {
+      armas, radar, reaccion: `${sistema.reaccion_s} s · ${sistema.canales} canal${sistema.canales === 1 ? "" : "es"} de tiro`,
+      despliegue: `${km(sistema.despliegue_min)} min / ${km(sistema.repliegue_min)} min`, movilidad: sistema.movilidad,
+      vehiculos: `${sistema.total_vehiculos}: ${sistema.vehiculos.map((v) => `${v.cantidad} ${v.descripcion}`).join(", ")}`,
+      personal: sistema.personal, nota: sistema.nota, elegida: (estado && estado.arma_elegida) || "",
+    };
+  }
+
   function muestraCobertura(u, clase) {
     return !!u && u.tipo !== "aerea" && u.estado === "activa" && (u.deteccion_km || 0) >= 15 && !!clase && (clase.emisor || u.tipo === "naval" || (u.deteccion_km || 0) >= 20);
   }
@@ -726,6 +1084,14 @@
   // ---- unidades segun el zoom: de lejos no deben tapar el mapa ni encimarse; de cerca se ven con detalle ----
   const ZOOM_ROTULOS = 8; // por debajo, las unidades van sin nombre (se lee al pasar el cursor)
   const ZOOM_ALCANCES = 9; // desde aca, cada unidad desplegada muestra el anillo de su alcance
+  const ZOOM_CARRETERAS = 7; // desde aca se dibujan las carreteras reales
+
+  /** Rotulo de un tramo de carretera apto como pista de un PRO (tools/preparar_tramos_pro.py). */
+  function textoTramoPro(p) {
+    const via = [p.ref, p.nombre].filter(Boolean).join(" ") || "Carretera";
+    const miles = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return `${p.id} · ${via}: tramo recto de ${miles(p.largo_m)} m, ancho ${p.ancho_m} m, pendiente ${p.pendiente_pct} %`;
+  }
 
   /** Factor de tamaño de miniaturas y simbolos: 0,35 de lejos (pais entero), 1 hacia el zoom 10, hasta 1,5 de cerca. */
   function escalaUnidad(zoom) {
@@ -747,11 +1113,15 @@
   }
 
   const api = {
-    MAPA_VENEZUELA, ordenarMapas, limitesDe, limitesDeMapas, textoMapa, ZOOM_ROTULOS, ZOOM_ALCANCES, escalaUnidad, unidadesConAlcance,
-    PERFILES_VUELO, textoPerfil, muestraCobertura,
-    PUESTOS, puestoDe, puestoPuede, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
+    MAPA_VENEZUELA, ordenarMapas, limitesDe, limitesDeMapas, textoMapa, ZOOM_ROTULOS, ZOOM_ALCANCES, ZOOM_CARRETERAS, textoTramoPro, escalaUnidad, unidadesConAlcance,
+    PERFILES_VUELO, textoPerfil, muestraCobertura, resumenSistemaDA, UNIDADES, convertir, sistemaMedidas, medida,
+    filasFicha, entraEnPista,
+    NIVELES_OBJETIVO, arbolObjetivos, superioresPosibles, textoCalendario, nombreFase, CONDUCCION,
+    PUESTOS, puestoDe, puestoPuede, puestoPuedeAereo, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,
-    ESTADOS_MISION, TIPOS_PUNTO_MISION, misionActiva, horaEstimada, textoMision, tramosCronograma,
+    ESTADOS_MISION, TIPOS_PUNTO_MISION, misionActiva, horaEstimada, textoMision, tramosCronograma, armasParaRol, textoTramo, textoPaquete,
+    ESTADOS_DERRIBADO, textoDerribado, derribadoCercano, textoWeaponeering, filaWarden, estadoSimbolo, lineasTarjeta,
+    ASPECTOS_APRESTO, textoGradoApresto, filaApresto, lineasPcao,
     RADIO_SIN_EMISION_KM, deteccionEfectiva, pctStock,
     nacionDe, etiquetaBandoNacion, filtrarUnidades, textoObjetivo, avanceObjetivo, ETIQUETA_OBJETIVO, CAPACIDAD_BASE, RADIO_ATERRIZAJE_KM, estacionadasEn, plazasLibres, opcionesDeAterrizaje, situacionDeVuelo,
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,
@@ -761,7 +1131,7 @@
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
     distanciaKm, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
-    unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, lineasCombate, describirCombate,
+    unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,
     etiquetaBando, claseBarra, estadoUnidad, memoriaVacia, alertasNuevas, climaEn, textoZonaClima,
   };

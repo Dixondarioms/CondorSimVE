@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app import auth
 from app.models.usuario import Usuario
-from app.terreno import get_terreno
+from app.terreno import NOMBRES_VIA, get_terreno
 
 router = APIRouter(prefix="/api/terreno", tags=["terreno"])
 
@@ -13,7 +13,9 @@ def clase_de_terreno(
     lon: float = Query(ge=-180, le=180),
     _: Usuario = Depends(auth.usuario_actual),
 ):
-    return {"clase": get_terreno().clase(lat, lon)}
+    t = get_terreno()
+    via = t.via(lat, lon)
+    return {"clase": t.clase(lat, lon), "via": via, "via_nombre": NOMBRES_VIA.get(via, "")}
 
 
 @router.get("/mapas", name="mapas")

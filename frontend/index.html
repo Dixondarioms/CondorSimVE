@@ -15,8 +15,13 @@
 <body>
   <!-- ============ acceso ============ -->
   <div id="login" hidden>
-    <form id="login-form" autocomplete="on">
-      <img class="logo-siete" src="/static/img/siete_logo_recortado.jpg" alt="S.I.E.T.E. · Fuerza Armada Nacional Bolivariana">
+    <form id="login-form" method="post" autocomplete="on">
+      <div id="aguila-login" class="aguila en-reposo" role="img" aria-label="Águila del S.I.E.T.E.">
+        <div class="lienzo">
+          <img class="posada" src="/static/img/siete_aguila_posada.png" alt="" draggable="false">
+          <video class="vuelo" data-src="/static/img/aguila_vuelo.webm" muted playsinline preload="auto" disablepictureinpicture></video>
+        </div>
+      </div>
       <h2>S.I.E.T.E.</h2>
       <p class="sec">Sistema Integral de Entrenamiento Táctico y Estratégico. Ingrese con su cuenta; si no tiene una, solicítela y el instructor la aprobará.</p>
       <input id="l-user" name="username" placeholder="Usuario" autocomplete="username" required>
@@ -26,9 +31,9 @@
       <button id="btn-ir-registro" type="button" class="enlace">Solicitar una cuenta</button>
     </form>
 
-    <form id="registro-form" autocomplete="off" hidden>
+    <form id="registro-form" method="post" autocomplete="off" hidden>
       <h2>SOLICITAR CUENTA</h2>
-      <p class="sec">Elija su usuario y contraseña. La cuenta quedará pendiente hasta que el instructor la apruebe (puede cambiarle el rol o el puesto).</p>
+      <p class="sec">Elija su usuario y contraseña. La cuenta quedará pendiente hasta que el instructor la apruebe (puede cambiarle el rol o la repartición).</p>
       <input id="r-user" placeholder="Usuario (letras, números, punto, guion)" maxlength="50" autocomplete="username" required>
       <input id="r-pass" type="password" placeholder="Contraseña (mín. 8 caracteres)" autocomplete="new-password" required>
       <input id="r-pass2" type="password" placeholder="Repita la contraseña" autocomplete="new-password" required>
@@ -38,12 +43,15 @@
         <option value="observador">Observador</option>
         <option value="instructor">Instructor</option>
       </select>
-      <select id="r-puesto" aria-label="Puesto dentro del bando">
-        <option value="mando">EM · Estado Mayor (todas las funciones)</option>
-        <option value="inteligencia">A2 · Inteligencia</option>
-        <option value="operaciones">A3 · Operaciones en curso</option>
-        <option value="logistica">A4 · Logística</option>
-        <option value="planificacion">A5 · Planificación</option>
+      <select id="r-puesto" aria-label="Repartición dentro del bando">
+        <option value="comandante">CMDTE · Comandante (todas las funciones)</option>
+        <option value="jem">JEM · Jefe de Estado Mayor (todas las funciones)</option>
+        <option value="a1">A-1 · Personal</option>
+        <option value="a2">A-2 · Inteligencia</option>
+        <option value="a3">A-3 · Operaciones</option>
+        <option value="a3da">A-3 D/A · Defensa Aérea</option>
+        <option value="a4">A-4 · Logística</option>
+        <option value="ce">C-E · Comunicaciones y Electrónica</option>
       </select>
       <button type="submit" class="primario">Enviar solicitud</button>
       <p id="r-error" class="error" role="alert"></p>
@@ -51,7 +59,7 @@
       <button id="btn-volver-login" type="button" class="enlace">Volver al ingreso</button>
     </form>
 
-    <form id="clave-form" hidden>
+    <form id="clave-form" method="post" hidden>
       <h2>CAMBIAR CONTRASEÑA</h2>
       <p id="c-motivo" class="sec"></p>
       <input id="c-actual" type="password" placeholder="Contraseña actual" autocomplete="current-password" required>
@@ -73,6 +81,7 @@
         <span class="dato">TURNO: <b id="h-turno">-</b> <small>(1h Simulada)</small></span>
         <span class="sep">|</span>
         <span class="dato">HORA SIMULADA: <b id="h-hora">--:--h</b></span>
+        <span class="dato" id="h-calendario-caja" hidden><span class="sep">|</span> <b id="h-calendario" title="Calendario de la operación: día D, hora H y fase"></b></span>
         <span class="sep">|</span>
         <span class="dato">BANDO: <b id="h-bando" class="">-</b></span>
       </div>
@@ -85,6 +94,10 @@
         <button id="btn-nuevo-escenario" class="solo-instructor secundario" type="button">Nuevo</button>
         <button id="btn-plantillas" class="solo-instructor secundario" type="button" title="Crear un escenario a partir de uno precargado">Desde plantilla…</button>
         <button id="btn-guardar-plantilla" class="solo-instructor secundario" type="button" title="Guardar las unidades, los objetivos y el clima actuales de este escenario como una plantilla reutilizable">Guardar como plantilla…</button>
+        <button id="btn-conducir-azul" class="secundario" type="button" hidden title="Dar las órdenes del bando Azul como su comandante">Conducir Azul</button>
+        <button id="btn-conducir-rojo" class="secundario" type="button" hidden title="Dar las órdenes del bando Rojo como su comandante">Conducir Rojo</button>
+        <span id="barra-conduce" class="barra-conduce" hidden><span id="barra-conduce-texto"></span>
+          <button id="btn-dejar-conducir" type="button" class="mini">Volver a instructor</button></span>
         <span id="estado-conexion" class="conexion off" title="desconectado"></span>
         <div id="reloj" class="reloj" role="timer" aria-live="off">
           <span class="etiqueta" id="reloj-etiqueta">TIEMPO RESTANTE PLANIFICACIÓN:</span>
@@ -109,9 +122,11 @@
     <main id="principal">
       <!-- ============ 2. panel lateral izquierdo ============ -->
       <aside id="panel-izq" aria-label="Órdenes y estado de fuerzas">
-        <div class="pestanas solo-instructor" role="tablist">
+        <div class="pestanas" role="tablist">
           <button type="button" role="tab" class="activa" data-pestana="fuerzas">FUERZAS</button>
-          <button type="button" role="tab" data-pestana="consola">CONSOLA</button>
+          <button type="button" role="tab" data-pestana="situacion" title="Cuadro radar, personal e infraestructura">SITUACIÓN</button>
+          <button type="button" role="tab" data-pestana="pmo" title="Trabajo Integral de Estado Mayor: calendario, Problema Militar y documentos de la apreciación">TIEM</button>
+          <button type="button" role="tab" data-pestana="consola" class="solo-instructor">CONSOLA</button>
         </div>
 
         <div id="pest-fuerzas" class="pestana">
@@ -127,7 +142,7 @@
           </section>
 
           <section class="bloque solo-alumno" id="sec-puesto">
-            <h2>Mi puesto <span id="puesto-nombre" class="contador azul-suave"></span></h2>
+            <h2>Mi repartición <span id="puesto-nombre" class="contador azul-suave"></span></h2>
             <p class="ayuda" id="puesto-desc"></p>
           </section>
 
@@ -143,6 +158,7 @@
               <button id="btn-planificar-mision" class="primario" type="button" hidden>✈ Planificar misión…</button>
               <button id="btn-cronograma" class="secundario" type="button" title="Flow sheet: horario de todas las misiones">Cronograma</button>
             </div>
+            <p class="ayuda ota-enlaces" id="ota-enlaces"></p>
             <ol id="lista-misiones" class="lista-misiones"></ol>
           </section>
 
@@ -172,7 +188,10 @@
               <p class="ayuda">Haga clic en el mapa para marcar waypoints. El terreno, el clima y el combustible limitan el avance.</p>
               <div id="o-waypoints" class="ayuda"></div>
               <p id="o-preview" class="ayuda preview"></p>
-              <button id="btn-limpiar-wp" class="secundario" type="button">Limpiar waypoints</button>
+              <div class="fila-botones">
+                <button id="btn-ruta-vias" class="secundario" type="button" title="Toma el último waypoint como destino y traza el camino más rápido por carreteras y puentes">Seguir carreteras</button>
+                <button id="btn-limpiar-wp" class="secundario" type="button">Limpiar waypoints</button>
+              </div>
             </div>
             <div id="o-construir" hidden>
               <select id="o-obra" aria-label="Obra">
@@ -221,6 +240,159 @@
           <section class="bloque cola">
             <h2>Cola de órdenes <span id="cola-contador" class="contador"></span></h2>
             <ol id="cola"></ol>
+          </section>
+        </div>
+
+        <!-- situacion: cuadro radar, personal e infraestructura (js/situacion.js) -->
+        <div id="pest-situacion" class="pestana" hidden>
+          <section class="bloque" id="sec-radar">
+            <h2>Cuadro radar <span id="radar-contador" class="contador"></span></h2>
+            <p class="ayuda">Lo que detecta ahora cada radar y sensor de su bando (radares, antiaérea guiada, buques con
+              radar, alerta temprana y escucha electrónica), con distancia y rumbo desde el sensor. Cada contacto nuevo
+              se informa solo al bando al cerrar el turno (alertas). Un clic en un contacto lo muestra en el mapa.</p>
+            <div id="cuadro-radar"></div>
+            <button id="btn-difundir-radar" class="secundario solo-alumno" type="button">Difundir el cuadro a la red del bando</button>
+          </section>
+          <section class="bloque" id="sec-personal">
+            <h2>Personal</h2>
+            <p class="ayuda">Efectivos al inicio y los que quedan, por rama. Las bajas siguen a la fuerza de cada unidad
+              (muertos, heridos y desaparecidos).</p>
+            <div id="cuadro-personal"></div>
+          </section>
+          <section class="bloque" id="sec-apresto">
+            <h2>Apresto Operacional y PCAO</h2>
+            <p class="ayuda">Cada unidad tiene o no tiene Apresto Operacional según los mínimos del Manual de Apresto
+              Operacional de la FANB: A personal 75 %, B armamento y munición 90 %, C equipamiento 85 %, D adiestramiento
+              85 % y E comando, control y comunicaciones 90 %, más las exigencias de su tipo (escuadrón: 75 % de pilotos,
+              80 % de aeronaves y 75 % de técnicos). La Puesta en Completo Apresto Operacional (PCAO) se cumple en 5
+              eventos; la ordena el Comandante o el JEM.</p>
+            <div id="cuadro-apresto"></div>
+            <button id="btn-pcao" type="button" class="primario" hidden>Ordenar la PCAO</button>
+          </section>
+          <section class="bloque" id="sec-toe">
+            <h2>Parte de personal por unidad</h2>
+            <p class="ayuda">Plantilla (lo autorizado) frente a lo existente, con lo que cubren las reservas activas (res.) y los
+              milicianos (mil.). Por aeronave: 3 o 4 tripulaciones y 7 técnicos (motores, célula, aviónica, armamento,
+              electricidad, equipo de vuelo); la falta de pilotos y técnicos baja la disponibilidad de las aeronaves (A-1).</p>
+            <div id="cuadro-toe"></div>
+          </section>
+          <section class="bloque" id="sec-esfuerzo">
+            <h2>Esfuerzo aéreo y atrición</h2>
+            <div id="cuadro-esfuerzo"></div>
+          </section>
+          <section class="bloque" id="sec-rescate">
+            <h2>Recuperación de personal y puntos de recobre</h2>
+            <p class="ayuda">Tripulaciones derribadas: esperan una misión de rescate (CSAR, con helicópteros) antes de que las
+              capture el enemigo o pase su tiempo de supervivencia (12 turnos en el agua, 72 en tierra). Los puntos de recobre
+              operacional (PRO) reabastecen y rearman cerca del frente si cumplen sus requisitos mínimos.</p>
+            <div id="cuadro-rescate"></div>
+            <div id="cuadro-pro"></div>
+          </section>
+          <section class="bloque" id="sec-transmisiones">
+            <h2>Plan de transmisiones (C-E)</h2>
+            <p class="ayuda">Frecuencia primaria y secundaria de cada red (MHz). Cada una dentro de su banda (HF 2-30, VHF 30-174,
+              UHF 225-400), sin repetirse ni quedar a menos de 25 kHz de otra, sin usar las de guardia (121,5 y 243,0) y
+              renovadas cada 24 turnos. Un plan con errores o vencido demora más las órdenes; uno válido permite saltar a la
+              secundaria ante la interferencia enemiga. Las frecuencias van en los SPINS de la OTA.</p>
+            <select id="tx-bando" aria-label="Bando del plan de transmisiones" hidden></select>
+            <table id="tabla-transmisiones" class="tabla-personal-cfg tabla-transmisiones">
+              <thead><tr><th>Red</th><th>Banda</th><th>Primaria</th><th>Secundaria</th><th>Indicativo</th></tr></thead>
+              <tbody></tbody>
+            </table>
+            <ul id="tx-estado" class="pm-avisos"></ul>
+            <button id="btn-transmisiones" type="button">Guardar plan de transmisiones</button>
+          </section>
+          <section class="bloque" id="sec-warden">
+            <h2>Análisis de sistemas del enemigo (anillos de Warden)</h2>
+            <p class="ayuda">Los objetivos enemigos que su bando conoce, del centro hacia afuera: 1 liderazgo (mando y control),
+              2 elementos orgánicos esenciales (energía y combustible), 3 infraestructura, 5 fuerzas desplegadas (la población,
+              anillo 4, no es objetivo). Atacar los anillos interiores produce efectos sobre todo el sistema.</p>
+            <div id="cuadro-warden"></div>
+          </section>
+          <section class="bloque" id="sec-inteligencia">
+            <h2>Inteligencia de imágenes (satélites)</h2>
+            <div id="cuadro-inteligencia"></div>
+          </section>
+          <section class="bloque" id="sec-infra">
+            <h2>Infraestructura</h2>
+            <p class="ayuda">Centrales eléctricas, refinerías, centros de comunicaciones y puentes del bando en el
+              ejercicio, y lo que su estado significa para la operación.</p>
+            <div id="cuadro-infra"></div>
+          </section>
+        </div>
+
+        <!-- PMO: Problema Militar Operativo y calendario de la operacion (js/pmo.js) -->
+        <div id="pest-pmo" class="pestana" hidden>
+          <section class="bloque" id="sec-calendario">
+            <h2>Calendario de la operación</h2>
+            <div id="pmo-calendario"></div>
+          </section>
+          <section class="bloque" id="ensayo-aviso" hidden>
+            <h2>Juego de guerra</h2>
+            <p id="ensayo-aviso-texto" class="ayuda"></p>
+            <button id="ensayo-volver" type="button" class="secundario">Volver al ejercicio</button>
+          </section>
+          <section class="bloque" id="sec-apreciacion">
+            <h2>Trabajo de Estado Mayor <span id="tiem-avance" class="contador"></span></h2>
+            <p class="ayuda">Los documentos que el Estado Mayor del bando redacta y presenta al instructor. Cada uno lo
+              redactan las reparticiones indicadas; todas lo pueden leer.</p>
+            <div id="tiem-docs"></div>
+          </section>
+          <section class="bloque" id="sec-orden-op">
+            <h2>Orden de Operaciones</h2>
+            <p class="ayuda">Las tareas del Plan de Operaciones para las próximas 24 horas. Las que vencen en este turno se
+              emiten como órdenes del simulador, con la misma validación que una orden manual; cada repartición emite las
+              de las unidades que conduce.</p>
+            <h4>Vencen en este turno</h4>
+            <ul id="orden-vencen" class="tiem-lista"></ul>
+            <button id="btn-emitir-orden" type="button">Emitir las tareas de este turno como órdenes</button>
+            <h4>Próximas 24 horas</h4>
+            <ul id="orden-proximas" class="tiem-lista"></ul>
+          </section>
+          <section class="bloque" id="sec-supervision">
+            <h2>Supervisión de la ejecución</h2>
+            <p class="ayuda">Objetivo → resultado → diferencia → causa → acción correctiva. El cuadro compara lo previsto en
+              el plan con lo ocurrido; registre la causa y la acción correctiva de cada desvío en la Supervisión y, si hace
+              falta, dé órdenes fragmentarias.</p>
+            <div id="sup-parte" class="sup-parte"></div>
+            <div id="sup-cuenta" class="tiem-sub"></div>
+            <label class="chk"><input type="checkbox" id="sup-solo-desvios" checked><span>Solo desvíos y fallidos</span></label>
+            <ul id="sup-cuadro" class="tiem-lista"></ul>
+            <button id="btn-sup-abrir" type="button" class="secundario">Abrir la Supervisión (registro y órdenes fragmentarias)</button>
+          </section>
+          <section class="bloque" id="sec-evaluacion">
+            <h2>Evaluación y legajo</h2>
+            <p class="ayuda">La evaluación del trabajo de Estado Mayor del bando (pase el cursor por un indicador para ver
+              cómo se calcula) y el legajo con el Problema Militar y todos los documentos, en el formato del TIEM.</p>
+            <div id="tiem-evaluacion"></div>
+            <div class="fila-botones">
+              <a id="legajo-word" class="boton-enlace" href="#">Descargar el legajo en Word</a>
+              <a id="legajo-pdf" class="boton-enlace" href="#" target="_blank">Legajo para imprimir o PDF</a>
+            </div>
+          </section>
+          <section class="bloque" id="sec-ensayos">
+            <h2>Juego de guerra: ensayos de F/A</h2>
+            <p class="ayuda">Ensaye una Forma de Acción en una copia del ejercicio, en su estado actual, con la IA
+              conduciendo al enemigo. El resultado ayuda a fundamentar la confrontación de las F/A.</p>
+            <p id="ensayo-sin-fa" class="vacio">Todavía no hay Formas de Acción redactadas.</p>
+            <div id="ensayo-crear" class="fila">
+              <select id="ensayo-fa" aria-label="Forma de Acción a ensayar"></select>
+              <button id="btn-ensayar" type="button" class="secundario mini">Ensayar en el simulador</button>
+            </div>
+            <ul id="ensayos-lista" class="tiem-lista"></ul>
+          </section>
+          <section class="bloque" id="sec-pmo">
+            <h2>Problema Militar Operativo <span id="pmo-origen" class="contador"></span></h2>
+            <p class="ayuda">El documento con que empieza el trabajo de Estado Mayor (TIEM): la situación, la misión del
+              escalón superior, la idea general y la misión de su bando, con sus medios, el área y las limitaciones.</p>
+            <label class="mini solo-control">Bando<select id="pmo-bando"><option value="azul">Azul</option><option value="rojo">Rojo</option></select></label>
+            <div class="fila-botones solo-instructor">
+              <button id="btn-pmo-generar" type="button" title="Redacta el PMO de los dos bandos, fija el calendario si falta y arma la cadena de objetivos a partir del escenario">Crear la situación automáticamente</button>
+              <button id="btn-pmo-editar" type="button" class="secundario">Redactar / corregir</button>
+            </div>
+            <label class="chk solo-instructor"><input type="checkbox" id="pmo-sobrescribir"><span>Al crearla, reemplazar también lo redactado a mano</span></label>
+            <div id="pmo-doc" class="pmo-doc"></div>
+            <form id="pmo-form" class="pmo-form" hidden></form>
           </section>
         </div>
 
@@ -299,6 +471,7 @@
               <label class="mini">Latencia base (ms)<input id="cfg-com-latencia" type="number" min="0" max="60000" value="0"></label>
               <label class="mini">Variación (ms)<input id="cfg-com-jitter" type="number" min="0" max="60000" value="0"></label>
               <label class="mini">Pérdida de mensajes (%)<input id="cfg-com-perdida" type="number" min="0" max="100" value="0"></label>
+              <label class="mini" title="Esas órdenes se cumplen el turno siguiente; dentro de una interferencia enemiga, 40 puntos más">Órdenes que no llegan a tiempo (%)<input id="cfg-com-ordenes" type="number" min="0" max="100" value="0"></label>
             </div>
             <button id="btn-config-com" type="button">Aplicar comunicaciones</button>
           </details>
@@ -316,23 +489,79 @@
               <label class="mini">Detección km<input id="u-deteccion" type="number" min="0"></label>
               <label class="mini">Autonomía km<input id="u-autonomia" type="number" min="1"></label>
               <label class="mini">Fuerza %<input id="u-fuerza" type="number" value="100" min="1" max="100"></label>
+              <label class="mini" title="Vacío: la dotación de su clase y escalón">Efectivos<input id="u-personal" type="number" min="0" placeholder="según escalón"></label>
             </div>
             <div id="u-aeronave-fila" class="aeronave-elegida" hidden>
               <img id="u-modelo-foto" alt="" width="72" height="52" hidden>
               <div><b id="u-modelo-nombre">Caza genérico</b><small id="u-modelo-grupo"></small></div>
               <button id="btn-elegir-modelo" type="button" class="secundario mini">Elegir aeronave…</button>
             </div>
+            <label id="u-tipo-fila" class="mini" hidden>Tipo (catálogo propio)<select id="u-tipo"></select></label>
+            <div id="u-pista-fila" hidden>
+              <label class="mini">Pista (m; vacío o 0 = solo helicópteros)<input id="u-pista" type="number" min="0" max="6000" step="100" placeholder="0"></label>
+              <p class="ayuda">Con pista, el PRO solo se ubica sobre un tramo de carretera apto (capa «Tramos aptos
+                para PRO», en verde: recto, pavimentado, ancho, casi plano, sin puentes) o en un aeródromo.</p>
+            </div>
             <button id="btn-modo-agregar" type="button">Ubicar en mapa</button>
           </details>
 
           <details>
+            <summary>Catálogo propio (tipos de unidad de la AMB)</summary>
+            <p class="ayuda">Defina sus propios tipos de unidad (por ejemplo «Buk-M2E», «VN-16» o «Mi-17V5») a partir de una clase: la
+              clase da el símbolo y las reglas; el tipo, el nombre y los valores de juego. Quedan disponibles al instante en
+              «Agregar unidad».</p>
+            <div class="grid">
+              <input id="mp-tipo-nombre" placeholder="Nombre (ej. Buk-M2E)" maxlength="80">
+              <input id="mp-corto" placeholder="Abreviatura en el mapa" maxlength="14">
+              <select id="mp-clase" aria-label="Clase"></select>
+              <input id="mp-pais" placeholder="País u origen" maxlength="40">
+            </div>
+            <div class="grid">
+              <label class="mini">Velocidad km/h<input id="mp-vel" type="number" min="0" max="3000"></label>
+              <label class="mini">Alcance km<input id="mp-alc" type="number" min="0" max="2000"></label>
+              <label class="mini">Detección km<input id="mp-det" type="number" min="0" max="1000"></label>
+              <label class="mini">Autonomía km<input id="mp-aut" type="number" min="0" max="20000"></label>
+              <label class="mini">Ataque terrestre<input id="mp-at-t" type="number" min="0" max="5" step="0.05"></label>
+              <label class="mini">Ataque aéreo<input id="mp-at-a" type="number" min="0" max="5" step="0.05"></label>
+              <label class="mini">Ataque naval<input id="mp-at-n" type="number" min="0" max="5" step="0.05"></label>
+              <label class="mini">Defensa<input id="mp-def" type="number" min="0" max="5" step="0.05"></label>
+            </div>
+            <textarea id="mp-desc" placeholder="Descripción (opcional)" maxlength="600" rows="2"></textarea>
+            <div class="fila-botones">
+              <button id="btn-mp-guardar" type="button">Guardar tipo</button>
+              <button id="btn-mp-nuevo" type="button" class="secundario">Nuevo</button>
+            </div>
+            <ul id="mp-lista" class="lista-propios"></ul>
+            <h4>Foto de un tipo de unidad</h4>
+            <p class="ayuda">Elija cualquier tipo (aéreo, naval o terrestre; del simulador o propio) o una clase y suba una
+              foto desde su equipo (JPG, PNG o WEBP, hasta 12 MB). El simulador recorta la unidad, la centra sobre el
+              fondo de las demás fotos y la deja en el mismo tamaño; aparece al instante en su ficha.</p>
+            <select id="ft-objetivo" aria-label="Tipo de unidad o clase de la foto"></select>
+            <div class="foto-carga">
+              <img id="ft-vista" alt="Foto actual del tipo elegido">
+              <div>
+                <input id="ft-archivo" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Archivo de la foto">
+                <input id="ft-autor" placeholder="Autor o fuente de la foto" maxlength="120">
+                <label class="chk"><input type="checkbox" id="ft-recortar" checked><span>Recortar la unidad del fondo</span></label>
+                <div class="fila-botones">
+                  <button id="btn-ft-subir" type="button">Subir foto</button>
+                  <button id="btn-ft-quitar" type="button" class="secundario">Volver a la original</button>
+                </div>
+                <p id="ft-estado" class="ayuda" aria-live="polite"></p>
+              </div>
+            </div>
+          </details>
+
+          <details>
             <summary>Objetivos y puntaje</summary>
-            <p class="ayuda">Cada bando ve solo los suyos. Ocupar: mantener la zona (sin enemigos) varios turnos seguidos. Destruir: unidad enemiga. Proteger: unidad propia viva hasta un turno. Además, cada 10 de fuerza que un bando inflige al enemigo vale 1 punto.</p>
+            <p class="ayuda">Cada bando ve solo los suyos. Ocupar: mantener la zona (sin enemigos) varios turnos seguidos. Destruir: unidad enemiga. Neutralizar: bajar la fuerza de una unidad enemiga hasta un porcentaje. Proteger: unidad propia viva hasta un turno. Efecto: objetivo ulterior o asignado de la cadena del TIEM, que se cumple cuando se cumplen los objetivos que dependen de él. Además, cada 10 de fuerza que un bando inflige al enemigo vale 1 punto.</p>
             <div class="grid">
               <select id="ob-tipo" aria-label="Tipo de objetivo">
                 <option value="ocupar">Ocupar una zona</option>
                 <option value="destruir">Destruir una unidad</option>
+                <option value="neutralizar">Neutralizar una unidad</option>
                 <option value="proteger">Proteger una unidad</option>
+                <option value="efecto">Efecto (ulterior o asignado)</option>
               </select>
               <select id="ob-bando" aria-label="Bando"><option value="azul">Para Azul</option><option value="rojo">Para Rojo</option></select>
               <input id="ob-nombre" placeholder="Nombre (ej. Tomar el puente)" maxlength="120">
@@ -341,7 +570,13 @@
               <label class="mini ob-ocupar">Turnos seguidos<input id="ob-turnos" type="number" min="1" max="48" value="1"></label>
               <label class="mini ob-unidad" hidden>Unidad<select id="ob-unidad"></select></label>
               <label class="mini ob-proteger" hidden>Hasta el turno<input id="ob-hasta" type="number" min="1" max="999" value="6"></label>
+              <label class="mini ob-plazo">Plazo (turno, opcional)<input id="ob-plazo" type="number" min="1" max="999" placeholder="sin plazo"></label>
+              <label class="mini ob-efecto" hidden>Nivel<select id="ob-nivel"><option value="asignado">Asignado</option><option value="ulterior">Ulterior</option></select></label>
+              <label class="mini ob-umbral" hidden><span id="ob-umbral-etq">Umbral (%)</span><input id="ob-umbral" type="number" min="0" max="100" step="5" placeholder="50"></label>
+              <label class="mini">Objetivo superior<select id="ob-padre"></select></label>
             </div>
+            <input id="ob-efecto" placeholder="Efecto deseado (ej. Degradar la defensa aérea del enemigo al 50 %)" maxlength="300">
+            <input id="ob-indicador" placeholder="Indicador con que se mide (ej. Dos antiaéreas fuera de servicio)" maxlength="300">
             <div class="ob-ocupar">
               <button id="btn-ob-ubicar" type="button" class="secundario">Ubicar la zona en el mapa</button>
               <p id="ob-centro" class="ayuda preview"></p>
@@ -357,13 +592,108 @@
           </details>
 
           <details>
+            <summary>Calendario de la operación (TIEM)</summary>
+            <p class="ayuda">Cada turno dura 1 h simulada. Fije la fecha del turno 1 y el turno en que cae la hora H: el día D es el de ese turno, y la cabecera muestra D+1, H+5 y la fase en curso. Sin fases propias se usan alistamiento, concentración y despliegue, ejecución y repliegue.</p>
+            <div class="grid">
+              <label class="mini">Fecha del turno 1<input id="cal-fecha" type="date"></label>
+              <label class="mini">Hora H en el turno<input id="cal-h" type="number" min="0" max="9999" placeholder="sin H"></label>
+              <label class="mini">Último turno previsto<input id="cal-final" type="number" min="0" max="9999" placeholder="sin límite"></label>
+            </div>
+            <h4>Fases de la operación</h4>
+            <div id="cal-fases" class="cal-fases"></div>
+            <div class="fila-botones">
+              <button id="btn-cal-fase" type="button" class="secundario mini">Agregar fase</button>
+              <button id="btn-cal-defecto" type="button" class="secundario mini">Usar las fases por defecto</button>
+            </div>
+            <button id="btn-calendario" type="button">Aplicar calendario</button>
+          </details>
+
+          <details>
+            <summary>Apresto Operacional de cada bando (grado y plazos de la PCAO)</summary>
+            <p class="ayuda">Grado de apresto de cada bando. En tiempo de paz y en elevado apresto no todas las aeronaves
+              están listas (60 % y 70/80/90 % según la fase) y las reservas y la milicia no se incorporan hasta el evento 2
+              de la PCAO. Los plazos se cuentan en turnos (horas); si el bando aprobó un Plan de PCAO, rigen los suyos.</p>
+            <table class="tabla-personal-cfg tabla-apresto-cfg">
+              <thead><tr><th></th><th>Grado</th><th>Adiestr. %</th><th>Meta %</th></tr></thead>
+              <tbody>
+                <tr><th>Azul</th><td><select id="apr-azul-grado"></select></td><td><input id="apr-azul-adi" type="number" min="0" max="100"></td><td><input id="apr-azul-meta" type="number" min="0" max="100"></td></tr>
+                <tr><th>Rojo</th><td><select id="apr-rojo-grado"></select></td><td><input id="apr-rojo-adi" type="number" min="0" max="100"></td><td><input id="apr-rojo-meta" type="number" min="0" max="100"></td></tr>
+              </tbody>
+            </table>
+            <table class="tabla-personal-cfg tabla-apresto-cfg">
+              <thead><tr><th>Plazos (turnos)</th><th>Aviso</th><th>Incorp.</th><th>Organiz.</th><th>Material</th><th>Adiestr.</th></tr></thead>
+              <tbody>
+                <tr><th>Azul</th><td><input id="apr-azul-p-aviso" type="number" min="0"></td><td><input id="apr-azul-p-incorporacion" type="number" min="0"></td><td><input id="apr-azul-p-organizacion" type="number" min="0"></td><td><input id="apr-azul-p-material" type="number" min="0"></td><td><input id="apr-azul-p-adiestramiento" type="number" min="0"></td></tr>
+                <tr><th>Rojo</th><td><input id="apr-rojo-p-aviso" type="number" min="0"></td><td><input id="apr-rojo-p-incorporacion" type="number" min="0"></td><td><input id="apr-rojo-p-organizacion" type="number" min="0"></td><td><input id="apr-rojo-p-material" type="number" min="0"></td><td><input id="apr-rojo-p-adiestramiento" type="number" min="0"></td></tr>
+              </tbody>
+            </table>
+            <div class="fila">
+              <button id="btn-apresto" type="button">Aplicar apresto</button>
+              <button id="btn-pcao-azul" type="button" class="secundario">Ordenar PCAO azul</button>
+              <button id="btn-pcao-rojo" type="button" class="secundario">Ordenar PCAO rojo</button>
+            </div>
+          </details>
+
+          <details>
+            <summary>Satélites de reconocimiento de cada bando</summary>
+            <p class="ayuda">Cada satélite pasa dos veces por día sobre una franja de 240 km del teatro; las imágenes tardan un
+              turno en procesarse y dan contactos con la posición de la hora de la pasada. El óptico no ve de noche ni con
+              nubes; el radar sí. El A-2 recibe además un informe de inteligencia (INTSUM) cada 6 turnos.</p>
+            <table class="tabla-personal-cfg">
+              <thead><tr><th></th><th>Satélites</th><th>Tipo</th></tr></thead>
+              <tbody>
+                <tr><th>Azul</th><td><input id="sat-azul-n" type="number" min="0" max="4"></td><td><select id="sat-azul-tipo"><option value="optico">Óptico</option><option value="radar">Radar</option></select></td></tr>
+                <tr><th>Rojo</th><td><input id="sat-rojo-n" type="number" min="0" max="4"></td><td><select id="sat-rojo-tipo"><option value="optico">Óptico</option><option value="radar">Radar</option></select></td></tr>
+              </tbody>
+            </table>
+            <button id="btn-satelites" type="button">Aplicar satélites</button>
+          </details>
+
+          <details>
+            <summary>Personal de cada bando (plantilla, reservas y milicia)</summary>
+            <p class="ayuda">Qué parte de su plantilla tiene cada bando, las reservas activas y los milicianos que cubren el
+              déficit (las reservas cubren pilotos, técnicos y oficiales; la milicia, solo tropa y apoyo) y las tripulaciones
+              por aeronave (3 normal, 4 operaciones intensas). El parte de cada unidad está en la pestaña Situación.</p>
+            <table class="tabla-personal-cfg">
+              <thead><tr><th></th><th>Plantilla %</th><th>Reservas</th><th>Milicianos</th><th>Tripulaciones</th></tr></thead>
+              <tbody>
+                <tr><th>Azul</th><td><input id="per-azul-cob" type="number" min="0" max="100"></td><td><input id="per-azul-res" type="number" min="0"></td>
+                  <td><input id="per-azul-mil" type="number" min="0"></td><td><select id="per-azul-tri"><option value="3">3</option><option value="4">4</option></select></td></tr>
+                <tr><th>Rojo</th><td><input id="per-rojo-cob" type="number" min="0" max="100"></td><td><input id="per-rojo-res" type="number" min="0"></td>
+                  <td><input id="per-rojo-mil" type="number" min="0"></td><td><select id="per-rojo-tri"><option value="3">3</option><option value="4">4</option></select></td></tr>
+              </tbody>
+            </table>
+            <button id="btn-personal" type="button">Aplicar personal</button>
+          </details>
+
+          <details>
             <summary>Dirección del ejercicio (interruptores del motor)</summary>
             <p class="ayuda">Simplifican el ejercicio con fines didácticos. Cada cambio queda registrado como evento y en el informe.</p>
             <label class="chk"><input type="checkbox" id="dir-niebla" checked><span>Niebla de guerra (apagada: ambos bandos ven todo)</span></label>
             <label class="chk"><input type="checkbox" id="dir-logistica" checked><span>Consumo de combustible y munición</span></label>
             <label class="chk"><input type="checkbox" id="dir-clima" checked><span>Efectos del clima y de las zonas meteorológicas</span></label>
             <label class="chk"><input type="checkbox" id="dir-fuego" checked><span>Fuego automático (patrullas, antiaérea, destructores)</span></label>
+            <label class="chk"><input type="checkbox" id="dir-noche"><span>Ciclo de día y noche (de noche se detecta menos a simple vista; el radar no cambia)</span></label>
+            <label class="chk"><input type="checkbox" id="dir-fallas"><span>Disponibilidad y fallas de las aeronaves (no todas están listas para despegar y pueden fallar en vuelo)</span></label>
+            <div class="fila avanzar-varios">
+              <label class="mini">Ejercicios largos: resolver varios turnos seguidos<select id="dir-avanzar-n">
+                <option value="3">3 turnos</option><option value="6" selected>6 turnos</option><option value="12">12 turnos (medio día)</option><option value="24">24 turnos (un día)</option>
+              </select></label>
+              <button id="btn-avanzar-varios" type="button" class="secundario">Avanzar</button>
+            </div>
+            <label class="mini">Conduce el bando Azul<select id="dir-cond-azul">
+              <option value="alumnos">Grupo de alumnos</option><option value="instructor">El instructor</option><option value="ia">Adversario automático (IA)</option>
+            </select></label>
+            <label class="mini">Conduce el bando Rojo<select id="dir-cond-rojo">
+              <option value="alumnos">Grupo de alumnos</option><option value="instructor">El instructor</option><option value="ia">Adversario automático (IA)</option>
+            </select></label>
+            <label class="mini">Nivel del adversario automático<select id="dir-ia-nivel">
+              <option value="prudente">Prudente: solo ataca con ventaja clara y cuida sus aviones</option>
+              <option value="normal" selected>Normal</option>
+              <option value="agresiva">Agresiva: ataca con poca ventaja y persigue lejos</option>
+            </select></label>
             <button id="btn-direccion" type="button">Aplicar interruptores</button>
+            <button id="btn-demo" type="button" class="secundario" title="El simulador conduce los dos bandos y resuelve un turno cada 15 segundos: para mostrar un ejercicio en clase">Modo demostración</button>
           </details>
 
           <details>
@@ -396,6 +726,7 @@
               <input id="adj-dano-plat" type="number" placeholder="Daño de la plataforma %" min="0" max="100">
               <input id="adj-dano-comb" type="number" placeholder="Daño del depósito de combustible %" min="0" max="100">
               <input id="adj-refugios" type="number" placeholder="Refugios reforzados (grupos protegidos)" min="0" max="24">
+              <input id="adj-pista" type="number" placeholder="Pista m (bases y PRO; PRO solo en un tramo apto)" min="0" max="6000" step="100">
             </div>
             <button id="btn-ajustar" type="button">Aplicar ajuste</button>
           </details>
@@ -427,12 +758,15 @@
                 <option value="observador">Observador</option>
                 <option value="instructor">Instructor</option>
               </select>
-              <select id="nu-puesto" title="Puesto del alumno dentro de su bando" aria-label="Puesto dentro del bando">
-                <option value="mando">EM · Estado Mayor (todas las funciones)</option>
-                <option value="inteligencia">A2 · Inteligencia</option>
-                <option value="operaciones">A3 · Operaciones en curso</option>
-                <option value="logistica">A4 · Logística</option>
-                <option value="planificacion">A5 · Planificación</option>
+              <select id="nu-puesto" title="Repartición del TIEM del alumno dentro de su bando" aria-label="Repartición dentro del bando">
+                <option value="comandante">CMDTE · Comandante (todas las funciones)</option>
+                <option value="jem">JEM · Jefe de Estado Mayor (todas las funciones)</option>
+                <option value="a1">A-1 · Personal</option>
+                <option value="a2">A-2 · Inteligencia</option>
+                <option value="a3">A-3 · Operaciones</option>
+                <option value="a3da">A-3 D/A · Defensa Aérea</option>
+                <option value="a4">A-4 · Logística</option>
+                <option value="ce">C-E · Comunicaciones y Electrónica</option>
               </select>
               <button id="btn-crear-usuario" type="button">Crear usuario</button>
             </div>
@@ -470,6 +804,26 @@
             <label class="mini">Escolta del paquete<select id="pm-escolta"></select></label>
             <p class="ayuda">La escolta despega con la misión (o se une desde el aire si es un grupo existente), vuela junto al grupo, intercepta a los aviones enemigos que lo amenacen y regresa a la misma base cuando la misión termina.</p>
           </div>
+          <details id="pm-ota" class="pm-ota">
+            <summary>Datos de la OTA (paquete, armamento, IFF, TOT)</summary>
+            <div class="pm-grid">
+              <label class="mini">Paquete<input id="pm-paquete-nombre" maxlength="12" placeholder="Ej. TELA"></label>
+              <label class="mini">Función<select id="pm-funcion">
+                <option value="-">Ninguna</option><option value="CM">CM: comandante de misión</option><option value="ACM">ACM: alterno</option>
+              </select></label>
+              <label class="mini">Código de misión<select id="pm-codigo"></select></label>
+              <label class="mini">Alerta<select id="pm-alerta"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
+              <label class="mini">Armamento primario<select id="pm-arma1"></select></label>
+              <label class="mini">Armamento secundario<select id="pm-arma2"></select></label>
+              <label class="mini">IFF (modo y código)<input id="pm-iff" maxlength="5" inputmode="numeric" placeholder="31701"></label>
+              <label class="mini">PDI (punto de impacto)<input id="pm-pdi" maxlength="30" placeholder="PDI25-PDI30"></label>
+              <label class="mini pm-ancho">Sobre el blanco (TOT)<select id="pm-tot"></select></label>
+            </div>
+            <p class="ayuda">Con un TOT y despegue desde una base, el turno de despegue se calcula hacia atrás. Cada punto puede
+              cambiar la altura del tramo que llega a él; un punto de paso marcado <b>RV</b> es el punto de reunión: el grupo
+              espera allí a los demás del paquete (hasta 2 turnos); uno marcado <b>AER</b> es el punto de reabastecimiento en
+              vuelo: espera un turno junto a la cisterna.</p>
+          </details>
           <div id="pm-estimacion"></div>
           <ul id="pm-avisos" class="pm-avisos"></ul>
           <div class="fila">
@@ -504,6 +858,12 @@
           <button id="btn-regla" type="button" class="mini secundario" title="Medir distancias y rumbos: clic para cada punto; doble clic o Esc para terminar">Regla</button>
           <button id="btn-regla-limpiar" type="button" class="mini secundario" hidden>Limpiar</button>
           <span id="regla-info" class="regla-info"></span>
+          <button id="btn-convertir" type="button" class="mini secundario" aria-expanded="false" title="Convertidor de unidades: distancia, velocidad, altura, masa y volumen">Convertir</button>
+          <div id="convertidor" class="convertidor" hidden>
+            <label>Magnitud <select id="cv-magnitud"></select></label>
+            <div class="cv-fila"><input id="cv-valor" type="number" step="any" value="1" aria-label="Valor a convertir"><select id="cv-unidad" aria-label="Unidad"></select></div>
+            <ul id="cv-resultados" aria-live="polite"></ul>
+          </div>
         </div>
 
         <div id="hud-vw" aria-live="off">
@@ -575,6 +935,8 @@
               </div>
             </div>
             <dl class="datos">
+              <div><dt>Hora simulada</dt><dd id="esc-hora">-</dd></div>
+              <div id="esc-calendario-fila" hidden><dt>Calendario</dt><dd id="esc-calendario">-</dd></div>
               <div><dt>Movimiento terrestre</dt><dd id="clima-mov">-</dd></div>
               <div><dt>Ataques aéreos</dt><dd id="clima-aire">-</dd></div>
               <div><dt>Fase</dt><dd id="esc-fase">-</dd></div>
@@ -588,6 +950,7 @@
               <span class="azul">AZUL <b id="marcador-azul">0</b><small id="marcador-azul-det"></small></span>
               <span class="rojo">ROJO <b id="marcador-rojo">0</b><small id="marcador-rojo-det"></small></span>
             </div>
+            <div class="avance-objetivos" id="avance-objetivos"></div>
             <ul id="objetivos-lista"></ul>
           </section>
 
@@ -609,8 +972,10 @@
               <label><input type="checkbox" data-capa="referencias" checked><span>Límites y poblaciones</span></label>
               <label><input type="checkbox" data-capa="bases_ven" checked><span>Bases aéreas y aeródromos (América)</span></label>
               <label><input type="checkbox" data-capa="aerodromos" checked><span>Plano de los aeródromos (pistas y hangares)</span></label>
+              <label title="Tramos rectos de carreteras principales pavimentadas, anchos, casi planos y sin puentes, donde puede ir un PRO con pista (OpenStreetMap)"><input type="checkbox" data-capa="tramos_pro"><span>Tramos aptos para PRO (pistas en carretera)</span></label>
               <label><input type="checkbox" id="ver-app6"><span>Símbolos militares (APP-6) en lugar de miniaturas</span></label>
               <label><input type="checkbox" data-capa="objetivos" checked><span>Objetivos</span></label>
+              <label title="Centrales eléctricas, refinerías, centros de comunicaciones y puentes de Venezuela (OpenStreetMap)"><input type="checkbox" data-capa="infraestructura" checked><span>Infraestructura (energía, refinerías, comunicaciones, puentes)</span></label>
               <label><input type="checkbox" data-capa="ge" checked><span>Guerra electrónica</span></label>
               <label><input type="checkbox" data-capa="meteorologia" checked><span>Meteorología (zonas)</span></label>
               <label><input type="checkbox" data-capa="misiones" checked><span>Misiones aéreas</span></label>
@@ -717,6 +1082,18 @@
       <div id="rb-contenido"></div>
       <p id="rb-nota" class="ayuda"></p>
       <a id="rb-csv" class="enlace-boton" title="Evaluación por alumno en CSV (hoja de cálculo)">CSV por alumno</a>
+      <button id="rb-comparar" type="button" class="secundario">Comparar con otros ejercicios…</button>
+      <button>Cerrar</button>
+    </form>
+  </dialog>
+  <dialog id="dlg-comparar" class="ancho">
+    <form method="dialog">
+      <h3>Comparar ejercicios</h3>
+      <p class="ayuda">Marque los ejercicios a comparar (hasta 12): la calificación y los indicadores doctrinales de cada
+        bando, y la evolución de cada alumno de un ejercicio a otro.</p>
+      <div id="cmp-lista" class="cmp-lista"></div>
+      <button id="cmp-ver" type="button">Comparar</button>
+      <div id="cmp-contenido"></div>
       <button>Cerrar</button>
     </form>
   </dialog>
@@ -728,6 +1105,7 @@
       <div class="aer-campos">
         <label class="mini" id="aer-base-fila">Base de origen<select id="aer-base"></select></label>
             <p id="aer-nota-base" class="ayuda" hidden>Desde un portaaviones solo despegan helicópteros, drones y cazas embarcados.</p>
+            <p id="aer-nota-pista" class="nota" hidden></p>
         <label class="mini">Aeronaves en el grupo<select id="aer-cantidad"></select></label>
         <label class="mini" id="aer-indicativo-fila">Indicativo (opcional)<input id="aer-indicativo" maxlength="40" placeholder="Ej. Halcón 1"></label>
       </div>
@@ -737,6 +1115,22 @@
         <button type="submit" id="aer-confirmar" class="primario">Enviar a despegar</button>
       </div>
     </form>
+  </dialog>
+  <dialog id="dlg-tiem" class="ancho">
+    <div class="tiem-dialogo">
+      <h3 id="tiem-titulo"></h3>
+      <div id="tiem-sub" class="tiem-sub"></div>
+      <p id="tiem-observaciones" class="tiem-observaciones" hidden></p>
+      <div id="tiem-cuerpo" class="tiem-cuerpo"></div>
+      <div id="tiem-revision" class="tiem-revision"></div>
+      <div id="tiem-adjuntos-caja" class="tiem-adjuntos-caja">
+        <h4>Archivos adjuntos (Word o PDF)</h4>
+        <ul id="tiem-adjuntos" class="tiem-adjuntos"></ul>
+        <button id="btn-tiem-adjuntar" type="button" class="secundario mini">Adjuntar un Word o PDF…</button>
+        <input id="tiem-archivo" type="file" accept=".doc,.docx,.odt,.rtf,.pdf" hidden>
+      </div>
+      <div id="tiem-botones" class="fila-botones tiem-botones"></div>
+    </div>
   </dialog>
   <dialog id="dlg-cronograma" class="ancho">
     <form method="dialog">
@@ -766,6 +1160,11 @@
   <script src="/static/js/replay.js"></script>
   <script src="/static/js/informe.js"></script>
   <script src="/static/js/plantillas.js"></script>
+  <script src="/static/js/situacion.js"></script>
+  <script src="/static/js/pmo.js"></script>
+  <script src="/static/js/tiem.js"></script>
+  <script src="/static/js/infraestructura.js"></script>
+  <script src="/static/js/aguila.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
 </html>

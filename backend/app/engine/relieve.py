@@ -33,6 +33,7 @@ ALTURA_MISIL_M = 30.0  # los misiles de crucero vuelan pegados al terreno o al m
 TECHO_PORTATIL_M = 3500.0  # una antiaerea portatil (tipo IGLA-S) no alcanza a una aeronave en perfil alto
 FACTOR_PORTATIL_RASANTE = 1.25  # ... y a baja cota la aeronave queda mas expuesta a ella
 CLASES_SIN_PERFIL_ALTO = ("helicoptero", "helicoptero_artillado", "municion_merodeadora")
+CLASES_PERFIL_ALTO = ("alerta_temprana", "cisterna")  # vuelan alto por defecto (radar sobre el relieve, orbita)
 
 # Altura de la antena o del sensor sobre el terreno (o sobre el mar), y la del blanco que ofrece la unidad.
 ANTENA_M = {
@@ -69,6 +70,8 @@ def perfil_por_defecto(u) -> str | None:
         return None
     if es_misil(u) or _clase_id(u) in ("helicoptero", "helicoptero_artillado"):
         return "rasante"
+    if _clase_id(u) in CLASES_PERFIL_ALTO:
+        return "alto"
     return "medio"
 
 

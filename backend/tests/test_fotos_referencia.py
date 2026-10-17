@@ -76,11 +76,14 @@ def test_el_manifiesto_del_repositorio_es_valido():
             assert catalogo._referencia_valida(e, id_, catalogo.RUTA_FOTOS), id_
 
 
-def test_la_herramienta_cubre_todas_las_aeronaves_y_buques(herramienta):
+def test_la_herramienta_cubre_aeronaves_buques_y_clases_terrestres(herramienta):
     claves = {(s, c) for s, c, _, _ in herramienta.UNIDADES}
-    sin_foto_real = {("modelos", m.id) for m in catalogo.MODELOS.values() if m.foto.endswith(".svg")}
+    # los que tienen ilustracion o ya la cambiaron por una foto de referencia (los del catalogo propio no van)
+    sin_foto_real = {("modelos", m.id) for m in catalogo.MODELOS.values() if not m.id.startswith("u_")
+                     and (m.foto.endswith(".svg") or m.foto.startswith("/static/fotos/ref_"))}
     buques = {("clases", c.id) for c in catalogo.CLASES.values() if c.tipo == "naval"}
-    assert claves == sin_foto_real | buques
+    terrestres = {("clases", c.id) for c in catalogo.CLASES.values() if c.tipo == "terrestre"}  # foto de la clase
+    assert claves == sin_foto_real | buques | terrestres
 
 
 def test_solo_acepta_licencias_libres(herramienta):
@@ -115,3 +118,15 @@ def test_reescribe_solo_su_bloque_de_creditos(herramienta, tmp_path, monkeypatch
     texto = creditos.read_text(encoding="utf-8")
     assert texto.startswith("# Créditos\n\nTexto previo.") and texto.count(herramienta.INICIO_TABLA) == 1
     assert "`ref_helo_ataque.jpg` | `helo_ataque`" in texto and "Fulano" in texto
+
+
+def test_el_encuadre_deja_solo_la_pieza_principal(herramienta):
+    pytest.importorskip("scipy")
+    from PIL import Image, ImageDraw
+    alfa = Image.new("L", (200, 100), 0)
+    d = ImageDraw.Draw(alfa)
+    d.rectangle([10, 10, 150, 60], fill=255)   # el buque
+    d.rectangle([170, 70, 185, 80], fill=255)  # una lancha suelta
+    limpia = herramienta.solo_lo_principal(alfa)
+    assert limpia.getpixel((50, 30)) == 255 and limpia.getpixel((178, 75)) == 0
+    assert herramienta.fondo().size == (herramienta.ANCHO, herramienta.ALTO)

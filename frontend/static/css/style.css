@@ -27,7 +27,7 @@ body {
 h1, h2, h3 { margin: 0; }
 b { font-weight: 700; }
 [hidden] { display: none !important; }
-button, input, select { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 .sec { color: var(--texto-sec); font-size: 11px; }
 .error { color: #ff8a80; min-height: 1.2em; font-size: 13px; }
 .ayuda { font-size: 12px; color: var(--texto-sec); margin: 4px 0; font-weight: normal; }
@@ -35,7 +35,7 @@ button, input, select { font: inherit; color: inherit; }
 h4 { margin: 10px 0 4px; font-size: 12px; color: var(--texto-sec); text-transform: uppercase; letter-spacing: .06em; }
 
 /* ---------- controles ---------- */
-input, select {
+input, select, textarea {
   width: 100%; padding: 6px 8px; margin: 2px 0; background: #1a1b2c; border: 1px solid var(--borde);
   border-radius: var(--radio);
 }
@@ -187,6 +187,13 @@ summary { cursor: pointer; font-weight: 700; padding: 7px 0; font-size: 12px; le
 .barra .relleno.critico { background: linear-gradient(90deg, #a5162a, var(--rojo)); }
 .barra .relleno.oculto { background: repeating-linear-gradient(45deg, #3B3E5A, #3B3E5A 6px, #2f3250 6px, #2f3250 12px); }
 .det-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin: 10px 0 0; }
+/* sistemas de defensa aerea: armas de la bateria y arma a emplear (js/app.js, renderDetalle) */
+.tabla-armas { width: 100%; margin: 10px 0 4px; border-collapse: collapse; font-size: 10.5px; table-layout: fixed; }
+.tabla-armas th, .tabla-armas td { padding: 3px 4px; border-bottom: 1px solid var(--borde); text-align: left; overflow-wrap: anywhere; }
+.tabla-armas th:first-child, .tabla-armas td:first-child { width: 32%; }
+.tabla-armas th { color: var(--texto-sec); font-weight: 600; text-transform: uppercase; font-size: 9.5px; letter-spacing: .05em; }
+.arma-da { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; font-size: 11px; color: var(--texto-sec); }
+.arma-da select { width: 100%; }
 .det-datos div { background: var(--panel-2); border: 1px solid var(--borde); border-radius: var(--radio); padding: 5px 8px; min-width: 0; }
 .det-datos dt { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--texto-sec); }
 .det-datos dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
@@ -365,13 +372,27 @@ path.ruta-anim { animation: marcha 1.2s linear infinite; }
 .estado.listo b { color: var(--verde); }
 
 /* ---------- acceso ---------- */
-#login { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 30%, #1c2748, #0e1120 70%); z-index: 2000; }
+#login { position: fixed; inset: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 30%, #1c2748, #0e1120 70%); z-index: 2000; }
 #login form {
   width: 440px; max-width: 94vw; padding: 24px 28px 28px; background: var(--panel); border: 1px solid var(--borde); border-radius: 8px;
   box-shadow: var(--sombra); display: flex; flex-direction: column; gap: 8px; text-align: center;
 }
 #login .logo { width: 44px; height: 44px; margin: 0 auto; }
-#login .logo-siete { display: block; width: 100%; max-width: 360px; margin: -6px auto 4px; border-radius: 10px; }
+/* Aguila del SIETE (js/aguila.js). En reposo se ve posada con las alas recogidas (.posada) y respira; al ingresar
+ * corre el video con transparencia (.vuelo: abre las alas y da una batida) mientras la figura (.en-vuelo) viene
+ * hacia la pantalla. El lienzo es el cuadro entero del video (16:9) y es mas grande que la figura: se ubica para
+ * que el aguila posada (x 31-69 %, y 21-84 % del cuadro) llene la figura; lo transparente desborda sin molestar. */
+.aguila { position: relative; width: 100%; height: 183px; margin: 2px auto 10px; pointer-events: none; user-select: none; }
+.aguila .lienzo { position: absolute; left: 50%; top: -62px; width: 520px; height: 292.5px; margin-left: -260px; }
+.aguila .lienzo img, .aguila .lienzo video { position: absolute; inset: 0; width: 100%; height: 100%; }
+.aguila video.vuelo { opacity: 0; }
+.aguila.volando video.vuelo { opacity: 1; }
+.aguila.volando img.posada { opacity: 0; }
+.aguila.en-reposo .lienzo { animation: aguila-flota 4.6s ease-in-out infinite; transform-origin: 50% 80%; }
+.aguila.en-vuelo { position: fixed; z-index: 5000; margin: 0; }
+@keyframes aguila-flota { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3px) scale(1.015); } }
+@media (prefers-reduced-motion: reduce) { .aguila.en-reposo .lienzo { animation: none; } }
+#login.despegando form { opacity: 0; transition: opacity .3s ease; }
 #login h2 { font-size: 20px; letter-spacing: .12em; }
 #login input, #login select { padding: 10px; }
 #login .primario { margin-top: 6px; padding: 10px; }
@@ -440,3 +461,69 @@ dialog td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .simbolo { display: inline-block; }
 .simbolo svg { width: 100%; height: 100%; display: block; }
 .fila-instructor { display: contents; }
+
+/* convertidor de unidades (js/herramientas.js) */
+.convertidor { margin-top: 6px; padding: 8px; background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio);
+  display: flex; flex-direction: column; gap: 6px; font-size: 12px; min-width: 210px; }
+.convertidor .cv-fila { display: flex; gap: 6px; }
+.convertidor .cv-fila input { width: 90px; }
+.convertidor ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+#pm-avisos li.logistica { color: var(--texto-sec); }
+
+/* parte de personal por unidad y esfuerzo aereo (pestaña Situación) */
+.tabla-toe td { font-size: 11px; }
+.tabla-toe tr.con-deficit td:first-child { color: var(--naranja, #ffb347); }
+.lista-esfuerzo { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; margin: 4px 0 10px; font-size: 12px; }
+.lista-esfuerzo dt { color: var(--texto-sec); }
+.lista-esfuerzo dd { margin: 0; text-align: right; font-weight: 600; }
+.tabla-personal-cfg input { width: 70px; }
+.tabla-personal-cfg th { text-align: left; font-weight: 600; }
+
+/* recuperacion de personal y puntos de recobre (pestaña Situación) y tripulaciones en el mapa */
+.lista-derribados { margin: 2px 0 8px 16px; padding: 0; font-size: 12px; }
+.lista-derribados li.aislado { color: var(--naranja, #ffb347); }
+.lista-derribados li.capturado, .lista-derribados li.perdido { color: #ef476f; }
+.lista-derribados li.rescatado { color: #2ec4b6; }
+.ficha-pro { font-size: 12px; margin: 4px 0 8px; }
+.ficha-pro ul { margin: 2px 0 0 16px; padding: 0; color: #ffd166; }
+.ficha-pro li.ok { color: #2ec4b6; }
+.pm-derribado span { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(255, 190, 11, .9); color: #111; font-size: 12px; box-shadow: 0 0 0 2px rgba(0, 0, 0, .5); }
+.pm-derribado.rojo span { background: rgba(239, 71, 111, .9); }
+
+/* tarjeta tactica dinamica y simbologia segun el estado de la unidad */
+.tarjeta-tactica { display: flex; flex-direction: column; gap: 1px; font-size: 11px; line-height: 1.3; }
+.tarjeta-tactica b { font-size: 12px; }
+.tarjeta-tactica .sub { color: #8a93a6; }
+.tarjeta-tactica.degradado b { color: #ffb347; }
+.tarjeta-tactica.critico b, .tarjeta-tactica.sin-combustible b { color: #ef476f; }
+.leaflet-marker-icon.degradado { filter: drop-shadow(0 0 3px #ffb347) drop-shadow(0 0 1px #ffb347); }
+.leaflet-marker-icon.critico { filter: drop-shadow(0 0 4px #ef476f) drop-shadow(0 0 2px #ef476f); }
+.leaflet-marker-icon.sin-combustible { filter: drop-shadow(0 0 4px #ffd166); animation: parpadeo-combustible 1.2s ease-in-out infinite; }
+@keyframes parpadeo-combustible { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .leaflet-marker-icon.sin-combustible { animation: none; } }
+/* plan de transmisiones */
+.tabla-transmisiones { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.tabla-transmisiones th, .tabla-transmisiones td { font-size: 11px; padding: 2px; }
+.tabla-transmisiones thead th:nth-child(1) { width: 27%; }
+.tabla-transmisiones thead th:nth-child(2) { width: 17%; }
+.tabla-transmisiones input, .tabla-transmisiones select { width: 100%; box-sizing: border-box; min-width: 0; font-size: 11px; padding: 2px; }
+.avanzar-varios { align-items: flex-end; gap: 6px; }
+
+/* apresto operacional y PCAO (pestaña Situación) */
+.tabla-apresto { width: 100%; table-layout: fixed; }
+.tabla-apresto th:first-child, .tabla-apresto td:first-child { width: 38%; }
+.tabla-apresto td, .tabla-apresto th { text-align: center; padding: 2px; }
+.tabla-apresto td:first-child, .tabla-apresto th:first-child { text-align: left; }
+.tabla-apresto td.bajo { color: #ef476f; font-weight: 600; }
+.tabla-apresto tr.tiene td:last-child { color: #2ec4b6; }
+.tabla-apresto tr.no-tiene td:last-child { color: #ef476f; font-weight: 600; }
+.lista-pcao { margin: 2px 0 8px 16px; padding: 0; font-size: 12px; }
+.lista-pcao li.cumplido { color: #2ec4b6; }
+.lista-pcao li.en.curso { color: #ffd166; font-weight: 600; }
+.tabla-apresto-cfg input, .tabla-apresto-cfg select { width: 100%; box-sizing: border-box; min-width: 0; font-size: 11px; }
+
+/* foto de un tipo de unidad (Consola -> Catalogo propio) */
+.foto-carga { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.foto-carga img { width: 100%; max-width: 360px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; border: 1px solid var(--borde, #334); }
+.foto-carga input[type=file], .foto-carga input:not([type=checkbox]) { width: 100%; box-sizing: border-box; margin-bottom: 4px; }

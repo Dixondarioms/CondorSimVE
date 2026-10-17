@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app import auth, schemas, state
 from app.db import get_db
-from app.engine import aar, catalogo, puestos, relieve, vision
+from app.engine import aar, catalogo, defensa_aerea, puestos, relieve, tramos_pro, vision
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.models.aar import Combate, RegistroLogistico
@@ -21,15 +21,24 @@ router = APIRouter(prefix="/api/escenarios/{escenario_id}/unidades", tags=["unid
 solo_instructor = auth.requiere_roles("instructor")
 
 
-def validar_ubicacion(tipo: str, lat: float, lon: float) -> None:
+def validar_ubicacion(tipo: str, lat: float, lon: float, clase_unidad: str = "") -> None:
     terreno = get_terreno()
-    if not terreno.disponible:
+    if not terreno.disponible or clase_unidad == "puente":  # un puente puede estar sobre el agua
         return
     clase = terreno.clase(lat, lon)
     if tipo in ("terrestre", "base") and clase == "agua":
         raise HTTPException(status_code=400, detail="Esta unidad no puede ubicarse en el agua")
     if tipo == "naval" and clase != "agua":
         raise HTTPException(status_code=400, detail="Una unidad naval solo puede ubicarse en el agua")
+
+
+def validar_pista_pro(clase: str, lat: float, lon: float, pista_m: float | None) -> None:
+    """Un PRO con pista solo va en un tramo de carretera apto o en un aerodromo (engine/tramos_pro.py)."""
+    if clase != "punto_recobre":
+        return
+    motivo = tramos_pro.error_de_ubicacion(lat, lon, pista_m)
+    if motivo:
+        raise HTTPException(status_code=400, detail=motivo)
 
 
 @router.post("", response_model=schemas.UnidadOut)
@@ -43,7 +52,7 @@ async def crear_unidad(
     if payload.modelo:
         modelo = catalogo.MODELOS.get(payload.modelo)
         if modelo is None:
-            raise HTTPException(status_code=400, detail="Modelo de aeronave desconocido")
+            raise HTTPException(status_code=400, detail="Modelo o tipo de unidad desconocido")
         if payload.clase is not None and payload.clase != modelo.clase:
             raise HTTPException(status_code=400, detail="El modelo no corresponde a la clase")
         payload.clase = modelo.clase
@@ -62,9 +71,12 @@ async def crear_unidad(
     if payload.echelon not in catalogo.ESCALONES:
         raise HTTPException(status_code=400, detail="Escalon desconocido")
     aeronaves = payload.aeronaves if clase.tipo == "aerea" else 1
-    escalon = payload.echelon or (catalogo.escalon_grupo(aeronaves) if modelo else clase.escalon)
+    escalon = payload.echelon or (catalogo.escalon_grupo(aeronaves) if modelo and clase.tipo == "aerea" else clase.escalon)
 
-    validar_ubicacion(clase.tipo, payload.lat, payload.lon)
+    validar_ubicacion(clase.tipo, payload.lat, payload.lon, clase.id)
+    if payload.pista_m and clase.id not in ("punto_recobre", "base_aerea"):
+        raise HTTPException(status_code=400, detail="Solo una base aérea o un PRO tienen pista")
+    validar_pista_pro(clase.id, payload.lat, payload.lon, payload.pista_m)
 
     def valor(indicado, defecto):
         return defecto if indicado is None else indicado
@@ -90,6 +102,9 @@ async def crear_unidad(
         autonomia_km=valor(payload.autonomia_km, ref.autonomia_km),
         carga=clase.carga_max,
         sidc=catalogo.generar_sidc(payload.bando, clase, escalon),
+        personal=payload.personal,
+        radio_km=payload.radio_km if clase.infraestructura == "puente" else None,
+        pista_m=payload.pista_m or None,
     )
     db.add(unidad)
     db.commit()
@@ -159,6 +174,12 @@ async def configurar_defensa(
         raise HTTPException(status_code=400, detail="Esta unidad no tiene radar")
     if payload.fuego_libre is not None and not clase.defensa_aerea:
         raise HTTPException(status_code=400, detail="Solo la defensa antiaerea tiene fuego automatico")
+    sistema = defensa_aerea.sistema(unidad)
+    if payload.arma is not None:
+        if sistema is None:
+            raise HTTPException(status_code=400, detail="Esta unidad no tiene un sistema de armas antiaereo")
+        if payload.arma and sistema.arma(payload.arma) is None:
+            raise HTTPException(status_code=400, detail="Ese arma no es de este sistema")
     if unidad.estado != "activa":
         raise HTTPException(status_code=400, detail="La unidad ya no esta activa")
     if usuario.rol != "instructor":
@@ -169,6 +190,8 @@ async def configurar_defensa(
         unidad.emitiendo = payload.emitiendo
     if payload.fuego_libre is not None:
         unidad.fuego_libre = payload.fuego_libre
+    if payload.arma is not None:
+        unidad.arma_elegida = payload.arma or None
     db.commit()
     db.refresh(unidad)
     await manager.difundir_estado(db, esc)
@@ -247,6 +270,9 @@ async def ajustar_unidad(
     cambios = payload.model_dump(exclude_none=True)
     if "lat" in cambios or "lon" in cambios:
         validar_ubicacion(unidad.tipo, cambios.get("lat", unidad.lat), cambios.get("lon", unidad.lon))
+    if {"lat", "lon", "pista_m"} & set(cambios):
+        validar_pista_pro(unidad.clase or "", cambios.get("lat", unidad.lat), cambios.get("lon", unidad.lon),
+                          cambios.get("pista_m", unidad.pista_m))
     detalle = []
     for campo, valor in cambios.items():
         anterior = getattr(unidad, campo)

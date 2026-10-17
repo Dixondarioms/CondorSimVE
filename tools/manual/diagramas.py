@@ -1,8 +1,11 @@
 # Genera los esquemas del manual como HTML (SVG) y los captura con Chrome headless a PNG.
+import os
 import subprocess
 from pathlib import Path
 
-AQUI = Path(__file__).resolve().parent / "salida"  # PNG/JPG generados (no se versionan)
+# PNG/JPG generados (no se versionan); SIETE_CAPTURAS: otra carpeta; SIETE_ESCALA=2: al doble de resolucion
+AQUI = Path(os.environ.get("SIETE_CAPTURAS") or Path(__file__).resolve().parent / "salida").resolve()
+ESCALA = os.environ.get("SIETE_ESCALA", "1")
 AQUI.mkdir(exist_ok=True)
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 
@@ -107,25 +110,30 @@ def ciclo():
 
 
 def puestos():
-    s = ['<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560">', CSS]
-    s.append('<text class="tb" x="600" y="34" text-anchor="middle" style="font-size:20px">Roles y puestos de un ejercicio</text>')
-    s.append(caja(40, 60, 240, 130, "Instructor", ["Director del ejercicio: crea el", "escenario, ubica unidades, fija el", "clima, inyecta eventos, resuelve", "turnos, evalúa (informe AAR)"], "amar"))
+    s = ['<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650">', CSS]
+    s.append('<text class="tb" x="600" y="34" text-anchor="middle" style="font-size:20px">Roles del ejercicio y reparticiones del Estado Mayor (TIEM)</text>')
+    s.append(caja(40, 60, 240, 130, "Instructor", ["Director del ejercicio: emite el", "Problema Militar, fija el calendario,", "resuelve turnos y evalúa; puede", "conducir un bando"], "amar"))
     s.append(caja(920, 60, 240, 130, "Observador", ["Ve todo, no emite órdenes.", "Útil para evaluadores", "y visitantes"], "gris"))
-    s.append(caja(300, 60, 600, 130, "Bando (Azul o Rojo) — un estado mayor de aula",
-                  ["Todos los puestos comparten la misma vista del bando (niebla, contactos, gráficos, chat).", "Lo que cambia es qué órdenes puede emitir cada uno. El servidor rechaza lo que no corresponde al puesto."], "azul"))
-    ps = [("EM · Estado Mayor", ["Todo (por defecto para", "un solo alumno por bando).", "Confirma LISTO"]),
-          ("A2 · Inteligencia", ["Radares (encender/apagar),", "guerra electrónica terrestre,", "contactos, gráficos de blancos"]),
-          ("A3 · Operaciones", ["Aeronaves ya en el aire o", "en pista: rutas, patrullas,", "ataques, aterrizajes, misiones"]),
-          ("A4 · Logística", ["Ingenieros (puentes, vados)", "y convoyes de", "abastecimiento"]),
-          ("A5 · Planificación", ["Unidades terrestres y navales,", "antiaérea, misiles, envío de", "grupos desde bases. LISTO"])]
+    s.append(caja(300, 60, 600, 130, "Bando (Azul o Rojo): Estado Mayor de un componente aéreo",
+                  ["Lo conduce un grupo de alumnos, el instructor o la IA. Todas las reparticiones comparten la vista del bando", "(niebla, contactos, PMO, chat); cambia qué órdenes puede emitir cada una. El servidor rechaza lo ajeno."], "azul"))
+    for x, t, ls in ((330, "Comandante (CMDTE)", ["Decide y conduce el bando:", "todas las funciones. LISTO"]),
+                     (630, "Jefe de Estado Mayor (JEM)", ["Coordina las reparticiones;", "todas las funciones. LISTO"])):
+        s.append(f'<path class="fl" d="M600,192 L{x + 120},228"/>')
+        s.append(caja(x, 230, 240, 100, t, ls, "verde"))
+    ps = [("A-1 · Personal", ["Efectivos, bajas y", "reemplazos. No ordena", "unidades"]),
+          ("A-2 · Inteligencia", ["Reconocimiento:", "unidades y drones;", "capacidades del ENO"]),
+          ("A-3 · Operaciones", ["Despegues, caza,", "ataque, helicópteros,", "superficie, misiles"]),
+          ("A-3 D/A · Def. Aérea", ["Radares, antiaérea,", "alerta temprana y", "caza de intercepción"]),
+          ("A-4 · Logística", ["Convoyes, depósitos", "e ingenieros (puentes", "y vados)"]),
+          ("C-E", ["Comunicaciones y", "Electrónica: escucha e", "interferencia (tierra y aire)"])]
     for i, (t, ls) in enumerate(ps):
-        x = 40 + i * 228
-        s.append(f'<path class="fl" d="M{x + 104},192 L{x + 104},228"/>' if i in (1, 2, 3) else f'<path class="fl" d="M{600 if i == 0 else 600},192 L{x + 104},228"/>')
-        s.append(caja(x, 230, 208, 120, t, ls, "azul" if i else "verde"))
-    s.append(caja(40, 380, 1120, 150, "Acceso y seguridad",
+        x = 40 + i * 188
+        s.append(f'<path class="fl" d="M600,332 L{x + 87},368"/>')
+        s.append(caja(x, 370, 174, 120, t, ls, "azul"))
+    s.append(caja(40, 520, 1120, 110, "Acceso y seguridad",
                   ["Cada usuario entra con contraseña (mínimo 8 caracteres, 5 intentos); las sesiones duran 12 h y el instructor puede revocarlas.",
                    "Alumnos y observadores solo ven los escenarios que el instructor les asigna. El instructor puede «ver como» un bando para mostrar en clase",
-                   "lo que ese bando conoce. Usuario y puesto: python -m app.crear_usuario <nombre> --rol azul --puesto planificacion"], "gris"))
+                   "lo que ese bando conoce. Usuario y repartición: python -m app.crear_usuario <nombre> --rol azul --puesto a3da".replace("<", "&lt;").replace(">", "&gt;")], "gris"))
     s.append("</svg>")
     return "\n".join(s)
 
@@ -134,11 +142,11 @@ def capturar(nombre, html, w, h):
     f = AQUI / f"{nombre}.html"
     f.write_text(f"<!doctype html><html><head><meta charset='utf-8'></head><body>{html}</body></html>", encoding="utf-8")
     subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run",
-                    f"--user-data-dir={AQUI / 'perfil'}", f"--window-size={w},{h}", "--virtual-time-budget=2000",
+                    f"--user-data-dir={AQUI / 'perfil'}", f"--window-size={w},{h}", f"--force-device-scale-factor={ESCALA}", "--virtual-time-budget=2000",
                     f"--screenshot={AQUI / (nombre + '.png')}", f.as_uri()], capture_output=True)
     print(nombre, (AQUI / f"{nombre}.png").stat().st_size)
 
 
 capturar("diag_arquitectura", arquitectura(), 1200, 720)
 capturar("diag_ciclo", ciclo(), 1200, 640)
-capturar("diag_puestos", puestos(), 1200, 560)
+capturar("diag_puestos", puestos(), 1200, 650)

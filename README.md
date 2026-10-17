@@ -8,19 +8,22 @@ sincronizados por WebSocket. **Funciona sin internet**: mapa, relieve, cobertura
 y datos se sirven desde el propio servidor (una política CSP bloquea cualquier recurso externo).
 
 Creado por el **Cap. Dixon Malpica**, División de Ingeniería y Desarrollo Aeroespacial (**DIDA**), Aviación Militar
-Bolivariana (escudo de la DIDA en `frontend/static/img/dida_logo.jpg`, en la portada y los créditos de ambos manuales).
+Bolivariana (escudo de la DIDA en `frontend/static/img/dida_logo.jpg`; en la portada y los créditos de ambos manuales va
+recortado, sin el fondo: `dida_logo_recortado.png`, que genera `python tools/recortar_logo_dida.py`).
 
 ## Manuales
 
-- **Manual de usuario** `docs/Manual_Usuario_SIETE.pdf`: guía paso a paso, con 56 capturas, de cada parte de la interfaz
-  para el instructor, los alumnos de cada puesto y el observador. Capturas: `python tools/manual/capturas_guia.py` (con
+- **Manual de usuario** `docs/Manual_Usuario_SIETE.pdf`: guía paso a paso, con 76 capturas, de cada parte de la interfaz
+  para el instructor, los alumnos de cada repartición y el observador, con un capítulo sobre el combate contra la IA (ejercicios
+  listos, niveles del adversario, ciclo de día y noche y modo demostración). Capturas: `python tools/manual/capturas_guia.py` (con
   el servidor en marcha en el puerto 8000): maneja Chrome por su protocolo de depuración (`tools/manual/navegador.py`)
   sobre el arnés de pruebas, hace los clics, recorta cada panel y numera las zonas. PDF: `python tools/generar_manual_usuario.py`.
 - **Manual de referencia** `docs/Manual_SIETE.pdf` (qué es, cómo se hizo, instalación, reglas del motor y catálogo). Se
   regenera con `python tools/generar_manual.py --imagenes <carpeta de capturas>` (capturas: `tools/manual/capturas.py`).
 - **Video de presentación en 4K con locución** (voces neuronales de Microsoft, español de Venezuela): doble clic en
   `tools\video\generar_video.cmd`; detalles en `tools/video/README.md`.
-- **Fotos de referencia** de aeronaves, drones y buques (Wikimedia Commons, licencias libres, con su crédito): doble
+- **Fotos de referencia** de aeronaves, drones, buques, sistemas antiaéreos y clases terrestres (Wikimedia Commons,
+  licencias libres, con su crédito): doble
   clic en `tools\fotos\descargar_fotos.cmd` en un equipo con internet y reinicie el servidor. Prefiere el equipo
   venezolano (Mi-35M, Mi-17V-5, K-8W, fragatas Mariscal Sucre, Sábalo, Capana...); para lo que la FANB no tiene usa
   un ejemplo real. Abre una hoja con las candidatas; para cambiar una: `descargar_fotos.cmd --elegir fragata=2`.
@@ -152,26 +155,114 @@ Sirve para revisar la interfaz tras un cambio. Regenérelo si cambia `index.html
 | `azul` / `rojo` | Sus unidades + enemigas detectadas + últimos contactos | Emitir/cancelar órdenes, marcar "listo"; informe solo al finalizar |
 | `observador` | Todo | Solo lectura (incluye el informe) |
 
-### Puestos por función dentro del bando (estado mayor de aula)
+### Reparticiones del Estado Mayor (TIEM)
 
-Cada alumno de un bando ocupa un **puesto**, como las células de un centro de operaciones; así varios
-alumnos trabajan a la vez sobre el mismo bando sin pisarse. Todos los puestos comparten la misma vista
-(niebla de guerra, contactos, gráficos, red de mensajes del bando); lo que cambia es **qué órdenes puede
-emitir** cada uno. El instructor lo asigna al crear el usuario o después (panel "Usuarios"); cambiarlo
-cierra la sesión del alumno para que entre con su nueva interfaz.
+El simulador sigue el **TIEM** (Trabajo Integral de Estado Mayor): cada bando es el Estado Mayor del componente aéreo
+de un Teatro de Operaciones y cada alumno ocupa una **repartición**. Todas comparten la misma vista (niebla de
+guerra, contactos, gráficos, Problema Militar, red de mensajes del bando); lo que cambia es **qué órdenes puede
+emitir** cada una. El instructor la asigna al crear el usuario o después (panel "Usuarios"); cambiarla cierra la
+sesión del alumno para que entre con su nueva interfaz.
 
-| Puesto | Conduce | Confirma LISTO |
+| Repartición (id) | Conduce (funciones de `engine/puestos.py`) | Confirma LISTO |
 |---|---|---|
-| **EM · Estado Mayor** (por defecto) | Todo: es el comportamiento de siempre para un solo alumno por bando | Sí |
-| **A2 · Inteligencia** | Radares y unidades terrestres de guerra electrónica (escucha e interferencia); sigue contactos, dibuja gráficos de blancos | No |
-| **A3 · Operaciones en curso** | Las aeronaves ya creadas: despegue desde pista, rutas, patrullas, ataques, aterrizajes | No |
-| **A4 · Logística** | Ingenieros (puentes y vados) y convoyes de abastecimiento | No |
-| **A5 · Planificación** | Unidades terrestres y navales, y el envío de grupos de caza desde las bases | Sí |
+| **CMDTE · Comandante** (`comandante`, por defecto) | Todo el bando | Sí |
+| **JEM · Jefe de Estado Mayor** (`jem`) | Todo; coordina a las reparticiones | Sí |
+| **A-1 · Personal** (`a1`) | Ninguna unidad: efectivos, bajas, reemplazos (pestaña Situación) | No |
+| **A-2 · Inteligencia** (`a2`) | `reconocimiento`: unidades y drones de reconocimiento | No |
+| **A-3 · Operaciones** (`a3`) | `superficie` (terrestres, navales, lanzadores), `aereo` (ataque, helicópteros, drones armados, cisternas), `caza`, `despegar` | No |
+| **A-3 D/A · Defensa Aérea** (`a3da`) | `defensa_aerea` (radares, antiaérea, alerta temprana), `caza`, `despegar` | No |
+| **A-4 · Logística** (`a4`) | `logistica`: convoyes, depósitos, ingenieros, toda orden de construir | No |
+| **C-E · Comunicaciones y Electrónica** (`ce`) | `guerra_electronica`: escucha e interferencia terrestres y aviones de GE | No |
 
-El servidor rechaza (403, explicando qué puesto corresponde) cualquier orden, cancelación o "listo" fuera
-del puesto; la interfaz solo muestra las herramientas del puesto ("Mi puesto" en el panel izquierdo) y
-avisa si la unidad seleccionada la conduce otra célula. Desde la consola: `python -m app.crear_usuario
-a5azul --rol azul --puesto planificacion`; en el arnés, `arnes.html?rol=azul&puesto=operaciones`.
+El servidor rechaza (403, explicando qué repartición corresponde) cualquier orden, cancelación o "listo" fuera
+de su área; la interfaz solo muestra sus herramientas ("Mi repartición" en el panel izquierdo) y avisa si la
+unidad seleccionada la conduce otra. Los ids anteriores (`mando`, `inteligencia`, `operaciones`, `logistica`,
+`planificacion`) se aceptan y se traducen (migración `0025`: mando → comandante, inteligencia → a2, operaciones y
+planificacion → a3, logistica → a4). Desde la consola: `python -m app.crear_usuario da_azul --rol azul --puesto
+a3da`; en el arnés, `arnes.html?rol=azul&puesto=a3`.
+
+### Problema Militar, calendario, conducción y cadena de objetivos (TIEM, etapa 1)
+
+- **Problema Militar Operativo** (`engine/pmo.py`, tabla `problemas_militares`, pestaña **TIEM**): por bando,
+  situación general, fuerzas enemigas y propias, misión del Comando del Teatro de Operaciones, idea general de la
+  operación conjunta, **misión del Componente Aéreo** (guardada por partes: tarea, qué, dónde, cuándo y propósito, y
+  revisada con las reglas del TIEM: verbo en infinitivo, sin condiciones), medios, área de operaciones, limitaciones
+  e instrucciones de coordinación. `GET /api/escenarios/{id}/pmo` (cada bando el suyo), `PUT /pmo/{bando}`
+  (instructor) y `POST /pmo/generar`: **crea la situación automáticamente** a partir de los países, las unidades
+  (las enemigas, aproximadas y por zona), los objetivos (postura ofensiva o defensiva), las ciudades de
+  `lugares.geojson` (`engine/lugares.py`) y el calendario; no reemplaza lo redactado por el instructor salvo
+  `sobrescribir`.
+- **Calendario** (`engine/calendario.py`): `fecha_inicio` (turno 1), `turno_h` (el día D es el de ese turno),
+  `turno_final` y fases (`fases_json`; por defecto alistamiento, concentración y despliegue, ejecución y repliegue).
+  Cada turno se nombra D±n · H±n · fase en la cabecera, en *Estado del escenario* y en la pestaña TIEM.
+- **Quién conduce cada bando** (a elección del instructor): `conduccion_azul/rojo` = alumnos | instructor | ia
+  (`PATCH /config`). Con "instructor", el botón *Conducir Rojo/Azul* le da la pantalla del Comandante de ese bando;
+  sus pedidos llevan la cabecera `X-Conduce-Bando` (`auth.conductor`) y no cuentan en la evaluación por alumno.
+- **Cadena de objetivos** (`engine/objetivos.py`): `nivel` (ulterior, asignado, material), `padre_id`, `efecto`
+  deseado, `indicador` y `umbral`; tipo **neutralizar** (fuerza ≤ umbral, 50 % por defecto) y **efecto** (se cumple
+  con el umbral % de sus dependientes, 100 % por defecto; falla cuando ya no puede). `hasta_turno` es un plazo para
+  todos menos proteger. El generador agrupa los objetivos materiales en asignados bajo un ulterior.
+- Migración `0026`; las plantillas, la copia y la exportación guardan PMO, calendario, conducción y cadena.
+
+### Apreciación inicial (TIEM, etapa 2)
+
+- **Documentos de la Fase I, Paso 1** (`engine/tiem.py`, tabla `documentos_tiem`, pestaña **TIEM**): *análisis de la
+  misión* y *concepto del comandante* (Comandante y JEM), *guía de planeamiento* (JEM) y *formas de acción
+  operacionales* (A-3, A-3 D/A, A-2), con los párrafos del formato guía del TIEM: misión por partes, tareas impuestas y
+  deducidas, centros de gravedad con CC/RC/VC, objetivos priorizados, nivel de efecto deseado, capacidades del enemigo
+  (qué, dónde, con qué, desde dónde, cuándo, cómo), criterios, suposiciones, cronograma y F/A con el criterio **APA**.
+- API `/api/escenarios/{id}/tiem`: `GET` (cada bando los suyos), `PUT /{bando}/{tipo}`, `POST …/presentar` (solo si no
+  falta nada), `POST …/revisar` (instructor: aprobado | devuelto | borrador, con observaciones), `GET …/sugerencias`
+  (transcribe PMO, cadena de objetivos y calendario, y agrega el PRC; la interfaz solo llena campos vacíos),
+  `GET /{bando}/prc` (Poder Relativo de Combate preliminar: lo propio exacto, lo enemigo estimado ±15 %) y archivos
+  adjuntos `POST …/archivos` (Word/PDF hasta 10 MB, guardados en `archivos_tiem`), `GET|DELETE /archivos/{id}`.
+- Cada paso avisa al bando (evento `tiem`), la revisión queda en el informe y la exportación incluye los documentos.
+  Migración `0027`.
+
+### Apreciaciones de Estado Mayor y juego de guerra (TIEM, etapa 3)
+
+- **Fase I, Paso 2**: seis apreciaciones más en `engine/tiem.py` — Inteligencia (A-2), Operaciones (A-3), Defensa Aérea
+  (A-3 D/A), Personal (A-1), Logística (A-4) y Comunicaciones y Electrónica (C-E) — con sus formatos guía.
+- **Matriz de confrontación** (campo `matriz`): cada F/A contra cada capacidad del enemigo, con efecto *no afecta*,
+  *degrada* o *anula* y su análisis; filas y columnas salen de `tiem.contexto` (F/A del documento de Formas de Acción;
+  capacidades de la Apreciación de Inteligencia o de la Guía). Luego, comparación y F/A recomendada.
+- Las sugerencias de cada apreciación calculan la situación de su área: personal (`engine/personal.py`), logística
+  (existencias, convoyes, refinación, puentes), comunicaciones (centros, energía, GE, red degradada) y defensa aérea.
+- **Juego de guerra** (`app/ensayos.py`, `POST /api/escenarios/{id}/tiem/{bando}/ensayos`): copia del escenario en su
+  estado actual con la IA conduciendo al enemigo, resolución automática y solo los alumnos del bando asignados; hasta 3
+  por bando. `GET /tiem` devuelve el resumen de cada ensayo (turnos, objetivos, puntos y unidades perdidas). Campos
+  `ensayo_de`, `ensayo_bando`, `ensayo_fa` y `ensayo_desde` del escenario (migración `0028`).
+
+### Decisión, Plan de Operaciones y Orden de Operaciones (TIEM, etapa 4)
+
+- **Decisión del Comandante** (Fase I, Paso 3; solo el Comandante), **Análisis previo al plan** (Fase II, Paso 1; JEM y
+  A-3) y **Plan de Operaciones** (Fase II, Paso 2; JEM, A-3, A-3 D/A) en `engine/tiem.py`, con sus formatos guía.
+- **Tareas del plan** (campo `tareas`): unidad, acción (`mover`, `atacar`, `patrullar`, `apoyar`, `aterrizar`,
+  `interferir`), turno, objetivo o destino (`o:<id>` objetivo del bando, `u:<id>` unidad) y detalle en infinitivo. `GET
+  /tiem` trae `opciones_tarea` (unidades propias, objetivos y enemigos conocidos), `ejecuciones` y `turno_actual`.
+- **Orden de Operaciones** (`POST /api/escenarios/{id}/tiem/{bando}/emitir`): emite como órdenes las tareas que vencen
+  hasta el turno en curso, con la misma validación que una orden manual (`ordenes._crear_orden`) y la repartición de
+  quien las emite; cada resultado (emitida o rechazada con su motivo) queda en `ejecuciones_tarea` (migración `0029`).
+
+### Supervisión de la ejecución (TIEM, etapa 5)
+
+- **Cuadro de supervisión** (`engine/supervision.py`, en `GET /tiem` como `supervision`): objetivo → resultado →
+  diferencia, con estado *conforme*, *en curso*, *desvío* o *fallido* y causa sugerida, a partir de las tareas vencidas
+  (ejecución y resultado de su orden), los objetivos del bando (estado, progreso y plazos por vencer) y las unidades
+  propias destruidas o por debajo del 50 %. Solo usa lo que el bando sabe. Incluye el **parte** del turno anterior.
+- **Documento de Supervisión** (Fase III): registro de causas y acciones correctivas, apreciaciones rápidas y
+  **órdenes fragmentarias** (tareas), que la Orden de Operaciones emite junto con las del plan aunque esté aprobado.
+
+### Evaluación y exportación (TIEM, etapa 6)
+
+- **Evaluación del trabajo de Estado Mayor** (`engine/tiem_evaluacion.py`, `GET /tiem/evaluacion`, y la clave `tiem`
+  de cada bando en la rúbrica del informe): documentos, forma según el TIEM, oportunidad (Fase I hasta H), ejecución
+  del plan y supervisión, de 0 a 100; nota automática de 1 a 20, nota del instructor (promedio de las notas que pone a
+  cada documento al revisarlo; columna `nota`, migración `0030`) y calificación (promedio de ambas).
+- **Exportación** (`app/legajo.py`): cada documento o el legajo completo del bando (portada, PMO y documentos) en Word
+  (`.docx` armado sin dependencias) o como página imprimible para guardar como PDF: `/tiem/{bando}/legajo.docx`,
+  `/tiem/{bando}/legajo.html`, `/tiem/{bando}/{tipo}/documento.docx` y `documento.html`. Formato del TIEM:
+  encabezamiento, cuerpo y final con firma y distribución.
 
 Alumnos y observadores solo acceden a los **escenarios que el instructor les asigna** (panel "Escenario").
 
@@ -183,11 +274,11 @@ Alumnos y observadores solo acceden a los **escenarios que el instructor les asi
   `python -m app.restablecer_admin` (en `backend`) devuelve `admin` a la contraseña inicial con la misma obligación,
   sin tocar a los demás usuarios.
 - **Solicitar una cuenta.** En la pantalla de acceso, *Solicitar una cuenta* pide usuario, contraseña (dos veces),
-  rol (alumno azul o rojo, observador o instructor) y puesto. La cuenta queda **pendiente**: quien intenta entrar
+  rol (alumno azul o rojo, observador o instructor) y repartición. La cuenta queda **pendiente**: quien intenta entrar
   recibe "Su solicitud de cuenta aun no fue aprobada" (solo si la contraseña es correcta; si no, el error de siempre).
   Hay un tope de 50 solicitudes pendientes.
 - **Aprobar o rechazar.** El instructor ve las solicitudes en *Consola → Usuarios* (con un contador junto al título;
-  se revisan cada 30 s y avisa de las nuevas) y las **aprueba** con el rol y el puesto pedidos o con los que elija, o
+  se revisan cada 30 s y avisa de las nuevas) y las **aprueba** con el rol y la repartición pedidos o con los que elija, o
   las **rechaza** (se borran y el nombre queda libre). API: `POST /api/auth/solicitar` (sin sesión),
   `POST /api/usuarios/{id}/aprobar` y `DELETE /api/usuarios/{id}/solicitud`.
 - **Contraseñas provisionales.** Una cuenta creada por el instructor en el panel, o a la que él le pone una
@@ -199,7 +290,15 @@ Alumnos y observadores solo acceden a los **escenarios que el instructor les asi
 
 Autorización en el servidor: cookie de sesión HttpOnly + SameSite=Strict, contraseñas PBKDF2-SHA256,
 bloqueo tras 5 intentos fallidos (persistente en la base), sesiones de 12 h revocables, WebSocket
-autenticado con verificación de origen, y cabeceras CSP / nosniff / frame-deny.
+autenticado con verificación de origen, y cabeceras CSP / nosniff / frame-deny. La CSP incluye
+`form-action 'none'` (ningún formulario se envía sin JavaScript: si se pulsa *Ingresar* antes de que cargue la
+página, usuario y contraseña nunca van en la dirección) y `media-src 'self' blob:` (el video del águila).
+
+Pantalla de acceso: el águila del SIETE espera posada con las alas recogidas
+(`static/img/siete_aguila_posada.png`); al aprobarse el ingreso se reproduce `static/img/aguila_vuelo.webm`
+(2,8 s, VP9 con transparencia: abre las alas, bate dos veces y vuela hacia la pantalla; `js/aguila.js`) y
+recién entonces se muestra el simulador. El video se arma desde el video original del águila con
+`tools/manual/aguila_video.py`, que le quita el fondo cuadro por cuadro y ajusta su duración.
 
 ## Flujo de un turno (1 turno = 1 hora simulada)
 
@@ -213,7 +312,7 @@ autenticado con verificación de origen, y cabeceras CSP / nosniff / frame-deny.
 
 ## Unidades, logística y efectos
 
-Catálogo (`backend/app/engine/catalogo.py`, 17 clases): infantería, blindados, artillería, reconocimiento,
+Catálogo (`backend/app/engine/catalogo.py`, 31 clases): infantería, blindados, artillería, reconocimiento,
 defensa antiaérea, **antiaérea portátil** (tipo IGLA-S), **ingenieros**, **transporte logístico** (terrestres);
 caza (con los modelos F-16 y Su-30), ataque a tierra, helicóptero, **helicóptero de transporte artillado** (aéreas); fragata, patrullero
 (navales); base aérea, depósito y puerto (bases). Cada clase define velocidad, alcance, detección, autonomía,
@@ -342,7 +441,17 @@ salta a ese turno y lugar. Los datos salen de `GET /api/escenarios/{id}/aar/time
 la exportación JSON): series, eventos con su causa (movimiento, combate, apoyo, convoy, construcción…) y
 correlaciones (`consumo_en_combate`, `coincide_con_combate`, `combate_con_logistica_baja`).
 
-**Rúbrica de evaluación por bando y por puesto.** El botón *Rúbrica* de la repetición (y la sección
+**Indicadores doctrinales y calificación (1 a 20).** La rúbrica suma, por bando, siete indicadores de 0 a 100, cada
+uno con su criterio a la vista: **reacción ante las amenazas** (turnos entre el primer ataque de una unidad enemiga y la
+primera orden propia contra ella), **conocimiento del enemigo** (unidades enemigas detectadas sobre el total),
+**sostenimiento logístico**, **coordinación entre reparticiones** (según quién dio cada orden; no aplica si un solo alumno
+condujo todo), **economía de fuerzas** (pérdidas infligidas sobre el total), **cumplimiento de objetivos** e
+**iniciativa** (turnos con órdenes). La **calificación** es su promedio en la escala de 1 a 20 (sin turnos jugados no
+hay nota). Va en el diálogo *Rúbrica*, en el informe imprimible y en la exportación. **Comparar ejercicios**
+(*Rúbrica → Comparar con otros ejercicios…*; `GET /api/evaluacion/comparar?ids=1,2,3`, instructor y observador): la
+nota y los indicadores de cada bando en varios ejercicios y la evolución de cada alumno de uno a otro.
+
+**Rúbrica de evaluación por bando y por repartición.** El botón *Rúbrica* de la repetición (y la sección
 "Rubrica de evaluacion" del informe imprimible) resume, para cada bando: órdenes emitidas / resueltas /
 rechazadas con los tres motivos de rechazo más frecuentes (agrupados sin cifras: "Objetivo fuera de alcance"),
 **turnos pasivos** (turnos resueltos en los que el bando no emitió ninguna orden ni planificó misiones),
@@ -350,7 +459,7 @@ logística (unidades que llegaron a menos del 25 % de combustible o munición y 
 pérdidas infligidas vs. sufridas y unidades destruidas, objetivos cumplidos / fallidos / pendientes, misiones
 aéreas cumplidas / abortadas / fallidas, y una lista de **observaciones automáticas** en español (p. ej. "2
 orden(es) rechazada(s) por 'Objetivo fuera de alcance': revisar la apreciacion de distancias antes de emitir
-la orden."). El desglose por puesto (A2, A3, A4, A5) se deriva de la **función de cada orden** —el puesto
+la orden."). El desglose por repartición (A-2, A-3, A-3 D/A, A-4, C-E) se deriva de la **función de cada orden** —la repartición
 responsable según la unidad y el tipo de orden—, no del alumno que la firmó.
 Datos en `GET /api/escenarios/{id}/aar/rubrica` (mismos permisos que el informe) e incluidos en la
 exportación JSON (`rubrica`).
@@ -375,11 +484,11 @@ logística o ajustes del instructor) y el marcador acumulado al terminar ese tur
 Node (`frontend/tests/replay.test.js`). En el arnés, `&abrir=replay&instante=2.5` lo abre detenido en ese punto.
 
 **Autor de cada orden y rúbrica por alumno.** Cada orden y cada misión aérea guarda quién la emitió
-(`autor_id`, `autor_puesto`: el puesto que ocupaba el alumno en ese momento; migración `0018`). La cola de
-órdenes muestra el autor y su sigla de puesto junto a cada orden; las órdenes automáticas del motor
+(`autor_id`, `autor_puesto`: la repartición que ocupaba el alumno en ese momento; migración `0018`). La cola de
+órdenes muestra el autor y su sigla de repartición junto a cada orden; las órdenes automáticas del motor
 (intercepciones, defensa antiaérea, ataques pedidos por misiones, regreso por combustible crítico) no tienen
 autor. La rúbrica añade la sección `alumnos`: por cada usuario de un bando asignado al escenario o que haya
-firmado algo, su bando y puesto, órdenes emitidas / resueltas / rechazadas con motivos, **turnos con órdenes
+firmado algo, su bando y repartición, órdenes emitidas / resueltas / rechazadas con motivos, **turnos con órdenes
 vs. turnos pasivos**, misiones planificadas / cumplidas / abortadas / fallidas y observaciones automáticas
 del mismo estilo que las de bando ("No emitio ninguna orden ni planifico misiones durante el ejercicio.").
 Se muestra en el diálogo *Rúbrica*, en el informe imprimible, en las diapositivas y se descarga como CSV
@@ -529,8 +638,9 @@ ella, contra el bando contrario: sus sensores detectan al **30 %** (radares al *
 el interferidor es visible para el enemigo mientras emite, y recibe un aviso con la zona. Las zonas se ven en el
 mapa (capa "Guerra electrónica") y el detalle de una unidad afectada lo explica.
 
-**Puestos**: los radares y la GE terrestre los conduce **A2 Inteligencia**; el avión de GE y los drones, como toda
-aeronave, **A3 Operaciones**; el envío desde la base, **A5 Planificación**.
+**Reparticiones**: los radares los conduce **A-3 D/A Defensa Aérea**; la GE terrestre y el avión de GE, **C-E**; los
+drones de reconocimiento, **A-2**; los armados, como toda aeronave de ataque, **A-3**; el envío desde la base, **A-3** o
+**A-3 D/A**.
 
 ## Buques, portaaviones y misiles de crucero
 
@@ -555,7 +665,7 @@ aeronave, **A3 Operaciones**; el envío desde la base, **A5 Planificación**.
   para los topes de aeronaves. **Intercepción antes del impacto:** la antiaérea automática, los destructores y
   las patrullas enemigas disparan contra la salva en ese mismo turno y sus pérdidas se descuentan **antes** de que
   impacte; si la derriban, no impacta («Derribado antes del impacto», con aviso al lanzador). Lo mismo vale ahora
-  para la munición merodeadora. La orden la conduce el puesto de superficie (A5) o el Estado Mayor.
+  para la munición merodeadora. La orden la conduce la A-3 (superficie) o el Comandante.
 - En el mapa, cada buque y el misil tienen su miniatura; el detalle de un lanzador muestra los misiles listos y el
   de un portaaviones, las aeronaves a bordo. Motor: `engine/misiles.py`, `engine/aeronaves.py`, `engine/orders.py`;
   migración 0013 (`blanco_id`).
@@ -581,6 +691,31 @@ aeronave, **A3 Operaciones**; el envío desde la base, **A5 Planificación**.
   en vuelo más cercana a su alcance que su bando detecte (aparece como "defensa aérea" en la cola de órdenes). La
   guiada por radar necesita el radar encendido; con el radar apagado solo tira **por orden y a ojo** (×0,3). La
   portátil infrarroja no necesita radar, pero sí estar desplegada. Se puede **retener el fuego** para no delatarse.
+- **Personal, disponibilidad y esfuerzo** (`engine/toe.py`, `engine/disponibilidad.py`, migración `0033`): parte de
+  personal por unidad (plantilla con 3 o 4 tripulaciones y 7 técnicos por especialidad por aeronave; oficiales,
+  técnicos y tropa en el resto), con la cobertura de cada bando y el déficit cubierto por reservas activas y
+  milicianos. Con "Disponibilidad y fallas", no todas las aeronaves salen (disponibilidad del modelo y técnicos,
+  tripulaciones) y pueden fallar en vuelo. Esfuerzo aéreo y atrición por bando en la pestaña Situación.
+- **Plataformas aéreas** (`engine/plataformas.py`): ficha técnica de cada aeronave (roles, velocidad en ruta y
+  máxima en nudos, radio de acción en millas náuticas, techo en pies, combustible y consumo, oxígeno líquido, carrera
+  de despegue y aterrizaje, tripulación), también para los tipos del catálogo propio. Largo de pista de cada base
+  aérea (del plano del aeródromo o fijado por el instructor, `pista_m`, migración `0032`) y pista útil según su daño:
+  una aeronave no despega ni aterriza donde su carrera no entra. Las misiones estiman combustible (kg) y oxígeno
+  líquido (l) con la reserva, y el perfil de vuelo. La interfaz muestra aviación, defensa aérea y armada en kt, NM y
+  ft (tierra en km), con un convertidor de unidades en la barra del mapa.
+- **Sistemas de defensa aérea con sus armas** (`engine/defensa_aerea.py`): ZU-23-2 (clase `artilleria_antiaerea`,
+  sin radar), Mistral (`antiaerea_portatil`, infrarrojo), RBS 70 (guiado por haz láser, con radar Giraffe), S-125
+  Pechora-2M, Buk-M2E y S-300VM Antey-2500 (modelos de `antiaerea`). Cada uno con sus armas (alcance mínimo y máximo,
+  franja de altura, probabilidad de derribo por misil, misiles por salva, listos y reserva, tiempo de recarga), radar
+  de vigilancia y de tiro, reacción, canales, despliegue/repliegue, movilidad, vehículos y personal. En el turno, la
+  batería calcula el tiempo que cada aeronave pasa en su alcance según su rumbo (de frente, de través o alejándose),
+  tira las salvas que le caben, recarga desde la reserva quedando inoperativa ese tiempo, y su probabilidad baja con
+  la interferencia enemiga, la maniobra evasiva, la firma radar, la cota muy baja y la noche (cañones). El operador
+  elige el arma (automática o una fija) desde la ficha. Migración `0031`. **Disciplina de fuego:** disparo-observación-
+  disparo (a lo sumo una salva por aeronave del grupo en el turno; las que sobreviven, el turno siguiente), un solo
+  misil por salva más allá de la mitad del alcance del arma (la salva completa más cerca) y una reserva del 25 % de la
+  dotación de misiles para la autodefensa, que solo se gasta contra blancos cercanos. Una batería sin reserva pero
+  con misiles en los lanzadores figura «Sin reserva · N misiles listos», no «Sin munición».
 - **Existencias de las bases:** cada base guarda combustible y munición (100 puntos = llenar una unidad; bases
   aéreas y puertos hasta 2000, depósitos hasta 3000). El reabastecimiento (+50 % por turno) sale de ahí; cada
   aeronave que despega consume 25 de cada uno y, sin existencias, la base no lanza el grupo (**sin logística**).
@@ -619,6 +754,52 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   `escolta_de`). Una escolta no escolta a otra escolta.
 - **Cronograma (flow sheet):** botón *Cronograma*: una fila por misión con vuelo, órbitas, ataques y aterrizajes
   sobre la línea de tiempo, y el turno actual marcado. Cada bando ve solo sus misiones; el instructor, todas.
+- **Orden de Tareas Aéreas** (`engine/ota.py`, migración `0034`): cada misión lleva sus datos de la OTA según la
+  directiva AV/D 5-47 (paquete, comandante de misión CM y alterno ACM, código de misión, alerta, armamento primario
+  y secundario, IFF, PDI y TOT). Con un TOT el despegue se calcula hacia atrás; cada punto puede cambiar la altura
+  del tramo (rumbo, NM y pies en la estimación) y un punto de paso puede ser el **punto de reunión** del paquete.
+  El armamento guiado o antirradiación pesa en el ataque. *OTA en Word* / *OTA para imprimir* generan la orden con
+  encabezado, asignación de medios (con el código OACI de la base), DATMI, ruta, LOCOB, RECO y SPINS.
+- **Cisternas, AEW, rescate y PRO** (`engine/apoyo_aereo.py`, `engine/rescate.py`, `engine/recobre.py`, migración
+  `0035`): la cisterna reabastece por tiempo (6 min de enganche más la transferencia a la tasa de su pértiga o
+  manguera, 60 min por turno); la cisterna y el AEW van con 2 cazas de escolta o se repliegan ante cazas enemigos; el
+  AEW mejora las intercepciones. Un punto AER en la ruta es el punto de reabastecimiento. Las tripulaciones
+  derribadas quedan aisladas hasta que las rescata una misión CSAR, las captura el enemigo o se pierden. Los PRO
+  son bases livianas de 4 plazas que rearman en 1 turno si cumplen sus requisitos mínimos.
+- **PRO: pistas en carretera** (`engine/tramos_pro.py`, `tools/preparar_tramos_pro.py`): no toda carretera sirve de pista. Un PRO
+  con pista solo se ubica (al agregarlo, moverlo o cambiarle la pista) a 1 km o menos de un tramo de carretera apto
+  con ese largo, o en un aeródromo con pista suficiente; sin pista (helicópteros) va en cualquier sitio. Los tramos aptos
+  salen de las carreteras reales de OpenStreetMap: principal pavimentada, recta (desvío ≤ 15 m) en 800 m o más, ancho
+  estimado ≥ 12 m (`width`, o canales × 3,5 m más hombrillos), sin puentes ni túneles ni agua, ≤ 20 % en zona urbana
+  y pendiente ≤ 2 % (relieve SRTM). Se guardan en `frontend/static/geo/<region>/tramos_pro.geojson` (Venezuela: 2 429 tramos,
+  928 de 2 km o más; teatro ficticio: 280) y el mapa los dibuja en verde (capa «Tramos aptos para PRO», que se
+  enciende sola al elegir la clase PRO). Si se cambian los mínimos: `python tools/preparar_tramos_pro.py`. Un PRO fuera de
+  un tramo apto pierde la pista (solo helicópteros) y lo dice en sus deficiencias; donde no hay datos de carreteras
+  queda «sin verificar».
+- **Cálculo de armamento, BDA, Warden e inteligencia** (`engine/weaponeering.py`, `engine/warden.py`,
+  `engine/inteligencia.py`, migración `0036`): el planificador calcula cuántas armas lanzar según la tabla de áreas
+  medias de efecto del documento de targeting (reproduce su ejemplo de 18 MK-82) y avisa del daño colateral en el
+  radio de escombros; cada ataque aéreo deja una evaluación de daños (BDA) en 3 niveles con la recomendación de
+  re-ataque; la pestaña Situación muestra los objetivos enemigos conocidos por anillo de Warden. Un punto CORTE corta
+  una carretera (cráter por 12 turnos). Los satélites (ópticos o radar, los asigna el instructor) pasan dos veces
+  por día, sus imágenes tardan un turno en procesarse y el A-2 recibe un INTSUM cada 6 turnos.
+- **Apresto Operacional y PCAO** (`engine/apresto.py`, migración `0039`; fuente: *Manual de Apresto Operacional de
+  la FANB y Milicia Bolivariana*, CEO-MC-159, CEOFANB, 2015): cada unidad tiene o no tiene apresto según los mínimos
+  de la tabla (personal 75 %, armamento y munición 90 %, equipamiento 85 %, adiestramiento 85 %, comando, control y
+  comunicaciones 90 %) y las exigencias de su tipo (escuadrón, ZU-23-2, Pechora, Buk, Mistral, S-300, RBS 70, radar
+  y buques). El instructor fija el
+  grado de cada bando (paz, elevado con fases amarilla, naranja y roja, o completo); el Comandante o el JEM ordenan
+  la Puesta en Completo Apresto Operacional, que corre en 5 eventos con plazos en turnos (los del Plan de PCAO del
+  TIEM, si lo hay). Hasta cumplirlos, parte de las aeronaves está preservada, las reservas y la milicia no se
+  incorporan y el adiestramiento bajo resta potencia. El manual en PDF no va en el repositorio.
+- **Plan de transmisiones, ejercicios largos y tarjetas tácticas** (`engine/transmisiones.py`, migración `0037`):
+  cada bando carga las frecuencias primaria y secundaria de sus redes; el simulador verifica banda, guardia,
+  separación y vigencia (24 turnos), y el plan pesa en la demora de las órdenes y ante la interferencia. Para
+  ejercicios de un mes el instructor resuelve hasta 24 turnos seguidos y el estado solo trae las órdenes recientes.
+  La tarjeta de cada unidad en el mapa y el marco de su símbolo cambian con su fuerza y su combustible. Al resolverse
+  cada turno, las unidades se deslizan por el mapa hasta su nueva posición por el camino que recorrieron (por la
+  carretera si la seguían; `Unidad.recorrido_json`, migración `0038`, solo para el propio bando) y dejan un rastro
+  que se desvanece.
 
 ## Ejercicios con o contra los países vecinos
 
@@ -647,17 +828,17 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   **"Sentinel-2 cloudless"** de EOX (https://cloudless.eox.at), un mosaico global sin nubes hecho con
   imágenes Copernicus Sentinel-2 (ESA) — la misma fuente en la que ya se basa la cobertura terrestre
   (ESA WorldCover). Licencia **CC BY 4.0** (libre, con atribución, que ya está en el control del mapa).
-  Resolución real ~10 m/píxel: se generó hasta el zoom 12, que es donde deja de haber información nueva (más
-  allá el propio servicio solo interpola). En *Capas* hay un botón **Satélite / Relieve** para alternar; el
+  Resolución real ~10 m/píxel: Venezuela se generó hasta el zoom 13 (~19 m/píxel en pantalla; el 14 rozaría el límite
+  real del satélite y cuadruplicaría el tamaño). En *Capas* hay un botón **Satélite / Relieve** para alternar; el
   relieve (el de siempre, con el terreno coloreado por clase) sigue disponible porque distingue mejor a
   simple vista el bosque, el pantano o la montaña.
 - **Más zoom:** antes el mapa llegaba como máximo a la tesela nativa de zoom 9 (con estiramiento hasta 11).
-  Ahora el zoom máximo es 15, con detalle real de satélite hasta el 12 (calles y manzanas se distinguen en
+  Ahora el zoom máximo es 15, con detalle real de satélite hasta el 13 (calles, manzanas y pistas se distinguen en
   zonas urbanas); no llega al detalle de edificio/vehículo individual de Google Maps, porque esa resolución
   no existe como dato abierto y gratuito para toda el área del ejercicio.
 - **Cómo se generó:** `python tools/preparar_satelite.py --region <id>` (independiente de `preparar_terreno.py`:
   no toca el relieve, la cobertura ni la grilla que usa el motor, solo agrega la imagen de fondo alternativa).
-  Cada región tiene su foto en `frontend/static/tiles_sat/<region>/`: **Venezuela hasta el zoom 12** y
+  Cada región tiene su foto en `frontend/static/tiles_sat/<region>/`: **Venezuela hasta el zoom 13** (~90 000 teselas más que el 12, ~1 GB) y
   **América hasta el 8** (~600 m/píxel real; más allá el mapa amplía la tesela). Es reanudable y admite
   `--hasta-zoom` para llegar más lejos más adelante (`--region america --hasta-zoom 9` agrega ~51 000 teselas,
   ~460 MB; el 10, ~200 000). El servidor detecta solo qué zooms tiene cada región (`GET /api/terreno/mapas`)
@@ -685,6 +866,38 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   fuerzas de ambos bandos son ficticios, las cifras de bajas varían según la fuente, y el desenlace político
   real (la captura del jefe de Estado) queda fuera del alcance de este ejercicio táctico. Antes de usarla en
   clase, ajuste las unidades y objetivos con lo que la institución considere pedagógicamente apropiado.
+- **`ataque_3_enero_2026`** — *"3 de enero de 2026: Operación Resolución Absoluta (reconstrucción)"*: a diferencia de la
+  anterior, **reconstruye el ataque con los tipos de aeronave que se informaron** en fuentes abiertas (rueda de prensa
+  del general Caine, Air & Space Forces Magazine, Wikipedia): bando rojo = EE. UU. con 73 aeronaves en 31 grupos —F-22A,
+  F-35A (Guardia Nacional de Vermont) y F-35B desde Roosevelt Roads; F/A-18E/F, EA-18G y E-2D del USS Gerald R. Ford;
+  B-1B, E-3G, RC-135V/W, EC-130H, P-8A, KC-135R, RQ-170, MQ-9A y drones de ataque de un solo uso (tipo LUCAS); y los
+  helicópteros del 160.º SOAR (MH-47G, MH-60M, MH-60M DAP, AH-6M, MH-6M) que salen rasantes desde el USS Iwo Jima—, el
+  Ford con dos destructores de escolta, el Iwo Jima y el USS San Antonio. Bando azul = Venezuela: La Carlota y Charallave,
+  los Buk-M2E de La Carlota e Higuerote, radares JY-27A/JYL-1, El Volcán, Fuerte Tiuna con sus Igla-S, el Comando de la
+  Milicia, La Guaira y los Su-30MK2 en tierra en El Libertador. Empieza a la 01:00 (los ataques se informaron hacia las
+  02:00), con objetivos emparejados (neutralizar/mantener los Buk, El Volcán y Fuerte Tiuna; preservar/derribar la
+  fuerza de asalto). Son 73 de las más de 150 aeronaves informadas; posiciones de buques, radares y grupos aéreos
+  aproximadas; el desenlace político queda fuera del ejercicio.
+  - Para ello el catálogo suma **20 modelos de EE. UU.** (`MODELOS`, cada uno con su miniatura 3D en `js/miniaturas.js` e
+    ilustración en `static/fotos/`, generada con `node tools/generar_fotos_miniaturas.js`), una **firma radar por modelo**
+    (F-22 ×0,3, F-35 ×0,35, RQ-170 ×0,15: los radares los ven mucho más cerca) y dos clases aéreas nuevas: **alerta
+    temprana (AEW&C)**, un radar en vuelo que ve aeronaves a 300-400 km por encima del relieve, y **avión cisterna**, que
+    da +40 % de combustible a las aeronaves propias en vuelo a ≤ 40 km (gasta su carga y la recarga en una base aérea).
+    Ambas vuelan alto por defecto y las conduce el A3. Las plantillas guardan además el **perfil de vuelo** de cada
+    aeronave.
+- **Escenarios contra la IA** (el bando rojo lo conduce el adversario automático desde el primer turno; se puede
+  apagar en *Consola → Dirección del ejercicio*). Fuerzas rojas genéricas, sin identidad nacional:
+  - **`defensa_aerea_central`** — *Defensa aérea de la región central*: la Base Aérea El Libertador, Su-30 y F-16 en
+    alerta, radar de montaña, antiaérea por capas y guerra electrónica contra un ataque aeronaval desde el Caribe
+    (portaaviones con escolta, cazas embarcados, guerra electrónica y drones armados).
+  - **`interdiccion_llanos`** — *Interdicción en los llanos*: una columna mecanizada roja con sus convoyes avanza de
+    Guasdualito a Barinas; el azul la detiene con K-8W, Mi-35M y drones desde el aeropuerto de Barinas y una defensa
+    terrestre escalonada (objetivos: cortar los convoyes, detener la columna, mantener Barinas).
+  - **`defensa_costa_oriental`** — *Defensa de la costa oriental*: dos buques de desembarco con fragatas y
+    helicópteros frente a Barcelona y Puerto La Cruz contra misiles costeros, patrulleros, infantería de marina,
+    radar y aviación.
+  - Una plantilla puede traer la IA encendida (`ia_azul` / `ia_rojo` en `Plantilla`); «Guardar como plantilla»
+    también la conserva.
 - Para agregar una plantilla propia: una entrada más en `PLANTILLAS` (`engine/plantillas.py`), con sus
   `UnidadPlantilla` y, si aplica, `ObjetivoPlantilla`; no hace falta tocar la base de datos ni el resto del código.
 
@@ -744,6 +957,10 @@ plantilla…» (marcada como *Guardada por un instructor*), se instancia igual q
   escribe a un bando o a todos). Un **interceptor** en el servidor aplica, por bando destinatario, **latencia**,
   **jitter** y **probabilidad de pérdida** que fija el instructor en *Consola*; el instructor ve en cada mensaje
   qué le pasó en cada bando (`[azul: +1.8 s] [rojo: perdido]`). Límite de 6 mensajes/10 s y 500 caracteres.
+  **Órdenes que no llegan a tiempo** (*Consola → Comunicaciones simuladas*, `com_ordenes_pct`): ese porcentaje de las
+  órdenes del turno se demora y se cumple el turno siguiente (una sola vez); dentro de una interferencia enemiga, 40
+  puntos más (hasta 90 %). El bando recibe el aviso «la orden … no llegó a tiempo». Los despegues (órdenes a una base)
+  siempre llegan; el sorteo es reproducible (semilla del escenario). `engine/orders.py`, `demorar_por_comunicaciones`.
 - **Centro de operaciones (videowall):** botón *Videowall* del instructor, tecla `V` o URL
   `?modo=videowall&escenario=ID&vista=azul|rojo|completa`. Los paneles colapsan por completo, el mapa ocupa el
   100 % de la pantalla (pantalla completa; se adapta a varias pantallas o cambios de tamaño) y un HUD muestra
@@ -755,6 +972,57 @@ plantilla…» (marcada como *Guardada por un instructor*), se instancia igual q
   ambos bandos ven todo), **consumo de combustible y munición** (apagado, nada se gasta; el reabastecimiento sigue),
   **efectos del clima** (apagados, todo se resuelve como con cielo despejado) y **fuego automático** (apagado, las
   patrullas, la antiaérea y los destructores solo disparan por orden). Cada cambio queda como evento y en el informe.
+- **Adversario automático** (*Consola → Dirección del ejercicio* → «el simulador conduce el bando Azul / Rojo»;
+  `ia_azul` / `ia_rojo` en `PATCH /config`; `backend/app/adversario.py`): el simulador da las órdenes de ese bando al
+  abrirse cada turno (y en el turno en curso al encenderlo) y lo marca **listo**, así un solo bando de alumnos puede
+  entrenar sin contraparte. Sus órdenes pasan por la misma validación que las de los alumnos (alcance, munición,
+  combustible, niebla de guerra) y **solo usa lo que su bando sabe**: sus unidades, las enemigas que detecta (posición,
+  tipo y clase, nunca su fuerza ni su logística), los últimos contactos y sus objetivos. Conducta: las aeronaves vuelven
+  a la base con poco combustible (a una con plazas libres), atacan el mejor blanco a su alcance o se acercan a uno que
+  puedan batir y volver; los aviones sin armas (alerta temprana, cisterna, guerra electrónica) se mantienen fuera del
+  alcance de la antiaérea que ven; la guerra electrónica interfiere al enemigo; las unidades de tierra se reabastecen,
+  atacan si la relación es favorable y van a sus objetivos (ocupar, destruir, proteger); los buques lanzan salvas de
+  misiles; las bases lanzan cazas si el enemigo tiene aviación a la vista. El pie de pantalla muestra «IA · LISTO».
+  Es una conducta didáctica y legible, no óptima: sirve de oponente, no reemplaza al análisis del instructor.
+  **Nivel** (`ia_nivel`: `prudente` | `normal` | `agresiva`, en la misma sección): cuánto riesgo toma. La prudente solo
+  ataca con clara ventaja, persigue poco, vuelve antes a la base y no se mete en la antiaérea que conoce; la agresiva
+  ataca con poca ventaja, persigue hasta 150 km y lanza más cazas (tabla `NIVELES` en `backend/app/adversario.py`).
+  **Modo demostración** (botón en la misma sección): la IA conduce los dos bandos y el turno se resuelve solo cada
+  15 s, para mostrar un ejercicio en clase; se detiene desmarcando los adversarios o pausando.
+- **Ciclo de día y noche** (*Consola → Dirección del ejercicio*; `dia_noche` en `PATCH /config`; las plantillas
+  contra la IA y el ataque del 3 de enero lo traen encendido): cada turno es una hora desde la hora de inicio; de
+  07:00 a 17:59 es de día, a las 06:00 y a las 18:00 crepúsculo y el resto noche (`engine/clima.py`,
+  `periodo_del_dia`). De noche la detección a simple vista (tropas, vehículos, buques) baja a la mitad (75 % en el
+  crepúsculo) y la de aeronaves, drones y reconocimiento, con cámaras térmicas, al 80 % (90 %); los radares y la
+  escucha electrónica no cambian. La cabecera muestra la hora con «Día / Crepúsculo / Noche» y el mapa se oscurece.
+- **Infraestructura no militar** (capa *Infraestructura* del mapa; clases `termoelectrica`, `hidroelectrica`,
+  `refineria`, `centro_comunicaciones` y `puente`; `backend/app/engine/infraestructura.py`): 40 instalaciones reales de
+  Venezuela ubicadas con OpenStreetMap (`frontend/static/geo/venezuela/infraestructura.json`, que genera
+  `python tools/preparar_infraestructura.py`) que el instructor coloca en el ejercicio con un clic en su ficha. Son
+  unidades fijas sin armas ni personal que se atacan, protegen o fijan como objetivo, y su estado pesa en la operación
+  del bando: sin **energía** los radares de vigilancia fijos trabajan con generadores (alcance × 0,5 + 0,5·capacidad),
+  sin **refinación** los depósitos reponen menos combustible (× 0,25 + 0,75·capacidad), sin **centros de
+  comunicaciones** más órdenes no llegan a tiempo (+30·(1 − capacidad) puntos) y un **puente** con menos del 50 % de
+  fuerza queda cortado (la carretera no da paso sobre el río o el agua en su radio). Si el bando no tiene instalaciones
+  de una categoría, no le afecta. Las plantillas de la región central y de la costa oriental traen Planta Centro, El
+  Palito y la refinería de Puerto La Cruz con objetivos para ambos bandos.
+- **Mapa ficticio** (región `teatro_ficticio`, botón *Teatro ficticio* de la tarjeta Capas): el País Azul y
+  el País Rojo, dos estados inventados en una masa de tierra del tamaño de un país ubicada en pleno
+  Atlántico (6 a 12,5° N, 27,5 a 20° O), con la misma resolución que la región de Venezuela. Tiene relieve (cordillera,
+  serranía costera, macizo con mesetas, llanos, plataforma continental), ríos calculados sobre la elevación, un lago,
+  embalses con su represa, bosques, pantanos, 28 ciudades, carreteras con puentes y pasos de frontera, provincias,
+  infraestructura, relieve y foto satelital sintética, las naciones ficticias (`valdoria`, `ostrania`) y la plantilla
+  *País Azul contra País Rojo*. Se regenera sin internet con `python tools/generar_mapa_ficticio.py` (semilla fija: siempre
+  el mismo mapa); las plantillas del sistema en JSON (`backend/data/plantillas_sistema/`) se cargan solas.
+- **Pestaña Situación** (`frontend/static/js/situacion.js`): **cuadro radar** (lo que detecta cada sensor del bando,
+  con distancia, rumbo y cota; `engine/vision.py`, `cuadro_sensores`), con aviso automático de los contactos nuevos al
+  cerrar el turno (evento «radar», `engine/contactos.py`) y botón para difundirlo a la red del bando; **personal**
+  (dotación por escalón, tripulación o buque, o la que fija el instructor en `personal`; efectivos que siguen a la
+  fuerza y bajas por rama; `engine/personal.py`, migración 0024) e **infraestructura** del bando.
+- **Porcentaje de objetivos cumplidos** de cada bando en la tarjeta *Objetivos y puntaje* (`marcador`: `cumplidos`,
+  `fallidos`, `asignados`, `cumplidos_pct`) y **tiempo de todo el recorrido** de una orden de mover en la vista previa
+  (`/ordenes/previsualizar` → `tiempo`: km, horas, turnos y hora de llegada; `engine/movimiento.py`,
+  `tiempo_recorrido`), con el rótulo «ETA» en el mapa.
 - **Informes inyectados** (*Consola → Eventos e informes inyectados*): además del aviso de texto, un informe puede
   llevar **fuente** (Inteligencia, Población, Reconocimiento…) y **posición** (clic en el mapa) con una vigencia en
   turnos: el bando destinatario lo ve en el mapa como un rombo amarillo con la fuente, «como si viniera de
@@ -773,6 +1041,27 @@ plantilla…» (marcada como *Guardada por un instructor*), se instancia igual q
   `backend/simulador_fenix.db`.
 - **Migraciones:** `backend/migrations/` (Alembic); una base anterior a las migraciones se adopta sola.
   Una prueba comprueba que los modelos y las migraciones no divergen.
+
+### Catálogo propio (orden de batalla de la AMB)
+
+*Consola → Catálogo propio*: el instructor define sus propios tipos de unidad (por ejemplo «Buk-M2E», «VN-16»,
+«Mi-17V5») a partir de una clase del catálogo —la clase da el símbolo, la movilidad y las reglas; el tipo, el nombre,
+el país y los valores de juego (velocidad, alcance, detección, autonomía, ataque contra cada tipo y defensa)—. Quedan
+disponibles al instante en *Agregar unidad* (lista «Tipo» en las clases de tierra y mar; las aeronaves, en el selector
+con fotos), sin tocar el código ni reiniciar. Se guardan en `backend/data/modelos_usuario.json` (fuera del
+repositorio; `SIMULADOR_MODELOS_USUARIO` cambia el archivo) con ids `u_…` que nunca pisan los del sistema. API:
+`POST /api/catalogo/modelos` (crea o reemplaza) y `DELETE /api/catalogo/modelos/{id}` (instructor);
+`engine/modelos_usuario.py`.
+
+**Foto de un tipo de unidad.** En la misma sección el instructor elige cualquier tipo (aéreo, naval o terrestre; del
+sistema o propio) o una clase y sube una foto desde su equipo (JPG, PNG o WEBP, hasta 12 MB). El simulador la deja en
+el formato de las demás: recorta la unidad del fondo (con `rembg`, si está instalado: `tools/fotos/requirements.txt`),
+la centra sobre el fondo común con su sombra y la guarda en 720 × 405; sin `rembg`, o si se desmarca «Recortar», la
+foto entera se encaja en el mismo marco. Aparece al instante en la ficha y en el selector de aeronaves, por encima de
+la foto de referencia o la ilustración; «Volver a la original» la quita. Se guardan en `backend/data/fotos_usuario/`
+(fuera del repositorio; `SIMULADOR_FOTOS_USUARIO` cambia la carpeta), con el original en `originales/`. API:
+`POST /api/catalogo/fotos`, `DELETE /api/catalogo/fotos/{modelos|clases}/{id}` (instructor) y
+`GET /api/catalogo/fotos/archivo/{nombre}`; `engine/fotos_usuario.py`.
 
 ### Ajustar los valores de juego
 
@@ -808,6 +1097,25 @@ servidor. Formato:
   nuevas (las existentes se editan desde la ficha de la unidad); el resto (`ataque_vs`, `defensa`, existencias,
   firma, cadencia, despliegue, recarga, plazas, topes) se consulta en cada resolución y afecta también a los
   escenarios ya creados.
+
+## Carreteras, puentes y rutas
+
+- **Datos** (`python tools/preparar_vias.py`): carreteras principales y secundarias de **OpenStreetMap** en Venezuela
+  y vecinos (Overpass, por celdas de 2° con caché en `tools/cache/osm_vias/`, reanudable; si una celda no baja, se usa
+  Natural Earth en ella) y de **Natural Earth 10m roads** en el resto de América. Escribe la grilla del motor
+  `backend/data/terreno/<región>/vias.bin.z` (mismo índice que las clases de terreno; 0 ninguna, 1 secundaria, 2
+  principal, con 2 celdas de ancho para que los pasos de 1 km no la salten) y `frontend/static/geo/<región>/
+  carreteras.geojson` para el mapa.
+- **Motor** (`engine/movimiento.py`): por carretera las unidades terrestres van a ×1,25 (secundaria) o ×1,5
+  (principal), por encima del terreno que atraviesan (un bosque o una montaña con carretera ya no frenan); donde la
+  vía cruza un río o el agua hay un **puente** (×0,9, como uno de ingenieros), que también pasan los blindados. Sin
+  `vias.bin.z` todo sigue como antes.
+- **Rutas por carretera** (botón *Seguir carreteras* en la orden de mover; `POST /ordenes/ruta`): toma el último
+  waypoint como destino y traza el camino más rápido (A* sobre una grilla local según el terreno, las carreteras, los
+  puentes y las obras de ingenieros vigentes), en hasta 30 waypoints. Sin camino (destino en el agua, río sin puente),
+  propone la ruta directa y lo avisa.
+- **Mapa**: capa de carreteras desde el zoom 7 (principales en ocre, secundarias más finas) y, bajo el cursor, el tipo
+  de vía junto al terreno.
 
 ## Datos de terreno (offline): regiones del mapa
 
@@ -845,7 +1153,7 @@ Cómo se combinan: el servidor lista las regiones generadas en `GET /api/terreno
 teselas de todas apiladas (la más detallada encima), carga los límites y poblaciones de cada una, abre la vista en la
 más detallada y ofrece un botón por región en la tarjeta **Capas** para encajar la vista. El motor
 (`backend/app/terreno.py`) consulta la clase de terreno en la región más fina que cubra el punto; fuera de todas es
-llano. La foto satelital (`tiles_sat/<region>/`) existe para Venezuela (zoom 12) y América (zoom 8); una región
+llano. La foto satelital (`tiles_sat/<region>/`) existe para Venezuela (zoom 13) y América (zoom 8); una región
 nueva la obtiene con `python tools/preparar_satelite.py --region <id>`.
 
 Fuentes: elevación de *AWS Terrain Tiles* (SRTM/GMTED/ETOPO1 vía Mapzen), cobertura terrestre de
@@ -871,12 +1179,13 @@ del proyecto centrado en La Guaira/Caracas.
 
 - El modelo de combate es una abstracción didáctica, no una simulación física; los valores del catálogo
   y de la tabla de pérdidas son ajustables en `engine/`.
-- El terreno no distingue cultivos, cárcavas ni carreteras; los ríos se detectan en la grilla (~300 m) y
-  los puentes que existen en la realidad no están cargados (solo los que construyen los ingenieros).
+- El terreno no distingue cultivos ni cárcavas; las carreteras son las principales y secundarias (OpenStreetMap en
+  Venezuela, Natural Earth en América) y sus puentes se deducen de dónde cruzan un río o el agua.
 - No hay unidades anfibias/aerotransportadas; el transporte logístico es terrestre.
-- Los modelos de aeronave son solo F-16 y Su-30; los aviones no gastan inventario de las bases (solo hay un tope
-  por bando) y el estado real de cada aparato en la flota venezolana no se modela.
-- Las comunicaciones simuladas solo afectan al chat, no a las órdenes ni a la niebla de guerra.
+- Los modelos de aeronave venezolanos son solo F-16 y Su-30 (los de EE. UU. de la plantilla del 3 de enero tienen cifras
+  didácticas, no técnicas); los aviones no gastan inventario de las bases (solo hay un tope por bando) y el estado real
+  de cada aparato en la flota venezolana no se modela.
+- Las comunicaciones simuladas afectan al chat y pueden demorar órdenes, pero no a la niebla de guerra.
 - No hay selección múltiple de unidades ni órdenes de grupo: cada orden se da a una unidad.
 - La identidad nacional es solo un nombre para la interfaz: no se modela el orden de batalla real de ningún país de América. El terreno a ~300 m, la foto satelital a 10 m y los planos de aeródromos se limitan a Venezuela y vecinos; el resto de América está a ~1,2 km/píxel de relieve y ~600 m de foto (y el mundo, si se genera, a ~2,4 km).
 - El bloqueo de inicio de sesión es por usuario (un atacante puede bloquear una cuenta 5 min).

@@ -225,16 +225,16 @@ def test_api_interferir_valida_el_punto_y_ambos_bandos_ven_la_zona_el_turno_sigu
     assert api("bravo").get(base).json()["interferencias"] == []
 
 
-def test_la_guerra_electronica_terrestre_la_conduce_inteligencia_a2(api):
+def test_la_guerra_electronica_terrestre_la_conduce_ce(api):
     prof = api("prof")
-    for nombre, puesto in (("a2int", "inteligencia"), ("a5plan", "planificacion")):
+    for nombre, puesto in (("uce", "ce"), ("ua3", "a3")):
         r = prof.post("/api/usuarios", json={"username": nombre, "password": "clave-segura-1", "rol": "azul", "puesto": puesto})
         assert r.status_code == 200
     prof, base, *_ = _preparar(api)
     orden = {"unidad_id": _ge_api(prof, base), "tipo": "interferir", "waypoints": [[0.3, 0.5]]}
-    r = api("a5plan").post(f"{base}/ordenes", json=orden)
-    assert r.status_code == 403 and "Inteligencia (A2)" in r.json()["detail"]
-    assert api("a2int").post(f"{base}/ordenes", json=orden).status_code == 200
+    r = api("ua3").post(f"{base}/ordenes", json=orden)
+    assert r.status_code == 403 and "Comunicaciones y Electronica (C-E)" in r.json()["detail"]
+    assert api("uce").post(f"{base}/ordenes", json=orden).status_code == 200
 
 
 def test_el_catalogo_publica_el_tope_de_drones(api):

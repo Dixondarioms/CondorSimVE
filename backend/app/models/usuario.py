@@ -21,8 +21,8 @@ class Usuario(Base):
     password_hash: Mapped[str] = mapped_column(String(300))
     # rol: "instructor" | "azul" | "rojo" | "observador"
     rol: Mapped[str] = mapped_column(String(20))
-    # puesto dentro del bando (solo alumnos): mando | inteligencia | operaciones | logistica | planificacion
-    puesto: Mapped[str] = mapped_column(String(20), default="mando", server_default="mando")
+    # reparticion del TIEM dentro del bando (solo alumnos): comandante | jem | a1 | a2 | a3 | a3da | a4 | ce
+    puesto: Mapped[str] = mapped_column(String(20), default="comandante", server_default="comandante")
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     # False = solicitud de cuenta hecha desde la pantalla de acceso, a la espera de que un instructor la apruebe
     aprobado: Mapped[bool] = mapped_column(Boolean, default=True, server_default=sa_true())

@@ -12,6 +12,15 @@
     return "Guardada por un instructor" + (fecha ? ` el ${fecha}` : "") + (p.con_estado ? " · conserva el estado" : "");
   }
 
+  /** Etiqueta de los ejercicios contra la IA (que bando conduce el simulador) y del ciclo de dia y noche; "" si no. */
+  function etiquetaIA(p) {
+    const bandos = ["azul", "rojo"].filter((b) => p[`ia_${b}`]).map((b) => (b === "azul" ? "Azul" : "Rojo"));
+    const partes = [];
+    if (bandos.length) partes.push(`Contra la IA (el simulador conduce el bando ${bandos.join(" y ")})`);
+    if (p.dia_noche) partes.push("ciclo de día y noche");
+    return partes.join(" · ");
+  }
+
   /** Empareja los <li> de la lista (por el nombre en su <b>) con las plantillas del servidor, en orden. */
   function emparejar(nombres, plantillas) {
     const pendientes = [...plantillas];
@@ -21,7 +30,7 @@
     });
   }
 
-  const api = { etiquetaOrigen, emparejar };
+  const api = { etiquetaOrigen, etiquetaIA, emparejar };
   if (typeof module !== "undefined" && module.exports) { module.exports = api; return; }
   raiz.Plantillas = api;
   if (typeof document === "undefined") return;
@@ -113,6 +122,13 @@
       origen.className = "origen-plantilla";
       origen.textContent = " · " + etiquetaOrigen(p);
       if (info) info.appendChild(origen);
+      const ia = etiquetaIA(p);
+      if (ia && info) {
+        const e = document.createElement("span");
+        e.className = "etiqueta-ia";
+        e.textContent = ia;
+        info.appendChild(e);
+      }
       if (p.origen !== "usuario") return;
       const b = document.createElement("button");
       b.type = "button";

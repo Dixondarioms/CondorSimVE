@@ -58,9 +58,9 @@ def test_los_datos_reales_tienen_venezuela_y_america_en_carpetas_por_region():
         assert (RAIZ / "frontend" / "static" / "geo" / region / "fronteras.geojson").is_file()
     real = terreno_mod.cargar()
     ids = [r["id"] for r in real.regiones()]
-    # foto satelital por region: Venezuela hasta el zoom 12, America hasta el 8 (tools/preparar_satelite.py)
+    # foto satelital por region: Venezuela hasta el zoom 13, America hasta el 8 (tools/preparar_satelite.py)
     sat = {r["id"]: r["satelite"] for r in real.regiones()}
-    assert sat["venezuela"] == {"z_min": 5, "z_max": 12}
+    assert sat["venezuela"]["z_min"] == 5 and sat["venezuela"]["z_max"] >= 12
     assert sat["america"] and sat["america"]["z_min"] == 3 and sat["america"]["z_max"] >= 8
     assert ids.index("venezuela") < ids.index("america")
     assert real.clase(10.5, -66.9) == "urbano"  # Caracas (Venezuela)

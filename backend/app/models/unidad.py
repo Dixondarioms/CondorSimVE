@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Float, ForeignKey, Integer, String, true
+from sqlalchemy import Boolean, Float, ForeignKey, Integer, String, Text, true
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -66,6 +66,42 @@ class Unidad(Base):
     # sensores y defensa aerea: radar emitiendo (control de emisiones) y fuego automatico de la antiaerea
     emitiendo: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
     fuego_libre: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+    # sistemas de defensa aerea (engine/defensa_aerea.py): misiles listos de cada arma (JSON; None = lanzadores
+    # llenos) y arma que fijo el operador (None = automatica)
+    cargas_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # camino que recorrio en el ultimo turno ([[lat, lon], ...]; por la carretera si su ruta la seguia)
+    recorrido_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    arma_elegida: Mapped[str | None] = mapped_column(String(30), nullable=True)
+
+    # bases aereas: largo de la pista fijado por el instructor (None = el del plano del aerodromo o el por defecto)
+    pista_m: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    @property
+    def pista_largo_m(self) -> float | None:
+        from app.engine import plataformas
+
+        return plataformas.largo_pista(self)
+
+    @property
+    def pista_util_m(self) -> float | None:
+        from app.engine import plataformas
+
+        return plataformas.pista_util(self)
+
+    @property
+    def recorrido(self) -> list | None:
+        import json
+
+        try:
+            return json.loads(self.recorrido_json) if self.recorrido_json else None
+        except ValueError:
+            return None
+
+    @property
+    def sistema_da(self) -> dict | None:
+        from app.engine import defensa_aerea
+
+        return defensa_aerea.estado_dict(self)
     # aeronaves: perfil de vuelo "alto" | "medio" | "rasante" (None = el de su clase; ver engine/relieve.py)
     perfil_vuelo: Mapped[str | None] = mapped_column(String(10), nullable=True)
 
@@ -84,6 +120,23 @@ class Unidad(Base):
     # bases: existencias de combustible y municion (puntos: 100 = llenar una unidad; ver engine/logistica.py)
     stock_combustible: Mapped[float] = mapped_column(Float, default=1000.0, server_default="1000")
     stock_municion: Mapped[float] = mapped_column(Float, default=1000.0, server_default="1000")
+
+    # personal: dotacion inicial fijada por el instructor (None = la de engine/personal.py)
+    personal: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # puentes: radio del tramo que corta su destruccion (None = el de engine/infraestructura.py)
+    radio_km: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    @property
+    def personal_inicial(self) -> int:
+        from app.engine import personal
+
+        return personal.inicial(self)
+
+    @property
+    def personal_actual(self) -> int:
+        from app.engine import personal
+
+        return personal.actual(self)
 
     # codigo de simbolo (SIDC) para milsymbol.js
     sidc: Mapped[str] = mapped_column(String(20), default="")

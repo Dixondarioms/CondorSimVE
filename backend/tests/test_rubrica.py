@@ -66,17 +66,17 @@ def test_la_rubrica_cuenta_ordenes_rechazos_turnos_pasivos_y_perdidas(api):
     assert az["perdidas"]["infligidas"] == ro["perdidas"]["sufridas"] > 0
     assert az["perdidas"]["sufridas"] == ro["perdidas"]["infligidas"] > 0
 
-    # unidades terrestres -> puesto responsable A5 (planificacion); las demas celdas quedan en cero
-    assert az["puestos"]["planificacion"]["ordenes"]["emitidas"] == 3
-    assert az["puestos"]["planificacion"]["ordenes"]["rechazadas"] == 2
-    assert all(az["puestos"][p]["ordenes"]["emitidas"] == 0 for p in ("inteligencia", "operaciones", "logistica"))
-    assert "puesto responsable" in rub["nota_puestos"]
+    # unidades terrestres -> reparticion responsable A-3 (operaciones); las demas celdas quedan en cero
+    assert az["puestos"]["a3"]["ordenes"]["emitidas"] == 3
+    assert az["puestos"]["a3"]["ordenes"]["rechazadas"] == 2
+    assert all(az["puestos"][p]["ordenes"]["emitidas"] == 0 for p in ("a2", "a3da", "a4", "ce"))
+    assert "reparticion" in rub["nota_puestos"]
 
     # por alumno: alfa (azul) firmo las 3 ordenes; bravo (rojo) solo la del turno 2; el observador no se evalua
     alumnos = {a["username"]: a for a in rub["alumnos"]}
     assert list(alumnos) == ["alfa", "bravo"]
     alfa, bravo = alumnos["alfa"], alumnos["bravo"]
-    assert (alfa["bando"], alfa["puesto"], alfa["sigla"], alfa["asignado"]) == ("azul", "mando", "EM", True)
+    assert (alfa["bando"], alfa["puesto"], alfa["sigla"], alfa["asignado"]) == ("azul", "comandante", "CMDTE", True)
     assert (alfa["ordenes"]["emitidas"], alfa["ordenes"]["rechazadas"], alfa["ordenes"]["tasa_rechazo"]) == (3, 2, 66.7)
     assert alfa["turnos_activos"] == {"cantidad": 3, "turnos": [1, 2, 3]}
     assert alfa["turnos_pasivos"] == {"cantidad": 0, "turnos": []}
@@ -88,7 +88,7 @@ def test_la_rubrica_cuenta_ordenes_rechazos_turnos_pasivos_y_perdidas(api):
     obs_azul = " ".join(az["observaciones"])
     assert "2 orden(es) rechazada(s) por 'Objetivo fuera de alcance': revisar la apreciacion de distancias" in obs_azul
     assert "Alta proporcion de ordenes rechazadas (67 % de 3)" in obs_azul
-    assert any("en A5" in o for o in az["puestos"]["planificacion"]["observaciones"])
+    assert any("en A-3" in o for o in az["puestos"]["a3"]["observaciones"])
     obs_rojo = " ".join(ro["observaciones"])
     assert "2 turno(s) sin emitir ninguna orden (turno(s) 1, 3)" in obs_rojo
 
@@ -121,7 +121,7 @@ def test_logistica_objetivos_y_misiones_en_la_rubrica(db_session):
     assert az["objetivos"] == {"cumplidos": 1, "fallidos": 0, "pendientes": 0, "puntos": 30}
     assert ro["objetivos"]["fallidos"] == 1
     assert az["misiones"]["planificadas"] == 3 and az["misiones"]["abortadas"] == 1 and az["misiones"]["fallidas"] == 1
-    assert az["puestos"]["planificacion"]["misiones"] == 3  # sin unidad: despegue desde base -> A5
+    assert az["puestos"]["a3"]["misiones"] == 3  # sin unidad: despegue desde base -> A-3
     assert (az["perdidas"]["enemigas_destruidas"], ro["perdidas"]["unidades_destruidas"]) == (1, 1)
     # las misiones cuentan como actividad: turnos 1 y 2 no son pasivos para azul; rojo sin ordenes ni misiones
     assert az["turnos_pasivos"]["turnos"] == [] and ro["turnos_pasivos"]["turnos"] == [1, 2]
@@ -133,7 +133,7 @@ def test_logistica_objetivos_y_misiones_en_la_rubrica(db_session):
     assert "1 objetivo(s) fallido(s)" in " ".join(ro["observaciones"])
 
 
-def _usuario(db, nombre, rol, puesto="mando", esc=None):
+def _usuario(db, nombre, rol, puesto="comandante", esc=None):
     u = Usuario(username=nombre, password_hash=auth.hash_password("clave-segura-1"), rol=rol, puesto=puesto)
     db.add(u)
     db.commit()
@@ -152,8 +152,8 @@ def test_alumnos_sin_actividad_ordenes_sin_autor_y_misiones_por_nombre(db_sessio
     a = _unidad(db_session, esc, nombre="A", bando="azul")
     r = _unidad(db_session, esc, nombre="R", bando="rojo")
     caza = _unidad(db_session, esc, nombre="Caza", tipo="aerea", clase="caza")
-    quieto = _usuario(db_session, "quieto", "azul", "logistica", esc)
-    piloto = _usuario(db_session, "piloto", "azul", "operaciones")
+    quieto = _usuario(db_session, "quieto", "azul", "a4", esc)
+    piloto = _usuario(db_session, "piloto", "azul", "a3")
     _usuario(db_session, "mirando", "observador", esc=esc)
     _orden(db_session, esc, a, "mover", waypoints=[[1, 1]])  # sin autor: anterior a la migracion
     _orden(db_session, esc, r, "mover", waypoints=[[1, 1]])
@@ -168,11 +168,11 @@ def test_alumnos_sin_actividad_ordenes_sin_autor_y_misiones_por_nombre(db_sessio
     rub = aar.construir_rubrica(db_session, esc)
     alumnos = {x["username"]: x for x in rub["alumnos"]}
     assert list(alumnos) == ["piloto", "quieto"]  # el observador no se evalua; piloto entra por su mision
-    assert alumnos["quieto"]["sigla"] == "A4" and alumnos["quieto"]["asignado"] is True
+    assert alumnos["quieto"]["sigla"] == "A-4" and alumnos["quieto"]["asignado"] is True
     assert alumnos["quieto"]["observaciones"] == ["No emitio ninguna orden ni planifico misiones durante el ejercicio."]
     assert alumnos["quieto"]["turnos_pasivos"] == {"cantidad": 2, "turnos": [1, 2]}
     p = alumnos["piloto"]
-    assert (p["asignado"], p["sigla"], p["misiones"]["planificadas"], p["misiones"]["cumplidas"]) == (False, "A3", 1, 1)
+    assert (p["asignado"], p["sigla"], p["misiones"]["planificadas"], p["misiones"]["cumplidas"]) == (False, "A-3", 1, 1)
     assert p["turnos_activos"]["turnos"] == [1] and p["turnos_pasivos"]["turnos"] == [2]
     assert p["observaciones"] == ["1 turno(s) sin emitir ninguna orden (turno(s) 2): mantener la iniciativa o dejar "
                                   "constancia de la decision de esperar."]
@@ -187,14 +187,14 @@ def test_alumnos_sin_actividad_ordenes_sin_autor_y_misiones_por_nombre(db_sessio
 def test_el_puesto_del_alumno_es_el_que_ocupaba_al_emitir(db_session):
     esc = _escenario(db_session)
     a = _unidad(db_session, esc, nombre="A", bando="azul")
-    u = _usuario(db_session, "cambiante", "azul", "planificacion", esc)
+    u = _usuario(db_session, "cambiante", "azul", "a3da", esc)
     db_session.add(Orden(escenario_id=esc.id, unidad_id=a.id, tipo="mover", waypoints_json="[[1, 1]]", turno_emitida=1,
-                         autor_id=u.id, autor_puesto="operaciones"))
+                         autor_id=u.id, autor_puesto="operaciones"))  # id anterior al TIEM: cuenta como A-3
     db_session.commit()
-    u.puesto = "mando"  # el instructor lo cambio de puesto despues
+    u.puesto = "comandante"  # el instructor lo cambio de puesto despues
     db_session.commit()
     alumnos = aar.construir_rubrica(db_session, esc)["alumnos"]
-    assert [(x["username"], x["puesto"], x["ordenes"]["emitidas"]) for x in alumnos] == [("cambiante", "operaciones", 1)]
+    assert [(x["username"], x["puesto"], x["ordenes"]["emitidas"]) for x in alumnos] == [("cambiante", "a3", 1)]
 
 
 def test_las_ordenes_y_misiones_registran_su_autor(api):
@@ -202,9 +202,9 @@ def test_las_ordenes_y_misiones_registran_su_autor(api):
     azul = api("alfa")
     assert azul.post(f"{base}/ordenes", json={"unidad_id": a["id"], "tipo": "mover", "waypoints": [[0.1, 0]]}).status_code == 200
     ordenes = azul.get(f"{base}/ordenes").json()
-    assert [(o["autor"], o["autor_puesto"]) for o in ordenes] == [("alfa", "mando")]
+    assert [(o["autor"], o["autor_puesto"]) for o in ordenes] == [("alfa", "comandante")]
     estado = azul.get(base).json()
-    assert estado["ordenes"][0]["autor"] == "alfa" and estado["ordenes"][0]["autor_puesto"] == "mando"
+    assert estado["ordenes"][0]["autor"] == "alfa" and estado["ordenes"][0]["autor_puesto"] == "comandante"
     lote = azul.post(f"{base}/ordenes/lote", json={"unidad_ids": [a["id"]], "orden": {"tipo": "mover", "waypoints": [[0.2, 0]]}})
     assert lote.status_code == 200 and lote.json()["emitidas"] == 1
     assert [o["autor"] for o in azul.get(f"{base}/ordenes").json()] == ["alfa"]
@@ -223,7 +223,7 @@ def test_puesto_responsable_segun_la_unidad_y_la_orden(db_session):
     rub = aar.construir_rubrica(db_session, esc)
     pu = rub["bandos"]["azul"]["puestos"]
     assert {p: pu[p]["ordenes"]["emitidas"] for p in pu} == {
-        "inteligencia": 1, "operaciones": 1, "logistica": 1, "planificacion": 1}
+        "a2": 0, "a3": 2, "a3da": 1, "a4": 1, "ce": 0}
     assert rub["bandos"]["azul"]["ordenes"]["pendientes"] == 4
     assert rub["bandos"]["azul"]["observaciones"] == ["Sin observaciones destacables."]
 
@@ -238,7 +238,7 @@ def test_la_rubrica_respeta_los_permisos_y_va_en_la_exportacion_y_el_html(api):
     assert exportado["rubrica"]["bandos"]["azul"]["ordenes"]["rechazadas"] == 2
     html = prof.get(f"{base}/aar.html").text
     assert "Rubrica de evaluacion" in html and "Objetivo fuera de alcance (2)" in html
-    assert "Turnos pasivos" in html and "A5 · Planificacion" in html
+    assert "Turnos pasivos" in html and "A-3 · Operaciones" in html
     assert "revisar la apreciacion de distancias" in html
     assert "Evaluacion por alumno" in html and "<td>alfa</td>" in html and "<td>bravo</td>" in html
     assert "rechazada(s) de alfa" in html
@@ -247,7 +247,7 @@ def test_la_rubrica_respeta_los_permisos_y_va_en_la_exportacion_y_el_html(api):
     assert r.status_code == 200 and r.headers["content-type"].startswith("text/csv")
     filas = list(csv.DictReader(io.StringIO(r.text)))
     assert [(f["alumno"], f["bando"], f["puesto"], f["ordenes_emitidas"], f["ordenes_rechazadas"], f["turnos_pasivos"])
-            for f in filas] == [("alfa", "azul", "EM", "3", "2", "0"), ("bravo", "rojo", "EM", "1", "0", "2")]
+            for f in filas] == [("alfa", "azul", "CMDTE", "3", "2", "0"), ("bravo", "rojo", "CMDTE", "1", "0", "2")]
     assert api("alfa").get(f"{base}/aar/rubrica.csv").status_code == 403
     prof.post(f"{base}/finalizar")
     assert api("alfa").get(f"{base}/aar/rubrica").status_code == 200

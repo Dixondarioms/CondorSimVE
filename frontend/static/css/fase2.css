@@ -279,7 +279,7 @@ body.videowall #barra-herramientas { opacity: 0; pointer-events: none; }
 /* ---- misiones aereas: planificador sobre el mapa, lista y cronograma ---- */
 body.planificando-mision #barra-graficos { display: none; }
 #panel-mision {
-  left: 12px; top: 56px; width: 330px; max-height: calc(100% - 90px); overflow: auto; z-index: 1000;
+  left: 12px; top: 56px; width: 360px; max-height: calc(100% - 90px); overflow: auto; z-index: 1000;
   display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; letter-spacing: 0; font-size: 12px; color: var(--texto);
 }
 #panel-mision[hidden] { display: none; }
@@ -290,10 +290,15 @@ body.planificando-mision #barra-graficos { display: none; }
 #panel-mision .pm-grid[hidden], #panel-mision label[hidden] { display: none; }
 #panel-mision .pm-ancho { grid-column: 1 / -1; }
 .pm-puntos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.pm-puntos li { display: flex; align-items: center; gap: 6px; }
+.pm-puntos li { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pm-puntos li select.pm-perfil { flex: 0 0 104px; }
+.pm-puntos li label.pm-rv { display: flex; align-items: center; gap: 2px; font-size: 11px; }
+.pm-ota summary { cursor: pointer; font-weight: 600; margin-bottom: 4px; }
+.pm-ota input { width: 100%; box-sizing: border-box; }
+.ota-enlaces a { margin-right: 10px; }
 .pm-puntos li b { width: 18px; text-align: center; }
 .pm-puntos li select { flex: 1; min-width: 0; margin: 0; }
-.pm-puntos li .sec { flex: 1; }
+.pm-puntos li .sec { flex: 1 1 100%; order: 9; padding-left: 24px; font-size: 10px; color: var(--texto-sec); }
 .pm-puntos li.vacio { color: var(--texto-sec); font-style: italic; }
 .pm-tabla { width: 100%; border-collapse: collapse; font-size: 11px; }
 .pm-tabla th, .pm-tabla td { padding: 2px 4px; border-bottom: 1px solid var(--borde); text-align: left; }
@@ -405,3 +410,164 @@ body.replay-animado #leyenda-mapa, body.replay-animado #rp-combates { display: n
 .perfil-vuelo { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 8px 0 2px; }
 .perfil-vuelo > span { font-size: 12px; color: var(--texto-sec); margin-right: 2px; }
 .perfil-vuelo button { flex: 1 1 0; }
+
+/* botones en fila (ordenes: seguir carreteras / limpiar waypoints) */
+.fila-botones { display: flex; gap: 6px; flex-wrap: wrap; }
+.fila-botones > button { flex: 1 1 auto; }
+
+/* catalogo propio: lista de tipos con sus botones */
+.lista-propios { list-style: none; padding: 0; margin: 6px 0 0; }
+.lista-propios li { display: flex; gap: 6px; align-items: center; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+.lista-propios li span { flex: 1; font-size: 12px; }
+
+/* rubrica: fila de la calificacion */
+table tr.fila-nota td { font-weight: 700; }
+
+/* comparar ejercicios: lista de escenarios con casillas */
+.cmp-lista { max-height: 180px; overflow: auto; display: grid; gap: 2px; margin: 6px 0; }
+
+/* ciclo de dia y noche: el fondo del mapa se oscurece (las unidades y los graficos no) */
+.mapa-noche .leaflet-tile-pane { filter: brightness(.3) saturate(.45) sepia(.25) hue-rotate(180deg); }
+.mapa-crepusculo .leaflet-tile-pane { filter: brightness(.62) saturate(.8) sepia(.35); }
+#esc-hora.periodo-noche { color: #9db4ff; }
+#esc-hora.periodo-crepusculo { color: #ffb86b; }
+/* plantillas contra la IA: etiqueta visible en la lista de Desde plantilla */
+.etiqueta-ia { display: inline-block; margin: 4px 0 0 6px; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; color: #ffd27a; background: rgba(255, 183, 3, .14); border: 1px solid rgba(255, 183, 3, .45); }
+
+/* pestañas: Fuerzas, Situación y (instructor) Consola */
+.pestanas { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 1fr; }
+.pestanas button[hidden] { display: none; }
+/* pestaña Situación: cuadro radar, personal e infraestructura */
+#pest-situacion .sensor { border: 1px solid var(--borde); border-radius: var(--radio); padding: 6px 8px; margin: 6px 0; background: rgba(255, 255, 255, .02); }
+#pest-situacion .sensor.rojo { border-left: 3px solid var(--rojo); }
+#pest-situacion .sensor.azul { border-left: 3px solid var(--azul); }
+#pest-situacion .sensor small, #pest-situacion .infra-cat small { display: block; color: var(--texto-sec); font-size: 11px; margin: 2px 0 4px; }
+#pest-situacion .sensor ul, #pest-situacion .infra-cat ul { list-style: none; margin: 0; padding: 0; }
+#pest-situacion .sensor li.vacio { color: var(--texto-sec); font-size: 12px; }
+.sensor-titulo, .contacto-radar { background: none; border: 0; padding: 2px 0; margin: 0; text-align: left; color: inherit; cursor: pointer; width: 100%; }
+.sensor-titulo { font-weight: 700; }
+.contacto-radar { font-size: 12px; color: #ffb4a8; }
+.contacto-radar:hover, .sensor-titulo:hover { text-decoration: underline; }
+#pest-situacion .infra-cat .contacto-radar { color: var(--texto); }
+#pest-situacion h4 { margin: 8px 0 4px; font-size: 12px; letter-spacing: .05em; }
+#pest-situacion h4.azul { color: var(--azul); } #pest-situacion h4.rojo { color: var(--rojo); }
+.tabla-personal { width: 100%; border-collapse: collapse; font-size: 12px; }
+.tabla-personal th, .tabla-personal td { padding: 3px 4px; border-bottom: 1px solid var(--borde); text-align: right; }
+.tabla-personal th:first-child, .tabla-personal td:first-child { text-align: left; }
+.tabla-personal tr.total td { font-weight: 700; }
+.infra-cat { margin: 8px 0; }
+/* avance de los objetivos y capacidad de la infraestructura */
+.avance-objetivos { margin: 4px 0 8px; display: grid; gap: 4px; font-size: 12px; }
+.avance-objetivos .avance span { display: block; color: var(--texto-sec); }
+.barra-avance { height: 6px; background: rgba(255, 255, 255, .08); border-radius: 3px; overflow: hidden; margin: 2px 0; }
+.barra-avance i { display: block; height: 100%; background: #2a9d8f; }
+.avance.azul .barra-avance i { background: var(--azul); } .avance.rojo .barra-avance i { background: var(--rojo); }
+.barra-avance i.baja { background: #e76f51; }
+/* hora estimada de llegada al final de la ruta de una orden de mover */
+.eta-ruta span { display: inline-block; transform: translate(10px, -50%); white-space: nowrap; background: rgba(2, 136, 209, .92);
+  color: #fff; font: 600 11px/1.2 system-ui, sans-serif; padding: 2px 6px; border-radius: 3px; pointer-events: none; }
+/* capa de infraestructura */
+.icono-infra svg { border-radius: 50%; padding: 4px; fill: #fff; box-shadow: 0 0 0 1.5px #fff, 0 1px 3px rgba(0, 0, 0, .6); }
+.popup-infra .credito { font-size: 10px; color: #888; margin: 4px 0 0; }
+
+/* ---------- TIEM: pestaña PMO, calendario, cadena de objetivos e instructor conduciendo un bando ---------- */
+#h-calendario { color: var(--ambar); }
+.pmo-doc { display: grid; gap: 10px; margin-top: 8px; }
+.pmo-campo h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--texto-sec); margin: 0 0 4px; }
+.pmo-campo p { margin: 0 0 4px; }
+.pmo-campo ul { margin: 0 0 4px; padding-left: 18px; }
+.pmo-mision { border-left: 3px solid var(--ambar); background: var(--panel-2); padding: 6px 8px; font-weight: 600; }
+.pmo-partes { display: grid; grid-template-columns: 1fr; gap: 2px; margin: 6px 0 0; font-size: 12px; }
+.pmo-partes div { display: grid; grid-template-columns: 110px 1fr; gap: 6px; }
+.pmo-partes dt { color: var(--texto-sec); }
+.pmo-partes dd { margin: 0; }
+.avisos { margin: 6px 0 0; padding-left: 18px; color: var(--ambar); font-size: 12px; }
+.pmo-form { display: grid; gap: 8px; margin-top: 8px; }
+.pmo-form label.pmo-texto { display: grid; gap: 3px; font-size: 12px; color: var(--texto-sec); }
+.pmo-form textarea { width: 100%; resize: vertical; font: inherit; }
+.pmo-mision-form { border: 1px solid var(--borde); border-radius: var(--radio); display: grid; gap: 4px; padding: 6px 8px; }
+.pmo-mision-form legend { font-size: 12px; color: var(--texto-sec); }
+.pmo-mision-form input { width: 100%; }
+#pmo-calendario .datos { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin: 0; }
+#pmo-calendario .datos dt { color: var(--texto-sec); font-size: 11px; }
+#pmo-calendario .datos dd { margin: 0; }
+.fases-operacion { margin: 8px 0 0; padding-left: 18px; font-size: 12px; }
+.fases-operacion li.actual { color: var(--ambar); }
+.fases-operacion li.actual b::after { content: " ◀ en curso"; font-weight: 400; }
+.cal-fases { display: grid; gap: 4px; margin-bottom: 6px; }
+.fila-fase { display: grid; grid-template-columns: 1fr 64px 64px auto; gap: 4px; }
+.fila-fase input { min-width: 0; }
+#objetivos-lista small.efecto { display: block; color: var(--texto-sec); font-size: 11px; }
+#objetivos-lista .nivel-ulterior b, #objetivos-lista .nivel-asignado b { color: var(--ambar); }
+.barra-conduce { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: var(--radio);
+  background: var(--ambar); color: #1E1E24; font-weight: 600; font-size: 12px; }
+.barra-conduce[hidden] { display: none; }
+body.conduciendo #cabecera { box-shadow: inset 0 -3px 0 var(--ambar); }
+#pmo-calendario .cal-linea { margin: 0 0 2px; }
+#pmo-calendario .cal-linea span { color: var(--texto-sec); }
+#pmo-calendario .cal-linea.ahora b { color: var(--ambar); }
+.barra-conduce button { background: #1E1E24; color: #FFFFFF; border-color: #1E1E24; }
+
+/* ---------- TIEM etapa 2: documentos de la apreciacion inicial ---------- */
+.tiem-lista { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
+.tiem-lista li { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center;
+  background: var(--panel-2); border: 1px solid var(--borde); border-radius: var(--radio); padding: 6px 8px; }
+.tiem-lista li .texto { display: grid; gap: 2px; }
+.tiem-dialogo { display: grid; gap: 8px; padding: 4px 6px 8px; }
+.tiem-sub { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tiem-observaciones { border-left: 3px solid var(--rojo); background: var(--panel-2); padding: 6px 8px; margin: 0; }
+.tiem-cuerpo { display: grid; gap: 12px; }
+.tiem-campo h4 { margin: 0 0 4px; font-size: 13px; color: var(--ambar); }
+.tiem-campo p { margin: 0 0 4px; }
+.tiem-campo textarea, .tiem-campo input, .tiem-campo select { width: 100%; font: inherit; }
+.tiem-tabla td input, .tiem-tabla td select { min-width: 90px; }
+.tiem-fa { border: 1px solid var(--borde); border-radius: var(--radio); padding: 8px; margin: 0 0 8px; display: grid; gap: 4px; }
+.tiem-fa h5 { margin: 0; font-size: 13px; }
+.tiem-fa .apa { color: var(--verde); margin: 0; }
+.tiem-editor-formas .tiem-fa { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px; }
+.tiem-editor-formas .tiem-fa legend { font-weight: 700; }
+.tiem-editor-formas :is(.fa-como, .fa-prac_propia, .fa-prac_oposicion, .fa-prac_ambiente, .fa-acep_beneficio, .fa-acep_costo) { grid-column: 1 / -1; }
+.tiem-editor-formas .tiem-fa > button { justify-self: start; }
+.tiem-revision ul { margin: 2px 0 6px; padding-left: 18px; }
+.tiem-revision .faltan { color: var(--rojo); }
+.tiem-adjuntos { list-style: none; padding: 0; margin: 4px 0; }
+.tiem-adjuntos a { color: var(--azul); }
+.tiem-botones { position: sticky; bottom: -8px; background: var(--panel); padding-top: 6px; }
+:is(.tiem-lista, .tiem-sub) .chip { white-space: nowrap; font-size: 11px; padding: 1px 8px; border-radius: 9px; background: rgba(255, 255, 255, .1); }
+:is(.tiem-lista, .tiem-sub) .chip.ok { background: rgba(46, 196, 182, .25); color: #7ff0e2; }
+:is(.tiem-lista, .tiem-sub) .chip.fuego { background: rgba(239, 35, 60, .25); color: #ff8c9a; }
+:is(.tiem-lista, .tiem-sub) .chip.mov { background: rgba(255, 183, 3, .25); color: var(--ambar); }
+
+/* ---------- TIEM etapa 3: apreciaciones de EM, matriz de confrontacion y juego de guerra ---------- */
+.tiem-paso { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--texto-sec); margin: 10px 0 2px; }
+.tiem-matriz th:first-child { min-width: 160px; }
+.tiem-matriz td { vertical-align: top; min-width: 150px; }
+.tiem-matriz td select, .tiem-matriz td textarea { width: 100%; margin-bottom: 2px; }
+.tiem-matriz .chip { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 9px; background: rgba(255, 255, 255, .1); }
+.tiem-matriz .chip.ok { background: rgba(46, 196, 182, .25); color: #7ff0e2; }
+.tiem-matriz .chip.mov { background: rgba(255, 183, 3, .25); color: var(--ambar); }
+.tiem-matriz .chip.fuego { background: rgba(239, 35, 60, .25); color: #ff8c9a; }
+#ensayos-lista li { grid-template-columns: 1fr auto; }
+#ensayo-crear { flex-wrap: wrap; } #ensayo-crear select { flex: 1 1 100%; min-width: 0; }
+
+/* ---------- TIEM etapa 4: tareas del plan y Orden de Operaciones ---------- */
+#orden-vencen li, #orden-proximas li { grid-template-columns: 1fr auto; }
+#orden-vencen .motivo { color: #ff8c9a; }
+#sec-orden-op h4 { margin: 8px 0 2px; font-size: 12px; color: var(--texto-sec); }
+#btn-emitir-orden { margin-top: 6px; width: 100%; }
+.tiem-editor-tabla td input[type="number"] { width: 64px; min-width: 64px; }
+
+/* ---------- TIEM etapa 5: supervision de la ejecucion ---------- */
+#sup-cuadro li { grid-template-columns: 1fr auto auto; }
+#sup-cuadro .diferencia { color: var(--ambar); }
+.sup-parte { background: var(--panel-2); border-left: 3px solid var(--azul); padding: 6px 8px; margin: 4px 0 6px; font-size: 12px; }
+.sup-parte ul { margin: 2px 0 0; padding-left: 18px; }
+#btn-sup-abrir { margin-top: 6px; width: 100%; }
+
+/* ---------- TIEM etapa 6: evaluacion y legajo ---------- */
+a.boton-enlace { display: inline-flex; align-items: center; justify-content: center; padding: 6px 10px; border-radius: var(--radio);
+  border: 1px solid var(--borde); background: var(--panel-2); color: var(--texto); text-decoration: none; font-size: 12px; }
+a.boton-enlace:hover { border-color: var(--azul); }
+#tiem-evaluacion table th { text-align: left; font-weight: 600; }
+#tiem-evaluacion tr.fila-nota td, #tiem-evaluacion tr.fila-nota th { color: var(--ambar); font-weight: 700; }
+#tiem-evaluacion td.num { white-space: nowrap; }

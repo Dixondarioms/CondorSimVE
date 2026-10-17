@@ -20,7 +20,9 @@ VARIABLES = ("combustible", "municion")
 
 def stock(b, variable: str) -> float:
     v = getattr(b, f"stock_{variable}", None)
-    return STOCK_INICIAL if v is None else float(v)
+    if v is None:  # sin existencias registradas: las iniciales (no mas que su maximo, p. ej. un PRO)
+        return min(STOCK_INICIAL, catalogo.obtener(getattr(b, "clase", None), b.tipo).stock_max or STOCK_INICIAL)
+    return float(v)
 
 
 def maximo(b) -> float:
@@ -54,11 +56,13 @@ def depositar_carga(b, carga: float) -> None:
         cambiar_stock(b, v, carga * CARGA_A_STOCK / 2)
 
 
-def reponer(b) -> None:
+def reponer(b, factor_combustible: float = 1.0) -> None:
+    """Reposicion de cada turno (depositos). El combustible depende de las refinerias del bando
+    (engine/infraestructura.py): `factor_combustible` es la fraccion que llega."""
     r = catalogo.obtener(b.clase, b.tipo).reposicion_turno
     if r:
         for v in VARIABLES:
-            cambiar_stock(b, v, r)
+            cambiar_stock(b, v, r * factor_combustible if v == "combustible" else r)
 
 
 def costo_despegue(aeronaves: int) -> float:
