@@ -123,6 +123,22 @@
     return salida;
   }
 
+  /** Movimientos a animar al recibir un estado: solo si es el mismo escenario y avanzo el turno (no al cambiar de
+   *  escenario, ni al arrastrar una unidad, ni en una actualizacion dentro del mismo turno). `previas`: Map id ->
+   *  [lat, lon] de lo que se dibujo antes. */
+  function movimientosDelTurno(previas, unidades, antes, ahora, umbral = 0.0005) {
+    if (!antes || !ahora || antes.escenario !== ahora.escenario || !(ahora.turno > antes.turno) || !previas) return [];
+    const salida = [];
+    for (const u of unidades) {
+      const p = previas.get(u.id);
+      if (!p || u.estado === "destruida") continue;
+      if (Math.abs(p[0] - u.lat) > umbral || Math.abs(p[1] - u.lon) > umbral) {
+        salida.push({ id: u.id, bando: u.bando, tipo: u.tipo, desde: p, hasta: [u.lat, u.lon] });
+      }
+    }
+    return salida;
+  }
+
   /** Lineas atacante -> defensor de los combates de un turno, con las posiciones de la instantanea. */
   function lineasCombate(combates, unidades) {
     const por = new Map(unidades.map((u) => [u.id, u]));
@@ -1047,7 +1063,7 @@
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
     distanciaKm, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
-    unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, lineasCombate, describirCombate,
+    unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,
     etiquetaBando, claseBarra, estadoUnidad, memoriaVacia, alertasNuevas, climaEn, textoZonaClima,
   };

@@ -14,6 +14,8 @@
     porId: new Map(), contactosPorId: new Map(),
     modoAgregar: false, waypoints: [], modoOrden: "mover", unidadOrden: null, seleccion: null,
     markers: new Map(), flechas: [], encuadrado: false, map: null, capas: {}, capaActiva: {},
+    // desplazamiento animado al avanzar el turno: lo dibujado antes (id -> [lat, lon]) y el turno en que se dibujo
+    posDibujadas: new Map(), turnoDibujado: null, animaciones: [], cuadroAnimacion: null,
     catalogo: null, vista: "completa", informe: null, usuariosLista: [],
     temporizadorPreview: null, relojTimer: null,
     memoria: Logica.memoriaVacia(), alertas: [], alertasSinLeer: 0,
@@ -565,6 +567,7 @@
     c.preview = L.layerGroup().addTo(map);
     c.waypoints = L.layerGroup().addTo(map);
     c.obras = L.layerGroup().addTo(map);
+    c.rastros = L.layerGroup().addTo(map); // rastro del ultimo desplazamiento de cada unidad
     c.objetivos = L.layerGroup().addTo(map);
     c.ge = L.layerGroup().addTo(map);
     c.meteorologia = L.layerGroup().addTo(map);
@@ -860,8 +863,12 @@
   }
 
   function limpiarCapasVivas() {
+    detenerAnimaciones();
     for (const m of app.markers.values()) app.capas.unidades.removeLayer(m);
     app.markers.clear();
+    app.posDibujadas = new Map();
+    app.turnoDibujado = null;
+    if (app.capas.rastros) app.capas.rastros.clearLayers();
     for (const g of ["contactos", "cobertura", "niebla", "ordenes", "alcances", "seleccion", "preview", "obras", "objetivos", "ge", "misiones"]) app.capas[g].clearLayers();
     app.flechas = [];
   }
@@ -875,7 +882,50 @@
     });
   }
 
+  // ---------- desplazamiento animado al avanzar el turno ----------
+  const DURACION_DESPLAZAMIENTO_MS = 2500;
+  const DURACION_RASTRO_MS = 9000;
+  const movimientoReducido = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  /** Lleva cada animacion en curso a su posicion final (al llegar otro estado o al limpiar el mapa). */
+  function detenerAnimaciones() {
+    if (app.cuadroAnimacion) cancelAnimationFrame(app.cuadroAnimacion);
+    app.cuadroAnimacion = null;
+    for (const a of app.animaciones) a.m.setLatLng(a.hasta);
+    app.animaciones = [];
+  }
+
+  function pasoAnimacion(ahora) {
+    app.animaciones = app.animaciones.filter((a) => {
+      const f = Math.min(1, (ahora - a.t0) / DURACION_DESPLAZAMIENTO_MS);
+      const p = Replay.interpolar({ lat: a.desde[0], lon: a.desde[1] }, { lat: a.hasta[0], lon: a.hasta[1] }, f);
+      a.m.setLatLng(p);
+      return f < 1;
+    });
+    app.cuadroAnimacion = app.animaciones.length ? requestAnimationFrame(pasoAnimacion) : null;
+  }
+
+  /** Rastro punteado del desplazamiento, que se desvanece en unos segundos. */
+  function dibujarRastro(mov) {
+    const linea = L.polyline([mov.desde, mov.hasta], {
+      color: COLOR[mov.bando] || "#ffd166", weight: mov.tipo === "aerea" ? 2 : 3, dashArray: "4 6", opacity: 0.9, interactive: false,
+    }).addTo(app.capas.rastros);
+    const t0 = performance.now();
+    const desvanecer = (ahora) => {
+      const f = (ahora - t0) / DURACION_RASTRO_MS;
+      if (f >= 1 || !app.capas.rastros.hasLayer(linea)) { app.capas.rastros.removeLayer(linea); return; }
+      linea.setStyle({ opacity: 0.9 * (1 - f) });
+      requestAnimationFrame(desvanecer);
+    };
+    requestAnimationFrame(desvanecer);
+  }
+
   function dibujarUnidades(unidades) {
+    detenerAnimaciones();
+    const turnoAhora = app.data ? { escenario: app.escenarioId, turno: app.data.escenario.turno_actual } : null;
+    const animar = !movimientoReducido() && document.visibilityState !== "hidden";
+    const movimientos = animar ? new Map(Logica.movimientosDelTurno(app.posDibujadas, unidades, app.turnoDibujado, turnoAhora).map((x) => [x.id, x])) : new Map();
+    const dibujadas = new Map();
     const vivas = new Set();
     for (const u of unidades) {
       if (u.estado === "destruida" || Logica.embarcada(u)) continue; // lo embarcado viaja dentro de su transporte
@@ -909,6 +959,13 @@
       } else {
         m.setLatLng(pos);
       }
+      dibujadas.set(u.id, [u.lat, u.lon]);
+      const mov = movimientos.get(u.id);
+      if (mov && !estacionada) {  // avanzo el turno: se desliza desde donde estaba
+        m.setLatLng(mov.desde);
+        app.animaciones.push({ m, desde: mov.desde, hasta: pos, t0: performance.now() });
+        dibujarRastro(mov);
+      }
       m.unbindTooltip();
       m.bindTooltip(tooltipUnidad(u), { direction: "top", offset: [0, -14] });
       // simbologia dinamica: el marco del simbolo cambia con la fuerza y el combustible
@@ -922,6 +979,9 @@
     for (const [id, m] of app.markers) {
       if (!vivas.has(id)) { app.capas.unidades.removeLayer(m); app.markers.delete(id); }
     }
+    app.posDibujadas = dibujadas;
+    app.turnoDibujado = turnoAhora;
+    if (app.animaciones.length && !app.cuadroAnimacion) app.cuadroAnimacion = requestAnimationFrame(pasoAnimacion);
     marcarSeleccionEnMapa();
   }
 
