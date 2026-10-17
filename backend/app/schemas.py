@@ -107,6 +107,7 @@ class EscenarioOut(BaseModel):
     # disponibilidad y fallas de las aeronaves y personal de cada bando (engine/disponibilidad.py, engine/toe.py)
     fallas: bool = False
     personal: dict | None = None
+    inteligencia: dict | None = None  # satelites de cada bando (solo el instructor)
     # quien conduce cada bando: alumnos | instructor | ia
     conduccion_azul: str = "alumnos"
     conduccion_rojo: str = "alumnos"
@@ -125,6 +126,13 @@ class FaseIn(BaseModel):
     nombre: str = Field(min_length=1, max_length=60)
     desde: int = Field(ge=1, le=9999)
     hasta: int | None = Field(default=None, ge=1, le=9999)
+
+
+class InteligenciaBandoIn(BaseModel):
+    """Satelites de reconocimiento de un bando (engine/inteligencia.py)."""
+
+    satelites: int | None = Field(default=None, ge=0, le=4)
+    tipo: Literal["optico", "radar"] | None = None
 
 
 class PersonalBandoIn(BaseModel):
@@ -168,6 +176,7 @@ class EscenarioConfig(BaseModel):
     # tripulaciones}, "rojo": {...}}
     fallas: bool | None = None
     personal: dict[Literal["azul", "rojo"], PersonalBandoIn] | None = None
+    inteligencia: dict[Literal["azul", "rojo"], "InteligenciaBandoIn"] | None = None
     # identidad nacional de cada bando (ver /api/naciones); "" quita la identidad y deja "Azul"/"Rojo"
     nacion_azul: str | None = None
     nacion_rojo: str | None = None
@@ -374,6 +383,7 @@ class PuntoMisionIn(BaseModel):
     perfil: Literal["alto", "medio", "rasante"] | None = None  # altura del tramo que llega a este punto
     reunion: bool = False  # solo paso: punto de reunion del paquete (espera a los demas grupos)
     reabastecimiento: bool = False  # solo paso: punto de reabastecimiento en vuelo (espera un turno a la cisterna)
+    corte: bool = False  # solo blanco sin unidad: corte de carretera (crater) en ese punto
 
 
 class OtaMisionIn(BaseModel):

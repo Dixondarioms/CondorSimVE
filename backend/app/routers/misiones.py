@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app import auth, legajo, schemas, state
 from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
-from app.engine import apoyo_aereo, catalogo, ota, plataformas, puestos, relieve
+from app.engine import apoyo_aereo, catalogo, ota, plataformas, puestos, relieve, weaponeering
 from app.engine import clima as clima_mod
 from app.engine import misiones as misiones_mod
 from app.models.escenario import Escenario
@@ -88,6 +88,10 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
             if p.tipo != "paso":
                 errores_ruta.append(f"Punto {i + 1}: el punto de reunión debe ser un punto de paso.")
             d["reunion"] = True
+        if p.corte:
+            if p.tipo != "blanco" or p.objetivo_unidad_id:
+                errores_ruta.append(f"Punto {i + 1}: el corte de carretera es un punto de blanco sin unidad.")
+            d["corte"] = True
         if p.reabastecimiento:
             if p.tipo != "paso":
                 errores_ruta.append(f"Punto {i + 1}: el punto de reabastecimiento en vuelo debe ser un punto de paso.")
@@ -166,6 +170,24 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
         if n_esc < apoyo_aereo.ESCOLTAS_MINIMAS:
             errores.append(f"{misiones_mod.ROLES[payload.rol].nombre}: es un activo de alto valor y va con "
                            f"{apoyo_aereo.ESCOLTAS_MINIMAS} cazas de escolta (agregue la escolta del paquete).")
+    # calculo de armamento contra el primer blanco con unidad, con el armamento primario elegido
+    arma = (datos_ota or {}).get("armamento_primario")
+    pb = next((p for p in puntos if p["tipo"] == "blanco" and p.get("objetivo_unidad_id")), None)
+    if arma and pb is not None:
+        x = db.get(Unidad, pb["objetivo_unidad_id"])
+        tipo_b = weaponeering.tipo_de_blanco(x)
+        w = weaponeering.calcular(arma, tipo_b, dmpi=weaponeering.dmpi_de(x, tipo_b), aeronaves=n)
+        if w is not None:
+            plan["weaponeering"] = w
+            if not w["suficiente"]:
+                plan["advertencias"].append(
+                    f"Cálculo de armamento: para «{w['criterio_nombre'].lower()}» sobre {x.nombre} hacen falta unas "
+                    f"{w['lanzar']} {arma} ({w['aeronaves_necesarias']} aeronaves); {n} aeronave(s) llevan {w['lleva']}.")
+            todas = db.query(Unidad).filter(Unidad.escenario_id == esc.id).all()
+            colat = weaponeering.colaterales(x.lat, x.lon, w["radio_escombros_m"], todas, usuario.rol, x.id)
+            if colat:
+                plan["advertencias"].append("Riesgo de daño colateral (radio de escombros de "
+                                            f"{w['radio_escombros_m']} m): " + ", ".join(f"{u.nombre} a {d} m" for u, d in colat) + ".")
     reunion = next((i for i, p in enumerate(puntos) if p.get("reunion")), None)
     if reunion is not None:
         plan["reunion_turno"] = turno + int(math.floor(plan["puntos"][reunion]["llegada_h"] + 1e-9))

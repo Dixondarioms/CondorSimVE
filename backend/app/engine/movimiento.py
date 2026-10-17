@@ -45,6 +45,13 @@ def obra_en(obras, lat: float, lon: float):
     return mejor
 
 
+FACTOR_CRATER = 0.6  # un crater en la carretera: se pierde la carretera y se rodea por el terreno
+
+
+def carretera_cortada(obras, lat: float, lon: float) -> bool:
+    return any(o.tipo == "crater" and geo.distancia_km(o.lat, o.lon, lat, lon) <= o.radio_km for o in obras)
+
+
 def puente_cortado(obras, lat: float, lon: float) -> bool:
     return any(o.tipo == "corte" and geo.distancia_km(o.lat, o.lon, lat, lon) <= o.radio_km for o in obras)
 
@@ -57,6 +64,8 @@ def factor_terreno(unidad, clase_terreno: str, obras, lat: float, lon: float, vi
     if unidad.tipo == "naval":
         return 1.0 if clase_terreno == "agua" else 0.0
     base = FACTOR_MOVIMIENTO.get(clase_terreno, 1.0)
+    if via and carretera_cortada(obras, lat, lon):
+        return base * FACTOR_CRATER  # el corte obliga a dejar la carretera y rodearlo
     if via and clase_terreno in ("rio", "agua"):
         if not puente_cortado(obras, lat, lon):
             return FACTOR_PUENTE

@@ -35,6 +35,7 @@ from app.engine import toe as toe_mod
 from app.engine import ota as ota_mod
 from app.engine import apoyo_aereo as apoyo_mod
 from app.engine import rescate as rescate_mod
+from app.engine import weaponeering as weap_mod
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import infraestructura as infra_mod
@@ -910,6 +911,8 @@ def procesar_ordenes(
         orden.resultado = f"Ataque a {d.nombre}. {res.resumen}" + (
             f" Antiaerea interferida por guerra electronica enemiga (x{ge_mod.FACTOR_ANTIAEREA:.2f})." if aaa_interferida else ""
         ) + (f" Tiro optico con el radar apagado (x{ge_mod.FACTOR_TIRO_OPTICO:.2f})." if aaa_optica else "")
+        if a.tipo == "aerea" and not catalogo.es_misil(a) and not aeronaves_mod.en_vuelo(d):
+            ataques_aereos.append((a, d))
         db.add(Combate(
             escenario_id=escenario.id, turno=turno, orden_id=orden.id,
             atacante_id=a.id, defensor_id=d.id, atacante_nombre=a.nombre, defensor_nombre=d.nombre,
@@ -920,6 +923,7 @@ def procesar_ordenes(
             terreno=terreno.clase(d.lat, d.lon), efectos="; ".join(res.efectos), lat=d.lat, lon=d.lon,
         ))
 
+    ataques_aereos: list = []  # (atacante, blanco) de los ataques aereos a la superficie: su BDA
     ataques = [o for o in ordenes if o.tipo == "atacar"]
     # interceptacion antes del impacto: los disparos contra misiles y merodeadoras en vuelo se resuelven primero y
     # sus perdidas se descuentan de la fuerza con la que esa municion llega (o no llega) a su blanco
@@ -952,6 +956,16 @@ def procesar_ordenes(
             db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="combate", bando_destino=u.bando,
                           descripcion=f"La pista de {u.nombre} quedo inoperativa ({bases_mod.dano(u, 'pista'):.0f} % de daño): "
                                       "sin despegues ni aterrizajes hasta repararla."))
+    # evaluacion de danos (BDA) de cada ataque aereo, para el bando atacante
+    vistos_bda = set()
+    for a, d in ataques_aereos:
+        if (a.id, d.id) in vistos_bda:
+            continue
+        vistos_bda.add((a.id, d.id))
+        r = weap_mod.bda(a, d, estado_inicio.get(d.id, (d.fuerza,))[0], d.fuerza if d.estado != "destruida" else 0.0,
+                         lista_unidades)
+        db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="inteligencia", bando_destino=a.bando,
+                      lat=d.lat, lon=d.lon, hasta_turno=turno + 3, descripcion=weap_mod.texto_bda(a, r)))
     # la municion merodeadora se estrella contra su blanco: se pierde al atacar
     for uid in sorted(dispararon):
         u = unidades[uid]

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app import adversario, auth, diapositivas_html, informe_html, schemas, state, turnos
 from app.db import get_db
 from app.engine import toe
+from app.engine import inteligencia
 from app.engine import aar, calendario, clock, naciones, plantillas, timeline
 from app.models.aar import Instantanea
 from app.models.objetivo import Objetivo
@@ -176,6 +177,10 @@ async def configurar(
                 actual[bando] = {**actual[bando], **nuevos}
                 cambios.append(f"personal del bando {bando.capitalize()}: " + ", ".join(f"{k} {v}" for k, v in nuevos.items()))
         esc.personal_json = json.dumps(actual)
+    if payload.inteligencia is not None:
+        for bando, datos in payload.inteligencia.items():
+            c = inteligencia.configurar(esc, bando, datos.satelites, datos.tipo)
+            cambios.append(f"satélites del bando {bando.capitalize()}: {c['satelites']} ({c['tipo']})")
     if payload.dia_noche is not None and payload.dia_noche != esc.dia_noche:
         esc.dia_noche = payload.dia_noche
         cambios.append(f"ciclo de dia y noche {'activado' if payload.dia_noche else 'desactivado'}")

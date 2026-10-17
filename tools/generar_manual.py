@@ -804,6 +804,26 @@ def construir(salida: Path, img: Path) -> None:
                "<font face='Mono'>arma_elegida</font> (migración 0031); la munición de la unidad es el total de la reserva y el "
                "reabastecimiento se reparte entre las armas a las que les falta. <font face='Mono'>POST /unidades/{id}/defensa</font> "
                "acepta <font face='Mono'>arma</font>; <font face='Mono'>GET /api/catalogo</font> trae <font face='Mono'>sistemas_da</font>."])]
+    h += [H2("8.22 Cálculo de armamento, BDA, anillos de Warden, cortes de carretera e inteligencia de imágenes"),
+          Bul(["<b>Weaponeering</b> (<font face='Mono'>engine/weaponeering.py</font>): MAE en ft² de la tabla del documento de "
+               "targeting (MK-81 a MK-84; aviones estacionados, piezas antiaéreas, radar; 30/45/60°), armas rusas y guiadas "
+               "asimiladas a la bomba de efecto parecido; impactos por DMPI = techo(área del DMPI / (MAE × 0,3)); a lanzar ×3 "
+               "no guiadas, ×1,25 guiadas (reproduce el ejemplo 200 × 120 m → 6 MK-82 en el blanco → 18 a lanzar). El plan trae "
+               "<font face='Mono'>weaponeering</font> y avisa si no alcanza y del daño colateral en el radio de escombros.",
+               "<b>BDA</b> tras cada ataque aéreo a la superficie (evento de inteligencia del atacante): nivel 1 daño físico "
+               "estimado de a 10 %, nivel 2 estado funcional (umbrales 70/30/0 de fuerza), nivel 3 anillo de Warden, "
+               "recomendación de re-ataque y colaterales.",
+               "<b>Warden</b> (<font face='Mono'>engine/warden.py</font>): anillo por clase; el estado trae "
+               "<font face='Mono'>warden</font> con los objetivos enemigos conocidos (vistos o por contacto).",
+               "<b>Corte de carretera</b>: punto de blanco con <font face='Mono'>corte</font>; con <font face='Mono'>terreno.via</font> "
+               "crea una <font face='Mono'>Obra</font> «crater» de 1 km por 12 turnos; <font face='Mono'>factor_terreno</font> "
+               "pierde la carretera y aplica ×0,6.",
+               "<b>Satélites e INTSUM</b> (<font face='Mono'>engine/inteligencia.py</font>, <font face='Mono'>Escenario.inteligencia_json</font>, "
+               "migración 0036; <font face='Mono'>inteligencia</font> en <font face='Mono'>PATCH /config</font>, solo el "
+               "instructor): revisita 12 turnos por satélite, franja ±120 km de una traza norte-sur corrida al azar ±300 km "
+               "del centro del teatro, óptico sin noche ni nubes; procesamiento 1 turno (crea o actualiza "
+               "<font face='Mono'>Contacto</font>); INTSUM cada 6 turnos. Se llama desde <font face='Mono'>clock</font> "
+               "después de los contactos."])]
     h += [H2("8.21 Reabastecimiento en vuelo, AEW, rescate de tripulaciones y puntos de recobre"),
           Bul(["<b>Cisterna</b> (<font face='Mono'>engine/apoyo_aereo.py</font>): por turno, 60 min de servicio; cada aeronave "
                "receptora ocupa CONTACTO_MIN = 6 min más kg / tasa (pértiga 2900 kg/min, manguera 1100 kg/min), por orden de "
@@ -1067,6 +1087,9 @@ def construir(salida: Path, img: Path) -> None:
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
               ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña TIEM; engine/pmo.py",
                "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["Cálculo de armamento, BDA, Warden e inteligencia", "Planificar misión (armamento, CORTE); Situación → Warden e Inteligencia; Consola → Satélites",
+               "Weaponeering con la tabla de áreas de efecto, daño colateral, BDA en 3 niveles, anillos de Warden, cortes de "
+               "carretera, satélites con procesamiento e INTSUM (8.22)."],
               ["Cisternas, AEW, rescate y puntos de recobre", "Planificar misión (AAR, AEW, CSAR, punto AER); Situación → Recuperación",
                "Reabastecimiento en vuelo por tiempo, escolta de los activos de alto valor, tripulaciones derribadas y su rescate, "
                "y puntos de recobre operacional con requisitos mínimos (8.21)."],

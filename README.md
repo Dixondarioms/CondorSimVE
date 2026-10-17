@@ -760,6 +760,13 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   AEW mejora las intercepciones. Un punto AER en la ruta es el punto de reabastecimiento. Las tripulaciones
   derribadas quedan aisladas hasta que las rescata una misión CSAR, las captura el enemigo o se pierden. Los PRO
   son bases livianas de 4 plazas que rearman en 1 turno si cumplen sus requisitos mínimos.
+- **Cálculo de armamento, BDA, Warden e inteligencia** (`engine/weaponeering.py`, `engine/warden.py`,
+  `engine/inteligencia.py`, migración `0036`): el planificador calcula cuántas armas lanzar según la tabla de áreas
+  medias de efecto del documento de targeting (reproduce su ejemplo de 18 MK-82) y avisa del daño colateral en el
+  radio de escombros; cada ataque aéreo deja una evaluación de daños (BDA) en 3 niveles con la recomendación de
+  re-ataque; la pestaña Situación muestra los objetivos enemigos conocidos por anillo de Warden. Un punto CORTE corta
+  una carretera (cráter por 12 turnos). Los satélites (ópticos o radar, los asigna el instructor) pasan dos veces
+  por día, sus imágenes tardan un turno en procesarse y el A-2 recibe un INTSUM cada 6 turnos.
 
 ## Ejercicios con o contra los países vecinos
 

@@ -478,6 +478,14 @@ def construir(salida: Path) -> None:
              "más cercana a su alcance.",
              f"{B('Arma a emplear')} (sistemas de defensa aérea): automática o un arma fija; ver abajo."]),
     ])
+    h += [H3("Anillos de Warden e inteligencia de imágenes (A-2)"),
+          P("<b>Análisis de sistemas del enemigo</b>: los objetivos enemigos que el bando conoce, en los cinco anillos de Warden "
+            "(1 liderazgo, 2 elementos orgánicos esenciales, 3 infraestructura, 4 población —no es objetivo— y 5 fuerzas "
+            "desplegadas), con cuántos están degradados, neutralizados, destruidos o sin noticias."),
+          P("<b>Satélites</b>: el instructor le asigna a cada bando hasta 4, ópticos o radar. Cada uno pasa dos veces por día "
+            "sobre una franja de 240 km; el óptico no ve de noche ni con nubes. Las imágenes tardan un turno en procesarse y "
+            "dan contactos con la posición de la hora de la pasada. Cada 6 turnos llega un <b>INTSUM</b>: contactos recientes, "
+            "amenazas cerca de las bases aéreas propias y objetivos por anillo.")]
     h += [H3("Parte de personal y esfuerzo aéreo (A-1)"),
           P("En la pestaña <b>Situación</b>, el <b>parte de personal por unidad</b> compara la plantilla (lo autorizado) con lo "
             "existente. Por aeronave, la plantilla tiene 3 tripulaciones de pilotos (4 en operaciones intensas), 7 técnicos "
@@ -653,6 +661,18 @@ def construir(salida: Path) -> None:
           P("Cuando se derriba una aeronave en vuelo, sus tripulantes se eyectan y quedan <b>aislados</b>. La pestaña "
             "<b>Situación → Recuperación de personal</b> los lista: si no llega el rescate, el enemigo cercano puede capturarlos "
             "o se pierden al pasar su tiempo de supervivencia (12 turnos en el agua, 72 en tierra).")]
+    h += [H3("Cálculo de armamento, corte de carreteras y evaluación de daños"),
+          P("Al planificar un ataque contra una unidad con armamento primario elegido, el simulador hace el <b>cálculo de "
+            "armamento</b> (weaponeering) con la tabla de áreas medias de efecto del documento de targeting de la AMB: cuántas "
+            "armas deben caer en el blanco para el criterio de daño (por ejemplo, «imposibilita el despegue» o «neutraliza el "
+            "poder de fuego»), cuántas hay que lanzar (×3 las no guiadas por la dispersión, ×1,25 las guiadas) y cuántas "
+            "aeronaves hacen falta. También avisa si hay infraestructura civil o unidades propias dentro del "
+            "<b>radio de escombros</b> (MK-82: 240 m; GBU-12: 110 m)."),
+          P("Un punto de blanco marcado <b>CORTE</b> (sin unidad) es un <b>corte de carretera</b>: si hay carretera, el grupo "
+            "deja un cráter que obliga a los vehículos a rodearlo por 12 turnos (✱ en el mapa)."),
+          P("Después de cada ataque aéreo, el A-2 recibe la <b>evaluación de daños (BDA)</b> en tres niveles: el daño físico "
+            "estimado, el estado funcional del objetivo (operativo, degradado, neutralizado, destruido) y el efecto sobre el "
+            "sistema enemigo según su anillo de Warden, con la recomendación de re-ataque.")]
     h += al_lado("misiones_lista", "Lista de misiones del bando.", [
         P("La lista <b>Misiones aéreas</b> muestra cada misión de su bando con su estado (programada, en curso, cumplida, abortada) y lo que "
           "está haciendo. Una orden directa al grupo reemplaza la misión; la «×» la cancela."),

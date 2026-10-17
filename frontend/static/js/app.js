@@ -1788,6 +1788,9 @@
         set(`per-${b}-res`, (e) => { e.value = p.reserva ?? 0; });
         set(`per-${b}-mil`, (e) => { e.value = p.milicia ?? 0; });
         set(`per-${b}-tri`, (e) => { e.value = String(p.tripulaciones || 3); });
+        const sat = (esc.inteligencia || {})[b] || {};
+        set(`sat-${b}-n`, (e) => { e.value = sat.satelites ?? 0; });
+        set(`sat-${b}-tipo`, (e) => { e.value = sat.tipo || "optico"; });
       }
       set("dir-ia-nivel", (e) => { e.value = esc.ia_nivel || "normal"; });
       set("cfg-limite", (e) => { e.value = esc.limite_decision_seg || 0; });
@@ -1978,6 +1981,36 @@
       }
       esf.appendChild(dl);
     }
+    // analisis de sistemas del enemigo: anillos de Warden
+    const wd = $("cuadro-warden");
+    limpiar(wd);
+    for (const [b, filas] of Object.entries(data.warden || {})) {
+      if (varios) wd.appendChild(Object.assign(document.createElement("h4"), { className: b, textContent: `${nombreDeBando(b)} (lo que sabe del enemigo)` }));
+      const t = document.createElement("table");
+      t.className = "tabla-personal tabla-toe";
+      t.innerHTML = "<thead><tr><th>Anillo</th><th>Objetivos</th><th>Estado</th><th>Ejemplos</th></tr></thead>";
+      const tb = document.createElement("tbody");
+      for (const f of filas) {
+        const tr = document.createElement("tr");
+        tr.title = f.efecto;
+        for (const v of Logica.filaWarden(f)) tr.appendChild(Object.assign(document.createElement("td"), { textContent: v }));
+        tb.appendChild(tr);
+      }
+      t.appendChild(tb);
+      wd.appendChild(t);
+    }
+    // inteligencia de imagenes
+    const it = $("cuadro-inteligencia");
+    limpiar(it);
+    for (const [b, r] of Object.entries(data.inteligencia || {})) {
+      const c = r.config || {};
+      const p = document.createElement("p");
+      p.className = "ayuda";
+      p.textContent = `${varios ? nombreDeBando(b) + ": " : ""}${c.satelites ? `${c.satelites} satélite${c.satelites === 1 ? "" : "s"} ${c.tipo === "radar" ? "radar" : "óptico"}${c.satelites === 1 ? "" : "s"}, pasada cada ${r.revisita_turnos / Math.max(1, c.satelites)} turnos en promedio, ${r.procesamiento_turnos} turno de procesamiento` : "Sin satélites (los asigna el instructor)"}.`
+        + (r.pendientes.length ? ` En proceso: imágenes del T${r.pendientes.map((x) => x.turno).join(", T")}.` : "")
+        + (r.historial.length ? ` Últimas pasadas: ${r.historial.slice(-4).map((h) => `T${h.turno} (${h.vistas} unidades)`).join(", ")}.` : "");
+      it.appendChild(p);
+    }
     // recuperacion de personal (tripulaciones derribadas) y puntos de recobre operacional
     const res = $("cuadro-rescate");
     limpiar(res);
@@ -2116,9 +2149,10 @@
     for (const o of obras) {
       const enemiga = !!vista && o.bando !== vista;
       L.marker([o.lat, o.lon], {
-        icon: L.divIcon({ className: `obra ${o.tipo}${enemiga ? " enemiga" : ""}`, html: `<span>${o.tipo === "puente" ? "P" : "V"}</span>`, iconSize: [24, 24], iconAnchor: [12, 12] }),
+        icon: L.divIcon({ className: `obra ${o.tipo}${enemiga ? " enemiga" : ""}`, html: `<span>${o.tipo === "puente" ? "P" : o.tipo === "crater" ? "✱" : "V"}</span>`, iconSize: [24, 24], iconAnchor: [12, 12] }),
         keyboard: false,
-      }).bindTooltip(`${o.tipo === "puente" ? "Puente" : "Vado"} (${o.bando}) · transitable hasta el turno ${o.expira_turno}`, { direction: "top" }).addTo(g);
+      }).bindTooltip(o.tipo === "crater" ? `Corte de carretera (cráter, ${o.bando}) · los vehículos rodean hasta el turno ${o.expira_turno}`
+        : `${o.tipo === "puente" ? "Puente" : "Vado"} (${o.bando}) · transitable hasta el turno ${o.expira_turno}`, { direction: "top" }).addTo(g);
       L.circle([o.lat, o.lon], { radius: o.radio_km * 1000, color: enemiga ? "#EF233C" : "#ffd166", weight: 1, dashArray: "3 4", fillOpacity: 0.05, interactive: false }).addTo(g);
     }
   }
@@ -2728,6 +2762,13 @@
       conduccion_azul: $("dir-cond-azul").value, conduccion_rojo: $("dir-cond-rojo").value,
       dia_noche: $("dir-noche").checked, ia_nivel: $("dir-ia-nivel").value, fallas: $("dir-fallas").checked,
     }).then(() => toast("Interruptores aplicados", true)));
+  });
+  $("btn-satelites").addEventListener("click", () => {
+    if (!app.escenarioId) return;
+    const inteligencia = Object.fromEntries(["azul", "rojo"].map((b) => [b, {
+      satelites: Math.max(0, Math.min(4, parseInt($(`sat-${b}-n`).value, 10) || 0)), tipo: $(`sat-${b}-tipo`).value,
+    }]));
+    enSilencio(api("PATCH", rutaEsc("/config"), { inteligencia }).then(() => toast("Satélites aplicados", true)));
   });
   $("btn-personal").addEventListener("click", () => {
     if (!app.escenarioId) return;

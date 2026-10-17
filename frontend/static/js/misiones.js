@@ -267,11 +267,20 @@
           t.addEventListener("change", () => { p.turnos = parseInt(t.value, 10); refrescar(); });
           li.appendChild(t);
         } else if (p.tipo === "blanco") {
+          const corte = el("label", "pm-rv");
+          const cc = el("input");
+          cc.type = "checkbox";
+          cc.checked = !!p.corte;
+          cc.addEventListener("change", () => { p.corte = cc.checked; if (cc.checked) apuntar(p, null); refrescar(); });
+          corte.title = "Corte de carretera: bombardea la carretera en este punto (cráter por 12 turnos)";
+          corte.append(cc, el("span", "", "CORTE"));
+          li.appendChild(corte);
           const o = el("select");
           o.setAttribute("aria-label", `Blanco del punto ${i + 1}`);
           const cerca = enemigos().map((e) => ({ e, d: Logica.distanciaKm(p.lat, p.lon, e.lat, e.lon) })).sort((a, b) => a.d - b.d).slice(0, 8);
           opciones(o, [["", "El enemigo detectado más cercano"], ...cerca.map(({ e, d }) => [e.id, `${e.nombre} · ${Math.round(d)} km`])], p.objetivo_unidad_id ?? "");
-          o.addEventListener("change", () => { apuntar(p, enemigos().find((e) => String(e.id) === o.value) || null); refrescar(); });
+          o.addEventListener("change", () => { apuntar(p, enemigos().find((e) => String(e.id) === o.value) || null); if (p.objetivo_unidad_id) p.corte = false; refrescar(); });
+          o.disabled = !!p.corte;
           li.appendChild(o);
         } else {
           li.appendChild(el("span", "sec", `${p.lat.toFixed(2)}, ${p.lon.toFixed(2)}`));
@@ -294,7 +303,8 @@
         if (p.tipo === "paso" && p.reunion) d.reunion = true;
         if (p.tipo === "paso" && p.reabastecimiento) d.reabastecimiento = true;
         if (p.tipo === "orbita") d.turnos = p.turnos;
-        if (p.tipo === "blanco" && p.objetivo_unidad_id) d.objetivo_unidad_id = p.objetivo_unidad_id;
+        if (p.tipo === "blanco" && p.objetivo_unidad_id && !p.corte) d.objetivo_unidad_id = p.objetivo_unidad_id;
+        if (p.tipo === "blanco" && p.corte) d.corte = true;
         return d;
       });
       if (!esKamikaze() && borrador.aterrizajeId) {
@@ -393,6 +403,7 @@
       if (r.plan.reunion_turno) tiempos.push(`reunión ${hora(r.plan.reunion_turno)}`);
       if (r.plan.tot_turno) tiempos.push(`sobre el blanco (TOT) ${hora(r.plan.tot_turno)}`);
       avisos.appendChild(el("li", "logistica", tiempos.join(" · ") + "."));
+      if (r.plan.weaponeering) avisos.appendChild(el("li", "logistica", Logica.textoWeaponeering(r.plan.weaponeering)));
       const aar = r.plan.aar;
       if (aar) {
         avisos.appendChild(el("li", "logistica", `Reabastecimiento en vuelo (${hora(aar.turno)}): ${aar.kg.toLocaleString("es-VE")} kg `

@@ -543,6 +543,13 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
                 m.resultado = f"Llega a la orbita; la mantiene {m.espera} turno(s)."
             else:
                 m.resultado = f"Vuela hacia la orbita: faltan {faltan:.0f} km."
+        elif destino["tipo"] == "blanco" and destino.get("corte"):
+            if llego:
+                m.indice = j + 1
+                m.resultado = _cortar_carretera(db, escenario, m, u, destino, terreno, turno)
+                _evento(db, m, turno, m.resultado)
+            else:
+                m.resultado = f"Vuela al corte de carretera: faltan {faltan:.0f} km."
         elif destino["tipo"] == "blanco":
             en_alcance = objetivo is not None and geo.distancia_km(u.lat, u.lon, objetivo.lat, objetivo.lon) <= u.alcance_km
             if en_alcance or llego:
@@ -576,6 +583,26 @@ def avanzar(db, escenario, unidades: dict, lista: list, con_orden: set, terreno,
             else:
                 m.resultado = f"Regresa a {base.nombre if base else 'la base'}: faltan {faltan:.0f} km."
     return ataques, bajo_mision
+
+
+DURACION_CORTE_TURNOS = 12
+RADIO_CORTE_KM = 1.0
+
+
+def _cortar_carretera(db, escenario, m: Mision, u, p: dict, terreno, turno: int) -> str:
+    """El grupo bombardea la carretera en el punto: deja un crater que la corta DURACION_CORTE_TURNOS turnos."""
+    from app.models.obra import Obra  # importacion tardia
+
+    via = terreno.via(p["lat"], p["lon"]) if terreno is not None and hasattr(terreno, "via") else 0
+    if not via:
+        return "Llega al punto pero no hay una carretera que cortar allí."
+    if u.municion <= 0:
+        return "Llega al corte de carretera sin munición."
+    db.add(Obra(escenario_id=escenario.id, unidad_id=u.id, bando=u.bando, tipo="crater", lat=p["lat"], lon=p["lon"],
+                radio_km=RADIO_CORTE_KM, creada_turno=turno, expira_turno=turno + DURACION_CORTE_TURNOS))
+    u.municion = max(0.0, u.municion - 25.0)
+    return (f"Cortó la carretera: los vehículos deben rodear el cráter hasta el turno {turno + DURACION_CORTE_TURNOS} "
+            "(pierden la carretera en 1 km).")
 
 
 def _rescatar(db, escenario, m: Mision, u, turno: int) -> None:

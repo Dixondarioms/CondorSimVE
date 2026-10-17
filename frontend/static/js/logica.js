@@ -531,6 +531,23 @@
     return mejor ? mejor.d : null;
   }
 
+  /** Calculo de armamento en una frase: "Para «neutraliza…» hacen falta 24 BMK (12 en el blanco, 4 DMPI): 4 aeronaves; lleva 12." */
+  function textoWeaponeering(w) {
+    if (!w) return "";
+    return `Cálculo de armamento (${w.blanco_nombre.toLowerCase()}, «${w.criterio_nombre.toLowerCase()}», ${w.angulo}°): `
+      + `${w.impactos} ${w.arma} en el blanco (${w.dmpi} DMPI) y ${w.lanzar} a lanzar${w.guiada ? " (guiadas)" : " (×3 por la dispersión)"}`
+      + `: ${w.aeronaves_necesarias} aeronave${w.aeronaves_necesarias === 1 ? "" : "s"} de ${w.por_aeronave}`
+      + (w.lleva !== undefined ? `; el grupo lleva ${w.lleva}${w.suficiente ? "" : " (no alcanza)"}` : "")
+      + `. Radio de escombros ${w.radio_escombros_m} m.`;
+  }
+
+  /** Fila del cuadro de anillos de Warden: [nombre, objetivos, "2 neutralizados · 1 destruido", ejemplos]. */
+  function filaWarden(f) {
+    const estado = [[f.degradados, "degradado"], [f.neutralizados, "neutralizado"], [f.destruidos, "destruido"], [f.sin_noticias, "sin noticias"]]
+      .filter(([n]) => n).map(([n, t]) => `${n} ${t}${n === 1 || t === "sin noticias" ? "" : "s"}`).join(" · ");
+    return [f.nombre, String(f.objetivos), estado || (f.objetivos ? "operativos" : "—"), (f.ejemplos || []).join(", ")];
+  }
+
   /** Paquete y funcion de una mision en la OTA: "paq. TELA (CM)" ("" si no va en un paquete). */
   function textoPaquete(m) {
     const o = (m && m.ota) || {};
@@ -983,7 +1000,7 @@
     PUESTOS, puestoDe, puestoPuede, puestoPuedeAereo, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,
     ESTADOS_MISION, TIPOS_PUNTO_MISION, misionActiva, horaEstimada, textoMision, tramosCronograma, armasParaRol, textoTramo, textoPaquete,
-    ESTADOS_DERRIBADO, textoDerribado, derribadoCercano,
+    ESTADOS_DERRIBADO, textoDerribado, derribadoCercano, textoWeaponeering, filaWarden,
     RADIO_SIN_EMISION_KM, deteccionEfectiva, pctStock,
     nacionDe, etiquetaBandoNacion, filtrarUnidades, textoObjetivo, avanceObjetivo, ETIQUETA_OBJETIVO, CAPACIDAD_BASE, RADIO_ATERRIZAJE_KM, estacionadasEn, plazasLibres, opcionesDeAterrizaje, situacionDeVuelo,
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,

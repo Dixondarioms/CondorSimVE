@@ -66,6 +66,7 @@ class Escenario(Base):
     fallas: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     personal_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     derribados_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # engine/rescate.py
+    inteligencia_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # engine/inteligencia.py
     esfuerzo_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # identidad nacional de cada bando (ver engine/naciones.py); "" = sin especificar (se muestra "Azul"/"Rojo")
@@ -104,6 +105,13 @@ class Escenario(Base):
         from app.engine import toe
 
         return {b: toe.config(self, b) for b in ("azul", "rojo")}
+
+    @property
+    def inteligencia(self) -> dict:
+        """Satelites de cada bando (engine/inteligencia.py)."""
+        from app.engine import inteligencia
+
+        return {b: inteligencia.config(self, b) for b in ("azul", "rojo")}
 
     @property
     def periodo(self) -> str:

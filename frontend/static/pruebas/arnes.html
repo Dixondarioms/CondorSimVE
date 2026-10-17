@@ -278,6 +278,17 @@
             <div id="cuadro-rescate"></div>
             <div id="cuadro-pro"></div>
           </section>
+          <section class="bloque" id="sec-warden">
+            <h2>Análisis de sistemas del enemigo (anillos de Warden)</h2>
+            <p class="ayuda">Los objetivos enemigos que su bando conoce, del centro hacia afuera: 1 liderazgo (mando y control),
+              2 elementos orgánicos esenciales (energía y combustible), 3 infraestructura, 5 fuerzas desplegadas (la población,
+              anillo 4, no es objetivo). Atacar los anillos interiores produce efectos sobre todo el sistema.</p>
+            <div id="cuadro-warden"></div>
+          </section>
+          <section class="bloque" id="sec-inteligencia">
+            <h2>Inteligencia de imágenes (satélites)</h2>
+            <div id="cuadro-inteligencia"></div>
+          </section>
           <section class="bloque" id="sec-infra">
             <h2>Infraestructura</h2>
             <p class="ayuda">Centrales eléctricas, refinerías, centros de comunicaciones y puentes del bando en el
@@ -548,6 +559,21 @@
               <button id="btn-cal-defecto" type="button" class="secundario mini">Usar las fases por defecto</button>
             </div>
             <button id="btn-calendario" type="button">Aplicar calendario</button>
+          </details>
+
+          <details>
+            <summary>Satélites de reconocimiento de cada bando</summary>
+            <p class="ayuda">Cada satélite pasa dos veces por día sobre una franja de 240 km del teatro; las imágenes tardan un
+              turno en procesarse y dan contactos con la posición de la hora de la pasada. El óptico no ve de noche ni con
+              nubes; el radar sí. El A-2 recibe además un informe de inteligencia (INTSUM) cada 6 turnos.</p>
+            <table class="tabla-personal-cfg">
+              <thead><tr><th></th><th>Satélites</th><th>Tipo</th></tr></thead>
+              <tbody>
+                <tr><th>Azul</th><td><input id="sat-azul-n" type="number" min="0" max="4"></td><td><select id="sat-azul-tipo"><option value="optico">Óptico</option><option value="radar">Radar</option></select></td></tr>
+                <tr><th>Rojo</th><td><input id="sat-rojo-n" type="number" min="0" max="4"></td><td><select id="sat-rojo-tipo"><option value="optico">Óptico</option><option value="radar">Radar</option></select></td></tr>
+              </tbody>
+            </table>
+            <button id="btn-satelites" type="button">Aplicar satélites</button>
           </details>
 
           <details>

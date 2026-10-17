@@ -25,6 +25,8 @@ from app.engine import disponibilidad as disp_mod
 from app.engine import toe as toe_mod
 from app.engine import recobre as recobre_mod
 from app.engine import rescate as rescate_mod
+from app.engine import inteligencia as intel_mod
+from app.engine import warden as warden_mod
 from app.engine.vision import cuadro_sensores, unidades_visibles
 from app.models.contacto import Contacto
 from app.models.escenario import Escenario
@@ -46,7 +48,7 @@ CAMPOS_OCULTOS = (
     "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios",
     "transporte_id", "personal_inicial", "personal_actual", "sistema_da", "pista_largo_m", "pista_util_m",
 )
-CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct", "com_ordenes_pct")
+CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct", "com_ordenes_pct", "inteligencia")
 
 
 def es_bando(rol: str) -> bool:
@@ -195,12 +197,24 @@ def estado_para(
         "derribados": rescate_mod.visibles(escenario, rol, todas),
         "recuperacion": {b: rescate_mod.resumen(escenario, b) for b in bandos_propios},
         "recobre": {b: recobre_mod.estado(todas, b) for b in bandos_propios},
+        # inteligencia: satelites e imagenes en proceso, y los objetivos enemigos conocidos por anillo de Warden
+        "inteligencia": {b: intel_mod.resumen(escenario, b) for b in bandos_propios},
+        "warden": {b: warden_mod.resumen(_conocidos(db, escenario, todas, b, terreno, clima_ctx, ge_ctx), b)
+                   for b in bandos_propios},
         "infraestructura": {b: infra_mod.resumen(todas, b) for b in bandos_propios},
         "sensores": sensores,
         "marcador": objetivos_mod.marcador(db, escenario),
         "ordenes": [OrdenOut.model_validate(o).model_dump() for o in ordenes],
         "eventos": [EventoOut.model_validate(e).model_dump() for e in eventos],
     }
+
+
+def _conocidos(db: Session, escenario: Escenario, todas: list, bando: str, terreno, clima_ctx, ge_ctx) -> list:
+    """[(unidad enemiga, se ve ahora)]: las que el bando ve y las que solo conoce por un contacto anterior."""
+    ve = {u.id for u in unidades_visibles(todas, bando, terreno, clima_ctx, ge_ctx) if u.bando != bando}
+    por_id = {u.id: u for u in todas}
+    contactos = {c.unidad_id for c in db.query(Contacto).filter(Contacto.escenario_id == escenario.id, Contacto.bando == bando)}
+    return [(por_id[i], i in ve) for i in sorted(ve | contactos) if i in por_id]
 
 
 def catalogo_publico() -> list[dict]:

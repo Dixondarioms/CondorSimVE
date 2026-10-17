@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from app.engine import aar, contactos, objetivos, orders
+from app.engine import inteligencia
 from app.models.escenario import Escenario
 from app.models.orden import Orden
 
@@ -43,6 +44,7 @@ def avanzar_turno(
 
     objetivos.evaluar(db, escenario)
     contactos.actualizar_contactos(db, escenario, terreno)
+    inteligencia.procesar_turno(db, escenario)
     aar.guardar_instantanea(db, escenario, escenario.turno_actual)
 
     escenario.turno_actual += 1
