@@ -25,6 +25,14 @@
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
       "pagina": "https://commons.wikimedia.org/wiki/File:A_B-1B_Lancer.jpg"
     },
+    "buk_m2e": {
+      "foto": "/static/fotos/ref_buk_m2e.jpg",
+      "obra": "BUK-M2E VEN",
+      "autor": "Cancillería del Ecuador",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:BUK-M2E_VEN.jpg"
+    },
     "caza_embarcado": {
       "foto": "/static/fotos/ref_caza_embarcado.jpg",
       "obra": "F-18F after launch from USS Abraham Lincoln (CVN-72)",
@@ -185,6 +193,14 @@
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
       "pagina": "https://commons.wikimedia.org/wiki/File:US_Army_160th_SOAR_MH-6.jpg"
     },
+    "mistral": {
+      "foto": "/static/fotos/ref_mistral.jpg",
+      "obra": "Mistral Atlas launcher of the Hungarian Armed Forces cropped",
+      "autor": "Admiralis-generalis-Aladeen",
+      "licencia": "CC0",
+      "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Mistral_Atlas_launcher_of_the_Hungarian_Armed_Forces_cropped.jpg"
+    },
     "mq9": {
       "foto": "/static/fotos/ref_mq9.jpg",
       "obra": "MQ-9 Reaper in flight 2",
@@ -200,6 +216,22 @@
       "licencia": "Public domain",
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
       "pagina": "https://commons.wikimedia.org/wiki/File:P-8A_Poseidon_Executes_Training_Flight_(9341127).jpg"
+    },
+    "pechora_2m": {
+      "foto": "/static/fotos/ref_pechora_2m.jpg",
+      "obra": "Pechora-2M - missile launcher 1",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Pechora-2M_-_missile_launcher_1.jpg"
+    },
+    "rbs70": {
+      "foto": "/static/fotos/ref_rbs70.jpg",
+      "obra": "RBS 70 (3)",
+      "autor": "Reise Reise",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:RBS_70_(3).jpg"
     },
     "rc135": {
       "foto": "/static/fotos/ref_rc135.jpg",
@@ -240,6 +272,14 @@
       "licencia": "CC BY-SA 2.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:Insitu_ScanEagle_%E2%80%93_2017_Sola_Airshow_(28630372098).jpg"
+    },
+    "zu23_2": {
+      "foto": "/static/fotos/ref_zu23_2.jpg",
+      "obra": "ZU-23-2 in Saint Petersburg",
+      "autor": "One half 3544",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:ZU-23-2_in_Saint_Petersburg.jpg"
     }
   },
   "clases": {

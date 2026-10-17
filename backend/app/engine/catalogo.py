@@ -497,7 +497,7 @@ MODELOS: dict[str, Modelo] = {m.id: m for m in [
            30, 32, 160, 400, _atk(0.1, 2.4, 0.1), 0.85, "/static/fotos/pechora_2m.svg", _CREDITO_PROPIO),
     Modelo("buk_m2e", "antiaerea", "Buk-M2E (batería)", "Buk-M2E", "Almaz-Antey", "Rusia",
            "Sistema de misiles tierra-aire de mediano alcance autopropulsado",
-           "Sistema autopropulsado sobre orugas, operado por la Defensa Antiaérea venezolana. Cada TELAR lleva su "
+           "Sistema autopropulsado sobre ruedas (chasis MZKT en la versión venezolana), operado por la Defensa Antiaérea venezolana. Cada TELAR lleva su "
            "radar de tiro y 4 misiles; el radar de vigilancia 9S18M1-3E alimenta a la batería.",
            "12 misiles 9M317E listos (45 km, de 15 m a 25 km de altura) y 8 de recarga en el TEL; sección Igla-S de "
            "defensa cercana.",

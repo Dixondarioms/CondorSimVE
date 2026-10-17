@@ -473,7 +473,7 @@
   function buk() {
     return {
       piezas: [
-        ...orugas(0.42, 0.6, 1.0, 0.3),
+        ...ruedas([-0.78, -0.48, 0.2, 0.62], 0.44, 0.16, 0.12),  // chasis MZKT de 4 ejes (version venezolana)
         secciones([[-1.0, rect(-0.5, 0.5, 0.12, 0.42)], [0.85, rect(-0.5, 0.5, 0.12, 0.42)], [1.02, rect(-0.5, 0.5, 0.15, 0.3)]], "oliva"),
         enCapa(caja([-0.32, 0.32], [-0.35, 0.35], [0.42, 0.58], "oliva2"), 1),
         enCapa(caja([-0.22, 0.22], [0.36, 0.5], [0.5, 0.95], "oliva2"), 2),  // radar de tiro

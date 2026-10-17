@@ -125,7 +125,7 @@ SISTEMAS: dict[str, Sistema] = {s.modelo: s for s in [
             Arma("igla_s", "Igla-S (defensa cercana)", "misil_ir", "corto", 0.5, 6.0, 10.0, 3500.0, 0.4, 1, 600.0,
                  4, 8, 1.0),
         ), radar_vigilancia_km=160.0, radar_tiro_km=45.0, reaccion_s=12.0, canales=8,
-        despliegue_min=5.0, repliegue_min=5.0, movilidad="Autopropulsada sobre orugas (pesada)",
+        despliegue_min=5.0, repliegue_min=5.0, movilidad="Autopropulsada sobre ruedas (chasis MZKT, versión venezolana; pesada)",
         vehiculos=((2, "TELAR 9A317E (radar de tiro y 4 misiles)"), (1, "TEL 9A316E (4 misiles y 8 de recarga)"),
                    (1, "radar de vigilancia 9S18M1-3E"), (1, "puesto de mando 9S510E"),
                    (1, "vehículo de mantenimiento"), (1, "sección Igla-S de defensa cercana")),
