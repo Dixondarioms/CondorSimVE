@@ -804,6 +804,23 @@ def construir(salida: Path, img: Path) -> None:
                "<font face='Mono'>arma_elegida</font> (migración 0031); la munición de la unidad es el total de la reserva y el "
                "reabastecimiento se reparte entre las armas a las que les falta. <font face='Mono'>POST /unidades/{id}/defensa</font> "
                "acepta <font face='Mono'>arma</font>; <font face='Mono'>GET /api/catalogo</font> trae <font face='Mono'>sistemas_da</font>."])]
+    h += [H2("8.24 Apresto Operacional y Puesta en Completo Apresto Operacional (PCAO)"),
+          Bul(["<b>Fuente</b>: Manual de Apresto Operacional de la FANB y Milicia Bolivariana (CEO-MC-159, CEOFANB, "
+               "Dirección Conjunta de Operaciones, 25MAR2015). <font face='Mono'>engine/apresto.py</font>, "
+               "<font face='Mono'>Escenario.apresto_json</font>, migración 0039.",
+               "<b>Calificación</b> (Cap. I, Secc. B): tiene / no tiene apresto con los mínimos de la tabla A personal 75, "
+               "B armamento y munición 90, C equipamiento 85, D adiestramiento 85, E C3 90 (%). Datos del simulador: personal = "
+               "existentes + reservas + milicia / plantilla (<font face='Mono'>engine/toe.py</font>); B = mínimo de fuerza y "
+               "munición; C = fuerza (aviación: aeronaves listas); D = adiestramiento del bando; E = centros de "
+               "comunicaciones en pie × 0,85 si el plan de transmisiones tiene errores. Índices eliminatorios del Anexo A: "
+               "escuadrón (A.20: pilotos 75, aeronaves 80, técnicos 75; carga básica 50 por apreciación), GADAA ZU-23-2 "
+               "(A.15), CMDAA Pechora y Buk (A.16) y escuadrón de vigilancia y control (A.17).",
+               "<b>Grados y PCAO</b> (Cap. II y III): paz, elevado (fases 1-3), completo; 5 eventos con plazos en turnos "
+               "(por defecto 2, 24, 24, 24 y 72; o los de la tabla del documento TIEM «plan_pcao» al ordenarla con "
+               "<font face='Mono'>POST /pcao</font>, comandante o JEM). Efectos hasta cada evento: reservas y milicia fuera "
+               "de <font face='Mono'>toe.partes</font> hasta el 2; despegues limitados a la fracción lista (0,6 / 0,7 / 0,8 / "
+               "0,9) hasta el 4; adiestramiento que sube de la base a la meta en el 5; ataque × (0,8 + 0,2 × adiestramiento / "
+               "85) por debajo del 85 %. Sin configurar, el bando está en completo apresto y nada cambia."])]
     h += [H2("8.23 Plan de transmisiones, ejercicios largos y tarjetas tácticas"),
           Bul(["<b>Plan de transmisiones</b> (<font face='Mono'>engine/transmisiones.py</font>, <font face='Mono'>Escenario.transmisiones_json</font>, "
                "migración 0037; <font face='Mono'>PUT /transmisiones</font>, el alumno solo el de su bando): 5 redes con banda, "
@@ -1099,6 +1116,9 @@ def construir(salida: Path, img: Path) -> None:
                "Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4 y C-E reemplazan a los puestos EM, A2, A3, A4 y A5 (8.11)."],
               ["TIEM, etapa 1: Problema Militar Operativo", "Pestaña TIEM; engine/pmo.py",
                "El PMO de cada bando, redactado por el instructor o generado a partir del escenario, con la misión en la forma tarea «a fin de» propósito (8.11)."],
+              ["Apresto Operacional y PCAO", "Situación → Apresto Operacional; Consola → Apresto; TIEM → Plan de PCAO",
+               "Calificación de cada unidad con los mínimos del Manual de Apresto Operacional de la FANB, grados de apresto "
+               "y la PCAO en 5 eventos con sus efectos (8.24)."],
               ["Plan de transmisiones, ejercicios largos y tarjetas tácticas", "Situación → Plan de transmisiones; Consola → Dirección; el mapa",
                "Frecuencias primaria y secundaria verificadas, varios turnos seguidos y tarjeta y símbolo según el estado (8.23)."],
               ["Cálculo de armamento, BDA, Warden e inteligencia", "Planificar misión (armamento, CORTE); Situación → Warden e Inteligencia; Consola → Satélites",

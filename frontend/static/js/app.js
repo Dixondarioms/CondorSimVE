@@ -1859,6 +1859,19 @@
         set(`per-${b}-res`, (e) => { e.value = p.reserva ?? 0; });
         set(`per-${b}-mil`, (e) => { e.value = p.milicia ?? 0; });
         set(`per-${b}-tri`, (e) => { e.value = String(p.tripulaciones || 3); });
+        const apr = (esc.apresto || {})[b] || {};
+        set(`apr-${b}-grado`, (e) => {
+          if (!e.options.length) {
+            for (const [v, t] of [["paz", "Tiempo de paz"], ["elevado:1", "Elevado · fase amarilla"], ["elevado:2", "Elevado · fase naranja"],
+              ["elevado:3", "Elevado · fase roja"], ["completo", "Completo apresto"]]) e.appendChild(Object.assign(document.createElement("option"), { value: v, textContent: t }));
+          }
+          e.value = apr.grado === "elevado" ? `elevado:${apr.fase || 1}` : (apr.grado || "completo");
+        });
+        set(`apr-${b}-adi`, (e) => { e.value = apr.adiestramiento ?? 90; });
+        set(`apr-${b}-meta`, (e) => { e.value = apr.adiestramiento_meta ?? 95; });
+        for (const ev of ["aviso", "incorporacion", "organizacion", "material", "adiestramiento"]) {
+          set(`apr-${b}-p-${ev}`, (e) => { e.value = (apr.plazos || {})[ev] ?? ""; });
+        }
         const sat = (esc.inteligencia || {})[b] || {};
         set(`sat-${b}-n`, (e) => { e.value = sat.satelites ?? 0; });
         set(`sat-${b}-tipo`, (e) => { e.value = sat.tipo || "optico"; });
@@ -2053,6 +2066,43 @@
       esf.appendChild(dl);
     }
     renderTransmisiones(data, false);
+    // apresto operacional: grado, PCAO y calificacion de cada unidad
+    const ap = $("cuadro-apresto");
+    limpiar(ap);
+    let puedeOrdenar = false;
+    for (const [b, r] of Object.entries(data.apresto || {})) {
+      if (varios) ap.appendChild(Object.assign(document.createElement("h4"), { className: b, textContent: nombreDeBando(b) }));
+      ap.appendChild(Object.assign(document.createElement("p"), { className: "ayuda", textContent: Logica.textoGradoApresto(r) }));
+      const ul = document.createElement("ul");
+      ul.className = "lista-pcao";
+      if (r.pcao.activa || (r.config.pcao_inicio !== null && r.config.pcao_inicio !== undefined)) {
+        Logica.lineasPcao(r.pcao).forEach((t, i) => ul.appendChild(Object.assign(document.createElement("li"), { className: r.pcao.eventos[i].estado || "", textContent: t })));
+        if (r.pcao.activa) ul.appendChild(Object.assign(document.createElement("li"), { className: "ayuda", textContent: `Faltan ${r.pcao.restan} turnos para el Completo Apresto Operacional.` }));
+      } else if (r.config.grado !== "completo") {
+        ul.appendChild(Object.assign(document.createElement("li"), { className: "ayuda", textContent: `Sin PCAO en marcha: plazo total previsto ${r.pcao.total} turnos.` }));
+        puedeOrdenar = puedeOrdenar || esBando(b);
+      }
+      ap.appendChild(ul);
+      const t = document.createElement("table");
+      t.className = "tabla-personal tabla-toe tabla-apresto";
+      t.innerHTML = "<thead><tr><th>Unidad</th><th title='Personal'>A</th><th title='Armamento y munición'>B</th><th title='Equipamiento'>C</th><th title='Adiestramiento'>D</th><th title='Comando, control y comunicaciones'>E</th><th title='¿Tiene Apresto Operacional?'>Apresto</th></tr></thead>";
+      const tb = document.createElement("tbody");
+      for (const f of r.unidades) {
+        const tr = document.createElement("tr");
+        tr.className = f.tiene ? "tiene" : "no-tiene";
+        tr.title = [...f.motivos, ...f.observaciones].join("\n") || "Cumple todos los mínimos";
+        for (const c of Logica.filaApresto(f, r.minimos)) {
+          const td = document.createElement("td");
+          if (typeof c === "string") td.textContent = c;
+          else { td.textContent = c.texto; if (c.bajo) td.className = "bajo"; }
+          tr.appendChild(td);
+        }
+        tb.appendChild(tr);
+      }
+      t.appendChild(tb);
+      ap.appendChild(t);
+    }
+    $("btn-pcao").hidden = !(puedeOrdenar && esAlumno() && ["comandante", "jem"].includes((app.usuario && app.usuario.puesto) || "comandante"));
     // analisis de sistemas del enemigo: anillos de Warden
     const wd = $("cuadro-warden");
     limpiar(wd);
@@ -2892,6 +2942,25 @@
     enSilencio(api("PUT", rutaEsc("/transmisiones"), { bando: b, redes }).then((r) => toast(r.errores.length ? `Plan guardado con ${r.errores.length} observación(es)` : "Plan de transmisiones guardado", !r.errores.length)));
   });
   $("tx-bando").addEventListener("change", () => { if (app.data) renderTransmisiones(app.data, true); });
+  $("btn-apresto").addEventListener("click", () => {
+    if (!app.escenarioId) return;
+    const num = (id, def) => { const v = parseInt($(id).value, 10); return Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : def; };
+    const apresto = Object.fromEntries(["azul", "rojo"].map((b) => {
+      const [grado, fase] = $(`apr-${b}-grado`).value.split(":");
+      const plazos = Object.fromEntries(["aviso", "incorporacion", "organizacion", "material", "adiestramiento"]
+        .map((ev) => [ev, Math.max(0, parseInt($(`apr-${b}-p-${ev}`).value, 10) || 0)]));
+      return [b, { grado, fase: fase ? parseInt(fase, 10) : undefined, adiestramiento: num(`apr-${b}-adi`, 90),
+        adiestramiento_meta: num(`apr-${b}-meta`, 95), plazos }];
+    }));
+    enSilencio(api("PATCH", rutaEsc("/config"), { apresto }).then(() => toast("Apresto aplicado", true)));
+  });
+  const ordenarPcao = (bando) => {
+    if (!app.escenarioId || !confirm("¿Ordenar la Puesta en Completo Apresto Operacional? Empiezan a correr los 5 eventos.")) return;
+    enSilencio(api("POST", rutaEsc("/pcao"), bando ? { bando } : {}).then((r) => toast(`PCAO ordenada: ${r.pcao.total} turnos`, true)));
+  };
+  $("btn-pcao").addEventListener("click", () => ordenarPcao(null));
+  $("btn-pcao-azul").addEventListener("click", () => ordenarPcao("azul"));
+  $("btn-pcao-rojo").addEventListener("click", () => ordenarPcao("rojo"));
   $("btn-satelites").addEventListener("click", () => {
     if (!app.escenarioId) return;
     const inteligencia = Object.fromEntries(["azul", "rojo"].map((b) => [b, {

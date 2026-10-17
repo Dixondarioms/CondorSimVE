@@ -28,6 +28,7 @@ from app.engine import rescate as rescate_mod
 from app.engine import inteligencia as intel_mod
 from app.engine import warden as warden_mod
 from app.engine import transmisiones as trans_mod
+from app.engine import apresto as apresto_mod
 from app.engine.vision import cuadro_sensores, unidades_visibles
 from app.models.contacto import Contacto
 from app.models.escenario import Escenario
@@ -50,7 +51,7 @@ CAMPOS_OCULTOS = (
     "transporte_id", "personal_inicial", "personal_actual", "sistema_da", "pista_largo_m", "pista_util_m", "recorrido",
 )
 TURNOS_ORDENES = 3  # ordenes ya resueltas que viajan con el estado (el historial completo esta en el AAR)
-CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct", "com_ordenes_pct", "inteligencia")
+CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct", "com_ordenes_pct", "inteligencia", "apresto")
 
 
 def es_bando(rol: str) -> bool:
@@ -194,7 +195,9 @@ def estado_para(
         "objetivos": objetivos_para(db, escenario, rol),
         "personal": {b: personal_mod.resumen(todas, b) for b in bandos_propios},
         # plantilla de personal por unidad con reservas y milicia, y esfuerzo aereo (engine/toe.py, disponibilidad.py)
-        "personal_toe": {b: toe_mod.partes(todas, escenario, b) for b in bandos_propios},
+        "personal_toe": (partes := {b: toe_mod.partes(todas, escenario, b) for b in bandos_propios}),
+        # apresto operacional: grado, PCAO y calificacion de cada unidad (engine/apresto.py)
+        "apresto": {b: apresto_mod.resumen(escenario, b, todas, partes[b]) for b in bandos_propios},
         "esfuerzo": {b: disp_mod.resumen(escenario, b, todas) for b in bandos_propios},
         # recuperacion de personal (tripulaciones derribadas) y puntos de recobre operacional
         "derribados": rescate_mod.visibles(escenario, rol, todas),

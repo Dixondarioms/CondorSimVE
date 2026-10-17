@@ -147,7 +147,8 @@ def test_una_mision_csar_rescata_a_la_tripulacion(db_session):
     assert any("rescató" in e.descripcion for e in db_session.query(Evento))
 
 
-def test_el_derribo_en_vuelo_deja_tripulantes_aislados(db_session):
+def test_el_derribo_en_vuelo_deja_tripulantes_aislados(db_session, monkeypatch):
+    monkeypatch.setattr(rescate, "PROB_CAPTURA", 1.0)  # la probabilidad la prueba test_el_enemigo_cercano_puede_capturarlos
     esc = _escenario(db_session)
     caza = _caza(db_session, esc, nombre="Halcon", modelo="f16", aeronaves=4, lat=0.3)
     _unidad(db_session, esc, nombre="SAM", bando="rojo", tipo="terrestre", clase="antiaerea", lat=0.32, alcance_km=40,

@@ -68,6 +68,7 @@ class Escenario(Base):
     derribados_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # engine/rescate.py
     inteligencia_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # engine/inteligencia.py
     transmisiones_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # engine/transmisiones.py
+    apresto_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # engine/apresto.py (grado y PCAO)
     esfuerzo_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # identidad nacional de cada bando (ver engine/naciones.py); "" = sin especificar (se muestra "Azul"/"Rojo")
@@ -106,6 +107,13 @@ class Escenario(Base):
         from app.engine import toe
 
         return {b: toe.config(self, b) for b in ("azul", "rojo")}
+
+    @property
+    def apresto(self) -> dict:
+        """Grado de Apresto Operacional y PCAO de cada bando (engine/apresto.py)."""
+        from app.engine import apresto
+
+        return {b: apresto.config(self, b) for b in ("azul", "rojo")}
 
     @property
     def inteligencia(self) -> dict:

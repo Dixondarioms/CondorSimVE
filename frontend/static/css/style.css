@@ -509,3 +509,16 @@ dialog td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .tabla-transmisiones thead th:nth-child(2) { width: 17%; }
 .tabla-transmisiones input, .tabla-transmisiones select { width: 100%; box-sizing: border-box; min-width: 0; font-size: 11px; padding: 2px; }
 .avanzar-varios { align-items: flex-end; gap: 6px; }
+
+/* apresto operacional y PCAO (pestaña Situación) */
+.tabla-apresto { width: 100%; table-layout: fixed; }
+.tabla-apresto th:first-child, .tabla-apresto td:first-child { width: 38%; }
+.tabla-apresto td, .tabla-apresto th { text-align: center; padding: 2px; }
+.tabla-apresto td:first-child, .tabla-apresto th:first-child { text-align: left; }
+.tabla-apresto td.bajo { color: #ef476f; font-weight: 600; }
+.tabla-apresto tr.tiene td:last-child { color: #2ec4b6; }
+.tabla-apresto tr.no-tiene td:last-child { color: #ef476f; font-weight: 600; }
+.lista-pcao { margin: 2px 0 8px 16px; padding: 0; font-size: 12px; }
+.lista-pcao li.cumplido { color: #2ec4b6; }
+.lista-pcao li.en.curso { color: #ffd166; font-weight: 600; }
+.tabla-apresto-cfg input, .tabla-apresto-cfg select { width: 100%; box-sizing: border-box; min-width: 0; font-size: 11px; }

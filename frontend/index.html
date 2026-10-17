@@ -259,6 +259,16 @@
               (muertos, heridos y desaparecidos).</p>
             <div id="cuadro-personal"></div>
           </section>
+          <section class="bloque" id="sec-apresto">
+            <h2>Apresto Operacional y PCAO</h2>
+            <p class="ayuda">Cada unidad tiene o no tiene Apresto Operacional según los mínimos del Manual de Apresto
+              Operacional de la FANB: A personal 75 %, B armamento y munición 90 %, C equipamiento 85 %, D adiestramiento
+              85 % y E comando, control y comunicaciones 90 %, más las exigencias de su tipo (escuadrón: 75 % de pilotos,
+              80 % de aeronaves y 75 % de técnicos). La Puesta en Completo Apresto Operacional (PCAO) se cumple en 5
+              eventos; la ordena el Comandante o el JEM.</p>
+            <div id="cuadro-apresto"></div>
+            <button id="btn-pcao" type="button" class="primario" hidden>Ordenar la PCAO</button>
+          </section>
           <section class="bloque" id="sec-toe">
             <h2>Parte de personal por unidad</h2>
             <p class="ayuda">Plantilla (lo autorizado) frente a lo existente, con lo que cubren las reservas activas (res.) y los
@@ -573,6 +583,32 @@
               <button id="btn-cal-defecto" type="button" class="secundario mini">Usar las fases por defecto</button>
             </div>
             <button id="btn-calendario" type="button">Aplicar calendario</button>
+          </details>
+
+          <details>
+            <summary>Apresto Operacional de cada bando (grado y plazos de la PCAO)</summary>
+            <p class="ayuda">Grado de apresto de cada bando. En tiempo de paz y en elevado apresto no todas las aeronaves
+              están listas (60 % y 70/80/90 % según la fase) y las reservas y la milicia no se incorporan hasta el evento 2
+              de la PCAO. Los plazos se cuentan en turnos (horas); si el bando aprobó un Plan de PCAO, rigen los suyos.</p>
+            <table class="tabla-personal-cfg tabla-apresto-cfg">
+              <thead><tr><th></th><th>Grado</th><th>Adiestr. %</th><th>Meta %</th></tr></thead>
+              <tbody>
+                <tr><th>Azul</th><td><select id="apr-azul-grado"></select></td><td><input id="apr-azul-adi" type="number" min="0" max="100"></td><td><input id="apr-azul-meta" type="number" min="0" max="100"></td></tr>
+                <tr><th>Rojo</th><td><select id="apr-rojo-grado"></select></td><td><input id="apr-rojo-adi" type="number" min="0" max="100"></td><td><input id="apr-rojo-meta" type="number" min="0" max="100"></td></tr>
+              </tbody>
+            </table>
+            <table class="tabla-personal-cfg tabla-apresto-cfg">
+              <thead><tr><th>Plazos (turnos)</th><th>Aviso</th><th>Incorp.</th><th>Organiz.</th><th>Material</th><th>Adiestr.</th></tr></thead>
+              <tbody>
+                <tr><th>Azul</th><td><input id="apr-azul-p-aviso" type="number" min="0"></td><td><input id="apr-azul-p-incorporacion" type="number" min="0"></td><td><input id="apr-azul-p-organizacion" type="number" min="0"></td><td><input id="apr-azul-p-material" type="number" min="0"></td><td><input id="apr-azul-p-adiestramiento" type="number" min="0"></td></tr>
+                <tr><th>Rojo</th><td><input id="apr-rojo-p-aviso" type="number" min="0"></td><td><input id="apr-rojo-p-incorporacion" type="number" min="0"></td><td><input id="apr-rojo-p-organizacion" type="number" min="0"></td><td><input id="apr-rojo-p-material" type="number" min="0"></td><td><input id="apr-rojo-p-adiestramiento" type="number" min="0"></td></tr>
+              </tbody>
+            </table>
+            <div class="fila">
+              <button id="btn-apresto" type="button">Aplicar apresto</button>
+              <button id="btn-pcao-azul" type="button" class="secundario">Ordenar PCAO azul</button>
+              <button id="btn-pcao-rojo" type="button" class="secundario">Ordenar PCAO rojo</button>
+            </div>
           </details>
 
           <details>

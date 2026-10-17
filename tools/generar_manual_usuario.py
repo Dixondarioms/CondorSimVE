@@ -478,6 +478,21 @@ def construir(salida: Path) -> None:
              "más cercana a su alcance.",
              f"{B('Arma a emplear')} (sistemas de defensa aérea): automática o un arma fija; ver abajo."]),
     ])
+    h += [H3("Apresto Operacional y PCAO"),
+          P("<b>Situación → Apresto Operacional y PCAO</b> califica cada unidad como lo hace el Manual de Apresto "
+            "Operacional de la FANB y Milicia Bolivariana (CEO-MC-159, 2015): <b>tiene</b> apresto si alcanza el mínimo de "
+            "cada literal (A personal 75 %, B armamento y munición 90 %, C equipamiento 85 %, D adiestramiento 85 %, "
+            "E comando, control y comunicaciones 90 %) y las exigencias de su tipo: un escuadrón necesita el 75 % de su "
+            "personal de vuelo, el 80 % de sus aeronaves disponibles y el 75 % de sus técnicos; una batería ZU-23-2, el 75 % "
+            "de su equipo de combate; un Pechora, al menos 2 rampas listas; un radar, el 80 % operativo. Al pasar el ratón "
+            "sobre la fila se ve qué le falta."),
+          P("El instructor fija el <b>grado</b> de cada bando (tiempo de paz, elevado con sus fases amarilla, naranja y "
+            "roja, o completo). Mientras el bando no completa la <b>Puesta en Completo Apresto Operacional (PCAO)</b>, "
+            "parte de las aeronaves está preservada (60 % listas en paz; 70, 80 o 90 % según la fase), las reservas y la "
+            "milicia no se incorporan y, con adiestramiento por debajo del 85 %, las unidades combaten peor. El Comandante "
+            "o el JEM pulsan <b>Ordenar la PCAO</b> y corren los 5 eventos: aviso, incorporación del personal y los "
+            "recursos, organización de las unidades, preparación del material de guerra y adiestramiento y cohesión de "
+            "combate. Si el bando aprobó su <b>Plan de PCAO</b> (pestaña TIEM), rigen los plazos de ese plan.")]
     h += [H3("Plan de transmisiones (C-E)"),
           P("Cada bando carga en <b>Situación → Plan de transmisiones</b> la frecuencia primaria y la secundaria de sus redes "
             "(mando y control, control de interceptación, ataque y apoyo aéreo cercano, defensa aérea, logística). El "

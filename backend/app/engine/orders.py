@@ -37,6 +37,7 @@ from app.engine import apoyo_aereo as apoyo_mod
 from app.engine import rescate as rescate_mod
 from app.engine import weaponeering as weap_mod
 from app.engine import transmisiones as trans_mod
+from app.engine import apresto as apresto_mod
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import infraestructura as infra_mod
@@ -334,7 +335,14 @@ def procesar_ordenes(
     cobertura_aerea: dict[str, tuple] = {}
 
     def disponibles(base, modelo_id: str, n: int, clave) -> tuple[int, str]:
-        """Aeronaves listas para despegar (todas, si el escenario no simula la disponibilidad)."""
+        """Aeronaves listas para despegar: las que no estan preservadas segun el grado de apresto y, si el escenario
+        simula la disponibilidad, las que estan en servicio."""
+        fraccion = apresto_mod.fraccion_aeronaves_listas(escenario, base.bando, turno)
+        if fraccion < 1.0:
+            preservadas = n - int(round(n * fraccion))
+            if preservadas > 0:
+                return n - preservadas, (f"{preservadas} preservada(s): el bando no completó la preparación del material "
+                                         "de guerra (evento 4 de la PCAO)")
         if not getattr(escenario, "fallas", False):
             return n, ""
         if base.bando not in cobertura_aerea:
@@ -888,7 +896,7 @@ def procesar_ordenes(
             factor_ataque=clase_a.ataque_vs.get(t_d, 1.0) * catalogo.factor_grupo(a)
             * (FACTOR_ATAQUE_TRAS_EVASION if a.id in evadieron else 1.0)
             * (ge_mod.FACTOR_ANTIAEREA if aaa_interferida else 1.0) * (ge_mod.FACTOR_TIRO_OPTICO if aaa_optica else 1.0)
-            * relieve.factor_portatil(a, d) * ota_mod.factor_ataque(a, d)
+            * relieve.factor_portatil(a, d) * ota_mod.factor_ataque(a, d) * apresto_mod.factor_adiestramiento(escenario, a.bando)
             * apoyo_mod.factor_control(a, d, lista_unidades, lambda x, b: misiones_mod._visible(x, b, lista_unidades, terreno, clima, ge)),
             factor_defensa=clase_d.defensa * catalogo.factor_grupo(d),
             factor_clima=clima_mod.factor_ataque_aereo(clima, d.lat, d.lon) if a.tipo == "aerea" else 1.0,
@@ -1129,6 +1137,10 @@ def procesar_ordenes(
             db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="logistica", bando_destino=u.bando,
                           descripcion=f"{k} aeronave(s) de {u.nombre} regresan a su base por falla técnica; "
                                       f"el grupo sigue con {u.aeronaves}."))
+
+    # PCAO: los eventos que se cumplen este turno y el paso a Completo Apresto Operacional
+    for bando, texto in apresto_mod.avanzar(escenario, turno):
+        db.add(Evento(escenario_id=escenario.id, turno=turno, tipo="direccion", bando_destino=bando, descripcion=texto))
 
     # tripulaciones aisladas: captura por el enemigo cercano o perdida al pasar su tiempo de supervivencia
     for d, nuevo in rescate_mod.avanzar(escenario, lista_unidades, turno):

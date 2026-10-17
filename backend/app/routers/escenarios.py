@@ -10,6 +10,7 @@ from app.db import get_db
 from app.engine import toe
 from app.engine import inteligencia
 from app.engine import transmisiones
+from app.engine import apresto
 from app.engine import aar, calendario, clock, naciones, plantillas, timeline
 from app.models.aar import Instantanea
 from app.models.objetivo import Objetivo
@@ -96,6 +97,42 @@ async def avanzar_turno(
             break
         await turnos.resolver_y_difundir(db, esc)
     return state.estado_para(db, esc, usuario.rol)
+
+
+@router.post("/{escenario_id}/pcao")
+async def ordenar_pcao(
+    payload: schemas.PcaoIn,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.usuario_actual),
+):
+    """Ordena la Puesta en Completo Apresto Operacional: el comandante o el JEM del bando, o el instructor. Si el
+    bando tiene un Plan de PCAO con los plazos de los 5 eventos, rigen esos plazos."""
+    if usuario.rol in ("azul", "rojo"):
+        if (usuario.puesto or "comandante") not in ("comandante", "jem"):
+            raise HTTPException(status_code=403, detail="La PCAO la ordena el Comandante o el Jefe de Estado Mayor")
+        bando = usuario.rol
+    elif usuario.rol == "instructor" and payload.bando:
+        bando = payload.bando
+    else:
+        raise HTTPException(status_code=403, detail="Solo el comandante del bando o el instructor ordenan la PCAO")
+    c = apresto.config(esc, bando)
+    if c["grado"] == "completo":
+        raise HTTPException(status_code=400, detail="El bando ya está en Completo Apresto Operacional")
+    if c.get("pcao_inicio") is not None:
+        raise HTTPException(status_code=400, detail="La PCAO ya está en marcha")
+    doc = db.query(DocumentoTiem).filter(DocumentoTiem.escenario_id == esc.id, DocumentoTiem.bando == bando,
+                                         DocumentoTiem.tipo == "plan_pcao").one_or_none()
+    plazos = apresto.plazos_del_plan(json.loads(doc.contenido_json)) if doc is not None else None
+    apresto.iniciar_pcao(esc, bando, esc.turno_actual, plazos)
+    p = apresto.progreso(esc, bando, esc.turno_actual)
+    db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino=bando,
+                  descripcion=f"Se ordenó la Puesta en Completo Apresto Operacional (PCAO): {p['total']} turnos en 5 "
+                              f"eventos{' según el Plan de PCAO' if plazos else ''}; termina en el turno "
+                              f"{esc.turno_actual + p['total']}."))
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return apresto.resumen(esc, bando, db.query(Unidad).filter(Unidad.escenario_id == esc.id).all())
 
 
 @router.put("/{escenario_id}/transmisiones")
@@ -213,6 +250,18 @@ async def configurar(
                 actual[bando] = {**actual[bando], **nuevos}
                 cambios.append(f"personal del bando {bando.capitalize()}: " + ", ".join(f"{k} {v}" for k, v in nuevos.items()))
         esc.personal_json = json.dumps(actual)
+    if payload.apresto is not None:
+        for bando, datos in payload.apresto.items():
+            d = datos.model_dump(exclude_none=True)
+            reiniciar = d.pop("reiniciar_pcao", False)
+            if reiniciar or d.get("grado") in ("paz", "elevado"):
+                d["pcao_inicio"] = None
+            c = apresto.guardar(esc, bando, **d)
+            cambios.append(f"apresto del bando {bando.capitalize()}: {apresto.NOMBRE_GRADO[c['grado']]}"
+                           + (f", fase {apresto.FASES[int(c['fase'])]}" if c["grado"] == "elevado" else ""))
+            db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino=bando,
+                          descripcion=f"El bando pasa a {apresto.NOMBRE_GRADO[c['grado']]}"
+                                      + (f" (fase {apresto.FASES[int(c['fase'])]})." if c["grado"] == "elevado" else ".")))
     if payload.inteligencia is not None:
         for bando, datos in payload.inteligencia.items():
             c = inteligencia.configurar(esc, bando, datos.satelites, datos.tipo)

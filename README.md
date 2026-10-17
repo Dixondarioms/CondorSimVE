@@ -767,6 +767,14 @@ el motor ejecuta solo, turno tras turno ("✈ Planificar misión…" en el panel
   re-ataque; la pestaña Situación muestra los objetivos enemigos conocidos por anillo de Warden. Un punto CORTE corta
   una carretera (cráter por 12 turnos). Los satélites (ópticos o radar, los asigna el instructor) pasan dos veces
   por día, sus imágenes tardan un turno en procesarse y el A-2 recibe un INTSUM cada 6 turnos.
+- **Apresto Operacional y PCAO** (`engine/apresto.py`, migración `0039`; fuente: *Manual de Apresto Operacional de
+  la FANB y Milicia Bolivariana*, CEO-MC-159, CEOFANB, 2015): cada unidad tiene o no tiene apresto según los mínimos
+  de la tabla (personal 75 %, armamento y munición 90 %, equipamiento 85 %, adiestramiento 85 %, comando, control y
+  comunicaciones 90 %) y las exigencias de su tipo (escuadrón, ZU-23-2, Pechora, Buk, radar). El instructor fija el
+  grado de cada bando (paz, elevado con fases amarilla, naranja y roja, o completo); el Comandante o el JEM ordenan
+  la Puesta en Completo Apresto Operacional, que corre en 5 eventos con plazos en turnos (los del Plan de PCAO del
+  TIEM, si lo hay). Hasta cumplirlos, parte de las aeronaves está preservada, las reservas y la milicia no se
+  incorporan y el adiestramiento bajo resta potencia. El manual en PDF no va en el repositorio.
 - **Plan de transmisiones, ejercicios largos y tarjetas tácticas** (`engine/transmisiones.py`, migración `0037`):
   cada bando carga las frecuencias primaria y secundaria de sus redes; el simulador verifica banda, guardia,
   separación y vigencia (24 turnos), y el plan pesa en la demora de las órdenes y ante la interferencia. Para

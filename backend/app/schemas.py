@@ -108,6 +108,7 @@ class EscenarioOut(BaseModel):
     fallas: bool = False
     personal: dict | None = None
     inteligencia: dict | None = None  # satelites de cada bando (solo el instructor)
+    apresto: dict | None = None  # grado de apresto y PCAO de cada bando (solo el instructor)
     # quien conduce cada bando: alumnos | instructor | ia
     conduccion_azul: str = "alumnos"
     conduccion_rojo: str = "alumnos"
@@ -141,6 +142,21 @@ class RedTransmisionIn(BaseModel):
 class PlanTransmisionesIn(BaseModel):
     bando: Literal["azul", "rojo"] | None = None  # solo el instructor elige el bando
     redes: list[RedTransmisionIn] = Field(min_length=1, max_length=8)
+
+
+class AprestoBandoIn(BaseModel):
+    """Grado de Apresto Operacional de un bando y plazos de la PCAO (engine/apresto.py)."""
+
+    grado: Literal["paz", "elevado", "completo"] | None = None
+    fase: int | None = Field(default=None, ge=1, le=3)  # elevado: 1 amarilla, 2 naranja, 3 roja
+    adiestramiento: int | None = Field(default=None, ge=0, le=100)
+    adiestramiento_meta: int | None = Field(default=None, ge=0, le=100)
+    plazos: dict[Literal["aviso", "incorporacion", "organizacion", "material", "adiestramiento"], int] | None = None
+    reiniciar_pcao: bool = False  # vuelve a tiempo de paz o elevado sin PCAO en marcha
+
+
+class PcaoIn(BaseModel):
+    bando: Literal["azul", "rojo"] | None = None  # solo el instructor elige el bando
 
 
 class InteligenciaBandoIn(BaseModel):
@@ -192,6 +208,7 @@ class EscenarioConfig(BaseModel):
     fallas: bool | None = None
     personal: dict[Literal["azul", "rojo"], PersonalBandoIn] | None = None
     inteligencia: dict[Literal["azul", "rojo"], "InteligenciaBandoIn"] | None = None
+    apresto: dict[Literal["azul", "rojo"], "AprestoBandoIn"] | None = None
     # identidad nacional de cada bando (ver /api/naciones); "" quita la identidad y deja "Azul"/"Rojo"
     nacion_azul: str | None = None
     nacion_rojo: str | None = None

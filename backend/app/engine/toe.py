@@ -88,6 +88,10 @@ def partes(unidades, escenario, bando: str) -> dict:
     cobertura = max(0.0, min(100.0, float(cfg["cobertura"]))) / 100.0
     tripulaciones = 4 if int(cfg.get("tripulaciones") or 3) >= 4 else 3
     reserva, milicia = max(0, int(cfg["reserva"] or 0)), max(0, int(cfg["milicia"] or 0))
+    from app.engine import apresto  # importacion tardia: apresto usa este modulo
+
+    if not apresto.reservas_incorporadas(escenario, bando):
+        reserva = milicia = 0  # hasta el evento 2 de la PCAO no se incorporaron
     propias = [u for u in unidades if u.bando == bando and u.estado != "destruida"
                and (personal.inicial(u) or _aereo(u))]
     filas = []

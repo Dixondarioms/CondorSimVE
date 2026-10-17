@@ -595,6 +595,31 @@
     return [f.nombre, String(f.objetivos), estado || (f.objetivos ? "operativos" : "—"), (f.ejemplos || []).join(", ")];
   }
 
+  // ---------------------------------------------------------------- apresto operacional (engine/apresto.py)
+  const ASPECTOS_APRESTO = ["personal", "armamento", "equipamiento", "adiestramiento", "c3"];
+
+  /** Linea del grado del bando: "Elevado Apresto Operacional (fase naranja) · aeronaves listas 80 % · ..." */
+  function textoGradoApresto(r) {
+    if (!r) return "";
+    const c = r.config || {};
+    return `${r.grado_nombre}${c.grado === "elevado" && r.fase_nombre ? ` (fase ${r.fase_nombre})` : ""}`
+      + ` · aeronaves listas ${r.aeronaves_listas_pct} %`
+      + ` · reservas y milicia ${r.reservas_incorporadas ? "incorporadas" : "sin incorporar (evento 2 de la PCAO)"}`
+      + ` · ${r.tienen} de ${r.total} unidad${r.total === 1 ? "" : "es"} con apresto.`;
+  }
+
+  /** Celdas de una unidad en el cuadro de apresto (en %): [nombre, {texto, bajo} x 5, "Sí" | "No"]. */
+  function filaApresto(f, minimos) {
+    return [f.nombre, ...ASPECTOS_APRESTO.map((k) => ({ texto: String(Math.round(f.aspectos[k])), bajo: f.aspectos[k] < minimos[k] })),
+      f.tiene ? "Sí" : "No"];
+  }
+
+  /** Estado de cada evento de la PCAO: "1. Activación ... · 2 turnos · cumplido". */
+  function lineasPcao(p) {
+    if (!p) return [];
+    return p.eventos.map((e) => `${e.nombre} · ${e.plazo} turno${e.plazo === 1 ? "" : "s"}${e.estado ? ` · ${e.estado}` : ""}`);
+  }
+
   // ---------------------------------------------------------------- tarjeta tactica dinamica de una unidad
   const NOMBRE_PERFIL_CORTO = { alto: "alto", medio: "medio", rasante: "rasante" };
 
@@ -1085,6 +1110,7 @@
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,
     ESTADOS_MISION, TIPOS_PUNTO_MISION, misionActiva, horaEstimada, textoMision, tramosCronograma, armasParaRol, textoTramo, textoPaquete,
     ESTADOS_DERRIBADO, textoDerribado, derribadoCercano, textoWeaponeering, filaWarden, estadoSimbolo, lineasTarjeta,
+    ASPECTOS_APRESTO, textoGradoApresto, filaApresto, lineasPcao,
     RADIO_SIN_EMISION_KM, deteccionEfectiva, pctStock,
     nacionDe, etiquetaBandoNacion, filtrarUnidades, textoObjetivo, avanceObjetivo, ETIQUETA_OBJETIVO, CAPACIDAD_BASE, RADIO_ATERRIZAJE_KM, estacionadasEn, plazasLibres, opcionesDeAterrizaje, situacionDeVuelo,
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,

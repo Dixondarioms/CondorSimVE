@@ -65,7 +65,9 @@ def test_salen_las_aeronaves_listas_y_no_mas_que_las_tripulaciones():
     assert sin < con * 0.7
 
 
-def test_con_fallas_el_despegue_lanza_solo_las_listas_y_cuenta_el_esfuerzo(db_session):
+def test_con_fallas_el_despegue_lanza_solo_las_listas_y_cuenta_el_esfuerzo(db_session, monkeypatch):
+    # solo el despegue: sin fallas en vuelo ese mismo turno (con algunas semillas fallaba una aeronave en el aire)
+    monkeypatch.setitem(disponibilidad.FALLA_HORA_CLASE, "caza", 0.0)
     esc = _escenario(db_session)
     esc.fallas = True
     base = _base(db_session, esc)

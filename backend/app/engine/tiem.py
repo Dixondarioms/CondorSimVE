@@ -309,6 +309,27 @@ DOCUMENTOS: dict[str, Documento] = {d.tipo: d for d in [
         Campo("logistica", "4. Asuntos logísticos", requerido=False),
         Campo("comando", "5. Asuntos de comando y comunicaciones", requerido=False),
     ), "El plan convierte la decisión en tareas para cada unidad, en tiempo y espacio."),
+    Documento("plan_pcao", "Plan de Puesta en Completo Apresto Operacional (PCAO)", "Fase II · Paso 2",
+              ("jem", "a1", "a4", "a3", "comandante"), (
+        Campo("situacion", "1. Situación (amenaza y grado de Apresto Operacional actual)"),
+        Campo("mision", "2. Misión", "mision"),
+        Campo("eventos", "3. Eventos de la PCAO y sus plazos", "tabla", min_filas=5, columnas=(
+            Columna("evento", "Evento", ("1. Activación del plan de localización", "2. Incorporación del personal y los recursos",
+                                         "3. Organización y formación de las unidades",
+                                         "4. Preparación del material de guerra", "5. Adiestramiento y cohesión de combate")),
+            Columna("medidas", "Medidas a ejecutar"), Columna("responsable", "Responsable"),
+            Columna("plazo", "Plazo (turnos)")),
+              ayuda="Los 5 eventos en orden; la suma de los plazos es el plazo total de la PCAO. Al ordenar la PCAO rigen "
+                    "estos plazos (un turno es una hora)."),
+        Campo("puntos", "4. Puntos y áreas de la movilización y concentración de medios", "tabla", requerido=False,
+              columnas=(Columna("punto", "Punto o área"), Columna("tipo", "Tipo", (
+                  "punto de reunión del personal", "punto de reunión del transporte", "punto de encuentro", "área de espera",
+                  "región de movilización", "punto de recepción", "área de equipamiento", "área de formación")),
+                  Columna("ubicacion", "Ubicación"))),
+        Campo("enmascaramiento", "5. Medidas de enmascaramiento", requerido=False),
+        Campo("comando", "6. Comando y comunicaciones (pre-arreglado, indicativos, puesto de comando)"),
+    ), "Cómo el bando pasa del grado de apresto actual al Completo Apresto Operacional, evento por evento "
+       "(Manual de Apresto Operacional de la FANB, CEO-MC-159)."),
     Documento("supervision", "Supervisión de la ejecución", "Fase III", ("comandante", "jem", "a3", "a3da", "a2"), (
         Campo("registro", "Registro de supervisión", "tabla", requerido=False, columnas=(
             Columna("turno", "Turno"), Columna("objetivo", "Objetivo (lo previsto)"), Columna("resultado", "Resultado"),
