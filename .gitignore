@@ -36,3 +36,5 @@ tools/fotos/salida/
 backend/data/modelos_usuario.json
 # fotos que carga el instructor (Consola -> Catalogo propio): datos de cada instalacion
 backend/data/fotos_usuario/
+# cuentas de prueba del video tutorial (tools/manual/video_tutorial.py): nunca al repositorio
+backend/cuentas_video.json

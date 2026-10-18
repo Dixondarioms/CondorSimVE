@@ -22,6 +22,13 @@ recortado, sin el fondo: `dida_logo_recortado.png`, que genera `python tools/rec
   regenera con `python tools/generar_manual.py --imagenes <carpeta de capturas>` (capturas: `tools/manual/capturas.py`).
 - **Video de presentación en 4K con locución** (voces neuronales de Microsoft, español de Venezuela): doble clic en
   `tools\video\generar_video.cmd`; detalles en `tools/video/README.md`.
+- **Video tutorial (2K) grabado sobre un ejercicio real**: `tools/manual/video_tutorial.py` maneja Chrome sobre el
+  simulador en marcha y graba, con voz natural y subtítulos, cómo entrar, crear el escenario desde una plantilla,
+  ubicar unidades y objetivos, dirigir el ejercicio, dar órdenes y planificar misiones como alumno, resolver el turno
+  y revisar el informe y el videowall. Necesita ffmpeg, `edge-tts` (internet solo para la voz) y un JSON con las
+  cuentas de prueba (`SIETE_CUENTAS`; nunca se muestran). Sale en `dist/video/2K/SIETE_3_tutorial_2K.mp4`
+  (`--1080` para 1920×1080; `--solo=acceso,crear` y `--rapido --sin-voz` para probar una parte). Los videos de
+  exposición con capturas fijas: `tools/manual/videos_exposicion.py`.
 - **Fotos de referencia** de aeronaves, drones, buques, sistemas antiaéreos y clases terrestres (Wikimedia Commons,
   licencias libres, con su crédito): doble
   clic en `tools\fotos\descargar_fotos.cmd` en un equipo con internet y reinicie el servidor. Prefiere el equipo
