@@ -1,0 +1,27 @@
+{
+ "firma": "095fa4859775888f9098d2ae37aa4de6dfb67adf",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 1.6218105,
+   "texto": "Hay tres roles."
+  },
+  {
+   "inicio": 1.6718105,
+   "duracion": 4.9725648,
+   "texto": "El instructor dirige el ejercicio y lo ve todo; puede ver el mapa como lo ve cada bando."
+  },
+  {
+   "inicio": 6.6443754,
+   "duracion": 4.9939983,
+   "texto": "Los alumnos se dividen en el bando azul y el rojo, y solo ven lo que sus sensores detectan."
+  },
+  {
+   "inicio": 11.6383737,
+   "duracion": 3.1185697,
+   "texto": "El observador sigue el ejercicio sin intervenir."
+  }
+ ]
+}

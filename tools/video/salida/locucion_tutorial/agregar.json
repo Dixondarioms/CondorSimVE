@@ -1,0 +1,17 @@
+{
+ "firma": "68c2bd8109b0ab29266fc3e827d9847853a24781",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 6.9265942,
+   "texto": "En la consola, Agregar unidades coloca cada unidad sobre el mapa: bando, clase, tipo, nombre y escalón."
+  },
+  {
+   "inicio": 6.9765942,
+   "duracion": 6.9980276,
+   "texto": "El catálogo propio permite crear los tipos de unidades aéreas, terrestres y navales que falten, con sus valores y su foto."
+  }
+ ]
+}

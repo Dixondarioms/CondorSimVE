@@ -129,5 +129,4 @@ ESCENAS = [
 CREDITOS = [
     "Desarrollado por la División de Ingeniería y Desarrollo Aeroespacial (DIDA)",
     "Aviación Militar Bolivariana",
-    "Creador: Cap. Dixon Malpica",
 ]

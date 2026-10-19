@@ -1,0 +1,22 @@
+{
+ "firma": "5ee1457ad1f7e613435d93f8b43e80e4a93da74c",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 4.9439983,
+   "texto": "En la pestaña Fuerzas, el orden de batalla agrupa las unidades por rama con su estado."
+  },
+  {
+   "inicio": 4.9939983,
+   "duracion": 3.2471705,
+   "texto": "Un clic en una unidad la selecciona y centra el mapa."
+  },
+  {
+   "inicio": 8.2411688,
+   "duracion": 5.7441697,
+   "texto": "Su ficha muestra la foto de referencia, la fuerza, el combustible, la munición y sus alcances."
+  }
+ ]
+}

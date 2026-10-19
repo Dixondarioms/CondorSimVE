@@ -42,3 +42,29 @@ tiempos estimados y la marca «BORRADOR».
 
 Para cambiar el texto, edite `guion.py` y vuelva a ejecutar `locucion.py` y `generar_video.py`: la duración de cada
 escena la marca su locución. Si una sigla se lee mal, agréguela a `PRONUNCIACION`.
+
+## Video tutorial paso a paso (2K con locución)
+
+`tools\video\generar_tutorial.cmd` genera `salida/SIETE_tutorial_2K_locucion.mp4`: 2560×1440, ~10 min, con la misma
+voz venezolana (un poco más rápida: `--velocidad +8%`), 15 capítulos que recorren todo el simulador en el orden en que se
+usa (puesta en marcha, roles, pantalla, terreno, preparar el ejercicio, fuerzas, órdenes, aviación, defensa aérea y mar,
+resolver el turno, el TIEM, la IA, trabajo en equipo e informe posterior), y además de las capturas lleva **clips del
+simulador en marcha**: el vuelo sobre el terreno, una orden de mover con sus clics, la resolución del turno con las
+unidades desplazándose, la planificación de una misión, el replay del informe y los documentos del TIEM.
+
+| Archivo | Qué hace |
+|---|---|
+| `guion_tutorial.py` | Guion del tutorial (mismo formato que `guion.py`; una imagen `("clip_x", "clip")` reproduce un clip entero). |
+| `clips_video.py` | Graba los clips sobre el arnés con el **tiempo virtual** de Chrome: cada cuadro es 1/30 s exacto, así que salen fluidos aunque la captura a 2K sea lenta. Cursor rojo que marca los clics. `salida/clips/<nombre>/00001.jpg…` + `meta.json`. |
+| `capturas_video.py` | Ahora toma todas las capturas del manual (`capturas_guia.CAPTURAS`) a pantalla entera en 4K. |
+
+Paso a paso: `capturas_video.py`, `clips_video.py` (con el servidor en el puerto 8000), `locucion.py --guion guion_tutorial
+--velocidad +8%` y `generar_video.py --guion guion_tutorial --resolucion 2k`.
+
+**Voz más natural con ElevenLabs.** `locucion.py` admite `--motor elevenlabs`: hace falta una cuenta en elevenlabs.com y su
+clave de API en `backend\.env` (`ELEVENLABS_API_KEY=...`; ese archivo no se sube al repositorio y la clave nunca se muestra).
+`--motor elevenlabs --listar` enumera las voces de la cuenta (agregue antes una voz en español latino desde su biblioteca a
+«Mis voces») y los créditos que quedan; luego `locucion.py --guion guion_tutorial --motor elevenlabs --voz "Nombre"
+[--velocidad 1.05]` regraba solo las escenas que cambiaron. Cada carácter del guion consume un crédito (el tutorial usa
+unos 9 700; el plan gratuito da 10 000 al mes). El montaje es el mismo. `generar_video.py --guion guion_tutorial
+--comprobar` dice qué capturas, clips o locuciones faltan. La locución queda en `salida/locucion_tutorial/` (versionada).

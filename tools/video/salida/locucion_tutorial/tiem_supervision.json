@@ -1,0 +1,17 @@
+{
+ "firma": "33c9dc2c0072d1b72aa8d6c0440cb8325e7fd95b",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 7.9554007,
+   "texto": "Durante la ejecución, Supervisión muestra el cuadro de control y el parte de cada turno, con las apreciaciones rápidas y las órdenes fragmentarias."
+  },
+  {
+   "inicio": 8.0054007,
+   "duracion": 7.5552978,
+   "texto": "Al terminar, el simulador evalúa el trabajo de Estado Mayor con una nota del uno al veinte, y el legajo se descarga en Word o PDF."
+  }
+ ]
+}

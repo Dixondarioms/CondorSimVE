@@ -1,6 +1,6 @@
 """Video de demostracion de S.I.E.T.E. (MP4, 1920x1080): graba el simulador funcionando con Chrome manejado por CDP
 (navegador.py) sobre el arnes de pruebas (datos de ejemplo), con rotulos que explican cada parte, un circulo que marca
-cada clic, portada y cierre con el escudo de la DIDA y el credito del creador. Se codifica con ffmpeg.
+cada clic, portada y cierre con el escudo de la DIDA. Se codifica con ffmpeg.
 
 Requiere el servidor en marcha en 127.0.0.1:8000 y ffmpeg en el PATH.
 
@@ -139,7 +139,6 @@ def portada() -> Image.Image:
     im.paste(dida, (x, 800))
     d.text((x + dida.width + 36, 850), "Desarrollado por la División de Ingeniería y Desarrollo Aeroespacial (DIDA)", font=fuente(30, True), fill=(255, 255, 255))
     d.text((x + dida.width + 36, 900), "Aviación Militar Bolivariana · Fuerza Armada Nacional Bolivariana", font=fuente(28), fill=(200, 214, 235))
-    d.text((x + dida.width + 36, 950), "Creador del simulador: Cap. Dixon Malpica", font=fuente(30, True), fill=(255, 196, 0))
     return im
 
 
@@ -150,7 +149,7 @@ def cierre() -> Image.Image:
     d = ImageDraw.Draw(im)
     centrado(d, 640, "S.I.E.T.E.", fuente(72, True))
     centrado(d, 712, "Sistema Integral de Entrenamiento Táctico y Estratégico", fuente(36), (200, 214, 235))
-    centrado(d, 800, "Concebido, diseñado y desarrollado por el Cap. Dixon Malpica", fuente(38, True), (255, 196, 0))
+    centrado(d, 800, "Concebido, diseñado y desarrollado en la DIDA", fuente(38, True), (255, 196, 0))
     centrado(d, 858, "División de Ingeniería y Desarrollo Aeroespacial (DIDA) · Aviación Militar Bolivariana", fuente(30), (255, 255, 255))
     centrado(d, 930, "«El infinito es el límite»", fuente(30), (200, 214, 235))
     return im

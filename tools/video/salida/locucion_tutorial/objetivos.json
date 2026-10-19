@@ -1,0 +1,17 @@
+{
+ "firma": "c2fe14173c20bdf22a2cb2ced61c7dafb969ac74",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 8.8770398,
+   "texto": "Objetivos y puntaje define qué debe lograr cada bando: ocupar una zona, neutralizar una unidad, proteger una base o un efecto deseado, con sus puntos."
+  },
+  {
+   "inicio": 8.9270398,
+   "duracion": 3.0221191,
+   "texto": "El panel derecho muestra el avance de cada uno."
+  }
+ ]
+}

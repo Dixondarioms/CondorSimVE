@@ -1,0 +1,32 @@
+{
+ "firma": "05da1e102e2055f28161dd7cca97475dbf5a170f",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 3.0364195,
+   "texto": "Dar una orden siempre sigue los mismos pasos."
+  },
+  {
+   "inicio": 3.0864195,
+   "duracion": 2.4862824,
+   "texto": "Primero, seleccione la unidad."
+  },
+  {
+   "inicio": 5.5727019,
+   "duracion": 4.0402089,
+   "texto": "Segundo, elija el tipo de orden; en este caso, Mover."
+  },
+  {
+   "inicio": 9.6129109,
+   "duracion": 6.0442382,
+   "texto": "Tercero, haga clic en el mapa para cada punto de paso: la vista previa dice hasta dónde llega en el turno."
+  },
+  {
+   "inicio": 15.6571491,
+   "duracion": 5.0261485,
+   "texto": "Y cuarto, pulse Emitir orden: queda pendiente en la cola hasta que se resuelva el turno."
+  }
+ ]
+}

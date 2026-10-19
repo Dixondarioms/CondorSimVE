@@ -1,0 +1,17 @@
+{
+ "firma": "12120c0270ab2e153f8922de557111f3171160e8",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 9.3914431,
+   "texto": "Las misiones forman la orden de tareas aéreas: paquetes con comandante de misión, hora sobre el objetivo, cisternas, alerta temprana y rescate de tripulaciones."
+  },
+  {
+   "inicio": 9.4414431,
+   "duracion": 3.7830073,
+   "texto": "La cobertura de los radares muestra hasta dónde ven según el relieve."
+  }
+ ]
+}

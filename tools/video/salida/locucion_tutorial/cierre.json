@@ -1,0 +1,17 @@
+{
+ "firma": "e9fb767485bb87ab3b0bd9d468dac9a46bc9c0b1",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 5.9406546,
+   "texto": "Siete: desarrollado en la División de Ingeniería y Desarrollo Aeroespacial de la Aviación Militar Bolivariana."
+  },
+  {
+   "inicio": 5.9906546,
+   "duracion": 2.0361795,
+   "texto": "El infinito es el límite."
+  }
+ ]
+}

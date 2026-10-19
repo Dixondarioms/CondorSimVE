@@ -1,0 +1,17 @@
+{
+ "firma": "925aec630e1bf5b664592db78e5c7c77d630b8bc",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 4.9118481,
+   "texto": "El teatro de operaciones abarca toda América, con foto satelital real y relieve."
+  },
+  {
+   "inicio": 4.9618481,
+   "duracion": 6.7086758,
+   "texto": "Sobre Venezuela y los países vecinos el detalle es mayor: al acercar el mapa se ven calles, pistas y plataformas."
+  }
+ ]
+}

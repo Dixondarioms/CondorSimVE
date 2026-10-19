@@ -1,0 +1,27 @@
+{
+ "firma": "5d9df4c6796d2c3408b9979223b4dd025241e344",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 4.8475476,
+   "texto": "Para atacar, elija el objetivo enemigo detectado en la lista o con un clic sobre él."
+  },
+  {
+   "inicio": 4.8975476,
+   "duracion": 3.5686726,
+   "texto": "Con la tecla control se seleccionan varias unidades a la vez."
+  },
+  {
+   "inicio": 8.4662203,
+   "duracion": 2.7970677,
+   "texto": "Los ingenieros construyen vados y puentes."
+  },
+  {
+   "inicio": 11.263288,
+   "duracion": 2.8399346,
+   "texto": "Cada unidad tiene una sola orden por turno."
+  }
+ ]
+}

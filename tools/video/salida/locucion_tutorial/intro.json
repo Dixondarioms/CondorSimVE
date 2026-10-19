@@ -1,0 +1,17 @@
+{
+ "firma": "dbef2050f0dec3fc19a77547c9dfc18cea738423",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 9.0913745,
+   "texto": "La División de Ingeniería y Desarrollo Aeroespacial de la Aviación Militar Bolivariana presenta el tutorial de Siete, el Sistema Integral de Entrenamiento Táctico y Estratégico."
+  },
+  {
+   "inicio": 9.1413745,
+   "duracion": 2.9685354,
+   "texto": "Veamos, paso a paso, cómo se usa."
+  }
+ ]
+}

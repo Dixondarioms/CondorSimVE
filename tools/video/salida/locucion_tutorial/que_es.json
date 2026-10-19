@@ -1,0 +1,22 @@
+{
+ "firma": "8cbd60e574e90d05ad0bdfe4964737f980eff749",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 5.2440668,
+   "texto": "Siete es un simulador de conducción de operaciones aéreas, terrestres y navales para el aula."
+  },
+  {
+   "inicio": 5.2940668,
+   "duracion": 12.10991,
+   "texto": "Cada bando es el Estado Mayor del componente aéreo de un teatro de operaciones y trabaja con la metodología de apreciación y análisis de problemas militares operativos, e incorpora todas las etapas del Trabajo Integral de Estado Mayor, tiem."
+  },
+  {
+   "inicio": 17.4039769,
+   "duracion": 2.8077844,
+   "texto": "Funciona en la red local, sin internet."
+  }
+ ]
+}

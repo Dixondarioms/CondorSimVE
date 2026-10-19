@@ -1,0 +1,17 @@
+{
+ "firma": "b042e1852fa64b47aaaef28bb1c55d7ca184aa18",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 15.2892308,
+   "texto": "Las baterías de defensa aérea, zeta u veintitrés, Mistral, erre be ese setenta, Pechora dos eme, Buk eme dos e y ese trescientos ve eme, disparan solas contra lo que entra en su alcance, con disciplina de fuego: una salva por aeronave y una reserva para su autodefensa."
+  },
+  {
+   "inicio": 15.3892308,
+   "duracion": 2.9363852,
+   "texto": "El operador puede apagar el radar para emboscar."
+  }
+ ]
+}

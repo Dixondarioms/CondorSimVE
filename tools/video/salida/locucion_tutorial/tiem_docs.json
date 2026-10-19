@@ -1,0 +1,17 @@
+{
+ "firma": "ad3ec34fdb75e1c9545b0f68e7ff4195cb25317b",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 9.8522627,
+   "texto": "En la pestaña tiem, cada repartición redacta los documentos de la apreciación: el análisis de la misión, el concepto del comandante, la guía de planeamiento y las formas de acción."
+  },
+  {
+   "inicio": 9.9022627,
+   "duracion": 4.7796636,
+   "texto": "Cada documento se presenta al instructor, que lo aprueba o lo devuelve con observaciones."
+  }
+ ]
+}

@@ -1,0 +1,17 @@
+{
+ "firma": "23de7df4c3d20243af65e6425014cd6298c99943",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 3.3579215,
+   "texto": "Cada participante entra con su usuario y su contraseña."
+  },
+  {
+   "inicio": 3.4079215,
+   "duracion": 7.5660146,
+   "texto": "Quien no tiene cuenta pulsa Solicitar una cuenta, elige su usuario, su bando y su repartición, y el instructor la aprueba desde la consola."
+  }
+ ]
+}

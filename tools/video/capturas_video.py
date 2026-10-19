@@ -98,14 +98,8 @@ def replay(n):
 
 
 PROPIAS = [acceso, instructor_general, america, venezuela, bases, naval, replay]
-DEL_MANUAL = [
-    guia.pantalla_general, guia.alumno_pantalla, guia.oob_ficha, guia.orden_mover, guia.orden_atacar,
-    guia.seleccion_multiple, guia.aviacion_enviar, guia.orden_patrullar, guia.mision_planificar, guia.perfil_vuelo,
-    guia.cobertura_radar, guia.cronograma, guia.naval_misiles, guia.naval_desembarcar, guia.orden_interferir,
-    guia.mapa_relieve, guia.mapa_graficos, guia.mapa_meteo, guia.consola_agregar, guia.consola_objetivos,
-    guia.consola_eventos, guia.consola_usuarios, guia.plantillas, guia.videowall, guia.informe_repeticion,
-    guia.informe_dialogos, guia.informe_rubrica, guia.mapa_aerodromo, guia.consola_direccion, guia.acceso_registro,
-]
+# todas las capturas del manual de usuario (en su orden), a pantalla entera: el video tutorial las usa casi todas
+DEL_MANUAL = list(guia.CAPTURAS)
 
 
 def main() -> None:

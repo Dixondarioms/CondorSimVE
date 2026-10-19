@@ -1,0 +1,12 @@
+{
+ "firma": "3752c380f75c3852569f9b1f5701103bfb60c161",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 9.1235247,
+   "texto": "La pestaña Situación resume el personal del bando: tripulaciones, técnicos, reservas y bajas; y el cuadro radar, con los contactos que ven los sensores propios."
+  }
+ ]
+}

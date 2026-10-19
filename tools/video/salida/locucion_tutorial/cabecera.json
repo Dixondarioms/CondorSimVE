@@ -1,0 +1,17 @@
+{
+ "firma": "8b5a3add2e766aa82882f7da09b624c57006a112",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 1.8682954,
+   "texto": "Conozcamos la pantalla."
+  },
+  {
+   "inicio": 1.9182954,
+   "duracion": 9.5593272,
+   "texto": "Arriba, la cabecera: el turno en curso, el escenario activo, el punto verde de conexión, la cuenta regresiva de la fase de decisión, el videowall y el informe."
+  }
+ ]
+}

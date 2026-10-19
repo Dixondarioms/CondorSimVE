@@ -1,0 +1,17 @@
+{
+ "firma": "fc7380588053e49be3fd86f5b7f12da9e2bc3af2",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 7.2480962,
+   "texto": "En Meteorología se colocan zonas de lluvia o tormenta que se desplazan con los turnos y afectan la detección, la velocidad y los ataques."
+  },
+  {
+   "inicio": 7.2980962,
+   "duracion": 4.2652603,
+   "texto": "El calendario fija el día D, la hora H y las fases del ejercicio."
+  }
+ ]
+}

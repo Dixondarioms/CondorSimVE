@@ -1,0 +1,17 @@
+{
+ "firma": "038040b6e6daa7ffc3fe7d59c76ad9727ece1e61",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 7.6767656,
+   "texto": "Con el ciclo de día y noche activo, el mapa se oscurece al anochecer: de noche se detecta menos y los cañones antiaéreos apuntan peor."
+  },
+  {
+   "inicio": 7.7267656,
+   "duracion": 3.7830073,
+   "texto": "El panel de estado indica la hora simulada y el periodo del día."
+  }
+ ]
+}

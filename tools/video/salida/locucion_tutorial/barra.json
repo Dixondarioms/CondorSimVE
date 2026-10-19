@@ -1,0 +1,17 @@
+{
+ "firma": "ae5e449aad58cdb6b49ed44eaa0b92d06c8891c5",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 7.1302121,
+   "texto": "Abajo está el botón más importante de cada turno: Estoy listo para los alumnos, o Resolver y avanzar turno para el instructor."
+  },
+  {
+   "inicio": 7.1802121,
+   "duracion": 4.6617795,
+   "texto": "Y en el panel izquierdo, la cola de órdenes muestra lo que el bando ya decidió."
+  }
+ ]
+}

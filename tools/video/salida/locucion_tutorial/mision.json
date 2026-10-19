@@ -1,0 +1,17 @@
+{
+ "firma": "a4ecefb6b2cb4755885dc00e36e1096ee8013631",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 10.3452325,
+   "texto": "El a tres planifica misiones completas: el rol, patrulla, interdicción, apoyo aéreo cercano o supresión de defensas; el grupo o la base de origen; y la ruta con sus puntos."
+  },
+  {
+   "inicio": 10.3952325,
+   "duracion": 5.2083329,
+   "texto": "La vista previa calcula el combustible y las horas, y el cronograma muestra cada fase del vuelo."
+  }
+ ]
+}

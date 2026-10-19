@@ -1,0 +1,22 @@
+{
+ "firma": "4794bdcd4ad66ac79e9319f208aa9239e1a29805",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 2.4148489,
+   "texto": "El instructor prepara el ejercicio."
+  },
+  {
+   "inicio": 2.4648489,
+   "duracion": 6.1299721,
+   "texto": "Con Nuevo crea un escenario vacío; con Desde plantilla, uno que ya trae unidades, objetivos y clima."
+  },
+  {
+   "inicio": 8.5948211,
+   "duracion": 4.2545436,
+   "texto": "Y con Guardar como plantilla conserva cualquier situación para reutilizarla."
+  }
+ ]
+}

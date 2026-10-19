@@ -1,0 +1,22 @@
+{
+ "firma": "f8a276cde77f1e68b96c5f935af4c07e7fc012b7",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 4.6760799,
+   "texto": "En las capas se cambia el fondo satelital por el relieve coloreado por tipo de terreno."
+  },
+  {
+   "inicio": 4.7260799,
+   "duracion": 5.7334529,
+   "texto": "Al acercar aparecen las carreteras y los puentes, por donde las unidades terrestres avanzan más rápido."
+  },
+  {
+   "inicio": 10.4595329,
+   "duracion": 2.539866,
+   "texto": "La regla mide distancias y rumbos."
+  }
+ ]
+}

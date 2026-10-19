@@ -1,0 +1,22 @@
+{
+ "firma": "404cc5878a391d498cd8f397e059486c669c4d42",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 1.9968963,
+   "texto": "Ahora, el método."
+  },
+  {
+   "inicio": 2.0468963,
+   "duracion": 7.8232162,
+   "texto": "Todo comienza con el Problema Militar Operativo, el pe eme o: la situación, la misión y las instrucciones del comandante del teatro."
+  },
+  {
+   "inicio": 9.8701125,
+   "duracion": 8.0054007,
+   "texto": "El instructor lo redacta o lo genera automáticamente, y decide quién conduce a cada bando: alumnos, él mismo o el adversario automático."
+  }
+ ]
+}

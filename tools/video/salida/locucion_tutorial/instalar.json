@@ -1,0 +1,17 @@
+{
+ "firma": "3a66b860e9eea7b3c34fe37303498d348ef73bae",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 10.0344472,
+   "texto": "Se instala con un doble clic a través de un paquete ejecutable: prepara Python, los datos de mapa y el acceso directo Siete del escritorio, que arranca el servidor y abre el navegador."
+  },
+  {
+   "inicio": 10.0844472,
+   "duracion": 2.6899003,
+   "texto": "Los alumnos entran desde sus estaciones."
+  }
+ ]
+}

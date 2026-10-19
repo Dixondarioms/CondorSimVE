@@ -1,0 +1,17 @@
+{
+ "firma": "d1f234329233a03d7d368c1b324c1ad81fd0f4f2",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 4.6867966,
+   "texto": "El informe resume cada bando: fuerza, bajas, objetivos y puntaje."
+  },
+  {
+   "inicio": 4.7367966,
+   "duracion": 6.376457,
+   "texto": "La línea de tiempo muestra los hechos de cada turno, y la repetición permite volver a cualquier momento del ejercicio."
+  }
+ ]
+}

@@ -1,0 +1,17 @@
+{
+ "firma": "210d4bcc7c42603f93260750b1b353c9c5cafe35",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 8.8341729,
+   "texto": "Al finalizar, el informe posterior al ejercicio reproduce todo lo ocurrido sobre el mapa: movimientos, combates, estelas y el marcador turno a turno."
+  },
+  {
+   "inicio": 8.8841729,
+   "duracion": 3.0971362,
+   "texto": "Sirve para la sesión de análisis con los alumnos."
+  }
+ ]
+}

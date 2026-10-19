@@ -1,0 +1,17 @@
+{
+ "firma": "20feb84060d608755936e07fa398b63ea3f70ff2",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 4.9439983,
+   "texto": "Con la decisión del comandante se redacta el Plan de Operaciones, con sus tareas por turno."
+  },
+  {
+   "inicio": 4.9939983,
+   "duracion": 7.8017827,
+   "texto": "Desde la Orden de Operaciones, esas tareas se emiten como órdenes reales a las unidades: lo que el Estado Mayor planifica es lo que se ejecuta."
+  }
+ ]
+}

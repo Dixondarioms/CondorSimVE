@@ -1,0 +1,17 @@
+{
+ "firma": "89f0a4e4fa35ff429ab8267c0b0df9e758824b42",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 14.4426088,
+   "texto": "Dentro de cada bando, cada alumno ocupa una repartición del Estado Mayor: comandante, jefe de Estado Mayor, a uno personal, a dos inteligencia, a tres operaciones, a tres de defensa aérea defensa aérea, a cuatro logística y ce e comunicaciones."
+  },
+  {
+   "inicio": 14.5426088,
+   "duracion": 3.0971362,
+   "texto": "Cada una emite solo las órdenes que le corresponden."
+  }
+ ]
+}

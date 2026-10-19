@@ -1,0 +1,22 @@
+{
+ "firma": "bf3bae8877f1ed331310d838d943271bdb64193a",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 3.3043379,
+   "texto": "El ejercicio avanza por turnos de una hora simulada."
+  },
+  {
+   "inicio": 3.3543379,
+   "duracion": 4.4903117,
+   "texto": "En cada turno los alumnos aprecian la situación, deciden y dan sus órdenes."
+  },
+  {
+   "inicio": 7.8446497,
+   "duracion": 5.7013027,
+   "texto": "Cuando los dos bandos están listos, el instructor resuelve el turno y el simulador calcula el resultado."
+  }
+ ]
+}

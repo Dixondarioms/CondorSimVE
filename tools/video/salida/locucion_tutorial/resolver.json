@@ -1,0 +1,22 @@
+{
+ "firma": "da46f714a1f265c45c1e08d879a5ef8f9d536991",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 6.2085729,
+   "texto": "Cuando los dos bandos pulsan Estoy listo, o se agota el tiempo, el instructor pulsa Resolver y avanzar turno."
+  },
+  {
+   "inicio": 6.2585729,
+   "duracion": 6.9551607,
+   "texto": "El simulador resuelve movimientos, detecciones, combates y logística, y las unidades se desplazan por su ruta real."
+  },
+  {
+   "inicio": 13.2137337,
+   "duracion": 2.8077844,
+   "texto": "Cada orden queda en la cola con su resultado."
+  }
+ ]
+}

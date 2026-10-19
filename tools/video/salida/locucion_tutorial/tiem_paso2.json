@@ -1,0 +1,17 @@
+{
+ "firma": "5963af5502ba3fde7b1fadcbb410791e605ad32e",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 3.5293893,
+   "texto": "En el paso dos, cada repartición hace su apreciación."
+  },
+  {
+   "inicio": 3.5793893,
+   "duracion": 10.0630137,
+   "texto": "La matriz de confrontación compara las formas de acción propias con las capacidades del enemigo, y el juego de guerra ensaya cada forma de acción en una copia del escenario contra la inteligencia artificial."
+  }
+ ]
+}

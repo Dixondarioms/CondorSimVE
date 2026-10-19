@@ -1,0 +1,22 @@
+{
+ "firma": "899692053b178f570df1b678dee40bad34324ae7",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 8.3197696,
+   "texto": "Los alumnos trazan gráficos tácticos sobre el mapa: líneas de fase, ejes de avance, zonas de reunión y puntos de control, que todo su bando ve."
+  },
+  {
+   "inicio": 8.3697696,
+   "duracion": 3.0864195,
+   "texto": "Las comunicaciones sufren la interferencia enemiga."
+  },
+  {
+   "inicio": 11.4561892,
+   "duracion": 3.2793207,
+   "texto": "El videowall proyecta la situación en la pantalla grande."
+  }
+ ]
+}

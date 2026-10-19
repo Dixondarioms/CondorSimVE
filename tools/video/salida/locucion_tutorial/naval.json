@@ -1,0 +1,17 @@
+{
+ "firma": "dbd4250a352ebf82e5b794ffd809ba1dabbe0933",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 8.266186,
+   "texto": "En el mar, los buques lanzan salvas de misiles contra blancos a su alcance, y las unidades anfibias embarcan, navegan y desembarcan sobre la costa."
+  },
+  {
+   "inicio": 8.316186,
+   "duracion": 5.7441697,
+   "texto": "La guerra electrónica interfiere las emisiones del enemigo, y los radares pueden callar para no delatarse."
+  }
+ ]
+}

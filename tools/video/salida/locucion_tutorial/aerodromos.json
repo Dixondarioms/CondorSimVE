@@ -1,0 +1,17 @@
+{
+ "firma": "40e635dd1fd36902175ee6a9e45574b10e1263fc",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 7.2695297,
+   "texto": "Cada aeródromo aparece con su plano real: pistas, calles de rodaje y plataformas, y sus partes pueden dañarse y repararse."
+  },
+  {
+   "inicio": 7.3195297,
+   "duracion": 5.3476505,
+   "texto": "Para ejercicios sin países reales existe el teatro ficticio, con País Azul y País Rojo."
+  }
+ ]
+}

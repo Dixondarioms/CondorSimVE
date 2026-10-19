@@ -1,0 +1,17 @@
+{
+ "firma": "f5911f303ff52de4586c107410d390c3e382bf72",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 8.1161517,
+   "texto": "La rúbrica evalúa a cada alumno por su repartición, con indicadores doctrinales y observaciones automáticas, y permite comparar dos ejercicios."
+  },
+  {
+   "inicio": 8.1661517,
+   "duracion": 2.5612995,
+   "texto": "Con esto termina el recorrido por Siete"
+  }
+ ]
+}

@@ -1,0 +1,22 @@
+{
+ "firma": "2d3fd911ed08570938331d4ad6ec30a37fb56bb5",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 5.801337,
+   "texto": "A la izquierda, las pestañas Fuerzas, Situación, tiem y, para el instructor, Consola."
+  },
+  {
+   "inicio": 5.851337,
+   "duracion": 7.3945468,
+   "texto": "A la derecha, el estado del escenario, los objetivos con el puntaje, las capas del mapa, las comunicaciones y las alertas."
+  },
+  {
+   "inicio": 13.2458839,
+   "duracion": 2.5077158,
+   "texto": "En el centro, el mapa táctico."
+  }
+ ]
+}

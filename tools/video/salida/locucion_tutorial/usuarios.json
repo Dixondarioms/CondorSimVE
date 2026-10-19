@@ -1,0 +1,17 @@
+{
+ "firma": "13c4b55758b2a4696a4f4c38f9c2be2497806671",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 5.4905517,
+   "texto": "En Usuarios el instructor aprueba las solicitudes y asigna a cada alumno su bando y su repartición."
+  },
+  {
+   "inicio": 5.5405517,
+   "duracion": 4.8332472,
+   "texto": "En Turno fija el tiempo límite de la fase de decisión y pausa o reanuda el ejercicio."
+  }
+ ]
+}

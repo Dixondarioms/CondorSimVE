@@ -1,0 +1,17 @@
+{
+ "firma": "a0932c5926856b56e038eb97e420d7b4a4696723",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 4.108093,
+   "texto": "La primera vez, el simulador pide cambiar la contraseña inicial."
+  },
+  {
+   "inicio": 4.158093,
+   "duracion": 7.1587786,
+   "texto": "En el menú del perfil, arriba a la derecha, cada usuario ve su rol y su repartición, cambia su contraseña y cierra la sesión."
+  }
+ ]
+}

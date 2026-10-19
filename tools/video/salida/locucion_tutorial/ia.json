@@ -1,0 +1,22 @@
+{
+ "firma": "781d67cb3f74cf1008e0a00d713dcf4f291c91c8",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 4.2152603,
+   "texto": "Para practicar sin un segundo grupo, el simulador conduce un bando."
+  },
+  {
+   "inicio": 4.2652603,
+   "duracion": 6.7086758,
+   "texto": "Las plantillas Contra la i a ya lo traen configurado; en la consola se elige el nivel: prudente, normal o agresiva."
+  },
+  {
+   "inicio": 10.9739361,
+   "duracion": 5.2726334,
+   "texto": "El adversario automático juega con las mismas reglas y la misma niebla de guerra que los alumnos."
+  }
+ ]
+}

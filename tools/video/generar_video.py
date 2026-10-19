@@ -11,12 +11,15 @@ Pasos (con el servidor de S.I.E.T.E. en marcha para las capturas):
     python tools/video/locucion.py            # voz (necesita internet)
     python tools/video/generar_video.py       # -> tools/video/salida/SIETE_presentacion_4K_locucion.mp4
 
-Opciones: --resolucion 1080 (borrador rapido), --musica archivo.mp3 (en lugar de la generada), --sin-musica,
---sin-subtitulos, --preset (de x264: slow da archivos mas chicos). Sin locucion generada se arma un BORRADOR mudo con
-los tiempos estimados, util para revisar el montaje. Requiere ffmpeg en el PATH y `pip install -r requirements.txt`.
+Opciones: --resolucion 2k (2560x1440) o 1080 (borrador rapido), --guion guion_tutorial (otro guion: el video tutorial
+paso a paso, que ademas de capturas lleva clips del simulador en marcha, ver clips_video.py), --musica archivo.mp3 (en
+lugar de la generada), --sin-musica, --sin-subtitulos, --preset (de x264: slow da archivos mas chicos), --comprobar
+(solo dice que capturas y clips faltan). Sin locucion generada se arma un BORRADOR mudo con los tiempos estimados, util
+para revisar el montaje. Requiere ffmpeg en el PATH y `pip install -r requirements.txt`.
 """
 
 import argparse
+import importlib
 import json
 import math
 import re
@@ -33,10 +36,27 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parent.parent
 sys.path.insert(0, str(AQUI))
-from guion import CREDITOS, ESCENAS  # noqa: E402
 
 CAPTURAS = AQUI / "salida" / "capturas"
+CLIPS = AQUI / "salida" / "clips"
 LOCUCION = AQUI / "salida" / "locucion"
+ESCENAS: list[dict] = []
+CREDITOS: list[str] = []
+NOMBRE_ARCHIVO = "SIETE_presentacion"
+RESOLUCIONES = {"4k": (3840, 2160), "2k": (2560, 1440), "1080": (1920, 1080)}
+
+
+def cargar_guion(nombre: str) -> None:
+    """Guion (modulo de tools/video): escenas, creditos, nombre del archivo y carpeta de su locucion."""
+    global ESCENAS, CREDITOS, NOMBRE_ARCHIVO, LOCUCION
+    mod = importlib.import_module(nombre)
+    ESCENAS, CREDITOS = mod.ESCENAS, mod.CREDITOS
+    NOMBRE_ARCHIVO = getattr(mod, "NOMBRE_ARCHIVO", "SIETE_presentacion")
+    LOCUCION = AQUI / "salida" / carpeta_locucion(nombre)
+
+
+def carpeta_locucion(guion: str) -> str:
+    return "locucion" if guion == "guion" else "locucion_" + guion.removeprefix("guion_")
 EMBLEMA = AQUI / "recursos" / "dida_logo.jpg"
 EMBLEMA_CIRCULO = (514, 540, 416)  # centro y radio del emblema circular dentro de la imagen
 LOGO_SIETE = RAIZ / "frontend" / "static" / "img" / "siete_logo_recortado.jpg"
@@ -110,6 +130,14 @@ def trozos_subtitulo(texto: str, maximo=120) -> list[str]:
     return salida
 
 
+@lru_cache(maxsize=None)
+def meta_clip(nombre: str) -> dict:
+    ruta = CLIPS / nombre / "meta.json"
+    if not ruta.exists():
+        raise SystemExit(f"Falta el clip {nombre}: ejecute tools/video/clips_video.py")
+    return json.loads(ruta.read_text(encoding="utf-8"))
+
+
 def armar_linea_de_tiempo() -> tuple[list[dict], float, bool]:
     escenas, inicio, con_voz = [], 0.0, True
     for e in ESCENAS:
@@ -127,6 +155,12 @@ def armar_linea_de_tiempo() -> tuple[list[dict], float, bool]:
         e.setdefault("despues", DESPUES)
         e["inicio"] = inicio
         e["dur"] = e["antes"] + e["voz"] + e["despues"]
+        # los clips duran lo que duran: si la voz es mas corta, la escena se alarga y el resto de las capturas
+        # conserva al menos unos segundos cada una
+        clips = [meta_clip(nombre)["duracion"] for nombre, mov in e.get("imagenes", []) if mov == "clip"]
+        if clips:
+            libres = len(e["imagenes"]) - len(clips)
+            e["dur"] = max(e["dur"], sum(clips) + 3.5 * libres + 0.4)
         # subtitulos: cada frase con los tiempos que dio la voz; si no cuadran, en proporcion a los caracteres
         frases = [f for f in re.split(r"(?<=[.:;?!])\s+(?=[A-ZÁÉÍÓÚÑ¿¡])", e["texto"].strip()) if f]
         if len(limites) == len(frases):
@@ -174,6 +208,7 @@ class Lienzo:
         self.logo_siete = self._logo_siete()
         self.sello = self._escalar(self.emblema, int(170 * self.S))
         self._cache: dict = {}
+        self._clips: dict = {}
 
     def s(self, v: float) -> int:
         return int(round(v * self.S))
@@ -246,7 +281,7 @@ class Lienzo:
             if not ruta.exists():
                 raise SystemExit(f"Falta la captura {ruta.name}: ejecute tools/video/capturas_video.py")
             im = cv2.cvtColor(cv2.imread(str(ruta), cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB)
-            if im.shape[1] != self.W:  # borrador: se reduce una vez (la camara solo acerca)
+            if im.shape[1] != self.W and self.W <= 1920:  # borrador: se reduce una vez (la camara solo acerca)
                 im = cv2.resize(im, (self.W, round(im.shape[0] * self.W / im.shape[1])), interpolation=cv2.INTER_AREA)
             self.capturas[nombre] = im
         return self.capturas[nombre]
@@ -255,6 +290,20 @@ class Lienzo:
         for k in list(self.capturas):
             if k not in usadas:
                 del self.capturas[k]
+
+    def cuadro_clip(self, nombre: str, t: float) -> np.ndarray:
+        """Cuadro del clip (clips_video.py) en el segundo t; pasado el final, se queda en el ultimo."""
+        m = meta_clip(nombre)
+        k = min(m["cuadros"], max(1, int(t * m["fps"]) + 1))
+        clave = (nombre, k)
+        if clave not in self._clips:
+            if len(self._clips) > 6:
+                self._clips.clear()
+            im = cv2.cvtColor(cv2.imread(str(CLIPS / nombre / f"{k:05d}.jpg"), cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB)
+            if im.shape[1] != self.W or im.shape[0] != self.H:
+                im = cv2.resize(im, (self.W, self.H), interpolation=cv2.INTER_AREA if im.shape[1] > self.W else cv2.INTER_CUBIC)
+            self._clips[clave] = im
+        return self._clips[clave]
 
     # ------------------------------------------------------------ textos y paneles
     def texto(self, contenido: str, tipo: str, tam: int, color=BLANCO, espaciado=0) -> np.ndarray:
@@ -409,17 +458,39 @@ def cuadro_captura(L: Lienzo, nombre: str, mov, p: float) -> np.ndarray:
     return cv2.warpAffine(src, M, (L.W, L.H), flags=interp, borderMode=cv2.BORDER_REPLICATE)
 
 
-def escena_capturas(L: Lienzo, e: dict, t: float) -> np.ndarray:
+def tramos_escena(e: dict) -> list[tuple[float, float]]:
+    """(inicio, fin) de cada imagen de la escena, encadenadas con FUNDIDO_IMAGEN de solape: los clips duran lo suyo
+    y las capturas se reparten el resto por igual."""
     imgs = e["imagenes"]
     n = len(imgs)
-    tramo = (e["dur"] + FUNDIDO_IMAGEN * (n - 1)) / n
-    i = min(n - 1, int(t // (tramo - FUNDIDO_IMAGEN))) if n > 1 else 0
-    t_i = t - i * (tramo - FUNDIDO_IMAGEN)
-    cuadro = cuadro_captura(L, imgs[i][0], imgs[i][1], t_i / tramo)
-    if i + 1 < n and t_i > tramo - FUNDIDO_IMAGEN:  # fundido con la siguiente captura
-        t_j = t_i - (tramo - FUNDIDO_IMAGEN)
-        siguiente = cuadro_captura(L, imgs[i + 1][0], imgs[i + 1][1], t_j / tramo)
-        cuadro = mezclar(cuadro, siguiente, suave(t_j / FUNDIDO_IMAGEN))
+    fijos = {i: meta_clip(nombre)["duracion"] for i, (nombre, mov) in enumerate(imgs) if mov == "clip"}
+    libres = n - len(fijos)
+    por_libre = (e["dur"] + FUNDIDO_IMAGEN * (n - 1) - sum(fijos.values())) / libres if libres else 0.0
+    tramos, t = [], 0.0
+    for i in range(n):
+        d = fijos.get(i, por_libre)
+        tramos.append((t, t + d))
+        t += d - FUNDIDO_IMAGEN
+    return tramos
+
+
+def cuadro_imagen(L: Lienzo, imagen: tuple, t: float, dur: float) -> np.ndarray:
+    nombre, mov = imagen
+    if mov == "clip":
+        return L.cuadro_clip(nombre, t)
+    return cuadro_captura(L, nombre, mov, t / dur if dur > 0 else 1.0)
+
+
+def escena_capturas(L: Lienzo, e: dict, t: float) -> np.ndarray:
+    imgs = e["imagenes"]
+    tramos = tramos_escena(e)
+    i = max(k for k, (t0, _) in enumerate(tramos) if t0 <= t or k == 0)
+    t0, t1 = tramos[i]
+    cuadro = cuadro_imagen(L, imgs[i], t - t0, t1 - t0)
+    if i + 1 < len(imgs) and t >= tramos[i + 1][0]:  # fundido con la siguiente imagen
+        u0, u1 = tramos[i + 1]
+        siguiente = cuadro_imagen(L, imgs[i + 1], t - u0, u1 - u0)
+        cuadro = mezclar(cuadro, siguiente, suave((t - u0) / FUNDIDO_IMAGEN))
     return cuadro
 
 
@@ -618,7 +689,9 @@ def armar_audio(escenas: list[dict], total: float, musica: str | None, sin_music
 # ======================================================================= principal
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--resolucion", choices=["4k", "1080"], default="4k")
+    ap.add_argument("--resolucion", choices=list(RESOLUCIONES), default="4k")
+    ap.add_argument("--guion", default="guion", help="modulo del guion: guion (presentacion) o guion_tutorial")
+    ap.add_argument("--comprobar", action="store_true", help="solo comprueba que esten las capturas, los clips y la locucion")
     ap.add_argument("--salida", help="archivo MP4 de salida")
     ap.add_argument("--musica", help="archivo de audio para el fondo musical (en lugar del generado)")
     ap.add_argument("--sin-musica", action="store_true")
@@ -629,8 +702,23 @@ def main() -> None:
     ap.add_argument("--hasta", type=float, help="renderizar hasta este segundo (pruebas)")
     ap.add_argument("--cuadro", type=float, help="solo guarda el cuadro de ese segundo como PNG (pruebas)")
     a = ap.parse_args()
+    cargar_guion(a.guion)
 
-    ancho, alto = (3840, 2160) if a.resolucion == "4k" else (1920, 1080)
+    if a.comprobar:
+        faltan = []
+        for e in ESCENAS:
+            for nombre, mov in e.get("imagenes", []):
+                ruta = CLIPS / nombre / "meta.json" if mov == "clip" else CAPTURAS / f"{nombre}.png"
+                if not ruta.exists():
+                    faltan.append(f"{e['id']}: {'clip' if mov == 'clip' else 'captura'} {nombre}")
+            if not e.get("placa") and not e.get("imagenes"):
+                faltan.append(f"{e['id']}: sin imagenes")
+            if not (LOCUCION / f"{e['id']}.mp3").exists():
+                faltan.append(f"{e['id']}: locucion")
+        print("\n".join(faltan) if faltan else "No falta nada.")
+        raise SystemExit(1 if faltan else 0)
+
+    ancho, alto = RESOLUCIONES[a.resolucion]
     escenas, total, con_voz = armar_linea_de_tiempo()
     print(f"{len(escenas)} escenas, {total:.1f} s ({total / 60:.1f} min){'' if con_voz else ' - BORRADOR: falta la locucion (locucion.py)'}")
     L = Lienzo(ancho, alto)
@@ -650,8 +738,8 @@ def main() -> None:
         print(destino)
         return
 
-    sufijo = "4K" if a.resolucion == "4k" else "1080p"
-    nombre = f"SIETE_presentacion_{sufijo}_locucion.mp4" if con_voz else f"SIETE_presentacion_{sufijo}_BORRADOR.mp4"
+    sufijo = {"4k": "4K", "2k": "2K", "1080": "1080p"}[a.resolucion]
+    nombre = f"{NOMBRE_ARCHIVO}_{sufijo}_locucion.mp4" if con_voz else f"{NOMBRE_ARCHIVO}_{sufijo}_BORRADOR.mp4"
     salida = Path(a.salida) if a.salida else AQUI / "salida" / nombre
     salida.parent.mkdir(parents=True, exist_ok=True)
     desde, hasta = a.desde, min(total, a.hasta or total)
@@ -661,7 +749,7 @@ def main() -> None:
     cmd = ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{ancho}x{alto}", "-r", str(FPS), "-i", "-",
            "-ss", f"{desde:.3f}", "-t", f"{hasta - desde:.3f}", "-i", str(wav),
            "-c:v", "libx264", "-preset", a.preset, "-crf", str(a.crf), "-pix_fmt", "yuv420p", "-profile:v", "high",
-           "-level", "5.1" if a.resolucion == "4k" else "4.1", "-tune", "film",
+           "-level", "4.1" if a.resolucion == "1080" else "5.1", "-tune", "film",
            "-c:a", "aac", "-b:a", "256k", "-ar", str(SR), "-movflags", "+faststart",
            "-metadata", "title=S.I.E.T.E. - Sistema Integral de Entrenamiento Táctico y Estratégico",
            "-metadata", "artist=DIDA - Aviación Militar Bolivariana", "-shortest", str(salida)]

@@ -1,0 +1,17 @@
+{
+ "firma": "fa45a52942af76463b6244a7eed70db5754e0a3b",
+ "voz": "es-VE-SebastianNeural",
+ "velocidad": "+8%",
+ "frases": [
+  {
+   "inicio": 0.1,
+   "duracion": 8.7055721,
+   "texto": "Desde una base aérea o un portaaviones, Enviar aeronaves lanza un grupo: elija el modelo en las fichas, con su foto, sus prestaciones y su armamento."
+  },
+  {
+   "inicio": 8.7555721,
+   "duracion": 6.0442382,
+   "texto": "El perfil de vuelo, alto, medio o rasante, decide si se esconde tras el relieve o si gasta más."
+  }
+ ]
+}
