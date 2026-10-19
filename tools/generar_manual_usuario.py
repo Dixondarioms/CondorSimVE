@@ -82,6 +82,18 @@ def leyenda(filas: list[tuple[str, str, str]]) -> Table:
     return Tbl(["N.º", "Zona", "Para qué sirve"], [list(f) for f in filas], [1.0 * cm, 4.0 * cm, ANCHO_TEXTO - 5.0 * cm])
 
 
+def titulos_con_su_figura(h: list) -> list:
+    """Un titulo seguido de una figura (o de una tabla) va en el mismo bloque: keepWithNext no alcanza cuando el titulo
+    y una captura alta no caben juntos al pie de la pagina, y el titulo quedaba solo."""
+    salida = []
+    for f in h:
+        while (salida and isinstance(f, (KeepTogether, Table)) and isinstance(salida[-1], Paragraph)
+               and salida[-1].style.name in ("h2", "h3")):
+            f = KeepTogether([salida.pop(), f])
+        salida.append(f)
+    return salida
+
+
 def pasos(*items) -> object:
     return Num(list(items))
 
@@ -463,7 +475,10 @@ def construir(salida: Path) -> None:
     ])
     h += al_lado("ficha_unidad", "Ficha de la unidad seleccionada.", [
         P("La <b>ficha</b> de la unidad seleccionada muestra:"),
-        Bul(["Una <b>foto de referencia</b> de la aeronave, el dron o el buque (con su autor y licencia), o su ilustración.",
+        Bul(["Una <b>foto de referencia</b> real (con su autor y licencia) o su ilustración: de la aeronave, el dron o el buque; de "
+             "las baterías antiaéreas (ZU-23-2, Mistral, RBS 70, Pechora-2M, Buk-M2E, S-300VM), y de cada tipo de unidad "
+             "terrestre (infantería, blindados, artillería, ingenieros, guerra electrónica, lanzadores de misiles…). El "
+             "instructor puede reemplazarla por una propia (7.4, «Foto de un tipo de unidad»).",
              "<b>Fuerza</b>, <b>combustible</b> y <b>munición</b> en barras (en rojo cuando están bajos).",
              "Clase, terreno donde está, velocidad, alcance de fuego, detección, autonomía, movilidad y el clima local.",
              "La orden pendiente, si tiene una.",
@@ -573,7 +588,17 @@ def construir(salida: Path) -> None:
             "<b>interferencia</b> enemiga sobre la batería (además, su radar de tiro alcanza menos), la <b>maniobra evasiva</b> de "
             "las aeronaves tripuladas (que además ataca peor ese turno), la <b>firma radar</b> reducida de los furtivos, la cota "
             "muy baja para los misiles guiados por radar, y la noche para los cañones. Cada resultado queda en la cola de órdenes "
-            "con las salvas, el rumbo, el tiempo en alcance y la probabilidad.")]
+            "con las salvas, el rumbo, el tiempo en alcance y la probabilidad."),
+          P("<b>Disciplina de fuego.</b> La batería no gasta todos sus misiles en un solo turno; tira como lo haría su dotación:"),
+          Bul(["<b>Disparo, observación, disparo:</b> en cada turno tira a lo sumo una salva por aeronave del grupo. Las que "
+               "sobreviven se baten el turno siguiente.",
+               "<b>Lejos, un misil; cerca, la salva completa:</b> más allá de la mitad del alcance del arma tira un solo misil por "
+               "salva, porque hay tiempo de ver el resultado y repetir. Más cerca tira los dos.",
+               "<b>Reserva para la autodefensa:</b> la cuarta parte de sus misiles queda guardada y solo se usa contra blancos "
+               "cercanos (dentro de la mitad del alcance). Si un blanco lejano no recibe fuego por eso, la cola de órdenes lo "
+               "explica: «conserva sus últimos N misiles para su autodefensa»."]),
+          Nota("En el orden de batalla, una batería que gastó su reserva pero todavía tiene misiles en los lanzadores figura "
+               "«Sin reserva · N misiles listos»: puede seguir tirando. «Sin munición» aparece solo cuando ya no le queda ninguno.")]
     h += [H2("6.4 Dar una orden: los pasos de siempre"),
           pasos("Seleccione la unidad (en el orden de batalla o con un clic en el mapa).",
                 "En <b>Nueva orden</b>, elija el tipo de orden: los botones que aparecen dependen de la unidad y de su repartición.",
@@ -992,7 +1017,9 @@ def construir(salida: Path) -> None:
     h += [Bul([f"{B('Nuevo')} crea un escenario vacío y le pide el nombre.",
                f"{B('Desde plantilla…')} crea un escenario nuevo con unidades, objetivos y clima ya cargados. Hay plantillas del sistema y las que "
                "guardaron los instructores. Entre las del sistema está «3 de enero de 2026: Operación Resolución Absoluta», que reconstruye "
-               "el ataque con las aeronaves y los buques de EE. UU. que se informaron y las defensas venezolanas del litoral central.",
+               "el ataque con las aeronaves y los buques de EE. UU. que se informaron y las defensas venezolanas del litoral central: los "
+               "Buk-M2E de La Carlota e Higuerote, una batería S-300VM en Catia La Mar, secciones RBS 70 en Fuerte Tiuna y La Guaira, y "
+               "las Igla-S de Fuerte Tiuna (ubicaciones aproximadas).",
                "Las plantillas con la etiqueta amarilla <b>Contra la IA</b> crean un ejercicio en el que el simulador ya conduce al bando rojo "
                "(capítulo 8).",
                "<b>País Azul contra País Rojo (mapa ficticio)</b> crea un ejercicio sobre el mapa ficticio (4.12), sin ningún país real: cada "
@@ -1468,7 +1495,7 @@ def construir(salida: Path) -> None:
           ], [4.5 * cm, ANCHO_TEXTO - 4.5 * cm])]
 
     h += seccion_creditos("Créditos")
-    doc.multiBuild(h)
+    doc.multiBuild(titulos_con_su_figura(h))
 
 
 def main() -> None:
