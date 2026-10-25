@@ -220,14 +220,12 @@ def tabla_modelos():
 LOGO_DIDA = next((x for x in (RAIZ / "frontend" / "static" / "img" / "dida_logo_recortado.png",
                               RAIZ / "frontend" / "static" / "img" / "dida_logo.jpg") if x.exists()),
                  RAIZ / "frontend" / "static" / "img" / "dida_logo.jpg")
-CREADOR = "Cap. Dixon Malpica"
 UNIDAD = "División de Ingeniería y Desarrollo Aeroespacial (DIDA)"
 
 
 def credito_portada() -> list:
-    """Escudo de la DIDA, unidad que creo el simulador, y el credito de su creador, para la portada."""
-    texto = Paragraph(f"Desarrollado por la <b>{UNIDAD}</b><br/>Aviación Militar Bolivariana · Fuerza Armada Nacional Bolivariana<br/>"
-                      f"Creador del simulador: <b>{CREADOR}</b>",
+    """Escudo de la DIDA, la unidad que desarrollo el simulador, para la portada (credito institucional)."""
+    texto = Paragraph(f"Desarrollado en la <b>{UNIDAD}</b><br/>Aviación Militar Bolivariana · Fuerza Armada Nacional Bolivariana",
                       ParagraphStyle("cred", parent=S["pc"], fontSize=10.5, leading=15, textColor=GRIS))
     if not LOGO_DIDA.exists():
         return [texto]
@@ -239,17 +237,17 @@ def credito_portada() -> list:
 
 
 def seccion_creditos(titulo: str) -> list:
-    """Pagina de creditos: escudo de la DIDA, el creador del simulador y la unidad."""
+    """Pagina de creditos: escudo de la DIDA y la unidad que desarrollo el simulador (credito institucional)."""
     h = H1(titulo)
     if LOGO_DIDA.exists():
         im = Image(str(LOGO_DIDA))
         im.drawWidth, im.drawHeight = 7.5 * cm, 7.5 * cm * im.imageHeight / im.imageWidth
         h += [im, Spacer(1, 10)]
     centrado = ParagraphStyle("credc", parent=S["p"], alignment=TA_CENTER, fontSize=11, leading=16)
-    h += [Paragraph(f"S.I.E.T.E. (Sistema Integral de Entrenamiento Táctico y Estratégico) fue concebido, diseñado y desarrollado por el "
-                    f"<b>{CREADOR}</b>, de la <b>{UNIDAD}</b> de la Aviación Militar Bolivariana.", centrado),
+    h += [Paragraph(f"S.I.E.T.E. (Sistema Integral de Entrenamiento Táctico y Estratégico) fue concebido, diseñado y desarrollado en la "
+                    f"<b>{UNIDAD}</b> de la Aviación Militar Bolivariana.", centrado),
           Spacer(1, 6), Paragraph("<i>«El infinito es el límite»</i>", centrado), Spacer(1, 14)]
-    filas = [["Creador del simulador", CREADOR], ["Unidad", UNIDAD],
+    filas = [["Unidad", UNIDAD],
              ["Componente", "Aviación Militar Bolivariana · Fuerza Armada Nacional Bolivariana"]]
     t = Table([[Paragraph(f"<b>{a}</b>", S["celda"]), Paragraph(b, S["celda"])] for a, b in filas],
               colWidths=[5.0 * cm, ANCHO_TEXTO - 5.0 * cm], hAlign="CENTER")
@@ -1228,7 +1226,7 @@ def construir(salida: Path, img: Path) -> None:
                "  tools/              scripts de preparación de datos (terreno, satélite, aeródromos, bases, arnés, manual)\n"
                "  docs/               este manual\n  README.md           documentación técnica completa"),
           H2("Anexo C. Créditos y licencias"),
-          P(f"Simulador concebido, diseñado y desarrollado por el <b>{CREADOR}</b>, {UNIDAD}, Aviación Militar Bolivariana. "
+          P(f"Simulador concebido, diseñado y desarrollado en la <b>{UNIDAD}</b>, Aviación Militar Bolivariana. "
             "Datos y componentes de terceros:"),
           P("Satélite: EOxCloudless (EOX IT Services GmbH), Copernicus Sentinel-2 (ESA), CC BY 4.0. Relieve: AWS Terrain Tiles (SRTM/GMTED/ETOPO1 "
             "vía Mapzen). Cobertura terrestre: ESA WorldCover 2021, CC BY 4.0. Vectores: Natural Earth (dominio público). Planos de aeródromos: "
