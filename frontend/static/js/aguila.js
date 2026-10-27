@@ -1,7 +1,8 @@
-/* Aguila del SIETE en la pantalla de acceso. En reposo esta posada con las alas recogidas (siete_aguila_posada.png,
- * que es el primer cuadro del video); al aprobarse el ingreso se reproduce aguila_vuelo.webm (2,8 s, con
- * transparencia: abre las alas, las sube y da dos batidas; tools/manual/aguila_video.py) mientras la figura levanta
- * el vuelo y viene hacia la pantalla hasta desaparecer. Recien entonces se muestra el simulador.
+/* Figura de la pantalla de acceso (en esta version, el condor: condor_posado.png y condor_vuelo.webm, de
+ * tools/manual/condor_video.py; el aguila del SIETE por turnos usa siete_aguila_posada.png y aguila_vuelo.webm).
+ * En reposo esta posada con las alas recogidas (el primer cuadro del video); al aprobarse el ingreso se reproduce el
+ * video (2,8 s, con transparencia: abre las alas y despega) mientras la figura levanta el vuelo y viene hacia la
+ * pantalla hasta desaparecer. Recien entonces se muestra el simulador.
  * Si el video no se puede reproducir, vuela la imagen posada; con "reducir movimiento" del sistema se entra directo. */
 (function (raiz) {
   "use strict";

@@ -385,6 +385,9 @@ path.ruta-anim { animation: marcha 1.2s linear infinite; }
 .aguila { position: relative; width: 100%; height: 183px; margin: 2px auto 10px; pointer-events: none; user-select: none; }
 .aguila .lienzo { position: absolute; left: 50%; top: -62px; width: 520px; height: 292.5px; margin-left: -260px; }
 .aguila .lienzo img, .aguila .lienzo video { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* el condor (tools/manual/condor_video.py) ocupa casi todo su cuadro: posado, x 35-66 % e y 7-98 %; lienzo mas chico
+ * para que el condor posado mida lo mismo que el aguila posada */
+.aguila.condor .lienzo { top: -15px; width: 370px; height: 208px; margin-left: -185px; }
 .aguila video.vuelo { opacity: 0; }
 .aguila.volando video.vuelo { opacity: 1; }
 .aguila.volando img.posada { opacity: 0; }
