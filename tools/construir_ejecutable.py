@@ -35,8 +35,14 @@ TRABAJO = DIST / "_construccion"
 LANZADOR = RAIZ / "tools" / "ejecutable" / "siete.py"
 ICONO_PNG = RAIZ / "frontend" / "static" / "img" / "icono_escritorio.png"
 
-# Lo que no viaja en la carpeta portatil: datos del aula de este equipo, pruebas y caches.
-IGNORAR = shutil.ignore_patterns("__pycache__", "*.pyc", "*.log", "plantillas_usuario")
+# Lo que no viaja en la carpeta portatil: datos del aula de este equipo (y sus ajustes del catalogo), pruebas y caches.
+IGNORAR = shutil.ignore_patterns("__pycache__", "*.pyc", "*.log", "plantillas_usuario", "ajustes_catalogo.json")
+# Ajustes del catalogo que pide el ejercicio Operacion Guri (tools/crear_ejercicio_guri.py): viajan aparte, sin aplicar.
+AJUSTES_GURI = {
+    "_comentario": "Ajustes del ejercicio Operacion Guri: renombre este archivo a ajustes_catalogo.json y reinicie Condor.exe.",
+    "clases": {"base_aerea": {"plazas_aeronaves": 100}},
+    "topes": {"MAX_AERONAVES_BANDO": 160, "MAX_DRONES_BANDO": 40},
+}
 
 SPEC = r'''
 # Generado por tools/construir_ejecutable.py: no editar a mano.
@@ -81,7 +87,12 @@ PUESTA EN MARCHA
      Si Windows pregunta por el cortafuegos, permita el acceso en "redes privadas" para que entren las
      estaciones del aula. Cerrar la ventana negra detiene el servidor.
   3. Las estaciones del aula abren en su navegador la direccion que muestra la ventana negra
-     (http://<ip-de-este-equipo>:8000/).
+     (http://<ip-de-este-equipo>:8001/).
+
+PRIMEROS PASOS
+  En la pantalla del Condor, el boton "Ayuda" (o la tecla F1) responde preguntas sobre el simulador y tiene
+  el "Recorrido guiado paso a paso" por la pantalla. Para practicar, cree el ejercicio "Tutorial del Condor"
+  con "Desde plantilla..." (el alumno conduce el Azul; el Rojo, el adversario automatico).
 
 PRIMER ACCESO
   Usuario: admin      Contrasena inicial: siete1234
@@ -101,6 +112,8 @@ OPCIONES (en una consola, dentro de esta carpeta)
 DATOS
   La base de datos queda en backend\\simulador_fenix.db y los respaldos automaticos en backend\\respaldos.
   Para pasar a una version nueva, copie esos dos elementos a la carpeta nueva.
+  El ejercicio "Juegos de Guerra 01-2026: Operacion Guri" necesita mas aeronaves por base y por bando:
+  renombre backend\\data\\ajustes_catalogo.guri.json a ajustes_catalogo.json y reinicie Condor.exe.
 {nota_datos}
 Manual de referencia del SIETE (instalacion y reglas del motor): docs\\Manual_SIETE.pdf
 
@@ -179,6 +192,8 @@ def escribir_ayudas(destino: Path, fuera: set[str]) -> None:
                 "  siete_datos.zip dentro de esta carpeta Condor.\n")
     else:
         nota = ""
+    (destino / "backend" / "data" / "ajustes_catalogo.guri.json").write_text(
+        json.dumps(AJUSTES_GURI, ensure_ascii=False, indent=2), encoding="utf-8")
     (destino / "LEEME.txt").write_text(LEEME.format(fecha=date.today().strftime("%d/%m/%Y"), nota_datos=nota),
                                        encoding="utf-8-sig", newline="\r\n")
     (destino / "Restablecer admin.cmd").write_text(
