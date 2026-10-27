@@ -1,11 +1,11 @@
-"""Lanzador de S.I.E.T.E. en la carpeta portatil (SIETE.exe; se construye con tools/construir_ejecutable.py).
+"""Lanzador del Cóndor en la carpeta portatil (Condor.exe; se construye con tools/construir_ejecutable.py).
 
-    SIETE.exe                       arranca el servidor para la red del aula y abre el navegador
-    SIETE.exe --sin-navegador       solo el servidor (tarea programada, arranque automatico)
-    SIETE.exe --puerto 8080         otro puerto (tambien SIETE_PUERTO); --https usa un certificado autofirmado
-    SIETE.exe --solo-este-equipo    no acepta conexiones de la red local
-    SIETE.exe --restablecer-admin   devuelve la cuenta admin a la contrasena inicial (recuperar el acceso)
-    SIETE.exe --demo                crea el escenario de demostracion
+    Condor.exe                       arranca el servidor para la red del aula y abre el navegador
+    Condor.exe --sin-navegador       solo el servidor (tarea programada, arranque automatico)
+    Condor.exe --puerto 8080         otro puerto (tambien SIETE_PUERTO); --https usa un certificado autofirmado
+    Condor.exe --solo-este-equipo    no acepta conexiones de la red local
+    Condor.exe --restablecer-admin   devuelve la cuenta admin a la contrasena inicial (recuperar el acceso)
+    Condor.exe --demo                crea el escenario de demostracion
 
 El codigo del simulador va como fuentes en backend\\app, junto al .exe y no dentro de el: la base de datos,
 los respaldos y los certificados quedan en backend\\, igual que en una instalacion con Python, y las rutas del
@@ -25,7 +25,7 @@ from pathlib import Path
 
 
 def carpeta_raiz() -> Path:
-    if getattr(sys, "frozen", False):  # SIETE.exe
+    if getattr(sys, "frozen", False):  # Condor.exe
         return Path(sys.executable).resolve().parent
     return Path(__file__).resolve().parents[2]  # en el repositorio: python tools/ejecutable/siete.py
 
@@ -68,7 +68,7 @@ def main() -> int:
     raiz = carpeta_raiz()
     backend = raiz / "backend"
     leer_env(backend / ".env")
-    ap = argparse.ArgumentParser(prog="SIETE", description="S.I.E.T.E. - Sistema Integral de Entrenamiento Tactico y Estrategico")
+    ap = argparse.ArgumentParser(prog="Condor", description="Condor - Simulador de entrenamiento tactico y estrategico en tiempo real")
     ap.add_argument("--puerto", type=int, default=None)
     ap.add_argument("--https", action="store_true", default=os.environ.get("SIETE_HTTPS") == "1")
     ap.add_argument("--solo-este-equipo", action="store_true", help="escuchar solo en 127.0.0.1")
@@ -79,7 +79,7 @@ def main() -> int:
 
     if not (backend / "app" / "main.py").exists():
         print(f"No se encuentra el codigo del simulador en {backend / 'app'}.")
-        print("SIETE.exe debe quedar en la carpeta SIETE junto a las carpetas backend y frontend.")
+        print("Condor.exe debe quedar en la carpeta Condor junto a las carpetas backend y frontend.")
         return 1
     sys.path.insert(0, str(backend))
     os.chdir(backend)
@@ -95,7 +95,7 @@ def main() -> int:
         crear_demo.main()
         return 0
 
-    puerto = args.puerto or int(os.environ.get("SIETE_PUERTO") or (8443 if args.https else 8000))
+    puerto = args.puerto or int(os.environ.get("SIETE_PUERTO") or (8443 if args.https else 8001))
     host = "127.0.0.1" if args.solo_este_equipo else os.environ.get("SIETE_HOST") or "0.0.0.0"
     esquema = "https" if args.https else "http"
     url = f"{esquema}://localhost:{puerto}/"
@@ -106,7 +106,7 @@ def main() -> int:
             webbrowser.open(url)
         return 0
 
-    print("S.I.E.T.E. - Sistema Integral de Entrenamiento Tactico y Estrategico")
+    print("Condor - Simulador de entrenamiento tactico y estrategico en tiempo real")
     print(f"Servidor en {url}")
     if host != "127.0.0.1":
         for ip in ips_locales():
@@ -121,7 +121,7 @@ def main() -> int:
 
     from app import servidor
 
-    sys.argv = ["SIETE", "--host", host, "--port", str(puerto)] + (["--https"] if args.https else [])
+    sys.argv = ["Condor", "--host", host, "--port", str(puerto)] + (["--https"] if args.https else [])
     return servidor.main()
 
 
@@ -136,5 +136,5 @@ if __name__ == "__main__":
     if codigo and getattr(sys, "frozen", False) and "--sin-navegador" not in sys.argv:
         # con doble clic la ventana se cerraria sin dejar leer el error
         print()
-        input(f"S.I.E.T.E. termino con un error (codigo {codigo}). Pulse Enter para cerrar.")
+        input(f"El Condor termino con un error (codigo {codigo}). Pulse Enter para cerrar.")
     sys.exit(codigo)
