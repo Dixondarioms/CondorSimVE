@@ -168,3 +168,17 @@ def test_operacion_guri_las_tropas_de_asalto_pueden_embarcar_desde_el_primer_tur
         if u.bando == "azul" and u.clase == "infanteria":
             b = bases[u.nombre.split("(")[-1].rstrip(")")]
             assert geo.distancia_km(u.lat, u.lon, b.lat, b.lon) < transporte.RADIO_EMBARQUE_KM, u.nombre
+
+
+def test_tutorial_del_condor_es_chico_lo_conduce_un_alumno_contra_la_ia_y_el_enemigo_esta_lejos(db_session):
+    """tools/crear_ejercicio_tutorial.py: para aprender la pantalla, con tiempo para mover y detectar antes del combate."""
+    from app.engine import geo
+
+    p = plantillas.PLANTILLAS["tutorial_condor"]
+    assert len(p.unidades) <= 24 and p.ia_rojo and not p.ia_azul
+    por = {u.nombre: u for u in p.unidades}
+    inf, blind = por["1.ª Brigada de Infantería azul"], por["Brigada Blindada rojo"]
+    assert 60 < geo.distancia_km(inf.lat, inf.lon, blind.lat, blind.lon) < 120
+    assert {o.bando for o in p.objetivos} == {"azul", "rojo"}
+    esc = plantillas.crear_desde_plantilla(db_session, "tutorial_condor")
+    assert esc.nombre == "Tutorial del Cóndor" and esc.ia_rojo

@@ -1,0 +1,416 @@
+/* Temas de la ayuda del Cóndor (ayuda.js): cómo funciona el simulador, en lenguaje llano. Cada tema: id, sección,
+ * título, palabras clave (lo que alguien escribiría al preguntar) y el texto (HTML propio, sin datos de usuarios).
+ * "director: true" = solo lo ve el director del ejercicio. Al cambiar el simulador, actualizar el tema que corresponda. */
+(function (raiz) {
+  "use strict";
+
+  const SECCIONES = [
+    "Primeros pasos", "El reloj y las alertas", "Órdenes", "Aviación", "Defensa aérea y doctrina",
+    "Inteligencia y contactos", "Logística, ingenieros y transporte", "Guerra electrónica", "El mapa",
+    "Estado Mayor (TIEM)", "Informe y repetición", "Dirección del ejercicio", "Problemas frecuentes",
+  ];
+
+  const TEMAS = [
+    // ------------------------------------------------------------------ primeros pasos
+    {
+      id: "que-es", seccion: "Primeros pasos", titulo: "Qué es el Cóndor",
+      claves: "simulador tiempo real que es para que sirve bandos azul rojo director ejercicio juego de guerra",
+      texto: `<p>El Cóndor es un simulador de entrenamiento táctico y estratégico <b>en tiempo real</b>: las unidades se mueven,
+        detectan y combaten mientras corre el reloj, y las órdenes se cumplen en el acto (no hay que esperar al fin de un turno).</p>
+        <p>Se enfrentan dos bandos (Azul y Rojo). Cada bando es un Estado Mayor: cada persona entra con la cuenta de su
+        <b>repartición</b> (Comandante, JEM, A-1, A-2, A-3, A-3 D/A, A-4, C-E) y ordena solo las unidades que le corresponden.
+        El <b>director del ejercicio</b> prepara el escenario, maneja el reloj y ve los dos bandos.</p>`,
+    },
+    {
+      id: "entrar", seccion: "Primeros pasos", titulo: "Entrar y elegir el ejercicio",
+      claves: "entrar iniciar sesion login usuario contraseña clave escenario elegir lista cambiar contraseña cerrar sesion salir cuenta",
+      texto: `<ol><li>Abra en Chrome o Edge la dirección que le dio el director (termina en <b>:8001</b>).</li>
+        <li>Escriba su usuario y contraseña tal como figuran en su tarjeta (respetando mayúsculas y guiones).</li>
+        <li>Arriba, en la lista <b>Escenario</b>, elija el ejercicio (una cuenta puede tener más de uno).</li></ol>
+        <p>Para cambiar la contraseña o salir: botón del usuario (arriba a la derecha) → <b>Cambiar contraseña</b> o
+        <b>Cerrar sesión</b>. Use una cuenta por vez en cada navegador.</p>`,
+    },
+    {
+      id: "pantalla", seccion: "Primeros pasos", titulo: "Las partes de la pantalla",
+      claves: "pantalla paneles pestañas fuerzas situacion tiem consola mapa derecha izquierda estado del escenario objetivos capas comunicaciones alertas abajo reloj",
+      texto: `<ul><li><b>Izquierda</b>, en pestañas: <b>FUERZAS</b> (orden de batalla, doctrina, unidad seleccionada, aviación,
+        nueva orden y cola de órdenes), <b>SITUACIÓN</b> (cuadro radar, personal, apresto, infraestructura…), <b>TIEM</b>
+        (trabajo de Estado Mayor) y, para el director, <b>CONSOLA</b>.</li>
+        <li><b>Centro</b>: el mapa con las unidades, rutas, zonas y contactos.</li>
+        <li><b>Derecha</b>: estado del escenario (hora, clima, reloj), objetivos y puntaje, capas del mapa, comunicaciones y alertas.</li>
+        <li><b>Abajo</b>: el reloj del ejercicio y quién conduce cada bando.</li></ul>`,
+    },
+    {
+      id: "reparticiones", seccion: "Primeros pasos", titulo: "Qué ordena cada repartición",
+      claves: "reparticion puesto comandante jem a1 a2 a3 a3da a4 ce personal inteligencia operaciones defensa aerea logistica comunicaciones electronica quien ordena permisos funciones corresponde",
+      texto: `<table><tr><th>Repartición</th><th>Qué conduce</th></tr>
+        <tr><td>Comandante y JEM</td><td>Todo: reúnen las funciones de todas las reparticiones y fijan la doctrina del bando.</td></tr>
+        <tr><td>A-1 Personal</td><td>Sigue efectivos, bajas y moral. No ordena unidades.</td></tr>
+        <tr><td>A-2 Inteligencia</td><td>Sigue al enemigo y conduce el reconocimiento (unidades y drones de reconocimiento).</td></tr>
+        <tr><td>A-3 Operaciones</td><td>La maniobra: despegues, caza, ataque, helicópteros, drones armados, cisternas, fuerzas de superficie y lanzadores de misiles.</td></tr>
+        <tr><td>A-3 D/A Defensa Aérea</td><td>Radares, antiaérea, alerta temprana y la caza de intercepción con sus despegues.</td></tr>
+        <tr><td>A-4 Logística</td><td>Convoyes, depósitos e ingenieros (puentes y vados).</td></tr>
+        <tr><td>C-E Comunicaciones y Electrónica</td><td>Guerra electrónica: escucha e interferencia desde tierra y aviones de guerra electrónica.</td></tr></table>
+        <p>Si una orden «corresponde a otra repartición», pídasela a quien la conduce (o al Comandante o al JEM).</p>`,
+    },
+    // ------------------------------------------------------------------ reloj y alertas
+    {
+      id: "reloj", seccion: "El reloj y las alertas", titulo: "El reloj: tiempo real y velocidades",
+      claves: "reloj tiempo real velocidad 1x 10x 60x poner en marcha detener pausa hora simulada hora del ejercicio adelantar +1 h acelerar",
+      texto: `<p>El ejercicio corre en tiempo simulado. La velocidad puede ser <b>1×</b> (igual que la realidad), <b>10×</b> o
+        <b>60×</b> (un minuto simulado por segundo). El reloj lo pone en marcha y lo detiene el director (en el ensayo de una
+        forma de acción, el Comandante y el JEM); el botón <b>+1 h</b> adelanta una hora de golpe.</p>
+        <p>Arriba se ve la <b>hora simulada</b> y la <b>hora del ejercicio</b> (la primera hora es la 1). Con el reloj detenido
+        se pueden dar órdenes: se cumplen al ponerlo en marcha.</p>`,
+    },
+    {
+      id: "pausa-auto", seccion: "El reloj y las alertas", titulo: "Pausa automática y alertas",
+      claves: "pausa automatica alerta aviso se detuvo solo contacto nuevo ataque unidad perdida combustible critico mision terminada reanudar ver en el mapa banner",
+      texto: `<p>Las <b>alertas</b> avisan al instante lo importante para su bando: contacto nuevo, ataque a una unidad propia,
+        unidad perdida, combustible crítico y misión terminada. Aparecen como aviso sobre el mapa y quedan en el panel
+        <b>Alertas</b> (derecha); con un clic en el lugar, el mapa va hasta allí.</p>
+        <p>El director elige en CONSOLA → <b>Reloj y configuración</b> qué causas <b>detienen el reloj solas</b>. Cuando eso pasa,
+        arriba aparece la franja roja <b>PAUSA AUTOMÁTICA</b> con el motivo, <b>Ver en el mapa</b> y (para el director)
+        <b>Reanudar</b>.</p>`,
+    },
+    // ------------------------------------------------------------------ órdenes
+    {
+      id: "dar-orden", seccion: "Órdenes", titulo: "Cómo dar una orden",
+      claves: "dar orden ordenar seleccionar unidad nueva orden enviar waypoints puntos clic mapa cola detener cancelar reemplazar varias unidades ctrl formacion",
+      texto: `<ol><li>Elija la unidad en el <b>orden de batalla</b> (izquierda) o con un clic en el mapa.</li>
+        <li>En <b>Nueva orden</b>, elija el tipo (Mover, Atacar, Apoyar…). Solo aparecen los que esa unidad puede cumplir.</li>
+        <li>Complete lo que pide: puntos de la ruta (clic en el mapa), el blanco o el lugar.</li>
+        <li>Envíela. La unidad empieza en el acto.</li></ol>
+        <p>Una orden nueva <b>reemplaza</b> a la que estaba cumpliendo (una aeronave en vuelo se desvía al momento). En la
+        <b>Cola de órdenes</b>, el botón ■ detiene una orden. Con <b>Ctrl+clic</b> se suman varias unidades propias: la orden va a
+        todas y, con formación, cada una conserva su lugar.</p>`,
+    },
+    {
+      id: "tipos-orden", seccion: "Órdenes", titulo: "Los tipos de orden",
+      claves: "tipos de orden mover atacar apoyar construir patrullar aterrizar interferir lanzar misiles embarcar desembarcar que hace cada orden",
+      texto: `<table><tr><th>Orden</th><th>Qué hace</th></tr>
+        <tr><td>Mover</td><td>Va por los puntos marcados (por carretera cuando conviene).</td></tr>
+        <tr><td>Atacar</td><td>Ataca a un enemigo detectado; si hace falta, se acerca hasta tenerlo a su alcance.</td></tr>
+        <tr><td>Apoyar</td><td>Acompaña y apoya con fuego a otra unidad propia.</td></tr>
+        <tr><td>Construir</td><td>Ingenieros: puente o vado sobre un río.</td></tr>
+        <tr><td>Patrullar</td><td>Aeronaves: orbitan sobre una zona e interceptan lo que entre.</td></tr>
+        <tr><td>Aterrizar</td><td>Aeronaves en vuelo: vuelven a una base.</td></tr>
+        <tr><td>Interferir</td><td>Guerra electrónica: degrada al enemigo en una zona.</td></tr>
+        <tr><td>Lanzar misiles</td><td>Buques y baterías con misiles de crucero.</td></tr>
+        <tr><td>Embarcar / Desembarcar</td><td>Tropas a bordo de un buque de desembarco o un helicóptero de transporte.</td></tr></table>`,
+    },
+    {
+      id: "mover", seccion: "Órdenes", titulo: "Mover: terreno, ríos y combustible",
+      claves: "mover marcha desplazar ruta camino carretera terreno rio cruzar puente velocidad lento no avanza varada combustible se detuvo llegar",
+      texto: `<p>La velocidad depende del tipo de unidad, del <b>terreno</b> y del <b>clima</b>. Las unidades de tierra aprovechan las
+        carreteras. Los <b>vehículos pesados solo cruzan los ríos por un puente o un vado</b> (obra de ingenieros); si no hay paso,
+        la unidad busca otro camino y, si no lo encuentra, se detiene y avisa.</p>
+        <p>Moverse gasta combustible: sin combustible la unidad no avanza hasta que la reabastezcan (ver «Logística»).</p>`,
+    },
+    {
+      id: "atacar", seccion: "Órdenes", titulo: "Atacar y el combate",
+      claves: "atacar ataque combate disparar fuego blanco objetivo enemigo daño fuerza municion alcance no aparece el blanco fuego continuo bajas",
+      texto: `<p>Solo se puede atacar a un enemigo <b>detectado</b> por su bando. La unidad se acerca hasta tenerlo a su alcance y
+        combate mientras dure la orden: el daño se reparte poco a poco y depende de las armas, la defensa, el terreno, el clima
+        y el azar. Cada ataque gasta munición; una unidad con poca fuerza queda casi sin capacidad de combate.</p>
+        <p>Además, según la <b>doctrina</b>, las unidades pueden tirar solas contra lo que tengan a su alcance (ver «Doctrina y
+        reglas de enfrentamiento»).</p>`,
+    },
+    // ------------------------------------------------------------------ aviación
+    {
+      id: "despegar", seccion: "Aviación", titulo: "Despegar aviones y drones",
+      claves: "despegar despegue avion aeronave caza dron drones enviar aeronaves base aerea tope cuantos aviones grupo",
+      texto: `<p>En la pestaña FUERZAS, panel <b>Aviación</b> → <b>Enviar aeronaves o drones…</b>: elija el tipo (caza, ataque,
+        dron, avión de guerra electrónica…), cuántas y la base de la que despegan. Los despegues los ordenan A-3 y A-3 D/A
+        (y el Comandante o el JEM).</p>
+        <p>Cada bando tiene un <b>tope</b> de aeronaves y de drones (lo muestra el panel). Una aeronave en tierra que acaba de
+        aterrizar necesita tiempo para reabastecer y rearmar antes de volver a salir.</p>`,
+    },
+    {
+      id: "patrulla", seccion: "Aviación", titulo: "Patrullar, aterrizar y el combustible",
+      claves: "patrulla patrullar cap orbitar interceptar aterrizar regreso base combustible bingo winchester reabastecer rearmar 2 horas plazas",
+      texto: `<p><b>Patrullar</b>: la aeronave vuela a la zona, orbita (gasta cerca de 8 % de combustible por hora) e intercepta a
+        los aviones enemigos que detecte a su alcance.</p>
+        <p><b>Aterrizar</b>: vuelve a la base elegida. En tierra tarda unas <b>2 horas</b> en reabastecer y rearmar; después,
+        cualquier orden de vuelo es el despegue. Cada base tiene un número de plazas.</p>
+        <p>Con poco combustible (por defecto 25 %) o sin armamento, la aeronave <b>regresa sola</b> a la base más cercana; esos
+        valores se cambian en la doctrina.</p>`,
+    },
+    {
+      id: "misiones", seccion: "Aviación", titulo: "Misiones aéreas planificadas",
+      claves: "mision misiones aereas planificar paquete ota cronograma flow sheet escolta ataque hora sobre el blanco tot",
+      texto: `<p>El panel <b>Misiones aéreas</b> arma misiones completas: qué aeronaves, la ruta, el blanco, la escolta y la hora.
+        Al llegar la hora, las aeronaves despegan y cumplen la misión solas; al terminar llega la alerta «misión terminada».
+        El <b>cronograma</b> (flow sheet) muestra todas las misiones en el tiempo.</p>`,
+    },
+    // ------------------------------------------------------------------ defensa aérea y doctrina
+    {
+      id: "doctrina", seccion: "Defensa aérea y doctrina", titulo: "Doctrina y reglas de enfrentamiento",
+      claves: "doctrina reglas de enfrentamiento roe libre restringido retenido solo identificados solo con orden misiles por blanco distancia abre fuego disparar solas combustible de regreso sin armamento",
+      texto: `<p>En FUERZAS → <b>Doctrina y reglas de enfrentamiento</b> se decide cómo actúan las unidades por su cuenta:</p>
+        <ul><li><b>Contra aeronaves</b> y <b>contra superficie</b>: <i>Libre</i> (tiran contra cualquier enemigo detectado),
+        <i>Solo identificados</i> o <i>Solo con orden</i>.</li>
+        <li><b>Misiles por blanco</b> de la defensa aérea y <b>a qué distancia abren fuego</b> (100, 75 o 50 % del alcance:
+        más cerca, más probable el impacto).</li>
+        <li>Aeronaves: con qué <b>combustible regresan</b> y si vuelven al quedarse <b>sin armamento</b>.</li></ul>
+        <p>La del bando la fijan el Comandante y el JEM (y el director). Cada unidad puede tener la suya: lo que deje en «Del
+        bando» lo toma de la doctrina del bando. Por defecto: contra aeronaves libre, contra superficie solo con orden.</p>`,
+    },
+    {
+      id: "defensa-aerea", seccion: "Defensa aérea y doctrina", titulo: "Radares y defensa antiaérea",
+      claves: "defensa aerea antiaerea misiles radar alerta temprana derribar interceptar salva alcance techo relieve fuego libre sistema",
+      texto: `<p>Los <b>radares</b> y la antiaérea guiada detectan aeronaves según su alcance, el relieve (las montañas tapan) y la
+        altura a la que vuelan. La antiaérea dispara sola contra las aeronaves enemigas que tenga a su alcance, según la doctrina
+        (misiles por salva y distancia de apertura de fuego). Los conduce A-3 D/A.</p>
+        <p>En SITUACIÓN → <b>Cuadro radar</b> se ve qué detecta ahora cada sensor del bando.</p>`,
+    },
+    // ------------------------------------------------------------------ inteligencia
+    {
+      id: "contactos", seccion: "Inteligencia y contactos", titulo: "Contactos: desconocido, clasificado e identificado",
+      claves: "contacto contactos enemigo desconocido clasificado identificado circulo amarillo incertidumbre posicion dudosa donde esta niebla de guerra",
+      texto: `<p>Un enemigo recién detectado aparece como <b>desconocido</b> (solo se sabe si está en el aire o en superficie). Mientras
+        se lo sigue, pasa a <b>clasificado</b> (se sabe qué clase de unidad es) y luego a <b>identificado</b> (se sabe cuál es). Es
+        más rápido de cerca y con radar; solo por escucha electrónica es lento y no pasa de clasificado. A menos de 8 km se
+        identifica a ojo; las bases se conocen de antemano.</p>
+        <p>El <b>círculo amarillo</b> muestra dónde puede estar en realidad. Si se pierde el contacto, queda su último lugar
+        conocido y el círculo crece con lo que pudo moverse. Las armas en <i>Solo identificados</i> no tiran contra desconocidos.</p>`,
+    },
+    {
+      id: "no-veo", seccion: "Inteligencia y contactos", titulo: "Por qué no veo al enemigo",
+      claves: "no veo enemigo no aparece invisible deteccion detectar reconocimiento niebla de guerra radar alcance ocultamiento clima noche",
+      texto: `<p>Cada bando ve solo lo que detectan sus unidades (<b>niebla de guerra</b>). La detección depende del alcance de cada
+        sensor, del terreno (bosques y ciudades ocultan), del relieve, del clima y de la noche. Para ver más: acerque unidades de
+        reconocimiento o drones (A-2), use radares y patrullas, o la escucha electrónica (C-E).</p>`,
+    },
+    // ------------------------------------------------------------------ logística
+    {
+      id: "logistica", seccion: "Logística, ingenieros y transporte", titulo: "Combustible, munición y abastecimiento",
+      claves: "logistica combustible municion abastecer reabastecer deposito convoy cisterna base sin combustible stock suministro",
+      texto: `<p>Las unidades gastan combustible al moverse y munición al combatir. Se reabastecen solas, poco a poco, cerca de
+        las <b>bases</b>, los <b>depósitos</b> y los <b>convoyes</b> propios (que llevan su carga a donde se los mande). Las
+        aeronaves pueden reabastecer en vuelo junto a un <b>avión cisterna</b>. Conduce A-4.</p>`,
+    },
+    {
+      id: "ingenieros", seccion: "Logística, ingenieros y transporte", titulo: "Ingenieros: puentes y vados",
+      claves: "ingenieros construir puente vado obra rio cruzar",
+      texto: `<p>Elija la unidad de ingenieros → orden <b>Construir</b> → clic sobre un río a menos de 5 km. La obra tarda un
+        tiempo; cuando está lista, los vehículos pesados pueden cruzar por allí.</p>`,
+    },
+    {
+      id: "embarcar", seccion: "Logística, ingenieros y transporte", titulo: "Embarcar y desembarcar tropas",
+      claves: "embarcar desembarcar transporte buque helicoptero tropas asalto aereo anfibio a bordo",
+      texto: `<p><b>Embarcar</b>: la unidad sube a un buque de desembarco o a un helicóptero de transporte propio que esté a menos
+        de 3 km. A bordo viaja con el transporte, no se la ve ni ataca por separado y sufre la mitad del daño que reciba el
+        transporte (se pierde si lo hunden o derriban).</p>
+        <p><b>Desembarcar</b>: elija el transporte y marque la ruta; el último punto es el lugar de desembarco, en tierra firme.</p>`,
+    },
+    {
+      id: "misiles-crucero", seccion: "Logística, ingenieros y transporte", titulo: "Misiles de crucero",
+      claves: "misil misiles crucero lanzar salva lanzador bateria buque",
+      texto: `<p>Buques y baterías con misiles de crucero: orden <b>Lanzar misiles</b> sobre un blanco. La salva vuela sola
+        (unos 850 km/h) hacia donde estaba el blanco; la antiaérea y las patrullas enemigas pueden derribarla antes. Cada misil
+        gasta el 25 % de la munición del lanzador.</p>`,
+    },
+    // ------------------------------------------------------------------ guerra electrónica
+    {
+      id: "ge", seccion: "Guerra electrónica", titulo: "Interferencia y escucha",
+      claves: "guerra electronica interferir interferencia escucha esm jammer radar apagado enlace drones emisor localizado",
+      texto: `<p><b>Interferir</b>: con la unidad o el avión de guerra electrónica, clic en el centro de la zona (dentro de su
+        alcance). Mientras dure la orden, allí el enemigo detecta mucho menos, su antiaérea guiada por radar pierde efecto y sus
+        drones pierden el enlace. Pero al emitir, <b>el enemigo localiza al interferidor</b>.</p>
+        <p>La <b>escucha</b> electrónica localiza de lejos a los radares enemigos encendidos. Un radar apagado no se oye, pero
+        tampoco ve. Conduce C-E.</p>`,
+    },
+    // ------------------------------------------------------------------ mapa
+    {
+      id: "capas", seccion: "El mapa", titulo: "Capas, estelas y símbolos",
+      claves: "capas mapa estela estelas rastro donde estuvo simbolos app-6 miniaturas cobertura niebla alcances relieve satelite zoom",
+      texto: `<p>En la tarjeta <b>Capas</b> (derecha) se enciende o apaga lo que muestra el mapa: terreno, cobertura de detección,
+        niebla de guerra, unidades, alcances (al acercarse), últimos contactos, gráficos tácticos, objetivos, infraestructura,
+        guerra electrónica, meteorología y misiones.</p>
+        <ul><li><b>Estelas de movimiento</b>: la línea por donde pasó cada unidad, más tenue cuanto más vieja. Puede elegir su
+        largo (de 10 minutos a 3 horas simuladas).</li>
+        <li><b>Símbolos militares (APP-6)</b> en lugar de las miniaturas.</li></ul>`,
+    },
+    {
+      id: "clima", seccion: "El mapa", titulo: "Clima, lluvia, tormentas y noche",
+      claves: "clima meteorologia lluvia tormenta nublado zona deriva se mueve satelite meteorologico radio noche dia crepusculo visibilidad",
+      texto: `<p>Además del clima general, el director puede poner <b>zonas</b> de nubosidad, lluvia o tormenta, que se desplazan
+        de forma continua. Dentro de ellas se detecta menos, se avanza más lento y el ataque aéreo pierde efecto. De noche
+        también se detecta menos.</p>
+        <p>En Capas → <b>Vista del clima</b>: <i>Solo el radio</i> (el círculo con su rótulo y la flecha de hacia dónde va) o
+        <i>Satélite meteorológico</i> (las nubes como en una imagen de satélite).</p>`,
+    },
+    {
+      id: "graficos", seccion: "El mapa", titulo: "Gráficos tácticos y herramientas",
+      claves: "graficos tacticos linea de fase eje de avance zona de reunion punto de control dibujar regla medir distancia convertir coordenadas",
+      texto: `<p>En el panel <b>Gráficos tácticos</b> (sobre el mapa) se dibujan líneas de fase, ejes de avance, zonas de reunión y
+        puntos de control, visibles para todos o solo para su bando. La <b>Regla</b> mide distancias y <b>Convertir</b> pasa
+        coordenadas de un formato a otro.</p>`,
+    },
+    {
+      id: "videowall", seccion: "El mapa", titulo: "Videowall (pantalla completa)",
+      claves: "videowall pantalla completa proyector centro de operaciones tecla v",
+      texto: `<p>El botón <b>Videowall</b> (o la tecla <b>V</b>) muestra el mapa a pantalla completa, sin paneles, para un proyector o
+        un centro de operaciones. Con <b>Esc</b> se vuelve.</p>`,
+    },
+    // ------------------------------------------------------------------ TIEM
+    {
+      id: "tiem", seccion: "Estado Mayor (TIEM)", titulo: "Trabajo de Estado Mayor (pestaña TIEM)",
+      claves: "tiem estado mayor problema militar operativo pmo apreciacion orden de operaciones supervision evaluacion legajo forma de accion ensayo juego de guerra calendario fases",
+      texto: `<p>La pestaña <b>TIEM</b> guía el trabajo del Estado Mayor: el <b>Problema Militar Operativo</b> de su bando, las
+        apreciaciones de cada repartición, las formas de acción y su <b>ensayo</b> (juego de guerra), la <b>Orden de
+        Operaciones</b>, la <b>supervisión</b> de la ejecución y la <b>evaluación</b>. El calendario muestra el día D, la hora H
+        y las fases de la operación.</p>`,
+    },
+    {
+      id: "comunicaciones", seccion: "Estado Mayor (TIEM)", titulo: "Comunicaciones del bando",
+      claves: "comunicaciones chat mensajes hablar escribir bando compañeros",
+      texto: `<p>En la tarjeta <b>Comunicaciones</b> (derecha) se escriben mensajes al resto del bando. Las comunicaciones pueden
+        tener demoras o pérdidas si el director las simula.</p>`,
+    },
+    // ------------------------------------------------------------------ informe
+    {
+      id: "informe", seccion: "Informe y repetición", titulo: "Informe, repetición y rúbrica",
+      claves: "informe resumen aar repeticion replay linea de tiempo rubrica evaluacion comparar ejercicios resultado final",
+      texto: `<p>El botón <b>Informe</b> abre el resumen del ejercicio de cada bando, la <b>línea de tiempo</b> (logística y
+        combates), la <b>repetición</b> del ejercicio sobre el mapa, la <b>rúbrica</b> de evaluación por repartición y la
+        comparación entre ejercicios.</p>`,
+    },
+    // ------------------------------------------------------------------ dirección (solo director)
+    {
+      id: "preparar", seccion: "Dirección del ejercicio", titulo: "Preparar un ejercicio", director: true,
+      claves: "preparar crear escenario nuevo plantilla desde plantilla guardar como plantilla agregar unidad objetivos puntaje editar escenario",
+      texto: `<ul><li><b>Nuevo</b> o <b>Desde plantilla…</b> (arriba) crea el escenario; <b>Guardar como plantilla…</b> guarda el
+        actual para reutilizarlo.</li>
+        <li>En CONSOLA: <b>Agregar unidad</b>, <b>Objetivos y puntaje</b>, <b>Editar el escenario</b>, meteorología por zonas,
+        calendario de la operación, identidad nacional, apresto y personal de cada bando.</li>
+        <li>CONSOLA → <b>Escenario</b> → <b>Usuarios con acceso</b>: marque las cuentas que entran a este ejercicio.</li></ul>`,
+    },
+    {
+      id: "conducir", seccion: "Dirección del ejercicio", titulo: "Conducir el ejercicio", director: true,
+      claves: "conducir director reloj inyectar eventos informes ajuste manual ver como conducir bando adversario automatico ia demostracion interruptores fuego automatico niebla",
+      texto: `<ul><li>Abajo: <b>PONER EN MARCHA / DETENER EL RELOJ</b>, la velocidad y <b>+1 h</b>.</li>
+        <li>CONSOLA → <b>Eventos e informes inyectados</b>: mensajes para un bando (con lugar en el mapa si quiere) y el ajuste
+        manual de una unidad (queda en el informe).</li>
+        <li>CONSOLA → <b>Dirección del ejercicio</b>: interruptores del motor (niebla de guerra, fuego automático, clima, azar…) y
+        el <b>adversario automático</b> para el bando que no tenga alumnos.</li>
+        <li><b>Conducir Azul / Rojo</b> (arriba) para dar órdenes como el comandante de un bando sin alumnos.</li>
+        <li>CONSOLA → <b>Reloj y configuración</b>: qué causas detienen el reloj solas (pausa automática).</li></ul>`,
+    },
+    {
+      id: "usuarios", seccion: "Dirección del ejercicio", titulo: "Cuentas y usuarios", director: true,
+      claves: "usuarios cuentas crear cuenta contraseña olvidada restablecer solicitudes pendientes asignar escenario alumno",
+      texto: `<p>CONSOLA → <b>Usuarios</b>: crear cuentas, cambiar su repartición, restablecer contraseñas y aprobar las
+        solicitudes de cuenta pendientes. Para que una cuenta vea un ejercicio, márquela en CONSOLA → Escenario → <b>Usuarios
+        con acceso a este escenario</b>.</p>`,
+    },
+    // ------------------------------------------------------------------ problemas
+    {
+      id: "no-puedo-ordenar", seccion: "Problemas frecuentes", titulo: "No puedo dar la orden",
+      claves: "no puedo ordenar orden rechazada corresponde a otra reparticion no aparece el tipo de orden boton gris error unidad destruida embarcada",
+      texto: `<ul><li>«Esa acción corresponde a otra repartición»: cada repartición ordena solo sus unidades (ver «Qué ordena cada
+        repartición»).</li>
+        <li>No aparece el tipo de orden: esa unidad no puede cumplirla (por ejemplo, solo las aeronaves patrullan).</li>
+        <li>No aparece el blanco: el enemigo no está detectado por su bando.</li>
+        <li>Una unidad embarcada, destruida o sin enlace (drones interferidos) no recibe órdenes.</li></ul>`,
+    },
+    {
+      id: "reloj-quieto", seccion: "Problemas frecuentes", titulo: "El reloj no avanza o las unidades no se mueven",
+      claves: "reloj no avanza detenido quieto no se mueven congelado pausa nada pasa",
+      texto: `<ul><li>Mire abajo: si dice <b>RELOJ DETENIDO</b>, el director debe ponerlo en marcha.</li>
+        <li>Si arriba hay una franja <b>PAUSA AUTOMÁTICA</b>, el reloj se detuvo por una alerta: el director lo reanuda.</li>
+        <li>El reloj solo corre mientras alguien está conectado al ejercicio.</li>
+        <li>Una unidad sin combustible, varada o esperando en tierra no se mueve: revise su detalle.</li></ul>`,
+    },
+    {
+      id: "no-abre", seccion: "Problemas frecuentes", titulo: "La página no abre o se desconectó",
+      claves: "no abre pagina no carga desconectado sin conexion servidor direccion puerto 8001 recargar f5 caida",
+      texto: `<ul><li>Revise la dirección: es la de la PC del Cóndor y termina en <b>:8001</b>.</li>
+        <li>El punto de conexión (arriba, junto al reloj) en rojo indica que se perdió la conexión: recargue con <b>F5</b>.</li>
+        <li>Si se cerró la ventana del servidor, el director lo vuelve a abrir con el acceso directo <b>Condor</b>; no se pierde
+        lo hecho.</li></ul>`,
+    },
+  ];
+
+  // ------------------------------------------------------------------ buscador
+  const VACIAS = new Set(("a al como con cual cuales cuando de del donde el en es esta este hay la las le lo los me mi mis " +
+    "o para por porque puedo puede que se si sin su sus un una uno unos y yo hacer hace hago tengo tiene quiero saber " +
+    "funciona funcionan sirve hago").split(" "));
+  const SINONIMOS = {
+    avion: "aeronave", aviones: "aeronave", aeronaves: "aeronave", jet: "aeronave", caza: "aeronave",
+    disparar: "atacar", tirar: "atacar", bombardear: "atacar", fuego: "atacar",
+    clave: "contraseña", password: "contraseña", login: "entrar", ingresar: "entrar",
+    tiempo: "reloj", acelerar: "velocidad", pausar: "pausa", parar: "detener",
+    lluvia: "clima", tormenta: "clima", meteorologia: "clima",
+    gasolina: "combustible", nafta: "combustible", balas: "municion",
+    jamming: "interferencia", interferir: "interferencia", radares: "radar",
+  };
+
+  function normalizar(texto) {
+    return String(texto || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+      .replace(/\b([a-z])-(\d)/g, "$1$2")  // "A-4" = "a4", "C-E" queda igual
+      .replace(/[^a-z0-9+\- ]+/g, " ");
+  }
+
+  function raizDe(p) {  // plural sencillo: "ordenes" -> "orden", "unidades" -> "unidad", "radares" -> "radar"
+    if (p.length > 5 && p.endsWith("es")) return p.slice(0, -2);
+    if (p.length > 3 && p.endsWith("s")) return p.slice(0, -1);
+    return p;
+  }
+
+  function palabras(texto) {
+    const salida = [];
+    for (const p of normalizar(texto).split(/\s+/)) {
+      if (!p || VACIAS.has(p)) continue;
+      salida.push(raizDe(p));
+      if (SINONIMOS[p]) salida.push(raizDe(normalizar(SINONIMOS[p])));
+    }
+    return [...new Set(salida)];
+  }
+
+  const sinEtiquetas = (html) => String(html).replace(/<[^>]+>/g, " ");
+  const INDICE = new Map();
+  function indice(t) {
+    let i = INDICE.get(t.id);
+    if (!i) {
+      i = { titulo: palabras(t.titulo), claves: palabras(t.claves), texto: palabras(sinEtiquetas(t.texto)) };
+      INDICE.set(t.id, i);
+    }
+    return i;
+  }
+
+  function coincide(p, lista) {
+    for (const w of lista) {
+      if (w === p) return 1;
+      if (p.length >= 4 && w.length >= 4 && (w.startsWith(p) || p.startsWith(w))) return 0.7;
+    }
+    return 0;
+  }
+
+  /** Temas que responden a la pregunta, del más al menos pertinente (sin los del director si no corresponde). */
+  function buscar(pregunta, opciones = {}) {
+    const q = palabras(pregunta);
+    if (!q.length) return [];
+    const temas = opciones.temas || TEMAS;
+    const res = [];
+    for (const t of temas) {
+      if (t.director && !opciones.director) continue;
+      const i = indice(t);
+      let puntos = 0;
+      let halladas = 0;
+      for (const p of q) {
+        const s = 3 * coincide(p, i.titulo) + 2 * coincide(p, i.claves) + coincide(p, i.texto);
+        if (s > 0) halladas += 1;
+        puntos += s;
+      }
+      if (puntos > 0) res.push({ tema: t, puntos: puntos * (0.5 + halladas / q.length) });
+    }
+    res.sort((a, b) => b.puntos - a.puntos);
+    return res.slice(0, opciones.max || 6).map((r) => r.tema);
+  }
+
+  const api = { SECCIONES, TEMAS, buscar, palabras, normalizar };
+  if (typeof module !== "undefined") module.exports = api;
+  raiz.AyudaTemas = api;
+})(typeof window !== "undefined" ? window : globalThis);

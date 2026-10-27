@@ -686,6 +686,11 @@
   }
   document.querySelectorAll("[data-capa]").forEach((chk) => chk.addEventListener("change", () => alternarCapa(chk.dataset.capa, chk.checked)));
 
+  // ayuda (boton Ayuda o F1) y recorrido guiado paso a paso por la pantalla
+  app.recorrido = Recorrido.crear({ esInstructor });
+  app.ayuda = Ayuda.crear({ esInstructor, recorrido: () => app.recorrido.iniciar() });
+  app.ayuda.conectar();
+
   // estelas: cuanto tiempo simulado recuerdan; zonas meteorologicas: radio o satelite (preferencias de cada puesto)
   try { app.estelas.fijarDuracion(Number(localStorage.getItem("condor.duracionEstela")) || 1800); } catch (_) { /* sin almacenamiento */ }
   $("estela-duracion").value = String(app.estelas.duracion());

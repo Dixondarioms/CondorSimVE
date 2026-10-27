@@ -417,6 +417,41 @@ button.enlace:hover { color: #fff; }
 /* ---------- dialogos y avisos ---------- */
 dialog { background: var(--panel); color: var(--texto); border: 1px solid var(--borde); border-radius: 6px; max-width: min(900px, 94vw); max-height: 88vh; overflow: auto; }
 dialog::backdrop { background: rgba(0, 0, 0, .6); }
+
+/* ---------- ayuda (ayuda.js) y recorrido guiado (recorrido.js) ---------- */
+.btn-ayuda span { display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; background: var(--azul); color: #fff; font-weight: 800; font-size: 12px; margin-right: 3px; }
+dialog.dlg-ayuda { width: min(980px, 94vw); height: min(680px, 86vh); padding: 14px 16px; display: none; flex-direction: column; gap: 8px; overflow: hidden; }
+dialog.dlg-ayuda[open] { display: flex; }
+.ayuda-cab { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ayuda-cab h3 { margin: 0; flex: 1; font-size: 17px; }
+.ayuda-cab button { width: auto; margin: 0; }
+#ayuda-recorrido { background: var(--azul); border-color: var(--azul); font-weight: 700; }
+#ayuda-buscar { font-size: 15px; padding: 9px 12px; }
+.ayuda-cuerpo { display: grid; grid-template-columns: minmax(200px, 270px) 1fr; gap: 14px; min-height: 0; flex: 1; }
+#ayuda-indice { overflow: auto; padding-right: 6px; border-right: 1px solid var(--borde); }
+#ayuda-indice h4 { margin: 10px 0 3px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #9aa3c7; }
+.ayuda-tema { display: block; width: 100%; text-align: left; background: transparent; border: 1px solid transparent; padding: 4px 8px; margin: 1px 0; font-size: 13px; }
+.ayuda-tema.activo { background: #34365a; border-color: var(--azul); }
+#ayuda-articulo { overflow: auto; padding-right: 6px; font-size: 14px; line-height: 1.5; }
+#ayuda-articulo h3 { margin: 2px 0 8px; font-size: 18px; }
+#ayuda-articulo li { margin: 3px 0; }
+.ayuda-seccion { margin: 0; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #9aa3c7; }
+.ayuda-relacionados { margin-top: 14px; padding-top: 8px; border-top: 1px solid var(--borde); font-size: 13px; color: #9aa3c7; }
+button.enlace { background: none; border: none; padding: 0; margin: 0; color: var(--azul); text-decoration: underline; width: auto; font-size: inherit; cursor: pointer; }
+@media (max-width: 700px) { .ayuda-cuerpo { grid-template-columns: 1fr; grid-template-rows: 35% 1fr; } #ayuda-indice { border-right: none; border-bottom: 1px solid var(--borde); } }
+.recorrido-foco { position: fixed; z-index: 4000; pointer-events: none; border: 2px solid #ffd166; border-radius: 6px;
+  box-shadow: 0 0 0 9999px rgba(8, 10, 24, .62), 0 0 18px rgba(255, 209, 102, .55); transition: all .25s ease; }
+.recorrido-tarjeta { position: fixed; z-index: 4001; width: min(380px, calc(100vw - 20px)); background: var(--panel); color: var(--texto);
+  border: 1px solid #ffd166; border-radius: 8px; padding: 12px 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, .5); font-size: 14px; line-height: 1.45; }
+.recorrido-tarjeta.centrada { width: min(520px, calc(100vw - 20px)); }
+.recorrido-tarjeta .rec-paso { margin: 0; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #ffd166; }
+.recorrido-tarjeta h3 { margin: 2px 0 6px; font-size: 16px; }
+.recorrido-tarjeta p, .recorrido-tarjeta ol { margin: 4px 0; }
+.recorrido-tarjeta .rec-botones { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+.recorrido-tarjeta .rec-botones button { width: auto; margin: 0; }
+.recorrido-tarjeta .rec-salir { margin-right: auto !important; }
+.recorrido-tarjeta .rec-siguiente { background: var(--azul); border-color: var(--azul); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .recorrido-foco { transition: none; } }
 dialog table { border-collapse: collapse; width: 100%; margin: 6px 0 12px; font-size: 13px; }
 dialog th, dialog td { border: 1px solid var(--borde); padding: 4px 6px; text-align: left; }
 dialog th { background: #34365a; }

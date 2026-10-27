@@ -1,0 +1,218 @@
+{
+ "id": "tutorial_condor",
+ "nombre": "Tutorial del Cóndor",
+ "descripcion": "Ejercicio corto para aprender a usar el Cóndor, paso a paso. Usted conduce el bando Azul; el Rojo lo conduce el adversario automático, así puede practicar solo. Antes de empezar haga el recorrido guiado (botón Ayuda → Recorrido guiado). Práctica sugerida: 1) seleccione la 1.ª Brigada de Infantería azul y ordénele Mover hacia el Cruce central (marque 2 puntos en el mapa); 2) despegue los Cazas azules (Aviación) y ordéneles Patrullar sobre la brigada; 3) adelante el Escuadrón de Reconocimiento y mire en SITUACIÓN → Cuadro radar cómo el enemigo pasa de desconocido a identificado (círculo amarillo en el mapa); 4) ordene Atacar con la artillería o los blindados y siga el combate en Alertas; 5) ocupe el Cruce central; 6) al terminar, abra el Informe y mire la repetición.",
+ "clima": "despejado",
+ "hora_inicio_min": 480,
+ "nacion_azul": "valdoria",
+ "nacion_rojo": "ostrania",
+ "ia_azul": false,
+ "ia_rojo": true,
+ "dia_noche": false,
+ "con_estado": false,
+ "conduce_azul": "alumnos",
+ "conduce_rojo": "alumnos",
+ "turno_final": 6,
+ "unidades": [
+  {
+   "nombre": "Base Aérea de Capital Azul",
+   "bando": "azul",
+   "clase": "base_aerea",
+   "lat": 10.53507,
+   "lon": -26.27243
+  },
+  {
+   "nombre": "Cazas azules",
+   "bando": "azul",
+   "clase": "caza",
+   "lat": 10.53507,
+   "lon": -26.27243,
+   "modelo": "f16",
+   "aeronaves": 4,
+   "en_tierra": true,
+   "base": "Base Aérea de Capital Azul"
+  },
+  {
+   "nombre": "Aviación de ataque azul",
+   "bando": "azul",
+   "clase": "ataque",
+   "lat": 10.53507,
+   "lon": -26.27243,
+   "modelo": "ataque_ligero",
+   "aeronaves": 2,
+   "en_tierra": true,
+   "base": "Base Aérea de Capital Azul"
+  },
+  {
+   "nombre": "Depósito logístico de Capital Azul",
+   "bando": "azul",
+   "clase": "deposito",
+   "lat": 10.67545,
+   "lon": -26.38229
+  },
+  {
+   "nombre": "Defensa antiaérea de Capital Azul",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "lat": 10.61067,
+   "lon": -26.2944
+  },
+  {
+   "nombre": "Radar de vigilancia azul",
+   "bando": "azul",
+   "clase": "radar",
+   "lat": 10.28384,
+   "lon": -26.06918
+  },
+  {
+   "nombre": "1.ª Brigada de Infantería azul",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 9.32306,
+   "lon": -24.22897,
+   "escalon": "brigada"
+  },
+  {
+   "nombre": "Brigada Blindada azul",
+   "bando": "azul",
+   "clase": "blindado",
+   "lat": 9.53981,
+   "lon": -24.32785,
+   "escalon": "brigada"
+  },
+  {
+   "nombre": "Grupo de Artillería azul",
+   "bando": "azul",
+   "clase": "artilleria",
+   "lat": 9.09532,
+   "lon": -24.25095
+  },
+  {
+   "nombre": "Escuadrón de Reconocimiento azul",
+   "bando": "azul",
+   "clase": "reconocimiento",
+   "lat": 9.40977,
+   "lon": -24.10812
+  },
+  {
+   "nombre": "Batallón de Ingenieros azul",
+   "bando": "azul",
+   "clase": "ingenieros",
+   "lat": 9.03022,
+   "lon": -24.09714
+  },
+  {
+   "nombre": "Convoy logístico azul",
+   "bando": "azul",
+   "clase": "transporte",
+   "lat": 9.76726,
+   "lon": -24.33884
+  },
+  {
+   "nombre": "Base Aérea de Capital Roja",
+   "bando": "rojo",
+   "clase": "base_aerea",
+   "lat": 8.25906,
+   "lon": -21.79001
+  },
+  {
+   "nombre": "Cazas rojos",
+   "bando": "rojo",
+   "clase": "caza",
+   "lat": 8.25906,
+   "lon": -21.79001,
+   "modelo": "su30",
+   "aeronaves": 4,
+   "en_tierra": true,
+   "base": "Base Aérea de Capital Roja"
+  },
+  {
+   "nombre": "Defensa antiaérea de Capital Roja",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 8.19382,
+   "lon": -21.76804
+  },
+  {
+   "nombre": "Radar de vigilancia rojo",
+   "bando": "rojo",
+   "clase": "radar",
+   "lat": 7.90827,
+   "lon": -21.89713
+  },
+  {
+   "nombre": "1.ª Brigada de Infantería rojo",
+   "bando": "rojo",
+   "clase": "infanteria",
+   "lat": 9.53981,
+   "lon": -23.43796,
+   "escalon": "brigada"
+  },
+  {
+   "nombre": "Brigada Blindada rojo",
+   "bando": "rojo",
+   "clase": "blindado",
+   "lat": 9.31221,
+   "lon": -23.36105,
+   "escalon": "brigada"
+  },
+  {
+   "nombre": "Grupo de Artillería rojo",
+   "bando": "rojo",
+   "clase": "artilleria",
+   "lat": 9.75643,
+   "lon": -23.39401
+  },
+  {
+   "nombre": "Escuadrón de Reconocimiento rojo",
+   "bando": "rojo",
+   "clase": "reconocimiento",
+   "lat": 9.45313,
+   "lon": -23.56979
+  }
+ ],
+ "objetivos": [
+  {
+   "bando": "azul",
+   "tipo": "ocupar",
+   "nombre": "Ocupar el Cruce central",
+   "puntos": 40,
+   "lat": 9.43,
+   "lon": -23.86,
+   "radio_km": 8.0,
+   "turnos_requeridos": 1
+  },
+  {
+   "bando": "azul",
+   "tipo": "destruir",
+   "nombre": "Batir la Brigada Blindada roja",
+   "puntos": 30,
+   "unidad": "Brigada Blindada rojo"
+  },
+  {
+   "bando": "azul",
+   "tipo": "proteger",
+   "nombre": "Conservar la Base Aérea de Capital Azul",
+   "puntos": 15,
+   "unidad": "Base Aérea de Capital Azul",
+   "hasta_turno": 6
+  },
+  {
+   "bando": "rojo",
+   "tipo": "ocupar",
+   "nombre": "Ocupar el Cruce central",
+   "puntos": 40,
+   "lat": 9.43,
+   "lon": -23.86,
+   "radio_km": 8.0,
+   "turnos_requeridos": 1
+  },
+  {
+   "bando": "rojo",
+   "tipo": "destruir",
+   "nombre": "Batir la 1.ª Brigada de Infantería azul",
+   "puntos": 30,
+   "unidad": "1.ª Brigada de Infantería azul"
+  }
+ ]
+}

@@ -104,6 +104,7 @@
           <b id="reloj-valor">--:--</b>
         </div>
         <button id="btn-videowall" class="solo-control secundario" type="button" title="Centro de operaciones: mapa a pantalla completa sin paneles (tecla V)">Videowall</button>
+        <button id="btn-ayuda" class="secundario btn-ayuda" type="button" title="Ayuda: cómo funciona el Cóndor y recorrido guiado (tecla F1)"><span aria-hidden="true">?</span> Ayuda</button>
         <button id="btn-informe" class="secundario" type="button">Informe</button>
         <div class="perfil-wrap">
           <button id="btn-perfil" class="perfil" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Perfil de usuario">
@@ -1075,6 +1076,19 @@
     </footer>
   </div>
 
+  <dialog id="dlg-ayuda" class="ancho dlg-ayuda" aria-labelledby="ayuda-titulo">
+    <div class="ayuda-cab">
+      <h3 id="ayuda-titulo">Ayuda del Cóndor</h3>
+      <button type="button" id="ayuda-recorrido">▶ Recorrido guiado paso a paso</button>
+      <button type="button" id="ayuda-cerrar" class="secundario" aria-label="Cerrar la ayuda">Cerrar</button>
+    </div>
+    <input type="search" id="ayuda-buscar" placeholder="Escriba su pregunta, por ejemplo: ¿cómo despego un caza?" aria-label="Buscar en la ayuda" autocomplete="off">
+    <div class="ayuda-cuerpo">
+      <nav id="ayuda-indice" aria-label="Temas de la ayuda"></nav>
+      <article id="ayuda-articulo" aria-live="polite"></article>
+    </div>
+  </dialog>
+
   <dialog id="dlg-resumen">
     <form method="dialog">
       <h3 id="dlg-titulo">Resumen del ejercicio</h3>
@@ -1217,6 +1231,9 @@
   <script src="/static/js/doctrina.js"></script>
   <script src="/static/js/estelas.js"></script>
   <script src="/static/js/clima_mapa.js"></script>
+  <script src="/static/js/ayuda_temas.js"></script>
+  <script src="/static/js/ayuda.js"></script>
+  <script src="/static/js/recorrido.js"></script>
   <script src="/static/js/infraestructura.js"></script>
   <script src="/static/js/aguila.js"></script>
   <script src="/static/pruebas/arnes.js"></script>
