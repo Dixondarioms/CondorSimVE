@@ -1,4 +1,4 @@
-"""Reloj del SIETE en tiempo real: cada segundo avanza los escenarios en marcha y difunde las posiciones.
+"""Reloj del Cóndor: cada segundo avanza los escenarios en marcha y difunde las posiciones.
 
 Solo corre un escenario "activo" que alguien tiene abierto (una conexion WebSocket): sin nadie mirando, el tiempo no
 pasa. Cada vuelta avanza `segundos reales x velocidad` simulados (engine/tiempo_real.py), confirma y envia a cada

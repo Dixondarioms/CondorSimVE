@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    Instala S.I.E.T.E. (Simulador Fénix) en un PC con Windows: entorno de Python, dependencias,
+    Instala el Cóndor (el SIETE en tiempo real) en un PC con Windows: entorno de Python, dependencias,
     datos de mapa, primer usuario instructor, acceso directo en el Escritorio y, opcionalmente,
     arranque automático, PostgreSQL y HTTPS. También actualiza una instalación existente.
 
@@ -8,7 +8,7 @@
     Uso normal: doble clic en instalar.cmd (que ejecuta este script). Opciones:
 
       -Demo           crea además el escenario de demostración (Andes/Llanos).
-      -Servicio       registra la tarea programada "SIETE Servidor" para que el servidor arranque solo
+      -Servicio       registra la tarea programada "Condor Servidor" para que el servidor arranque solo
                       (al iniciar Windows si se ejecuta como administrador; si no, al iniciar sesión).
       -Desinstalar    quita la tarea programada, el acceso directo y la regla del cortafuegos.
                       No borra la base de datos ni el entorno de Python.
@@ -84,8 +84,8 @@ $Backend = Join-Path $Raiz 'backend'
 $VenvPython = Join-Path $Backend 'venv\Scripts\python.exe'
 $ArchivoEnv = Join-Path $Backend '.env'
 $Icono = Join-Path $Raiz 'frontend\static\img\icono_escritorio.ico'
-$NombreTarea = 'SIETE Servidor'
-$NombreAcceso = 'S.I.E.T.E..lnk'
+$NombreTarea = 'Condor Servidor'
+$NombreAcceso = 'Condor.lnk'
 if (-not $Destino) { $Destino = [Environment]::GetFolderPath('Desktop') }
 
 # Salida con acentos correcta en la consola y en lo que se envía a Python.
@@ -167,7 +167,7 @@ function Set-VariableEnv([string]$Clave, [string]$Valor) {
         else { $nuevas += "$l" }
     }
     if (-not $reemplazada) {
-        if ($nuevas.Count -eq 0) { $nuevas += '# Configuración de S.I.E.T.E. (la escribe instalar.cmd; no se sube al repositorio).' }
+        if ($nuevas.Count -eq 0) { $nuevas += '# Configuración del Cóndor (la escribe instalar.cmd; no se sube al repositorio).' }
         $nuevas += "$Clave=$Valor"
     }
     [IO.File]::WriteAllLines($ArchivoEnv, [string[]]$nuevas, [System.Text.UTF8Encoding]::new($false))
@@ -194,7 +194,7 @@ Import-ArchivoEnv
 if ($Https -and -not $env:SIETE_PUERTO) { $env:SIETE_PUERTO = '8443' }
 $Puerto = if ($env:SIETE_PUERTO) { [int]$env:SIETE_PUERTO } else { 8001 }
 $Esquema = if ($Https -or $env:SIETE_HTTPS -eq '1') { 'https' } else { 'http' }
-$NombreReglaFw = "S.I.E.T.E. servidor (TCP $Puerto)"
+$NombreReglaFw = "Condor servidor (TCP $Puerto)"
 
 # ------------------------------------------------------------------ 1. Python
 function Find-Python {
@@ -359,8 +359,8 @@ function New-CertificadoPowerShell([string]$carpeta) {
         $ips = @('127.0.0.1') + @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
                                   ForEach-Object { $_.IPAddress } | Where-Object { $_ -notlike '169.254.*' })
         $san = (@("DNS=localhost", "DNS=$env:COMPUTERNAME") + ($ips | Sort-Object -Unique | ForEach-Object { "IPAddress=$_" })) -join '&'
-        $c = New-SelfSignedCertificate -Subject 'CN=S.I.E.T.E.' -TextExtension @("2.5.29.17={text}$san") `
-            -CertStoreLocation 'Cert:\CurrentUser\My' -FriendlyName 'S.I.E.T.E. (autofirmado)' -NotAfter (Get-Date).AddYears(2) `
+        $c = New-SelfSignedCertificate -Subject 'CN=Condor' -TextExtension @("2.5.29.17={text}$san") `
+            -CertStoreLocation 'Cert:\CurrentUser\My' -FriendlyName 'Condor (autofirmado)' -NotAfter (Get-Date).AddYears(2) `
             -KeyExportPolicy Exportable -KeyAlgorithm RSA -KeyLength 2048
         try {
             $rsa = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($c)
@@ -480,7 +480,7 @@ function New-AccesoDirecto {
     $acceso = $shell.CreateShortcut($ruta)
     $acceso.TargetPath = Join-Path $Raiz 'iniciar.cmd'
     $acceso.WorkingDirectory = $Raiz
-    $acceso.Description = 'S.I.E.T.E. - Sistema Integral de Entrenamiento Táctico y Estratégico'
+    $acceso.Description = 'Cóndor - Simulador de entrenamiento táctico y estratégico en tiempo real'
     if (Test-Path $Icono) { $acceso.IconLocation = "$Icono,0" }
     $acceso.WindowStyle = 7  # minimizada: la consola del servidor no estorba
     $acceso.Save()
@@ -653,7 +653,7 @@ function Update-Simulador($esAdmin) {
 
 # ------------------------------------------------------------------ principal
 Write-Host ""
-Write-Host "S.I.E.T.E. - Sistema Integral de Entrenamiento Táctico y Estratégico" -ForegroundColor White
+Write-Host "Cóndor - Simulador de entrenamiento táctico y estratégico en tiempo real" -ForegroundColor White
 Write-Host "Carpeta: $Raiz"
 $esAdmin = Test-EsAdministrador
 if ($esAdmin) { Write-Host "Ejecutando como administrador." } else { Write-Host "Ejecutando sin permisos de administrador." }
@@ -687,7 +687,7 @@ Open-Firewall $esAdmin
 
 Write-Host ""
 Write-Host "Instalación terminada." -ForegroundColor Green
-Write-Host "  - Para arrancar: doble clic en el acceso directo 'S.I.E.T.E.' (o en iniciar.cmd)."
+Write-Host "  - Para arrancar: doble clic en el acceso directo 'Condor' (o en iniciar.cmd)."
 Write-Host "  - Se abre ${Esquema}://localhost:$Puerto/ ; los alumnos entran por ${Esquema}://<ip-de-este-equipo>:$Puerto/"
 Write-Host "  - Para parar el servidor: cerrar su ventana o ejecutar detener.cmd."
 if (-not $Servicio) { Write-Host "  - Para que arranque solo con Windows: instalar.cmd -Servicio (como administrador)." }

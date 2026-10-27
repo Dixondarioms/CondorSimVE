@@ -1,6 +1,8 @@
-# S.I.E.T.E. — Sistema Integral de Entrenamiento Táctico y Estratégico (versión en tiempo real)
+# Cóndor — Simulador de entrenamiento táctico y estratégico en tiempo real
 
-> **Esta es la versión en tiempo real del SIETE**, separada del SIETE por turnos (repositorio `simulador-fenix`).
+> **Cóndor es la versión en tiempo real del S.I.E.T.E.**, separada del SIETE por turnos (repositorio `simulador-fenix`),
+> del que hereda el mapa, las unidades, el TIEM y el informe. Los nombres técnicos internos (variables `SIETE_*`,
+> carpeta `simulador_fenix.db`) se conservan para no romper instalaciones.
 > Aquí no hay turnos: el reloj del ejercicio corre solo a la velocidad que fija el director (1×, 10× o 60×, con pausa),
 > las unidades avanzan en vivo por el mapa y las órdenes se cumplen al instante: una orden nueva reemplaza a la que la
 > unidad estaba cumpliendo, y una aeronave en vuelo se desvía, regresa o aterriza en el momento. El motor está en

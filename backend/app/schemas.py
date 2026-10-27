@@ -190,7 +190,7 @@ class PersonalBandoIn(BaseModel):
 
 
 class RelojIn(BaseModel):
-    """Reloj del SIETE en tiempo real: velocidad (segundos simulados por segundo real) y marcha o pausa."""
+    """Reloj del Cóndor: velocidad (segundos simulados por segundo real) y marcha o pausa."""
 
     velocidad: int | None = None
     estado: Literal["activo", "pausado"] | None = None

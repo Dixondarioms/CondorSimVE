@@ -79,7 +79,7 @@ def render_diapositivas(informe: dict, rubrica: dict | None = None) -> str:
     res = informe["resumen"]
     marcador = informe.get("marcador") or {}
     dias = [
-        f'<section class="dia activa"><p class="sec">S.I.E.T.E. · Informe posterior al ejercicio</p><h1>{e(esc["nombre"])}</h1>'
+        f'<section class="dia activa"><p class="sec">Cóndor · Informe posterior al ejercicio</p><h1>{e(esc["nombre"])}</h1>'
         f'<p>Horas jugadas: {max(0, int(esc.get("turno_actual", 1)) - 1)} · clima general: {e(str(esc.get("clima", "")))}</p>'
         f"{_marcador_html(marcador)}</section>"
     ]

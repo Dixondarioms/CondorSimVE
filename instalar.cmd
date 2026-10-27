@@ -1,8 +1,8 @@
 @echo off
-rem Instalador de S.I.E.T.E. para Windows: doble clic y listo.
+rem Instalador del Condor para Windows: doble clic y listo.
 rem Los parametros se pasan a instalar.ps1, p. ej.:  instalar.cmd -Demo  |  -Servicio  |  -Postgres "<url>"  |  -Https  |  -Datos <zip>  |  -Actualizar  |  -Desinstalar
 setlocal
-title S.I.E.T.E. - instalacion
+title Condor - instalacion
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0instalar.ps1" %*
 set CODIGO=%errorlevel%
 echo.

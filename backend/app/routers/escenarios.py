@@ -100,7 +100,7 @@ async def avanzar_turno(
     return state.estado_para(db, esc, usuario.rol)
 
 
-MOTIVO_SIN_TURNOS = "En el SIETE en tiempo real el tiempo avanza solo: use la pausa y la velocidad del reloj."
+MOTIVO_SIN_TURNOS = "En el Cóndor el tiempo avanza solo: use la pausa y la velocidad del reloj."
 
 
 def _exigir_reloj(esc: Escenario, usuario: Usuario) -> None:

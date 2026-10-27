@@ -1,4 +1,4 @@
-"""SIETE en tiempo real: el ejercicio avanza segundo a segundo en lugar de por turnos.
+"""Cóndor (el SIETE en tiempo real): el ejercicio avanza segundo a segundo en lugar de por turnos.
 
 El reloj del escenario (`sim_segundos`) corre a la velocidad que fija el director (1x, 10x o 60x: segundos simulados
 por cada segundo real) y se detiene con la pausa. Cada segundo real el servidor llama a `paso`, que divide el tiempo
@@ -83,7 +83,7 @@ TIPOS_DE_ORDEN = ("mover", "atacar", "patrullar", "aterrizar", "despegar", "lanz
 TIEMPO_OBRA_S = {"vado": 1800.0, "puente": 3600.0}  # trabajo de los ingenieros en el sitio hasta que la obra queda lista
 EMBARQUE_S = 600.0  # lo que tarda una unidad en subir a su transporte
 DEMORA_MIN_S, DEMORA_MAX_S = 900.0, 2700.0  # una orden que no llega a tiempo tarda entre 15 y 45 minutos
-MOTIVO_ETAPA = "Ese tipo de orden no existe en el SIETE en tiempo real."
+MOTIVO_ETAPA = "Ese tipo de orden no existe en el Cóndor."
 
 
 def hora_del_dia(escenario: Escenario, sim_segundos: float | None = None) -> str:

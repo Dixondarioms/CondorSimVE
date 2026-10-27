@@ -459,7 +459,7 @@ def spins(esc, misiones: list, bando: str = "azul") -> list[str]:
     cms = [f"{(datos(m).get('paquete') or '').upper()}: M{m.id} {m.nombre or ''}".strip()
            for m in misiones if datos(m).get("funcion") == "CM"]
     out = [
-        "INFORMACIÓN GENERAL: OTA de ejercicio generada por el S.I.E.T.E.; cada turno del simulador es una hora.",
+        "INFORMACIÓN GENERAL: OTA de ejercicio generada por el simulador Cóndor; las horas son las del ejercicio.",
         "BLOQUES DE ALTURA: alta performance FL120 a FL210; baja performance FL040 a FL110. Desconflicto: 1000 ft o 5 NM.",
         "ESCOLTA: entra 5 min antes que el primer atacante y sale no menos de 10 NM detrás del último. "
         "Ventana sobre el blanco no menor de 5 min.",
