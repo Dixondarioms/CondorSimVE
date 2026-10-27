@@ -406,7 +406,8 @@ def test_la_mision_de_guerra_electronica_interfiere_mientras_orbita(db_session):
     assert not ge_mod.contexto(db_session, esc).interferido(radar)
 
 
-def test_las_ordenes_pueden_llegar_demoradas_y_la_unidad_sigue_con_la_anterior(db_session):
+def test_las_ordenes_pueden_llegar_demoradas_y_la_unidad_sigue_con_la_anterior(db_session, monkeypatch):
+    monkeypatch.setattr(orders, "prob_demora", lambda *a, **k: 1.0)  # que se demore siempre (sin azar en la prueba)
     esc = _escenario(db_session)
     esc.com_ordenes_pct = 100  # todas las ordenes se demoran
     db_session.commit()
@@ -430,7 +431,9 @@ def test_las_ordenes_pueden_llegar_demoradas_y_la_unidad_sigue_con_la_anterior(d
     assert primera.estado == "cancelada" and nueva.estado == "en_ejecucion" and u.ruta == [[0.0, 0.5]]
 
 
-def test_api_la_orden_demorada_queda_pendiente_y_avisa_cuando_llega(api):
+def test_api_la_orden_demorada_queda_pendiente_y_avisa_cuando_llega(api, monkeypatch):
+    # sin azar en la prueba: con demora configurada, se demora siempre
+    monkeypatch.setattr(orders, "prob_demora", lambda esc, *a, **k: 1.0 if esc.com_ordenes_pct else 0.0)
     prof, base, a, r1, r2 = _preparar(api)
     alfa = api("alfa")
     assert alfa.post(f"{base}/ordenes", json={"unidad_id": a["id"], "tipo": "mover", "waypoints": [[0.5, 0.0]]}).json()["estado"] == "en_ejecucion"
@@ -515,3 +518,58 @@ def test_el_apoyo_refuerza_el_combate_y_gasta_municion(db_session):
     sin, _ = combate(False)
     con, municion = combate(True)
     assert con > sin and municion == pytest.approx(100 - orders.MUNICION_POR_APOYO / 2, abs=0.5)
+
+
+# ---------------------------------------------------------------------------------------------- pausa automatica y alertas
+def test_la_pausa_automatica_detiene_el_reloj_al_aparecer_un_contacto(db_session):
+    esc = _escenario(db_session)
+    esc.estado = "activo"
+    esc.pausa_auto_json = json.dumps({"contacto": True})
+    db_session.commit()
+    _unidad(db_session, esc, nombre="A", deteccion_km=10)
+    r = _unidad(db_session, esc, nombre="R", bando="rojo", lat=0.3, deteccion_km=1)
+    _orden(db_session, esc, r, "mover", waypoints=[[0.0, 0.0]])  # 33 km a 30 km/h: entra al radar a los ~46 min
+    informe = tiempo_real.paso(db_session, esc, 3 * 3600, TerrenoFalso())
+    db_session.commit()
+    assert esc.estado == "pausado" and "Contacto nuevo" in esc.pausa_motivo
+    assert 2400 < esc.sim_segundos < 3300  # se detuvo apenas lo detecto, sin correr las 3 horas
+    (alerta,) = [a for a in informe.alertas if a["causa"] == "contacto"]
+    assert alerta["bando"] == "azul" and alerta["nivel"] == "critica" and alerta["lat"] is not None
+
+
+def test_lo_que_aparece_a_la_vista_entre_pasos_tambien_es_contacto_nuevo(db_session):
+    esc = _escenario(db_session)
+    esc.estado = "activo"
+    esc.pausa_auto_json = json.dumps({"contacto": True})
+    db_session.commit()
+    _unidad(db_session, esc, nombre="A", deteccion_km=10)
+    r = _unidad(db_session, esc, nombre="R", bando="rojo", lat=1.0, deteccion_km=1, velocidad_kmh=0)
+    tiempo_real.paso(db_session, esc, 60, TerrenoFalso())
+    r.lat = 0.05  # el director la pone a la vista con el reloj detenido
+    db_session.commit()
+    informe = tiempo_real.paso(db_session, esc, 60, TerrenoFalso())
+    db_session.commit()
+    assert [a["causa"] for a in informe.alertas] == ["contacto"] and esc.estado == "pausado"
+    assert "contacto de superficie" in esc.pausa_motivo or "R" in esc.pausa_motivo
+
+
+def test_sin_pausa_elegida_el_reloj_sigue_y_las_alertas_avisan_ataque_y_perdida(db_session):
+    esc = _escenario(db_session)
+    a = _unidad(db_session, esc, nombre="A", alcance_km=10, deteccion_km=30, fuerza=100)
+    r = _unidad(db_session, esc, nombre="R", bando="rojo", lat=0.05, deteccion_km=30, velocidad_kmh=0, fuerza=8)
+    _orden(db_session, esc, a, "atacar", objetivo=r)
+    informe = tiempo_real.paso(db_session, esc, 3600, TerrenoFalso())
+    db_session.commit()
+    causas = {(x["causa"], x["bando"]) for x in informe.alertas}
+    assert ("ataque", "rojo") in causas and ("perdida", "rojo") in causas
+    assert esc.sim_segundos == 3600 and esc.pausa_motivo is None
+
+
+def test_api_el_director_elige_las_causas_y_al_reanudar_se_borra_el_motivo(api):
+    prof, base, a, *_ = _preparar(api)
+    r = prof.patch(f"{base}/config", json={"pausa_auto": {"ataque": True, "perdida": True}})
+    assert r.status_code == 200
+    assert r.json()["escenario"]["pausa_auto"] == {"contacto": False, "ataque": True, "perdida": True,
+                                                   "combustible": False, "mision": False}
+    assert prof.patch(f"{base}/config", json={"pausa_auto": {"lluvia": True}}).status_code == 400
+    assert api("alfa").patch(f"{base}/config", json={"pausa_auto": {"ataque": False}}).status_code == 403

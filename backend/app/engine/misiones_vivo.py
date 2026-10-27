@@ -51,6 +51,8 @@ def activar(ctx) -> None:
 
 def _terminar(ctx, m: Mision, estado: str, texto: str) -> None:
     mis._terminar(ctx.db, m, estado, f"[{tr.hora_del_dia(ctx.esc)}] {texto}", _ahora_turno(ctx))
+    ctx.alerta("mision", m.bando, f"Misión {m.id} ({m.rol}{' ' + m.nombre if m.nombre else ''}) {estado}: {texto}",
+               nivel="info" if estado == "cumplida" else "aviso")
     ctx.informe.cambios = True
 
 
@@ -118,12 +120,12 @@ def _volar(ctx, m: Mision, u, h: float) -> None:
         return
     # ---- escolta: acompaña al grupo escoltado mientras su mision siga; luego vuelve a la base ----
     if m.rol == "ESCOLTA" and m.espera != -2:
-        if u.combustible > aeronaves_mod.COMBUSTIBLE_CRITICO and _escoltar(ctx, m, u, h):
+        if u.combustible > ctx.doctrina(u)["combustible_regreso"] and _escoltar(ctx, m, u, h):
             return
         m.espera = -2
         _evento(ctx, m, "La misión escoltada terminó: regresa a la base.")
     # ---- combustible critico: abandona la ruta y regresa ----
-    if (u.combustible <= aeronaves_mod.COMBUSTIBLE_CRITICO and pts[-1]["tipo"] == "aterrizaje"
+    if (u.combustible <= ctx.doctrina(u)["combustible_regreso"] and pts[-1]["tipo"] == "aterrizaje"
             and len(pts) - m.indice > 1 and not catalogo.obtener(u.clase, u.tipo).se_consume):
         base = aeronaves_mod.base_mas_cercana(u, ctx.lista)
         if base is not None:

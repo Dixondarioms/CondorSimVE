@@ -194,7 +194,9 @@ def test_el_estado_lleva_el_cuadro_radar_de_cada_bando(api):
     prof.post(f"{base}/unidades", json={"nombre": "Radar", "bando": "azul", "clase": "radar", "lat": 0.0, "lon": 0.1})
     prof.post(f"{base}/unidades", json={"nombre": "Caza", "bando": "rojo", "clase": "caza", "lat": 0.6, "lon": 0.1})
     azul = api("alfa").get(base).json()["sensores"]
-    assert [s["nombre"] for s in azul] == ["Radar"] and azul[0]["contactos"][0]["nombre"] == "Caza"
+    # recien detectado a 55 km: se sabe que hay algo en el aire, no que es (engine/contactos_vivo.py)
+    assert [s["nombre"] for s in azul] == ["Radar"] and azul[0]["contactos"][0]["nombre"] == "Contacto aéreo desconocido"
+    assert azul[0]["contactos"][0]["etapa"] == "desconocido" and azul[0]["contactos"][0]["clase"] is None
     assert api("bravo").get(base).json()["sensores"] == []  # el rojo no tiene sensores
 
 

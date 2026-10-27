@@ -90,6 +90,8 @@ class EscenarioOut(BaseModel):
     hora_inicio_min: int = 360
     sim_segundos: float = 0.0
     velocidad: int = 60
+    pausa_auto: dict = Field(default_factory=dict)
+    pausa_motivo: str | None = None
     nacion_azul: str = ""
     nacion_rojo: str = ""
     # comunicaciones simuladas: solo las ve el instructor (state.estado_para las quita al resto)
@@ -199,6 +201,8 @@ class RelojIn(BaseModel):
 class EscenarioConfig(BaseModel):
     """Configuracion que el instructor puede cambiar en cualquier momento."""
 
+    # causas de pausa automatica del reloj: {"contacto": true, "ataque": false, ...} (ver tiempo_real.CAUSAS_PAUSA)
+    pausa_auto: dict[str, bool] | None = None
     clima: Clima | None = None
     azar: bool | None = None
     auto_resolver: bool | None = None
@@ -383,6 +387,7 @@ class UnidadOut(BaseModel):
     # tiempo real: waypoints que le faltan, orden que cumple y rumbo
     ruta: list = Field(default_factory=list)
     orden_id: int | None = None
+    doctrina: dict | None = None  # lo que la unidad fija de su doctrina (Cóndor; lo demas, el de su bando)
     rumbo: float | None = None
     # bases aereas: largo de la pista y pista util con su dano (engine/plataformas.py)
     pista_largo_m: float | None = None

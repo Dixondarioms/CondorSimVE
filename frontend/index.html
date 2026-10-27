@@ -136,6 +136,24 @@
             <div id="oob"></div>
           </section>
 
+          <section class="bloque" id="sec-doctrina" hidden>
+            <h2>Doctrina y reglas de enfrentamiento</h2>
+            <p class="ayuda">Cuándo tiran solas las unidades, cuántos misiles por blanco, a qué distancia abren fuego y cuándo
+              vuelven las aeronaves. La fijan el director, o el Comandante y el JEM para todo el bando; cada unidad puede
+              tener la suya.</p>
+            <label class="mini">Para<select id="doc-ambito" aria-label="A quién se aplica la doctrina"></select></label>
+            <div class="grid">
+              <label class="mini">Contra aeronaves<select id="doc-armas_aire"></select></label>
+              <label class="mini">Contra superficie<select id="doc-armas_superficie"></select></label>
+              <label class="mini">Misiles por blanco (defensa aérea)<select id="doc-disparos_por_blanco"></select></label>
+              <label class="mini">Abre fuego al<select id="doc-distancia_pct"></select></label>
+              <label class="mini">Aeronaves: regresan con combustible<select id="doc-combustible_regreso"></select></label>
+              <label class="mini">Aeronaves sin armamento<select id="doc-regreso_sin_armas"></select></label>
+            </div>
+            <p id="doc-texto" class="ayuda"></p>
+            <button id="doc-aplicar" type="button">Aplicar doctrina</button>
+          </section>
+
           <section class="bloque" aria-live="polite">
             <h2>Unidad seleccionada</h2>
             <div id="detalle-contenido"><p class="vacio">Seleccione una unidad en la lista o en el mapa.</p></div>
@@ -405,6 +423,14 @@
               <button id="btn-pausar" type="button" title="El tiempo se detiene; las órdenes se pueden seguir dando">⏸ Detener</button>
               <button id="btn-finalizar" type="button" class="peligro">Finalizar</button>
             </div>
+            <fieldset class="pausa-auto">
+              <legend>Pausa automática: detener el reloj cuando haya…</legend>
+              <label class="chk"><input type="checkbox" data-causa="contacto"><span>un contacto enemigo nuevo</span></label>
+              <label class="chk"><input type="checkbox" data-causa="ataque"><span>un ataque a una unidad (de cualquier bando)</span></label>
+              <label class="chk"><input type="checkbox" data-causa="perdida"><span>una unidad perdida</span></label>
+              <label class="chk"><input type="checkbox" data-causa="combustible"><span>una aeronave con combustible crítico</span></label>
+              <label class="chk"><input type="checkbox" data-causa="mision"><span>una misión aérea terminada</span></label>
+            </fieldset>
             <div class="grid">
               <label class="mini">Clima
                 <select id="cfg-clima">
@@ -773,6 +799,13 @@
       <!-- ============ 3. mapa táctico ============ -->
       <div id="zona-mapa">
         <div id="map" aria-label="Mapa táctico"></div>
+        <!-- pausa automatica: por que se detuvo el reloj; avisos en vivo (contacto, ataque, perdida...) -->
+        <div id="banner-pausa" class="banner-pausa" role="alert" hidden>
+          <b>⏸ PAUSA AUTOMÁTICA</b> <span id="banner-pausa-texto"></span>
+          <button id="banner-pausa-ir" type="button" class="mini secundario">Ver en el mapa</button>
+          <button id="banner-pausa-reanudar" type="button" class="mini">▶ Reanudar</button>
+        </div>
+        <div id="avisos-vivos" class="avisos-vivos" aria-live="assertive"></div>
 
         <div id="coords" class="etiqueta-mapa">Mueva el cursor sobre el mapa</div>
 
@@ -1166,6 +1199,7 @@
   <script src="/static/js/situacion.js"></script>
   <script src="/static/js/pmo.js"></script>
   <script src="/static/js/tiem.js"></script>
+  <script src="/static/js/doctrina.js"></script>
   <script src="/static/js/infraestructura.js"></script>
   <script src="/static/js/aguila.js"></script>
   <script src="/static/js/app.js"></script>

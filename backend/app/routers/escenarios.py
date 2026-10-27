@@ -12,6 +12,7 @@ from app.engine import inteligencia
 from app.engine import transmisiones
 from app.engine import apresto
 from app.engine import aar, calendario, clock, naciones, plantillas, puestos, tiempo_real, timeline
+from app.engine import doctrina as doctrina_mod
 from app.models.aar import Instantanea
 from app.models.objetivo import Objetivo
 from app.models.problema_militar import ProblemaMilitar
@@ -93,8 +94,9 @@ async def avanzar_turno(
         raise HTTPException(status_code=400, detail="El escenario ya finalizo")
     if not 1 <= n <= tiempo_real.MAX_ADELANTO_H:
         raise HTTPException(status_code=400, detail=f"Se adelantan entre 1 y {tiempo_real.MAX_ADELANTO_H} horas de una vez")
-    tiempo_real.paso(db, esc, n * 3600.0)
+    informe = tiempo_real.paso(db, esc, n * 3600.0)
     db.commit()
+    await manager.difundir_alertas(esc.id, informe.alertas)
     reloj.marcar_cambios(esc.id)
     await manager.difundir_estado(db, esc)
     return state.estado_para(db, esc, usuario.rol)
@@ -137,6 +139,33 @@ async def ajustar_reloj(
     reloj.marcar_cambios(esc.id)
     return await _difundir_y_estado(db, esc, usuario)
 
+
+
+@router.put("/{escenario_id}/doctrina/{bando}")
+async def cambiar_doctrina(
+    bando: str,
+    payload: dict,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.usuario_actual),
+):
+    """Doctrina y reglas de enfrentamiento de un bando (engine/doctrina.py). La fijan el director o el Comandante y el
+    JEM del bando; cada unidad puede tener la suya (PUT /unidades/{id}/doctrina)."""
+    if bando not in ("azul", "rojo"):
+        raise HTTPException(status_code=404, detail="Bando desconocido")
+    if usuario.rol != "instructor":
+        if usuario.rol != bando:
+            raise HTTPException(status_code=403, detail="Solo puede fijar la doctrina de su bando")
+        auth.exigir_funcion(usuario, "listo")
+    problemas = doctrina_mod.errores(payload)
+    if problemas:
+        raise HTTPException(status_code=400, detail=" ".join(problemas))
+    nueva = doctrina_mod.fijar_bando(esc, bando, payload)
+    db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino=bando,
+                  descripcion=f"[{tiempo_real.hora_del_dia(esc)}] Doctrina del bando: {doctrina_mod.texto(nueva)}"))
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return {"bando": bando, "doctrina": nueva, "texto": doctrina_mod.texto(nueva)}
 
 
 @router.post("/{escenario_id}/pcao")
@@ -239,6 +268,15 @@ async def configurar(
     usuario: Usuario = Depends(solo_instructor),
 ):
     cambios = []
+    if payload.pausa_auto is not None:
+        desconocidas = set(payload.pausa_auto) - set(tiempo_real.CAUSAS_PAUSA)
+        if desconocidas:
+            raise HTTPException(status_code=400, detail=f"Causas de pausa desconocidas: {', '.join(sorted(desconocidas))}")
+        actual = tiempo_real.pausa_auto(esc)
+        actual.update(payload.pausa_auto)
+        esc.pausa_auto_json = json.dumps(actual)
+        elegidas = [tiempo_real.CAUSAS_PAUSA[c].lower() for c, v in actual.items() if v]
+        cambios.append("pausa automática: " + (", ".join(elegidas) if elegidas else "ninguna"))
     if payload.clima is not None and payload.clima != esc.clima:
         esc.clima = payload.clima
         db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="clima", bando_destino="todos",

@@ -68,12 +68,14 @@ def marcar_listo(db: Session, escenario: Escenario, bando: str, listo: bool) -> 
 
 def pausar(db: Session, escenario: Escenario) -> None:
     escenario.estado = "pausado"
+    escenario.pausa_motivo = None  # pausa del director, no automatica
     escenario.decision_termina_en = None
     db.commit()
 
 
 def reanudar(db: Session, escenario: Escenario) -> None:
     escenario.estado = "activo"
+    escenario.pausa_motivo = None  # ya no esta detenido por una pausa automatica
     programar_limite(escenario)
     db.commit()
 

@@ -148,6 +148,15 @@ class Unidad(Base):
     rumbo: Mapped[float | None] = mapped_column(Float, nullable=True)
     espera_hasta: Mapped[float | None] = mapped_column(Float, nullable=True)
     recarga_hasta: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # Cóndor: doctrina propia de la unidad (lo que no fija, lo hereda de su bando; engine/doctrina.py)
+    doctrina_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    @property
+    def doctrina(self) -> dict:
+        """Lo que la unidad fija de su doctrina (lo demas lo hereda de su bando)."""
+        from app.engine import doctrina
+
+        return doctrina.propia(self)
 
     @property
     def ruta(self) -> list:

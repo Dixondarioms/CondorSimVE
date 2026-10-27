@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app import auth, schemas, state
 from app.db import get_db
-from app.engine import aar, catalogo, defensa_aerea, puestos, relieve, tramos_pro, vision
+from app.engine import aar, catalogo, defensa_aerea, doctrina, puestos, relieve, tramos_pro, vision
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.models.aar import Combate, RegistroLogistico
@@ -223,6 +223,33 @@ async def cambiar_perfil(
             raise HTTPException(status_code=400, detail="El escenario ya finalizo")
         auth.exigir_funcion(usuario, puestos.funcion_de_orden(unidad, None, catalogo.obtener(unidad.clase, unidad.tipo)))
     unidad.perfil_vuelo = payload.perfil_vuelo
+    db.commit()
+    db.refresh(unidad)
+    await manager.difundir_estado(db, esc)
+    return unidad
+
+
+@router.put("/{unidad_id}/doctrina", response_model=schemas.UnidadOut)
+async def cambiar_doctrina(
+    unidad_id: int,
+    payload: dict,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.requiere_roles("azul", "rojo", "instructor")),
+):
+    """Doctrina propia de una unidad (estado de las armas, misiles por blanco, distancia de tiro, combustible de
+    regreso, regreso sin armamento); un valor null vuelve a heredar el de su bando (engine/doctrina.py)."""
+    unidad = db.get(Unidad, unidad_id)
+    if unidad is None or unidad.escenario_id != esc.id or (usuario.rol != "instructor" and unidad.bando != usuario.rol):
+        raise HTTPException(status_code=404, detail="Unidad no encontrada")
+    problemas = doctrina.errores(payload, admite_nulos=True)
+    if problemas:
+        raise HTTPException(status_code=400, detail=" ".join(problemas))
+    if usuario.rol != "instructor":
+        if esc.estado == "finalizado":
+            raise HTTPException(status_code=400, detail="El escenario ya finalizo")
+        auth.exigir_funcion(usuario, puestos.funcion_de_orden(unidad, None, catalogo.obtener(unidad.clase, unidad.tipo)))
+    doctrina.fijar_unidad(unidad, payload)
     db.commit()
     db.refresh(unidad)
     await manager.difundir_estado(db, esc)

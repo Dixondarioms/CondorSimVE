@@ -209,7 +209,9 @@ def test_ultimo_contacto_conocido(api):
     assert "R1" not in {u["nombre"] for u in est["unidades"]}
     (c,) = est["contactos"]
     assert (c["nombre"], c["turno_visto"]) == ("R1", 2)  # tiempo real: se lo vio por ultima vez al empezar la hora 2
-    assert c["lat"] == pytest.approx(0.045) and c["sidc"].startswith("SH")
+    # donde se lo vio, dentro de su circulo de incertidumbre (engine/contactos_vivo.py: a 5 km, identificado a ojo)
+    assert abs(c["lat"] - 0.045) * 111.32 <= c["incertidumbre_km"] + 1e-6 and c["sidc"].startswith("SH")
+    assert c["etapa"] == "identificado" and c["incertidumbre_km"] > 0
     # el rojo tambien vio a A (5 km) y la perdio de vista: recuerda donde estaba
     assert [x["nombre"] for x in api("bravo").get(base).json()["contactos"]] == ["A"]
 

@@ -73,6 +73,21 @@ class ConnectionManager:
             except Exception:
                 self.desconectar(escenario.id, c)
 
+    async def difundir_alertas(self, escenario_id: int, alertas: list[dict]) -> None:
+        """Alertas del tiempo real: cada bando recibe las suyas al instante; el director y el observador, todas."""
+        if not alertas:
+            return
+        for c in self.conexiones(escenario_id):
+            rol = c.rol_efectivo
+            for a in alertas:
+                if state.es_bando(rol) and a["bando"] not in (rol, "todos"):
+                    continue
+                try:
+                    await c.websocket.send_json({"tipo": "alerta", **a})
+                except Exception:
+                    self.desconectar(escenario_id, c)
+                    break
+
     async def difundir_grafico(self, escenario_id: int, mensaje: dict, bando: str) -> None:
         """Envia un cambio de graficos tacticos solo a quienes pueden ver los del `bando`."""
         for c in self.conexiones(escenario_id):

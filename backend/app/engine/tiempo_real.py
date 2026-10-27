@@ -37,6 +37,8 @@ from app.engine import apoyo_aereo as apoyo_mod
 from app.engine import apresto as apresto_mod
 from app.engine import azar as azar_mod
 from app.engine import clima as clima_mod
+from app.engine import contactos_vivo
+from app.engine import doctrina as doctrina_mod
 from app.engine import defensa_aerea as da_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import infraestructura as infra_mod
@@ -111,17 +113,23 @@ class Mundo:
     """Lo que el motor recuerda entre pasos y no hace falta guardar: si el servidor se reinicia, se rehace solo."""
 
     visibles: dict = field(default_factory=lambda: {"azul": set(), "rojo": set()})
+    detectado: bool = False  # ya hubo una deteccion desde que arranco el servidor
     visto_en: dict = field(default_factory=dict)  # (bando, unidad_id) -> segundo simulado en que se la vio
     movio_en: dict = field(default_factory=dict)  # unidad_id -> ultimo segundo simulado en que se movio
     pos_previa: dict = field(default_factory=dict)  # unidad_id -> (lat, lon) del paso anterior
     da: dict = field(default_factory=dict)  # bateria_id -> enfrentamientos en curso
     combates: dict = field(default_factory=dict)  # (atacante_id, defensor_id) -> fuego continuo acumulado
+    bajo_fuego: dict = field(default_factory=dict)  # (atacante_id, defensor_id) -> ultimo aviso de fuego continuo
     ia_pensada: float = -1e9  # segundo simulado de la ultima decision del adversario automatico
     logistica_en: float | None = None  # ultimo reabastecimiento continuo (bases, convoyes, depositos)
     cisternas_en: float | None = None  # ultimo reabastecimiento en vuelo
     registro: dict = field(default_factory=dict)  # (unidad_id, variable, causa) -> cambio acumulado en la hora
     reintentos_ruta: dict = field(default_factory=dict)  # (unidad_id, orden_id) -> veces que busco otro camino
     ultimo_contacto_guardado: float = -1e9
+    # seguimiento de contactos (engine/contactos_vivo.py): (bando, unidad_id) -> etapa, puntos, incertidumbre
+    pistas: dict = field(default_factory=dict)
+    pistas_cargadas: bool = False
+    pistas_en: dict = field(default_factory=dict)  # bando -> ultimo segundo simulado en que se sumaron puntos
 
 
 MUNDOS: dict[int, Mundo] = {}
@@ -133,10 +141,27 @@ def mundo_de(escenario_id: int) -> Mundo:
 
 @dataclass
 class Informe:
-    """Resultado de un `paso`: si hubo cambios que piden reenviar el estado completo y las horas cumplidas."""
+    """Resultado de un `paso`: si hubo cambios que piden reenviar el estado completo, las horas cumplidas y las
+    alertas para los bandos (se envian al instante: contacto nuevo, ataque, perdida, combustible, mision)."""
 
     cambios: bool = False
     horas: list = field(default_factory=list)
+    alertas: list = field(default_factory=list)
+
+
+# Causas de pausa automatica (el director elige cuales detienen el reloj) y sus nombres para la pantalla.
+CAUSAS_PAUSA = {"contacto": "Contacto nuevo", "ataque": "Ataque a una unidad propia", "perdida": "Unidad perdida",
+                "combustible": "Combustible crítico", "mision": "Misión terminada"}
+REPETIR_ALERTA_FUEGO_S = 900.0  # una unidad bajo fuego continuo se vuelve a avisar despues de esto
+
+
+def pausa_auto(esc) -> dict:
+    """{causa: bool} de la pausa automatica del escenario (sin configurar, ninguna)."""
+    try:
+        datos = json.loads(getattr(esc, "pausa_auto_json", None) or "{}")
+    except ValueError:
+        datos = {}
+    return {c: bool(datos.get(c)) for c in CAUSAS_PAUSA}
 
 
 class _Ctx:
@@ -150,6 +175,9 @@ class _Ctx:
         self.obras = obras + infra_mod.cortes(self.lista)
         self.informe = Informe()
         self.en_mision: set[int] = set()
+        self.pausas = pausa_auto(esc)
+        self._doctrinas: dict[int, dict] = {}
+        self.pausa: dict | None = None  # la alerta que pide detener el reloj en este paso
         self.bit = _BitacoraEnVivo(self)
         self.perdidas: dict[int, float] = {}
 
@@ -169,6 +197,34 @@ class _Ctx:
                            descripcion=f"[{hora_del_dia(self.esc)}] {texto}", lat=lat, lon=lon, sim_segundos=self.t,
                            hasta_turno=self.esc.turno_actual + 1 if lat is not None else None))
         self.informe.cambios = True
+
+    def alerta(self, causa: str, bando: str, texto: str, lat=None, lon=None, nivel: str = "aviso") -> None:
+        """Alerta para un bando (y el director): se envia al instante y, si el director lo eligio, detiene el reloj."""
+        a = {"causa": causa, "bando": bando, "nivel": nivel, "texto": f"[{hora_del_dia(self.esc)}] {texto}",
+             "lat": lat, "lon": lon, "sim_segundos": self.t}
+        self.informe.alertas.append(a)
+        if self.pausa is None and self.pausas.get(causa):
+            self.pausa = a
+
+    def doctrina(self, u: Unidad) -> dict:
+        """Doctrina efectiva de la unidad (la suya o la de su bando), una vez por paso."""
+        d = self._doctrinas.get(u.id)
+        if d is None:
+            d = self._doctrinas[u.id] = doctrina_mod.de_unidad(self.esc, u)
+        return d
+
+    def identificado(self, bando: str, x: Unidad) -> bool:
+        """El bando tiene a `x` identificado como enemigo (para las armas en estado restringido)."""
+        return contactos_vivo.identificado(self, bando, x)
+
+    def autoriza(self, u: Unidad, x: Unidad, dominio: str) -> bool:
+        """La doctrina de `u` le permite tirar por su cuenta contra `x` ("aire" o "superficie")."""
+        if not self.esc.fuego_automatico:
+            return False
+        estado = self.doctrina(u)["armas_aire" if dominio == "aire" else "armas_superficie"]
+        if estado == "retenido":
+            return False
+        return estado == "libre" or self.identificado(u.bando, x)
 
     def visible_para(self, u: Unidad, bando: str) -> bool:
         return u.bando == bando or not self.esc.niebla or u.id in self.mundo.visibles.get(bando, ())
@@ -367,7 +423,7 @@ def paso(db: Session, esc: Escenario, segundos: float, terreno: Terreno | None =
     aar.asegurar_linea_base(db, esc)
     if db.query(Fotograma.id).filter(Fotograma.escenario_id == esc.id).first() is None:
         guardar_fotograma(ctx)  # el punto de partida de la repeticion
-    _detectar(ctx)
+    _detectar(ctx, avisar=True)  # lo que aparecio entre pasos (p. ej., el director movio una unidad)
     restante = max(0.0, segundos)
     detectado = ctx.t
     while restante > 1e-6:
@@ -385,6 +441,9 @@ def paso(db: Session, esc: Escenario, segundos: float, terreno: Terreno | None =
             detectado = ctx.t
         while turno_de(esc.sim_segundos) > esc.turno_actual:
             _fin_de_hora(ctx)
+        if ctx.pausa is not None:
+            _pausa_automatica(ctx)
+            break
     _detectar(ctx, avisar=True)
     _guardar_contactos(ctx)
     return ctx.informe
@@ -411,6 +470,14 @@ def _logistica(ctx: _Ctx) -> None:
                 if r["receptores"]:
                     detalle = ", ".join(f"{n} ({k} aeronave{'s' if k != 1 else ''})" for n, k, _ in r["receptores"])
                     ctx.evento("logistica", t.bando, f"{t.nombre} reabasteció en vuelo a {detalle}.")
+
+
+def _pausa_automatica(ctx: _Ctx) -> None:
+    """El reloj se detiene por una alerta que el director eligio (el resto del tiempo de este paso no corre)."""
+    a = ctx.pausa
+    ctx.esc.estado, ctx.esc.pausa_motivo = "pausado", a["texto"][:300]  # el texto de la alerta ya dice que paso
+    ctx.evento("direccion", "todos", f"Pausa automática ({CAUSAS_PAUSA.get(a['causa'], a['causa']).lower()}).")
+    ctx.informe.cambios = True
 
 
 def _pensar_ia(ctx: _Ctx) -> None:
@@ -465,6 +532,7 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
     if ctx.esc.fuego_automatico:
         _interceptar(ctx)
         _antiaerea_generica(ctx, h)
+        _fuego_de_oportunidad(ctx, h)
     _defensa_aerea(ctx)
     _aplicar_perdidas(ctx)
     _combustible(ctx)
@@ -646,10 +714,15 @@ def _esperas_en_tierra(ctx: _Ctx) -> None:
 # ------------------------------------------------------------------------------------------- deteccion
 def _detectar(ctx: _Ctx, avisar: bool = False) -> None:
     anteriores = {b: set(v) for b, v in ctx.mundo.visibles.items()}
+    if not ctx.mundo.detectado:  # recien arrancado el servidor: lo ya registrado como contacto no es nuevo
+        for bando, uid in ctx.db.query(Contacto.bando, Contacto.unidad_id).filter(Contacto.escenario_id == ctx.esc.id):
+            anteriores.setdefault(bando, set()).add(uid)
     for bando in ("azul", "rojo"):
         vis = vision.unidades_visibles(ctx.lista, bando, ctx.terreno, ctx.clima, ctx.ge)
         ids = {u.id for u in vis if u.bando != bando and u.estado == "activa"}
         ctx.mundo.visibles[bando] = ids
+        if ctx.esc.niebla:
+            contactos_vivo.actualizar(ctx, bando, ids)
         nuevos = ids - anteriores.get(bando, set())
         if nuevos or anteriores.get(bando, set()) - ids:
             ctx.informe.cambios = True
@@ -658,14 +731,25 @@ def _detectar(ctx: _Ctx, avisar: bool = False) -> None:
             for uid in sorted(nuevos):
                 visto = ctx.mundo.visto_en.get((bando, uid))
                 if visto is None or ctx.t - visto > AVISO_CONTACTO_S:
-                    x = ctx.unidades[uid]
-                    textos.append(catalogo.obtener(x.clase, x.tipo).nombre.lower()
-                                  + (" en vuelo" if aeronaves_mod.en_vuelo(x) else ""))
+                    textos.append(_rotulo_contacto(ctx, bando, ctx.unidades[uid]))
             if textos:
-                ctx.evento("radar", bando, f"Contacto nuevo: {', '.join(textos[:4])}"
-                                           + (f" y {len(textos) - 4} más" if len(textos) > 4 else "") + ".")
+                texto = f"Contacto nuevo: {', '.join(textos[:4])}" + (f" y {len(textos) - 4} más" if len(textos) > 4 else "") + "."
+                ctx.evento("radar", bando, texto)
+                primero = ctx.unidades[min(nuevos)]
+                ctx.alerta("contacto", bando, texto, primero.lat, primero.lon, "critica")
         for uid in ids:
             ctx.mundo.visto_en[(bando, uid)] = ctx.t
+    ctx.mundo.detectado = True
+
+
+def _rotulo_contacto(ctx: _Ctx, bando: str, x: Unidad) -> str:
+    """Como se nombra un contacto en los avisos: lo que el bando sabe de el (engine/contactos_vivo.py)."""
+    p = ctx.mundo.pistas.get((bando, x.id)) if ctx.esc.niebla else None
+    etapa = p["etapa"] if p is not None else "identificado"
+    if etapa == "desconocido":
+        return "aeronave desconocida" if x.tipo == "aerea" else "contacto de superficie desconocido"
+    texto = catalogo.obtener(x.clase, x.tipo).nombre.lower() + (" en vuelo" if aeronaves_mod.en_vuelo(x) else "")
+    return f"{x.nombre} ({texto})" if etapa == "identificado" and p is not None else texto
 
 
 def _guardar_contactos(ctx: _Ctx, cada_s: float = 60.0) -> None:
@@ -681,10 +765,14 @@ def _guardar_contactos(ctx: _Ctx, cada_s: float = 60.0) -> None:
                 continue
             c = existentes.get((bando, uid))
             if c is None:
-                ctx.db.add(Contacto(escenario_id=ctx.esc.id, bando=bando, unidad_id=uid, lat=u.lat, lon=u.lon,
-                                    turno_visto=ctx.esc.turno_actual))
+                c = Contacto(escenario_id=ctx.esc.id, bando=bando, unidad_id=uid, lat=u.lat, lon=u.lon,
+                             turno_visto=ctx.esc.turno_actual)
+                ctx.db.add(c)
             else:
                 c.lat, c.lon, c.turno_visto = u.lat, u.lon, ctx.esc.turno_actual
+            p = ctx.mundo.pistas.get((bando, uid))
+            if p is not None:
+                c.etapa, c.puntos, c.incertidumbre_km = p["etapa"], round(p["puntos"], 2), p["inc"]
     for (bando, uid), c in existentes.items():
         u = ctx.unidades.get(uid)
         if u is None or u.estado == "destruida":
@@ -724,8 +812,10 @@ def _resolver(ctx: _Ctx, a: Unidad, d: Unidad, fraccion: float, clave: int, part
         factor_municion=min(1.0, a.municion / max(consumo * fraccion, 1e-9)),
         azar=_azar(ctx, clave, a, d), sorpresa=sorpresa, cadencia=clase_a.cadencia_fuego,
     )
-    perd_a = (a.fuerza - res.fuerza_atacante_resultante) * fraccion
-    perd_d = (d.fuerza - res.fuerza_defensor_resultante) * fraccion
+    # perdidas de la tabla (puntos por hora de combate) por la fraccion de hora; no se calculan sobre la fuerza que
+    # queda, para que una unidad muy debil termine fuera de combate en vez de debilitarse cada vez menos
+    perd_a = min(a.fuerza, res.perdida_atacante_pct * fraccion)
+    perd_d = min(d.fuerza, res.perdida_defensor_pct * fraccion)
     for apoyado in (a, d):  # quien apoya gasta municion mientras su fuego cuenta en el combate
         for sid in apoyos.get(apoyado.id, []):
             s = ctx.unidades.get(sid)
@@ -775,13 +865,18 @@ def _pasada(ctx: _Ctx, a: Unidad, d: Unidad, orden: Orden | None, recarga_s: flo
     texto = f"{a.nombre} atacó a {d.nombre}: {res.resumen}"
     ctx.evento("combate", a.bando, texto, d.lat, d.lon)
     if d.bando != a.bando:
-        ctx.evento("combate", d.bando, f"{d.nombre} fue atacado" + (f" por {a.nombre}" if ctx.visible_para(a, d.bando) else "")
-                   + f": perdió {perd_d:.0f} puntos de fuerza.", d.lat, d.lon)
+        recibido = (f"{d.nombre} fue atacado" + (f" por {a.nombre}" if ctx.visible_para(a, d.bando) else "")
+                    + f": perdió {perd_d:.0f} puntos de fuerza.")
+        ctx.evento("combate", d.bando, recibido, d.lat, d.lon)
+        ctx.alerta("ataque", d.bando, recibido, d.lat, d.lon, "critica")
     return texto
 
 
 def _fuego_continuo(ctx: _Ctx, a: Unidad, d: Unidad, orden: Orden | None, h: float) -> None:
     clave = orden.id if orden is not None else 0
+    if ctx.t - ctx.mundo.bajo_fuego.get((a.id, d.id), -1e9) >= REPETIR_ALERTA_FUEGO_S:
+        ctx.mundo.bajo_fuego[(a.id, d.id)] = ctx.t
+        ctx.alerta("ataque", d.bando, f"{d.nombre} está bajo fuego enemigo.", d.lat, d.lon, "critica")
     perd_a, perd_d, gasto, res = _resolver(ctx, a, d, h / 3600.0, clave)
     _perder(ctx, a, perd_a)
     _perder(ctx, d, perd_d)
@@ -1035,9 +1130,34 @@ def _interceptar(ctx: _Ctx) -> None:
             continue
         if catalogo.perfil(u).ataque_vs.get("aerea", 0.0) <= 0:
             continue
-        amenazas = _amenazas_aereas(ctx, u, u.alcance_km)
+        alcance = u.alcance_km * ctx.doctrina(u)["distancia_pct"] / 100.0
+        amenazas = [x for x in _amenazas_aereas(ctx, u, alcance) if ctx.autoriza(u, x, "aire")]
         if amenazas:
             _pasada(ctx, u, amenazas[0], None, RECARGA_AIRE_AIRE_S)
+
+
+def _fuego_de_oportunidad(ctx: _Ctx, h: float) -> None:
+    """Con las armas de superficie libres (o restringidas), una unidad de tierra o del mar sin orden tira contra el
+    enemigo de superficie mas cercano que tiene a su alcance y su bando ve (o tiene identificado)."""
+    for u in ctx.lista:
+        if (u.estado != "activa" or u.tipo in ("base", "aerea") or u.orden_id is not None or u.ruta_json
+                or transporte_mod.embarcada(u) or ctx.doctrina(u)["armas_superficie"] == "retenido"):
+            continue
+        clase = catalogo.perfil(u)
+        if not any(clase.ataque_vs.get(t, 0.0) > 0 for t in ("terrestre", "naval")) or _puede_disparar(ctx, u):
+            continue
+        alcance = u.alcance_km * ctx.doctrina(u)["distancia_pct"] / 100.0
+        candidatos = []
+        for x in ctx.lista:
+            if x.bando == u.bando or x.estado != "activa" or aeronaves_mod.en_vuelo(x) or transporte_mod.embarcada(x):
+                continue
+            if clase.ataque_vs.get(orders.tipo_efectivo(x), 0.0) <= 0 or not ctx.visible_para(x, u.bando):
+                continue
+            d = geo.distancia_km(u.lat, u.lon, x.lat, x.lon)
+            if d <= alcance and ctx.autoriza(u, x, "superficie"):
+                candidatos.append((d, x))
+        if candidatos:
+            _fuego_continuo(ctx, u, min(candidatos, key=lambda c: c[0])[1], None, h)
 
 
 def _antiaerea_generica(ctx: _Ctx, h: float) -> None:
@@ -1053,7 +1173,9 @@ def _antiaerea_generica(ctx: _Ctx, h: float) -> None:
             continue
         if clase.emisor and not ge_mod.emite_radar(u):
             continue
-        amenazas = [x for x in _amenazas_aereas(ctx, u, u.alcance_km, linea_de_vista=True) if not relieve.fuera_de_techo(u, x)]
+        alcance = u.alcance_km * ctx.doctrina(u)["distancia_pct"] / 100.0
+        amenazas = [x for x in _amenazas_aereas(ctx, u, alcance, linea_de_vista=True)
+                    if not relieve.fuera_de_techo(u, x) and ctx.autoriza(u, x, "aire")]
         if amenazas:
             _fuego_continuo(ctx, u, amenazas[0], None, h)
 
@@ -1099,6 +1221,7 @@ def _defensa_aerea(ctx: _Ctx) -> None:
                 ctx.evento("combate", bat.bando, f"{bat.nombre} lanzó {e['por_salva']} {arma.nombre} contra {d.nombre}.")
                 if e["tripulada"]:
                     ctx.evento("combate", d.bando, f"{d.nombre}: misil enemigo en vuelo, maniobra evasiva.")
+                ctx.alerta("ataque", d.bando, f"{d.nombre}: misil antiaéreo enemigo en vuelo.", d.lat, d.lon, "critica")
             elif e["fase"] == "vuelo":
                 e["fase"], e["hasta"] = "evaluacion", ctx.t + da_mod.EVALUACION_S
                 if d is None or not aeronaves_mod.en_vuelo(d):
@@ -1135,16 +1258,18 @@ def _defensa_aerea(ctx: _Ctx) -> None:
         # 3) nuevos blancos con canales libres
         libres = max(1, s.canales) - len(enf)
         orden = ctx.orden_de(bat)
-        automatico = ctx.esc.fuego_automatico and bat.fuego_libre is not False
+        doct = ctx.doctrina(bat)
+        automatico = ctx.esc.fuego_automatico and bat.fuego_libre is not False and doct["armas_aire"] != "retenido"
         if libres > 0 and (automatico or (orden is not None and orden.tipo == "atacar")):
             quieta = ctx.t - ctx.mundo.movio_en.get(bat.id, -1e9)
             if quieta >= (s.repliegue_min + s.despliegue_min) * 60.0:
                 ocupados = {e.get("blanco") for e in enf}
                 blancos = _amenazas_aereas(ctx, bat, max(a.alcance_max_km for a in s.armas), linea_de_vista=True)
-                if orden is not None and orden.tipo == "atacar":
-                    blancos.sort(key=lambda x: x.id != orden.objetivo_unidad_id)
-                    if not automatico:
-                        blancos = [x for x in blancos if x.id == orden.objetivo_unidad_id]
+                ordenado = orden.objetivo_unidad_id if orden is not None and orden.tipo == "atacar" else None
+                # por su cuenta, solo contra lo que la doctrina autoriza (el blanco ordenado, siempre)
+                blancos = [x for x in blancos if x.id == ordenado or (automatico and ctx.autoriza(bat, x, "aire"))]
+                if ordenado is not None:
+                    blancos.sort(key=lambda x: x.id != ordenado)
                 forzada = da_mod.arma_elegida(bat, s)
                 for d in blancos:
                     if libres <= 0:
@@ -1157,7 +1282,7 @@ def _defensa_aerea(ctx: _Ctx) -> None:
                     if arma is None:
                         continue
                     f_asp, aspecto = da_mod.factor_aspecto(bat, ctx.mundo.pos_previa.get(d.id), (d.lat, d.lon))
-                    if dist > arma.alcance_max_km * f_asp:
+                    if dist > arma.alcance_max_km * f_asp * doct["distancia_pct"] / 100.0:
                         continue
                     cx = catalogo.obtener(d.clase, d.tipo)
                     tripulada = not (cx.dron or cx.misil or cx.se_consume)
@@ -1165,6 +1290,8 @@ def _defensa_aerea(ctx: _Ctx) -> None:
                                                         firma=catalogo.firma(d), altura_m=altura)
                     cercano = dist <= arma.alcance_max_km * da_mod.ZONA_CERCANA
                     por_salva = min(listos[arma.id], arma.por_blanco if cercano or arma.tipo == "canon" else 1)
+                    if doct["disparos_por_blanco"] and arma.tipo != "canon":  # la doctrina fija los misiles por salva
+                        por_salva = min(listos[arma.id], doct["disparos_por_blanco"])
                     if por_salva <= 0:
                         continue
                     traza_propia = vision.detecta(bat, d, ctx.terreno, ctx.clima, ctx.ge)
@@ -1192,6 +1319,7 @@ def _aplicar_perdidas(ctx: _Ctx) -> None:
             ctx.terminar(ctx.orden_de(u), u, "La unidad quedó fuera de combate.")
             texto = f"{u.nombre} quedó fuera de combate."
             ctx.evento("combate", u.bando, texto, u.lat, u.lon)
+            ctx.alerta("perdida", u.bando, texto, u.lat, u.lon, "critica")
             for b in ("azul", "rojo"):
                 if b != u.bando and ctx.visible_para(u, b):
                     ctx.evento("combate", b, f"{u.nombre} enemigo fue destruido.", u.lat, u.lon)
@@ -1204,6 +1332,21 @@ def _aplicar_perdidas(ctx: _Ctx) -> None:
 
 
 # ------------------------------------------------------------------------------------------- combustible
+def _regresar(ctx: _Ctx, u: Unidad, orden: Orden | None, base: Unidad, detalle: str, texto: str) -> None:
+    """La aeronave deja lo que hacia y vuelve a la base (orden automatica de aterrizaje)."""
+    if orden is not None:
+        ctx.terminar(orden, u, texto, "cancelada")
+    rtb = Orden(escenario_id=ctx.esc.id, unidad_id=u.id, tipo="aterrizar", objetivo_unidad_id=base.id, detalle=detalle,
+                turno_emitida=ctx.esc.turno_actual, estado="en_ejecucion", emitida_seg=ctx.t)
+    ctx.db.add(rtb)
+    ctx.db.flush()
+    ctx.ordenes[rtb.id] = rtb
+    u.orden_id = rtb.id
+    u.mision, u.mision_lat, u.mision_lon = "", None, None
+    _poner_ruta(u, [[base.lat, base.lon]])
+    ctx.evento("logistica", u.bando, texto)
+
+
 def _combustible(ctx: _Ctx) -> None:
     for u in ctx.lista:
         if not aeronaves_mod.en_vuelo(u) or catalogo.es_misil(u):
@@ -1221,11 +1364,21 @@ def _combustible(ctx: _Ctx) -> None:
                 ctx.terminar(ctx.orden_de(u), u, "Se quedó sin combustible y se perdió.")
                 ctx.evento("logistica", u.bando, f"{u.nombre} se quedó sin combustible lejos de una base y se perdió.",
                            u.lat, u.lon)
+                ctx.alerta("perdida", u.bando, f"{u.nombre} se quedó sin combustible y se perdió.", u.lat, u.lon, "critica")
             continue
         orden = ctx.orden_de(u)
         if u.id in ctx.en_mision:
             continue  # su mision resuelve el regreso con combustible critico
-        if u.combustible <= aeronaves_mod.COMBUSTIBLE_CRITICO and (orden is None or orden.tipo != "aterrizar"):
+        doct = ctx.doctrina(u)
+        sin_armas = (doct["regreso_sin_armas"] and u.municion <= 0.5 and not catalogo.obtener(u.clase, u.tipo).se_consume
+                     and any(v > 0 for v in catalogo.perfil(u).ataque_vs.values()))
+        if sin_armas and (orden is None or orden.tipo not in ("aterrizar", "mover")):
+            base = aeronaves_mod.base_mas_cercana(u, ctx.lista)
+            if base is not None:
+                _regresar(ctx, u, orden, base, "sin armamento",
+                          f"{u.nombre} agotó su armamento y regresa a {base.nombre} a rearmarse.")
+            continue
+        if u.combustible <= doct["combustible_regreso"] and (orden is None or orden.tipo != "aterrizar"):
             base = aeronaves_mod.base_mas_cercana(u, ctx.lista)
             if base is None:
                 continue
@@ -1242,6 +1395,8 @@ def _combustible(ctx: _Ctx) -> None:
             _poner_ruta(u, [[base.lat, base.lon]])
             ctx.evento("logistica", u.bando,
                        f"{u.nombre} con combustible crítico ({u.combustible:.0f} %) regresa a {base.nombre}.")
+            ctx.alerta("combustible", u.bando, f"{u.nombre} con combustible crítico ({u.combustible:.0f} %) regresa a "
+                                               f"{base.nombre}.", u.lat, u.lon)
 
 
 # ------------------------------------------------------------------------------------------- cada hora
@@ -1295,7 +1450,11 @@ def posiciones_para(db: Session, esc: Escenario, rol: str) -> dict:
         if propio and u.bando != propio and esc.niebla and u.id not in mundo.visibles.get(propio, ()):
             continue
         ve_datos = propio is None or u.bando == propio
-        filas.append([u.id, round(u.lat, 5), round(u.lon, 5), round(u.rumbo) if u.rumbo is not None else None,
+        lat, lon = u.lat, u.lon
+        if not ve_datos and esc.niebla:  # el enemigo, donde el bando cree que esta (engine/contactos_vivo.py)
+            inc = contactos_vivo.incertidumbre(contactos_vivo.pista(db, esc, propio, u.id), u, esc.sim_segundos or 0.0)
+            lat, lon = contactos_vivo.aproximar(esc.semilla, propio, u.id, lat, lon, inc, esc.sim_segundos or 0.0)
+        filas.append([u.id, round(lat, 5), round(lon, 5), round(u.rumbo) if u.rumbo is not None else None,
                       1 if u.en_tierra else 0, round(u.fuerza) if ve_datos else None,
                       round(u.combustible) if ve_datos else None])
     return {"tipo": "posiciones", "reloj": reloj(esc), "unidades": filas}

@@ -11,6 +11,7 @@
 
   const app = {
     usuario: null, escenarioId: null, ws: null, wsAlive: null, data: null, recibidoEn: 0, reloj: null, vivo: new Map(), cuadroVivo: null,
+    textosAlertas: new Set(), ultimaAlerta: null,
     porId: new Map(), contactosPorId: new Map(),
     modoAgregar: false, waypoints: [], modoOrden: "mover", unidadOrden: null, seleccion: null,
     markers: new Map(), flechas: [], encuadrado: false, map: null, capas: {}, capaActiva: {},
@@ -629,6 +630,7 @@
     c.niebla = L.layerGroup();
     c.cobertura = L.layerGroup();
     c.contactos = L.layerGroup().addTo(map);
+    c.incertidumbre = L.layerGroup().addTo(map);  // circulos de incertidumbre de los contactos enemigos
     c.informes = L.layerGroup().addTo(map);
     c.unidades = L.layerGroup().addTo(map);
     c.ordenes = L.layerGroup().addTo(map);
@@ -674,7 +676,7 @@
     else if (nombre === "unidades") { poner(g.unidades, encendida); poner(g.ordenes, encendida); poner(g.obras, encendida); ajustarPorZoom(); if (encendida) app.flechas.forEach((f) => f.actualizar()); }
     else if (nombre === "alcances") ajustarPorZoom();
     else if (nombre === "graficos") poner(app.graficos.capa, encendida);
-    else if (nombre === "contactos") { poner(g.contactos, encendida); poner(g.informes, encendida); }
+    else if (nombre === "contactos") { poner(g.contactos, encendida); poner(g.informes, encendida); poner(g.incertidumbre, encendida); }
     else if (g[nombre]) poner(g[nombre], encendida);
   }
   document.querySelectorAll("[data-capa]").forEach((chk) => chk.addEventListener("change", () => alternarCapa(chk.dataset.capa, chk.checked)));
@@ -1078,9 +1080,28 @@
       const m = L.marker([c.lat, c.lon], { icon: iconoUnidad(c, "enemigo fantasma"), keyboard: false });
       m.on("click", () => seleccionar(c.unidad_id, "mapa"));
       const tip = document.createElement("span");
-      tip.textContent = `Último contacto (turno ${c.turno_visto}): ${c.nombre}, ${c.clase || c.tipo}`;
+      tip.textContent = `Último contacto (turno ${c.turno_visto}): ${c.nombre}, ${c.clase || c.tipo}`
+        + (c.etapa ? ` · ${Logica.textoEtapa(c)}` : "");
       m.bindTooltip(tip, { direction: "top", offset: [0, -14] }).addTo(g);
     }
+    dibujarIncertidumbre();
+  }
+
+  /** Circulo de incertidumbre de cada contacto enemigo: donde puede estar en realidad (engine/contactos_vivo.py). */
+  function dibujarIncertidumbre() {
+    const g = app.capas.incertidumbre;
+    g.clearLayers();
+    app.circulos = new Map();
+    if (!app.data) return;
+    const poner = (u, perdido) => {
+      const r = Number(u.incertidumbre_km) || 0;
+      if (r < 0.3) return;  // menos que el simbolo: no aporta
+      const circ = L.circle([u.lat, u.lon], { radius: r * 1000, color: "#ffb703", weight: 1, dashArray: perdido ? "4 6" : "2 4", fillColor: "#ffb703", fillOpacity: 0.06, interactive: false });
+      circ.addTo(g);
+      if (!perdido) app.circulos.set(u.id, circ);
+    };
+    for (const u of app.data.unidades) if (u.etapa && u.estado === "activa") poner(u, false);
+    for (const c of app.data.contactos || []) if (c.etapa) poner(c, true);
   }
 
   /** Cobertura de un sensor segun el relieve (GET .../cobertura), cacheada por posicion, emision y clima (un radar
@@ -1333,6 +1354,7 @@
     }
     app.seleccion = id;
     if (app.data) { renderOOBSeleccion(); renderDetalle(); actualizarNuevaOrden(app.data); dibujarSeleccion(); marcarSeleccionEnMapa(); }
+    if (app.doctrina) app.doctrina.refrescar();
   }
 
   // ---------- panel izquierdo: orden de batalla ----------
@@ -1941,6 +1963,7 @@
       Object.assign(u, { lat, lon, rumbo, en_tierra: !!enTierra });
       if (fuerza !== null) u.fuerza = fuerza;
       if (combustible !== null) u.combustible = combustible;
+      if (app.circulos && app.circulos.has(id) && movio) app.circulos.get(id).setLatLng([lat, lon]);
       const mk = app.markers.get(id);
       if (!mk || !movio) continue;
       if (quieto || enTierra) { app.vivo.delete(id); mk.setLatLng([lat, lon]); continue; }
@@ -2031,6 +2054,7 @@
 
   function actualizarPie(data) {
     const esc = data.escenario;
+    actualizarPausaAuto(esc);
     for (const bando of ["azul", "rojo"]) {
       const el = $(`estado-${bando}`);
       const quien = esc[`conduccion_${bando}`] || "alumnos";
@@ -2076,11 +2100,53 @@
     const { alertas, memoria } = Logica.alertasNuevas(app.memoria, data, app.usuario.rol);
     app.memoria = memoria;
     for (const a of alertas) {
+      if (app.textosAlertas.has(a.texto)) continue;  // ya llego al instante como alerta en vivo
       app.alertas.unshift({ ...a, hora: horaDelTurno(a.turno), nueva: true });
       app.alertasSinLeer += 1;
     }
     app.alertas = app.alertas.slice(0, MAX_ALERTAS);
     renderAlertas();
+  }
+
+  // ---------- Cóndor: alertas en vivo y pausa automatica ----------
+  const DURACION_AVISO_MS = 9000;
+
+  function irA(lat, lon) {
+    if (app.map && lat !== null && lat !== undefined) app.map.setView([lat, lon], Math.max(app.map.getZoom(), 10));
+  }
+
+  /** Alerta que el servidor envia al instante (contacto nuevo, ataque, perdida, combustible, mision). */
+  function recibirAlerta(m) {
+    const hora = (m.texto.match(/^\[(\d\d:\d\d)\]/) || [])[1] || "";
+    const texto = m.texto.replace(/^\[\d\d:\d\d\]\s*/, "");
+    app.textosAlertas.add(m.texto);
+    app.ultimaAlerta = m;
+    app.alertas.unshift({ nivel: m.nivel, texto, turno: app.data ? app.data.escenario.turno_actual : 0, horaVivo: hora,
+      lat: m.lat, lon: m.lon, nueva: true });
+    app.alertasSinLeer += 1;
+    app.alertas = app.alertas.slice(0, MAX_ALERTAS);
+    renderAlertas();
+    const caja = $("avisos-vivos");
+    const div = document.createElement("div");
+    div.className = `aviso-vivo ${m.nivel}`;
+    div.textContent = `${hora} · ${texto}`;
+    div.title = m.lat !== null && m.lat !== undefined ? "Clic: ver en el mapa" : "";
+    div.addEventListener("click", () => { irA(m.lat, m.lon); div.remove(); });
+    caja.prepend(div);
+    while (caja.children.length > 4) caja.lastChild.remove();
+    setTimeout(() => { div.classList.add("saliendo"); setTimeout(() => div.remove(), 700); }, DURACION_AVISO_MS);
+  }
+
+  function actualizarPausaAuto(esc) {
+    const visible = esc.estado === "pausado" && !!esc.pausa_motivo;
+    $("banner-pausa").hidden = !visible;
+    if (visible) $("banner-pausa-texto").textContent = esc.pausa_motivo;
+    $("banner-pausa-reanudar").hidden = !esInstructor();
+    if (esInstructor()) {
+      document.querySelectorAll("[data-causa]").forEach((c) => {
+        if (document.activeElement !== c) c.checked = !!(esc.pausa_auto || {})[c.dataset.causa];
+      });
+    }
   }
 
   function renderAlertas() {
@@ -2091,8 +2157,13 @@
       const li = document.createElement("li");
       li.className = a.nivel + (a.nueva ? " nueva" : "");
       const t = document.createElement("time");
-      t.textContent = `TURNO ${a.turno} · ${a.hora}`;
+      t.textContent = a.horaVivo ? a.horaVivo : `HORA ${a.turno} · ${a.hora}`;
       li.append(t, a.texto);
+      if (a.lat !== null && a.lat !== undefined) {
+        li.classList.add("con-lugar");
+        li.title = "Clic: ver en el mapa";
+        li.addEventListener("click", () => irA(a.lat, a.lon));
+      }
       ul.appendChild(li);
       a.nueva = false;
     }
@@ -2370,6 +2441,7 @@
     renderSituacion(data);
     if (app.pmo) app.pmo.render(data);
     if (app.tiem) app.tiem.render(data);
+    if (app.doctrina) app.doctrina.render(data);
     revisarConduccion(data.escenario);
     actualizarNuevaOrden(data);
     actualizarAviacion(data);
@@ -2556,6 +2628,12 @@
       escenarioId: () => app.escenarioId, capa: () => app.capas.infraestructura, mapas: () => Logica.ordenarMapas(app.mapas),
     });
     app.infraestructura.cargar();
+    app.doctrina = Doctrina.crear({
+      api, rutaEsc, toast, esInstructor, rol: () => bandoVista() || app.usuario.rol,
+      puedeBando: () => esAlumno() && puedeFuncion("listo"),
+      seleccionada: () => (app.seleccion !== null && app.porId ? app.porId.get(app.seleccion) || null : null),
+    });
+    app.doctrina.conectar();
     app.pmo = Pmo.crear({
       api, rutaEsc, toast, usuario: () => app.usuario, escenarioId: () => app.escenarioId, esInstructor,
     });
@@ -2805,6 +2883,7 @@
       const m = JSON.parse(ev.data);
       if (m.tipo === "estado") render(m);
       else if (m.tipo === "posiciones") aplicarPosiciones(m);
+      else if (m.tipo === "alerta") recibirAlerta(m);
       else if (m.tipo === "grafico") app.graficos.aplicar(m);
       else if (m.tipo === "chat_historial") app.chat.historial(m.mensajes);
       else if (m.tipo === "chat") app.chat.recibir(m);
@@ -3053,6 +3132,16 @@
     if (!app.escenarioId || !app.data) return;
     enSilencio(api("POST", rutaEsc("/reloj"), { estado: app.data.escenario.estado === "activo" ? "pausado" : "activo" }));
   });
+  $("banner-pausa-ir").addEventListener("click", () => {
+    const a = app.ultimaAlerta;
+    if (a) irA(a.lat, a.lon);
+  });
+  $("banner-pausa-reanudar").addEventListener("click", () => {
+    if (app.escenarioId) enSilencio(api("POST", rutaEsc("/reloj"), { estado: "activo" }));
+  });
+  document.querySelectorAll("[data-causa]").forEach((c) => c.addEventListener("change", () => {
+    if (app.escenarioId) enSilencio(api("PATCH", rutaEsc("/config"), { pausa_auto: { [c.dataset.causa]: c.checked } }));
+  }));
   $("btn-adelantar-1h").addEventListener("click", () => {
     if (app.escenarioId) enSilencio(api("POST", rutaEsc("/avanzar_turno?n=1")).then(() => toast("Reloj adelantado 1 h", true)));
   });

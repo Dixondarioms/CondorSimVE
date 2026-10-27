@@ -637,10 +637,20 @@
     return "";
   }
 
+  /** Etapa de un contacto enemigo y su incertidumbre (backend/app/engine/contactos_vivo.py); "" si no corresponde. */
+  function textoEtapa(u) {
+    if (!u || !u.etapa) return "";
+    const nombre = { desconocido: "Contacto desconocido", clasificado: "Contacto clasificado", identificado: "Contacto identificado" }[u.etapa] || u.etapa;
+    const inc = Number(u.incertidumbre_km) || 0;
+    if (inc < 0.05) return nombre;
+    return `${nombre} · posición ± ${inc < 10 ? inc.toFixed(1).replace(".", ",") : Math.round(inc)} km`;
+  }
+
   /** Lineas de la tarjeta tactica: lo que se sabe de la unidad ahora (las propias, todo; las enemigas, lo visible). */
   function lineasTarjeta(u, orden) {
     if (!u) return [];
     const out = [];
+    if (u.etapa) out.push(textoEtapa(u));
     const conocido = u.fuerza !== null && u.fuerza !== undefined;
     out.push(conocido ? `Fuerza ${Math.round(u.fuerza)} %` : "Fuerza desconocida (enemigo)");
     if (conocido && u.tipo !== "base" && u.combustible !== null && u.combustible !== undefined) {
@@ -1120,7 +1130,7 @@
     PUESTOS, puestoDe, puestoPuede, puestoPuedeAereo, puestosResponsables, etiquetaPuesto, funcionDeOrden, unidadesDelPuesto, textoPuestoAjeno,
     claseEsDron, modeloEsDron, interferenciasSobre, puedeInterferir, textoInterferido,
     ESTADOS_MISION, TIPOS_PUNTO_MISION, misionActiva, horaEstimada, textoMision, tramosCronograma, armasParaRol, textoTramo, textoPaquete,
-    ESTADOS_DERRIBADO, textoDerribado, derribadoCercano, textoWeaponeering, filaWarden, estadoSimbolo, lineasTarjeta,
+    ESTADOS_DERRIBADO, textoDerribado, derribadoCercano, textoWeaponeering, filaWarden, estadoSimbolo, lineasTarjeta, textoEtapa,
     ASPECTOS_APRESTO, textoGradoApresto, filaApresto, lineasPcao,
     RADIO_SIN_EMISION_KM, deteccionEfectiva, pctStock,
     nacionDe, etiquetaBandoNacion, filtrarUnidades, textoObjetivo, avanceObjetivo, ETIQUETA_OBJETIVO, CAPACIDAD_BASE, RADIO_ATERRIZAJE_KM, estacionadasEn, plazasLibres, opcionesDeAterrizaje, situacionDeVuelo,

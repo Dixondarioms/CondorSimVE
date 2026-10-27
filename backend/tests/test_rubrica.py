@@ -57,10 +57,11 @@ def test_la_rubrica_cuenta_ordenes_rechazos_turnos_pasivos_y_perdidas(api):
     az, ro = rub["bandos"]["azul"], rub["bandos"]["rojo"]
 
     o = az["ordenes"]
-    assert (o["emitidas"], o["canceladas"], o["pendientes"], o["rechazadas"]) == (3, 1, 2, 0)  # 2 ataques en curso
+    assert (o["emitidas"], o["canceladas"], o["rechazadas"]) == (3, 1, 0)
+    assert o["resueltas"] + o["pendientes"] == 2  # los dos ataques: cumplidos (R1 destruida) o todavia en curso
     assert o["motivos_rechazo"] == [] and o["tasa_rechazo"] == 0.0
     assert az["turnos_pasivos"] == {"cantidad": 0, "turnos": []}
-    assert (ro["ordenes"]["emitidas"], ro["ordenes"]["pendientes"]) == (1, 1)
+    assert ro["ordenes"]["emitidas"] == 1 and ro["ordenes"]["resueltas"] + ro["ordenes"]["pendientes"] == 1
     assert ro["turnos_pasivos"] == {"cantidad": 2, "turnos": [1, 3]}
 
     # ambos combatieron: lo que uno inflige lo sufre el otro

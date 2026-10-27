@@ -47,6 +47,10 @@ async def vuelta(db, real_s: float) -> list[int]:
             avanzados.append(esc.id)
             if informe.cambios:
                 _pendiente.add(esc.id)
+            await manager.difundir_alertas(esc.id, informe.alertas)
+            if esc.estado != "activo":  # pausa automatica: el estado nuevo sale ya
+                _pendiente.add(esc.id)
+                _ultimo_estado[esc.id] = 0.0
         await manager.difundir_posiciones(db, esc)
         ahora = time.monotonic()
         ultimo = _ultimo_estado.get(esc.id, 0.0)

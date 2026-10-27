@@ -15,6 +15,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.engine import catalogo, geo
+from app.engine import contactos_vivo
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import misiones as misiones_mod
@@ -29,6 +30,7 @@ from app.engine import inteligencia as intel_mod
 from app.engine import warden as warden_mod
 from app.engine import transmisiones as trans_mod
 from app.engine import apresto as apresto_mod
+from app.engine import doctrina as doctrina_mod
 from app.engine.vision import cuadro_sensores, unidades_visibles
 from app.models.contacto import Contacto
 from app.models.escenario import Escenario
@@ -49,7 +51,7 @@ CAMPOS_OCULTOS = (
     "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id",
     "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios",
     "transporte_id", "personal_inicial", "personal_actual", "sistema_da", "pista_largo_m", "pista_util_m", "recorrido",
-    "ruta", "orden_id",
+    "ruta", "orden_id", "doctrina",
 )
 TURNOS_ORDENES = 3  # ordenes ya resueltas que viajan con el estado (el historial completo esta en el AAR)
 CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct", "com_ordenes_pct", "inteligencia", "apresto")
@@ -116,6 +118,30 @@ def _obras_visibles(db: Session, escenario: Escenario, rol: str, unidades: list[
     ]
 
 
+def _contacto_para(d: dict, db: Session, escenario: Escenario, rol: str, u: Unidad, unidades: list, terreno) -> None:
+    """Lo que el bando sabe de un enemigo que ve: etapa, nombre y simbolo, y su posicion aproximada (sin pista todavia,
+    porque el reloj no corrio desde que aparecio: desconocido, salvo que se lo vea a ojo)."""
+    if contactos_vivo.fija(u) or (contactos_vivo.pista(db, escenario, rol, u.id) is None
+                                  and contactos_vivo.a_ojo(unidades, rol, u, terreno)):
+        d["etapa"], d["incertidumbre_km"] = "identificado", 0.0
+        return
+    p = contactos_vivo.pista(db, escenario, rol, u.id)
+    t = escenario.sim_segundos or 0.0
+    inc = contactos_vivo.incertidumbre(p, u, t)
+    d["lat"], d["lon"] = contactos_vivo.aproximar(escenario.semilla, rol, u.id, u.lat, u.lon, inc, t)
+    d["incertidumbre_km"] = inc
+    contactos_vivo.enmascarar(d, u, p["etapa"] if p else "desconocido")
+
+
+def _etiqueta_sensor(c: dict, x: Unidad, p: dict | None) -> None:
+    etapa = p["etapa"] if p else "desconocido"
+    c["etapa"] = etapa
+    if etapa == "desconocido":
+        c["nombre"], c["clase"] = contactos_vivo.generico(x), None
+    elif etapa == "clasificado":
+        c["nombre"] = f"{catalogo.obtener(x.clase, x.tipo).nombre} (sin identificar)"
+
+
 def estado_para(
     db: Session, escenario: Escenario, rol: str, terreno: Terreno | None = None
 ) -> dict:
@@ -135,10 +161,19 @@ def estado_para(
             u = por_id.get(c.unidad_id)
             if u is None or u.estado == "destruida" or c.unidad_id in visibles:
                 continue
-            contactos.append({
+            fila = {
                 "unidad_id": u.id, "nombre": u.nombre, "tipo": u.tipo, "clase": u.clase,
                 "sidc": u.sidc, "lat": c.lat, "lon": c.lon, "turno_visto": c.turno_visto,
-            })
+            }
+            if escenario.niebla:  # lo que el bando sabe de el y cuanto pudo moverse desde que lo vio
+                p = contactos_vivo.pista(db, escenario, rol, u.id)
+                inc = contactos_vivo.incertidumbre(p, u, escenario.sim_segundos or 0.0, perdido=True)
+                visto = (p or {}).get("visto") or 0.0
+                fila["lat"], fila["lon"] = contactos_vivo.aproximar(escenario.semilla, rol, u.id, c.lat, c.lon,
+                                                                    min(inc, (p or {}).get("inc") or 0.0), visto)
+                fila["incertidumbre_km"] = inc
+                contactos_vivo.enmascarar(fila, u, p["etapa"] if p else (c.etapa or "desconocido"))
+            contactos.append(fila)
     ordenes = (q_ordenes.filter(or_(Orden.estado.in_(("pendiente", "en_ejecucion")), Orden.turno_emitida >= escenario.turno_actual - TURNOS_ORDENES))
                .order_by(Orden.id).all())
     eventos = q_eventos.order_by(Evento.id.desc()).limit(20).all()
@@ -155,6 +190,8 @@ def estado_para(
         if es_bando(rol) and u.bando != rol:
             for oculto in CAMPOS_OCULTOS:
                 d[oculto] = None
+            if escenario.niebla:  # clasificacion e incertidumbre del contacto (engine/contactos_vivo.py)
+                _contacto_para(d, db, escenario, rol, u, unidades, terreno)
         unidades_out.append(d)
 
     # personal, infraestructura y cuadro radar: cada bando ve los suyos; instructor y observador, los de ambos
@@ -166,6 +203,11 @@ def estado_para(
     for b in bandos_propios:
         for fila in cuadro_sensores(todas, b, terreno, clima_ctx, ge_ctx):
             fila["bando"] = b
+            if escenario.niebla:
+                for c in fila.get("contactos", []):
+                    x = next((u for u in todas if u.id == c["unidad_id"]), None)
+                    if x is not None and not contactos_vivo.fija(x):
+                        _etiqueta_sensor(c, x, contactos_vivo.pista(db, escenario, b, x.id))
             sensores.append(fila)
 
     esc = EscenarioOut.model_validate(escenario).model_dump(mode="json")
@@ -211,6 +253,9 @@ def estado_para(
                    for b in bandos_propios},
         "infraestructura": {b: infra_mod.resumen(todas, b) for b in bandos_propios},
         "sensores": sensores,
+        # doctrina y reglas de enfrentamiento de cada bando (Cóndor, engine/doctrina.py)
+        "doctrina": {b: {"valores": doctrina_mod.de_bando(escenario, b), "texto": doctrina_mod.texto(doctrina_mod.de_bando(escenario, b))}
+                     for b in bandos_propios},
         "marcador": objetivos_mod.marcador(db, escenario),
         "ordenes": [OrdenOut.model_validate(o).model_dump() for o in ordenes],
         "eventos": [EventoOut.model_validate(e).model_dump() for e in eventos],

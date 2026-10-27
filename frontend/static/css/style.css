@@ -424,6 +424,24 @@ dialog td.num { text-align: right; font-variant-numeric: tabular-nums; }
 #toast { position: fixed; bottom: 108px; left: 50%; transform: translateX(-50%); background: #a5162a; color: #fff; padding: 8px 16px; border-radius: var(--radio); z-index: 3000; max-width: 80vw; box-shadow: var(--sombra); }
 #toast.ok { background: #1e8f84; }
 
+/* ---------- Cóndor: pausa automatica y avisos en vivo ---------- */
+.banner-pausa { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1100; display: flex;
+  align-items: center; gap: 10px; max-width: min(92%, 900px); padding: 9px 14px; border-radius: var(--radio);
+  background: rgba(165, 22, 42, .94); color: #fff; box-shadow: var(--sombra); font-size: 13px; }
+.banner-pausa b { letter-spacing: .06em; white-space: nowrap; }
+.banner-pausa span { flex: 1; }
+.banner-pausa button { margin: 0; white-space: nowrap; }
+.avisos-vivos { position: absolute; top: 60px; right: 14px; z-index: 1090; display: flex; flex-direction: column; gap: 6px;
+  width: min(360px, 70%); pointer-events: none; }
+.aviso-vivo { pointer-events: auto; cursor: pointer; padding: 8px 12px; border-radius: var(--radio); font-size: 12.5px;
+  background: rgba(22, 23, 42, .95); color: var(--texto); border-left: 4px solid var(--azul); box-shadow: var(--sombra);
+  animation: entrada .35s ease-out; }
+.aviso-vivo.critica { border-left-color: #ff4d5e; }
+.aviso-vivo.aviso { border-left-color: var(--ambar); }
+.aviso-vivo.saliendo { opacity: 0; transition: opacity .6s; }
+fieldset.pausa-auto { border: 1px solid var(--borde); border-radius: var(--radio); margin: 8px 0; padding: 6px 10px; }
+fieldset.pausa-auto legend { font-size: 12px; color: var(--texto-sec); padding: 0 4px; }
+
 /* ---------- animaciones ---------- */
 @keyframes pulso { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.75); } }
 @keyframes parpadeo { to { visibility: hidden; } }
@@ -546,3 +564,4 @@ dialog td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .velocidades button.activo { background: var(--ambar); color: #16172A; }
 .cola .chip.ejec { background: rgba(75, 147, 255, .2); color: #8fbaff; }
 .cola .chip.canc { background: rgba(160, 160, 180, .16); color: var(--texto-sec); }
+#alertas li.con-lugar { cursor: pointer; }

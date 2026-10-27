@@ -50,6 +50,12 @@ class Escenario(Base):
     # tiempo real (engine/tiempo_real.py): segundos simulados desde el inicio del ejercicio (el turno es la hora en
     # curso: turno_actual = sim_segundos // 3600 + 1) y cuantos segundos simulados pasan por cada segundo real
     sim_segundos: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")
+    # pausa automatica (engine/tiempo_real.py): causas que detienen el reloj {"contacto": true, ...} y la ultima que lo
+    # detuvo (se borra al reanudar)
+    pausa_auto_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    pausa_motivo: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    # doctrina y reglas de enfrentamiento de cada bando {"azul": {...}, "rojo": {...}} (engine/doctrina.py)
+    doctrina_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     velocidad: Mapped[int] = mapped_column(Integer, default=60, server_default="60")
 
     # interruptores del motor (herramientas de direccion): niebla de guerra, consumo/reabastecimiento, efectos del
@@ -98,6 +104,13 @@ class Escenario(Base):
     ensayo_bando: Mapped[str | None] = mapped_column(String(10), nullable=True)
     ensayo_fa: Mapped[str] = mapped_column(String(300), default="", server_default="")
     ensayo_desde: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    @property
+    def pausa_auto(self) -> dict:
+        """Causas de pausa automatica activas (engine/tiempo_real.py, CAUSAS_PAUSA)."""
+        from app.engine.tiempo_real import pausa_auto  # importacion tardia: el motor importa los modelos
+
+        return pausa_auto(self)
 
     def conduccion(self, bando: str) -> str:
         """alumnos | instructor | ia: quien da las ordenes de ese bando."""

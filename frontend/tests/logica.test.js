@@ -115,3 +115,10 @@ test("perfil de vuelo: textos y que sensores dibujan su cobertura por relieve", 
   assert.ok(!L.muestraCobertura({ tipo: "aerea", estado: "activa", deteccion_km: 60 }, { emisor: false }));
   assert.ok(!L.muestraCobertura({ ...radar, estado: "destruida" }, { emisor: true }));
 });
+
+test("textoEtapa: etapa del contacto enemigo y su incertidumbre", () => {
+  assert.equal(L.textoEtapa({ nombre: "A" }), "");
+  assert.equal(L.textoEtapa({ etapa: "desconocido", incertidumbre_km: 2.34 }), "Contacto desconocido · posición ± 2,3 km");
+  assert.equal(L.textoEtapa({ etapa: "identificado", incertidumbre_km: 0 }), "Contacto identificado");
+  assert.equal(L.lineasTarjeta({ etapa: "clasificado", incertidumbre_km: 15.6, fuerza: null, tipo: "terrestre" }, null)[0], "Contacto clasificado · posición ± 16 km");
+});
