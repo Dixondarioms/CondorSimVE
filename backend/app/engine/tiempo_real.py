@@ -431,6 +431,7 @@ def paso(db: Session, esc: Escenario, segundos: float, terreno: Terreno | None =
         _pensar_ia(ctx)
         _logistica(ctx)
         _subpaso(ctx, h)
+        clima_mod.derivar(clima_mod.zonas_de(ctx.db, esc), h / 3600.0)  # los frentes se mueven continuos
         restante -= h
         antes = esc.sim_segundos or 0.0
         esc.sim_segundos = antes + h
@@ -1416,7 +1417,7 @@ def _fin_de_hora(ctx: _Ctx) -> None:
     for u in ctx.lista:
         if catalogo.opera_aeronaves(u) and u.estado == "activa":
             bases_mod.reparar(u, ctx.lista)
-    for z in clima_mod.avanzar(db, esc, turno):
+    for z in clima_mod.avanzar(db, esc, turno, mover=False):
         ctx.evento("clima", "todos", f"Se disipó la zona de {z.tipo}{' ' + z.nombre if z.nombre else ''}.")
     for o in db.query(Obra).filter(Obra.escenario_id == esc.id, Obra.expira_turno <= turno):
         db.delete(o)

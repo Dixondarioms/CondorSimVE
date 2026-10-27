@@ -130,17 +130,26 @@ def error_de_zona(tipo: str, radio_km: float, deriva_kmh: float) -> str | None:
     return None
 
 
-def avanzar(db, escenario, turno: int) -> list:
-    """Al terminar el turno: cada zona se desplaza segun su deriva (una hora) y las vencidas se borran.
-    Devuelve las zonas que caducaron."""
+def derivar(zonas, horas: float) -> None:
+    """Desplaza cada zona segun su deriva durante `horas` (en tiempo real, un poco en cada paso: se mueve continua)."""
+    for z in zonas:
+        if z.deriva_kmh > 0 and horas > 0:
+            z.lat, z.lon = desplazar(z.lat, z.lon, z.deriva_rumbo, z.deriva_kmh * horas)
+
+
+def avanzar(db, escenario, turno: int, mover: bool = True) -> list:
+    """Al terminar el turno: las zonas vencidas se borran y, con `mover` (por turnos), las demas se desplazan una hora
+    de una vez (en tiempo real ya se fueron moviendo en cada paso: derivar). Devuelve las zonas que caducaron."""
     caducadas = []
+    vigentes = []
     for z in zonas_de(db, escenario):
         if z.hasta_turno is not None and turno >= z.hasta_turno:
             caducadas.append(z)
             db.delete(z)
-            continue
-        if z.deriva_kmh > 0:
-            z.lat, z.lon = desplazar(z.lat, z.lon, z.deriva_rumbo, z.deriva_kmh * 1.0)
+        else:
+            vigentes.append(z)
+    if mover:
+        derivar(vigentes, 1.0)
     return caducadas
 
 

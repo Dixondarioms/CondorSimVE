@@ -78,3 +78,18 @@ def test_el_estado_incluye_las_zonas_y_la_api_las_administra(api):
     assert alumno.get(f"{base}/clima/zonas").status_code == 200
     assert prof.delete(f"{base}/clima/zonas/{zona['id']}").status_code == 200
     assert prof.get(f"{base}/clima/zonas").json() == []
+
+
+def test_en_tiempo_real_la_zona_se_mueve_continua_y_no_a_saltos(db_session):
+    from app.engine import tiempo_real
+
+    esc = _escenario(db_session)
+    movil = _zona(db_session, esc, "lluvia", lat=0.0, lon=0.0, radio=30.0, rumbo=90.0, kmh=40.0)
+    tiempo_real.paso(db_session, esc, 900, T)  # un cuarto de hora: 10 km al este, sin esperar al fin de la hora
+    db_session.commit()
+    _refrescar(db_session, movil)
+    assert abs(movil.lon * 111.32 - 10.0) < 0.1
+    tiempo_real.paso(db_session, esc, 2700, T)  # se completa la hora: 40 km, sin el salto extra del fin de la hora
+    db_session.commit()
+    _refrescar(db_session, movil)
+    assert abs(movil.lon * 111.32 - 40.0) < 0.2

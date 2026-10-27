@@ -995,6 +995,15 @@
               <label><input type="checkbox" data-capa="cobertura"><span>Cobertura (detección)</span></label>
               <label><input type="checkbox" data-capa="niebla"><span>Niebla de guerra</span></label>
               <label><input type="checkbox" data-capa="unidades" checked><span>Unidades</span></label>
+              <label title="Por donde pasó cada unidad: la línea se desvanece cuanto más vieja es"><input type="checkbox" data-capa="estelas" checked><span>Estelas de movimiento</span></label>
+              <label class="sub-capa">Largo de la estela
+                <select id="estela-duracion" aria-label="Cuánto tiempo simulado muestra la estela">
+                  <option value="600">10 minutos</option>
+                  <option value="1800">30 minutos</option>
+                  <option value="3600">1 hora</option>
+                  <option value="10800">3 horas</option>
+                </select>
+              </label>
               <label title="El anillo de alcance de cada unidad desplegada aparece al acercar el mapa (zoom 9 en adelante)"><input type="checkbox" data-capa="alcances" checked><span>Alcance de las unidades (al acercarse)</span></label>
               <label><input type="checkbox" data-capa="contactos" checked><span>Últimos contactos</span></label>
               <label><input type="checkbox" data-capa="graficos" checked><span>Gráficos tácticos</span></label>
@@ -1007,6 +1016,12 @@
               <label title="Centrales eléctricas, refinerías, centros de comunicaciones y puentes de Venezuela (OpenStreetMap)"><input type="checkbox" data-capa="infraestructura" checked><span>Infraestructura (energía, refinerías, comunicaciones, puentes)</span></label>
               <label><input type="checkbox" data-capa="ge" checked><span>Guerra electrónica</span></label>
               <label><input type="checkbox" data-capa="meteorologia" checked><span>Meteorología (zonas)</span></label>
+              <label class="sub-capa">Vista del clima
+                <select id="vista-clima" aria-label="Cómo se ven las zonas meteorológicas">
+                  <option value="radio">Solo el radio</option>
+                  <option value="satelite">Satélite meteorológico</option>
+                </select>
+              </label>
               <label><input type="checkbox" data-capa="misiones" checked><span>Misiones aéreas</span></label>
             </div>
           </section>
@@ -1200,6 +1215,8 @@
   <script src="/static/js/pmo.js"></script>
   <script src="/static/js/tiem.js"></script>
   <script src="/static/js/doctrina.js"></script>
+  <script src="/static/js/estelas.js"></script>
+  <script src="/static/js/clima_mapa.js"></script>
   <script src="/static/js/infraestructura.js"></script>
   <script src="/static/js/aguila.js"></script>
   <script src="/static/pruebas/arnes.js"></script>

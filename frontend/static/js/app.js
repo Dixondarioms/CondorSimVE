@@ -12,6 +12,7 @@
   const app = {
     usuario: null, escenarioId: null, ws: null, wsAlive: null, data: null, recibidoEn: 0, reloj: null, vivo: new Map(), cuadroVivo: null,
     textosAlertas: new Set(), ultimaAlerta: null,
+    estelas: Estelas.crear(1800), meteo: null,  // estelas de movimiento y zonas meteorologicas en el mapa
     porId: new Map(), contactosPorId: new Map(),
     modoAgregar: false, waypoints: [], modoOrden: "mover", unidadOrden: null, seleccion: null,
     markers: new Map(), flechas: [], encuadrado: false, map: null, capas: {}, capaActiva: {},
@@ -639,12 +640,15 @@
     c.preview = L.layerGroup().addTo(map);
     c.waypoints = L.layerGroup().addTo(map);
     c.obras = L.layerGroup().addTo(map);
-    c.rastros = L.layerGroup().addTo(map); // rastro del ultimo desplazamiento de cada unidad
+    c.estelas = L.layerGroup().addTo(map); // por donde paso cada unidad en los ultimos minutos (estelas.js)
     c.objetivos = L.layerGroup().addTo(map);
     c.ge = L.layerGroup().addTo(map);
     c.meteorologia = L.layerGroup().addTo(map);
     c.misiones = L.layerGroup().addTo(map);
-    app.capaActiva = { terreno: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, alcances: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, infraestructura: true, ge: true, meteorologia: true, misiones: true, tramos_pro: false };
+    app.rendererEstelas = L.canvas({ padding: 0.3 });
+    app.meteo = ClimaMapa.crear({ L, mapa: map, capa: c.meteorologia, etiqueta: Logica.etiquetaClima, texto: Logica.textoZonaClima, escapar });
+    try { if (localStorage.getItem("condor.vistaClima") === "satelite") app.meteo.fijarVista("satelite", 0); } catch (_) { /* sin almacenamiento */ }
+    app.capaActiva = { terreno: true, estelas: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, alcances: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, infraestructura: true, ge: true, meteorologia: true, misiones: true, tramos_pro: false };
     if (app.capaActiva.niebla) c.niebla.addTo(map);
 
     let pendiente = null;
@@ -677,9 +681,24 @@
     else if (nombre === "alcances") ajustarPorZoom();
     else if (nombre === "graficos") poner(app.graficos.capa, encendida);
     else if (nombre === "contactos") { poner(g.contactos, encendida); poner(g.informes, encendida); poner(g.incertidumbre, encendida); }
+    else if (nombre === "estelas") { poner(g.estelas, encendida); dibujarEstelas(); }
     else if (g[nombre]) poner(g[nombre], encendida);
   }
   document.querySelectorAll("[data-capa]").forEach((chk) => chk.addEventListener("change", () => alternarCapa(chk.dataset.capa, chk.checked)));
+
+  // estelas: cuanto tiempo simulado recuerdan; zonas meteorologicas: radio o satelite (preferencias de cada puesto)
+  try { app.estelas.fijarDuracion(Number(localStorage.getItem("condor.duracionEstela")) || 1800); } catch (_) { /* sin almacenamiento */ }
+  $("estela-duracion").value = String(app.estelas.duracion());
+  $("estela-duracion").addEventListener("change", () => {
+    app.estelas.fijarDuracion(Number($("estela-duracion").value));
+    try { localStorage.setItem("condor.duracionEstela", $("estela-duracion").value); } catch (_) { /* sin almacenamiento */ }
+    dibujarEstelas();
+  });
+  try { $("vista-clima").value = localStorage.getItem("condor.vistaClima") === "satelite" ? "satelite" : "radio"; } catch (_) { /* sin almacenamiento */ }
+  $("vista-clima").addEventListener("change", () => {
+    try { localStorage.setItem("condor.vistaClima", $("vista-clima").value); } catch (_) { /* sin almacenamiento */ }
+    if (app.meteo) app.meteo.fijarVista($("vista-clima").value, segundosSimulados());
+  });
 
   // miniaturas 3D (por defecto) o simbolos militares APP-6: preferencia de cada puesto, guardada en el navegador
   try { app.simbolosApp6 = localStorage.getItem("fenix.simbolosApp6") === "1"; } catch (_) { app.simbolosApp6 = false; }
@@ -942,7 +961,8 @@
     app.markers.clear();
     app.posDibujadas = new Map();
     app.turnoDibujado = null;
-    if (app.capas.rastros) app.capas.rastros.clearLayers();
+    if (app.capas.estelas) app.capas.estelas.clearLayers();
+    app.estelas.limpiar();
     for (const g of ["contactos", "cobertura", "niebla", "ordenes", "alcances", "seleccion", "preview", "obras", "objetivos", "ge", "misiones"]) app.capas[g].clearLayers();
     app.flechas = [];
   }
@@ -958,7 +978,6 @@
 
   // ---------- desplazamiento animado al avanzar el turno ----------
   const DURACION_DESPLAZAMIENTO_MS = 2500;
-  const DURACION_RASTRO_MS = 9000;
   const movimientoReducido = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   /** Lleva cada animacion en curso a su posicion final (al llegar otro estado o al limpiar el mapa). */
@@ -978,19 +997,27 @@
     app.cuadroAnimacion = app.animaciones.length ? requestAnimationFrame(pasoAnimacion) : null;
   }
 
-  /** Rastro punteado del desplazamiento, que se desvanece en unos segundos. */
-  function dibujarRastro(mov) {
-    const linea = L.polyline(mov.ruta, {
-      color: COLOR[mov.bando] || "#ffd166", weight: mov.tipo === "aerea" ? 2 : 3, dashArray: "4 6", opacity: 0.9, interactive: false,
-    }).addTo(app.capas.rastros);
-    const t0 = performance.now();
-    const desvanecer = (ahora) => {
-      const f = (ahora - t0) / DURACION_RASTRO_MS;
-      if (f >= 1 || !app.capas.rastros.hasLayer(linea)) { app.capas.rastros.removeLayer(linea); return; }
-      linea.setStyle({ opacity: 0.9 * (1 - f) });
-      requestAnimationFrame(desvanecer);
-    };
-    requestAnimationFrame(desvanecer);
+  /** Una posicion para la estela (estelas.js): del enemigo, solo si se sabe bien donde esta (no su zona de duda). */
+  function registrarEstela(u, lat, lon, seg) {
+    if (u.estado !== "activa" || Logica.embarcada(u) || (Number(u.incertidumbre_km) || 0) >= 1) return;
+    app.estelas.registrar(u.id, lat, lon, seg);
+  }
+
+  /** Estelas: por donde paso cada unidad, mas tenue cuanto mas vieja (se redibuja con cada posicion). */
+  function dibujarEstelas() {
+    const g = app.capas.estelas;
+    g.clearLayers();
+    if (!app.data || !app.capaActiva.estelas) return;
+    const seg = segundosSimulados();
+    app.estelas.recortar(seg, new Set(app.data.unidades.filter((u) => u.estado === "activa").map((u) => u.id)));
+    for (const id of app.estelas.ids()) {
+      const u = app.porId.get(id);
+      if (!u || Logica.embarcada(u)) continue;
+      for (const t of app.estelas.tramos(id, seg)) {
+        L.polyline(t.puntos, { renderer: app.rendererEstelas, color: COLOR[u.bando] || "#ffd166", weight: u.tipo === "aerea" ? 2 : 3,
+          opacity: t.opacidad, lineCap: "round", lineJoin: "round", interactive: false }).addTo(g);
+      }
+    }
   }
 
   function dibujarUnidades(unidades) {
@@ -1495,7 +1522,7 @@
         ? `${Math.round(u.pista_util_m)} m útiles de ${Math.round(u.pista_largo_m)} m` : `${Math.round(u.pista_largo_m)} m (${Math.round(u.pista_largo_m / 0.3048)} ft)`));
     }
     if (app.data && (app.data.clima_zonas || []).length) {
-      const local = Logica.climaEn(u.lat, u.lon, app.data.escenario.clima, app.data.clima_zonas);
+      const local = Logica.climaEn(u.lat, u.lon, app.data.escenario.clima, app.meteo.zonasAhora(segundosSimulados()));
       if (local !== app.data.escenario.clima) extra.push(dato("Clima local", `${Logica.etiquetaClima(local)} (zona meteorológica)`));
     }
     const vuelo = Logica.esMisil(u) && !oculto ? Logica.textoMisil(u, app.data ? app.data.unidades : [])
@@ -1933,6 +1960,7 @@
     $("rv-hora").textContent = hora;
     $("rv-estado").textContent = estado === "finalizado" ? "EJERCICIO FINALIZADO" : estado === "activo" ? "▶ EN MARCHA" : "⏸ RELOJ DETENIDO";
     $("rv-vel").textContent = `${vel}×`;
+    if (app.meteo && estado === "activo") app.meteo.mover(seg);
     $("reloj-vivo").classList.toggle("en-marcha", estado === "activo");
     if (app.videowall) app.videowall.actualizarReloj(d, hora, estado, vel);
   }
@@ -1963,6 +1991,7 @@
       Object.assign(u, { lat, lon, rumbo, en_tierra: !!enTierra });
       if (fuerza !== null) u.fuerza = fuerza;
       if (combustible !== null) u.combustible = combustible;
+      registrarEstela(u, lat, lon, m.reloj.sim_segundos);
       if (app.circulos && app.circulos.has(id) && movio) app.circulos.get(id).setLatLng([lat, lon]);
       const mk = app.markers.get(id);
       if (!mk || !movio) continue;
@@ -1971,6 +2000,7 @@
       app.vivo.set(id, { m: mk, desde: [p.lat, p.lng], hasta: [lat, lon], t0: ahora });
     }
     if (giro) dibujarUnidades(app.data.unidades);  // las miniaturas giran con el rumbo
+    dibujarEstelas();
     if (app.vivo.size && !app.cuadroVivo) app.cuadroVivo = requestAnimationFrame(pasoVivo);
     dibujarOrdenes(app.data);
   }
@@ -2451,6 +2481,8 @@
     if (app.informe && app.informe.activo()) return; // durante la repeticion no se pisa el mapa
 
     dibujarUnidades(data.unidades);
+    for (const u of data.unidades) registrarEstela(u, u.lat, u.lon, data.escenario.sim_segundos || 0);
+    dibujarEstelas();
     dibujarAlcances(data.unidades);
     ajustarPorZoom();
     dibujarContactos(data.contactos || []);
@@ -2548,25 +2580,9 @@
     }
   }
 
-  const COLOR_ZONA_CLIMA = { nublado: "#9aa5b1", lluvia: "#3b7dd8", tormenta: "#7b2cbf" };
   function dibujarZonasClima(zonas) {
-    const g = app.capas.meteorologia;
-    g.clearLayers();
-    for (const z of zonas) {
-      const color = COLOR_ZONA_CLIMA[z.tipo] || "#9aa5b1";
-      L.circle([z.lat, z.lon], { radius: z.radio_km * 1000, color, weight: 2, dashArray: "6 6", fillColor: color, fillOpacity: z.tipo === "tormenta" ? 0.28 : 0.18, interactive: true })
-        .bindTooltip(Logica.textoZonaClima(z), { sticky: true }).addTo(g);
-      if (z.deriva_kmh > 0) { // flecha de deriva: hacia donde se mueve en las proximas 3 horas
-        const r = (z.deriva_rumbo * Math.PI) / 180, km = z.deriva_kmh * 3;
-        const fin = [z.lat + (km * Math.cos(r)) / 110.574, z.lon + (km * Math.sin(r)) / (111.32 * Math.cos((z.lat * Math.PI) / 180))];
-        L.polyline([[z.lat, z.lon], fin], { color: "#fff", weight: 2, opacity: 0.9, interactive: false }).addTo(g);
-        L.circleMarker(fin, { radius: 3, color: "#fff", fillColor: color, fillOpacity: 1, interactive: false }).addTo(g);
-      }
-      L.marker([z.lat, z.lon], {
-        icon: L.divIcon({ className: "zona-clima-rotulo", iconSize: [90, 18], iconAnchor: [45, 9], html: `<span style="border-color:${color}">${escapar(Logica.etiquetaClima(z.tipo))}${z.nombre ? " " + escapar(z.nombre) : ""}</span>` }),
-        keyboard: false, interactive: false,
-      }).addTo(g);
-    }
+    // radio o vista de satelite meteorologico, moviendose con su deriva entre estado y estado (clima_mapa.js)
+    app.meteo.dibujar(zonas, app.data ? app.data.escenario.sim_segundos : 0, segundosSimulados());
     if (esInstructor()) {
       const ul = $("lista-zonas-clima");
       ul.innerHTML = zonas.length ? "" : "<li class='sec'>Sin zonas: rige el clima general.</li>";
