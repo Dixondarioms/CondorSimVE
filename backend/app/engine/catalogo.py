@@ -293,88 +293,89 @@ MODELOS: dict[str, Modelo] = {m.id: m for m in [
         {"autor": "Carlos E. Perez S.L", "licencia": "CC BY-SA 4.0", "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
          "pagina": "https://commons.wikimedia.org/wiki/File:Sukhoi_Su-30MK2_de_Venezuela.jpg"},
     ),
-    # ---- no tripulados y guerra electronica: modelos genericos (parametros didacticos, sin fabricante real) ----
+    # ---- no tripulados y guerra electronica (cifras didacticas; ilustracion propia hasta tener su foto) ----
     Modelo(
-        "uav_reco", "dron_reconocimiento", "Dron de reconocimiento (UAV tactico)", "UAV-R", "Generico", "-",
-        "Vigilancia y reconocimiento no tripulado",
-        "Aeronave no tripulada de largo aliento: ve lejos y se la detecta tarde, pero no lleva armas y dentro de una "
-        "interferencia enemiga pierde el enlace y no acepta ordenes.",
-        "Sin armas: camaras electroopticas e infrarrojas.",
+        "uav_reco", "dron_reconocimiento", "Insitu ScanEagle", "ScanEagle", "Insitu (Boeing)", "Estados Unidos",
+        "Dron táctico de reconocimiento",
+        "Dron pequeño lanzado por catapulta desde tierra o buques, con más de 20 horas de vuelo. Vigila sin ser visto, "
+        "pero no lleva armas y dentro de una interferencia enemiga pierde el enlace. Operado por Colombia, Perú y "
+        "muchos otros.",
+        "Sin armas: cámaras electroópticas e infrarrojas.",
         150, 0, 45, 1500, _atk(0.0, 0.0, 0.0), 0.35,
         "/static/fotos/dron_reconocimiento.svg", _CREDITO_PROPIO,
     ),
     Modelo(
-        "uav_armado", "dron_ataque", "Dron armado (UAV de media altitud)", "UAV-A", "Generico", "-",
-        "Ataque de precision no tripulado",
-        "Dron con misiles ligeros para atacar vehiculos y buques a distancia. Lento y fragil si lo detectan; "
-        "vulnerable a la interferencia de su enlace.",
-        "Dos misiles guiados ligeros (2 ataques por carga).",
+        "uav_armado", "dron_ataque", "Qods Mohajer-6", "Mohajer-6", "Qods Aviation Industry", "Irán",
+        "Dron armado táctico",
+        "Dron iraní de reconocimiento y ataque con bombas guiadas Qaem; base de los drones venezolanos ANSU. Lento y "
+        "frágil si lo detectan; vulnerable a la interferencia de su enlace.",
+        "2 a 4 bombas guiadas Qaem (2 ataques por carga).",
         200, 15, 30, 1200, _atk(0.9, 0.0, 0.6), 0.35,
         "/static/fotos/dron_armado.svg", _CREDITO_PROPIO,
     ),
     Modelo(
-        "merodeadora", "municion_merodeadora", "Municion merodeadora (dron kamikaze)", "Kamikaze", "Generico", "-",
-        "Ataque de un solo uso",
-        "Pequeno dron que merodea sobre la zona y se estrella contra el blanco. Muy dificil de detectar, "
-        "corto alcance; se pierde al atacar.",
-        "Carga explosiva (un solo ataque).",
+        "merodeadora", "municion_merodeadora", "IAI Harop", "Harop", "Israel Aerospace Industries", "Israel",
+        "Munición merodeadora antirradiación",
+        "Munición merodeadora que vuela horas sobre la zona y se lanza contra radares y otros blancos de alto valor. "
+        "Muy difícil de detectar; se pierde al atacar.",
+        "Carga explosiva de 23 kg (un solo ataque).",
         180, 5, 15, 300, _atk(1.4, 0.0, 1.0), 0.2,
         "/static/fotos/municion_merodeadora.svg", _CREDITO_PROPIO,
     ),
     Modelo(
-        "ge_aereo", "avion_ge", "Avion de guerra electronica (interferidor)", "GE", "Generico", "-",
+        "ge_aereo", "avion_ge", "Ilyushin Il-22PP Porubshchik", "Il-22PP", "Ilyushin", "Rusia",
         "Interferencia y escucha desde el aire",
-        "Avion con interferidores y receptores: en orbita, fuera del alcance de la defensa enemiga, interfiere sus "
-        "sensores, antiaerea y drones, y localiza sus radares. Sin armas: necesita escolta.",
+        "Cuatrimotor turbohélice de guerra electrónica: en órbita, fuera del alcance de la defensa enemiga, interfiere "
+        "sus radares, su antiaérea y sus enlaces de drones, y localiza sus emisores. Sin armas: necesita escolta.",
         "Interferidores y receptores de escucha; sin armas.",
-        750, 60, 60, 2500, _atk(0.0, 0.0, 0.0), 0.6,
+        600, 60, 60, 4500, _atk(0.0, 0.0, 0.0), 0.5,
         "/static/fotos/avion_ge.svg", _CREDITO_PROPIO,
     ),
-    # ---- aviacion embarcada y de apoyo, y misil de crucero: modelos genericos (ilustraciones propias) ----
+    # ---- aviacion embarcada y de apoyo, y misil de crucero ----
     Modelo(
-        "caza_embarcado", "caza", "Caza embarcado (generico)", "Caza emb.", "Generico", "-",
-        "Caza multirol naval",
-        "Caza reforzado con gancho de apontaje: despega y aterriza en un portaaviones. Algo menos de autonomia que "
-        "un caza de base terrestre y buena capacidad antibuque.",
-        "Canon, misiles aire-aire y misiles antibuque.",
-        900, 70, 60, 1500, _atk(0.8, 1.2, 1.0), 0.95,
+        "caza_embarcado", "caza", "Dassault Rafale M", "Rafale M", "Dassault Aviation", "Francia",
+        "Caza polivalente embarcado",
+        "Versión naval del Rafale, reforzada y con gancho de apontaje: despega y aterriza en un portaaviones (Charles "
+        "de Gaulle). Buena capacidad antibuque y aire-aire.",
+        "Cañón de 30 mm, misiles Meteor y MICA, misiles antibuque Exocet AM39 y de crucero SCALP.",
+        1000, 100, 110, 2000, _atk(1.1, 1.35, 1.2), 1.0,
         "/static/fotos/caza_embarcado.svg", _CREDITO_PROPIO, embarcable=True,
     ),
     Modelo(
-        "helo_ataque", "helicoptero", "Helicoptero de ataque (generico)", "Helo At.", "Generico", "-",
-        "Ataque a blindados y embarcaciones",
-        "Helicoptero con misiles guiados: lento pero muy eficaz contra blindados y embarcaciones. Opera desde bases "
-        "y portaaviones.",
-        "Canon de 30 mm, cohetes y misiles antitanque guiados.",
+        "helo_ataque", "helicoptero", "Mil Mi-35M Hind-E", "Mi-35M", "Mil (Rostvertol)", "Rusia",
+        "Helicóptero de ataque y transporte",
+        "Helicóptero de ataque blindado que también lleva 8 soldados. Muy eficaz contra blindados y embarcaciones. "
+        "La Aviación Militar venezolana lo opera.",
+        "Cañón doble GSh-23V de 23 mm, misiles antitanque Shturm y Ataka, cohetes de 80 mm.",
         280, 25, 20, 550, _atk(1.2, 0.3, 1.0), 0.85,
         "/static/fotos/helo_ataque.svg", _CREDITO_PROPIO,
     ),
     Modelo(
-        "helo_transporte", "helicoptero_artillado", "Helicoptero de transporte artillado (generico)", "Helo Tr.",
-        "Generico", "-",
-        "Transporte de tropas con autodefensa",
-        "Helicoptero de transporte con ametralladoras en las puertas: apoyo ligero y autodefensa. Opera desde bases "
-        "y portaaviones.",
-        "Ametralladoras de 12,7 mm en afuste (alta cadencia).",
+        "helo_transporte", "helicoptero_artillado", "Mil Mi-17V-5 Hip-H", "Mi-17V-5", "Mil (Kazan Helicopters)",
+        "Rusia",
+        "Helicóptero de transporte medio artillado",
+        "Helicóptero de transporte de 30 soldados o 4 t de carga, con ametralladoras en las puertas y cohetes. "
+        "La Aviación Militar venezolana lo opera.",
+        "Ametralladoras de 7,62 y 12,7 mm en afuste, cohetes de 80 mm (alta cadencia).",
         230, 6, 15, 500, _atk(0.45, 0.15, 0.3), 0.7,
         "/static/fotos/helo_transporte.svg", _CREDITO_PROPIO,
     ),
     Modelo(
-        "ataque_ligero", "ataque", "Avion de ataque ligero (generico)", "At. ligero", "Generico", "-",
-        "Apoyo aereo cercano",
-        "Avion ligero y economico para apoyo cercano contra blancos terrestres poco defendidos. Vulnerable a la "
-        "antiaerea y a los cazas. Solo opera desde bases terrestres.",
-        "Canon, cohetes y bombas ligeras.",
-        650, 90, 30, 1800, _atk(1.2, 0.3, 1.0), 0.75,
+        "ataque_ligero", "ataque", "Hongdu K-8W Karakorum", "K-8W", "Hongdu (AVIC)", "China / Pakistán",
+        "Entrenador avanzado y ataque ligero a reacción",
+        "Entrenador a reacción con capacidad de ataque ligero contra blancos poco defendidos. La Aviación Militar "
+        "venezolana lo opera (K-8W). Vulnerable a la antiaérea y a los cazas; solo opera desde bases terrestres.",
+        "Cañón de 23 mm en contenedor, cohetes, bombas ligeras y misiles aire-aire de corto alcance.",
+        800, 60, 30, 2000, _atk(1.0, 0.3, 0.7), 0.7,
         "/static/fotos/ataque_ligero.svg", _CREDITO_PROPIO,
     ),
     Modelo(
-        "crucero", "misil_crucero", "Misil de crucero (generico)", "Crucero", "Generico", "-",
-        "Ataque de precision a larga distancia",
-        "Misil subsonico de vuelo rasante lanzado en salvas desde buques, submarinos o baterias costeras. Vuela solo "
-        "hacia su blanco; la antiaerea enemiga puede derribarlo antes del impacto.",
-        "Cabeza explosiva (un solo impacto).",
-        850, 5, 0, 1000, _atk(1.5, 0.0, 1.6), 0.3,
+        "crucero", "misil_crucero", "BGM-109 Tomahawk Block IV", "Tomahawk", "Raytheon", "Estados Unidos",
+        "Misil de crucero de ataque a tierra",
+        "Misil subsónico de vuelo rasante lanzado en salvas desde buques y submarinos, con alcance de más de 1 600 km. "
+        "Vuela solo hacia su blanco; la antiaérea enemiga puede derribarlo antes del impacto.",
+        "Cabeza de 450 kg (un solo impacto).",
+        850, 5, 0, 1600, _atk(1.6, 0.0, 1.4), 0.3,
         "/static/fotos/crucero.svg", _CREDITO_PROPIO,
     ),
     # ---- aeronaves de EE. UU. del 3 de enero de 2026 (plantilla ataque_3_enero_2026). Ilustraciones propias generadas
@@ -524,6 +525,16 @@ MODELOS: dict[str, Modelo] = {m.id: m for m in [
 ]}
 
 
+# ---- catalogo ampliado (engine/catalogo_ampliado.py): aeronaves, drones, misiles, sistemas terrestres y buques reales
+from app.engine.catalogo_ampliado import MODELOS_AMPLIADOS as _AMPLIADOS  # noqa: E402
+
+for (_i, _c, _n, _k, _f, _p, _fu, _d, _a, _v, _al, _de, _au, _atq, _df, _e, _fi) in _AMPLIADOS:
+    if _i in MODELOS or _c not in CLASES:
+        raise ValueError(f"catalogo ampliado: modelo repetido o de clase desconocida: {_i}")
+    MODELOS[_i] = Modelo(_i, _c, _n, _k, _f, _p, _fu, _d, _a, _v, _al, _de, _au, _atk(*_atq), _df, "", {},
+                         embarcable=_e, firma=_fi)
+
+
 def modelo_embarcable(m: Modelo) -> bool:
     return CLASES[m.clase].embarcable if m.embarcable is None else m.embarcable
 
@@ -568,7 +579,8 @@ def escalon_grupo(aeronaves: int) -> str:
 
 def modelo_dict(m: Modelo) -> dict:
     return {
-        "id": m.id, "clase": m.clase, "nombre": m.nombre, "corto": m.corto, "fabricante": m.fabricante,
+        "id": m.id, "clase": m.clase, "tipo": CLASES[m.clase].tipo, "nombre": m.nombre, "corto": m.corto,
+        "fabricante": m.fabricante,
         "pais": m.pais, "funcion": m.funcion, "descripcion": m.descripcion, "armamento": m.armamento,
         "velocidad_kmh": m.velocidad_kmh, "alcance_km": m.alcance_km, "deteccion_km": m.deteccion_km,
         "autonomia_km": m.autonomia_km, "ataque_vs": m.ataque_vs, "defensa": m.defensa,
@@ -827,4 +839,32 @@ def aplicar_referencias(ruta=None, raiz_static=None) -> dict:
     return resumen
 
 
+# ilustracion propia de cada clase aerea para el modelo que todavia no tiene foto de referencia
+ILUSTRACION_CLASE = {
+    "caza": "caza_embarcado.svg", "ataque": "ataque_ligero.svg", "helicoptero": "helo_ataque.svg",
+    "helicoptero_artillado": "helo_transporte.svg", "avion_ge": "avion_ge.svg",
+    "dron_reconocimiento": "dron_reconocimiento.svg", "dron_ataque": "dron_armado.svg",
+    "municion_merodeadora": "municion_merodeadora.svg", "misil_crucero": "crucero.svg",
+    "alerta_temprana": "e3g.svg", "cisterna": "kc135.svg",
+}
+
+
+def completar_fotos() -> list[str]:
+    """Los modelos sin foto toman la de su clase (o su ilustracion). Devuelve los ids completados."""
+    hechos = []
+    for id_, m in list(MODELOS.items()):
+        if m.foto:
+            continue
+        ref = FOTOS_CLASE.get(m.clase)
+        if ref:
+            MODELOS[id_] = replace(m, foto=ref["foto"], credito=ref["credito"])
+        elif m.clase in ILUSTRACION_CLASE:
+            MODELOS[id_] = replace(m, foto=f"/static/fotos/{ILUSTRACION_CLASE[m.clase]}", credito=_CREDITO_PROPIO)
+        else:
+            continue
+        hechos.append(id_)
+    return hechos
+
+
 aplicar_referencias()
+completar_fotos()

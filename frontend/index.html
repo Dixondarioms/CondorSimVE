@@ -516,10 +516,10 @@
             </div>
             <div id="u-aeronave-fila" class="aeronave-elegida" hidden>
               <img id="u-modelo-foto" alt="" width="72" height="52" hidden>
-              <div><b id="u-modelo-nombre">Caza genérico</b><small id="u-modelo-grupo"></small></div>
+              <div><b id="u-modelo-nombre">Elija la aeronave</b><small id="u-modelo-grupo"></small></div>
               <button id="btn-elegir-modelo" type="button" class="secundario mini">Elegir aeronave…</button>
             </div>
-            <label id="u-tipo-fila" class="mini" hidden>Tipo (catálogo propio)<select id="u-tipo"></select></label>
+            <label id="u-tipo-fila" class="mini" hidden>Modelo<select id="u-tipo"></select></label>
             <div id="u-pista-fila" hidden>
               <label class="mini">Pista (m; vacío o 0 = solo helicópteros)<input id="u-pista" type="number" min="0" max="6000" step="100" placeholder="0"></label>
               <p class="ayuda">Con pista, el PRO solo se ubica sobre un tramo de carretera apto (capa «Tramos aptos
@@ -1166,6 +1166,10 @@
     <form id="aer-form" method="dialog">
       <h3 id="aer-titulo">Enviar grupo de caza</h3>
       <p id="aer-ayuda" class="ayuda"></p>
+      <div class="aer-filtros">
+        <input type="search" id="aer-buscar" placeholder="Buscar por nombre, país o fabricante (ej. Tucano, Rusia, Embraer)" aria-label="Buscar aeronave" autocomplete="off">
+        <select id="aer-filtro-clase" aria-label="Tipo de aeronave"></select>
+      </div>
       <div id="aer-tarjetas" class="tarjetas-modelo" role="radiogroup" aria-label="Modelo de aeronave"></div>
       <div class="aer-campos">
         <label class="mini" id="aer-base-fila">Base de origen<select id="aer-base"></select></label>

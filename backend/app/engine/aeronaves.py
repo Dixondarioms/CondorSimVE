@@ -84,6 +84,8 @@ def error_de_despegue(base: Unidad, modelo_id: str | None, aeronaves: int | None
         return "Elija un modelo de aeronave del catalogo."
     if catalogo.CLASES[modelo.clase].misil:
         return "Los misiles de crucero no despegan de una base: se lanzan con la orden lanzar."
+    if catalogo.CLASES[modelo.clase].tipo != "aerea":
+        return f"{modelo.nombre} no es una aeronave: no despega de una base."
     if catalogo.es_portaaviones(base) and not catalogo.modelo_embarcable(modelo):
         return f"{modelo.nombre} no puede despegar de un portaaviones: {MOTIVO_NO_EMBARCABLE}."
     pista = plataformas.error_de_pista(modelo, base)

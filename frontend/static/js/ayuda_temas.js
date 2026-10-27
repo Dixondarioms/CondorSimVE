@@ -53,6 +53,17 @@
         <tr><td>C-E Comunicaciones y Electrónica</td><td>Guerra electrónica: escucha e interferencia desde tierra y aviones de guerra electrónica.</td></tr></table>
         <p>Si una orden «corresponde a otra repartición», pídasela a quien la conduce (o al Comandante o al JEM).</p>`,
     },
+    {
+      id: "catalogo", seccion: "Primeros pasos", titulo: "El catálogo: aeronaves, vehículos y buques",
+      claves: "catalogo ficha modelo aeronave avion helicoptero dron tanque blindado artilleria buque fragata submarino portaaviones foto pais fabricante tucano",
+      texto: `<p>Cada unidad puede ser un <b>modelo real</b> con su ficha: foto de referencia, fabricante, país, función,
+        armamento, velocidad, alcance, detección y efectividad contra aire, tierra y mar. El catálogo trae cerca de 200 modelos
+        de muchos ejércitos: cazas (F-16, Su-30, Rafale, Gripen, Kfir…), ataque (A-29 Super Tucano, AT-27 Tucano, K-8W, Su-25…),
+        helicópteros, drones, misiles, tanques, artillería, defensa antiaérea, radares y buques.</p>
+        <p>La ficha se ve al pasar el cursor sobre una unidad en el mapa y en <b>Unidad seleccionada</b>. Al despegar aeronaves o
+        al agregar una unidad, el buscador encuentra el modelo por nombre, país o fabricante. Las cifras son didácticas:
+        sirven para comparar plataformas entre sí, no son datos oficiales.</p>`,
+    },
     // ------------------------------------------------------------------ reloj y alertas
     {
       id: "reloj", seccion: "El reloj y las alertas", titulo: "El reloj: tiempo real y velocidades",

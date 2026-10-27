@@ -31,14 +31,14 @@ def test_cada_modelo_tiene_clase_valida_foto_en_disco_y_credito():
     assert {"f16", "su30"} <= set(catalogo.MODELOS)
     for m in catalogo.MODELOS.values():
         clase = catalogo.CLASES[m.clase]
-        assert clase.tipo == "aerea" or clase.defensa_aerea  # aeronaves y sistemas de defensa aerea
+        assert clase.id == m.clase  # aeronaves, sistemas terrestres y buques (catalogo ampliado)
         assert (FRONTEND / m.foto.lstrip("/")).is_file(), m.foto
         assert m.credito["autor"]
         if m.foto.endswith(".svg"):  # ilustracion propia: dominio publico, creditos en fotos/CREDITOS.md
             assert m.credito["licencia"] == "CC0" and m.credito["pagina"] == "/static/fotos/CREDITOS.md"
         else:  # foto de terceros (catalogo o tools/fotos): licencia libre y enlace a su origen
             licencia = m.credito["licencia"].lower()
-            assert licencia.startswith(("cc by", "cc0", "public domain", "pd")), m.credito["licencia"]
+            assert licencia.startswith(("cc by", "cc0", "public domain", "pd", "attribution")), m.credito["licencia"]
             assert m.credito["pagina"].startswith("https://")
         assert m.ataque_vs.keys() == {"terrestre", "aerea", "naval"}
 
@@ -239,3 +239,14 @@ def test_el_sukhoi_es_mejor_contra_buques_que_el_f16(db_session):
     f16 = _combate(db_session, "f16", 4, defensor_tipo="naval", defensor_clase="fragata")
     su30 = _combate(db_session, "su30", 4, defensor_tipo="naval", defensor_clase="fragata")
     assert su30 > f16 > 0
+
+
+def test_solo_las_aeronaves_despegan_de_una_base():
+    from types import SimpleNamespace
+
+    base = SimpleNamespace(tipo="base", clase="base_aerea", estado="activa", fuerza=100.0, modelo="",
+                           dano_pista=0.0, pista_largo_m=3000, pista_util_m=3000, stock_combustible=2000.0,
+                           stock_municion=2000.0)
+    for modelo in ("t72b1", "lupo", "s400"):
+        motivo = aeronaves.error_de_despegue(base, modelo, 4, 0)
+        assert motivo and "no es una aeronave" in motivo, (modelo, motivo)

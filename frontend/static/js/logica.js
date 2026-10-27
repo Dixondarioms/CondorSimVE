@@ -90,7 +90,15 @@
   /** `u` puede aterrizar en (o despegar de) `base`. */
   const puedeOperarEn = (u, base) => operaAeronaves(base) && !esMisil(u) && (!esPortaaviones(base) || esEmbarcable(u));
   /** Modelo del catalogo que puede salir de esa base (un portaaviones solo lanza embarcables; nadie lanza misiles). */
-  const modeloDespegaDe = (m, base) => !!m && !m.misil && (!esPortaaviones(base) || !!m.embarcable);
+  const esAeronave = (m) => !!m && !m.misil && (!m.tipo || m.tipo === "aerea");
+  const modeloDespegaDe = (m, base) => esAeronave(m) && (!esPortaaviones(base) || !!m.embarcable);
+
+  /** Filtro del selector de aeronaves: texto (nombre, pais, fabricante o funcion, sin acentos) y clase. */
+  function filtrarModelos(modelos, texto, clase) {
+    const q = String(texto || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    return (modelos || []).filter((m) => (!clase || m.clase === clase) && (!q || `${m.nombre} ${m.corto} ${m.pais} ${m.fabricante} ${m.funcion}`
+      .toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)));
+  }
   const puedeLanzarMisiles = (u, clase) => !!u && u.estado === "activa" && (clase ? !!clase.lanza_misiles : LANZAN_MISILES.includes(u.clase || ""));
   /** Misiles que la municion del lanzador permite en una salva (0 a 4). */
   const misilesDisponibles = (u) => Math.max(0, Math.min(MAX_MISILES_SALVA, Math.floor(((u && u.municion) || 0) / MUNICION_POR_MISIL)));
@@ -1137,6 +1145,7 @@
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,
     aeronavesComprometidas, baseEnEscenario, nombreCortoBase, FUERZA_MINIMA_BASE, modoAerodromo, colorAerodromo, ZOOM_AEROPUERTOS, ZOOM_ICONOS_AERODROMO,
     esMisil, operaAeronaves, esPortaaviones, plazasDe, esEmbarcable, puedeOperarEn, modeloDespegaDe, puedeLanzarMisiles,
+    esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
     distanciaKm, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,

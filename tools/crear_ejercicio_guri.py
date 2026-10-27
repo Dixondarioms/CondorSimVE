@@ -376,6 +376,8 @@ PMO = {
 
 def plantilla():
     unidades = armar()
+    from modelos_en_plantillas import aplicar  # cada unidad con su modelo real (A-29, Bell 212, Shahed-136...)
+    aplicar({"unidades": unidades})
     return {
         "id": "guri_2026",
         "nombre": "Juegos de Guerra 01-2026: Operación Guri",

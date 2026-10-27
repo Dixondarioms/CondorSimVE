@@ -125,7 +125,7 @@
    "clase": "caza",
    "lat": 5.62,
    "lon": -67.6061,
-   "modelo": "",
+   "modelo": "kfir",
    "aeronaves": 8,
    "en_tierra": true,
    "base": "Base Echo (Puerto Ayacucho)"
@@ -136,7 +136,7 @@
    "clase": "caza",
    "lat": 5.62,
    "lon": -67.6061,
-   "modelo": "",
+   "modelo": "kfir",
    "aeronaves": 8,
    "en_tierra": true,
    "base": "Base Echo (Puerto Ayacucho)"
@@ -147,7 +147,7 @@
    "clase": "caza",
    "lat": 5.62,
    "lon": -67.6061,
-   "modelo": "",
+   "modelo": "kfir",
    "aeronaves": 8,
    "en_tierra": true,
    "base": "Base Echo (Puerto Ayacucho)"
@@ -158,7 +158,7 @@
    "clase": "caza",
    "lat": 5.62,
    "lon": -67.6061,
-   "modelo": "f16",
+   "modelo": "f16_b70",
    "aeronaves": 8,
    "en_tierra": true,
    "base": "Base Echo (Puerto Ayacucho)"
@@ -169,7 +169,7 @@
    "clase": "caza",
    "lat": 5.62,
    "lon": -67.6061,
-   "modelo": "f16",
+   "modelo": "f16_b70",
    "aeronaves": 8,
    "en_tierra": true,
    "base": "Base Echo (Puerto Ayacucho)"
@@ -180,7 +180,7 @@
    "clase": "caza",
    "lat": 5.62,
    "lon": -67.6061,
-   "modelo": "f16",
+   "modelo": "f16_b70",
    "aeronaves": 8,
    "en_tierra": true,
    "base": "Base Echo (Puerto Ayacucho)"
@@ -191,7 +191,7 @@
    "clase": "caza",
    "lat": 5.62,
    "lon": -67.6061,
-   "modelo": "f16",
+   "modelo": "f16_b70",
    "aeronaves": 8,
    "en_tierra": true,
    "base": "Base Echo (Puerto Ayacucho)"
@@ -202,7 +202,7 @@
    "clase": "caza",
    "lat": 5.62,
    "lon": -67.6061,
-   "modelo": "f16",
+   "modelo": "f16_b70",
    "aeronaves": 8,
    "en_tierra": true,
    "base": "Base Echo (Puerto Ayacucho)"
@@ -213,7 +213,7 @@
    "clase": "caza",
    "lat": 5.62,
    "lon": -67.6061,
-   "modelo": "f16",
+   "modelo": "f16_b70",
    "aeronaves": 8,
    "en_tierra": true,
    "base": "Base Echo (Puerto Ayacucho)"
@@ -224,7 +224,7 @@
    "clase": "ataque",
    "lat": 5.62,
    "lon": -67.6061,
-   "modelo": "ataque_ligero",
+   "modelo": "a37",
    "aeronaves": 8,
    "en_tierra": true,
    "base": "Base Echo (Puerto Ayacucho)"
@@ -235,7 +235,7 @@
    "clase": "ataque",
    "lat": 5.62,
    "lon": -67.6061,
-   "modelo": "ataque_ligero",
+   "modelo": "a37",
    "aeronaves": 4,
    "en_tierra": true,
    "base": "Base Echo (Puerto Ayacucho)"
@@ -257,7 +257,7 @@
    "clase": "avion_ge",
    "lat": 5.62,
    "lon": -67.6061,
-   "modelo": "",
+   "modelo": "ep3e",
    "aeronaves": 2,
    "en_tierra": true,
    "base": "Base Echo (Puerto Ayacucho)"
@@ -267,14 +267,18 @@
    "bando": "azul",
    "clase": "antiaerea",
    "lat": 5.65822,
-   "lon": -67.56769
+   "lon": -67.56769,
+   "modelo": "mim23",
+   "aeronaves": 1
   },
   {
    "nombre": "MIM-23 Hawk 2 (Echo)",
    "bando": "azul",
    "clase": "antiaerea",
    "lat": 5.58178,
-   "lon": -67.64451
+   "lon": -67.64451,
+   "modelo": "mim23",
+   "aeronaves": 1
   },
   {
    "nombre": "1.er Batallón de Asalto Aéreo (Echo)",
@@ -318,7 +322,7 @@
    "clase": "helicoptero_artillado",
    "lat": 6.232,
    "lon": -62.8548,
-   "modelo": "mh60m",
+   "modelo": "uh60l",
    "aeronaves": 5,
    "en_tierra": true,
    "base": "Base Golf (Canaima)"
@@ -329,7 +333,7 @@
    "clase": "helicoptero_artillado",
    "lat": 6.232,
    "lon": -62.8548,
-   "modelo": "mh60m",
+   "modelo": "uh60l",
    "aeronaves": 5,
    "en_tierra": true,
    "base": "Base Golf (Canaima)"
@@ -340,7 +344,7 @@
    "clase": "ataque",
    "lat": 6.232,
    "lon": -62.8548,
-   "modelo": "ataque_ligero",
+   "modelo": "ov10",
    "aeronaves": 8,
    "en_tierra": true,
    "base": "Base Golf (Canaima)"
@@ -351,7 +355,7 @@
    "clase": "ataque",
    "lat": 6.232,
    "lon": -62.8548,
-   "modelo": "ataque_ligero",
+   "modelo": "ov10",
    "aeronaves": 4,
    "en_tierra": true,
    "base": "Base Golf (Canaima)"
@@ -361,7 +365,9 @@
    "bando": "azul",
    "clase": "antiaerea",
    "lat": 6.27705,
-   "lon": -62.8548
+   "lon": -62.8548,
+   "modelo": "nasams",
+   "aeronaves": 1
   },
   {
    "nombre": "1.er Batallón de Asalto Aéreo (Golf)",
@@ -387,7 +393,7 @@
    "clase": "ataque",
    "lat": 4.5547,
    "lon": -61.1452,
-   "modelo": "ataque_ligero",
+   "modelo": "a29",
    "aeronaves": 8,
    "en_tierra": true,
    "base": "Base Hotel (Santa Elena de Uairén)"
@@ -398,7 +404,7 @@
    "clase": "ataque",
    "lat": 4.5547,
    "lon": -61.1452,
-   "modelo": "ataque_ligero",
+   "modelo": "a29",
    "aeronaves": 4,
    "en_tierra": true,
    "base": "Base Hotel (Santa Elena de Uairén)"
@@ -408,14 +414,18 @@
    "bando": "azul",
    "clase": "antiaerea",
    "lat": 4.60875,
-   "lon": -61.1452
+   "lon": -61.1452,
+   "modelo": "mim23",
+   "aeronaves": 1
   },
   {
    "nombre": "NASAMS (Hotel)",
    "bando": "azul",
    "clase": "antiaerea",
    "lat": 4.50065,
-   "lon": -61.1452
+   "lon": -61.1452,
+   "modelo": "nasams",
+   "aeronaves": 1
   },
   {
    "nombre": "1.er Batallón de Asalto Aéreo (Hotel)",
@@ -441,7 +451,7 @@
    "clase": "dron_ataque",
    "lat": 6.2264,
    "lon": -67.4486,
-   "modelo": "uav_armado",
+   "modelo": "mq1",
    "aeronaves": 5,
    "en_tierra": true,
    "base": "Base Kilo (Puerto Páez)"
@@ -461,7 +471,7 @@
    "clase": "helicoptero_artillado",
    "lat": 6.833,
    "lon": -63.33,
-   "modelo": "mh60m",
+   "modelo": "uh60l",
    "aeronaves": 5,
    "en_tierra": true,
    "base": "Base Oscar (La Paragua)"
@@ -472,7 +482,7 @@
    "clase": "helicoptero_artillado",
    "lat": 6.833,
    "lon": -63.33,
-   "modelo": "mh60m",
+   "modelo": "uh60l",
    "aeronaves": 5,
    "en_tierra": true,
    "base": "Base Oscar (La Paragua)"
@@ -483,7 +493,7 @@
    "clase": "helicoptero_artillado",
    "lat": 6.833,
    "lon": -63.33,
-   "modelo": "helo_transporte",
+   "modelo": "bell212",
    "aeronaves": 1,
    "en_tierra": true,
    "base": "Base Oscar (La Paragua)"
@@ -493,7 +503,9 @@
    "bando": "azul",
    "clase": "antiaerea",
    "lat": 6.87805,
-   "lon": -63.33
+   "lon": -63.33,
+   "modelo": "nasams",
+   "aeronaves": 1
   },
   {
    "nombre": "Batallón de Asalto Aéreo (Oscar)",
@@ -510,7 +522,7 @@
    "clase": "dron_ataque",
    "lat": 5.632,
    "lon": -61.77,
-   "modelo": "uav_armado",
+   "modelo": "mq1",
    "aeronaves": 5,
    "en_tierra": true,
    "base": "Base November (Kavanayén)"
@@ -543,7 +555,7 @@
    "clase": "helicoptero_artillado",
    "lat": 5.632,
    "lon": -61.77,
-   "modelo": "helo_transporte",
+   "modelo": "bell212",
    "aeronaves": 2,
    "en_tierra": true,
    "base": "Base November (Kavanayén)"
@@ -554,7 +566,7 @@
    "clase": "helicoptero_artillado",
    "lat": 5.632,
    "lon": -61.77,
-   "modelo": "mh47g",
+   "modelo": "ch47f",
    "aeronaves": 5,
    "en_tierra": true,
    "base": "Base November (Kavanayén)"
@@ -564,14 +576,18 @@
    "bando": "azul",
    "clase": "antiaerea_portatil",
    "lat": 5.64551,
-   "lon": -61.74648
+   "lon": -61.74648,
+   "modelo": "m_shorad",
+   "aeronaves": 1
   },
   {
    "nombre": "M-SHORAD 2 (November)",
    "bando": "azul",
    "clase": "antiaerea_portatil",
    "lat": 5.61849,
-   "lon": -61.79352
+   "lon": -61.79352,
+   "modelo": "m_shorad",
+   "aeronaves": 1
   },
   {
    "nombre": "Compañía de Asalto Aéreo (November)",
@@ -686,7 +702,7 @@
    "clase": "alerta_temprana",
    "lat": 10.1072,
    "lon": -64.6892,
-   "modelo": "",
+   "modelo": "y8w",
    "aeronaves": 2,
    "en_tierra": true,
    "base": "Base Aves (Barcelona)"
@@ -697,7 +713,7 @@
    "clase": "avion_ge",
    "lat": 10.1072,
    "lon": -64.6892,
-   "modelo": "",
+   "modelo": "sa227_elint",
    "aeronaves": 1,
    "en_tierra": true,
    "base": "Base Aves (Barcelona)"
@@ -732,7 +748,8 @@
    "clase": "antiaerea",
    "lat": 10.13873,
    "lon": -64.63372,
-   "modelo": "buk_m2e"
+   "modelo": "buk_m3",
+   "aeronaves": 1
   },
   {
    "nombre": "1.er Batallón de Defensa de Base (Aves)",
@@ -758,7 +775,7 @@
    "clase": "helicoptero_artillado",
    "lat": 9.749,
    "lon": -63.1533,
-   "modelo": "helo_transporte",
+   "modelo": "as532",
    "aeronaves": 4,
    "en_tierra": true,
    "base": "Base Patos (Maturín)"
@@ -777,7 +794,8 @@
    "clase": "antiaerea",
    "lat": 9.71747,
    "lon": -63.09789,
-   "modelo": "buk_m2e"
+   "modelo": "buk_m3",
+   "aeronaves": 1
   },
   {
    "nombre": "S-125 Pechora-2M (Patos)",
@@ -801,7 +819,8 @@
    "clase": "antiaerea",
    "lat": 7.7049,
    "lon": -63.03637,
-   "modelo": "buk_m2e"
+   "modelo": "buk_m3",
+   "aeronaves": 1
   },
   {
    "nombre": "S-125 Pechora-2M (Guri) (Roques)",
@@ -883,7 +902,8 @@
    "clase": "antiaerea",
    "lat": 8.05914,
    "lon": -63.5369,
-   "modelo": "buk_m2e"
+   "modelo": "buk_m3",
+   "aeronaves": 1
   },
   {
    "nombre": "S-125 Pechora-2M 1 (Tortuga)",
@@ -932,7 +952,7 @@
    "clase": "ataque",
    "lat": 8.9451,
    "lon": -64.1511,
-   "modelo": "ataque_ligero",
+   "modelo": "at27",
    "aeronaves": 4,
    "en_tierra": true,
    "base": "Base Orchila (San Tomé)"
@@ -943,7 +963,7 @@
    "clase": "municion_merodeadora",
    "lat": 8.9451,
    "lon": -64.1511,
-   "modelo": "merodeadora",
+   "modelo": "shahed136",
    "aeronaves": 8,
    "en_tierra": true,
    "base": "Base Orchila (San Tomé)"
@@ -954,7 +974,7 @@
    "clase": "municion_merodeadora",
    "lat": 8.9451,
    "lon": -64.1511,
-   "modelo": "merodeadora",
+   "modelo": "shahed136",
    "aeronaves": 8,
    "en_tierra": true,
    "base": "Base Orchila (San Tomé)"
@@ -965,7 +985,7 @@
    "clase": "municion_merodeadora",
    "lat": 8.9451,
    "lon": -64.1511,
-   "modelo": "merodeadora",
+   "modelo": "shahed136",
    "aeronaves": 4,
    "en_tierra": true,
    "base": "Base Orchila (San Tomé)"
@@ -984,7 +1004,8 @@
    "clase": "antiaerea",
    "lat": 8.89105,
    "lon": -64.1511,
-   "modelo": "buk_m2e"
+   "modelo": "buk_m3",
+   "aeronaves": 1
   },
   {
    "nombre": "Compañía de Defensa de Base (Orchila)",

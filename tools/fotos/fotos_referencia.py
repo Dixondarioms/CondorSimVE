@@ -115,6 +115,13 @@ UNIDADES = [
     ("clases", "buque_desembarco", "Buque de desembarco anfibio", ["Capana T-61", "clase Capana", "T-64 Los Llanos",
                                                                    "landing ship tank"]),
 ]
+# catalogo ampliado del Condor (backend/app/engine/catalogo_ampliado.py) y modelos que cambiaron de identidad
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from busquedas_ampliado import BUSQUEDAS, RENOVAR  # noqa: E402
+
+for _i, _consultas in RENOVAR.items():
+    UNIDADES = [u if u[1] != _i else (u[0], u[1], _consultas[0], _consultas) for u in UNIDADES]
+UNIDADES += [("modelos", _i, _consultas[0], _consultas) for _i, _consultas in BUSQUEDAS.items()]
 POR_CLAVE = {clave: (seccion, que, busquedas) for seccion, clave, que, busquedas in UNIDADES}
 
 
@@ -145,6 +152,13 @@ _PROPS = {"prop": "imageinfo", "iiprop": "url|size|mime|extmetadata", "iiurlwidt
           "iiextmetadatafilter": "Artist|LicenseShortName|LicenseUrl|ObjectName"}
 
 
+def _autor(texto: str) -> str:
+    """Autor corto: algunas fichas de Commons traen en el autor todo el texto de su plantilla de licencia."""
+    if not texto:
+        return "Desconocido"
+    return texto if len(texto) <= 100 else texto[:97].rsplit(" ", 1)[0] + "..."
+
+
 def _candidata(pagina: dict) -> dict | None:
     info = (pagina.get("imageinfo") or [None])[0]
     if not info or info.get("mime") not in ("image/jpeg", "image/png"):
@@ -157,13 +171,20 @@ def _candidata(pagina: dict) -> dict | None:
     return {
         "titulo": titulo,
         "obra": _texto((meta.get("ObjectName") or {}).get("value", "")) or Path(titulo.split(":", 1)[1]).stem,
-        "autor": _texto((meta.get("Artist") or {}).get("value", "")) or "Desconocido",
+        "autor": _autor(_texto((meta.get("Artist") or {}).get("value", ""))),
         "licencia": licencia,
         "url_licencia": (meta.get("LicenseUrl") or {}).get("value", "") or "https://commons.wikimedia.org/wiki/Commons:Licensing",
         "pagina": info.get("descriptionurl") or f"https://commons.wikimedia.org/wiki/{urllib.parse.quote(titulo)}",
         "miniatura": info.get("thumburl") or info["url"],
         "ancho": info.get("width", 0), "alto": info.get("height", 0),
     }
+
+
+# titulos que no muestran la plataforma (mapas de operadores, sellos, tripulaciones, ceremonias, diagramas...)
+DESCARTAR = re.compile(r"operators|operadores|\bmap\b|mapa|stamp|booklet|sailors|secretary|ceremon|cerim|flag|logo|"
+                       r"diagram|insignia|patch|cockpit|interior|crew|personnel|soldiers|wreck|destroyed|"
+                       r"explosion|shock\s*trial|airport|aeroporto|aeropuerto|rendering|model\b|toy|stamp|"
+                       r"зоны|caracal-\d|blenny|escenius", re.IGNORECASE)
 
 
 def buscar(busquedas: list[str]) -> list[dict]:
@@ -175,7 +196,8 @@ def buscar(busquedas: list[str]) -> list[dict]:
         paginas = sorted((datos.get("query") or {}).get("pages") or [], key=lambda p: p.get("index", 0))
         for p in paginas:
             c = _candidata(p)
-            if c and c["titulo"] not in vistas and c["ancho"] >= 800 and c["ancho"] >= c["alto"]:
+            if (c and c["titulo"] not in vistas and c["ancho"] >= 800 and c["ancho"] >= c["alto"]
+                    and not DESCARTAR.search(c["titulo"])):
                 vistas.add(c["titulo"])
                 candidatas.append(c)
         if len(candidatas) >= CANDIDATAS:

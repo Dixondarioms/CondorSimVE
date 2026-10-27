@@ -122,7 +122,7 @@ def test_validacion_del_lanzamiento(db_session):
     assert "aeronaves" in misiles.error_de_lanzamiento(ff, avion, 1)
     assert "no puede lanzar" in misiles.error_de_lanzamiento(patrullero, blanco, 1)
     assert "1 y 4" in misiles.error_de_lanzamiento(ff, blanco, 5)
-    lejos = _unidad(db_session, esc, nombre="Lejos", bando="rojo", lat=12.0)
+    lejos = _unidad(db_session, esc, nombre="Lejos", bando="rojo", lat=16.0)  # ~1 780 km: fuera del alcance del Tomahawk
     assert "fuera del alcance" in misiles.error_de_lanzamiento(ff, lejos, 1)
 
 

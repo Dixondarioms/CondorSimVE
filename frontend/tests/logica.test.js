@@ -122,3 +122,17 @@ test("textoEtapa: etapa del contacto enemigo y su incertidumbre", () => {
   assert.equal(L.textoEtapa({ etapa: "identificado", incertidumbre_km: 0 }), "Contacto identificado");
   assert.equal(L.lineasTarjeta({ etapa: "clasificado", incertidumbre_km: 15.6, fuerza: null, tipo: "terrestre" }, null)[0], "Contacto clasificado · posición ± 16 km");
 });
+
+test("selector de aeronaves: solo aeronaves y filtro por texto (sin acentos) y por clase", () => {
+  const ms = [
+    { id: "at27", clase: "ataque", tipo: "aerea", nombre: "EMB-312 Tucano (AT-27)", corto: "AT-27", pais: "Brasil", fabricante: "Embraer", funcion: "Entrenador" },
+    { id: "su35", clase: "caza", tipo: "aerea", nombre: "Su-35S Flanker-E", corto: "Su-35", pais: "Rusia", fabricante: "Sukhoi", funcion: "Caza" },
+    { id: "t72b1", clase: "blindado", tipo: "terrestre", nombre: "T-72B1", corto: "T-72B1", pais: "Rusia", fabricante: "UVZ", funcion: "Tanque" },
+    { id: "crucero", clase: "misil_crucero", tipo: "aerea", misil: true, nombre: "Tomahawk", corto: "Tomahawk", pais: "EE. UU.", fabricante: "Raytheon", funcion: "Misil" },
+  ];
+  assert.deepEqual(ms.filter(L.esAeronave).map((m) => m.id), ["at27", "su35"]);
+  assert.equal(L.modeloDespegaDe(ms[2], null), false);  // un tanque no despega de una base
+  assert.deepEqual(L.filtrarModelos(ms.filter(L.esAeronave), "rusia").map((m) => m.id), ["su35"]);
+  assert.deepEqual(L.filtrarModelos(ms.filter(L.esAeronave), "tucano").map((m) => m.id), ["at27"]);
+  assert.deepEqual(L.filtrarModelos(ms.filter(L.esAeronave), "", "caza").map((m) => m.id), ["su35"]);
+});

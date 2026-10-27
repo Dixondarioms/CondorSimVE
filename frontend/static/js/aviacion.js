@@ -93,7 +93,9 @@
       limpiar(tarjetas);
       const base = baseElegida();
       const despegue = modoActual && modoActual.tipo === "despegue";
-      const posibles = modelos().filter((m) => (despegue ? Logica.modeloDespegaDe(m, base) : !m.misil));
+      const todos = modelos().filter((m) => (despegue ? Logica.modeloDespegaDe(m, base) : Logica.esAeronave(m)));
+      llenarFiltroClase(todos);
+      const posibles = Logica.filtrarModelos(todos, $("aer-buscar").value, $("aer-filtro-clase").value);
       const lista = despegue ? posibles.filter((m) => Logica.entraEnPista(m, base)) : posibles;
       const cortos = despegue ? posibles.filter((m) => !Logica.entraEnPista(m, base)) : [];
       lista.forEach((m) => tarjetas.appendChild(tarjeta(m)));
@@ -106,6 +108,18 @@
           ? `La pista útil de ${base.nombre} (${Math.round(base.pista_util_m)} m) no alcanza para despegar: ${cortos.map((m) => `${m.corto} (${m.ficha.despegue_m} m)`).join(", ")}.`
           : "";
       }
+    }
+
+    /** Las clases de aeronave presentes en la lista (para filtrar: cazas, ataque, helicopteros, drones...). */
+    function llenarFiltroClase(todos) {
+      const sel = $("aer-filtro-clase");
+      const previo = sel.value;
+      const clases = (ctx.catalogo() && ctx.catalogo().clases) || [];
+      const presentes = clases.filter((c) => todos.some((m) => m.clase === c.id));
+      limpiar(sel);
+      sel.appendChild(Object.assign(el("option", "", `Todas (${todos.length})`), { value: "" }));
+      presentes.forEach((c) => sel.appendChild(Object.assign(el("option", "", `${c.nombre} (${todos.filter((m) => m.clase === c.id).length})`), { value: c.id })));
+      sel.value = presentes.some((c) => c.id === previo) ? previo : "";
     }
 
     function marcar(id) {
@@ -172,6 +186,8 @@
         if (modeloInicial && bases.some((b) => b.id === modeloInicial.base)) sel.value = String(modeloInicial.base);
         $("aer-indicativo").value = "";
       }
+      $("aer-buscar").value = "";
+      $("aer-filtro-clase").value = "";
       llenarTarjetas();
       marcar((modeloInicial && modeloInicial.modelo) || null);
       if (!$("dlg-aeronaves").open) $("dlg-aeronaves").showModal();
@@ -217,6 +233,8 @@
     function conectarDialogo() {
       $("aer-cantidad").addEventListener("change", actualizarResumen);
       $("aer-base").addEventListener("change", () => { llenarTarjetas(); marcar(elegido); });
+      $("aer-buscar").addEventListener("input", () => { llenarTarjetas(); marcar(elegido); });
+      $("aer-filtro-clase").addEventListener("change", () => { llenarTarjetas(); marcar(elegido); });
       $("aer-cancelar").addEventListener("click", () => $("dlg-aeronaves").close());
       $("aer-form").addEventListener("submit", async (e) => {
         e.preventDefault();

@@ -24,6 +24,12 @@ MAX_MISILES = 4
 LLEGADA_KM = 1.0
 DESPLAZAMIENTO_GRADOS = 0.004  # las salvas del mismo lanzador no nacen encima unas de otras
 MOTIVO_SIN_ORDENES = "Un misil en vuelo no admite ordenes."
+# misil que lanza cada modelo de lanzador (catalogo_ampliado.py); los demas lanzan el de siempre (MODELO: Tomahawk)
+MISIL_DEL_LANZADOR = {
+    "grigorovich": "kalibr", "buyan_m": "kalibr", "kilo636": "kalibr",
+    "bastion_p": "oniks", "bal_e": "kh35", "nsm_cds": "nsm",
+    "fremm": "exocet", "scorpene": "exocet", "tamandare": "exocet",
+}
 
 
 def codificar(misiles: int) -> str:
@@ -36,6 +42,11 @@ def decodificar(detalle: str) -> dict:
     except ValueError:
         return {}
     return d if isinstance(d, dict) else {}
+
+
+def modelo_misil(lanzador) -> catalogo.Modelo:
+    """El misil de crucero o antibuque que dispara ese lanzador."""
+    return catalogo.MODELOS[MISIL_DEL_LANZADOR.get(getattr(lanzador, "modelo", "") or "", MODELO)]
 
 
 def clase_misil() -> catalogo.Clase:
@@ -67,7 +78,7 @@ def error_de_lanzamiento(lanzador, blanco, misiles: int | None) -> str | None:
         return "Blanco invalido o ya fuera de combate."
     if not blanco_valido(blanco):
         return f"Un misil de crucero no puede atacar objetivos de tipo {_tipo_efectivo(blanco)} (aeronaves en vuelo)."
-    modelo = catalogo.MODELOS[MODELO]
+    modelo = modelo_misil(lanzador)
     d = geo.distancia_km(lanzador.lat, lanzador.lon, blanco.lat, blanco.lon)
     if d > modelo.autonomia_km:
         return f"Blanco fuera del alcance del misil ({d:.0f} km > {modelo.autonomia_km:.0f} km)."
@@ -79,7 +90,7 @@ def error_de_lanzamiento(lanzador, blanco, misiles: int | None) -> str | None:
 
 def crear_salva(lanzador, blanco, misiles: int, ya_lanzadas: int = 0) -> Unidad:
     """Unidad aerea nueva (la salva) sobre el lanzador (sin agregarla a la sesion: lo hace quien llama)."""
-    m = catalogo.MODELOS[MODELO]
+    m = modelo_misil(lanzador)
     clase = catalogo.CLASES[m.clase]
     return Unidad(
         escenario_id=lanzador.escenario_id, nombre=f"{m.corto} x{misiles} de {lanzador.nombre}"[:120],

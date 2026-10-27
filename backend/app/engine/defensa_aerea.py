@@ -174,6 +174,158 @@ SISTEMAS: dict[str, Sistema] = {s.modelo: s for s in [
         nota="Batería de largo alcance (S-300VM Antey-2500): el radar de tiro 9S32ME guía varios misiles a la vez "
              "hasta 200 km. Recargar los lanzadores desde los cargadores toma unos 40 min sin poder tirar. Muy "
              "visible para la escucha enemiga mientras emite; necesita su defensa cercana."),
+    # ---- catalogo ampliado (engine/catalogo_ampliado.py): cifras didacticas, no datos oficiales ----
+    Sistema(
+        "pantsir_s1", (
+            Arma("57e6", "57E6 (misil de corto alcance)", "misil_radar", "corto", 1.2, 20.0, 15.0, 15000.0, 0.7, 1,
+                 1300.0, 12, 12, 20.0),
+            Arma("2a38m", "2A38M (cañones dobles de 30 mm)", "canon", "corto", 0.2, 4.0, 0.0, 3000.0, 0.15, 2, 960.0,
+                 40, 80, 5.0),
+        ), radar_vigilancia_km=36.0, radar_tiro_km=24.0, reaccion_s=5.0, canales=4,
+        despliegue_min=5.0, repliegue_min=5.0, movilidad="Autopropulsado sobre camión 8x8 (pesado)",
+        vehiculos=((1, "vehículo de combate con radares, 12 misiles y 2 cañones dobles"),
+                   (1, "vehículo de transporte y recarga")), personal=6,
+        nota="Defensa de punto de los sistemas de largo alcance: tira con misiles y cañones contra aviones, helicópteros, "
+             "drones y misiles de crucero."),
+    Sistema(
+        "tor_m2e", (
+            Arma("9m338", "9M338 (corto alcance)", "misil_radar", "corto", 1.0, 16.0, 10.0, 10000.0, 0.75, 1, 1000.0,
+                 16, 16, 18.0),
+        ), radar_vigilancia_km=32.0, radar_tiro_km=20.0, reaccion_s=8.0, canales=4,
+        despliegue_min=3.0, repliegue_min=3.0, movilidad="Autopropulsado sobre orugas o ruedas (pesado)",
+        vehiculos=((1, "vehículo de combate con radares y 16 misiles"), (1, "vehículo de transporte y recarga")),
+        personal=8,
+        nota="Vehículo autónomo con radar de búsqueda y de tiro propios: protege a las tropas y a los objetivos "
+             "contra aviones, drones y misiles a corta distancia."),
+    Sistema(
+        "buk_m3", (
+            Arma("9m317m", "9M317M (mediano alcance)", "misil_radar", "largo", 2.5, 70.0, 15.0, 35000.0, 0.8, 2,
+                 1550.0, 12, 12, 15.0),
+        ), radar_vigilancia_km=160.0, radar_tiro_km=70.0, reaccion_s=10.0, canales=12,
+        despliegue_min=5.0, repliegue_min=5.0, movilidad="Autopropulsada sobre orugas (pesada)",
+        vehiculos=((2, "TELAR 9A317M (radar de tiro y 6 misiles)"), (1, "TEL 9A316M"),
+                   (1, "radar de vigilancia 9S18M1-3"), (1, "puesto de mando 9S510M")), personal=30,
+        nota="Batería de mediano alcance con misiles en contenedores: más alcance y más blancos a la vez que el "
+             "Buk-M2E. Recargar los TELAR desde el TEL toma unos 15 minutos."),
+    Sistema(
+        "s400", (
+            Arma("48n6dm", "48N6DM (largo alcance)", "misil_radar", "largo", 3.0, 250.0, 10.0, 27000.0, 0.8, 2, 2000.0,
+                 8, 8, 40.0),
+            Arma("9m96", "9M96E2 (mediano alcance)", "misil_radar", "corto", 1.0, 120.0, 5.0, 30000.0, 0.8, 1, 1000.0,
+                 8, 8, 40.0),
+        ), radar_vigilancia_km=600.0, radar_tiro_km=250.0, reaccion_s=10.0, canales=10,
+        despliegue_min=5.0, repliegue_min=5.0, movilidad="Lanzadores y radares sobre camión (pesado)",
+        vehiculos=((2, "lanzadores 5P85TE2 de 4 misiles"), (1, "radar de tiro 92N6E"),
+                   (1, "radar de vigilancia 91N6E"), (1, "puesto de mando 55K6E")), personal=60,
+        nota="Batería estratégica: radar de vigilancia de 600 km y misiles de mediano a muy largo alcance. Muy visible "
+             "para la escucha enemiga; necesita defensa cercana (Pantsir)."),
+    Sistema(
+        "hq9", (
+            Arma("hq9", "HQ-9 (largo alcance)", "misil_radar", "largo", 6.0, 200.0, 25.0, 30000.0, 0.75, 2, 1500.0,
+                 8, 8, 40.0),
+        ), radar_vigilancia_km=300.0, radar_tiro_km=200.0, reaccion_s=12.0, canales=6,
+        despliegue_min=6.0, repliegue_min=6.0, movilidad="Lanzadores y radares sobre camión (pesado)",
+        vehiculos=((2, "lanzadores de 4 misiles"), (1, "radar de tiro HT-233"), (1, "radar de vigilancia"),
+                   (1, "puesto de mando")), personal=50,
+        nota="Batería china de largo alcance con lanzamiento vertical."),
+    Sistema(
+        "patriot", (
+            Arma("pac3", "PAC-3 MSE (antimisil)", "misil_radar", "corto", 1.0, 35.0, 50.0, 24000.0, 0.85, 1, 1700.0,
+                 12, 12, 45.0),
+            Arma("pac2", "PAC-2 GEM-T (largo alcance)", "misil_radar", "largo", 3.0, 160.0, 60.0, 24000.0, 0.75, 2,
+                 1700.0, 8, 8, 45.0),
+        ), radar_vigilancia_km=180.0, radar_tiro_km=160.0, reaccion_s=9.0, canales=9,
+        despliegue_min=15.0, repliegue_min=15.0, movilidad="Lanzadores y radar remolcados (pesado)",
+        vehiculos=((2, "lanzadores M903"), (1, "radar AN/MPQ-65"), (1, "estación de control ECS"),
+                   (1, "grupo electrógeno")), personal=90,
+        nota="Batería de defensa aérea y antimisil: el radar de fase guía varios misiles a la vez. Recargar los "
+             "lanzadores toma unos 45 minutos."),
+    Sistema(
+        "nasams", (
+            Arma("amraam", "AIM-120 AMRAAM", "misil_radar", "largo", 1.0, 40.0, 30.0, 16000.0, 0.8, 1, 1200.0,
+                 12, 12, 15.0),
+            Arma("aim9x", "AIM-9X (infrarrojo)", "misil_ir", "corto", 0.5, 10.0, 10.0, 8000.0, 0.7, 1, 900.0,
+                 6, 6, 15.0),
+        ), radar_vigilancia_km=75.0, radar_tiro_km=0.0, reaccion_s=6.0, canales=8,
+        despliegue_min=10.0, repliegue_min=10.0, movilidad="Lanzadores y radares sobre camión (pesado)",
+        vehiculos=((2, "lanzadores de 6 misiles"), (2, "radares Sentinel AN/MPQ-64"), (1, "centro de dirección de fuego")),
+        personal=30,
+        nota="Batería en red: los radares Sentinel alimentan a lanzadores dispersos; el AMRAAM guía con su propio radar."),
+    Sistema(
+        "mim23", (
+            Arma("mim23b", "MIM-23B Hawk", "misil_radar", "largo", 1.5, 40.0, 30.0, 18000.0, 0.6, 2, 900.0,
+                 9, 9, 30.0),
+        ), radar_vigilancia_km=100.0, radar_tiro_km=60.0, reaccion_s=20.0, canales=2,
+        despliegue_min=30.0, repliegue_min=30.0, movilidad="Lanzadores y radares remolcados (pesado)",
+        vehiculos=((3, "lanzadores M192 de 3 misiles"), (1, "radar de búsqueda"), (1, "radar de iluminación"),
+                   (1, "puesto de mando")), personal=50,
+        nota="Sistema veterano: un radar de iluminación por blanco; tarda en desplegar y en recargar."),
+    Sistema(
+        "iris_t_slm", (
+            Arma("iris_t_sl", "IRIS-T SL", "misil_ir", "largo", 1.0, 40.0, 20.0, 20000.0, 0.8, 1, 1100.0,
+                 16, 8, 15.0),
+        ), radar_vigilancia_km=250.0, radar_tiro_km=0.0, reaccion_s=6.0, canales=8,
+        despliegue_min=10.0, repliegue_min=10.0, movilidad="Lanzadores y radar sobre camión (pesado)",
+        vehiculos=((2, "lanzadores de 8 misiles"), (1, "radar TRML-4D"), (1, "puesto de mando")), personal=25,
+        nota="Misil infrarrojo de lanzamiento vertical con enlace de datos: no lo engaña la interferencia de radar."),
+    Sistema(
+        "osa_akm", (
+            Arma("9m33m3", "9M33M3 (corto alcance)", "misil_radar", "corto", 1.5, 10.0, 25.0, 5000.0, 0.5, 2, 1000.0,
+                 6, 6, 5.0),
+        ), radar_vigilancia_km=30.0, radar_tiro_km=20.0, reaccion_s=26.0, canales=1,
+        despliegue_min=4.0, repliegue_min=4.0, movilidad="Autopropulsado anfibio sobre ruedas 6x6",
+        vehiculos=((1, "vehículo de combate con radares y 6 misiles"), (1, "vehículo de recarga")), personal=5,
+        nota="Defensa de las tropas en movimiento: un blanco a la vez."),
+    Sistema(
+        "igla_s", (
+            Arma("9m342", "9M342 Igla-S (infrarrojo)", "misil_ir", "corto", 0.5, 6.0, 10.0, 3500.0, 0.45, 1, 600.0,
+                 4, 8, 1.0),
+        ), radar_vigilancia_km=0.0, radar_tiro_km=0.0, reaccion_s=8.0, canales=4,
+        despliegue_min=1.0, repliegue_min=1.0, movilidad="Portátil",
+        vehiculos=((4, "puestos de tiro portátiles"), (1, "vehículo ligero con los misiles de recarga")), personal=12,
+        nota="Sección de misiles portátiles infrarrojos: no emite, pero depende del cuadro aéreo de su bando."),
+    Sistema(
+        "stinger", (
+            Arma("fim92", "FIM-92 Stinger (infrarrojo)", "misil_ir", "corto", 0.2, 8.0, 5.0, 3800.0, 0.5, 1, 750.0,
+                 4, 8, 1.0),
+        ), radar_vigilancia_km=0.0, radar_tiro_km=0.0, reaccion_s=6.0, canales=4,
+        despliegue_min=1.0, repliegue_min=1.0, movilidad="Portátil",
+        vehiculos=((4, "puestos de tiro portátiles"), (1, "vehículo ligero con los misiles de recarga")), personal=12,
+        nota="Sección de misiles portátiles infrarrojos: no emite, pero depende del cuadro aéreo de su bando."),
+    Sistema(
+        "m_shorad", (
+            Arma("fim92_ms", "Stinger (infrarrojo)", "misil_ir", "corto", 0.2, 8.0, 5.0, 3800.0, 0.55, 1, 750.0,
+                 8, 8, 5.0),
+            Arma("xm914", "XM914 (cañón de 30 mm)", "canon", "corto", 0.2, 3.0, 0.0, 2000.0, 0.1, 2, 1000.0,
+                 30, 60, 5.0),
+        ), radar_vigilancia_km=20.0, radar_tiro_km=0.0, reaccion_s=5.0, canales=4,
+        despliegue_min=0.5, repliegue_min=0.5, movilidad="Autopropulsado sobre Stryker 8x8",
+        vehiculos=((4, "Stryker M-SHORAD con radar, Stinger, Hellfire y cañón de 30 mm"),), personal=16,
+        nota="Defensa antiaérea de maniobra: acompaña a las brigadas y tira casi sin detenerse."),
+    Sistema(
+        "gepard", (
+            Arma("kdb35", "2 cañones Oerlikon de 35 mm", "canon", "corto", 0.2, 4.0, 0.0, 3000.0, 0.15, 2, 1175.0,
+                 32, 64, 10.0),
+        ), radar_vigilancia_km=15.0, radar_tiro_km=15.0, reaccion_s=5.0, canales=1,
+        despliegue_min=0.5, repliegue_min=0.5, movilidad="Autopropulsado sobre orugas (Leopard 1)",
+        vehiculos=((2, "Flakpanzer Gepard con radar de búsqueda y de tiro"),), personal=6,
+        nota="Cañones guiados por radar: muy eficaces contra drones, helicópteros y aviones a baja cota."),
+    Sistema(
+        "zsu23_4", (
+            Arma("azp23", "4 cañones AZP-23 de 23 mm", "canon", "corto", 0.2, 2.5, 0.0, 1500.0, 0.12, 2, 970.0,
+                 30, 60, 10.0),
+        ), radar_vigilancia_km=12.0, radar_tiro_km=12.0, reaccion_s=6.0, canales=1,
+        despliegue_min=0.5, repliegue_min=0.5, movilidad="Autopropulsado sobre orugas",
+        vehiculos=((2, "ZSU-23-4 Shilka con radar de tiro"),), personal=8,
+        nota="Cuatro cañones guiados por radar: temible a muy baja cota, inútil por encima de 1 500 m."),
+    Sistema(
+        "bofors40", (
+            Arma("l70", "Bofors 40 mm L/70 (espoleta de proximidad)", "canon", "corto", 0.2, 4.0, 0.0, 3000.0, 0.1, 2,
+                 1000.0, 24, 96, 2.0),
+        ), radar_vigilancia_km=0.0, radar_tiro_km=0.0, reaccion_s=8.0, canales=2,
+        despliegue_min=2.0, repliegue_min=2.0, movilidad="Remolcado por camión",
+        vehiculos=((2, "cañones de 40 mm"), (2, "camiones tractores con la munición")), personal=14,
+        nota="Cañones de puntería óptica: no emiten, pero dependen del cuadro aéreo de su bando y de noche tiran peor."),
 ]}
 
 

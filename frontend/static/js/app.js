@@ -355,7 +355,7 @@
     $("u-aeronave-fila").hidden = !aerea;
     const tipos = (app.catalogo.modelos || []).filter((m) => m.clase === c.id);
     $("u-tipo-fila").hidden = aerea || !tipos.length;
-    if (!aerea) llenarSelect($("u-tipo"), [["", `${c.nombre} (valores de la clase)`], ...tipos.map((m) => [m.id, m.nombre])]);
+    if (!aerea) llenarSelect($("u-tipo"), [["", `Sin elegir (valores de la clase ${c.nombre.toLowerCase()})`], ...tipos.map((m) => [m.id, `${m.nombre} · ${m.pais}`])]);
     const tipo = !aerea && $("u-tipo").value ? modeloPorId($("u-tipo").value) : null;
     const ref = (aerea && app.modeloUnidad && modeloPorId(app.modeloUnidad.modelo)) || tipo || c;
     $("u-velocidad").value = ref.velocidad_kmh;
@@ -382,8 +382,8 @@
     foto.hidden = !m;
     if (m) { foto.src = m.foto; foto.alt = m.nombre; }
     const clase = app.catalogo && app.catalogo.clases.find((x) => x.id === $("u-clase").value);
-    $("u-modelo-nombre").textContent = m ? m.nombre : `${clase ? clase.nombre : "Aeronave"} (genérico)`;
-    $("u-modelo-grupo").textContent = m ? `Grupo de ${app.modeloUnidad.aeronaves} aeronave${app.modeloUnidad.aeronaves === 1 ? "" : "s"}` : "Sin modelo: valores de la clase";
+    $("u-modelo-nombre").textContent = m ? m.nombre : "Elija la aeronave";
+    $("u-modelo-grupo").textContent = m ? `Grupo de ${app.modeloUnidad.aeronaves} aeronave${app.modeloUnidad.aeronaves === 1 ? "" : "s"}` : `Sin elegir: valores de la clase ${clase ? clase.nombre.toLowerCase() : ""}`;
   }
   $("btn-elegir-modelo").addEventListener("click", async () => {
     const elegido = await app.aviacion.elegirModelo(app.modeloUnidad);
