@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from app.engine import plantillas
+from app.engine import objetivos, plantillas
 
 RAIZ = Path(__file__).resolve().parents[1]
 
@@ -27,10 +27,10 @@ def test_cada_plantilla_referencia_clases_y_modelos_validos_y_nombres_de_unidad_
             if u.modelo:
                 assert u.modelo in catalogo.MODELOS and catalogo.MODELOS[u.modelo].clase == u.clase
         for o in p.objetivos:
-            assert o.tipo in ("ocupar", "destruir", "proteger")
+            assert o.tipo in objetivos.TIPOS, (p.id, o.tipo)
             if o.tipo == "ocupar":
                 assert o.lat is not None and o.lon is not None
-            else:
+            elif o.tipo != "efecto":
                 assert o.unidad in nombres, (p.id, o.nombre)
 
 
@@ -138,3 +138,33 @@ def test_la_cli_rechaza_una_plantilla_desconocida(tmp_path):
     )
     assert r.returncode != 0 and "Plantilla desconocida" in r.stderr
     assert not db.exists()  # no debe crear ni tocar la base si el id no existe
+
+
+def test_operacion_guri_respeta_la_zdo_y_las_cifras_de_la_situacion(db_session):
+    """tools/crear_ejercicio_guri.py: Rojo al norte del paralelo 7 y Azul al sur, con las flotas de los documentos."""
+    from app.engine import catalogo
+
+    p = plantillas.PLANTILLAS["guri_2026"]
+    aereas = {"azul": 0, "rojo": 0}
+    for u in p.unidades:
+        if u.clase != "puente":
+            assert (u.lat > 7.0) == (u.bando == "rojo"), u.nombre
+        if catalogo.CLASES[u.clase].tipo == "aerea":
+            aereas[u.bando] += u.aeronaves
+            assert u.aeronaves <= 8, u.nombre
+    assert aereas == {"azul": 160, "rojo": 77}  # tripuladas y drones de la Situación de cada bando
+    assert sum(u.personal or 0 for u in p.unidades if u.bando == "azul" and u.clase == "infanteria") == 6750
+    assert set(p.pmo) == {"azul", "rojo"} and p.pmo["azul"]["mision"]["tarea"] == "Neutralizar"
+    esc = plantillas.crear_desde_plantilla(db_session, "guri_2026")
+    assert esc.fecha_inicio == "2026-06-02" and esc.turno_final == 12
+
+
+def test_operacion_guri_las_tropas_de_asalto_pueden_embarcar_desde_el_primer_turno():
+    from app.engine import geo, transporte
+
+    p = plantillas.PLANTILLAS["guri_2026"]
+    bases = {u.nombre.split(" ")[1]: u for u in p.unidades if u.clase == "base_aerea"}
+    for u in p.unidades:
+        if u.bando == "azul" and u.clase == "infanteria":
+            b = bases[u.nombre.split("(")[-1].rstrip(")")]
+            assert geo.distancia_km(u.lat, u.lon, b.lat, b.lon) < transporte.RADIO_EMBARQUE_KM, u.nombre

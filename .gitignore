@@ -39,3 +39,6 @@ backend/data/modelos_usuario.json
 backend/data/fotos_usuario/
 # cuentas de prueba del video tutorial (tools/manual/video_tutorial.py): nunca al repositorio
 backend/cuentas_video.json
+
+# ajustes del instructor de cada equipo (p. ej., los topes del ejercicio Operación Guri)
+backend/data/ajustes_catalogo.json

@@ -9,23 +9,27 @@ el servidor embebido de `pixeltable-pgserver` o el indicado en TEST_DATABASE_URL
 import os
 from pathlib import Path
 
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
+# Las pruebas usan el catalogo del codigo, no los ajustes del instructor de este equipo
+# (backend/data/ajustes_catalogo.json): se apunta a un archivo que no existe antes de importar la aplicacion.
+os.environ.setdefault("SIMULADOR_AJUSTES_CATALOGO", os.path.join(os.path.dirname(__file__), "_sin_ajustes_catalogo.json"))
 
-from app import adversario as adversario_mod
-from app import auth
-from app import models  # noqa: F401  (registra todas las tablas)
-from app import state as state_mod
-from app.db import Base, get_db, normalizar_url
-from app.engine import orders
-from app.main import app
-from app.models.usuario import Usuario
-from app.routers import ordenes as router_ordenes
-from app.routers import unidades as router_unidades
-from app.terreno import Terreno
+import pytest  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+from sqlalchemy import create_engine, text  # noqa: E402
+from sqlalchemy.orm import sessionmaker  # noqa: E402
+from sqlalchemy.pool import StaticPool  # noqa: E402
+
+from app import adversario as adversario_mod  # noqa: E402
+from app import auth  # noqa: E402
+from app import models  # noqa: E402,F401  (registra todas las tablas)
+from app import state as state_mod  # noqa: E402
+from app.db import Base, get_db, normalizar_url  # noqa: E402
+from app.engine import orders  # noqa: E402
+from app.main import app  # noqa: E402
+from app.models.usuario import Usuario  # noqa: E402
+from app.routers import ordenes as router_ordenes  # noqa: E402
+from app.routers import unidades as router_unidades  # noqa: E402
+from app.terreno import Terreno  # noqa: E402
 
 USAR_POSTGRES = os.environ.get("TEST_DB", "sqlite").lower() in ("postgres", "postgresql", "pg")
 

@@ -1,0 +1,1243 @@
+{
+ "id": "guri_2026",
+ "nombre": "Juegos de Guerra 01-2026: Operación Guri",
+ "descripcion": "Ejercicio de los Juegos de Guerra 01-2026 sobre el mapa de Venezuela, con dos países ficticios. La República Federal Azul (sur del Paralelo 7) busca neutralizar el poder aeroespacial del País Rojo para introducir tropas de asalto aéreo y asegurar el Embalse del Guri sin destruirlo; el País Rojo (norte) lo defiende con defensa aérea rusa en capas. Fuerzas, combustible y armamento según la Situación de cada bando (junio de 2026); los planes de campaña Timotocuica y Caribe están en el Problema Militar de cada bando (pestaña TIEM). La ZDO se dibuja en 7° N. Supuestos: las bases con nombre clave se ubican en aeródromos reales (Azul: Echo Puerto Ayacucho, Golf Canaima, Hotel Santa Elena, Kilo Puerto Páez, Oscar La Paragua, November Kavanayén; Rojo: Aves Barcelona, Patos Maturín, Roques Puerto Ordaz con su defensa en el Guri, Tortuga Angostura, Orchila San Tomé); el transporte de ala fija no está representado. Requiere backend/data/ajustes_catalogo.json con 100 plazas por base y topes de 160 aeronaves y 40 drones por bando.",
+ "clima": "despejado",
+ "hora_inicio_min": 300,
+ "nacion_azul": "valdoria",
+ "nacion_rojo": "ostrania",
+ "ia_azul": false,
+ "ia_rojo": false,
+ "dia_noche": true,
+ "con_estado": true,
+ "conduce_azul": "alumnos",
+ "conduce_rojo": "alumnos",
+ "fecha_inicio": "2026-06-02",
+ "turno_h": 1,
+ "turno_final": 12,
+ "fases": [
+  {
+   "nombre": "Superioridad aérea",
+   "desde": 1,
+   "hasta": 4
+  },
+  {
+   "nombre": "Asalto aéreo al Guri",
+   "desde": 5,
+   "hasta": 8
+  },
+  {
+   "nombre": "Consolidación",
+   "desde": 9,
+   "hasta": 12
+  }
+ ],
+ "pmo": {
+  "azul": {
+   "situacion_general": "Juegos de Guerra 01-2026. El conflicto entre la República Federal Azul y el País Rojo es una guerra congelada desde la guerra civil de 1951-1954. El armisticio dividió el territorio por el Paralelo 7, que corta la cuenca del Orinoco; la frontera es la Zona Desmilitarizada del Orinoco (ZDO), una franja de 4 km. El Embalse del Guri quedó justo al norte de la línea, bajo control de Rojo, pero sus aguas y líneas de transmisión cruzan la ZDO hacia Azul. Azul compra a Rojo el 75 % de su electricidad y explota tierras raras en el límite de la ZDO; Rojo denuncia que los sedimentos obstruyen las turbinas del Guri. En mayo de 2026 Rojo declaró el fin del armisticio. El Guri es la principal reserva de agua dulce de la región y el núcleo hidroeléctrico de ambos países: Rojo lo ha convertido en su centro de gravedad defensivo, con defensa aérea rusa en capas. Situación Azul (Operación Guri, Capital DF, 01 21:00 JUN26): Rojo amenaza con cortar el suministro eléctrico; en abril se detectó un sobrevuelo de un dron de Rojo en la frontera; el Departamento de Inteligencia reporta sabotajes en las plantas refinadoras de tierras raras del centro del país, movimientos inusuales de unidades terrestres de Rojo en la frontera y la captura de individuos cerca de instalaciones militares. El Presidente decretó el Estado de Alerta y Movilización Nacional con 7 000 combatientes aerotransportados, especialistas en asalto aéreo y aseguramiento de áreas estratégicas.",
+   "fuerzas_enemigas": "Rojo ha fortificado el Guri con defensa aérea de fabricación rusa en capas (sistemas S-300VM Antey-2500, Buk y Pechora), aviación de combate (Su-30MK2, F-16 y aviones de ataque K-8W y AT-27), medios aéreos de inteligencia avanzados (alerta temprana y ELINT) y drones kamikaze. Se estima su aviación de combate en unas 60 aeronaves, en bases del norte y del este del país, y la defensa aérea concentrada en las bases y alrededor de la represa.",
+   "fuerzas_propias": "Fuerza de Tarea Aérea con seis bases al sur del Paralelo 7 (Echo, Golf, Hotel, Kilo, Oscar y November): más de 140 aeronaves tripuladas (Kfir, F-16 Block 70, A-37, OV-10, A-29, UH-60, CH-47, Bell 212, tanqueros y P-3), 20 drones (MQ-1 y MQ-9), defensa antiaérea de base (Hawk, NASAMS y M-SHORAD) y 6 750 combatientes de asalto aéreo distribuidos en las bases.",
+   "mision_superior": "Neutralizar el poder aeroespacial del país Rojo a fin de introducir tropas en el área del embalse del Guri, asegurando así el dominio total. (Situación Azul, punto 2.)",
+   "idea_general": "Plan Militar de Campaña Timotocuica (Base Aérea Central, 01 09:00 JUN2026): a partir del día D a la hora H, operaciones ofensivas para neutralizar la defensa aérea del enemigo, introducir tropas en el área por delimitar, lograr el control de la zona en reclamación y evitar el ingreso de fuerzas de Rojo. El COC se reserva el empleo del componente aéreo, del sistema de defensa aérea y de los medios estratégicos; el componente naval pasa bajo su control operacional. Fases previstas: I, superioridad aérea y supresión de la defensa aérea (turnos 1 a 4); II, asalto aéreo al Guri (5 a 8); III, consolidación (9 a 12).",
+   "mision": {
+    "tarea": "Neutralizar",
+    "que": "el poder aeroespacial y la defensa aérea del País Rojo",
+    "donde": "en el área del Embalse del Guri y las bases aéreas enemigas",
+    "cuando": "a partir del día D a la hora H",
+    "proposito": "introducir tropas de asalto aéreo y asegurar el Guri sin destruir la infraestructura hidroeléctrica"
+   },
+   "medios": "Echo: 3 000 combatientes; 24 Kfir, 48 F-16 Block 70, 12 A-37 Dragonfly, 14 C-130J, 2 Boeing 737 tanqueros, 2 P-3 Orion, 2 MIM-23 Hawk. JP-1 2 659 000 de 2 700 000 l. GBU-12 500, SPICE 2000 300, Python 4 600, AIM-120D 2 000, AGM-158 JASSM 1 000, cartuchos 7,62 mm 5 000, MK 82 1 000. Criogénicos O2/N2 12 000/7 000 psi.\nGolf: 1 200 combatientes; 10 UH-60 Black Hawk, 12 OV-10 Bronco, 1 NASAMS. JP-1 640 000 de 700 000 l. MK 82 300, MK 81 200, 7,62 mm 7 000. O2/N2 2 000/700 psi.\nHotel: 1 450 combatientes; 12 A-29 Super Tucano, 2 C-208 Caravan, 1 MIM-23 Hawk, 1 NASAMS. JP-1 140 000 de 900 000 l; AVGAS 1 000 l. MK 81 200, 7,62 mm 7 000. O2/N2 1 000/500 psi.\nKilo: 300 combatientes; 5 MQ-1 Predator, 1 C-206. JP-1 180 000 de 300 000 l; AVGAS 200 l. MK 81 2 000. O2/N2 1 000/500 psi.\nOscar: 650 combatientes; 10 UH-60 Black Hawk, 1 Bell 212, 1 C-206, 1 NASAMS. JP-1 110 000 de 500 000 l; AVGAS 100 l. AGM-114 400, FIM-92 Stinger 100, 7,62 mm 17 000. O2/N2 1 000/1 500 psi.\nNovember: 150 combatientes; 5 MQ-1 Predator, 10 MQ-9 Reaper, 2 Bell 212, 5 CH-47 Chinook, 2 M-SHORAD. JP-1 140 000 de 900 000 l; AVGAS 200 l. MK 81 2 000, 7,62 mm 7 000. O2/N2 2 000/2 500 psi.",
+   "area_operaciones": "Cuenca del Orinoco y del Caroní entre el Paralelo 7 y el Bajo Caroní: Embalse del Guri, represas de Tocoma, Caruachi y Macagua, Angostura (Ciudad Bolívar) y Puerto Ordaz, y las bases aéreas de Rojo en el norte y el este.",
+   "limitaciones": "Asegurar la infraestructura hidroeléctrica del Guri sin destruirla. Respetar la ZDO hasta la hora H. El combustible es crítico en Hotel, Oscar y November (menos del 25 % de la capacidad). En el simulador los C-130J, C-208 y C-206 no están representados: el asalto aéreo se hace con los helicópteros (UH-60, CH-47 y Bell 212), que llevan una unidad cada grupo.",
+   "instrucciones": "Las tropas embarcan en un helicóptero propio a menos de 3 km (orden Embarcar) y desembarcan con la orden Desembarcar sobre el área del Guri. El objetivo se cumple con tropas propias en el área durante 3 turnos y sin tropas enemigas en ella."
+  },
+  "rojo": {
+   "situacion_general": "Juegos de Guerra 01-2026. El conflicto entre la República Federal Azul y el País Rojo es una guerra congelada desde la guerra civil de 1951-1954. El armisticio dividió el territorio por el Paralelo 7, que corta la cuenca del Orinoco; la frontera es la Zona Desmilitarizada del Orinoco (ZDO), una franja de 4 km. El Embalse del Guri quedó justo al norte de la línea, bajo control de Rojo, pero sus aguas y líneas de transmisión cruzan la ZDO hacia Azul. Azul compra a Rojo el 75 % de su electricidad y explota tierras raras en el límite de la ZDO; Rojo denuncia que los sedimentos obstruyen las turbinas del Guri. En mayo de 2026 Rojo declaró el fin del armisticio. El Guri es la principal reserva de agua dulce de la región y el núcleo hidroeléctrico de ambos países: Rojo lo ha convertido en su centro de gravedad defensivo, con defensa aérea rusa en capas. Situación Rojo (Escudo Protector Guri, Angostura, 01 23:00 JUN26): por más de una década Azul ha realizado acciones injerencistas; su explotación minera afecta la cuenca y la generación hidroeléctrica. El COSENA reporta una amplia posibilidad de ataque de Azul. La máxima autoridad ordenó fortificar toda la infraestructura del Guri y preparar a la nación contra cualquier ataque.",
+   "fuerzas_enemigas": "Azul tiene mayor número de aeronaves tácticas y medios aerotransportados: cazas Kfir y F-16, aviones de ataque ligero, helicópteros de transporte (UH-60 y CH-47), drones armados MQ-1 y MQ-9, tanqueros y del orden de 7 000 combatientes de asalto aéreo. Se estima que opera desde bases al sur del Paralelo 7 y que redespliega unidades aéreas del occidente hacia el centro del país.",
+   "fuerzas_propias": "Cinco bases (Aves, Patos, Roques, Tortuga y Orchila) con unas 57 aeronaves tripuladas (Su-30MK2, F-16, K-8W, AT-27, AS532 Cougar, Y-8W de alerta temprana y un Metro Merlin ELINT), 20 drones kamikaze Shahed-136 y defensa aérea en capas (9 S-300VM Antey-2500, 5 Buk-M3 y 6 S-125 Pechora-2M). Guarniciones de base: 2 520 combatientes.",
+   "mision_superior": "Ejecutar operaciones militares en todo el territorio nacional, a fin de neutralizar el posible carácter de las acciones del enemigo. (Situación Rojo, punto 2.)",
+   "idea_general": "Plan Militar de Campaña Caribe (Base Aérea Central, 01 09:00 JUN2026): a partir del día D a la hora H, el COC ejecutará operaciones militares para contener y eliminar las fuerzas enemigas que intenten penetrar el territorio nacional, sin abandonar la ofensiva, y operaciones de orden interno. Coordinación por las REDI Oriental y Guayana; el componente naval pasa a la REDI Marítima Insular. El COC se reserva el componente aéreo y el sistema de defensa aérea.",
+   "mision": {
+    "tarea": "Defender",
+    "que": "la represa y el Embalse del Guri y el sistema hidroeléctrico del Bajo Caroní",
+    "donde": "en el territorio nacional al norte del Paralelo 7",
+    "cuando": "a partir del día D a la hora H",
+    "proposito": "contener y eliminar a las fuerzas de Azul que intenten penetrar, sin abandonar la ofensiva"
+   },
+   "medios": "Aves: 1 500 combatientes; 14 Su-30MK2, 10 K-8W, 2 Y-8W, 1 Metro Merlin ELINT, 3 S-300VM Antey-2500, 1 Buk-M3. JP-1 1 600 000 de 1 700 000 l. KAB-500 1 000, OFAB-250/270 700, RVV-AE 300, R-27ET 200, R-27ER 100, R-73 250, 7,62 mm 5 000, 30 mm 2 000, MK 82 1 400. O2/N2 2 000/2 000 psi.\nPatos: 4 AS532 Cougar, 2 Do 228 Dornier, 1 S-300VM, 1 Buk-M3, 1 S-125 Pechora-2M. JP-1 140 000 de 300 000 l. Cohetes FZ90 HE 420, 7,62 mm 7 000. O2/N2 500/400 psi.\nRoques: 170 combatientes; 1 S-300VM, 1 Buk-M3, 1 S-125 Pechora-2M (desplegados en la represa del Guri). JP-1 190 000 de 200 000 l. O2/N2 200/200 psi.\nTortuga: 650 combatientes; 14 F-16, 8 K-8W, 2 Y-8, 2 C-550 Citation, 3 S-300VM, 1 Buk-M3, 4 S-125 Pechora-2M. JP-1 590 000 de 700 000 l; AVGAS 600 l. MK 81 200, MK 82 300, 20 mm 4 000. O2/N2 600/500 psi.\nOrchila: 200 combatientes; 4 AT-27 Tucano, 1 C-550 Citation, 20 drones kamikaze Shahed-136, 1 S-300VM, 1 Buk-M3. JP-1 380 000 de 400 000 l. MK 81 1 000, cohetes FZ90 HE 420. O2/N2 1 000/500 psi.",
+   "area_operaciones": "Territorio nacional al norte del Paralelo 7, con prioridad en la REDI Guayana (Guri, Bajo Caroní, Angostura y Puerto Ordaz) y la REDI Oriental (Barcelona, Maturín, San Tomé).",
+   "limitaciones": "No cruzar la ZDO antes de la hora H. Patos tiene menos de la mitad de su combustible. En el simulador los Y-8 de transporte, los Do 228 y los C-550 no están representados.",
+   "instrucciones": "La defensa aérea de Roques está desplegada alrededor de la represa del Guri. Los Shahed-136 tienen poca autonomía en el simulador (300 km): lánzelos desde Orchila (San Tomé) contra blancos al alcance."
+  }
+ },
+ "unidades": [
+  {
+   "nombre": "Base Echo (Puerto Ayacucho)",
+   "bando": "azul",
+   "clase": "base_aerea",
+   "lat": 5.62,
+   "lon": -67.6061,
+   "stock_combustible": 1969.6
+  },
+  {
+   "nombre": "Base Golf (Canaima)",
+   "bando": "azul",
+   "clase": "base_aerea",
+   "lat": 6.232,
+   "lon": -62.8548,
+   "stock_combustible": 1828.6
+  },
+  {
+   "nombre": "Base Hotel (Santa Elena de Uairén)",
+   "bando": "azul",
+   "clase": "base_aerea",
+   "lat": 4.5547,
+   "lon": -61.1452,
+   "stock_combustible": 311.1
+  },
+  {
+   "nombre": "Base Kilo (Puerto Páez)",
+   "bando": "azul",
+   "clase": "base_aerea",
+   "lat": 6.2264,
+   "lon": -67.4486,
+   "stock_combustible": 1200.0
+  },
+  {
+   "nombre": "Base Oscar (La Paragua)",
+   "bando": "azul",
+   "clase": "base_aerea",
+   "lat": 6.833,
+   "lon": -63.33,
+   "stock_combustible": 440.0
+  },
+  {
+   "nombre": "Base November (Kavanayén)",
+   "bando": "azul",
+   "clase": "base_aerea",
+   "lat": 5.632,
+   "lon": -61.77,
+   "stock_combustible": 311.1
+  },
+  {
+   "nombre": "Escuadrón Kfir 1 (Echo)",
+   "bando": "azul",
+   "clase": "caza",
+   "lat": 5.62,
+   "lon": -67.6061,
+   "modelo": "",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Echo (Puerto Ayacucho)"
+  },
+  {
+   "nombre": "Escuadrón Kfir 2 (Echo)",
+   "bando": "azul",
+   "clase": "caza",
+   "lat": 5.62,
+   "lon": -67.6061,
+   "modelo": "",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Echo (Puerto Ayacucho)"
+  },
+  {
+   "nombre": "Escuadrón Kfir 3 (Echo)",
+   "bando": "azul",
+   "clase": "caza",
+   "lat": 5.62,
+   "lon": -67.6061,
+   "modelo": "",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Echo (Puerto Ayacucho)"
+  },
+  {
+   "nombre": "Escuadrón F-16 Block 70 1 (Echo)",
+   "bando": "azul",
+   "clase": "caza",
+   "lat": 5.62,
+   "lon": -67.6061,
+   "modelo": "f16",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Echo (Puerto Ayacucho)"
+  },
+  {
+   "nombre": "Escuadrón F-16 Block 70 2 (Echo)",
+   "bando": "azul",
+   "clase": "caza",
+   "lat": 5.62,
+   "lon": -67.6061,
+   "modelo": "f16",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Echo (Puerto Ayacucho)"
+  },
+  {
+   "nombre": "Escuadrón F-16 Block 70 3 (Echo)",
+   "bando": "azul",
+   "clase": "caza",
+   "lat": 5.62,
+   "lon": -67.6061,
+   "modelo": "f16",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Echo (Puerto Ayacucho)"
+  },
+  {
+   "nombre": "Escuadrón F-16 Block 70 4 (Echo)",
+   "bando": "azul",
+   "clase": "caza",
+   "lat": 5.62,
+   "lon": -67.6061,
+   "modelo": "f16",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Echo (Puerto Ayacucho)"
+  },
+  {
+   "nombre": "Escuadrón F-16 Block 70 5 (Echo)",
+   "bando": "azul",
+   "clase": "caza",
+   "lat": 5.62,
+   "lon": -67.6061,
+   "modelo": "f16",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Echo (Puerto Ayacucho)"
+  },
+  {
+   "nombre": "Escuadrón F-16 Block 70 6 (Echo)",
+   "bando": "azul",
+   "clase": "caza",
+   "lat": 5.62,
+   "lon": -67.6061,
+   "modelo": "f16",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Echo (Puerto Ayacucho)"
+  },
+  {
+   "nombre": "Escuadrón A-37 Dragonfly 1 (Echo)",
+   "bando": "azul",
+   "clase": "ataque",
+   "lat": 5.62,
+   "lon": -67.6061,
+   "modelo": "ataque_ligero",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Echo (Puerto Ayacucho)"
+  },
+  {
+   "nombre": "Escuadrón A-37 Dragonfly 2 (Echo)",
+   "bando": "azul",
+   "clase": "ataque",
+   "lat": 5.62,
+   "lon": -67.6061,
+   "modelo": "ataque_ligero",
+   "aeronaves": 4,
+   "en_tierra": true,
+   "base": "Base Echo (Puerto Ayacucho)"
+  },
+  {
+   "nombre": "Boeing 737 tanquero (Echo)",
+   "bando": "azul",
+   "clase": "cisterna",
+   "lat": 5.62,
+   "lon": -67.6061,
+   "modelo": "",
+   "aeronaves": 2,
+   "en_tierra": true,
+   "base": "Base Echo (Puerto Ayacucho)"
+  },
+  {
+   "nombre": "P-3 Orion (guerra electrónica) (Echo)",
+   "bando": "azul",
+   "clase": "avion_ge",
+   "lat": 5.62,
+   "lon": -67.6061,
+   "modelo": "",
+   "aeronaves": 2,
+   "en_tierra": true,
+   "base": "Base Echo (Puerto Ayacucho)"
+  },
+  {
+   "nombre": "MIM-23 Hawk 1 (Echo)",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "lat": 5.65822,
+   "lon": -67.56769
+  },
+  {
+   "nombre": "MIM-23 Hawk 2 (Echo)",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "lat": 5.58178,
+   "lon": -67.64451
+  },
+  {
+   "nombre": "1.er Batallón de Asalto Aéreo (Echo)",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 5.6327,
+   "lon": -67.60146,
+   "escalon": "batallon",
+   "personal": 750
+  },
+  {
+   "nombre": "2.º Batallón de Asalto Aéreo (Echo)",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 5.61538,
+   "lon": -67.59334,
+   "escalon": "batallon",
+   "personal": 750
+  },
+  {
+   "nombre": "3.º Batallón de Asalto Aéreo (Echo)",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 5.6073,
+   "lon": -67.61074,
+   "escalon": "batallon",
+   "personal": 750
+  },
+  {
+   "nombre": "4.º Batallón de Asalto Aéreo (Echo)",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 5.62687,
+   "lon": -67.61494,
+   "escalon": "batallon",
+   "personal": 750
+  },
+  {
+   "nombre": "UH-60 Black Hawk 1 (Golf)",
+   "bando": "azul",
+   "clase": "helicoptero_artillado",
+   "lat": 6.232,
+   "lon": -62.8548,
+   "modelo": "mh60m",
+   "aeronaves": 5,
+   "en_tierra": true,
+   "base": "Base Golf (Canaima)"
+  },
+  {
+   "nombre": "UH-60 Black Hawk 2 (Golf)",
+   "bando": "azul",
+   "clase": "helicoptero_artillado",
+   "lat": 6.232,
+   "lon": -62.8548,
+   "modelo": "mh60m",
+   "aeronaves": 5,
+   "en_tierra": true,
+   "base": "Base Golf (Canaima)"
+  },
+  {
+   "nombre": "OV-10 Bronco 1 (Golf)",
+   "bando": "azul",
+   "clase": "ataque",
+   "lat": 6.232,
+   "lon": -62.8548,
+   "modelo": "ataque_ligero",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Golf (Canaima)"
+  },
+  {
+   "nombre": "OV-10 Bronco 2 (Golf)",
+   "bando": "azul",
+   "clase": "ataque",
+   "lat": 6.232,
+   "lon": -62.8548,
+   "modelo": "ataque_ligero",
+   "aeronaves": 4,
+   "en_tierra": true,
+   "base": "Base Golf (Canaima)"
+  },
+  {
+   "nombre": "NASAMS (Golf)",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "lat": 6.27705,
+   "lon": -62.8548
+  },
+  {
+   "nombre": "1.er Batallón de Asalto Aéreo (Golf)",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 6.232,
+   "lon": -62.84121,
+   "escalon": "batallon",
+   "personal": 600
+  },
+  {
+   "nombre": "2.º Batallón de Asalto Aéreo (Golf)",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 6.232,
+   "lon": -62.86839,
+   "escalon": "batallon",
+   "personal": 600
+  },
+  {
+   "nombre": "A-29 Super Tucano 1 (Hotel)",
+   "bando": "azul",
+   "clase": "ataque",
+   "lat": 4.5547,
+   "lon": -61.1452,
+   "modelo": "ataque_ligero",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Hotel (Santa Elena de Uairén)"
+  },
+  {
+   "nombre": "A-29 Super Tucano 2 (Hotel)",
+   "bando": "azul",
+   "clase": "ataque",
+   "lat": 4.5547,
+   "lon": -61.1452,
+   "modelo": "ataque_ligero",
+   "aeronaves": 4,
+   "en_tierra": true,
+   "base": "Base Hotel (Santa Elena de Uairén)"
+  },
+  {
+   "nombre": "MIM-23 Hawk (Hotel)",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "lat": 4.60875,
+   "lon": -61.1452
+  },
+  {
+   "nombre": "NASAMS (Hotel)",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "lat": 4.50065,
+   "lon": -61.1452
+  },
+  {
+   "nombre": "1.er Batallón de Asalto Aéreo (Hotel)",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 4.5547,
+   "lon": -61.13164,
+   "escalon": "batallon",
+   "personal": 725
+  },
+  {
+   "nombre": "2.º Batallón de Asalto Aéreo (Hotel)",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 4.5547,
+   "lon": -61.15876,
+   "escalon": "batallon",
+   "personal": 725
+  },
+  {
+   "nombre": "MQ-1 Predator (Kilo)",
+   "bando": "azul",
+   "clase": "dron_ataque",
+   "lat": 6.2264,
+   "lon": -67.4486,
+   "modelo": "uav_armado",
+   "aeronaves": 5,
+   "en_tierra": true,
+   "base": "Base Kilo (Puerto Páez)"
+  },
+  {
+   "nombre": "Compañía de Asalto Aéreo (Kilo)",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 6.2264,
+   "lon": -67.43501,
+   "escalon": "compania",
+   "personal": 300
+  },
+  {
+   "nombre": "UH-60 Black Hawk 1 (Oscar)",
+   "bando": "azul",
+   "clase": "helicoptero_artillado",
+   "lat": 6.833,
+   "lon": -63.33,
+   "modelo": "mh60m",
+   "aeronaves": 5,
+   "en_tierra": true,
+   "base": "Base Oscar (La Paragua)"
+  },
+  {
+   "nombre": "UH-60 Black Hawk 2 (Oscar)",
+   "bando": "azul",
+   "clase": "helicoptero_artillado",
+   "lat": 6.833,
+   "lon": -63.33,
+   "modelo": "mh60m",
+   "aeronaves": 5,
+   "en_tierra": true,
+   "base": "Base Oscar (La Paragua)"
+  },
+  {
+   "nombre": "Bell 212 (Oscar)",
+   "bando": "azul",
+   "clase": "helicoptero_artillado",
+   "lat": 6.833,
+   "lon": -63.33,
+   "modelo": "helo_transporte",
+   "aeronaves": 1,
+   "en_tierra": true,
+   "base": "Base Oscar (La Paragua)"
+  },
+  {
+   "nombre": "NASAMS (Oscar)",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "lat": 6.87805,
+   "lon": -63.33
+  },
+  {
+   "nombre": "Batallón de Asalto Aéreo (Oscar)",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 6.81723,
+   "lon": -63.32607,
+   "escalon": "batallon",
+   "personal": 650
+  },
+  {
+   "nombre": "MQ-1 Predator (November)",
+   "bando": "azul",
+   "clase": "dron_ataque",
+   "lat": 5.632,
+   "lon": -61.77,
+   "modelo": "uav_armado",
+   "aeronaves": 5,
+   "en_tierra": true,
+   "base": "Base November (Kavanayén)"
+  },
+  {
+   "nombre": "MQ-9 Reaper 1 (November)",
+   "bando": "azul",
+   "clase": "dron_ataque",
+   "lat": 5.632,
+   "lon": -61.77,
+   "modelo": "mq9",
+   "aeronaves": 5,
+   "en_tierra": true,
+   "base": "Base November (Kavanayén)"
+  },
+  {
+   "nombre": "MQ-9 Reaper 2 (November)",
+   "bando": "azul",
+   "clase": "dron_ataque",
+   "lat": 5.632,
+   "lon": -61.77,
+   "modelo": "mq9",
+   "aeronaves": 5,
+   "en_tierra": true,
+   "base": "Base November (Kavanayén)"
+  },
+  {
+   "nombre": "Bell 212 (November)",
+   "bando": "azul",
+   "clase": "helicoptero_artillado",
+   "lat": 5.632,
+   "lon": -61.77,
+   "modelo": "helo_transporte",
+   "aeronaves": 2,
+   "en_tierra": true,
+   "base": "Base November (Kavanayén)"
+  },
+  {
+   "nombre": "CH-47 Chinook (November)",
+   "bando": "azul",
+   "clase": "helicoptero_artillado",
+   "lat": 5.632,
+   "lon": -61.77,
+   "modelo": "mh47g",
+   "aeronaves": 5,
+   "en_tierra": true,
+   "base": "Base November (Kavanayén)"
+  },
+  {
+   "nombre": "M-SHORAD 1 (November)",
+   "bando": "azul",
+   "clase": "antiaerea_portatil",
+   "lat": 5.64551,
+   "lon": -61.74648
+  },
+  {
+   "nombre": "M-SHORAD 2 (November)",
+   "bando": "azul",
+   "clase": "antiaerea_portatil",
+   "lat": 5.61849,
+   "lon": -61.79352
+  },
+  {
+   "nombre": "Compañía de Asalto Aéreo (November)",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 5.6203,
+   "lon": -61.76321,
+   "escalon": "compania",
+   "personal": 150
+  },
+  {
+   "nombre": "Estación Terrena Luepa",
+   "bando": "azul",
+   "clase": "centro_comunicaciones",
+   "lat": 4.56859,
+   "lon": -61.07664
+  },
+  {
+   "nombre": "Planta refinadora de tierras raras (centro de Azul)",
+   "bando": "azul",
+   "clase": "refineria",
+   "lat": 5.75,
+   "lon": -64.6
+  },
+  {
+   "nombre": "Base Aves (Barcelona)",
+   "bando": "rojo",
+   "clase": "base_aerea",
+   "lat": 10.1072,
+   "lon": -64.6892,
+   "stock_combustible": 1882.4
+  },
+  {
+   "nombre": "Base Patos (Maturín)",
+   "bando": "rojo",
+   "clase": "base_aerea",
+   "lat": 9.749,
+   "lon": -63.1533,
+   "stock_combustible": 933.3
+  },
+  {
+   "nombre": "Base Roques (Puerto Ordaz)",
+   "bando": "rojo",
+   "clase": "base_aerea",
+   "lat": 8.2847,
+   "lon": -62.7639,
+   "stock_combustible": 1900.0
+  },
+  {
+   "nombre": "Base Tortuga (Angostura, Ciudad Bolívar)",
+   "bando": "rojo",
+   "clase": "base_aerea",
+   "lat": 8.1222,
+   "lon": -63.5369,
+   "stock_combustible": 1685.7
+  },
+  {
+   "nombre": "Base Orchila (San Tomé)",
+   "bando": "rojo",
+   "clase": "base_aerea",
+   "lat": 8.9451,
+   "lon": -64.1511,
+   "stock_combustible": 1900.0
+  },
+  {
+   "nombre": "Escuadrón Su-30MK2 1 (Aves)",
+   "bando": "rojo",
+   "clase": "caza",
+   "lat": 10.1072,
+   "lon": -64.6892,
+   "modelo": "su30",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Aves (Barcelona)"
+  },
+  {
+   "nombre": "Escuadrón Su-30MK2 2 (Aves)",
+   "bando": "rojo",
+   "clase": "caza",
+   "lat": 10.1072,
+   "lon": -64.6892,
+   "modelo": "su30",
+   "aeronaves": 6,
+   "en_tierra": true,
+   "base": "Base Aves (Barcelona)"
+  },
+  {
+   "nombre": "Escuadrón K-8W 1 (Aves)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": 10.1072,
+   "lon": -64.6892,
+   "modelo": "ataque_ligero",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Aves (Barcelona)"
+  },
+  {
+   "nombre": "Escuadrón K-8W 2 (Aves)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": 10.1072,
+   "lon": -64.6892,
+   "modelo": "ataque_ligero",
+   "aeronaves": 2,
+   "en_tierra": true,
+   "base": "Base Aves (Barcelona)"
+  },
+  {
+   "nombre": "Y-8W (alerta temprana) (Aves)",
+   "bando": "rojo",
+   "clase": "alerta_temprana",
+   "lat": 10.1072,
+   "lon": -64.6892,
+   "modelo": "",
+   "aeronaves": 2,
+   "en_tierra": true,
+   "base": "Base Aves (Barcelona)"
+  },
+  {
+   "nombre": "Metro Merlin ELINT (Aves)",
+   "bando": "rojo",
+   "clase": "avion_ge",
+   "lat": 10.1072,
+   "lon": -64.6892,
+   "modelo": "",
+   "aeronaves": 1,
+   "en_tierra": true,
+   "base": "Base Aves (Barcelona)"
+  },
+  {
+   "nombre": "S-300VM Antey-2500 1 (Aves)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 10.1997,
+   "lon": -64.68005,
+   "modelo": "s300vm"
+  },
+  {
+   "nombre": "S-300VM Antey-2500 2 (Aves)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 10.05315,
+   "lon": -64.5941,
+   "modelo": "s300vm"
+  },
+  {
+   "nombre": "S-300VM Antey-2500 3 (Aves)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 10.05315,
+   "lon": -64.7843,
+   "modelo": "s300vm"
+  },
+  {
+   "nombre": "Buk-M3 (Aves)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 10.13873,
+   "lon": -64.63372,
+   "modelo": "buk_m2e"
+  },
+  {
+   "nombre": "1.er Batallón de Defensa de Base (Aves)",
+   "bando": "rojo",
+   "clase": "infanteria",
+   "lat": 10.12071,
+   "lon": -64.71298,
+   "escalon": "batallon",
+   "personal": 750
+  },
+  {
+   "nombre": "2.º Batallón de Defensa de Base (Aves)",
+   "bando": "rojo",
+   "clase": "infanteria",
+   "lat": 10.08379,
+   "lon": -64.67547,
+   "escalon": "batallon",
+   "personal": 750
+  },
+  {
+   "nombre": "AS532 Cougar (Patos)",
+   "bando": "rojo",
+   "clase": "helicoptero_artillado",
+   "lat": 9.749,
+   "lon": -63.1533,
+   "modelo": "helo_transporte",
+   "aeronaves": 4,
+   "en_tierra": true,
+   "base": "Base Patos (Maturín)"
+  },
+  {
+   "nombre": "S-300VM Antey-2500 (Patos)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 9.83909,
+   "lon": -63.1533,
+   "modelo": "s300vm"
+  },
+  {
+   "nombre": "Buk-M3 (Patos)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 9.71747,
+   "lon": -63.09789,
+   "modelo": "buk_m2e"
+  },
+  {
+   "nombre": "S-125 Pechora-2M (Patos)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 9.72648,
+   "lon": -63.19288,
+   "modelo": "pechora_2m"
+  },
+  {
+   "nombre": "S-300VM Antey-2500 (Guri) (Roques)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 7.90246,
+   "lon": -63.0,
+   "modelo": "s300vm"
+  },
+  {
+   "nombre": "Buk-M3 (Guri) (Roques)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 7.7049,
+   "lon": -63.03637,
+   "modelo": "buk_m2e"
+  },
+  {
+   "nombre": "S-125 Pechora-2M (Guri) (Roques)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 7.76732,
+   "lon": -62.96363,
+   "modelo": "pechora_2m"
+  },
+  {
+   "nombre": "Compañía de Custodia de la Represa del Guri (Roques)",
+   "bando": "rojo",
+   "clase": "infanteria",
+   "lat": 7.77633,
+   "lon": -63.01575,
+   "escalon": "compania",
+   "personal": 170
+  },
+  {
+   "nombre": "Escuadrón F-16 1 (Tortuga)",
+   "bando": "rojo",
+   "clase": "caza",
+   "lat": 8.1222,
+   "lon": -63.5369,
+   "modelo": "f16",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Tortuga (Angostura, Ciudad Bolívar)"
+  },
+  {
+   "nombre": "Escuadrón F-16 2 (Tortuga)",
+   "bando": "rojo",
+   "clase": "caza",
+   "lat": 8.1222,
+   "lon": -63.5369,
+   "modelo": "f16",
+   "aeronaves": 6,
+   "en_tierra": true,
+   "base": "Base Tortuga (Angostura, Ciudad Bolívar)"
+  },
+  {
+   "nombre": "Escuadrón K-8W (Tortuga)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": 8.1222,
+   "lon": -63.5369,
+   "modelo": "ataque_ligero",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Tortuga (Angostura, Ciudad Bolívar)"
+  },
+  {
+   "nombre": "S-300VM Antey-2500 1 (Tortuga)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 8.23031,
+   "lon": -63.5369,
+   "modelo": "s300vm"
+  },
+  {
+   "nombre": "S-300VM Antey-2500 2 (Tortuga)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 8.06815,
+   "lon": -63.44233,
+   "modelo": "s300vm"
+  },
+  {
+   "nombre": "S-300VM Antey-2500 3 (Tortuga)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 8.06815,
+   "lon": -63.63147,
+   "modelo": "s300vm"
+  },
+  {
+   "nombre": "Buk-M3 (Tortuga)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 8.05914,
+   "lon": -63.5369,
+   "modelo": "buk_m2e"
+  },
+  {
+   "nombre": "S-125 Pechora-2M 1 (Tortuga)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 8.14535,
+   "lon": -63.50237,
+   "modelo": "pechora_2m"
+  },
+  {
+   "nombre": "S-125 Pechora-2M 2 (Tortuga)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 8.09035,
+   "lon": -63.50473,
+   "modelo": "pechora_2m"
+  },
+  {
+   "nombre": "S-125 Pechora-2M 3 (Tortuga)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 8.09035,
+   "lon": -63.56907,
+   "modelo": "pechora_2m"
+  },
+  {
+   "nombre": "S-125 Pechora-2M 4 (Tortuga)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 8.15405,
+   "lon": -63.56907,
+   "modelo": "pechora_2m"
+  },
+  {
+   "nombre": "Batallón de Defensa de Base (Tortuga)",
+   "bando": "rojo",
+   "clase": "infanteria",
+   "lat": 8.1222,
+   "lon": -63.5642,
+   "escalon": "batallon",
+   "personal": 650
+  },
+  {
+   "nombre": "AT-27 Tucano (Orchila)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": 8.9451,
+   "lon": -64.1511,
+   "modelo": "ataque_ligero",
+   "aeronaves": 4,
+   "en_tierra": true,
+   "base": "Base Orchila (San Tomé)"
+  },
+  {
+   "nombre": "Shahed-136 1 (Orchila)",
+   "bando": "rojo",
+   "clase": "municion_merodeadora",
+   "lat": 8.9451,
+   "lon": -64.1511,
+   "modelo": "merodeadora",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Orchila (San Tomé)"
+  },
+  {
+   "nombre": "Shahed-136 2 (Orchila)",
+   "bando": "rojo",
+   "clase": "municion_merodeadora",
+   "lat": 8.9451,
+   "lon": -64.1511,
+   "modelo": "merodeadora",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "Base Orchila (San Tomé)"
+  },
+  {
+   "nombre": "Shahed-136 3 (Orchila)",
+   "bando": "rojo",
+   "clase": "municion_merodeadora",
+   "lat": 8.9451,
+   "lon": -64.1511,
+   "modelo": "merodeadora",
+   "aeronaves": 4,
+   "en_tierra": true,
+   "base": "Base Orchila (San Tomé)"
+  },
+  {
+   "nombre": "S-300VM Antey-2500 (Orchila)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 9.03519,
+   "lon": -64.1511,
+   "modelo": "s300vm"
+  },
+  {
+   "nombre": "Buk-M3 (Orchila)",
+   "bando": "rojo",
+   "clase": "antiaerea",
+   "lat": 8.89105,
+   "lon": -64.1511,
+   "modelo": "buk_m2e"
+  },
+  {
+   "nombre": "Compañía de Defensa de Base (Orchila)",
+   "bando": "rojo",
+   "clase": "infanteria",
+   "lat": 8.9451,
+   "lon": -64.12374,
+   "escalon": "compania",
+   "personal": 200
+  },
+  {
+   "nombre": "Central Hidroeléctrica Simón Bolívar (Guri)",
+   "bando": "rojo",
+   "clase": "hidroelectrica",
+   "lat": 7.77182,
+   "lon": -63.0
+  },
+  {
+   "nombre": "Central Hidroeléctrica Manuel Piar (Tocoma)",
+   "bando": "rojo",
+   "clase": "hidroelectrica",
+   "lat": 7.90441,
+   "lon": -63.03342
+  },
+  {
+   "nombre": "Central Hidroeléctrica Francisco de Miranda (Caruachi)",
+   "bando": "rojo",
+   "clase": "hidroelectrica",
+   "lat": 8.15678,
+   "lon": -62.79296
+  },
+  {
+   "nombre": "Central Hidroeléctrica Macagua (Antonio José de Sucre)",
+   "bando": "rojo",
+   "clase": "hidroelectrica",
+   "lat": 8.30749,
+   "lon": -62.67081
+  },
+  {
+   "nombre": "Puente Angostura",
+   "bando": "rojo",
+   "clase": "puente",
+   "lat": 8.14399,
+   "lon": -63.59841,
+   "radio_km": 0.8
+  },
+  {
+   "nombre": "Puente Orinoquia",
+   "bando": "rojo",
+   "clase": "puente",
+   "lat": 8.28883,
+   "lon": -62.89914,
+   "radio_km": 0.8
+  },
+  {
+   "nombre": "Puente Caroní",
+   "bando": "rojo",
+   "clase": "puente",
+   "lat": 8.32267,
+   "lon": -62.69145,
+   "radio_km": 0.8
+  },
+  {
+   "nombre": "Puente Angosturita",
+   "bando": "rojo",
+   "clase": "puente",
+   "lat": 8.33912,
+   "lon": -62.71264,
+   "radio_km": 0.8
+  },
+  {
+   "nombre": "Planta de Generación Eléctrica El Furrial",
+   "bando": "rojo",
+   "clase": "termoelectrica",
+   "lat": 9.70055,
+   "lon": -63.46784
+  },
+  {
+   "nombre": "Planta Termoeléctrica Antonio José de Sucre",
+   "bando": "rojo",
+   "clase": "termoelectrica",
+   "lat": 10.39954,
+   "lon": -64.16639
+  },
+  {
+   "nombre": "Refinería de Puerto La Cruz",
+   "bando": "rojo",
+   "clase": "refineria",
+   "lat": 10.22075,
+   "lon": -64.62064
+  }
+ ],
+ "objetivos": [
+  {
+   "bando": "azul",
+   "tipo": "ocupar",
+   "nombre": "Asegurar el Embalse y la represa del Guri",
+   "puntos": 40,
+   "lat": 7.76732,
+   "lon": -63.0,
+   "radio_km": 12.0,
+   "turnos_requeridos": 3
+  },
+  {
+   "bando": "azul",
+   "tipo": "proteger",
+   "nombre": "Capturar el Guri sin destruir la central",
+   "puntos": 20,
+   "unidad": "Central Hidroeléctrica Simón Bolívar (Guri)",
+   "hasta_turno": 12
+  },
+  {
+   "bando": "azul",
+   "tipo": "proteger",
+   "nombre": "Mantener operativa la Base Echo",
+   "puntos": 10,
+   "unidad": "Base Echo (Puerto Ayacucho)",
+   "hasta_turno": 12
+  },
+  {
+   "bando": "rojo",
+   "tipo": "proteger",
+   "nombre": "Defender la Central Hidroeléctrica del Guri",
+   "puntos": 30,
+   "unidad": "Central Hidroeléctrica Simón Bolívar (Guri)",
+   "hasta_turno": 12
+  },
+  {
+   "bando": "rojo",
+   "tipo": "destruir",
+   "nombre": "Destruir la planta refinadora de tierras raras",
+   "puntos": 10,
+   "unidad": "Planta refinadora de tierras raras (centro de Azul)"
+  },
+  {
+   "bando": "rojo",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar la Base Echo (Puerto Ayacucho)",
+   "puntos": 20,
+   "unidad": "Base Echo (Puerto Ayacucho)",
+   "umbral": 50
+  },
+  {
+   "bando": "rojo",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar la Base Golf (Canaima)",
+   "puntos": 15,
+   "unidad": "Base Golf (Canaima)",
+   "umbral": 50
+  },
+  {
+   "bando": "rojo",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar la Base Oscar (La Paragua)",
+   "puntos": 15,
+   "unidad": "Base Oscar (La Paragua)",
+   "umbral": 50
+  },
+  {
+   "bando": "rojo",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar la Base November (Kavanayén)",
+   "puntos": 15,
+   "unidad": "Base November (Kavanayén)",
+   "umbral": 50
+  },
+  {
+   "bando": "azul",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar la Base Aves (Barcelona)",
+   "puntos": 10,
+   "unidad": "Base Aves (Barcelona)",
+   "umbral": 50
+  },
+  {
+   "bando": "azul",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar la Base Patos (Maturín)",
+   "puntos": 10,
+   "unidad": "Base Patos (Maturín)",
+   "umbral": 50
+  },
+  {
+   "bando": "azul",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar la Base Roques (Puerto Ordaz)",
+   "puntos": 10,
+   "unidad": "Base Roques (Puerto Ordaz)",
+   "umbral": 50
+  },
+  {
+   "bando": "azul",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar la Base Tortuga (Angostura, Ciudad Bolívar)",
+   "puntos": 10,
+   "unidad": "Base Tortuga (Angostura, Ciudad Bolívar)",
+   "umbral": 50
+  },
+  {
+   "bando": "azul",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar la Base Orchila (San Tomé)",
+   "puntos": 10,
+   "unidad": "Base Orchila (San Tomé)",
+   "umbral": 50
+  },
+  {
+   "bando": "azul",
+   "tipo": "neutralizar",
+   "nombre": "Suprimir la defensa del Guri: S-300VM Antey-2500 (Guri) (Roques)",
+   "puntos": 10,
+   "unidad": "S-300VM Antey-2500 (Guri) (Roques)",
+   "umbral": 50
+  },
+  {
+   "bando": "azul",
+   "tipo": "neutralizar",
+   "nombre": "Suprimir la defensa del Guri: Buk-M3 (Guri) (Roques)",
+   "puntos": 10,
+   "unidad": "Buk-M3 (Guri) (Roques)",
+   "umbral": 50
+  },
+  {
+   "bando": "azul",
+   "tipo": "neutralizar",
+   "nombre": "Suprimir la defensa del Guri: S-125 Pechora-2M (Guri) (Roques)",
+   "puntos": 10,
+   "unidad": "S-125 Pechora-2M (Guri) (Roques)",
+   "umbral": 50
+  },
+  {
+   "bando": "rojo",
+   "tipo": "proteger",
+   "nombre": "Proteger Central Hidroeléctrica Manuel Piar (Tocoma)",
+   "puntos": 5,
+   "unidad": "Central Hidroeléctrica Manuel Piar (Tocoma)",
+   "hasta_turno": 12
+  },
+  {
+   "bando": "rojo",
+   "tipo": "proteger",
+   "nombre": "Proteger Central Hidroeléctrica Francisco de Miranda (Caruachi)",
+   "puntos": 5,
+   "unidad": "Central Hidroeléctrica Francisco de Miranda (Caruachi)",
+   "hasta_turno": 12
+  },
+  {
+   "bando": "rojo",
+   "tipo": "proteger",
+   "nombre": "Proteger Central Hidroeléctrica Macagua (Antonio José de Sucre)",
+   "puntos": 5,
+   "unidad": "Central Hidroeléctrica Macagua (Antonio José de Sucre)",
+   "hasta_turno": 12
+  }
+ ]
+}
