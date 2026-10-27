@@ -29,6 +29,9 @@ class ConnectionManager:
     def conexiones(self, escenario_id: int) -> list[Conexion]:
         return list(self._conexiones.get(escenario_id, []))
 
+    def escenarios_con_conexiones(self) -> list[int]:
+        return [eid for eid, lista in self._conexiones.items() if lista]
+
     async def conectar(self, escenario_id: int, websocket: WebSocket, usuario) -> Conexion:
         await websocket.accept()
         c = Conexion(websocket, usuario.id, usuario.rol)
@@ -50,6 +53,21 @@ class ConnectionManager:
             clave = rol if state.es_bando(rol) else "completa"
             if clave not in vistas:
                 vistas[clave] = state.estado_para(db, escenario, rol)
+            try:
+                await c.websocket.send_json(vistas[clave])
+            except Exception:
+                self.desconectar(escenario.id, c)
+
+    async def difundir_posiciones(self, db: Session, escenario: Escenario) -> None:
+        """Reloj y posiciones de las unidades (tiempo real), filtradas por la niebla de guerra de cada vista."""
+        from app.engine import tiempo_real  # importacion tardia: el motor importa los modelos
+
+        vistas: dict[str, dict] = {}
+        for c in self.conexiones(escenario.id):
+            rol = c.rol_efectivo
+            clave = rol if state.es_bando(rol) else "completa"
+            if clave not in vistas:
+                vistas[clave] = tiempo_real.posiciones_para(db, escenario, rol)
             try:
                 await c.websocket.send_json(vistas[clave])
             except Exception:

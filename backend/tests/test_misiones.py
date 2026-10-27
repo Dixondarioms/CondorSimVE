@@ -61,10 +61,10 @@ def test_la_estimacion_da_hora_y_combustible_en_cada_punto():
     pts = [P("orbita", 90, turnos=2), {"tipo": "aterrizaje", "lat": 0.0, "lon": 0.0, "base_id": 1}]
     plan = misiones_mod.estimar(0.0, 0.0, 900, 1800, 100, pts)
     orbita, final = plan["puntos"]
-    assert orbita["llegada_h"] == pytest.approx(0.1, abs=0.01) and orbita["salida_h"] == 3
+    assert orbita["llegada_h"] == pytest.approx(0.1, abs=0.01) and orbita["salida_h"] == pytest.approx(2.1, abs=0.01)  # tiempo real: 2 h exactas de orbita
     assert orbita["combustible_llegada"] == pytest.approx(95, abs=0.2)
     assert orbita["combustible_salida"] == pytest.approx(79, abs=0.2)
-    assert final["llegada_h"] == pytest.approx(3.1, abs=0.01) and plan["combustible_final"] == pytest.approx(74, abs=0.3)
+    assert final["llegada_h"] == pytest.approx(2.2, abs=0.01) and plan["combustible_final"] == pytest.approx(74, abs=0.3)
     assert plan["advertencias"] == []
     corto = misiones_mod.estimar(0.0, 0.0, 900, 200, 100, pts)  # poca autonomia
     assert any(a.startswith("No alcanza") for a in corto["advertencias"])

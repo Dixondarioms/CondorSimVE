@@ -647,8 +647,8 @@ def sugerencias(tipo: str, esc, unidades, objetivos, bando: str, pm_contenido: d
         cal = calendario.resumen(esc)
         if cal:
             if cal["turno_h"]:
-                lineas.append(f"- Tiempo: día D {cal['dia_d'] or '(a determinar)'}, hora H {cal['hora_h']} (turno {cal['turno_h']})"
-                              + (f"; hasta el turno {cal['turno_final']}." if cal["turno_final"] else "."))
+                lineas.append(f"- Tiempo: día D {cal['dia_d'] or '(a determinar)'}, hora H {cal['hora_h']} (hora {cal['turno_h']} del ejercicio)"
+                              + (f"; hasta la hora {cal['turno_final']}." if cal["turno_final"] else "."))
             for f in cal["fases"]:
                 lineas.append(f"- Fase {f['nombre']}: turnos {f['desde']} a {f['hasta'] or '…'}.")
         if p["area_operaciones"]:

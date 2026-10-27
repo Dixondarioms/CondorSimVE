@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Integer, String, Text
+from sqlalchemy import Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -27,6 +27,8 @@ class Mision(Base):
     plan_json: Mapped[str] = mapped_column(Text, default="{}")  # estimacion de hora y combustible al planificarla
     indice: Mapped[int] = mapped_column(Integer, default=0)  # punto de la ruta hacia el que va
     espera: Mapped[int] = mapped_column(Integer, default=-1)  # turnos de orbita que le quedan (-1: no esta orbitando)
+    # tiempo real: segundo simulado hasta el que orbita (o espera a su paquete o a la cisterna); None si esta en vuelo
+    espera_hasta: Mapped[float | None] = mapped_column(Float, nullable=True)
     resultado: Mapped[str] = mapped_column(String(300), default="")
     autor: Mapped[str] = mapped_column(String(50), default="")  # nombre de usuario de quien la planifico
     # id del autor y puesto que ocupaba al planificarla (nulos en las misiones anteriores a la migracion 0018)

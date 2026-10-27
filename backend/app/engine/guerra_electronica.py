@@ -58,7 +58,10 @@ class Contexto:
 
 
 def contexto(db, escenario, en_resolucion: bool = False) -> Contexto:
-    """Durante la resolucion rigen las zonas creadas en este turno; en la planificacion, las del turno anterior."""
+    """Tiempo real: rigen las zonas cuyo emisor sigue interfiriendo (sin `fin_seg`). Las zonas por turno (sin
+    `inicio_seg`): durante la resolucion, las creadas en este turno; en la planificacion, las del turno anterior."""
+    from sqlalchemy import and_, or_
+
     from app.engine import infraestructura
     from app.models.unidad import Unidad
 
@@ -66,7 +69,9 @@ def contexto(db, escenario, en_resolucion: bool = False) -> Contexto:
     unidades = db.query(Unidad).filter(Unidad.escenario_id == escenario.id, Unidad.tipo == "base").all()
     return Contexto(
         db.query(Interferencia)
-        .filter(Interferencia.escenario_id == escenario.id, Interferencia.turno == turno)
+        .filter(Interferencia.escenario_id == escenario.id,
+                or_(and_(Interferencia.inicio_seg.isnot(None), Interferencia.fin_seg.is_(None)),
+                    and_(Interferencia.inicio_seg.is_(None), Interferencia.turno == turno)))
         .order_by(Interferencia.id)
         .all(),
         {b: infraestructura.factor_radar(unidades, b) for b in ("azul", "rojo")},
@@ -96,4 +101,4 @@ def enlace_perdido(u, ge: Contexto) -> bool:
 
 def serializar(z: Interferencia) -> dict:
     return {"id": z.id, "bando": z.bando, "unidad_id": z.unidad_id, "lat": z.lat, "lon": z.lon,
-            "radio_km": z.radio_km, "turno": z.turno}
+            "radio_km": z.radio_km, "turno": z.turno, "desde_seg": getattr(z, "inicio_seg", None)}

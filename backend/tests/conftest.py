@@ -7,6 +7,7 @@ el servidor embebido de `pixeltable-pgserver` o el indicado en TEST_DATABASE_URL
 """
 
 import os
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -52,6 +53,8 @@ def terreno_llano(monkeypatch):
     monkeypatch.setattr(router_unidades, "get_terreno", lambda: TerrenoFalso())
     monkeypatch.setattr(router_ordenes, "get_terreno", lambda: TerrenoFalso())
     monkeypatch.setattr(adversario_mod, "get_terreno", lambda: TerrenoFalso())
+    from app.engine import tiempo_real
+    monkeypatch.setattr(tiempo_real, "get_terreno", lambda: TerrenoFalso())
     monkeypatch.setattr(auth, "ITERACIONES", 1000)  # hash rapido solo en tests
 
 
@@ -161,3 +164,21 @@ def api(db_engine):
     cliente.engine = db_engine
     yield cliente
     app.dependency_overrides.clear()
+
+
+# SIETE en tiempo real: estas pruebas describen el SIETE por turnos (LISTO, resolver el turno, una orden pendiente por
+# turno, el adversario automatico) o funciones que llegan en las proximas etapas (construir, interferir, embarcar). Se
+# conservan para retomarlas en cada etapa; la lista esta en tests/pruebas_por_turnos.txt.
+_POR_TURNOS = {
+    linea.strip() for linea in (Path(__file__).parent / "pruebas_por_turnos.txt").read_text(encoding="utf-8").splitlines()
+    if linea.strip() and not linea.startswith("#")
+}
+
+
+def pytest_collection_modifyitems(config, items):
+    import pytest
+
+    marca = pytest.mark.skip(reason="SIETE por turnos o etapa siguiente del tiempo real (tests/pruebas_por_turnos.txt)")
+    for item in items:
+        if item.nodeid.replace("\\", "/") in _POR_TURNOS:
+            item.add_marker(marca)

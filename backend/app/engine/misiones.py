@@ -39,13 +39,13 @@ class Rol:
 
 ROLES: dict[str, Rol] = {r.id: r for r in [
     Rol("CAP", "Patrulla aerea de combate (CAP)",
-        "Vuela a una orbita, la mantiene los turnos indicados interceptando a los aviones enemigos detectados a su "
+        "Vuela a una orbita, la mantiene las horas indicadas interceptando a los aviones enemigos detectados a su "
         "alcance y regresa a la base.", ("orbita",), ("blanco",), "aire"),
     Rol("INTERDICCION", "Interdiccion (ataque a un blanco)",
         "Vuela hasta el blanco, lo ataca al tenerlo a su alcance y regresa. Si el blanco ya no esta, ataca al enemigo "
         "detectado mas cercano.", ("blanco",), (), "superficie"),
     Rol("CAS", "Apoyo aereo cercano (CAS)",
-        "Orbita sobre la zona de combate y en cada turno ataca al enemigo de superficie detectado mas cercano a su "
+        "Orbita sobre la zona de combate y en cada pasada ataca al enemigo de superficie detectado mas cercano a su "
         "alcance.", ("orbita",), ("blanco",), "superficie"),
     Rol("SEAD", "Supresion de defensas aereas (SEAD)",
         "Ataca radares y antiaerea: el blanco indicado o, si no lo hay, el emisor enemigo detectado mas cercano.",
@@ -53,7 +53,7 @@ ROLES: dict[str, Rol] = {r.id: r for r in [
     Rol("RECO", "Reconocimiento",
         "Recorre la ruta (con orbitas, si se indican) para detectar al enemigo, sin atacar.", (), ("blanco",), ""),
     Rol("GE", "Guerra electronica (interferencia en orbita)",
-        "Mantiene una orbita e interfiere cada turno sobre ella (sensores, antiaerea y drones enemigos).",
+        "Mantiene una orbita e interfiere sobre ella (sensores, antiaerea y drones enemigos). En tiempo real la interferencia llega con la etapa de guerra electronica: por ahora solo orbita.",
         ("orbita",), ("blanco",), "interferencia"),
     Rol("TRASLADO", "Traslado a otra base",
         "Vuela la ruta y aterriza en la base indicada.", (), ("orbita", "blanco"), ""),
@@ -78,6 +78,7 @@ TIPOS_PUNTO = ("paso", "orbita", "blanco", "aterrizaje")
 MAX_PUNTOS = 12
 MAX_TURNOS_ORBITA = 12
 MAX_ANTICIPACION_TURNOS = 24
+ESPERA_REABASTECIMIENTO_H = 0.25  # tiempo real: lo que tarda junto a la cisterna en el punto de reabastecimiento
 LLEGADA_KM = 1.0
 ACTIVAS = ("programada", "en_curso")
 
@@ -132,7 +133,7 @@ def validar(rol_id: str, puntos: list, clase) -> list[str]:
         if t in tipos:
             errores.append(f"El rol {rol.nombre} no admite puntos de tipo {t}.")
     if any(p.get("tipo") == "orbita" and not 1 <= int(p.get("turnos") or 0) <= MAX_TURNOS_ORBITA for p in puntos):
-        errores.append(f"Cada orbita dura entre 1 y {MAX_TURNOS_ORBITA} turnos.")
+        errores.append(f"Cada orbita dura entre 1 y {MAX_TURNOS_ORBITA} horas.")
     if rol.capacidad == "aire" and clase.ataque_vs.get("aerea", 0.0) <= 0:
         errores.append(f"{clase.nombre} no puede interceptar aviones: no sirve para {rol.nombre}.")
     if rol.capacidad == "superficie" and max(clase.ataque_vs.get("terrestre", 0.0), clase.ataque_vs.get("naval", 0.0)) <= 0:
@@ -154,9 +155,9 @@ def estimar(lat: float, lon: float, velocidad_kmh: float, autonomia_km: float, c
             factor_consumo: float = 1.0) -> dict:
     """Hora (horas desde el despegue) y combustible (%) estimados en cada punto de la ruta.
 
-    Igual que en la resolucion: el grupo se detiene en cada orbita o blanco el resto del turno en que llega; la
-    orbita dura N turnos completos y gasta el combustible de espera; el vuelo gasta segun la autonomia, y ambos,
-    segun el perfil de vuelo (`factor_consumo`: alto 0,85, medio 1, rasante 1,3)."""
+    Tiempo real: el grupo vuela sin pausas; la orbita dura N horas y gasta el combustible de espera; el blanco es una
+    pasada; en el punto de reabastecimiento espera un cuarto de hora junto a la cisterna y sale lleno; el vuelo gasta
+    segun la autonomia, y todo, segun el perfil de vuelo (`factor_consumo`: alto 0,85, medio 1, rasante 1,3)."""
     vel, aut = max(velocidad_kmh, 1e-6), max(autonomia_km, 1e-6)
     horas, comb = 0.0, float(combustible)
     filas, avisos = [], []
@@ -168,21 +169,18 @@ def estimar(lat: float, lon: float, velocidad_kmh: float, autonomia_km: float, c
         horas += d / vel
         comb -= d / aut * 100.0 * factor_consumo
         fila = {"tipo": p["tipo"], "km": round(d, 1), "llegada_h": round(horas, 2), "combustible_llegada": round(comb, 1)}
-        if p.get("reabastecimiento"):  # la cisterna lo llena: espera el resto del turno y sigue con el tanque lleno
-            horas = math.floor(horas + 1e-9) + 1
+        if p.get("reabastecimiento"):  # la cisterna lo llena: un cuarto de hora junto a ella y sigue con el tanque lleno
+            horas += ESPERA_REABASTECIMIENTO_H
             fila.update(salida_h=round(horas, 2), reabastece=True)
             comb = 100.0
-        if p.get("reunion"):  # el grupo espera en el punto de reunion el resto del turno
-            horas = math.floor(horas + 1e-9) + 1
-            comb -= aeronaves_mod.COMBUSTIBLE_LOITER * factor_consumo * 0.5
+        if p.get("reunion"):  # se reune con el paquete (si los grupos llegan a tiempo, sin esperar)
             fila["salida_h"] = round(horas, 2)
         if p["tipo"] == "orbita":
             t = int(p.get("turnos") or 1)
-            horas = math.floor(horas + 1e-9) + 1 + t
+            horas += t
             comb -= t * aeronaves_mod.COMBUSTIBLE_LOITER * factor_consumo
             fila.update(salida_h=round(horas, 2), combustible_salida=round(comb, 1))
         elif p["tipo"] == "blanco":
-            horas = math.floor(horas + 1e-9) + 1
             fila["salida_h"] = round(horas, 2)
         if comb < 0:
             if not any(a.startswith("No alcanza") for a in avisos):
@@ -376,7 +374,7 @@ def activar(db, escenario, unidades: dict, lista: list, turno: int, lanzados_en_
                 _terminar(db, m, "fallida", "El grupo ya no esta activo.", turno)
                 continue
             if u.en_tierra and u.espera_restante > 0:
-                m.resultado = f"Espera en tierra: faltan {u.espera_restante} turno(s) para reabastecer y rearmar."
+                m.resultado = f"Espera en tierra: le falta(n) {u.espera_restante} h para reabastecer y rearmar."
                 continue
             if u.en_tierra:
                 aeronaves_mod.despegar_unidad(u)

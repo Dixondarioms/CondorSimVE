@@ -141,5 +141,22 @@ class Unidad(Base):
     # codigo de simbolo (SIDC) para milsymbol.js
     sidc: Mapped[str] = mapped_column(String(20), default="")
 
+    # tiempo real (engine/tiempo_real.py): waypoints que le faltan recorrer, orden que esta cumpliendo, rumbo (grados)
+    # y segundos simulados en que termina la espera en tierra (rearme) y en que puede volver a disparar
+    ruta_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    orden_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    rumbo: Mapped[float | None] = mapped_column(Float, nullable=True)
+    espera_hasta: Mapped[float | None] = mapped_column(Float, nullable=True)
+    recarga_hasta: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    @property
+    def ruta(self) -> list:
+        import json
+
+        try:
+            return json.loads(self.ruta_json) if self.ruta_json else []
+        except ValueError:
+            return []
+
     # estado: "activa" | "destruida" | "replegada"
     estado: Mapped[str] = mapped_column(String(20), default="activa")

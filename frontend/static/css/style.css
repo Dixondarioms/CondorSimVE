@@ -527,3 +527,19 @@ dialog td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .foto-carga { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
 .foto-carga img { width: 100%; max-width: 360px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; border: 1px solid var(--borde, #334); }
 .foto-carga input[type=file], .foto-carga input:not([type=checkbox]) { width: 100%; box-sizing: border-box; margin-bottom: 4px; }
+
+/* ---------- SIETE en tiempo real: reloj en vivo del pie, controles del director y estados de las ordenes ---------- */
+#control-turno .centro { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 10px 26px; }
+.reloj-vivo { display: flex; align-items: baseline; gap: 12px; font-size: 13px; letter-spacing: .08em; color: var(--texto-sec); }
+.reloj-vivo b { font: 800 26px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; color: var(--texto); letter-spacing: .04em; }
+.reloj-vivo .rv-vel { font-weight: 800; color: var(--ambar); }
+.reloj-vivo.en-marcha #rv-estado { color: var(--verde); }
+#control-turno .fila-instructor { display: flex; align-items: center; gap: 14px; }
+#control-turno .fila-instructor[hidden] { display: none; }
+#control-turno .btn-tactico { padding: 9px 34px 9px 18px; font-size: 15px; }
+.velocidades { display: inline-flex; border: 1px solid var(--borde); }
+.velocidades button { margin: 0; border: 0; border-radius: 0; padding: 7px 12px; font-weight: 800; background: transparent; color: var(--texto-sec); }
+.velocidades button + button { border-left: 1px solid var(--borde); }
+.velocidades button.activo { background: var(--ambar); color: #16172A; }
+.cola .chip.ejec { background: rgba(75, 147, 255, .2); color: #8fbaff; }
+.cola .chip.canc { background: rgba(160, 160, 180, .16); color: var(--texto-sec); }

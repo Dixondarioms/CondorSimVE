@@ -87,7 +87,7 @@ def _rubrica_html(rubrica: dict | None) -> str:
          lambda x: f'{x["ordenes"]["emitidas"]} / {x["ordenes"]["resueltas"]} / {x["ordenes"]["rechazadas"]}'),
         ("Motivos de rechazo mas frecuentes",
          lambda x: "; ".join(f'{e(m["motivo"])} ({m["veces"]})' for m in x["ordenes"]["motivos_rechazo"]) or "-"),
-        ("Turnos pasivos (sin ninguna orden)",
+        ("Horas sin órdenes (pasivas)",
          lambda x: str(x["turnos_pasivos"]["cantidad"])
          + (" (turnos " + ", ".join(str(t) for t in x["turnos_pasivos"]["turnos"]) + ")" if x["turnos_pasivos"]["turnos"] else "")),
         (f'Unidades bajo el {rubrica["umbral_critico"]:.0f} % de combustible o municion',
@@ -158,7 +158,7 @@ def _rubrica_html(rubrica: dict | None) -> str:
     filas_alumnos = _filas_alumnos(rubrica)
     if filas_alumnos:
         partes.append("<h3>Evaluacion por alumno</h3>" + _tabla(
-            ["Alumno", "Bando", "Puesto", "Ordenes", "Resueltas", "Rechazadas", "Turnos activos / pasivos",
+            ["Alumno", "Bando", "Puesto", "Ordenes", "Resueltas", "Rechazadas", "Horas activas / pasivas",
              "Misiones", "Observaciones"], filas_alumnos, num=(3, 4, 5, 7)))
         partes.append(f'<p class="meta">{e(rubrica.get("nota_alumnos", ""))}</p>')
     return "".join(partes)
@@ -226,7 +226,7 @@ def render_html(informe: dict, rubrica: dict | None = None) -> str:
 <h3>Fuerza perdida acumulada</h3>{_barras(res)}
 <h2>Estado final de las unidades</h2>{unidades_tabla}
 {_rubrica_html(rubrica)}
-<h2>Cronologia</h2>{"".join(secciones) or "<p class='meta'>Aun no se resolvio ningun turno.</p>"}
+<h2>Cronologia</h2>{"".join(secciones) or "<p class='meta'>Aun no se cumplio ninguna hora del ejercicio.</p>"}
 </body></html>"""
 
 

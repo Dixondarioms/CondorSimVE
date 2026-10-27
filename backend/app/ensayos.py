@@ -2,7 +2,8 @@
 
 El Estado Mayor de un bando crea un ensayo de una de sus F/A: una copia del escenario en su estado ACTUAL (unidades con
 su fuerza, combustible, municion y posicion; objetivos; calendario; Problema Militar y los ultimos contactos del bando)
-en la que el adversario automatico conduce al enemigo y la resolucion es automatica cuando el bando confirma su turno.
+en la que el adversario automatico conduce al enemigo. En tiempo real la copia arranca con el reloj detenido en la misma
+hora que el original, y su reloj lo manejan el Comandante y el JEM del bando (marcha, velocidad y adelantar horas).
 Solo se asignan a la copia los alumnos de ese bando, asi el enemigo no ve el ensayo. Al terminar, el resumen del
 ensayo (turnos jugados, objetivos, perdidas) sirve para fundamentar la confrontacion de las F/A con las capacidades del
 enemigo en las apreciaciones de Operaciones y de Defensa Aerea.
@@ -21,7 +22,7 @@ from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 
 MAX_ENSAYOS = 3  # por bando y escenario
-_CAMPOS_ESCENARIO = ("clima", "azar", "semilla", "hora_inicio_min", "turno_actual", "nacion_azul", "nacion_rojo", "niebla",
+_CAMPOS_ESCENARIO = ("clima", "azar", "semilla", "hora_inicio_min", "turno_actual", "sim_segundos", "velocidad", "nacion_azul", "nacion_rojo", "niebla",
                      "logistica", "efectos_clima", "fuego_automatico", "ia_nivel", "dia_noche", "fecha_inicio", "turno_h",
                      "turno_final", "fases_json", "com_latencia_ms", "com_jitter_ms", "com_perdida_pct", "com_ordenes_pct")
 _REFERENCIAS = ("base_id", "blanco_id", "transporte_id")  # columnas de Unidad que apuntan a otra unidad
@@ -39,7 +40,7 @@ def crear(db: Session, esc: Escenario, bando: str, fa: str) -> Escenario:
     corto = (fa.split(":")[0] or f"F/A {n}").strip()
     copia = Escenario(nombre=f"Ensayo {n} · {corto} · {bando.capitalize()} · {esc.nombre}"[:200],
                       ensayo_de=esc.id, ensayo_bando=bando, ensayo_fa=fa[:300], ensayo_desde=esc.turno_actual,
-                      auto_resolver=True, **{c: getattr(esc, c) for c in _CAMPOS_ESCENARIO})
+                      estado="pausado", **{c: getattr(esc, c) for c in _CAMPOS_ESCENARIO})
     setattr(copia, f"ia_{enemigo}", True)
     setattr(copia, f"conduce_{bando}", "alumnos")
     db.add(copia)
@@ -88,7 +89,7 @@ def crear(db: Session, esc: Escenario, bando: str, fa: str) -> Escenario:
 
 
 def resumen(db: Session, copia: Escenario) -> dict:
-    """Resultado del ensayo hasta ahora: turnos jugados, objetivos del bando, puntos y unidades perdidas."""
+    """Resultado del ensayo hasta ahora: horas jugadas, objetivos del bando, puntos y unidades perdidas."""
     bando = copia.ensayo_bando
     enemigo = "rojo" if bando == "azul" else "azul"
     m = objetivos_mod.marcador(db, copia)
@@ -96,7 +97,7 @@ def resumen(db: Session, copia: Escenario) -> dict:
     perdidas = {b: sum(1 for u in unidades if u.bando == b and u.estado == "destruida") for b in (bando, enemigo)}
     turnos = max(0, copia.turno_actual - (copia.ensayo_desde or copia.turno_actual))
     mio = m[bando]
-    texto = (f"Ensayo de {copia.ensayo_fa or 'la F/A'}: {turnos} turno(s) jugado(s); objetivos {mio['cumplidos']} "
+    texto = (f"Ensayo de {copia.ensayo_fa or 'la F/A'}: {turnos} hora(s) jugada(s); objetivos {mio['cumplidos']} "
              f"cumplido(s) y {mio['fallidos']} fallido(s) de {mio['asignados']}; puntos por bajas infligidas "
              f"{mio['bajas']} contra {m[enemigo]['bajas']} sufridos; unidades perdidas: propias {perdidas[bando]}, "
              f"enemigas {perdidas[enemigo]}.")

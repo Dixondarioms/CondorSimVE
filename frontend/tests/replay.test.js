@@ -153,3 +153,13 @@ test("la zona de interes reune las estelas completas y los lugares de combate", 
   assert.deepEqual(zona, [[0, 0], [0.5, 0], [1, 0], [1, 1]]);
   assert.deepEqual(R.zonaDeInteres([turno(0, [u(1, "azul", 0, 0)]), turno(1, [u(1, "azul", 0, 0)])]), [], "sin movimiento ni combates no se reencuadra");
 });
+
+test("tiempo real: el rotulo de cada cuadro dice su hora simulada y la hora del ejercicio", () => {
+  const cuadros = [
+    { turno: 1, sim_segundos: 0, hora: "06:00", clima: "despejado", unidades: [], marcador: { azul: { total: 0 }, rojo: { total: 0 } } },
+    { turno: 3, sim_segundos: 7500, hora: "08:05", clima: "lluvia", unidades: [], marcador: { azul: { total: 4 }, rojo: { total: 1 } } },
+  ];
+  assert.equal(R.textoRotulo(cuadros, R.estadoEnInstante(cuadros, 0), 360), "06:00 · Inicio del ejercicio · Despejado · Marcador azul 0 - rojo 0");
+  assert.equal(R.textoRotulo(cuadros, R.estadoEnInstante(cuadros, 1), 360), "08:05 · hora 3 del ejercicio · Lluvia · Marcador azul 4 - rojo 1");
+  assert.ok(Math.abs(R.avanzar(0, 500, 1, 2, 500) - 1) < 1e-9);  // medio segundo por cuadro a 1x
+});

@@ -56,7 +56,7 @@
       $("rp-slider").value = String(indice);
       $("rp-turno").textContent = t.turno === 0
         ? "Despliegue inicial"
-        : `Turno ${t.turno} de ${turnos[turnos.length - 1].turno} · ${Logica.etiquetaClima(t.clima)}`;
+        : `Hora ${t.turno} de ${turnos[turnos.length - 1].turno} del ejercicio${t.en_curso ? " (en curso)" : ""} · ${Logica.etiquetaClima(t.clima)}`;
 
       capa.clearLayers();
       if (indice > 0) {
@@ -251,7 +251,7 @@
       const alumnos = Rubrica.filasAlumnos(datos);
       if (alumnos.length) {
         cont.appendChild(celda("h4", "Evaluación por alumno"));
-        cont.appendChild(tabla(["Alumno", "Bando", "Puesto", "Órdenes", "Resueltas", "Rechazadas", "Turnos activos / pasivos", "Misiones", "Observaciones"], alumnos, [3, 4, 5]));
+        cont.appendChild(tabla(["Alumno", "Bando", "Puesto", "Órdenes", "Resueltas", "Rechazadas", "Horas activas / pasivas", "Misiones", "Observaciones"], alumnos, [3, 4, 5]));
         if (datos.nota_alumnos) cont.appendChild(celda("p", datos.nota_alumnos, "ayuda"));
       }
       $("rb-csv").href = `/api/escenarios/${id}/aar/rubrica.csv`;
@@ -306,7 +306,7 @@
               `${e.turnos_activos} / ${e.turnos_pasivos}`, e.misiones, e.nota_bando == null ? "-" : `${e.nota_bando} / 20`]);
           }
         }
-        cont.appendChild(tabla(["Alumno", "Ejercicio", "Bando · puesto", "Órdenes", "Rechazadas", "Turnos activos / pasivos", "Misiones", "Nota del bando"], fa, [3, 4, 6]));
+        cont.appendChild(tabla(["Alumno", "Ejercicio", "Bando · puesto", "Órdenes", "Rechazadas", "Horas activas / pasivas", "Misiones", "Nota del bando"], fa, [3, 4, 6]));
       }
     }
     $("rb-comparar").addEventListener("click", abrirComparar);

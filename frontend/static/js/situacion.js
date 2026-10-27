@@ -24,7 +24,7 @@
   /** Texto del tiempo de todo el recorrido de una orden de mover (respuesta de /ordenes/previsualizar). */
   function textoTiempo(t) {
     if (!t || !(t.km > 0)) return "";
-    let s = `Recorrido completo: ${t.km} km en ${duracion(t.horas)} (${t.turnos} turno${t.turnos > 1 ? "s" : ""})`;
+    let s = `Recorrido completo: ${t.km} km en ${duracion(t.horas)}`;
     if (t.llegada && !t.bloqueo) s += `; llegada estimada ${t.llegada}h${t.llegada_dias ? ` (+${t.llegada_dias} día${t.llegada_dias > 1 ? "s" : ""})` : ""}`;
     s += ".";
     if (t.bloqueo) s += ` ${t.bloqueo}`;

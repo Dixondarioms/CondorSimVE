@@ -12,8 +12,13 @@ test("index.html no repite identificadores (getElementById devolveria el primero
   assert.deepEqual(repetidos, []);
 });
 
-test("los controles de direccion del ejercicio existen (dia y noche, nivel de la IA, modo demostracion)", () => {
-  for (const id of ["dir-noche", "dir-ia-nivel", "btn-demo", "dir-cond-azul", "dir-cond-rojo", "pest-pmo", "cal-fecha", "ob-padre", "dlg-tiem", "tiem-docs", "tiem-archivo", "sec-ensayos", "btn-ensayar", "ensayo-volver", "sec-orden-op", "btn-emitir-orden", "sec-supervision", "sup-cuadro", "btn-sup-abrir", "sec-evaluacion", "legajo-word", "legajo-pdf", "mp-tipo-nombre"]) {
+test("los controles de direccion del ejercicio existen (dia y noche, nivel de la IA, reloj en vivo)", () => {
+  for (const id of ["dir-noche", "dir-ia-nivel", "btn-marcha", "reloj-vivo", "dir-cond-azul", "dir-cond-rojo", "pest-pmo", "cal-fecha", "ob-padre", "dlg-tiem", "tiem-docs", "tiem-archivo", "sec-ensayos", "btn-ensayar", "ensayo-volver", "sec-orden-op", "btn-emitir-orden", "sec-supervision", "sup-cuadro", "btn-sup-abrir", "sec-evaluacion", "legajo-word", "legajo-pdf", "mp-tipo-nombre"]) {
     assert.ok(html.includes(`id="${id}"`), id);
   }
+});
+
+test("tiempo real: sin LISTO ni resolver turno; el director tiene las tres velocidades", () => {
+  for (const id of ["btn-listo", "btn-avanzar", "cfg-limite", "cfg-auto"]) assert.ok(!html.includes(`id="${id}"`), id);
+  for (const v of ["1", "10", "60"]) assert.ok(html.includes(`data-vel="${v}"`), v);
 });

@@ -56,10 +56,11 @@ def depositar_carga(b, carga: float) -> None:
         cambiar_stock(b, v, carga * CARGA_A_STOCK / 2)
 
 
-def reponer(b, factor_combustible: float = 1.0) -> None:
+def reponer(b, factor_combustible: float = 1.0, fraccion: float = 1.0) -> None:
     """Reposicion de cada turno (depositos). El combustible depende de las refinerias del bando
-    (engine/infraestructura.py): `factor_combustible` es la fraccion que llega."""
-    r = catalogo.obtener(b.clase, b.tipo).reposicion_turno
+    (engine/infraestructura.py): `factor_combustible` es la fraccion que llega. En tiempo real se repone `fraccion`
+    de la cantidad de un turno (1 h) cada vez."""
+    r = catalogo.obtener(b.clase, b.tipo).reposicion_turno * fraccion
     if r:
         for v in VARIABLES:
             cambiar_stock(b, v, r * factor_combustible if v == "combustible" else r)

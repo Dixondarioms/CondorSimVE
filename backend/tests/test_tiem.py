@@ -182,7 +182,7 @@ def test_el_instructor_puede_conducir_un_bando(api):
     r = prof.post(f"{base}/ordenes", json=orden, headers=cab)
     assert r.status_code == 200, r.text
     assert prof.post(f"{base}/ordenes", json=dict(orden, unidad_id=a["id"]), headers=cab).status_code == 404  # no es rojo
-    assert prof.post(f"{base}/listo", json={"listo": True}, headers=cab).status_code == 200
+    assert prof.post(f"{base}/listo", json={"listo": True}, headers=cab).status_code == 400  # tiempo real: sin turnos
     # la IA tiene prioridad y se enciende desde el mismo selector
     r = prof.patch(f"{base}/config", json={"conduccion_rojo": "ia"})
     assert r.json()["escenario"]["ia_rojo"] is True and r.json()["escenario"]["conduccion_rojo"] == "ia"

@@ -16,12 +16,12 @@
     const criticas = (x) => (x.logistica.unidades_criticas || [])
       .map((c) => `${c.unidad} (${c.variables.map((v) => VARIABLE[v] || v).join("/")} ${Math.round(c.minimo)} %, t${c.turno})`)
       .join(", ") || "ninguna";
-    const pasivos = (x) => `${x.turnos_pasivos.cantidad}` + (x.turnos_pasivos.turnos.length ? ` (turnos ${x.turnos_pasivos.turnos.join(", ")})` : "");
+    const pasivos = (x) => `${x.turnos_pasivos.cantidad}` + (x.turnos_pasivos.turnos.length ? ` (horas ${x.turnos_pasivos.turnos.join(", ")})` : "");
     const def = [
       ["Órdenes emitidas / resueltas / rechazadas", (x) => `${x.ordenes.emitidas} / ${x.ordenes.resueltas} / ${x.ordenes.rechazadas}`],
       ["Tasa de rechazo", (x) => `${n(x.ordenes.tasa_rechazo).toFixed(0)} %`],
       ["Motivos de rechazo más frecuentes", (x) => motivos(x.ordenes)],
-      ["Turnos pasivos (sin ninguna orden)", pasivos],
+      ["Horas sin órdenes (pasivas)", pasivos],
       [`Unidades bajo el ${umbral} % de combustible o munición`, criticas],
       ["Reabastecimientos realizados", (x) => `${x.logistica.reabastecimientos}`],
       ["Pérdidas infligidas / sufridas (pts)", (x) => `${n(x.perdidas.infligidas).toFixed(1)} / ${n(x.perdidas.sufridas).toFixed(1)}`],
@@ -50,7 +50,7 @@
 
   function resumen(rubrica) {
     const e = rubrica.escenario || {};
-    return `${e.nombre || ""} · ${e.turnos_resueltos ?? 0} turno(s) resuelto(s)` + (e.estado ? ` · ${e.estado}` : "");
+    return `${e.nombre || ""} · ${e.turnos_resueltos ?? 0} hora(s) cumplida(s)` + (e.estado ? ` · ${e.estado}` : "");
   }
 
   const SIN_AUTOR = "sin autor registrado";

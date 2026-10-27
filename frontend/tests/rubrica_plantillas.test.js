@@ -34,7 +34,7 @@ test("filasIndicadores arma una fila por indicador con una columna por bando", (
   assert.deepEqual(por["Órdenes emitidas / resueltas / rechazadas"], ["3 / 1 / 2", "3 / 1 / 2"]);
   assert.deepEqual(por["Tasa de rechazo"], ["67 %", "67 %"]);
   assert.deepEqual(por["Motivos de rechazo más frecuentes"], ["Objetivo fuera de alcance (2)", "Objetivo fuera de alcance (2)"]);
-  assert.deepEqual(por["Turnos pasivos (sin ninguna orden)"], ["2 (turnos 1, 3)", "0"]);
+  assert.deepEqual(por["Horas sin órdenes (pasivas)"], ["2 (horas 1, 3)", "0"]);
   assert.deepEqual(por["Unidades bajo el 25 % de combustible o munición"], ["A (comb./mun. 12 %, t2)", "ninguna"]);
   assert.deepEqual(por["Pérdidas infligidas / sufridas (pts)"], ["30.3 / 10.0", "30.3 / 10.0"]);
   assert.deepEqual(por["Objetivos cumplidos / fallidos / pendientes"], ["1 / 0 / 2 (20 pts)", "1 / 0 / 2 (20 pts)"]);
@@ -62,8 +62,8 @@ test("observaciones reune las del bando y las de sus puestos sin repetir", () =>
 });
 
 test("resumen describe el escenario", () => {
-  assert.equal(R.resumen(datos()), "Prueba · 3 turno(s) resuelto(s) · activo");
-  assert.equal(R.resumen({}), " · 0 turno(s) resuelto(s)");
+  assert.equal(R.resumen(datos()), "Prueba · 3 hora(s) cumplida(s) · activo");
+  assert.equal(R.resumen({}), " · 0 hora(s) cumplida(s)");
 });
 
 const alumno = (extra = {}) => ({

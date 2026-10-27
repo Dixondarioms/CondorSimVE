@@ -2,11 +2,11 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const T = require("../static/js/tiem.js");
 
-test("estado de cada documento con su turno", () => {
+test("estado de cada documento con su hora", () => {
   assert.deepEqual(T.textoEstado({ estado: "borrador", existe: false }), { texto: "Sin empezar", clase: "" });
   assert.deepEqual(T.textoEstado({ estado: "borrador", existe: true }), { texto: "Borrador", clase: "" });
-  assert.deepEqual(T.textoEstado({ estado: "presentado", existe: true, presentado_turno: 2 }), { texto: "Presentado (turno 2)", clase: "mov" });
-  assert.deepEqual(T.textoEstado({ estado: "devuelto", existe: true, revisado_turno: 3 }), { texto: "Devuelto (turno 3)", clase: "fuego" });
+  assert.deepEqual(T.textoEstado({ estado: "presentado", existe: true, presentado_turno: 2 }), { texto: "Presentado (hora 2)", clase: "mov" });
+  assert.deepEqual(T.textoEstado({ estado: "devuelto", existe: true, revisado_turno: 3 }), { texto: "Devuelto (hora 3)", clase: "fuego" });
   assert.equal(T.textoAvance({ a: { estado: "aprobado" }, b: { estado: "presentado" }, c: { estado: "borrador" }, d: { estado: "devuelto" } }),
     "1 de 4 aprobados · 1 presentado · 1 devuelto");
 });
@@ -72,5 +72,5 @@ test("supervisión: tareas del plan y órdenes fragmentarias, y renglón del reg
 });
 
 test("la nota del instructor aparece en el estado del documento", () => {
-  assert.equal(T.textoEstado({ estado: "aprobado", existe: true, revisado_turno: 3, nota: 17 }).texto, "Aprobado (turno 3) · 17/20");
+  assert.equal(T.textoEstado({ estado: "aprobado", existe: true, revisado_turno: 3, nota: 17 }).texto, "Aprobado (hora 3) · 17/20");
 });

@@ -1,4 +1,41 @@
-# S.I.E.T.E. — Sistema Integral de Entrenamiento Táctico y Estratégico
+# S.I.E.T.E. — Sistema Integral de Entrenamiento Táctico y Estratégico (versión en tiempo real)
+
+> **Esta es la versión en tiempo real del SIETE**, separada del SIETE por turnos (repositorio `simulador-fenix`).
+> Aquí no hay turnos: el reloj del ejercicio corre solo a la velocidad que fija el director (1×, 10× o 60×, con pausa),
+> las unidades avanzan en vivo por el mapa y las órdenes se cumplen al instante: una orden nueva reemplaza a la que la
+> unidad estaba cumpliendo, y una aeronave en vuelo se desvía, regresa o aterriza en el momento. El motor está en
+> `backend/app/engine/tiempo_real.py` y el reloj en `backend/app/reloj.py`; por defecto se sirve en el puerto **8001**,
+> para que ambas versiones puedan correr en la misma PC.
+>
+> Primera etapa (núcleo): reloj, movimiento continuo, órdenes en vivo (mover, atacar, patrullar, aterrizar, despegar,
+> lanzar y detener), detección y niebla, combate, combustible y munición, defensa aérea y consola del director.
+> Segunda etapa (TIEM): documentos, Orden de Operaciones, supervisión y calendario en horas del ejercicio; el ensayo de
+> una F/A (juego de guerra) arranca con el reloj detenido y lo manejan el Comandante y el JEM del bando.
+> Tercera etapa (IA): el adversario automático decide cada 5 minutos simulados con el reloj en marcha, no repite lo que
+> sus unidades ya cumplen, mueve las terrestres por carretera y recuerda los destinos a los que no pudo llegar. Las
+> rutas ya no cruzan ríos sin puente al recortar curvas, y una unidad que se topa con uno busca otro camino. El modo
+> demostración pone a la IA en los dos bandos con el reloj a 60×.
+> Cuarta etapa (informe y repetición): la repetición guarda la posición de cada unidad cada 5 minutos simulados y
+> muestra los combates y novedades en el momento en que ocurrieron (una hora del ejercicio dura 6 s a 1×); el informe,
+> la rúbrica y las diapositivas hablan en horas del ejercicio y agrupan el fuego continuo por hora.
+> Quinta etapa (logística): bases, depósitos, convoyes y portaaviones reabastecen de forma continua (las cantidades
+> por hora se aplican minuto a minuto), el avión cisterna atiende en tandas de 15 minutos y el registro logístico se
+> escribe por hora y por causa (movimiento, patrulla, combate, reabastecimiento) para la línea de tiempo del informe.
+> Sexta etapa (misiones aéreas planificadas): las misiones despegan al empezar su hora (o en el acto) y se vuelan en
+> vivo (`backend/app/engine/misiones_vivo.py`): puntos de paso, órbitas por horas (CAP intercepta, CAS ataca por
+> pasadas, CSAR rescata), ataque al blanco, reunión del paquete, reabastecimiento junto a la cisterna, escolta,
+> regreso por combustible crítico y aterrizaje. Una orden directa al grupo reemplaza la misión.
+> Séptima etapa (guerra electrónica): la orden «interferir» crea una zona que rige mientras el emisor la mantenga
+> (activo, en vuelo si es un avión y al alcance), las misiones GE interfieren mientras orbitan, los drones dentro de
+> una interferencia enemiga no reciben órdenes, y las órdenes demoradas por las comunicaciones llegan entre 15 y 45
+> minutos más tarde (la unidad sigue con la anterior hasta entonces).
+> Octava etapa (obras, transporte y apoyo): los ingenieros tienden un vado en 30 minutos o un puente en 1 hora si
+> siguen en el sitio; una unidad tarda 10 minutos en embarcar y el transporte desembarca al llegar a menos de 5 km del
+> punto; el apoyo de fuego es continuo (la unidad se mantiene al alcance, refuerza los combates de la apoyada y gasta
+> munición mientras su fuego cuenta).
+> Con esta etapa todas las órdenes del SIETE funcionan en tiempo real. Las pruebas que siguen apartadas
+> (`backend/tests/pruebas_por_turnos.txt`) describen el SIETE por turnos (LISTO, resolver el turno, límite de decisión). Las pruebas del SIETE por turnos que esperan esas etapas están listadas en
+> `backend/tests/pruebas_por_turnos.txt`.
 
 (Nombre de desarrollo del proyecto: "Simulador Fénix"; el código, la base de datos y el repositorio conservan ese nombre.)
 
@@ -7,8 +44,7 @@ sobre el terreno de Venezuela. Instructor/director de ejercicio + alumnos por ba
 sincronizados por WebSocket. **Funciona sin internet**: mapa, relieve, cobertura terrestre, librerías
 y datos se sirven desde el propio servidor (una política CSP bloquea cualquier recurso externo).
 
-Creado por el **Cap. Dixon Malpica**, División de Ingeniería y Desarrollo Aeroespacial (**DIDA**), Aviación Militar
-Bolivariana (escudo de la DIDA en `frontend/static/img/dida_logo.jpg`; en la portada y los créditos de ambos manuales va
+Desarrollado en la División de Ingeniería y Desarrollo Aeroespacial (**DIDA**), Aviación Militar Bolivariana (escudo de la DIDA en `frontend/static/img/dida_logo.jpg`; en la portada y los créditos de ambos manuales va
 recortado, sin el fondo: `dida_logo_recortado.png`, que genera `python tools/recortar_logo_dida.py`).
 
 ## Manuales

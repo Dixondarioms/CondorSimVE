@@ -10,7 +10,8 @@ from tests.test_orders import _avanzar, _escenario, _unidad
 
 
 def _ordenes(db, esc, bando=None):
-    q = db.query(Orden).filter(Orden.escenario_id == esc.id, Orden.estado == "pendiente").all()
+    """Ordenes que las unidades estan cumpliendo (tiempo real: se aplican al emitirse)."""
+    q = db.query(Orden).filter(Orden.escenario_id == esc.id, Orden.estado.in_(("pendiente", "en_ejecucion"))).all()
     return {o.unidad_id: o for o in q if bando is None or db.get(Unidad, o.unidad_id).bando == bando}
 
 
@@ -20,7 +21,7 @@ def _jugar(db, esc, **kw):
     return r
 
 
-def test_solo_juega_el_bando_que_conduce_y_lo_marca_listo(db_session):
+def test_solo_juega_el_bando_que_conduce(db_session):
     esc = _escenario(db_session)
     esc.ia_rojo = True
     db_session.commit()
@@ -30,7 +31,7 @@ def test_solo_juega_el_bando_que_conduce_y_lo_marca_listo(db_session):
     ordenes = _ordenes(db_session, esc)
     assert rojo.id in ordenes and azul.id not in ordenes
     assert ordenes[rojo.id].tipo == "atacar" and ordenes[rojo.id].objetivo_unidad_id == azul.id
-    assert esc.listo_rojo and not esc.listo_azul
+    assert ordenes[rojo.id].estado == "en_ejecucion" and rojo.orden_id == ordenes[rojo.id].id
 
 
 def test_no_ataca_lo_que_su_bando_no_ve(db_session):
@@ -82,15 +83,31 @@ def test_el_avion_sin_armas_se_aleja_de_la_antiaerea_enemiga(db_session):
     assert o.tipo == "mover" and o.waypoints[-1][0] > 0.3  # se va al norte, a mas del doble del alcance de la AA
 
 
-def test_al_abrirse_cada_turno_vuelve_a_jugar(db_session):
+def test_con_el_reloj_en_marcha_piensa_cada_cinco_minutos_sin_repetir_ordenes(db_session):
+    from app.engine import tiempo_real
+
+    tiempo_real.MUNDOS.clear()
     esc = _escenario(db_session)
     esc.ia_rojo = True
     db_session.commit()
-    _unidad(db_session, esc, nombre="A", bando="azul", lat=0.0, lon=0.0, alcance_km=10, deteccion_km=15)
+    azul = _unidad(db_session, esc, nombre="A", bando="azul", lat=0.0, lon=0.0, alcance_km=10, deteccion_km=15)
     rojo = _unidad(db_session, esc, nombre="R", bando="rojo", lat=0.05, lon=0.0, alcance_km=10, deteccion_km=15)
-    _avanzar(db_session, esc)  # turno 1 sin ordenes; al abrirse el 2 la IA ya ordeno
-    assert esc.turno_actual == 2 and esc.listo_rojo
-    assert _ordenes(db_session, esc)[rojo.id].turno_emitida == 2
+    tiempo_real.paso(db_session, esc, 60, TerrenoFalso())  # piensa en el primer paso: ataca y ya combate
+    db_session.commit()
+    o = _ordenes(db_session, esc)[rojo.id]
+    assert o.tipo == "atacar" and azul.fuerza < 100
+    tiempo_real.paso(db_session, esc, 600, TerrenoFalso())  # vuelve a pensar dos veces: sigue con la misma orden
+    db_session.commit()
+    assert _ordenes(db_session, esc)[rojo.id].id == o.id
+    assert db_session.query(Orden).filter(Orden.unidad_id == rojo.id).count() == 1
+    # el blanco se aleja y sale de su vista: la IA cambia de orden en la decision siguiente
+    azul.lat = 2.0
+    db_session.commit()
+    tiempo_real.paso(db_session, esc, 900, TerrenoFalso())
+    db_session.commit()
+    db_session.refresh(o)
+    assert o.estado != "en_ejecucion"
+    tiempo_real.MUNDOS.clear()
 
 
 def test_el_instructor_la_enciende_desde_la_consola_y_juega_el_turno_en_curso(api):
@@ -98,12 +115,12 @@ def test_el_instructor_la_enciende_desde_la_consola_y_juega_el_turno_en_curso(ap
     r = prof.patch(f"{base}/config", json={"ia_rojo": True})
     assert r.status_code == 200, r.text
     esc = r.json()["escenario"]
-    assert esc["ia_rojo"] is True and esc["listo_rojo"] is True
+    assert esc["ia_rojo"] is True
     datos = prof.get(base).json()
     assert any(o["unidad_id"] == r1["id"] and o["tipo"] == "atacar" for o in datos["ordenes"])
     assert any("adversario automatico del bando Rojo activado" in ev["descripcion"] for ev in datos["eventos"])
     r = prof.patch(f"{base}/config", json={"ia_rojo": False})
-    assert r.json()["escenario"]["ia_rojo"] is False and r.json()["escenario"]["listo_rojo"] is False
+    assert r.json()["escenario"]["ia_rojo"] is False
 
 
 def test_las_plantillas_contra_la_ia_crean_el_escenario_con_el_rojo_ya_jugando(db_session):
@@ -111,7 +128,7 @@ def test_las_plantillas_contra_la_ia_crean_el_escenario_con_el_rojo_ya_jugando(d
     for pid in ("defensa_aerea_central", "interdiccion_llanos", "defensa_costa_oriental"):
         assert plantillas.PLANTILLAS[pid].ia_rojo
         esc = plantillas.crear_desde_plantilla(db_session, pid)
-        assert esc.ia_rojo and not esc.ia_azul and esc.listo_rojo
+        assert esc.ia_rojo and not esc.ia_azul
         assert _ordenes(db_session, esc, "rojo"), pid  # el rojo ya dio ordenes en el primer turno
 
 

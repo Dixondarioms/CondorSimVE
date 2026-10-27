@@ -93,7 +93,8 @@ def test_las_ordenes_incluyen_sus_waypoints(api):
     (o,) = azul.get(base).json()["ordenes"]
     assert o["waypoints"] == [[0.1, 0.2], [0.3, 0.4]] and o["tipo"] == "mover"
     azul.post(f"{base}/ordenes", json={"unidad_id": a["id"], "tipo": "atacar", "objetivo_unidad_id": r1["id"]})
-    (o,) = azul.get(base).json()["ordenes"]
+    previa, o = azul.get(base).json()["ordenes"]  # tiempo real: la nueva reemplaza (cancela) a la anterior
+    assert previa["estado"] == "cancelada" and o["estado"] == "en_ejecucion"
     assert o["waypoints"] == [] and o["objetivo_unidad_id"] == r1["id"]
 
 
@@ -207,7 +208,7 @@ def test_ultimo_contacto_conocido(api):
     est = azul.get(base).json()
     assert "R1" not in {u["nombre"] for u in est["unidades"]}
     (c,) = est["contactos"]
-    assert (c["nombre"], c["turno_visto"]) == ("R1", 1)  # se lo vio por ultima vez al resolver el turno 1
+    assert (c["nombre"], c["turno_visto"]) == ("R1", 2)  # tiempo real: se lo vio por ultima vez al empezar la hora 2
     assert c["lat"] == pytest.approx(0.045) and c["sidc"].startswith("SH")
     # el rojo tambien vio a A (5 km) y la perdio de vista: recuerda donde estaba
     assert [x["nombre"] for x in api("bravo").get(base).json()["contactos"]] == ["A"]

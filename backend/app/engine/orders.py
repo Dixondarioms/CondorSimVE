@@ -152,11 +152,12 @@ class _Bitacora:
 REPOSICION_PORTAAVIONES = 100.0  # puntos por variable que un portaaviones recarga por turno junto a un puerto propio
 
 
-def _reabastecer(unidades: list[Unidad], bit: _Bitacora, factor_combustible: dict | None = None) -> None:
+def _reabastecer(unidades: list[Unidad], bit: _Bitacora, factor_combustible: dict | None = None,
+                 fraccion: float = 1.0) -> None:
     """Las bases reabastecen (+50 %) desde sus existencias; los convoyes reabastecen en marcha (+40 %), se recargan
     en los depositos y descargan en las bases aereas y puertos; los depositos reponen existencias cada turno. Un
     portaaviones reabastece a sus aeronaves embarcadas desde sus propias existencias y las repone junto a un puerto
-    propio."""
+    propio. Las cantidades son por turno (1 h); en tiempo real se aplica `fraccion` de hora cada vez."""
     bases = [
         u for u in unidades
         if (u.tipo == "base" or catalogo.es_portaaviones(u)) and u.estado == "activa" and u.fuerza >= BASE_FUERZA_MINIMA
@@ -174,13 +175,13 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora, factor_combustible: dic
                 continue  # un portaaviones solo abastece a las aeronaves estacionadas a bordo
             if geo.distancia_km(b.lat, b.lon, u.lat, u.lon) <= b.alcance_km:
                 for variable in logistica.VARIABLES:
-                    dar = min(REABASTECIMIENTO_POR_TURNO, 100.0 - getattr(u, variable), logistica.stock(b, variable))
+                    dar = min(REABASTECIMIENTO_POR_TURNO * fraccion, 100.0 - getattr(u, variable), logistica.stock(b, variable))
                     if dar > 0.05:
                         bit.poner(u, variable, getattr(u, variable) + dar, "reabastecimiento")
                         logistica.cambiar_stock(b, variable, -dar)
                 clase_u = catalogo.obtener(u.clase, u.tipo)
                 if clase_u.carga_max:
-                    carga = logistica.carga_disponible(b, min(RECARGA_CONVOY_EN_DEPOSITO, clase_u.carga_max - u.carga))
+                    carga = logistica.carga_disponible(b, min(RECARGA_CONVOY_EN_DEPOSITO * fraccion, clase_u.carga_max - u.carga))
                     if carga > 0.05:
                         bit.poner(u, "carga", u.carga + carga, "reabastecimiento")
                         logistica.retirar_carga(b, carga)
@@ -191,7 +192,7 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora, factor_combustible: dic
         if conv.estado != "activa" or not clase.nodo_movil_km:
             continue
         for r in unidades:
-            if conv.carga < CARGA_POR_UNIDAD_CONVOY:
+            if conv.carga < CARGA_POR_UNIDAD_CONVOY * fraccion:
                 break
             if r is conv or r.estado != "activa" or r.bando != conv.bando or r.tipo not in clase.suministra:
                 continue
@@ -202,10 +203,10 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora, factor_combustible: dic
                 continue
             if geo.distancia_km(conv.lat, conv.lon, r.lat, r.lon) <= clase.nodo_movil_km:
                 causa = "reabastecimiento en vuelo" if cisterna else "convoy"
-                bit.poner(r, "combustible", r.combustible + REABASTECIMIENTO_CONVOY, causa)
+                bit.poner(r, "combustible", r.combustible + REABASTECIMIENTO_CONVOY * fraccion, causa)
                 if not cisterna:
-                    bit.poner(r, "municion", r.municion + REABASTECIMIENTO_CONVOY, causa)
-                bit.poner(conv, "carga", conv.carga - CARGA_POR_UNIDAD_CONVOY, causa)
+                    bit.poner(r, "municion", r.municion + REABASTECIMIENTO_CONVOY * fraccion, causa)
+                bit.poner(conv, "carga", conv.carga - CARGA_POR_UNIDAD_CONVOY * fraccion, causa)
 
     # los convoyes descargan sus suministros en las bases que no los recargan (bases aereas y puertos)
     for conv in unidades:
@@ -216,7 +217,7 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora, factor_combustible: dic
             if b.tipo != "base" or b.bando != conv.bando or conv.tipo in catalogo.obtener(b.clase, "base").suministra:
                 continue
             if geo.distancia_km(conv.lat, conv.lon, b.lat, b.lon) <= clase.nodo_movil_km:
-                entrega = logistica.carga_que_admite(b, min(logistica.ENTREGA_CONVOY_POR_TURNO, conv.carga))
+                entrega = logistica.carga_que_admite(b, min(logistica.ENTREGA_CONVOY_POR_TURNO * fraccion, conv.carga))
                 if entrega > 0.05:
                     bit.poner(conv, "carga", conv.carga - entrega, "entrega a base")
                     logistica.depositar_carga(b, entrega)
@@ -231,7 +232,7 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora, factor_combustible: dic
             if p.bando != pa.bando or geo.distancia_km(p.lat, p.lon, pa.lat, pa.lon) > p.alcance_km:
                 continue
             for variable in logistica.VARIABLES:
-                dar = min(REPOSICION_PORTAAVIONES, logistica.maximo(pa) - logistica.stock(pa, variable),
+                dar = min(REPOSICION_PORTAAVIONES * fraccion, logistica.maximo(pa) - logistica.stock(pa, variable),
                           logistica.stock(p, variable))
                 if dar > 0.05:
                     logistica.cambiar_stock(pa, variable, dar)
@@ -239,7 +240,7 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora, factor_combustible: dic
             break
 
     for b in bases:
-        logistica.reponer(b, (factor_combustible or {}).get(b.bando, 1.0))
+        logistica.reponer(b, (factor_combustible or {}).get(b.bando, 1.0), fraccion)
         for variable in logistica.VARIABLES:
             if antes[b.id][variable] > 0 and logistica.stock(b, variable) <= 0:
                 bit.db.add(Evento(

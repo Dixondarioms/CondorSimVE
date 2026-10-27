@@ -6,11 +6,11 @@
   // regiones del mapa (GET /api/terreno/mapas): Venezuela en detalle, America y, si se genero, el mundo; se apilan
   // de la mas general a la mas detallada (ver tools/preparar_terreno.py y Logica.limitesDeMapas)
   const NOMBRE_TIPO = { terrestre: "Terrestres", aerea: "Aéreas", naval: "Navales", base: "Bases y logística" };
-  const ETIQUETA_FASE = { decision: "Decisión", resolucion: "Resolución" };
+  const ETIQUETA_RELOJ = { activo: "En marcha", pausado: "Detenido", finalizado: "Finalizado" };
   const MAX_ALERTAS = 40;
 
   const app = {
-    usuario: null, escenarioId: null, ws: null, wsAlive: null, data: null, recibidoEn: 0,
+    usuario: null, escenarioId: null, ws: null, wsAlive: null, data: null, recibidoEn: 0, reloj: null, vivo: new Map(), cuadroVivo: null,
     porId: new Map(), contactosPorId: new Map(),
     modoAgregar: false, waypoints: [], modoOrden: "mover", unidadOrden: null, seleccion: null,
     markers: new Map(), flechas: [], encuadrado: false, map: null, capas: {}, capaActiva: {},
@@ -168,7 +168,7 @@
     try { app.catalogo = await api("GET", "/api/catalogo"); prepararCatalogo(); } catch (_) { /* sin catalogo */ }
     try { app.naciones = (await api("GET", "/api/naciones")).naciones; prepararNaciones(); } catch (_) { /* sin naciones */ }
     clearInterval(app.relojTimer);
-    app.relojTimer = setInterval(actualizarReloj, 1000);
+    app.relojTimer = setInterval(actualizarReloj, 250);
     await cargarEscenarios();
     clearInterval(app.solicitudesTimer);
     if (esInstructor()) {
@@ -285,7 +285,6 @@
     $("puesto-desc").textContent = puesto.descripcion;
     $("sec-orden").hidden = !esBando(rol) || !puesto.funciones.some((f) => f !== "listo");
     $("sec-aviacion").hidden = !esBando(rol) || !puedeFuncion("despegar");
-    $("btn-listo").hidden = !esBando(rol) || !puedeFuncion("listo");
     if (app.chat) app.chat.configurarRol();
     activarPestana("fuerzas");
     app.waypoints = [];
@@ -774,7 +773,7 @@
     }
   }
 
-  // Previsualizacion: donde terminaria la unidad este turno con los waypoints marcados.
+  // Previsualizacion: el camino que haria la unidad con los waypoints marcados y cuando llegaria (tiempo real).
   function pedirPreview() {
     clearTimeout(app.temporizadorPreview);
     app.temporizadorPreview = setTimeout(async () => {
@@ -784,8 +783,8 @@
         const g = app.capas.preview;
         g.clearLayers();
         L.polyline(p.ruta, { color: "#81d4fa", weight: 4, opacity: 0.9, interactive: false }).addTo(g);
-        L.circleMarker(p.destino, { radius: 7, color: "#81d4fa", fillColor: "#0288d1", fillOpacity: 0.9 }).bindTooltip("Posición al final del turno").addTo(g);
-        $("o-preview").textContent = `${p.llega ? "Llega al último waypoint" : "No llega al destino este turno"}: recorre ${p.km} km, combustible restante ${p.combustible_restante}%. ${p.nota}`;
+        L.circleMarker(p.destino, { radius: 7, color: "#81d4fa", fillColor: "#0288d1", fillOpacity: 0.9 }).bindTooltip("Dónde estará dentro de una hora").addTo(g);
+        $("o-preview").textContent = `${p.llega ? "En una hora llega al último waypoint" : "En una hora todavía no llega"}: recorre ${p.km} km, combustible restante ${p.combustible_restante}%. ${p.nota}`;
         const tiempo = Situacion.textoTiempo(p.tiempo);
         if (tiempo) {
           $("o-preview").textContent += ` ${tiempo}`;
@@ -808,6 +807,7 @@
 
   /** Hacia donde apunta la aeronave: su ultimo desplazamiento; si no se movio, su orden pendiente; si no, el ultimo rumbo. */
   function rumboDe(u) {
+    if (u.rumbo !== null && u.rumbo !== undefined) return u.rumbo;  // tiempo real: el rumbo lo da el servidor
     const previa = app.posPrevia.get(u.id);
     let r = app.rumbos.get(u.id);
     if (previa && Logica.distanciaKm(previa[0], previa[1], u.lat, u.lon) > 0.1) {
@@ -993,9 +993,6 @@
 
   function dibujarUnidades(unidades) {
     detenerAnimaciones();
-    const turnoAhora = app.data ? { escenario: app.escenarioId, turno: app.data.escenario.turno_actual } : null;
-    const animar = !movimientoReducido() && document.visibilityState !== "hidden";
-    const movimientos = animar ? new Map(Logica.movimientosDelTurno(app.posDibujadas, unidades, app.turnoDibujado, turnoAhora).map((x) => [x.id, x])) : new Map();
     const dibujadas = new Map();
     const vivas = new Set();
     for (const u of unidades) {
@@ -1008,15 +1005,18 @@
       const mini = conMiniatura(u);
       const rumbo = mini && Modelo3d.gira(u) ? Math.round(rumboDe(u) / 5) * 5 : 0;
       const plano = mini && enPlanoAerodromo(u) ? "p" : "";
-      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}${u.perfil_actual || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${rumbo}|${mini ? baseAvion() : `s${tamApp6()}`}|${plano}`;
+      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}${u.perfil_actual || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${mini ? baseAvion() : `s${tamApp6()}`}|${plano}`;
       // aeronaves estacionadas: sobre la plataforma real de su base cuando se ve el plano del aerodromo
       const estacionada = mini && app.capaActiva.aerodromos && app.aerodromos && app.map.getZoom() >= app.aerodromos.zoomDetalle
         ? app.aerodromos.posicionEstacionada(u, unidades) : null;
       const pos = estacionada || [u.lat, u.lon];
       if (m && m._firma !== firma) { app.capas.unidades.removeLayer(m); m = null; }
+      // tiempo real: si solo cambio el rumbo, se gira el icono sin rehacer el marcador (sigue deslizandose)
+      if (m && m._rumbo !== rumbo) { m.setIcon(iconoUnidad(u, clases, rumbo)); m._rumbo = rumbo; }
       if (!m) {
         m = L.marker(pos, { icon: iconoUnidad(u, clases, rumbo), keyboard: false, draggable: esInstructor() && app.editando }).addTo(app.capas.unidades);
         m._firma = firma;
+        m._rumbo = rumbo;
         m._uid = u.id;
         m.on("dragend", async () => {
           const p = m.getLatLng();
@@ -1027,16 +1027,13 @@
         });
         m.on("click", (e) => { if (!(app.misiones && app.misiones.alClickUnidad(app.porId.get(u.id)))) seleccionar(u.id, "mapa", !!(e.originalEvent && (e.originalEvent.ctrlKey || e.originalEvent.shiftKey))); });
         app.markers.set(u.id, m);
+      } else if (app.vivo.has(u.id) && !estacionada) {
+        app.vivo.get(u.id).hasta = pos;  // se esta deslizando: solo se corrige el punto de llegada
       } else {
         m.setLatLng(pos);
       }
+      if (app.vivo.has(u.id)) app.vivo.get(u.id).m = m;  // si se rehizo el simbolo, se desliza el nuevo
       dibujadas.set(u.id, [u.lat, u.lon]);
-      const mov = movimientos.get(u.id);
-      if (mov && !estacionada) {  // avanzo el turno: se desliza desde donde estaba
-        m.setLatLng(mov.desde);
-        app.animaciones.push({ m, desde: mov.desde, hasta: pos, ruta: [...mov.ruta.slice(0, -1), pos], t0: performance.now() });
-        dibujarRastro(mov);
-      }
       m.unbindTooltip();
       m.bindTooltip(tooltipUnidad(u), { direction: "top", offset: [0, -14] });
       // simbologia dinamica: el marco del simbolo cambia con la fuerza y el combustible
@@ -1051,8 +1048,6 @@
       if (!vivas.has(id)) { app.capas.unidades.removeLayer(m); app.markers.delete(id); }
     }
     app.posDibujadas = dibujadas;
-    app.turnoDibujado = turnoAhora;
-    if (app.animaciones.length && !app.cuadroAnimacion) app.cuadroAnimacion = requestAnimationFrame(pasoAnimacion);
     marcarSeleccionEnMapa();
   }
 
@@ -1183,12 +1178,12 @@
       return u ? [u.lat, u.lon] : null;
     };
     for (const o of data.ordenes) {
-      if (o.estado !== "pendiente") continue;
+      if (!ACTIVAS.has(o.estado)) continue;
       const u = app.porId.get(o.unidad_id);
       if (!u || u.estado === "destruida") continue;
       const origen = [u.lat, u.lon];
       if (o.tipo === "mover" && o.waypoints.length) {
-        L.polyline([origen, ...o.waypoints], { color: COLOR.azul, weight: 3, dashArray: "9 7", opacity: 0.95, className: "ruta-anim" }).addTo(app.capas.ordenes);
+        L.polyline([origen, ...(u.ruta && u.ruta.length ? u.ruta : o.waypoints)], { color: COLOR.azul, weight: 3, dashArray: "9 7", opacity: 0.95, className: "ruta-anim" }).addTo(app.capas.ordenes);
         o.waypoints.forEach((w, i) => {
           L.marker(w, { icon: L.divIcon({ className: "wp", html: `<span>W${i + 1}</span>`, iconSize: [22, 22], iconAnchor: [11, 11] }), keyboard: false })
             .bindTooltip(`W${i + 1} · ${u.nombre}`, { direction: "top" }).addTo(app.capas.ordenes);
@@ -1230,9 +1225,9 @@
     L.polyline([[u.lat, u.lon], app.patrullaPunto], { color: "#ffd166", weight: 3, dashArray: "9 7", interactive: false }).addTo(g);
     L.circle(app.patrullaPunto, { radius: (u.alcance_km || 80) * 1000, color: "#ffd166", weight: 1.5, dashArray: "6 6", fillOpacity: 0.06, interactive: false }).addTo(g);
     L.circleMarker(app.patrullaPunto, { radius: 6, color: "#ffd166", fillColor: "#4a3a10", fillOpacity: 0.9 }).bindTooltip("Punto de patrulla").addTo(g);
-    const horas = u.velocidad_kmh ? Math.max(1, Math.ceil(d / u.velocidad_kmh)) : null;
+    const minutos = u.velocidad_kmh ? Math.max(1, Math.round((d / u.velocidad_kmh) * 60)) : null;
     $("o-patrulla-punto").textContent = `Punto: ${lat.toFixed(3)}, ${lon.toFixed(3)} · a ${d.toFixed(0)} km`
-      + (horas ? ` (${horas === 1 ? "llega este turno" : `llega en ${horas} turnos`})` : "") + `. Vigila un radio de ${u.alcance_km} km.`;
+      + (minutos ? ` (llega en ${Situacion.duracion(minutos / 60)})` : "") + `. Vigila un radio de ${u.alcance_km} km.`;
   }
 
   /** Vista previa de la interferencia: alcance del interferidor y zona que cubriria sobre el punto elegido. */
@@ -1375,7 +1370,9 @@
     return frag;
   }
 
-  const pendientes = () => (app.data ? app.data.ordenes.filter((o) => o.estado === "pendiente") : []);
+  // tiempo real: una orden esta activa mientras la unidad la cumple ("en_ejecucion"); "pendiente" queda por compatibilidad
+  const ACTIVAS = new Set(["pendiente", "en_ejecucion"]);
+  const pendientes = () => (app.data ? app.data.ordenes.filter((o) => ACTIVAS.has(o.estado)) : []);
 
   function renderOOB(data) {
     const cont = $("oob");
@@ -1604,10 +1601,10 @@
     const tope = (app.catalogo.aeronaves || {}).max_bando || 24;
     const usadas = Logica.aeronavesComprometidas(data.unidades, data.ordenes, rol, false, app.catalogo);
     $("aviacion-tope").textContent = `${usadas}/${tope}`;
-    const puede = data.escenario.estado === "activo" && data.escenario.fase === "decision" && bases.length > 0;
+    const puede = data.escenario.estado !== "finalizado" && bases.length > 0;
     $("btn-enviar-caza").disabled = !puede;
     $("aviacion-ayuda").textContent = bases.length
-      ? "Elija el caza, el dron o el avión de guerra electrónica (con imagen y datos) y la base de la que despegan. El grupo aparece al resolverse el turno; los drones tienen su propio tope."
+      ? "Elija el caza, el dron o el avión de guerra electrónica (con imagen y datos) y la base de la que despegan. El grupo despega en el acto y espera órdenes sobre la base; los drones tienen su propio tope."
       : "Su bando no tiene una base aérea activa: pídale al instructor que coloque una desde la capa «Bases aéreas y aeródromos».";
   }
   $("btn-enviar-caza").addEventListener("click", () => app.aviacion && app.aviacion.abrirDespegue(app.baseSeleccionada));
@@ -1652,9 +1649,9 @@
     if (app.modoOrden === "lanzar" && !lanza) app.modoOrden = "mover";
     const espera = u && u.en_tierra && u.espera_restante > 0;
     $("o-espera").hidden = !espera;
-    if (espera) $("o-espera").textContent = `En tierra: podrá despegar en ${u.espera_restante} turno${u.espera_restante === 1 ? "" : "s"}; hasta entonces no acepta órdenes de vuelo.`;
+    if (espera) $("o-espera").textContent = `En tierra reabasteciendo y rearmando: podrá despegar en ${u.espera_restante} h o menos; hasta entonces no acepta órdenes de vuelo.`;
     $("orden-unidad").textContent = u ? u.nombre : "elija una unidad";
-    $("btn-emitir").disabled = !u || data.escenario.estado !== "activo" || data.escenario.fase !== "decision";
+    $("btn-emitir").disabled = !u || data.escenario.estado === "finalizado";
     document.querySelectorAll(".modos button").forEach((b) => b.classList.toggle("activo", b.dataset.modo === app.modoOrden));
     $("o-mover").hidden = app.modoOrden !== "mover" && app.modoOrden !== "desembarcar";
     $("o-construir").hidden = app.modoOrden !== "construir";
@@ -1667,9 +1664,7 @@
       const elegida = opciones.find((o) => String(o.base.id) === $("o-base").value);
       $("o-aterrizaje-info").textContent = !opciones.length
         ? "No hay una base propia con plazas libres para este grupo."
-        : elegida.llegaEsteTurno
-          ? `Llega y aterriza este turno (${Math.round(elegida.km)} km).`
-          : `A ${Math.round(elegida.km)} km: tardará ${elegida.turnos} turnos en llegar.`
+        : `A ${Math.round(elegida.km)} km: llega y aterriza en ${Situacion.duracion(elegida.km / Math.max(1, u.velocidad_kmh || 1))}.`
             + (elegida.alcanzaCombustible ? "" : ` Necesita ~${Math.round(elegida.combustibleNecesario)} % de combustible y tiene ${Math.round(u.combustible)} %.`);
     }
     $("o-objetivo-box").hidden = ["mover", "construir", "patrullar", "aterrizar", "interferir", "embarcar", "desembarcar"].includes(app.modoOrden);
@@ -1678,7 +1673,7 @@
     $("o-desembarcar").hidden = app.modoOrden !== "desembarcar";
     if (app.modoOrden === "embarcar" && u) {
       llenarSelect($("o-transporte"), transportes.map((x) => [x.t.id, `${x.t.nombre} · ${x.km.toFixed(1)} km · ${Logica.aBordo(x.t, data.unidades).length}/${Logica.CAPACIDAD_TRANSPORTE[x.t.clase]} a bordo`]));
-      $("o-embarcar-info").textContent = "La unidad sube al resolverse el turno.";
+      $("o-embarcar-info").textContent = "La unidad tarda 10 minutos en subir; después viaja a bordo con el transporte.";
     }
     if (app.modoOrden === "desembarcar" && u) {
       const carga = Logica.aBordo(u, data.unidades).map((x) => x.nombre).join(", ");
@@ -1796,7 +1791,10 @@
     } catch (_) { /* toast ya mostrado */ }
   });
 
-  const CHIP = { pendiente: ["pend", "PENDIENTE"], resuelta: ["res", "RESUELTA"], rechazada: ["rech", "RECHAZADA"] };
+  const CHIP = {
+    pendiente: ["pend", "PENDIENTE"], en_ejecucion: ["ejec", "EN CURSO"], resuelta: ["res", "CUMPLIDA"],
+    rechazada: ["rech", "RECHAZADA"], cancelada: ["canc", "CANCELADA"],
+  };
   function textoOrden(o) {
     const obj = app.porId.get(o.objetivo_unidad_id) || app.contactosPorId.get(o.objetivo_unidad_id);
     const nombreObj = obj ? obj.nombre : `#${o.objetivo_unidad_id}`;
@@ -1826,7 +1824,7 @@
   function renderCola(data) {
     const ol = $("cola");
     limpiar(ol);
-    const orden = [...data.ordenes].sort((a, b) => (a.estado === "pendiente") === (b.estado === "pendiente") ? b.id - a.id : a.estado === "pendiente" ? -1 : 1).slice(0, 30);
+    const orden = [...data.ordenes].sort((a, b) => ACTIVAS.has(a.estado) === ACTIVAS.has(b.estado) ? b.id - a.id : ACTIVAS.has(a.estado) ? -1 : 1).slice(0, 30);
     if (!orden.length) { const li = document.createElement("li"); li.className = "vacio"; li.style.display = "block"; li.textContent = "Sin órdenes: las unidades mantienen su posición."; ol.appendChild(li); }
     for (const o of orden) {
       const u = app.porId.get(o.unidad_id);
@@ -1837,7 +1835,8 @@
       const b = document.createElement("b");
       b.textContent = `Orden ${o.id}: ${textoOrden(o)}`;
       const s = document.createElement("span");
-      s.textContent = `${u ? u.nombre : "#" + o.unidad_id} · turno ${o.turno_emitida}${o.resultado ? " · " + o.resultado : ""}`;
+      const cuando = o.emitida_seg !== null && o.emitida_seg !== undefined ? `emitida ${horaDeSegundos(o.emitida_seg).slice(0, 5)}` : `hora ${o.turno_emitida}`;
+      s.textContent = `${u ? u.nombre : "#" + o.unidad_id} · ${cuando}${o.resultado ? " · " + o.resultado : ""}`;
       // autor registrado (usuario y puesto al emitirla); las ordenes automaticas del motor no lo tienen
       if (o.autor) {
         const a = document.createElement("span");
@@ -1852,45 +1851,111 @@
       chip.className = "chip " + claseChip;
       chip.textContent = textoChip;
       li.append(t, chip);
-      if (esAlumno() && o.estado === "pendiente") {
-        const x = boton("×", () => enSilencio(api("DELETE", rutaEsc(`/ordenes/${o.id}`))), "");
-        x.title = "Cancelar orden";
-        x.setAttribute("aria-label", `Cancelar orden ${o.id}`);
+      if (esAlumno() && ACTIVAS.has(o.estado)) {
+        const x = boton("■", () => enSilencio(api("DELETE", rutaEsc(`/ordenes/${o.id}`))), "");
+        x.title = "Detener: la unidad deja de cumplir la orden y se queda donde está (una aeronave, orbitando allí)";
+        x.setAttribute("aria-label", `Detener la orden ${o.id}`);
         li.appendChild(x);
       }
       li.addEventListener("click", (ev) => { if (ev.target.tagName !== "BUTTON") seleccionar(o.unidad_id, "lista"); });
       ol.appendChild(li);
     }
-    $("cola-contador").textContent = String(data.ordenes.filter((o) => o.estado === "pendiente").length);
+    $("cola-contador").textContent = String(data.ordenes.filter((o) => ACTIVAS.has(o.estado)).length);
   }
 
   // ---------- cabecera, reloj, pie y tarjetas ----------
+  // ---------- reloj del tiempo real ----------
+  const MAX_EXTRAPOLACION_S = 3;  // sin noticias del servidor, el reloj no se adelanta mas que esto (en segundos reales)
+
+  /** Segundos simulados ahora: los ultimos que informo el servidor mas lo que corrio desde entonces. */
+  function segundosSimulados() {
+    const r = app.reloj;
+    if (!r) return 0;
+    if (r.estado !== "activo") return r.sim;
+    return r.sim + r.velocidad * Math.min(MAX_EXTRAPOLACION_S, (performance.now() - r.t0) / 1000);
+  }
+
+  function horaDeSegundos(seg) {
+    const esc = app.data && app.data.escenario;
+    const total = Math.floor((esc ? esc.hora_inicio_min : 360) * 60 + seg) % 86400;
+    const dos = (n) => String(n).padStart(2, "0");
+    return `${dos(Math.floor(total / 3600))}:${dos(Math.floor(total / 60) % 60)}:${dos(total % 60)}`;
+  }
+
+  function fijarReloj(r) {
+    if (!r) return;
+    const previo = app.reloj && app.reloj.estado === "activo" && r.estado === "activo" ? segundosSimulados() : null;
+    // el reloj no retrocede en pantalla por la demora de un mensaje (si el servidor salto de verdad, se le hace caso)
+    const sim = previo !== null && r.sim < previo && previo - r.sim < 3 * r.velocidad ? previo : r.sim;
+    app.reloj = { ...r, sim, t0: performance.now() };
+    actualizarReloj();
+  }
+
   function actualizarReloj() {
     const d = app.data;
-    const r = $("reloj");
     if (!d) return;
     const esc = d.escenario;
-    const etiqueta = $("reloj-etiqueta");
-    const valor = $("reloj-valor");
+    const seg = segundosSimulados();
+    const hora = horaDeSegundos(seg);
+    const vel = app.reloj ? app.reloj.velocidad : esc.velocidad;
+    const estado = app.reloj ? app.reloj.estado : esc.estado;
+    $("h-turno").textContent = String(Math.floor(seg / 3600) + 1);
+    const periodo = esc.dia_noche ? (esc.periodo || "dia") : "dia";
+    $("h-hora").textContent = hora + (esc.dia_noche ? ` · ${{ dia: "Día", crepusculo: "Crepúsculo", noche: "Noche" }[periodo]}` : "");
+    $("esc-hora").textContent = $("h-hora").textContent;
+    const r = $("reloj");
     r.classList.remove("urgente");
-    r.classList.remove("inactivo");
-    if (esc.estado === "finalizado") { etiqueta.textContent = ""; valor.textContent = "ESCENARIO FINALIZADO"; r.classList.add("inactivo"); return; }
-    if (esc.estado === "pausado") { etiqueta.textContent = ""; valor.textContent = "PAUSADO"; r.classList.add("inactivo"); return; }
-    if (!esc.decision_termina_en) { etiqueta.textContent = "PLANIFICACIÓN:"; valor.textContent = "SIN LÍMITE"; r.classList.add("inactivo"); return; }
-    const seg = Logica.segundosRestantes(esc.decision_termina_en, d.ahora, app.recibidoEn);
-    etiqueta.textContent = "TIEMPO RESTANTE PLANIFICACIÓN:";
-    valor.textContent = Logica.formatoTiempo(seg);
-    r.classList.toggle("urgente", seg !== null && seg <= 15);
-    if (app.videowall) app.videowall.actualizarReloj(d, app.recibidoEn);
+    r.classList.toggle("inactivo", estado !== "activo");
+    $("reloj-etiqueta").textContent = "TIEMPO REAL:";
+    $("reloj-valor").textContent = estado === "finalizado" ? "FINALIZADO" : estado === "activo" ? `▶ ${vel}×` : "⏸ DETENIDO";
+    $("rv-hora").textContent = hora;
+    $("rv-estado").textContent = estado === "finalizado" ? "EJERCICIO FINALIZADO" : estado === "activo" ? "▶ EN MARCHA" : "⏸ RELOJ DETENIDO";
+    $("rv-vel").textContent = `${vel}×`;
+    $("reloj-vivo").classList.toggle("en-marcha", estado === "activo");
+    if (app.videowall) app.videowall.actualizarReloj(d, hora, estado, vel);
+  }
+
+  // ---------- movimiento en vivo: cada mensaje de posiciones desliza los simbolos hasta su nuevo lugar ----------
+  const DURACION_VIVO_MS = 1050;  // algo mas que el intervalo del servidor (1 s): el simbolo no se detiene entre mensajes
+
+  function pasoVivo(ahora) {
+    for (const [id, a] of app.vivo) {
+      const f = Math.min(1, (ahora - a.t0) / DURACION_VIVO_MS);
+      a.m.setLatLng([a.desde[0] + (a.hasta[0] - a.desde[0]) * f, a.desde[1] + (a.hasta[1] - a.desde[1]) * f]);
+      if (f >= 1) app.vivo.delete(id);
+    }
+    app.cuadroVivo = app.vivo.size ? requestAnimationFrame(pasoVivo) : null;
+  }
+
+  function aplicarPosiciones(m) {
+    fijarReloj({ sim: m.reloj.sim_segundos, velocidad: m.reloj.velocidad, estado: m.reloj.estado });
+    if (!app.data || app.capaInforme) return;
+    const quieto = movimientoReducido() || document.visibilityState === "hidden";
+    const ahora = performance.now();
+    let giro = false;
+    for (const [id, lat, lon, rumbo, enTierra, fuerza, combustible] of m.unidades) {
+      const u = app.porId.get(id);
+      if (!u) continue;  // recien detectada: llega con el proximo estado completo
+      const movio = u.lat !== lat || u.lon !== lon;
+      if (rumbo !== null && u.rumbo !== null && u.rumbo !== undefined && Math.abs(((rumbo - u.rumbo) + 540) % 360 - 180) >= 10) giro = true;
+      Object.assign(u, { lat, lon, rumbo, en_tierra: !!enTierra });
+      if (fuerza !== null) u.fuerza = fuerza;
+      if (combustible !== null) u.combustible = combustible;
+      const mk = app.markers.get(id);
+      if (!mk || !movio) continue;
+      if (quieto || enTierra) { app.vivo.delete(id); mk.setLatLng([lat, lon]); continue; }
+      const p = mk.getLatLng();
+      app.vivo.set(id, { m: mk, desde: [p.lat, p.lng], hasta: [lat, lon], t0: ahora });
+    }
+    if (giro) dibujarUnidades(app.data.unidades);  // las miniaturas giran con el rumbo
+    if (app.vivo.size && !app.cuadroVivo) app.cuadroVivo = requestAnimationFrame(pasoVivo);
+    dibujarOrdenes(app.data);
   }
 
   function actualizarCabecera(data) {
     const esc = data.escenario;
-    $("h-turno").textContent = String(esc.turno_actual);
     const periodo = esc.dia_noche ? (esc.periodo || "dia") : "dia";
-    $("h-hora").textContent = horaDelTurno(esc.turno_actual) + (esc.dia_noche ? ` · ${{ dia: "Día", crepusculo: "Crepúsculo", noche: "Noche" }[periodo]}` : "");
-    // tambien en la tarjeta Estado del escenario: en pantallas de hasta 1450 px la cabecera oculta la hora
-    $("esc-hora").textContent = $("h-hora").textContent;
+    // la hora (tambien en la tarjeta Estado del escenario) la pinta el reloj en vivo: actualizarReloj
     $("esc-hora").className = esc.dia_noche && periodo !== "dia" ? `periodo-${periodo}` : "";
     const cal = Logica.textoCalendario(esc.calendario);
     $("h-calendario-caja").hidden = !cal;
@@ -1949,12 +2014,10 @@
         set(`sat-${b}-tipo`, (e) => { e.value = sat.tipo || "optico"; });
       }
       set("dir-ia-nivel", (e) => { e.value = esc.ia_nivel || "normal"; });
-      set("cfg-limite", (e) => { e.value = esc.limite_decision_seg || 0; });
       set("cfg-hora", (e) => { e.value = `${String(Math.floor(esc.hora_inicio_min / 60)).padStart(2, "0")}:${String(esc.hora_inicio_min % 60).padStart(2, "0")}`; });
       set("cfg-nacion-azul", (e) => { e.value = esc.nacion_azul || ""; });
       set("cfg-nacion-rojo", (e) => { e.value = esc.nacion_rojo || ""; });
       set("cfg-azar", (e) => { e.checked = esc.azar; });
-      set("cfg-auto", (e) => { e.checked = esc.auto_resolver; });
       if (esc.com_perdida_pct !== undefined) {
         set("cfg-com-latencia", (e) => { e.value = esc.com_latencia_ms; });
         set("cfg-com-jitter", (e) => { e.value = esc.com_jitter_ms; });
@@ -1968,24 +2031,25 @@
 
   function actualizarPie(data) {
     const esc = data.escenario;
-    const rol = app.usuario.rol;
     for (const bando of ["azul", "rojo"]) {
-      const listo = esc[`listo_${bando}`];
       const el = $(`estado-${bando}`);
-      el.classList.toggle("listo", listo);
-      el.querySelector("b").textContent = (esc[`ia_${bando}`] ? "IA · " : "") + (listo ? "LISTO" : rol === bando ? "PLANIFICANDO" : "PENDIENTE");
-      el.title = esc[`ia_${bando}`] ? "Este bando lo conduce el adversario automático del simulador" : "";
-      el.querySelector("i").classList.toggle("pulso", !listo);
+      const quien = esc[`conduccion_${bando}`] || "alumnos";
+      el.classList.remove("listo");
+      el.querySelector("b").textContent = { alumnos: "ALUMNOS", instructor: "INSTRUCTOR", ia: "IA" }[quien] || quien.toUpperCase();
+      el.title = quien === "ia" ? "Este bando lo conduce el adversario automático del simulador" : "";
+      el.querySelector("i").classList.toggle("pulso", esc.estado === "activo");
       el.querySelector(".rotulo-bando").textContent = nombreDeBando(bando).toUpperCase();
     }
-    if (esAlumno()) {
-      const listo = esc[`listo_${rol}`];
-      const btn = $("btn-listo");
-      btn.classList.toggle("confirmado", listo);
-      $("btn-listo-texto").textContent = listo ? "ÓRDENES CONFIRMADAS - CLIC PARA RETIRAR" : "ESTOY LISTO - CONFIRMAR ÓRDENES";
-      btn.disabled = esc.estado !== "activo" || esc.fase !== "decision";
+    // el reloj lo maneja el director; en un ensayo del TIEM, tambien el Comandante y el JEM del bando que ensaya
+    const manejaReloj = esInstructor() || (esAlumno() && !!esc.ensayo_de && esc.ensayo_bando === app.usuario.rol && puedeFuncion("listo"));
+    $("controles-reloj").hidden = !manejaReloj;
+    if (manejaReloj) {
+      const enMarcha = esc.estado === "activo";
+      $("btn-marcha").disabled = esc.estado === "finalizado";
+      $("btn-marcha-texto").textContent = enMarcha ? "DETENER EL RELOJ" : "PONER EN MARCHA";
+      $("btn-marcha").classList.toggle("confirmado", enMarcha);
+      document.querySelectorAll("[data-vel]").forEach((b) => b.classList.toggle("activo", Number(b.dataset.vel) === esc.velocidad));
     }
-    if (esInstructor()) $("btn-avanzar").disabled = esc.estado !== "activo";
   }
 
   const ICONOS_CLIMA = {
@@ -2003,8 +2067,8 @@
     $("clima-vis").textContent = `Visibilidad ${Logica.visibilidadPct(esc.clima)} %`;
     $("clima-mov").textContent = `×${ef.terrestre}`;
     $("clima-aire").textContent = `×${ef.ataqueAereo}`;
-    $("esc-fase").textContent = `${ETIQUETA_FASE[esc.fase] || esc.fase} · ${esc.estado}`;
-    $("esc-modo").textContent = `${esc.azar ? "Azar" : "Determinista"} · ${esc.auto_resolver ? "Auto" : "Manual"}`;
+    $("esc-fase").textContent = ETIQUETA_RELOJ[esc.estado] || esc.estado;
+    $("esc-modo").textContent = `${esc.azar ? "Azar" : "Determinista"} · tiempo real ${esc.velocidad}×`;
   }
 
   // ---------- alertas ----------
@@ -2286,6 +2350,7 @@
   function render(data) {
     app.data = data;
     app.recibidoEn = Date.now();
+    fijarReloj({ sim: data.escenario.sim_segundos, velocidad: data.escenario.velocidad, estado: data.escenario.estado });
     app.porId = new Map(data.unidades.map((u) => [u.id, u]));
     app.contactosPorId = new Map((data.contactos || []).map((c) => [c.unidad_id, c]));
     if (app.seleccion !== null && !app.porId.has(app.seleccion) && !app.contactosPorId.has(app.seleccion)) app.seleccion = null;
@@ -2400,7 +2465,7 @@
     for (const z of zonas) {
       const propia = !vista || z.bando === vista;
       const quien = z.bando === "azul" ? "Azul" : "Rojo";
-      const texto = `Interferencia electrónica (${quien}) · radio ${Math.round(z.radio_km)} km · vigente hasta resolver el turno ${z.turno + 1}`
+      const texto = `Interferencia electrónica (${quien}) · radio ${Math.round(z.radio_km)} km ${z.desde_seg !== null && z.desde_seg !== undefined ? ` · desde las ${horaDeSegundos(z.desde_seg).slice(0, 5)}, mientras el emisor siga interfiriendo` : ` · vigente hasta resolver el turno ${z.turno + 1}`}`
         + (propia && vista ? "" : vista ? " · sus sensores, antiaérea y drones están degradados aquí" : "");
       L.circle([z.lat, z.lon], { radius: z.radio_km * 1000, color: "#c77dff", weight: 2, dashArray: "2 7", fillColor: COLOR[z.bando] || "#c77dff", fillOpacity: 0.1, interactive: true })
         .bindTooltip(texto, { sticky: true }).addTo(g);
@@ -2739,6 +2804,7 @@
     ws.onmessage = (ev) => {
       const m = JSON.parse(ev.data);
       if (m.tipo === "estado") render(m);
+      else if (m.tipo === "posiciones") aplicarPosiciones(m);
       else if (m.tipo === "grafico") app.graficos.aplicar(m);
       else if (m.tipo === "chat_historial") app.chat.historial(m.mensajes);
       else if (m.tipo === "chat") app.chat.recibir(m);
@@ -2980,9 +3046,19 @@
   $("plantilla-cerrar").addEventListener("click", () => $("dlg-plantillas").close());
 
   const accion = (id, ruta) => $(id).addEventListener("click", () => app.escenarioId && enSilencio(api("POST", rutaEsc(`/${ruta}`))));
-  accion("btn-avanzar", "avanzar_turno");
   accion("btn-pausar", "pausar");
   accion("btn-reanudar", "reanudar");
+  // reloj del tiempo real: marcha/pausa y velocidad (segundos simulados por segundo real)
+  $("btn-marcha").addEventListener("click", () => {
+    if (!app.escenarioId || !app.data) return;
+    enSilencio(api("POST", rutaEsc("/reloj"), { estado: app.data.escenario.estado === "activo" ? "pausado" : "activo" }));
+  });
+  $("btn-adelantar-1h").addEventListener("click", () => {
+    if (app.escenarioId) enSilencio(api("POST", rutaEsc("/avanzar_turno?n=1")).then(() => toast("Reloj adelantado 1 h", true)));
+  });
+  document.querySelectorAll("[data-vel]").forEach((b) => b.addEventListener("click", () => {
+    if (app.escenarioId) enSilencio(api("POST", rutaEsc("/reloj"), { velocidad: Number(b.dataset.vel) }));
+  }));
   $("btn-finalizar").addEventListener("click", () => {
     if (app.escenarioId && confirm("¿Finalizar el escenario? Ya no se podrán emitir órdenes y el informe se abrirá a los alumnos.")) {
       enSilencio(api("POST", rutaEsc("/finalizar")));
@@ -3001,8 +3077,8 @@
   $("btn-avanzar-varios").addEventListener("click", () => {
     if (!app.escenarioId) return;
     const n = parseInt($("dir-avanzar-n").value, 10) || 1;
-    if (!confirm(`¿Resolver ${n} turnos seguidos? Las órdenes y misiones vigentes se cumplen solas; el adversario automático juega cada turno.`)) return;
-    enSilencio(api("POST", rutaEsc(`/avanzar_turno?n=${n}`)).then(() => toast(`Se resolvieron ${n} turnos`, true)));
+    if (!confirm(`¿Adelantar el reloj ${n} hora${n === 1 ? "" : "s"} de una vez? Todo se mueve, combate y consume como si el reloj hubiera corrido.`)) return;
+    enSilencio(api("POST", rutaEsc(`/avanzar_turno?n=${n}`)).then(() => toast(`Reloj adelantado ${n} h`, true)));
   });
   $("btn-transmisiones").addEventListener("click", () => {
     const b = $("tx-bando").value;
@@ -3142,9 +3218,10 @@
 
   $("btn-demo").addEventListener("click", () => {
     if (!app.escenarioId) return;
-    if (!confirm("Modo demostración: el simulador conducirá los dos bandos y resolverá un turno cada 15 segundos. ¿Continuar?")) return;
-    enSilencio(api("PATCH", rutaEsc("/config"), { ia_azul: true, ia_rojo: true, limite_decision_seg: 15 })
-      .then(() => toast("Modo demostración: la IA juega los dos bandos (para detenerlo, desmarque los adversarios o pause).", true)));
+    if (!confirm("Modo demostración: el simulador conducirá los dos bandos y el reloj correrá a 60×. ¿Continuar?")) return;
+    enSilencio(api("PATCH", rutaEsc("/config"), { ia_azul: true, ia_rojo: true })
+      .then(() => api("POST", rutaEsc("/reloj"), { velocidad: 60, estado: "activo" }))
+      .then(() => toast("Modo demostración: la IA juega los dos bandos (para terminarlo, desmarque los adversarios o detenga el reloj).", true)));
   });
   $("btn-evento-posicion").addEventListener("click", () => {
     app.marcandoEvento = !app.marcandoEvento;
@@ -3156,8 +3233,7 @@
   $("btn-config").addEventListener("click", () => {
     if (!app.escenarioId) return;
     const cuerpo = {
-      clima: $("cfg-clima").value, azar: $("cfg-azar").checked, auto_resolver: $("cfg-auto").checked,
-      limite_decision_seg: Math.max(0, parseInt($("cfg-limite").value, 10) || 0),
+      clima: $("cfg-clima").value, azar: $("cfg-azar").checked,
     };
     if ($("cfg-hora").value) cuerpo.hora_inicio = $("cfg-hora").value;
     enSilencio(api("PATCH", rutaEsc("/config"), cuerpo).then(() => toast("Configuración aplicada", true)));
@@ -3251,11 +3327,6 @@
   });
 
   $("btn-informe").addEventListener("click", () => app.informe && app.informe.abrir());
-
-  $("btn-listo").addEventListener("click", () => {
-    if (!app.data) return;
-    enSilencio(api("POST", rutaEsc("/listo"), { listo: !app.data.escenario[`listo_${app.usuario.rol}`] }));
-  });
 
   arrancar();
 })();

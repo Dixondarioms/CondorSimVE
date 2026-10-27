@@ -5,13 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from sqlalchemy.orm import Session
 
-from app import adversario, auth, diapositivas_html, informe_html, schemas, state, turnos
+from app import adversario, auth, diapositivas_html, informe_html, reloj, schemas, state
 from app.db import get_db
 from app.engine import toe
 from app.engine import inteligencia
 from app.engine import transmisiones
 from app.engine import apresto
-from app.engine import aar, calendario, clock, naciones, plantillas, timeline
+from app.engine import aar, calendario, clock, naciones, plantillas, puestos, tiempo_real, timeline
 from app.models.aar import Instantanea
 from app.models.objetivo import Objetivo
 from app.models.problema_militar import ProblemaMilitar
@@ -84,19 +84,59 @@ async def avanzar_turno(
     n: int = 1,
     esc: Escenario = Depends(auth.escenario_dep),
     db: Session = Depends(get_db),
-    usuario: Usuario = Depends(solo_instructor),
+    usuario: Usuario = Depends(auth.usuario_actual),
 ):
-    """Resuelve el turno; con `n`, varios seguidos (hasta un dia: para recorrer los periodos tranquilos de un
-    ejercicio largo). Se detiene si el escenario deja de estar activo."""
-    if esc.estado != "activo":
-        raise HTTPException(status_code=400, detail="El escenario no esta activo")
-    if not 1 <= n <= MAX_TURNOS_DE_UNA_VEZ:
-        raise HTTPException(status_code=400, detail=f"Se avanzan entre 1 y {MAX_TURNOS_DE_UNA_VEZ} turnos de una vez")
-    for _ in range(n):
-        if esc.estado != "activo":
-            break
-        await turnos.resolver_y_difundir(db, esc)
+    """Adelanta el reloj `n` horas simuladas de una vez (para saltar los periodos tranquilos de un ejercicio largo):
+    todo se mueve, combate y consume como si el reloj hubiera corrido. Se puede con el reloj detenido."""
+    _exigir_reloj(esc, usuario)
+    if esc.estado == "finalizado":
+        raise HTTPException(status_code=400, detail="El escenario ya finalizo")
+    if not 1 <= n <= tiempo_real.MAX_ADELANTO_H:
+        raise HTTPException(status_code=400, detail=f"Se adelantan entre 1 y {tiempo_real.MAX_ADELANTO_H} horas de una vez")
+    tiempo_real.paso(db, esc, n * 3600.0)
+    db.commit()
+    reloj.marcar_cambios(esc.id)
+    await manager.difundir_estado(db, esc)
     return state.estado_para(db, esc, usuario.rol)
+
+
+MOTIVO_SIN_TURNOS = "En el SIETE en tiempo real el tiempo avanza solo: use la pausa y la velocidad del reloj."
+
+
+def _exigir_reloj(esc: Escenario, usuario: Usuario) -> None:
+    """El reloj lo maneja el director; en un ensayo (juego de guerra del TIEM), el Comandante o el JEM del bando que
+    ensaya, que juega solo contra el enemigo."""
+    if usuario.rol == "instructor":
+        return
+    if esc.ensayo_de is not None and usuario.rol == esc.ensayo_bando and puestos.puede(usuario.puesto, "listo"):
+        return
+    raise HTTPException(status_code=403, detail="El reloj lo maneja el director del ejercicio (en un ensayo, el "
+                                                "Comandante o el JEM del bando que ensaya)")
+
+
+@router.post("/{escenario_id}/reloj")
+async def ajustar_reloj(
+    payload: schemas.RelojIn,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.usuario_actual),
+):
+    """El director pone en marcha o detiene el reloj y elige su velocidad (1x, 10x o 60x)."""
+    _exigir_reloj(esc, usuario)
+    if esc.estado == "finalizado":
+        raise HTTPException(status_code=400, detail="El escenario ya finalizo")
+    if payload.velocidad is not None:
+        if payload.velocidad not in tiempo_real.VELOCIDADES:
+            raise HTTPException(status_code=400, detail="Velocidades posibles: 1x, 10x y 60x")
+        esc.velocidad = payload.velocidad
+    if payload.estado == "activo":
+        clock.reanudar(db, esc)
+    elif payload.estado == "pausado":
+        clock.pausar(db, esc)
+    db.commit()
+    reloj.marcar_cambios(esc.id)
+    return await _difundir_y_estado(db, esc, usuario)
+
 
 
 @router.post("/{escenario_id}/pcao")
@@ -297,7 +337,7 @@ async def configurar(
                 ia_encendida.append(campo[3:])
             else:
                 setattr(esc, f"listo_{campo[3:]}", False)
-    if ia_encendida and esc.estado == "activo" and esc.fase == "decision":
+    if ia_encendida and esc.estado != "finalizado":
         db.flush()
         adversario.jugar_turno(db, esc, bandos=ia_encendida)  # juega ya el turno en curso
     for campo, etiqueta in (("nacion_azul", "Azul"), ("nacion_rojo", "Rojo")):
@@ -348,15 +388,7 @@ async def marcar_listo(
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(auth.conductor),
 ):
-    auth.exigir_funcion(usuario, "listo")
-    if esc.estado != "activo" or esc.fase != "decision":
-        raise HTTPException(status_code=400, detail="El escenario no esta en fase de decision")
-    ambos = clock.marcar_listo(db, esc, usuario.rol, payload.listo)
-    if ambos and esc.auto_resolver:
-        await turnos.resolver_y_difundir(db, esc)
-    else:
-        await manager.difundir_estado(db, esc)
-    return state.estado_para(db, esc, usuario.rol)
+    raise HTTPException(status_code=400, detail=MOTIVO_SIN_TURNOS)
 
 
 @router.post("/{escenario_id}/eventos", response_model=schemas.EventoOut)

@@ -206,7 +206,7 @@ def _ge_api(prof, base):
     return r.json()["id"]
 
 
-def test_api_interferir_valida_el_punto_y_ambos_bandos_ven_la_zona_el_turno_siguiente(api):
+def test_api_interferir_valida_el_punto_y_la_zona_dura_mientras_se_mantiene_la_orden(api):
     prof, base, a, *_ = _preparar(api)
     ge_id = _ge_api(prof, base)
     alfa = api("alfa")
@@ -216,11 +216,14 @@ def test_api_interferir_valida_el_punto_y_ambos_bandos_ven_la_zona_el_turno_sigu
     assert orden(ge_id, [[0.3, 0.5], [0.3, 0.6]]).status_code == 400
     r = orden(a["id"], [[0.0, 0.1]])
     assert r.status_code == 400 and "guerra electronica" in r.json()["detail"]
-    assert orden(ge_id, [[0.3, 0.5]]).status_code == 200
-    assert prof.post(f"{base}/avanzar_turno").status_code == 200
-    for nombre in ("alfa", "bravo", "obs"):
+    r = orden(ge_id, [[0.3, 0.5]])
+    assert r.status_code == 200 and r.json()["estado"] == "en_ejecucion"
+    for nombre in ("alfa", "bravo", "obs"):  # tiempo real: rige desde que se emite
         zonas = api(nombre).get(base).json()["interferencias"]
         assert [(z["bando"], z["radio_km"]) for z in zonas] == [("azul", 25.0)], nombre
+    assert prof.post(f"{base}/avanzar_turno?n=2").status_code == 200  # sigue mientras se mantenga la orden
+    assert len(api("bravo").get(base).json()["interferencias"]) == 1
+    assert alfa.delete(f"{base}/ordenes/{r.json()['id']}").status_code == 200  # el interferidor deja de emitir
     prof.post(f"{base}/avanzar_turno")
     assert api("bravo").get(base).json()["interferencias"] == []
 

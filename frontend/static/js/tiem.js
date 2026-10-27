@@ -16,12 +16,12 @@
     simultaneo: "Simultáneo", sistemico: "Sistémico" };
   const SIGLAS = { comandante: "CMDTE", jem: "JEM", a1: "A-1", a2: "A-2", a3: "A-3", a3da: "A-3 D/A", a4: "A-4", ce: "C-E", instructor: "Instructor" };
 
-  /** {texto, clase} del estado de un documento, con el turno en que se presentó o revisó. */
+  /** {texto, clase} del estado de un documento, con la hora del ejercicio en que se presentó o revisó. */
   function textoEstado(doc) {
     const e = ESTADOS[doc.estado] || ESTADOS.borrador;
     let texto = e.texto;
-    if (doc.estado === "presentado" && doc.presentado_turno) texto += ` (turno ${doc.presentado_turno})`;
-    if ((doc.estado === "aprobado" || doc.estado === "devuelto") && doc.revisado_turno) texto += ` (turno ${doc.revisado_turno})`;
+    if (doc.estado === "presentado" && doc.presentado_turno) texto += ` (hora ${doc.presentado_turno})`;
+    if ((doc.estado === "aprobado" || doc.estado === "devuelto") && doc.revisado_turno) texto += ` (hora ${doc.revisado_turno})`;
     if (doc.estado === "borrador" && !doc.existe) texto = "Sin empezar";
     if (doc.nota) texto += ` · ${doc.nota}/20`;
     return { texto, clase: e.clase };
@@ -242,11 +242,11 @@
       const parte = $("sup-parte");
       parte.replaceChildren();
       if (sup && sup.parte) {
-        parte.append(el("b", "", `Parte del turno ${sup.parte.turno}${sup.parte.referencia ? ` (${sup.parte.referencia})` : ""}`));
+        parte.append(el("b", "", `Parte de la hora ${sup.parte.turno}${sup.parte.referencia ? ` (${sup.parte.referencia})` : ""}`));
         const ul = el("ul");
         sup.parte.lineas.forEach((l) => ul.append(el("li", "", l)));
         parte.append(ul);
-      } else parte.append(el("p", "vacio", "Todavía no se resolvió ningún turno."));
+      } else parte.append(el("p", "vacio", "Todavía no se cumplió ninguna hora del ejercicio."));
       const cuenta = $("sup-cuenta");
       cuenta.replaceChildren();
       const filas = (sup && sup.cuadro) || [];
@@ -302,18 +302,18 @@
           const li = el("li");
           const txt = el("div", "texto");
           const ref = refH(t.turno, turnoH);
-          txt.append(el("b", "", textoTarea(t, tipos)), el("span", "ayuda", `${t.origen === "frago" ? "Orden fragmentaria · " : ""}Turno ${t.turno}${ref ? ` (${ref})` : ""}${t.detalle ? ` · ${t.detalle}` : ""}`));
+          txt.append(el("b", "", textoTarea(t, tipos)), el("span", "ayuda", `${t.origen === "frago" ? "Orden fragmentaria · " : ""}Hora ${t.turno}${ref ? ` (${ref})` : ""}${t.detalle ? ` · ${t.detalle}` : ""}`));
           if (e && e.estado === "rechazada" && e.motivo) txt.append(el("span", "ayuda motivo", `Rechazada: ${e.motivo}`));
           const chip = { emitida: ["Emitida", "ok"], rechazada: ["Rechazada", "fuego"], pendiente: ["Pendiente", ""] }[estado];
           li.append(txt, el("span", `chip ${chip[1]}`, chip[0]));
           ul.append(li);
         }
       };
-      pintar($("orden-vencen"), vencen, tareas.length ? "Ninguna tarea vence en este turno." : "El Plan de Operaciones todavía no tiene tareas.");
+      pintar($("orden-vencen"), vencen, tareas.length ? "Ninguna tarea vence en esta hora." : "El Plan de Operaciones todavía no tiene tareas.");
       pintar($("orden-proximas"), proximas, "Sin tareas en las próximas 24 horas.");
       const porEmitir = vencen.filter((x) => x.estado !== "emitida").length;
       $("btn-emitir-orden").disabled = !porEmitir;
-      $("btn-emitir-orden").textContent = porEmitir ? `Emitir ${porEmitir} tarea(s) de este turno como órdenes` : "No hay tareas por emitir";
+      $("btn-emitir-orden").textContent = porEmitir ? `Emitir ${porEmitir} tarea(s) de esta hora como órdenes` : "No hay tareas por emitir";
       $("btn-emitir-orden").hidden = (ctx.usuario() || {}).rol === "observador";
     }
 
@@ -333,7 +333,7 @@
       $("sec-ensayos").hidden = !!(esc && esc.ensayo_de);
       $("sec-apreciacion").hidden = !!(esc && esc.ensayo_de); // los documentos se redactan en el ejercicio original
       if (esc && esc.ensayo_de) {
-        $("ensayo-aviso-texto").textContent = `Esto es un ensayo (juego de guerra) de «${esc.ensayo_fa}»: la IA conduce al enemigo y el turno se resuelve en cuanto su bando confirma.`;
+        $("ensayo-aviso-texto").textContent = `Esto es un ensayo (juego de guerra) de «${esc.ensayo_fa}»: arranca con el reloj detenido en la hora del ejercicio; el Comandante o el JEM lo ponen en marcha, eligen la velocidad o adelantan una hora desde la barra inferior.`;
         return;
       }
       const formas = (datos.contexto && datos.contexto[b] && datos.contexto[b].formas) || [];
@@ -553,14 +553,14 @@
       const tipos = def().tipos_tarea;
       const t = el("table", "tiem-tabla");
       const tr = el("tr");
-      ["Turno", "Unidad", "Acción", "Objetivo o destino", "Detalle", "Ejecución"].forEach((x) => tr.append(el("th", "", x)));
+      ["Hora", "Unidad", "Acción", "Objetivo o destino", "Detalle", "Ejecución"].forEach((x) => tr.append(el("th", "", x)));
       t.append(tr);
       for (const x of [...tareas].sort((a, b) => (a.turno || 0) - (b.turno || 0))) {
         const r = el("tr");
         const e = ej[x.id];
         const ref = refH(x.turno, turnoH);
         [`${x.turno || "—"}${ref ? ` (${ref})` : ""}`, x.unidad_nombre, tipos[x.tipo] || "—", x.objetivo_nombre, x.detalle,
-          e ? (e.estado === "emitida" ? `Emitida (turno ${e.turno})` : `Rechazada: ${e.motivo}`) : "Pendiente"]
+          e ? (e.estado === "emitida" ? `Emitida (hora ${e.turno})` : `Rechazada: ${e.motivo}`) : "Pendiente"]
           .forEach((v) => r.append(el("td", "", v || "")));
         t.append(r);
       }
@@ -578,7 +578,7 @@
         caja.replaceChildren();
         const t = el("table", "tiem-tabla");
         const tr = el("tr");
-        ["Turno", "Unidad", "Acción", "Objetivo o destino", "Detalle (en infinitivo)", ""].forEach((x) => tr.append(el("th", "", x)));
+        ["Hora", "Unidad", "Acción", "Objetivo o destino", "Detalle (en infinitivo)", ""].forEach((x) => tr.append(el("th", "", x)));
         t.append(tr);
         tareas.forEach((x, i) => {
           const r = el("tr");

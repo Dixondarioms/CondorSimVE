@@ -1,6 +1,6 @@
 import json
 
-from sqlalchemy import ForeignKey, Integer, String, Text
+from sqlalchemy import Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -34,8 +34,12 @@ class Orden(Base):
     def waypoints(self) -> list:
         return json.loads(self.waypoints_json or "[]")
 
-    # estado: "pendiente" | "resuelta" | "rechazada"
+    # estado: "pendiente" | "en_ejecucion" (la unidad la esta cumpliendo) | "resuelta" | "rechazada" | "cancelada"
     estado: Mapped[str] = mapped_column(String(20), default="pendiente")
+    # segundo simulado en que se emitio (tiempo real)
+    emitida_seg: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # orden demorada por las comunicaciones: segundo simulado en que llega a la unidad (queda "pendiente" hasta entonces)
+    llega_seg: Mapped[float | None] = mapped_column(Float, nullable=True)
     resultado: Mapped[str] = mapped_column(Text, default="")
 
     # quien la emitio y el puesto que ocupaba en ese momento (mando | inteligencia | operaciones | logistica |

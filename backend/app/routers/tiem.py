@@ -395,14 +395,14 @@ def _orden_de_tarea(db: Session, esc: Escenario, bando: str, t: dict, conocidas:
 
 
 class EmitirIn(BaseModel):
-    ids: list[str] | None = None  # tareas a emitir; sin ids, todas las que vencen hasta este turno
+    ids: list[str] | None = None  # tareas a emitir; sin ids, todas las que vencen hasta la hora en curso
 
 
 @router.post("/{bando}/emitir")
 async def emitir(bando: str, payload: EmitirIn, esc: Escenario = Depends(auth.escenario_dep), db: Session = Depends(get_db),
                  u=Depends(autor)):
     """Orden de Operaciones: emite como ordenes del simulador las tareas del plan (y las ordenes fragmentarias de la
-    Supervision) que vencen en el turno en curso (o
+    Supervision) que vencen en la hora en curso (o
     antes y aun no emitidas). Cada orden pasa por la misma validacion que una orden manual, con la reparticion de
     quien la emite; las que no se pueden cumplir quedan rechazadas con el motivo y se pueden reintentar."""
     from app.routers.ordenes import _crear_orden, _en_decision  # importacion tardia: evita ciclos entre routers
@@ -440,8 +440,6 @@ async def emitir(bando: str, payload: EmitirIn, esc: Escenario = Depends(auth.es
         ej.turno, ej.orden_id, ej.motivo, ej.emitida_por = esc.turno_actual, orden_id, motivo[:300], u.username
         db.add(ej)
         resultados.append({"id": t["id"], "texto": tiem.texto_tarea(t), "ok": ok, "motivo": motivo, "orden_id": orden_id})
-    if any(r["ok"] for r in resultados):
-        setattr(esc, f"listo_{bando}", False)
     db.commit()
     await manager.difundir_estado(db, esc)
     return {"resultados": resultados, "emitidas": sum(1 for r in resultados if r["ok"])}

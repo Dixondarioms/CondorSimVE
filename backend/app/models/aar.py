@@ -24,6 +24,21 @@ class Instantanea(Base):
     creado_en: Mapped[datetime] = mapped_column(DateTime, default=_ahora)
 
 
+class Fotograma(Base):
+    """Posicion, fuerza y estado de cada unidad en un instante del ejercicio en tiempo real (cada pocos minutos
+    simulados), para la repeticion: [[id, lat, lon, fuerza, estado], ...]. El nombre, el bando y el simbolo se toman
+    de la unidad (no cambian)."""
+
+    __tablename__ = "fotogramas"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    escenario_id: Mapped[int] = mapped_column(ForeignKey("escenarios.id"), index=True)
+    sim_segundos: Mapped[float] = mapped_column(Float)
+    turno: Mapped[int] = mapped_column(Integer)
+    clima: Mapped[str] = mapped_column(String(20), default="despejado")
+    datos_json: Mapped[str] = mapped_column(Text)
+
+
 class Combate(Base):
     """Registro estructurado de cada enfrentamiento resuelto (para el informe)."""
 
@@ -48,6 +63,7 @@ class Combate(Base):
     efectos: Mapped[str] = mapped_column(Text, default="")
     lat: Mapped[float] = mapped_column(Float)
     lon: Mapped[float] = mapped_column(Float)
+    sim_segundos: Mapped[float | None] = mapped_column(Float, nullable=True)  # tiempo real: cuando ocurrio
 
 
 class RegistroLogistico(Base):

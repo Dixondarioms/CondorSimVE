@@ -176,7 +176,7 @@ def test_el_arranque_del_servidor_crea_el_admin_en_una_base_vacia(api, monkeypat
     monkeypatch.setattr(main, "SessionLocal", Session)
     monkeypatch.setattr(main, "init_db", lambda: None)
     monkeypatch.setattr(main, "get_terreno", lambda: type("T", (), {"disponible": True})())
-    monkeypatch.setattr(main.turnos, "vigilar_plazos", sin_vigilancia)
+    monkeypatch.setattr(main.reloj, "correr", sin_vigilancia)
     monkeypatch.setenv("SIMULADOR_RESPALDO_HORAS", "0")
     with TestClient(app):
         pass

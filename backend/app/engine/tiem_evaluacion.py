@@ -4,7 +4,7 @@ Indicadores de 0 a 100, con el mismo formato que los indicadores doctrinales del
   documentos   documentos del TIEM aprobados (1) o presentados (0,5), sobre los 13 de las fases I y II;
   forma        documentos redactados sin faltantes ni observaciones de forma del TIEM (mision en infinitivo y sin
                condiciones, dos F/A con su APA, COG propio y enemigo...);
-  oportunidad  documentos de la Fase I presentados a mas tardar en el turno de la hora H;
+  oportunidad  documentos de la Fase I presentados a mas tardar a la hora H;
   ejecucion    tareas del plan y ordenes fragmentarias vencidas que se emitieron como ordenes;
   supervision  desvios y fallidos del cuadro de supervision con su causa y su accion correctiva en el registro.
 Un indicador sin datos no aplica y no cuenta. La nota automatica (1 a 20) es el promedio de los que aplican; si el
@@ -64,11 +64,11 @@ def evaluar(db: Session, esc, bando: str) -> dict:
     if esc.turno_h and fase1:
         a_tiempo = sum(1 for d in fase1 if d.presentado_turno <= esc.turno_h)
         inds.append(_ind("oportunidad", "Oportunidad de la apreciación", f"{a_tiempo} de {len(fase1)} presentado(s) "
-                         f"hasta la hora H (turno {esc.turno_h})", 100 * a_tiempo / len(fase1),
-                         "Documentos de la Fase I presentados a más tardar en el turno de la hora H."))
+                         f"hasta la hora H (hora {esc.turno_h} del ejercicio)", 100 * a_tiempo / len(fase1),
+                         "Documentos de la Fase I presentados a más tardar a la hora H."))
     else:
         inds.append(_ind("oportunidad", "Oportunidad de la apreciación", "sin hora H o sin documentos presentados", None,
-                         "Documentos de la Fase I presentados a más tardar en el turno de la hora H."))
+                         "Documentos de la Fase I presentados a más tardar a la hora H."))
     # 4. ejecucion del plan
     tareas = [t for t, _ in supervision.tareas_del_bando(contenidos) if t.get("turno") and t["turno"] <= esc.turno_actual]
     ejec = {e.tarea_id: e for e in db.query(EjecucionTarea).filter(EjecucionTarea.escenario_id == esc.id,

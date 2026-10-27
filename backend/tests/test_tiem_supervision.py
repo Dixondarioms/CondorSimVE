@@ -41,13 +41,18 @@ def test_el_cuadro_de_supervision_compara_lo_previsto_con_lo_ocurrido(api):
     assert filas["t:s0000001"]["estado"] == "en curso"
     assert filas["t:s0000002"]["estado"] == "desvio" and "localizarlo" in filas["t:s0000002"]["causa_sugerida"]
     destruir = next(f for k, f in filas.items() if k.startswith("o:"))
-    assert destruir["estado"] == "desvio" and "Vence en el turno 2" in destruir["diferencia"]
-    # se resuelve el turno: la orden de ataque se cumple y aparece el parte
+    assert destruir["estado"] == "desvio" and "Vence en la hora 2" in destruir["diferencia"]
+    # pasa una hora: el ataque sigue en curso (fuego continuo mientras R1 resista) y aparece el parte de la hora 1
     assert prof.post(f"{base}/avanzar_turno").status_code == 200
     sup = a3.get(f"{base}/tiem").json()["supervision"]["azul"]
     filas = {f["clave"]: f for f in sup["cuadro"]}
-    assert filas["t:s0000001"]["estado"] == "conforme" and "Ataque" in filas["t:s0000001"]["resultado"]
-    assert sup["parte"]["turno"] == 1 and "1 cumplida(s)" in sup["parte"]["lineas"][0]
+    assert filas["t:s0000001"]["estado"] == "en curso" and "cumpliendo" in filas["t:s0000001"]["resultado"]
+    assert sup["parte"]["turno"] == 1 and "1 en curso" in sup["parte"]["lineas"][0]
+    # si se detiene la orden, la tarea queda con desvio
+    orden_id = next(o["id"] for o in a3.get(f"{base}/ordenes").json() if o["tipo"] == "atacar")
+    assert a3.delete(f"{base}/ordenes/{orden_id}").status_code == 200
+    filas = {f["clave"]: f for f in a3.get(f"{base}/tiem").json()["supervision"]["azul"]["cuadro"]}
+    assert filas["t:s0000001"]["estado"] == "desvio" and "otra orden" in filas["t:s0000001"]["causa_sugerida"]
     assert sup["cuenta"]["desvio"] >= 1
     # el enemigo no ve la supervision de azul
     assert list(api("bravo").get(f"{base}/tiem").json()["supervision"]) == ["rojo"]

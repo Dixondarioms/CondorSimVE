@@ -1,8 +1,10 @@
 """Adversario automatico: el simulador conduce un bando (azul o rojo) con las mismas reglas que un alumno.
 
-Al abrirse cada turno (clock.avanzar_turno) y al encenderlo el instructor (PATCH /config con ia_azul / ia_rojo), da
-una orden a cada unidad de su bando y marca el bando como listo. Las ordenes pasan por la misma validacion que las
-de los alumnos (routers/ordenes._crear_orden): alcance, municion, combustible, puestos, niebla de guerra...
+En tiempo real "piensa" cada IA_CADA_S segundos simulados mientras corre el reloj (engine/tiempo_real.py) y al
+encenderlo el instructor (PATCH /config con ia_azul / ia_rojo): revisa cada unidad de su bando y le da una orden solo
+si cambia lo que ya esta haciendo (una unidad en camino al mismo destino o atacando al mismo blanco sigue como va).
+Las ordenes pasan por la misma validacion que las de los alumnos (routers/ordenes._crear_orden): alcance, municion,
+combustible, puestos, niebla de guerra...
 
 Solo usa lo que su bando sabe: sus propias unidades, las enemigas que detecta ahora (posicion, tipo y clase; nunca
 su fuerza, su modelo ni su logistica), los ultimos contactos, sus propios objetivos y la ubicacion de las bases
@@ -32,6 +34,7 @@ from app.engine import aeronaves as aeronaves_mod
 from app.engine import catalogo, defensa_aerea, geo
 from app.engine import guerra_electronica as ge_mod
 from app.engine import misiles as misiles_mod
+from app.engine import rutas as rutas_mod
 from app.engine import transporte as transporte_mod
 from app.engine.orders import tipo_efectivo
 from app.models.contacto import Contacto
@@ -50,6 +53,10 @@ REABASTECER = 20  # % de combustible o municion por debajo del cual una unidad d
 RELACION_MINIMA = 0.6  # ataque propio / defensa del blanco (de su clase) para atacar en tierra
 APROXIMACION = 0.8  # se acerca hasta este factor de su alcance
 GRUPO_CAZA = 2  # aeronaves por grupo que lanza una base
+IA_CADA_S = 300.0  # segundos simulados entre dos decisiones del adversario (5 min: a 60x, cada 5 s reales)
+MISMO_DESTINO_KM = 3.0  # un destino nuevo a menos de esto (o del 10 % de lo que falta) es la misma orden
+VARADA_RECUERDA_S = 3 * 3600.0  # tiempo simulado que recuerda que una unidad no pudo llegar a un destino...
+VARADA_RADIO_KM = 10.0  # ...ni a sus alrededores
 # Niveles del adversario (Escenario.ia_nivel): cuanto riesgo toma.
 NIVELES = {
     # relacion: ataque/defensa minima para atacar en tierra; regreso: puntos de combustible sobre el de regreso;
@@ -114,12 +121,24 @@ class _Turno:
         self.objetivos = db.query(Objetivo).filter(Objetivo.escenario_id == esc.id, Objetivo.bando == bando,
                                                    Objetivo.estado == "pendiente").all()
         self.decisiones: list[str] = []
+        # ordenes que sus unidades estan cumpliendo (tiempo real) y destinos a los que no pudieron llegar hace poco (un
+        # rio sin puente): no se las vuelve a mandar alli
+        self.activas, self.varadas = {}, {}
+        desde = (esc.sim_segundos or 0.0) - VARADA_RECUERDA_S
+        for o in db.query(Orden).filter(Orden.escenario_id == esc.id,
+                                        Orden.estado.in_(("pendiente", "en_ejecucion", "resuelta"))).order_by(Orden.id):
+            if o.estado in ("pendiente", "en_ejecucion"):
+                self.activas[o.unidad_id] = o
+            elif o.tipo == "mover" and "Se detuvo" in (o.resultado or "") and (o.emitida_seg or 0.0) >= desde and o.waypoints:
+                self.varadas.setdefault(o.unidad_id, []).append(o.waypoints[-1])
         self.nivel = NIVELES.get(getattr(esc, "ia_nivel", "normal") or "normal", NIVELES["normal"])
         self.reservas: dict[int, int] = {}  # plazas de cada base ya comprometidas por los aterrizajes de este turno
 
     # ---------------------------------------------------------------- emision
     def ordenar(self, u: Unidad, **campos) -> bool:
-        """Intenta dar la orden; True si la validacion la acepto."""
+        """Intenta dar la orden; True si la validacion la acepto o si la unidad ya esta cumpliendo esa misma orden."""
+        if self.ya_la_cumple(u, campos):
+            return True
         try:
             self._crear(schemas.OrdenCreate(unidad_id=u.id, **campos), self.esc, self.db, self.usuario)
         except HTTPException:
@@ -128,9 +147,35 @@ class _Turno:
         self.decisiones.append(f"{u.nombre}: {campos['tipo']}")
         return True
 
+    def ya_la_cumple(self, u, campos) -> bool:
+        """La unidad ya cumple esa orden: mismo blanco o la misma base, o un destino practicamente igual (tiempo real:
+        no se reinicia lo que va bien)."""
+        actual = self.activas.get(u.id)
+        if actual is None or actual.tipo != campos.get("tipo"):
+            return False
+        if actual.tipo in ("atacar", "aterrizar", "apoyar", "embarcar"):
+            return actual.objetivo_unidad_id == campos.get("objetivo_unidad_id")
+        nuevos, viejos = list(campos.get("waypoints") or []), actual.waypoints
+        if not nuevos or not viejos:
+            return False
+        (lat, lon), (lat0, lon0) = nuevos[-1], viejos[-1]
+        falta = geo.distancia_km(u.lat, u.lon, lat0, lon0)
+        return geo.distancia_km(lat, lon, lat0, lon0) <= max(MISMO_DESTINO_KM, 0.1 * falta)
+
     def mover(self, u, lat, lon) -> bool:
         if geo.distancia_km(u.lat, u.lon, lat, lon) < 0.5:
             return False
+        if self.ya_la_cumple(u, {"tipo": "mover", "waypoints": [(lat, lon)]}):
+            return True  # antes de trazar la ruta: ya va hacia alli
+        if any(geo.distancia_km(lat, lon, a, b) <= VARADA_RADIO_KM for a, b in self.varadas.get(u.id, [])):
+            return False  # hace poco no pudo llegar alli
+        if u.tipo == "terrestre" and self.terreno is not None:
+            # por el camino mas rapido (carreteras y puentes), como el boton "Ruta por carretera" de los alumnos
+            from app.routers.ordenes import _obras_y_cortes  # importacion tardia: evita ciclos entre routers
+            ruta = rutas_mod.ruta(u, [lat, lon], self.terreno, _obras_y_cortes(self.db, self.esc))
+            if ruta["nota"].startswith(("No hay camino", "El destino es intransitable")):
+                return False  # no hay como llegar (rio sin puente): no se la manda a quedar varada
+            return self.ordenar(u, tipo="mover", waypoints=[tuple(w) for w in ruta["waypoints"]])
         return self.ordenar(u, tipo="mover", waypoints=[(lat, lon)])
 
     # ---------------------------------------------------------------- criterios
@@ -463,8 +508,8 @@ class _Turno:
 
     # ---------------------------------------------------------------- turno
     def jugar(self) -> list[str]:
-        con_orden = {o.unidad_id for o in self.db.query(Orden).filter(
-            Orden.escenario_id == self.esc.id, Orden.estado == "pendiente")}
+        # una aeronave que vuelve a aterrizar (combustible critico o decision previa) no se distrae
+        con_orden = {uid for uid, o in self.activas.items() if o.tipo == "aterrizar"}
         # primero las bases (despegues), luego aeronaves, mar y tierra
         orden = sorted(self.propias, key=lambda u: {"base": 0, "aerea": 1, "naval": 2}.get(u.tipo, 3))
         for u in orden:
@@ -486,8 +531,10 @@ class _Turno:
 
 
 def jugar_turno(db: Session, esc: Escenario, terreno=None, bandos=None) -> dict[str, list[str]]:
-    """Da las ordenes de los bandos que conduce el simulador y los marca listos. No confirma la transaccion."""
-    if esc.estado != "activo" or esc.fase != "decision":
+    """Una decision de los bandos que conduce el simulador: las ordenes nuevas que hacen falta. No confirma la
+    transaccion. En tiempo real se llama cada IA_CADA_S simulados (y al encender la IA), tambien con el reloj
+    detenido, salvo con el escenario finalizado."""
+    if esc.estado == "finalizado":
         return {}
     terreno = terreno or get_terreno()
     resultado = {}
@@ -506,7 +553,6 @@ def jugar_turno(db: Session, esc: Escenario, terreno=None, bandos=None) -> dict[
             if not getattr(esc, f"ia_{bando}", False):
                 continue
             resultado[bando] = _Turno(db, esc, bando, terreno).jugar()
-            setattr(esc, f"listo_{bando}", True)
     finally:
         state.unidades_visibles_para = original
     db.flush()

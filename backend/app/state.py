@@ -49,6 +49,7 @@ CAMPOS_OCULTOS = (
     "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id",
     "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios",
     "transporte_id", "personal_inicial", "personal_actual", "sistema_da", "pista_largo_m", "pista_util_m", "recorrido",
+    "ruta", "orden_id",
 )
 TURNOS_ORDENES = 3  # ordenes ya resueltas que viajan con el estado (el historial completo esta en el AAR)
 CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct", "com_ordenes_pct", "inteligencia", "apresto")
@@ -138,7 +139,7 @@ def estado_para(
                 "unidad_id": u.id, "nombre": u.nombre, "tipo": u.tipo, "clase": u.clase,
                 "sidc": u.sidc, "lat": c.lat, "lon": c.lon, "turno_visto": c.turno_visto,
             })
-    ordenes = (q_ordenes.filter(or_(Orden.estado == "pendiente", Orden.turno_emitida >= escenario.turno_actual - TURNOS_ORDENES))
+    ordenes = (q_ordenes.filter(or_(Orden.estado.in_(("pendiente", "en_ejecucion")), Orden.turno_emitida >= escenario.turno_actual - TURNOS_ORDENES))
                .order_by(Orden.id).all())
     eventos = q_eventos.order_by(Evento.id.desc()).limit(20).all()
     obras = _obras_visibles(db, escenario, rol, unidades)

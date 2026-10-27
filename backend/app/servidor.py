@@ -1,6 +1,6 @@
 """Arranca el simulador.
 
-    python -m app.servidor [--host 0.0.0.0] [--port 8000] [--https]
+    python -m app.servidor [--host 0.0.0.0] [--port 8001] [--https]
 
 --https usa certs/cert.pem y certs/key.pem (los genera si no existen; ver app.gen_cert).
 Detras de un proxy TLS (Caddy, nginx) use --proxy y no --https.
@@ -14,7 +14,7 @@ import sys
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--host", default="127.0.0.1", help="0.0.0.0 para aceptar conexiones de la red local")
-    ap.add_argument("--port", type=int, default=8000)
+    ap.add_argument("--port", type=int, default=8001)
     ap.add_argument("--https", action="store_true")
     ap.add_argument("--proxy", action="store_true", help="confiar en X-Forwarded-* de un proxy inverso")
     args = ap.parse_args()

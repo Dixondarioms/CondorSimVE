@@ -37,7 +37,7 @@
     El script nunca descarga instaladores de programas: si falta Python, indica de dónde bajarlo y se
     detiene. Solo descarga (previa confirmación) el paquete de datos de mapa y, con -Actualizar sin git,
     el código del propio simulador. Variables de entorno respetadas: SIMULADOR_DB (otra base SQLite),
-    SIMULADOR_DATABASE_URL (PostgreSQL), SIETE_PUERTO (puerto, 8000 u 8443 con HTTPS); también se leen
+    SIMULADOR_DATABASE_URL (PostgreSQL), SIETE_PUERTO (puerto, 8001 en el SIETE en tiempo real u 8443 con HTTPS); también se leen
     de backend\.env.
 
 .EXAMPLE
@@ -192,7 +192,7 @@ function Protect-Texto([string]$texto) {
 
 Import-ArchivoEnv
 if ($Https -and -not $env:SIETE_PUERTO) { $env:SIETE_PUERTO = '8443' }
-$Puerto = if ($env:SIETE_PUERTO) { [int]$env:SIETE_PUERTO } else { 8000 }
+$Puerto = if ($env:SIETE_PUERTO) { [int]$env:SIETE_PUERTO } else { 8001 }
 $Esquema = if ($Https -or $env:SIETE_HTTPS -eq '1') { 'https' } else { 'http' }
 $NombreReglaFw = "S.I.E.T.E. servidor (TCP $Puerto)"
 

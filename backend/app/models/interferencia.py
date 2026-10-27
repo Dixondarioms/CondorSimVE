@@ -18,3 +18,7 @@ class Interferencia(Base):
     lon: Mapped[float] = mapped_column(Float)
     radio_km: Mapped[float] = mapped_column(Float)
     turno: Mapped[int] = mapped_column(Integer)
+    # tiempo real: la zona rige desde `inicio_seg` mientras el emisor siga interfiriendo; `fin_seg` cuando dejo de
+    # hacerlo (ver engine/tiempo_real.py). Sin `inicio_seg`, es una zona por turno (SIETE por turnos).
+    inicio_seg: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fin_seg: Mapped[float | None] = mapped_column(Float, nullable=True)

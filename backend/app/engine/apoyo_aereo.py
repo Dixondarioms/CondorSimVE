@@ -97,8 +97,9 @@ def protegido(hva, unidades, visible) -> tuple[bool, str]:
                    f"y solo {n} de {ESCOLTAS_MINIMAS} escoltas.")
 
 
-def reabastecer(cisterna, unidades, bit, visible) -> dict:
-    """Reabastecimiento en vuelo de un turno. Devuelve {receptores: [(nombre, aeronaves, kg)], kg, minutos, motivo}."""
+def reabastecer(cisterna, unidades, bit, visible, minutos_disponibles: float = MINUTOS_TURNO) -> dict:
+    """Reabastecimiento en vuelo durante `minutos_disponibles` (un turno si no se indica). Devuelve
+    {receptores: [(nombre, aeronaves, kg)], kg, minutos, motivo}."""
     out = {"receptores": [], "kg": 0.0, "minutos": 0.0, "motivo": ""}
     if not en_vuelo(cisterna):
         return out
@@ -110,7 +111,7 @@ def reabastecer(cisterna, unidades, bit, visible) -> dict:
     total = transferible_kg(cisterna)
     disponible = max(0.0, cisterna.carga or 0.0) / 100.0 * total
     v = tasa(cisterna)
-    minutos = MINUTOS_TURNO
+    minutos = minutos_disponibles
     receptores = sorted(
         (r for r in unidades
          if r is not cisterna and r.bando == cisterna.bando and en_vuelo(r) and not catalogo.es_misil(r)
@@ -140,7 +141,7 @@ def reabastecer(cisterna, unidades, bit, visible) -> dict:
         out["kg"] += kg
     if out["kg"] > 0:
         bit.poner(cisterna, "carga", max(0.0, (cisterna.carga or 0.0) - out["kg"] / total * 100.0), "reabastecimiento en vuelo")
-    out["minutos"] = round(MINUTOS_TURNO - minutos)
+    out["minutos"] = round(minutos_disponibles - minutos)
     return out
 
 

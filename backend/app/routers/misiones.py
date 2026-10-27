@@ -13,6 +13,7 @@ from app.engine import aeronaves as aeronaves_mod
 from app.engine import apoyo_aereo, catalogo, ota, plataformas, puestos, relieve, weaponeering
 from app.engine import clima as clima_mod
 from app.engine import misiones as misiones_mod
+from app.engine import tiempo_real
 from app.models.escenario import Escenario
 from app.models.mision import Mision
 from app.models.orden import Orden
@@ -286,14 +287,15 @@ async def crear(payload: schemas.MisionIn, esc: Escenario = Depends(auth.escenar
                                               Mision.estado.in_(misiones_mod.ACTIVAS)):
             previa.estado = "abortada" if previa.estado == "en_curso" else "cancelada"
             previa.resultado = "Reemplazada por una nueva mision."
-        db.query(Orden).filter(Orden.escenario_id == esc.id, Orden.unidad_id == payload.unidad_id,
-                               Orden.estado == "pendiente").delete()
+        grupo = db.get(Unidad, payload.unidad_id)
+        if grupo is not None:  # tiempo real: la orden que estaba cumpliendo queda cancelada
+            tiempo_real.cancelar_ordenes_de(db, grupo, "La reemplaza una misión aérea.", tiempo_real.hora_del_dia(esc))
     m = Mision(
         escenario_id=esc.id, bando=usuario.rol, rol=payload.rol, nombre=payload.nombre.strip(), estado="programada",
         unidad_id=payload.unidad_id, base_id=payload.base_id, modelo=r["modelo"] or "", aeronaves=r["aeronaves"] or 0,
         turno_despegue=r["turno"], creada_turno=esc.turno_actual, puntos_json=json.dumps(r["puntos"]),
         plan_json=json.dumps(r["plan"]), autor=usuario.username, **puestos.firma(usuario),
-        resultado="Programada." if r["turno"] > esc.turno_actual else "Se inicia al resolverse este turno.",
+        resultado="Programada." if r["turno"] > esc.turno_actual else "Se inicia en el acto.",
         ota_json=json.dumps(r["ota"]) if r["ota"] else None,
     )
     db.add(m)
@@ -321,7 +323,6 @@ async def crear(payload: schemas.MisionIn, esc: Escenario = Depends(auth.escenar
             ota_json=json.dumps(_ota_escolta(r["ota"], re["modelo"], esc_payload.unidad_id, db)),
             **puestos.firma(usuario),
         ))
-    setattr(esc, f"listo_{usuario.rol}", False)  # como una orden nueva: el bando debe confirmar otra vez
     db.commit()
     db.refresh(m)
     await manager.difundir_estado(db, esc)

@@ -1,0 +1,14 @@
+# Pruebas del SIETE por turnos que no aplican al tiempo real (LISTO, resolver el turno, limite de decision, resultados al resolver); ver tests/conftest.py
+tests/test_aeronaves.py::test_un_alumno_envia_un_grupo_desde_su_base_y_nace_al_resolver_el_turno
+tests/test_aeronaves.py::test_el_tope_de_aeronaves_por_bando_incluye_activas_y_pendientes
+tests/test_aeronaves.py::test_una_base_destruida_o_danada_antes_de_resolver_rechaza_el_despegue
+tests/test_api.py::test_nueva_orden_reemplaza_a_la_pendiente
+tests/test_api.py::test_turno_completo_con_combate_y_niebla
+tests/test_api.py::test_ordenes_bloqueadas_si_el_escenario_esta_pausado
+tests/test_api_avanzado.py::test_listo_y_resolucion_automatica
+tests/test_api_avanzado.py::test_sin_resolucion_automatica_el_listo_no_avanza
+tests/test_api_avanzado.py::test_limite_de_decision_y_vencimiento
+tests/test_fase2.py::test_timeline_cruza_logistica_con_combates
+tests/test_fase2.py::test_caida_abrupta_de_combustible_por_movimiento_coincide_con_el_combate
+tests/test_fase2.py::test_avanzar_con_turno_esperado_no_resuelve_dos_veces
+tests/test_recorrido.py::test_el_enemigo_no_ve_el_camino

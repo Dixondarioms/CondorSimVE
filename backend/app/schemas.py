@@ -88,6 +88,8 @@ class EscenarioOut(BaseModel):
     listo_rojo: bool = False
     archivado: bool = False
     hora_inicio_min: int = 360
+    sim_segundos: float = 0.0
+    velocidad: int = 60
     nacion_azul: str = ""
     nacion_rojo: str = ""
     # comunicaciones simuladas: solo las ve el instructor (state.estado_para las quita al resto)
@@ -187,6 +189,13 @@ class PersonalBandoIn(BaseModel):
     tripulaciones: Literal[3, 4] | None = None
 
 
+class RelojIn(BaseModel):
+    """Reloj del SIETE en tiempo real: velocidad (segundos simulados por segundo real) y marcha o pausa."""
+
+    velocidad: int | None = None
+    estado: Literal["activo", "pausado"] | None = None
+
+
 class EscenarioConfig(BaseModel):
     """Configuracion que el instructor puede cambiar en cualquier momento."""
 
@@ -244,7 +253,7 @@ class AsignacionIn(BaseModel):
 
 class PrevisualizarIn(BaseModel):
     unidad_id: int
-    waypoints: list[tuple[float, float]] = Field(min_length=1, max_length=30)
+    waypoints: list[tuple[float, float]] = Field(min_length=1, max_length=120)
 
 
 class RutaIn(BaseModel):
@@ -371,6 +380,10 @@ class UnidadOut(BaseModel):
     sistema_da: dict | None = None
     # camino del ultimo turno (solo el propio bando: el del enemigo no se conoce)
     recorrido: list | None = None
+    # tiempo real: waypoints que le faltan, orden que cumple y rumbo
+    ruta: list = Field(default_factory=list)
+    orden_id: int | None = None
+    rumbo: float | None = None
     # bases aereas: largo de la pista y pista util con su dano (engine/plataformas.py)
     pista_largo_m: float | None = None
     pista_util_m: float | None = None
@@ -379,7 +392,7 @@ class UnidadOut(BaseModel):
 class OrdenCreate(BaseModel):
     unidad_id: int | None = None  # obligatorio salvo dentro de un lote (POST /ordenes/lote)
     tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar", "interferir", "lanzar", "embarcar", "desembarcar"]
-    waypoints: list[tuple[float, float]] = Field(default_factory=list, max_length=30)
+    waypoints: list[tuple[float, float]] = Field(default_factory=list, max_length=120)  # rutas por carretera largas
     objetivo_unidad_id: int | None = None
     # solo para "construir": obra que se tiende en el punto indicado
     detalle: Literal["puente", "vado"] | None = None
@@ -412,6 +425,8 @@ class OrdenOut(BaseModel):
     waypoints: list[list[float]] = Field(default_factory=list)
     detalle: str = ""
     turno_emitida: int
+    emitida_seg: float | None = None
+    llega_seg: float | None = None
     estado: str
     resultado: str
     # quien la emitio (nombre de usuario) y su puesto; vacios en las ordenes automaticas del motor

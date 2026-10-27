@@ -320,7 +320,7 @@ def test_la_api_no_deja_despegar_ni_apoyar_en_tierra(api):
     prof, base, ba, caza = _api_base_y_caza(api, en_tierra=True, espera=1)
     azul = api("alfa")
     r = azul.post(f"{base}/ordenes", json={"unidad_id": caza["id"], "tipo": "mover", "waypoints": [[0.5, 0.3]]})
-    assert r.status_code == 400 and "faltan 1 turno" in r.json()["detail"]
+    assert r.status_code == 400 and "le falta 1 h" in r.json()["detail"]
     assert azul.post(f"{base}/ordenes", json={"unidad_id": caza["id"], "tipo": "patrullar", "waypoints": [[0.5, 0.3]]}).status_code == 400
     assert "en tierra" in azul.post(f"{base}/ordenes", json={"unidad_id": caza["id"], "tipo": "apoyar", "objetivo_unidad_id": 1}).json()["detail"].lower()
     assert azul.post(f"{base}/ordenes", json={"unidad_id": caza["id"], "tipo": "aterrizar", "objetivo_unidad_id": ba["id"]}).json()["detail"] == "La aeronave ya esta en tierra."

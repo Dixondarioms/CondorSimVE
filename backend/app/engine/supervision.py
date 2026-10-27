@@ -32,7 +32,7 @@ def tareas_del_bando(documentos: dict[str, dict]) -> list[tuple[dict, str]]:
 
 def _ref(esc: Escenario, turno: int) -> str:
     r = calendario.referencia(esc, turno)
-    return r["hora_h"] or f"turno {turno}"
+    return r["hora_h"] or f"hora {turno}"
 
 
 def cuadro(db: Session, esc: Escenario, bando: str, documentos: dict[str, dict]) -> list[dict]:
@@ -52,7 +52,7 @@ def cuadro(db: Session, esc: Escenario, bando: str, documentos: dict[str, dict])
                 "turno": t["turno"], "objetivo": objetivo, "resultado": "", "diferencia": "", "estado": "conforme",
                 "causa_sugerida": ""}
         if e is None:
-            fila.update(resultado="No se emitió la orden.", diferencia="La tarea no se ejecutó en su turno.",
+            fila.update(resultado="No se emitió la orden.", diferencia="La tarea no se ejecutó en su hora.",
                         estado="desvio", causa_sugerida="La tarea no se emitió desde la Orden de Operaciones.")
         elif e.estado == "rechazada":
             fila.update(resultado=f"Orden rechazada al emitirla: {e.motivo}", diferencia="La tarea no se ejecutó.",
@@ -62,11 +62,14 @@ def cuadro(db: Session, esc: Escenario, bando: str, documentos: dict[str, dict])
             if o is None:
                 fila.update(resultado="La orden fue reemplazada o cancelada.", diferencia="La unidad no cumplió la tarea "
                             "prevista.", estado="desvio", causa_sugerida="Se le dio otra orden a la unidad.")
-            elif o.estado == "pendiente":
-                fila.update(resultado=f"Orden emitida en el turno {e.turno}; se cumple al resolverse el turno.",
+            elif o.estado in ("pendiente", "en_ejecucion"):
+                fila.update(resultado=f"Orden emitida en la hora {e.turno}; la unidad la está cumpliendo.",
                             estado="en curso")
+            elif o.estado == "cancelada":
+                fila.update(resultado=f"La orden se detuvo o fue reemplazada: {o.resultado}", diferencia="La unidad no "
+                            "completó la tarea prevista.", estado="desvio", causa_sugerida="Se le dio otra orden a la unidad.")
             elif o.estado == "rechazada":
-                fila.update(resultado=f"Orden rechazada al resolverse: {o.resultado}", diferencia="La tarea no se cumplió.",
+                fila.update(resultado=f"Orden rechazada: {o.resultado}", diferencia="La tarea no se cumplió.",
                             estado="desvio", causa_sugerida=o.resultado)
             else:
                 fila.update(resultado=o.resultado or "Orden cumplida.", estado="conforme")
@@ -78,17 +81,17 @@ def cuadro(db: Session, esc: Escenario, bando: str, documentos: dict[str, dict])
                 "objetivo": o.nombre + (f" (efecto: {o.efecto})" if o.efecto else ""), "resultado": "",
                 "diferencia": "", "estado": "en curso", "causa_sugerida": ""}
         if o.estado == "cumplido":
-            fila.update(resultado=f"Cumplido en el turno {o.turno_resuelto}.", estado="conforme")
+            fila.update(resultado=f"Cumplido en la hora {o.turno_resuelto}.", estado="conforme")
         elif o.estado == "fallido":
-            fila.update(resultado=f"Fallido en el turno {o.turno_resuelto}.", diferencia="No se logró el efecto deseado.",
+            fila.update(resultado=f"Fallido en la hora {o.turno_resuelto}.", diferencia="No se logró el efecto deseado.",
                         estado="fallido")
         else:
             if o.tipo == "ocupar":
-                fila["resultado"] = f"Zona mantenida {o.progreso} de {o.turnos_requeridos} turno(s) seguidos."
+                fila["resultado"] = f"Zona mantenida {o.progreso} de {o.turnos_requeridos} hora(s) seguidas."
             else:
                 fila["resultado"] = "Pendiente."
             if o.hasta_turno and o.tipo != "proteger" and o.hasta_turno - turno <= AVISO_PLAZO:
-                fila.update(diferencia=f"Vence en el turno {o.hasta_turno} y todavía no se cumplió.", estado="desvio",
+                fila.update(diferencia=f"Vence en la hora {o.hasta_turno} y todavía no se cumplió.", estado="desvio",
                             causa_sugerida="El ritmo de la operación no alcanza para el plazo.")
         filas.append(fila)
     # 3. unidades propias muy dañadas o perdidas
@@ -107,7 +110,7 @@ def cuadro(db: Session, esc: Escenario, bando: str, documentos: dict[str, dict])
 
 
 def parte(db: Session, esc: Escenario, bando: str) -> dict | None:
-    """Parte del ultimo turno resuelto para el bando: ordenes cumplidas y rechazadas, objetivos y perdidas."""
+    """Parte de la ultima hora cumplida para el bando: ordenes cumplidas y rechazadas, objetivos y perdidas."""
     t = esc.turno_actual - 1
     if t < 1:
         return None
@@ -117,7 +120,8 @@ def parte(db: Session, esc: Escenario, bando: str) -> dict | None:
     eventos = db.query(Evento).filter(Evento.escenario_id == esc.id, Evento.turno == t, Evento.tipo == "objetivo",
                                       Evento.bando_destino == bando).all()
     perdidas = [u.nombre for u in propias.values() if u.estado == "destruida"]
-    lineas = [f"Órdenes del turno {t}: {sum(1 for o in ordenes if o.estado == 'resuelta')} cumplida(s), "
+    lineas = [f"Órdenes de la hora {t}: {sum(1 for o in ordenes if o.estado == 'resuelta')} cumplida(s), "
+              f"{sum(1 for o in ordenes if o.estado == 'en_ejecucion')} en curso, "
               f"{sum(1 for o in ordenes if o.estado == 'rechazada')} rechazada(s)."]
     lineas += [e.descripcion for e in eventos]
     if perdidas:

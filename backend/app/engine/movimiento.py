@@ -32,6 +32,7 @@ class Movimiento:
     ruta: list = field(default_factory=list)  # [[lat, lon], ...] desde el origen
     nota: str = ""
     combustible_gastado: float = 0.0  # puntos porcentuales
+    alcanzados: int = 0  # waypoints a los que llego (tiempo real: los que ya no le faltan)
 
 
 MAX_PUNTOS_RECORRIDO = 150
@@ -96,8 +97,36 @@ def factor_terreno(unidad, clase_terreno: str, obras, lat: float, lon: float, vi
     return base if ligera else 0.0
 
 
-def simular(unidad, waypoints: list, terreno: Terreno, clima: str = "despejado", obras=()) -> Movimiento:
-    """Devuelve donde termina `unidad` al seguir `waypoints` durante un turno."""
+PUENTE_CERCA_KM = (0.15, 0.3)  # radios en que se busca el puente de la carretera junto a un punto de rio
+
+
+def puente_cercano(terreno: Terreno, lat: float, lon: float, obras=()) -> bool:
+    """Hay un puente de carretera (rio o agua con via, no cortado) a pocos cientos de metros: la ruta de la unidad pasa
+    junto al puente y lo usa (las grillas de terreno y de carreteras no coinciden al metro con la ruta trazada)."""
+    for radio in PUENTE_CERCA_KM:
+        d_lat = radio / 111.32
+        d_lon = radio / (111.32 * max(0.05, math.cos(math.radians(lat))))
+        for i in range(8):
+            a = i * math.pi / 4
+            p_lat, p_lon = lat + d_lat * math.sin(a), lon + d_lon * math.cos(a)
+            if terreno.via(p_lat, p_lon) and terreno.clase(p_lat, p_lon) in ("rio", "agua") \
+                    and not puente_cortado(obras, p_lat, p_lon):
+                return True
+    return False
+
+
+def factor_en(unidad, terreno: Terreno, obras, lat: float, lon: float) -> float:
+    """factor_terreno en un punto del mapa; un rio intransitable junto a un puente de carretera se cruza por el puente."""
+    clase_terreno = terreno.clase(lat, lon)
+    f = factor_terreno(unidad, clase_terreno, obras, lat, lon, terreno.via(lat, lon))
+    if f <= 0 and clase_terreno == "rio" and unidad.tipo == "terrestre" and puente_cercano(terreno, lat, lon, obras):
+        return FACTOR_PUENTE
+    return f
+
+
+def simular(unidad, waypoints: list, terreno: Terreno, clima: str = "despejado", obras=(),
+            horas: float = TURNO_DURACION_HORAS) -> Movimiento:
+    """Devuelve donde termina `unidad` al seguir `waypoints` durante `horas` (un turno si no se indica)."""
     lat, lon = unidad.lat, unidad.lon
     mov = Movimiento(lat, lon, ruta=[[lat, lon]])
     if unidad.tipo == "base" or unidad.velocidad_kmh <= 0:
@@ -106,7 +135,7 @@ def simular(unidad, waypoints: list, terreno: Terreno, clima: str = "despejado",
 
     clase = catalogo.obtener(unidad.clase, unidad.tipo)
     presupuesto = (
-        unidad.velocidad_kmh * TURNO_DURACION_HORAS * clima_mod.factor_movimiento(clima, unidad.tipo, unidad.lat, unidad.lon)
+        unidad.velocidad_kmh * horas * clima_mod.factor_movimiento(clima, unidad.tipo, unidad.lat, unidad.lon)
         * (1.0 - clase.penalizacion_movilidad)
     )
     # las aeronaves gastan segun su perfil de vuelo: a baja cota rinden menos kilometros por punto de combustible
@@ -130,7 +159,7 @@ def simular(unidad, waypoints: list, terreno: Terreno, clima: str = "despejado",
                 factor = 1.0
             else:
                 clase_terreno = terreno.clase(sig_lat, sig_lon)
-                factor = factor_terreno(unidad, clase_terreno, obras, sig_lat, sig_lon, terreno.via(sig_lat, sig_lon))
+                factor = factor_en(unidad, terreno, obras, sig_lat, sig_lon)
             if factor <= 0:
                 mov.nota = (
                     "Avance detenido: rio sin puente ni vado (se necesitan ingenieros)."
@@ -149,6 +178,8 @@ def simular(unidad, waypoints: list, terreno: Terreno, clima: str = "despejado",
             presupuesto -= costo
             mov.km_reales += paso
             lat, lon = sig_lat, sig_lon
+        if geo.distancia_km(lat, lon, wp_lat, wp_lon) < 1e-6:
+            mov.alcanzados += 1
         mov.ruta.append([lat, lon])
         if presupuesto <= 1e-9:
             break
@@ -180,8 +211,7 @@ def tiempo_recorrido(unidad, waypoints: list, terreno: Terreno, clima: str = "de
                 break
             paso = restante if aerea else min(PASO_KM, restante)
             sig_lat, sig_lon = geo.avanzar_hacia(lat, lon, wp_lat, wp_lon, paso)
-            factor = 1.0 if aerea else factor_terreno(unidad, terreno.clase(sig_lat, sig_lon), obras, sig_lat, sig_lon,
-                                                      terreno.via(sig_lat, sig_lon))
+            factor = 1.0 if aerea else factor_en(unidad, terreno, obras, sig_lat, sig_lon)
             if factor <= 0:
                 salida["bloqueo"] = ("Río sin puente ni vado en la ruta: los vehículos pesados no pasan (se necesitan "
                                      "ingenieros o seguir carreteras)." if terreno.clase(sig_lat, sig_lon) == "rio"

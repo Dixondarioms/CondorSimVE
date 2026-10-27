@@ -83,15 +83,22 @@ def test_juego_de_guerra_ensayo_de_una_fa(api, db_session):
     copia = f"/api/escenarios/{ens['id']}"
     estado = a3.get(copia).json()
     assert estado["escenario"]["ensayo_de"] == esc_id and estado["escenario"]["conduccion_rojo"] == "ia"
-    assert estado["escenario"]["auto_resolver"] is True and estado["escenario"]["listo_rojo"] is True  # la IA ya ordenó
+    # tiempo real: la copia arranca detenida en la misma hora que el original
+    original = prof.get(base).json()["escenario"]
+    assert estado["escenario"]["estado"] == "pausado" and estado["escenario"]["sim_segundos"] == original["sim_segundos"]
     propia = next(u for u in estado["unidades"] if u["nombre"] == "A")
     assert propia["fuerza"] == 70
     assert api("bravo").get(copia).status_code == 404  # el enemigo no ve el ensayo
-    # el bando juega su turno solo: al confirmar, se resuelve
-    assert api("alfa").post(f"{copia}/listo", json={"listo": True}).status_code == 200
+    # el reloj del ensayo lo maneja el Comandante del bando (no otra reparticion, ni el ejercicio original)
+    assert a3.post(f"{copia}/reloj", json={"estado": "activo"}).status_code == 403
+    assert api("alfa").post(f"{base}/reloj", json={"estado": "activo"}).status_code == 403
+    assert api("alfa").post(f"{copia}/reloj", json={"velocidad": 10, "estado": "activo"}).status_code == 200
+    assert api("alfa").post(f"{copia}/reloj", json={"estado": "pausado"}).status_code == 200
+    assert api("alfa").post(f"{copia}/avanzar_turno?n=1").status_code == 200
     vista = a3.get(f"{base}/tiem").json()
     e = vista["ensayos"]["azul"][0]
-    assert e["turnos_jugados"] == 1 and "1 turno(s) jugado(s)" in e["texto"] and vista["puede_ensayar"]["azul"] is True
+    assert e["turnos_jugados"] == 1 and "1 hora(s) jugada(s)" in e["texto"] and vista["puede_ensayar"]["azul"] is True
+    assert prof.get(base).json()["escenario"]["sim_segundos"] == original["sim_segundos"]  # el original no se movio
     assert a3.post(f"{copia}/tiem/azul/ensayos", json={"fa": "x"}).status_code == 400  # no se ensaya un ensayo
     for _ in range(2):
         assert a3.post(f"{base}/tiem/azul/ensayos", json={"fa": "F/A 2"}).status_code == 200

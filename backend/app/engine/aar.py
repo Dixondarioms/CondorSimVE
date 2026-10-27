@@ -11,7 +11,7 @@ from app import state
 from app.engine import catalogo, puestos
 from app.engine import objetivos as objetivos_mod
 from app.engine import orders as orders_mod
-from app.models.aar import Combate, Instantanea, RegistroLogistico
+from app.models.aar import Combate, Fotograma, Instantanea, RegistroLogistico
 from app.models.asignacion import Asignacion
 from app.models.contacto import Contacto
 from app.models.escenario import Escenario
@@ -85,6 +85,39 @@ def _combate_dict(c: Combate) -> dict:
     }
 
 
+def _agrupar_fuego_continuo(combates: list) -> list[dict]:
+    """Tiempo real: el fuego continuo se registra cada pocos minutos (para la repeticion); en el informe va una sola
+    fila por enfrentamiento y hora, con las perdidas sumadas y el tiempo total de fuego."""
+    salida, abiertos = [], {}
+    for c in combates:
+        d = _combate_dict(c)
+        if not (c.efectos or "").startswith("fuego continuo"):
+            salida.append(d)
+            continue
+        clave = (c.turno, c.orden_id, c.atacante_id, c.defensor_id)
+        previo = abiertos.get(clave)
+        minutos = _minutos(c.efectos)
+        if previo is None:
+            d["_minutos"] = minutos
+            abiertos[clave] = d
+            salida.append(d)
+            continue
+        previo["perdida_atacante"] = round(previo["perdida_atacante"] + d["perdida_atacante"], 1)
+        previo["perdida_defensor"] = round(previo["perdida_defensor"] + d["perdida_defensor"], 1)
+        previo["ratio"], previo["lat"], previo["lon"] = d["ratio"], d["lat"], d["lon"]
+        previo["_minutos"] += minutos
+        resto = d["efectos"].split(";", 1)[1].strip() if ";" in d["efectos"] else ""
+        previo["efectos"] = f"fuego continuo durante {previo['_minutos']} min" + (f"; {resto}" if resto else "")
+    for d in salida:
+        d.pop("_minutos", None)
+    return salida
+
+
+def _minutos(efectos: str) -> int:
+    m = re.match(r"fuego continuo durante (\d+) min", efectos or "")
+    return int(m.group(1)) if m else 0
+
+
 def construir_informe(db: Session, escenario: Escenario) -> dict:
     """Vista completa (sin niebla de guerra) de todo lo ocurrido en el escenario."""
     unidades = {u.id: u for u in db.query(Unidad).filter(Unidad.escenario_id == escenario.id)}
@@ -103,15 +136,17 @@ def construir_informe(db: Session, escenario: Escenario) -> dict:
             "turno": inst.turno, "clima": inst.clima, "unidades": json.loads(inst.datos_json)["unidades"],
             "combates": [], "ordenes": [], "eventos": [], "en_curso": False,
         }
-    for c in combates:
-        turnos[c.turno]["combates"].append(_combate_dict(c))
-
     def entrada_en_curso() -> dict:
-        # Ordenes y eventos del turno que aun no se resolvio (no tiene instantanea).
+        # Ordenes, eventos y combates del turno (la hora) que aun no se cerro (no tiene instantanea).
         return turnos.setdefault(escenario.turno_actual, {
             "turno": escenario.turno_actual, "clima": escenario.clima, "unidades": [],
             "combates": [], "ordenes": [], "eventos": [], "en_curso": True,
         })
+
+    for c in _agrupar_fuego_continuo(combates):
+        if c["turno"] in turnos or c["turno"] == escenario.turno_actual:
+            turnos.get(c["turno"]) or entrada_en_curso()
+            turnos[c["turno"]]["combates"].append(c)
 
     for o in ordenes:
         if o.turno_emitida in turnos or o.turno_emitida == escenario.turno_actual:
@@ -135,13 +170,13 @@ def construir_informe(db: Session, escenario: Escenario) -> dict:
             continue
         r["unidades"] += 1
         r["destruidas"] += 1 if u.estado == "destruida" else 0
-    for c in combates:
-        resumen[c.atacante_bando]["combates_iniciados"] += 1
-        resumen[c.defensor_bando]["combates_recibidos"] += 1
-        resumen[c.atacante_bando]["fuerza_perdida"] += c.perdida_atacante
-        resumen[c.defensor_bando]["fuerza_perdida"] += c.perdida_defensor
-        resumen[c.atacante_bando]["dano_infligido"] += c.perdida_defensor
-        resumen[c.defensor_bando]["dano_infligido"] += c.perdida_atacante
+    for c in _agrupar_fuego_continuo(combates):  # un fuego continuo cuenta como un combate por hora
+        resumen[c["atacante_bando"]]["combates_iniciados"] += 1
+        resumen[c["defensor_bando"]]["combates_recibidos"] += 1
+        resumen[c["atacante_bando"]]["fuerza_perdida"] += c["perdida_atacante"]
+        resumen[c["defensor_bando"]]["fuerza_perdida"] += c["perdida_defensor"]
+        resumen[c["atacante_bando"]]["dano_infligido"] += c["perdida_defensor"]
+        resumen[c["defensor_bando"]]["dano_infligido"] += c["perdida_atacante"]
     for o in ordenes:
         u = unidades.get(o.unidad_id)
         if u is not None and u.bando in resumen:
@@ -206,10 +241,63 @@ def _marcador_hasta(objetivos: list[Objetivo], combates: list[Combate], turno: i
     }
 
 
+DURACION_CUADRO_MS = 500  # tiempo real: cada fotograma (5 min simulados) dura medio segundo a 1x (1 h en 6 s)
+
+
+def _hora(escenario: Escenario, sim_segundos: float) -> str:
+    m = int((escenario.hora_inicio_min or 0) + sim_segundos // 60)
+    return f"{m % 1440 // 60:02d}:{m % 60:02d}"
+
+
+def _replay_en_vivo(db: Session, escenario: Escenario, fotogramas: list) -> dict:
+    """Repeticion del SIETE en tiempo real: un cuadro por fotograma, con los combates y las novedades publicas que
+    ocurrieron desde el cuadro anterior (por su hora simulada)."""
+    unidades = {u.id: u for u in db.query(Unidad).filter(Unidad.escenario_id == escenario.id)}
+    combates = db.query(Combate).filter(Combate.escenario_id == escenario.id).order_by(Combate.id).all()
+    eventos = db.query(Evento).filter(Evento.escenario_id == escenario.id).order_by(Evento.id).all()
+    objetivos = db.query(Objetivo).filter(Objetivo.escenario_id == escenario.id).order_by(Objetivo.id).all()
+    cuadros, previo = [], -1e18
+    for f in fotogramas:
+        filas = []
+        for uid, lat, lon, fuerza, estado in json.loads(f.datos_json):
+            u = unidades.get(uid)
+            if u is None:
+                continue
+            filas.append({"id": uid, "nombre": u.nombre, "bando": u.bando, "tipo": u.tipo, "clase": u.clase,
+                          "sidc": u.sidc, "lat": lat, "lon": lon, "fuerza": fuerza, "estado": estado})
+
+        def en_cuadro(x) -> bool:
+            t = getattr(x, "sim_segundos", None)
+            return t is not None and previo <= t < f.sim_segundos  # lo ocurrido desde el cuadro anterior
+        cuadros.append({
+            "turno": f.turno, "sim_segundos": f.sim_segundos, "hora": _hora(escenario, f.sim_segundos),
+            "clima": f.clima, "unidades": filas,
+            "combates": [_combate_dict(c) for c in combates if en_cuadro(c)],
+            "eventos": [{"id": e.id, "tipo": e.tipo, "descripcion": e.descripcion} for e in eventos
+                        if en_cuadro(e) and (e.tipo in TIPOS_NOVEDAD_PUBLICA or e.bando_destino == "todos")],
+            # el marcador de ese momento: solo los combates ocurridos hasta el cuadro
+            "marcador": _marcador_hasta(objetivos, [c for c in combates if (c.sim_segundos or 0.0) < f.sim_segundos], f.turno),
+        })
+        previo = f.sim_segundos
+    return {
+        "escenario": {
+            "id": escenario.id, "nombre": escenario.nombre, "estado": escenario.estado,
+            "turno_actual": escenario.turno_actual, "hora_inicio_min": escenario.hora_inicio_min,
+            "tiempo_real": True, "duracion_cuadro_ms": DURACION_CUADRO_MS,
+        },
+        "turnos": cuadros,
+    }
+
+
 def construir_replay(db: Session, escenario: Escenario) -> dict:
     """Turnos con instantanea (el turno en curso no), cada uno con todas las unidades (id, nombre, bando, tipo,
     clase, sidc, lat, lon, fuerza, estado), los combates del turno con su lugar y sus participantes, las novedades
-    publicas y el marcador acumulado. Mismos permisos que el informe: lo decide el router."""
+    publicas y el marcador acumulado. Mismos permisos que el informe: lo decide el router. En tiempo real, un cuadro
+    cada pocos minutos simulados (fotogramas)."""
+    fotogramas = (db.query(Fotograma).filter(Fotograma.escenario_id == escenario.id)
+                  .order_by(Fotograma.sim_segundos, Fotograma.id).all())
+    if fotogramas:
+        return _replay_en_vivo(db, escenario, fotogramas)
     instantaneas = (
         db.query(Instantanea).filter(Instantanea.escenario_id == escenario.id).order_by(Instantanea.turno).all()
     )
@@ -261,7 +349,7 @@ _SUGERENCIAS = (
     (re.compile(r"fuera de(l)? alcance", re.I), "revisar la apreciacion de distancias antes de emitir la orden"),
     (re.compile(r"sin municion|material insuficiente", re.I), "planificar el reabastecimiento antes de empenar la unidad"),
     (re.compile(r"recargando|desplegando", re.I), "tener en cuenta los tiempos de recarga y despliegue del sistema"),
-    (re.compile(r"en tierra", re.I), "respetar los turnos de reabastecimiento y rearme en pista antes de ordenar el despegue"),
+    (re.compile(r"en tierra", re.I), "respetar el tiempo de reabastecimiento y rearme en pista antes de ordenar el despegue"),
     (re.compile(r"no esta activa|invalido|fuera de combate", re.I), "actualizar la situacion propia y enemiga antes de emitir"),
     (re.compile(r"no puede atacar objetivos", re.I), "emplear el medio adecuado contra cada tipo de objetivo"),
     (re.compile(r"sin waypoints|indique", re.I), "completar los datos de la orden antes de enviarla"),
@@ -300,7 +388,7 @@ def _puesto_de(unidad: Unidad | None, tipo_orden: str) -> str:
 
 
 def _bloque_ordenes() -> dict:
-    return {"emitidas": 0, "resueltas": 0, "rechazadas": 0, "pendientes": 0, "_motivos": Counter()}
+    return {"emitidas": 0, "resueltas": 0, "rechazadas": 0, "pendientes": 0, "canceladas": 0, "_motivos": Counter()}
 
 
 def _cerrar_ordenes(b: dict) -> dict:
@@ -340,13 +428,15 @@ def _contar_orden(bl: dict, o: Orden) -> None:
         bl["_motivos"][motivo_generico(o.resultado)] += 1
     elif o.estado == "resuelta":
         bl["resueltas"] += 1
+    elif o.estado == "cancelada":  # tiempo real: la detuvo o la reemplazo otra orden
+        bl["canceladas"] += 1
     else:
         bl["pendientes"] += 1
 
 
 def _observacion_pasivos(tp: dict) -> str:
     lista = ", ".join(str(t) for t in tp["turnos"][:8]) + ("..." if len(tp["turnos"]) > 8 else "")
-    return (f"{tp['cantidad']} turno(s) sin emitir ninguna orden (turno(s) {lista}): "
+    return (f"{tp['cantidad']} hora(s) del ejercicio sin emitir ninguna orden (hora(s) {lista}): "
             "mantener la iniciativa o dejar constancia de la decision de esperar.")
 
 
@@ -474,11 +564,11 @@ def _doctrina(b: str, x: dict, unidades: dict, ordenes: list, combates: list, co
         base = 100 if media is not None and media <= 1 else 75 if media is not None and media <= 2 else \
             50 if media is not None and media <= 3 else 25
         puntaje = base * len(respuestas) / len(primer_ataque) if respuestas else 0
-        valor = (f"{media:.1f} turno(s) en promedio" if media is not None else "sin respuesta") + \
+        valor = (f"{media:.1f} hora(s) en promedio" if media is not None else "sin respuesta") + \
             (f"; {sin_respuesta} amenaza(s) sin respuesta" if sin_respuesta else "")
         inds.append(_ind("reaccion", "Reacción ante las amenazas", valor, puntaje,
                          "Turnos entre el primer ataque de una unidad enemiga y la primera orden propia contra ella "
-                         "(1 turno = 100; 2 = 75; 3 = 50; más = 25), ponderado por las amenazas respondidas."))
+                         "(1 hora = 100; 2 = 75; 3 = 50; más = 25), ponderado por las amenazas respondidas."))
     else:
         inds.append(_ind("reaccion", "Reacción ante las amenazas", "el enemigo no atacó", None,
                          "Turnos entre el primer ataque de una unidad enemiga y la primera orden propia contra ella."))
@@ -539,7 +629,7 @@ def _doctrina(b: str, x: dict, unidades: dict, ordenes: list, combates: list, co
     if turnos_resueltos and any(u.bando == b for u in unidades.values()):
         pasivos = x["turnos_pasivos"]["cantidad"]
         inds.append(_ind("iniciativa", "Iniciativa", f"{len(turnos_resueltos) - pasivos} de {len(turnos_resueltos)} "
-                         "turno(s) con órdenes", 100 * (1 - pasivos / len(turnos_resueltos)),
+                         "hora(s) con órdenes", 100 * (1 - pasivos / len(turnos_resueltos)),
                          "Turnos en los que el bando dio al menos una orden o planificó una misión."))
 
     puntajes = [i["puntaje"] for i in inds if i["puntaje"] is not None]

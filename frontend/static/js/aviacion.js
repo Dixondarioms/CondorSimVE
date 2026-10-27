@@ -140,8 +140,8 @@
       const descontar = detPrevia && Logica.modeloEsDron(detPrevia.modelo, cat) === dron ? (detPrevia.aeronaves || 0) : 0;
       const total = en - descontar + n;
       const excede = total > tope;
-      $("aer-resumen").textContent = `${m.corto} ×${n} saldrá de ${base ? base.nombre : "la base"} al resolverse el turno y aparecerá junto a ella; `
-        + `podrá recibir órdenes el turno siguiente. ${dron ? "Drones" : "Aeronaves tripuladas"} del bando: ${total} de ${tope}${excede ? " (excede el tope)" : ""}.`;
+      $("aer-resumen").textContent = `${m.corto} ×${n} despega de ${base ? base.nombre : "la base"} en el acto y espera órdenes sobre ella; `
+        + `puede recibir órdenes de inmediato. ${dron ? "Drones" : "Aeronaves tripuladas"} del bando: ${total} de ${tope}${excede ? " (excede el tope)" : ""}.`;
       conf.disabled = excede;
     }
 
@@ -185,7 +185,7 @@
       if (!bases.length) return ctx.toast("Su bando no tiene una base aérea activa desde la cual despegar.");
       abrirDialogo({
         tipo: "despegue", titulo: "Enviar aeronaves o drones",
-        ayuda: "Elija el caza, el dron o el avión de guerra electrónica, cuántos salen y desde qué base. El grupo aparece al resolverse el turno.",
+        ayuda: "Elija el caza, el dron o el avión de guerra electrónica, cuántos salen y desde qué base. El grupo despega en el acto.",
         textoConfirmar: "Enviar a despegar", bases,
         modeloInicial: { modelo: null, base: baseId }, cantidadInicial: 4,
         alConfirmar: async () => {
@@ -194,7 +194,7 @@
             aeronaves: parseInt($("aer-cantidad").value, 10), indicativo: $("aer-indicativo").value.trim(),
           };
           await ctx.api("POST", ctx.rutaEsc("/ordenes"), cuerpo);
-          ctx.toast("Grupo listo para despegar al resolverse el turno", true);
+          ctx.toast("El grupo despegó y espera órdenes sobre la base", true);
         },
       });
     }

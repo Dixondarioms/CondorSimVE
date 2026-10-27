@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import auth as auth_mod
-from app import respaldo, turnos
+from app import reloj, respaldo
 from app.db import SessionLocal, init_db
 from app.routers import auth, catalogo, clima, escenarios, evaluacion, graficos, misiones, naciones, objetivos, ordenes, plantillas, pmo, tiem, terreno, unidades, usuarios, ws
 from app.terreno import get_terreno
@@ -41,7 +41,7 @@ async def lifespan(_: FastAPI):
     if not get_terreno().disponible:
         log.warning("Sin datos de terreno: ejecute tools/preparar_terreno.py (todo sera 'llano').")
 
-    tareas = [asyncio.create_task(turnos.vigilar_plazos())]
+    tareas = [asyncio.create_task(reloj.correr())]
     horas = float(os.environ.get("SIMULADOR_RESPALDO_HORAS", "6"))
     if horas > 0:
         await asyncio.to_thread(respaldo.hacer_respaldo_configurado)

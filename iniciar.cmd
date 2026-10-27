@@ -1,8 +1,8 @@
 @echo off
 rem Arranca el servidor de S.I.E.T.E. y abre el navegador.
-rem   iniciar.cmd                 -> servidor en http://localhost:8000/ + navegador
+rem   iniciar.cmd                 -> servidor en http://localhost:8001/ + navegador
 rem   iniciar.cmd /sin-navegador  -> solo el servidor (tarea programada, arranque automatico)
-rem Variables opcionales: SIETE_PUERTO (por defecto 8000; 8443 con HTTPS), SIETE_HOST (por defecto 0.0.0.0),
+rem Variables opcionales: SIETE_PUERTO (por defecto 8001 en el SIETE en tiempo real, para convivir con el SIETE por turnos en el 8000; 8443 con HTTPS), SIETE_HOST (por defecto 0.0.0.0),
 rem SIETE_HTTPS=1 (certificado autofirmado de backend\certs). Se leen tambien de backend\.env
 rem (lo escribe instalar.cmd -Https / -Postgres); la variable ya definida en el entorno tiene prioridad.
 setlocal
@@ -10,7 +10,7 @@ title S.I.E.T.E. - servidor
 cd /d "%~dp0backend"
 if exist ".env" call :leer_env ".env"
 if "%SIETE_PUERTO%"=="" if "%SIETE_HTTPS%"=="1" set SIETE_PUERTO=8443
-if "%SIETE_PUERTO%"=="" set SIETE_PUERTO=8000
+if "%SIETE_PUERTO%"=="" set SIETE_PUERTO=8001
 if "%SIETE_HOST%"=="" set SIETE_HOST=0.0.0.0
 set ESQUEMA=http
 set OPCION_HTTPS=

@@ -1,7 +1,7 @@
 import secrets
 from datetime import datetime, timezone
 
-from sqlalchemy import false, true, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import false, true, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -20,7 +20,7 @@ class Escenario(Base):
     # fase: "decision" (los alumnos emiten ordenes) | "resolucion" (el motor resuelve)
     fase: Mapped[str] = mapped_column(String(20), default="decision")
     # estado: "activo" | "pausado" | "finalizado"
-    estado: Mapped[str] = mapped_column(String(20), default="activo")
+    estado: Mapped[str] = mapped_column(String(20), default="pausado")
     creado_en: Mapped[datetime] = mapped_column(DateTime, default=_ahora)
 
     # clima: "despejado" | "nublado" | "lluvia" | "tormenta"
@@ -47,6 +47,10 @@ class Escenario(Base):
 
     # hora simulada del turno 1, en minutos desde medianoche (cada turno dura 1 h)
     hora_inicio_min: Mapped[int] = mapped_column(Integer, default=360)
+    # tiempo real (engine/tiempo_real.py): segundos simulados desde el inicio del ejercicio (el turno es la hora en
+    # curso: turno_actual = sim_segundos // 3600 + 1) y cuantos segundos simulados pasan por cada segundo real
+    sim_segundos: Mapped[float] = mapped_column(Float, default=0.0, server_default="0")
+    velocidad: Mapped[int] = mapped_column(Integer, default=60, server_default="60")
 
     # interruptores del motor (herramientas de direccion): niebla de guerra, consumo/reabastecimiento, efectos del
     # clima y fuego automatico (patrullas y antiaerea). Apagarlos simplifica el ejercicio para fines didacticos.

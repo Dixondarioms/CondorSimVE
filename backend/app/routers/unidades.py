@@ -183,8 +183,8 @@ async def configurar_defensa(
     if unidad.estado != "activa":
         raise HTTPException(status_code=400, detail="La unidad ya no esta activa")
     if usuario.rol != "instructor":
-        if esc.estado != "activo":
-            raise HTTPException(status_code=400, detail=f"El escenario esta {esc.estado}")
+        if esc.estado == "finalizado":  # en tiempo real se ajusta tambien con el reloj detenido
+            raise HTTPException(status_code=400, detail="El escenario ya finalizo")
         auth.exigir_funcion(usuario, puestos.funcion_de_orden(unidad, "defensa", clase))
     if payload.emitiendo is not None:
         unidad.emitiendo = payload.emitiendo
@@ -219,8 +219,8 @@ async def cambiar_perfil(
     if unidad.estado != "activa":
         raise HTTPException(status_code=400, detail="La unidad ya no esta activa")
     if usuario.rol != "instructor":
-        if esc.estado != "activo":
-            raise HTTPException(status_code=400, detail=f"El escenario esta {esc.estado}")
+        if esc.estado == "finalizado":  # en tiempo real se ajusta tambien con el reloj detenido
+            raise HTTPException(status_code=400, detail="El escenario ya finalizo")
         auth.exigir_funcion(usuario, puestos.funcion_de_orden(unidad, None, catalogo.obtener(unidad.clase, unidad.tipo)))
     unidad.perfil_vuelo = payload.perfil_vuelo
     db.commit()

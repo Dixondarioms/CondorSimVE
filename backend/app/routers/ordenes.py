@@ -13,8 +13,10 @@ from app.engine import misiles as misiles_mod
 from app.engine import transporte as transporte_mod
 from app.engine import misiones as misiones_mod
 from app.engine import rutas as rutas_mod
+from app.engine import tiempo_real
 from app.engine.orders import COSTO_OBRA, tipo_efectivo
 from app.models.escenario import Escenario
+from app.models.evento import Evento
 from app.models.obra import Obra
 from app.models.orden import Orden
 from app.models.unidad import Unidad
@@ -26,10 +28,9 @@ router = APIRouter(prefix="/api/escenarios/{escenario_id}/ordenes", tags=["orden
 
 
 def _en_decision(esc: Escenario) -> Escenario:
-    if esc.estado != "activo":
-        raise HTTPException(status_code=400, detail=f"El escenario esta {esc.estado}")
-    if esc.fase != "decision":
-        raise HTTPException(status_code=400, detail="El escenario no esta en fase de decision")
+    """En tiempo real se dan ordenes en todo momento (tambien con el reloj detenido), salvo al finalizar."""
+    if esc.estado == "finalizado":
+        raise HTTPException(status_code=400, detail="El escenario ya finalizo")
     return esc
 
 
@@ -55,6 +56,8 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
     """Valida y agrega (sin confirmar) la orden de una unidad; lanza HTTPException con el motivo si no procede."""
     if payload.unidad_id is None:
         raise HTTPException(status_code=400, detail="Indique la unidad")
+    if payload.tipo not in tiempo_real.TIPOS_DE_ORDEN:
+        raise HTTPException(status_code=400, detail=tiempo_real.MOTIVO_ETAPA)
     unidad = _unidad_propia(db, esc, payload.unidad_id, usuario)
     if unidad.tipo == "base" and payload.tipo not in ("mover", "despegar"):
         raise HTTPException(status_code=400, detail="Una base no puede combatir ni apoyar")
@@ -72,7 +75,7 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
     if unidad.en_tierra and unidad.espera_restante > 0 and payload.tipo in ("mover", "atacar", "patrullar"):
         raise HTTPException(
             status_code=400,
-            detail=f"En tierra: faltan {unidad.espera_restante} turno(s) para reabastecer y rearmar antes de despegar",
+            detail=f"En tierra: le falta {_falta_texto(esc, unidad)} para reabastecer y rearmar antes de despegar",
         )
     if unidad.en_tierra and payload.tipo == "apoyar":
         raise HTTPException(status_code=400, detail="Una aeronave en tierra no puede apoyar: debe despegar primero")
@@ -151,6 +154,9 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         motivo = misiles_mod.error_de_lanzamiento(unidad, blanco, payload.misiles)
         if motivo:
             raise HTTPException(status_code=400, detail=motivo)
+        if unidad.recarga_hasta and unidad.recarga_hasta > (esc.sim_segundos or 0.0):
+            minutos = max(1, round((unidad.recarga_hasta - (esc.sim_segundos or 0.0)) / 60))
+            raise HTTPException(status_code=400, detail=f"El lanzador está recargando: faltan {minutos} min para otra salva")
     elif payload.tipo == "mover":
         if unidad.tipo == "base" or unidad.velocidad_kmh <= 0:
             raise HTTPException(status_code=400, detail="Esta unidad no puede moverse")
@@ -180,10 +186,18 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
     # Una orden directa a un grupo aereo reemplaza su mision (redireccionamiento).
     if unidad.tipo == "aerea":
         misiones_mod.cancelar_por_orden(db, unidad, payload.tipo)
-    # Una unidad tiene una sola orden por turno: la nueva reemplaza a la pendiente.
-    db.query(Orden).filter(
-        Orden.escenario_id == esc.id, Orden.unidad_id == unidad.id, Orden.estado == "pendiente",
-    ).delete()
+    # un dron dentro de una interferencia enemiga pierde el enlace de datos: no recibe ordenes
+    if ge_mod.enlace_perdido(unidad, ge_mod.contexto(db, esc)):
+        raise HTTPException(status_code=400, detail=ge_mod.MOTIVO_SIN_ENLACE)
+    # comunicaciones: la orden puede tardar en llegar (sigue con la que cumplia hasta que llegue la nueva)
+    demora = tiempo_real.demora_de_orden(db, esc, unidad, payload.tipo)
+    # Una unidad cumple una sola orden a la vez: la nueva reemplaza a la que estaba cumpliendo (al instante). El
+    # despegue y el lanzamiento son de la base o del lanzador y no interrumpen lo que hace.
+    if payload.tipo not in ("despegar", "lanzar") and not demora:
+        tiempo_real.cancelar_ordenes_de(db, unidad, "Reemplazada por una nueva orden.", tiempo_real.hora_del_dia(esc))
+    elif demora:  # una orden demorada reemplaza a otra que tambien esperaba llegar
+        for previa in db.query(Orden).filter(Orden.unidad_id == unidad.id, Orden.estado == "pendiente"):
+            previa.estado, previa.resultado = "cancelada", "Reemplazada por una nueva orden antes de llegar."
 
     orden = Orden(
         escenario_id=esc.id,
@@ -202,7 +216,26 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         **puestos.firma(usuario),
     )
     db.add(orden)
+    db.flush()
+    if demora:
+        orden.emitida_seg, orden.llega_seg = esc.sim_segundos, esc.sim_segundos + demora
+        llega = tiempo_real.hora_del_dia(esc, esc.sim_segundos + demora)
+        orden.resultado = (f"Comunicaciones: la orden no llegó a tiempo"
+                           + (" (interferencia enemiga)" if ge_mod.contexto(db, esc).interferido(unidad) else "")
+                           + f"; llegará a {unidad.nombre} a las {llega}.")
+        db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="comunicaciones", bando_destino=unidad.bando,
+                      descripcion=f"[{tiempo_real.hora_del_dia(esc)}] {orden.resultado}"))
+        return orden
+    tiempo_real.aplicar_orden(db, esc, orden, unidad)
     return orden
+
+
+def _falta_texto(esc: Escenario, unidad: Unidad) -> str:
+    """Tiempo simulado que le falta a una aeronave en tierra para quedar lista ("1 h 20 min")."""
+    if unidad.espera_hasta is None:
+        return f"{unidad.espera_restante} h"
+    minutos = max(1, round((unidad.espera_hasta - (esc.sim_segundos or 0.0)) / 60.0))
+    return f"{minutos // 60} h {minutos % 60} min" if minutos >= 60 else f"{minutos} min"
 
 
 @router.post("", response_model=schemas.OrdenOut)
@@ -214,8 +247,6 @@ async def emitir_orden(
 ):
     _en_decision(esc)
     orden = _crear_orden(payload, esc, db, usuario)
-    # Emitir una orden nueva invalida el "listo" del bando: debe confirmarlo otra vez.
-    setattr(esc, f"listo_{usuario.rol}", False)
     db.commit()
     db.refresh(orden)
 
@@ -252,8 +283,6 @@ async def emitir_lote(
             resultados.append({"unidad_id": uid, "ok": True, "orden_id": orden.id})
         except HTTPException as e:
             resultados.append({"unidad_id": uid, "ok": False, "detalle": e.detail})
-    if any(r["ok"] for r in resultados):
-        setattr(esc, f"listo_{usuario.rol}", False)
     db.commit()
     await manager.difundir_estado(db, esc)
     return {"resultados": resultados, "emitidas": sum(1 for r in resultados if r["ok"])}
@@ -277,9 +306,10 @@ def previsualizar(
     # tiempo de TODO el recorrido (no solo este turno): horas, turnos y hora simulada de llegada
     tiempo = movimiento.tiempo_recorrido(unidad, wps, get_terreno(), clima, obras)
     if tiempo["horas"] and not tiempo["bloqueo"]:
-        llegada = (esc.hora_inicio_min or 0) + (esc.turno_actual - 1) * 60 + round(tiempo["horas"] * 60)
+        ahora = (esc.hora_inicio_min or 0) + int((esc.sim_segundos or 0.0) // 60)
+        llegada = ahora + round(tiempo["horas"] * 60)
         tiempo["llegada"] = f"{llegada % 1440 // 60:02d}:{llegada % 60:02d}"
-        tiempo["llegada_dias"] = llegada // 1440 - ((esc.hora_inicio_min or 0) + (esc.turno_actual - 1) * 60) // 1440
+        tiempo["llegada_dias"] = llegada // 1440 - ahora // 1440
     return {
         "tiempo": tiempo,
         "ruta": mov.ruta,
@@ -326,10 +356,10 @@ async def cancelar_orden(
     if orden is None or orden.escenario_id != esc.id or unidad.bando != usuario.rol:
         raise HTTPException(status_code=404, detail="Orden no encontrada")
     auth.exigir_funcion(usuario, puestos.funcion_de_orden(unidad, orden.tipo, catalogo.perfil(unidad)))
-    if orden.estado != "pendiente":
-        raise HTTPException(status_code=400, detail="Solo se pueden cancelar ordenes pendientes")
-    db.delete(orden)
-    setattr(esc, f"listo_{usuario.rol}", False)
+    if orden.estado not in ("pendiente", "en_ejecucion"):
+        raise HTTPException(status_code=400, detail="Esa orden ya terminó")
+    # detener: la unidad deja de cumplir la orden y se queda donde esta (una aeronave, orbitando alli)
+    tiempo_real.detener(db, esc, unidad)
     db.commit()
     await manager.difundir_estado(db, esc)
     return {"ok": True}

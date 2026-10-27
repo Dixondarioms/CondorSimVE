@@ -26,7 +26,8 @@ def test_motivo_generico_agrupa_cifras_y_parentesis():
 
 
 def _jugar(api):
-    """Azul: dos ataques fuera de alcance (rechazados al resolver) y uno valido; rojo: solo ataca en el turno 2."""
+    """Tiempo real (una hora entre orden y orden): azul ordena a C atacar a R1 dos veces (la segunda reemplaza a la
+    primera, que queda cancelada) y luego a A; rojo solo ataca en la hora 2. Fuera de alcance, C se acerca y tira."""
     prof, base, a, r1, r2 = _preparar(api)
     # C ve a R1 (5 km) pero no lo alcanza (2 km): la orden se acepta y el motor la rechaza al resolver
     c = prof.post(f"{base}/unidades", json=dict(nombre="C", bando="azul", tipo="terrestre", lat=0.0, lon=0.001,
@@ -55,11 +56,11 @@ def test_la_rubrica_cuenta_ordenes_rechazos_turnos_pasivos_y_perdidas(api):
     assert rub["escenario"]["turnos_resueltos"] == 3
     az, ro = rub["bandos"]["azul"], rub["bandos"]["rojo"]
 
-    assert (az["ordenes"]["emitidas"], az["ordenes"]["resueltas"], az["ordenes"]["rechazadas"]) == (3, 1, 2)
-    assert az["ordenes"]["motivos_rechazo"] == [{"motivo": "Objetivo fuera de alcance", "veces": 2}]
-    assert az["ordenes"]["tasa_rechazo"] == 66.7
+    o = az["ordenes"]
+    assert (o["emitidas"], o["canceladas"], o["pendientes"], o["rechazadas"]) == (3, 1, 2, 0)  # 2 ataques en curso
+    assert o["motivos_rechazo"] == [] and o["tasa_rechazo"] == 0.0
     assert az["turnos_pasivos"] == {"cantidad": 0, "turnos": []}
-    assert (ro["ordenes"]["emitidas"], ro["ordenes"]["resueltas"]) == (1, 1)
+    assert (ro["ordenes"]["emitidas"], ro["ordenes"]["pendientes"]) == (1, 1)
     assert ro["turnos_pasivos"] == {"cantidad": 2, "turnos": [1, 3]}
 
     # ambos combatieron: lo que uno inflige lo sufre el otro
@@ -68,7 +69,7 @@ def test_la_rubrica_cuenta_ordenes_rechazos_turnos_pasivos_y_perdidas(api):
 
     # unidades terrestres -> reparticion responsable A-3 (operaciones); las demas celdas quedan en cero
     assert az["puestos"]["a3"]["ordenes"]["emitidas"] == 3
-    assert az["puestos"]["a3"]["ordenes"]["rechazadas"] == 2
+    assert az["puestos"]["a3"]["ordenes"]["canceladas"] == 1
     assert all(az["puestos"][p]["ordenes"]["emitidas"] == 0 for p in ("a2", "a3da", "a4", "ce"))
     assert "reparticion" in rub["nota_puestos"]
 
@@ -77,20 +78,16 @@ def test_la_rubrica_cuenta_ordenes_rechazos_turnos_pasivos_y_perdidas(api):
     assert list(alumnos) == ["alfa", "bravo"]
     alfa, bravo = alumnos["alfa"], alumnos["bravo"]
     assert (alfa["bando"], alfa["puesto"], alfa["sigla"], alfa["asignado"]) == ("azul", "comandante", "CMDTE", True)
-    assert (alfa["ordenes"]["emitidas"], alfa["ordenes"]["rechazadas"], alfa["ordenes"]["tasa_rechazo"]) == (3, 2, 66.7)
+    assert (alfa["ordenes"]["emitidas"], alfa["ordenes"]["canceladas"], alfa["ordenes"]["tasa_rechazo"]) == (3, 1, 0.0)
     assert alfa["turnos_activos"] == {"cantidad": 3, "turnos": [1, 2, 3]}
     assert alfa["turnos_pasivos"] == {"cantidad": 0, "turnos": []}
-    assert "2 orden(es) rechazada(s) de alfa por 'Objetivo fuera de alcance'" in " ".join(alfa["observaciones"])
     assert (bravo["ordenes"]["emitidas"], bravo["turnos_pasivos"]["turnos"], bravo["turnos_activos"]["turnos"]) == (1, [1, 3], [2])
-    assert "2 turno(s) sin emitir ninguna orden (turno(s) 1, 3)" in " ".join(bravo["observaciones"])
+    assert "2 hora(s) del ejercicio sin emitir ninguna orden (hora(s) 1, 3)" in " ".join(bravo["observaciones"])
     assert rub["sin_autor"] == {"azul": {"ordenes": 0, "misiones": 0}, "rojo": {"ordenes": 0, "misiones": 0}}
 
-    obs_azul = " ".join(az["observaciones"])
-    assert "2 orden(es) rechazada(s) por 'Objetivo fuera de alcance': revisar la apreciacion de distancias" in obs_azul
-    assert "Alta proporcion de ordenes rechazadas (67 % de 3)" in obs_azul
-    assert any("en A-3" in o for o in az["puestos"]["a3"]["observaciones"])
+    assert "favorable" in " ".join(az["observaciones"])  # C y A le hicieron mas bajas a R1 que las que sufrieron
     obs_rojo = " ".join(ro["observaciones"])
-    assert "2 turno(s) sin emitir ninguna orden (turno(s) 1, 3)" in obs_rojo
+    assert "2 hora(s) del ejercicio sin emitir ninguna orden (hora(s) 1, 3)" in obs_rojo
 
 
 def test_logistica_objetivos_y_misiones_en_la_rubrica(db_session):
@@ -174,7 +171,7 @@ def test_alumnos_sin_actividad_ordenes_sin_autor_y_misiones_por_nombre(db_sessio
     p = alumnos["piloto"]
     assert (p["asignado"], p["sigla"], p["misiones"]["planificadas"], p["misiones"]["cumplidas"]) == (False, "A-3", 1, 1)
     assert p["turnos_activos"]["turnos"] == [1] and p["turnos_pasivos"]["turnos"] == [2]
-    assert p["observaciones"] == ["1 turno(s) sin emitir ninguna orden (turno(s) 2): mantener la iniciativa o dejar "
+    assert p["observaciones"] == ["1 hora(s) del ejercicio sin emitir ninguna orden (hora(s) 2): mantener la iniciativa o dejar "
                                   "constancia de la decision de esperar."]
     # la intercepcion automatica no cuenta como "sin autor"
     assert rub["sin_autor"] == {"azul": {"ordenes": 1, "misiones": 0}, "rojo": {"ordenes": 1, "misiones": 1}}
@@ -207,7 +204,8 @@ def test_las_ordenes_y_misiones_registran_su_autor(api):
     assert estado["ordenes"][0]["autor"] == "alfa" and estado["ordenes"][0]["autor_puesto"] == "comandante"
     lote = azul.post(f"{base}/ordenes/lote", json={"unidad_ids": [a["id"]], "orden": {"tipo": "mover", "waypoints": [[0.2, 0]]}})
     assert lote.status_code == 200 and lote.json()["emitidas"] == 1
-    assert [o["autor"] for o in azul.get(f"{base}/ordenes").json()] == ["alfa"]
+    ordenes = azul.get(f"{base}/ordenes").json()  # la del lote reemplaza (cancela) a la primera
+    assert [(o["autor"], o["estado"]) for o in ordenes] == [("alfa", "cancelada"), ("alfa", "en_ejecucion")]
     informe = prof.get(f"{base}/aar").json()
     assert informe["turnos"][-1]["ordenes"][0]["autor"] == "alfa"
 
@@ -235,19 +233,17 @@ def test_la_rubrica_respeta_los_permisos_y_va_en_la_exportacion_y_el_html(api):
     assert api("obs").get(f"{base}/aar/rubrica").status_code == 200
     assert api().get(f"{base}/aar/rubrica").status_code == 401
     exportado = prof.get(f"{base}/exportar").json()
-    assert exportado["rubrica"]["bandos"]["azul"]["ordenes"]["rechazadas"] == 2
+    assert exportado["rubrica"]["bandos"]["azul"]["ordenes"]["canceladas"] == 1
     html = prof.get(f"{base}/aar.html").text
-    assert "Rubrica de evaluacion" in html and "Objetivo fuera de alcance (2)" in html
-    assert "Turnos pasivos" in html and "A-3 · Operaciones" in html
-    assert "revisar la apreciacion de distancias" in html
+    assert "Rubrica de evaluacion" in html
+    assert "Horas sin órdenes" in html and "A-3 · Operaciones" in html
     assert "Evaluacion por alumno" in html and "<td>alfa</td>" in html and "<td>bravo</td>" in html
-    assert "rechazada(s) de alfa" in html
     assert "<td>alfa</td>" in prof.get(f"{base}/aar/diapositivas.html").text
     r = prof.get(f"{base}/aar/rubrica.csv")
     assert r.status_code == 200 and r.headers["content-type"].startswith("text/csv")
     filas = list(csv.DictReader(io.StringIO(r.text)))
     assert [(f["alumno"], f["bando"], f["puesto"], f["ordenes_emitidas"], f["ordenes_rechazadas"], f["turnos_pasivos"])
-            for f in filas] == [("alfa", "azul", "CMDTE", "3", "2", "0"), ("bravo", "rojo", "CMDTE", "1", "0", "2")]
+            for f in filas] == [("alfa", "azul", "CMDTE", "3", "0", "0"), ("bravo", "rojo", "CMDTE", "1", "0", "2")]
     assert api("alfa").get(f"{base}/aar/rubrica.csv").status_code == 403
     prof.post(f"{base}/finalizar")
     assert api("alfa").get(f"{base}/aar/rubrica").status_code == 200

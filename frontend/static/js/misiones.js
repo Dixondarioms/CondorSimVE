@@ -115,7 +115,7 @@
       const max = (cat().aeronaves || {}).max_grupo || 8;
       opciones($("pm-cantidad"), Array.from({ length: max }, (_, i) => [i + 1, `${i + 1}`]), borrador.aeronaves);
       const t0 = turnoActual();
-      opciones($("pm-turno"), Array.from({ length: 13 }, (_, i) => [t0 + i, `T${t0 + i} · ${ctx.horaDeTurno(t0 + i)}${i === 0 ? " (al resolver este turno)" : ""}`]), borrador.turno);
+      opciones($("pm-turno"), Array.from({ length: 13 }, (_, i) => [t0 + i, i === 0 ? "Ahora (en el acto)" : `Hora ${t0 + i} · ${ctx.horaDeTurno(t0 + i)}`]), borrador.turno);
       opciones($("pm-rol"), roles().map((r) => [r.id, r.nombre]), borrador.rol);
       opciones($("pm-aterrizaje"), bases().map((u) => [u.id, u.nombre]), borrador.aterrizajeId);
       // rol ESCOLTA: que mision escolta; roles de ataque: escolta opcional del paquete (grupo existente o grupo que despega)
@@ -141,7 +141,7 @@
       const modelo = borrador.origen === "grupo" ? ((datos().unidades.find((x) => x.id === borrador.unidadId) || {}).modelo) : borrador.modelo;
       opciones($("pm-arma1"), [["", "—"], ...Logica.armasParaRol(catOta, modelo, borrador.rol, true)], o.armamento_primario);
       opciones($("pm-arma2"), [["", "—"], ...Logica.armasParaRol(catOta, modelo, borrador.rol, false)], o.armamento_secundario);
-      opciones($("pm-tot"), [["", "Sin TOT (según el despegue)"], ...Array.from({ length: 25 }, (_, i) => [t0 + i, `T${t0 + i} · ${ctx.horaDeTurno(t0 + i)}`])], o.tot_turno ?? "");
+      opciones($("pm-tot"), [["", "Sin TOT (según el despegue)"], ...Array.from({ length: 25 }, (_, i) => [t0 + i, `Hora ${t0 + i} · ${ctx.horaDeTurno(t0 + i)}`])], o.tot_turno ?? "");
       o.codigo = $("pm-codigo").value;
       o.armamento_primario = $("pm-arma1").value;
       o.armamento_secundario = $("pm-arma2").value;
@@ -255,15 +255,15 @@
             if (ca.checked) p.reunion = false;
             refrescar();
           });
-          aer.title = "Punto de reabastecimiento en vuelo: espera un turno junto a la cisterna";
+          aer.title = "Punto de reabastecimiento en vuelo: espera junto a la cisterna hasta llenarse (a lo sumo 30 min)";
           aer.append(ca, el("span", "", "AER"));
           li.appendChild(aer);
         }
         if (p.tipo === "orbita") {
           const t = el("select");
-          t.setAttribute("aria-label", `Turnos de órbita del punto ${i + 1}`);
+          t.setAttribute("aria-label", `Horas de órbita del punto ${i + 1}`);
           const max = (cat().misiones || {}).max_turnos_orbita || 12;
-          opciones(t, Array.from({ length: max }, (_, k) => [k + 1, `${k + 1} turno${k ? "s" : ""}`]), p.turnos);
+          opciones(t, Array.from({ length: max }, (_, k) => [k + 1, `${k + 1} h`]), p.turnos);
           t.addEventListener("change", () => { p.turnos = parseInt(t.value, 10); refrescar(); });
           li.appendChild(t);
         } else if (p.tipo === "blanco") {
@@ -272,7 +272,7 @@
           cc.type = "checkbox";
           cc.checked = !!p.corte;
           cc.addEventListener("change", () => { p.corte = cc.checked; if (cc.checked) apuntar(p, null); refrescar(); });
-          corte.title = "Corte de carretera: bombardea la carretera en este punto (cráter por 12 turnos)";
+          corte.title = "Corte de carretera: bombardea la carretera en este punto (cráter por 12 horas)";
           corte.append(cc, el("span", "", "CORTE"));
           li.appendChild(corte);
           const o = el("select");
@@ -398,7 +398,7 @@
         $("pm-turno").value = String(r.turno_despegue);
         borrador.turno = r.turno_despegue;
       }
-      const hora = (t) => `T${t} · ${ctx.horaDeTurno(t)}`;
+      const hora = (t) => `hora ${t} (${ctx.horaDeTurno(t)})`;
       const tiempos = [`Despegue ${hora(r.turno_despegue)}`];
       if (r.plan.reunion_turno) tiempos.push(`reunión ${hora(r.plan.reunion_turno)}`);
       if (r.plan.tot_turno) tiempos.push(`sobre el blanco (TOT) ${hora(r.plan.tot_turno)}`);
@@ -408,7 +408,7 @@
       if (aar) {
         avisos.appendChild(el("li", "logistica", `Reabastecimiento en vuelo (${hora(aar.turno)}): ${aar.kg.toLocaleString("es-VE")} kg `
           + `(${aar.kg_por_aeronave.toLocaleString("es-VE")} kg por aeronave), unos ${aar.minutos} min de la cisterna `
-          + `(${aar.contacto_min} min de enganche por aeronave). La cisterna atiende 60 min por turno.`));
+          + `(${aar.contacto_min} min de enganche por aeronave). La cisterna atiende en tandas de 15 minutos.`));
       }
       const lg = r.plan.logistica;
       if (lg) {

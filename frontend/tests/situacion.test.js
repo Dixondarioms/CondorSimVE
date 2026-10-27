@@ -12,7 +12,7 @@ test("duracion en horas y minutos, y en dias para recorridos largos", () => {
 
 test("tiempo de todo el recorrido de una orden de mover, con llegada y avisos", () => {
   const t = S.textoTiempo({ km: 87, horas: 3.33, turnos: 4, llegada: "14:20", llegada_dias: 0, bloqueo: "", km_combustible: 300 });
-  assert.equal(t, "Recorrido completo: 87 km en 3 h 20 min (4 turnos); llegada estimada 14:20h.");
+  assert.equal(t, "Recorrido completo: 87 km en 3 h 20 min; llegada estimada 14:20h.");
   assert.match(S.textoTiempo({ km: 500, horas: 20, turnos: 20, llegada: "02:00", llegada_dias: 1, km_combustible: 300 }),
     /\(\+1 día\)\. El combustible alcanza para 300 km/);
   assert.match(S.textoTiempo({ km: 12, horas: 0.5, turnos: 1, bloqueo: "Río sin puente ni vado en la ruta." }), /Río sin puente/);

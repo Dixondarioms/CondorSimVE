@@ -56,5 +56,5 @@ def test_diapositivas_del_aar(api):
     api("alfa").post(f"{base}/ordenes", json={"unidad_id": a["id"], "tipo": "atacar", "objetivo_unidad_id": r1["id"]})
     prof.post(f"{base}/avanzar_turno")
     r = prof.get(f"{base}/aar/diapositivas.html")
-    assert r.status_code == 200 and "Turno 1" in r.text and "Resumen del ejercicio" in r.text and "Preguntas" in r.text
+    assert r.status_code == 200 and "Hora 1 del ejercicio" in r.text and "Resumen del ejercicio" in r.text and "Preguntas" in r.text
     assert api("alfa").get(f"{base}/aar/diapositivas.html").status_code == 403

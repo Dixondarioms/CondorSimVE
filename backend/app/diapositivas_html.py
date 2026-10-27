@@ -70,7 +70,7 @@ def _dia_turno(t: dict) -> str | None:
     rechazadas = [o for o in t["ordenes"] if o.get("estado") == "rechazada"]
     detalle = " · ".join(e(str(o.get("resultado", "")))[:90] for o in rechazadas[:3])
     partes.append(f'<p class="sec">Órdenes emitidas: {len(t["ordenes"])} · rechazadas: {len(rechazadas)}{" · " + detalle if detalle else ""}</p>')
-    return (f'<section class="dia"><h2>Turno {t["turno"]}</h2><p class="sec">Clima: {e(str(t.get("clima", "")))}</p>'
+    return (f'<section class="dia"><h2>Hora {t["turno"]} del ejercicio</h2><p class="sec">Clima: {e(str(t.get("clima", "")))}</p>'
             + "".join(partes) + "</section>")
 
 
@@ -80,7 +80,7 @@ def render_diapositivas(informe: dict, rubrica: dict | None = None) -> str:
     marcador = informe.get("marcador") or {}
     dias = [
         f'<section class="dia activa"><p class="sec">S.I.E.T.E. · Informe posterior al ejercicio</p><h1>{e(esc["nombre"])}</h1>'
-        f'<p>Turnos jugados: {max(0, int(esc.get("turno_actual", 1)) - 1)} · clima general: {e(str(esc.get("clima", "")))}</p>'
+        f'<p>Horas jugadas: {max(0, int(esc.get("turno_actual", 1)) - 1)} · clima general: {e(str(esc.get("clima", "")))}</p>'
         f"{_marcador_html(marcador)}</section>"
     ]
     dias += [d for d in (_dia_turno(t) for t in informe["turnos"]) if d]
@@ -93,7 +93,7 @@ def render_diapositivas(informe: dict, rubrica: dict | None = None) -> str:
                 f"{_marcador_html(marcador)}</section>")
     for b, datos in ((rubrica or {}).get("bandos") or {}).items():
         o = datos.get("ordenes") or {}
-        cuerpo = (f"<p>Órdenes: {o.get('emitidas', 0)} emitidas, {o.get('rechazadas', 0)} rechazadas · turnos pasivos: "
+        cuerpo = (f"<p>Órdenes: {o.get('emitidas', 0)} emitidas, {o.get('rechazadas', 0)} rechazadas · horas sin órdenes: "
                   f"{(datos.get('turnos_pasivos') or {}).get('cantidad', 0)} · objetivos cumplidos: "
                   f"{(datos.get('objetivos') or {}).get('cumplidos', 0)}</p>")
         obs = datos.get("observaciones") or []
@@ -110,7 +110,7 @@ def render_diapositivas(informe: dict, rubrica: dict | None = None) -> str:
         sin_autor = sum(n["ordenes"] + n["misiones"] for n in ((rubrica or {}).get("sin_autor") or {}).values())
         nota = f'<p class="sec">{sin_autor} orden(es) o misión(es) sin autor registrado.</p>' if sin_autor else ""
         dias.append('<section class="dia"><h2>Evaluación por alumno</h2><table><tr><th>Alumno</th><th>Bando</th><th>Puesto</th>'
-                    f"<th>Órdenes</th><th>Rechazadas</th><th>Turnos pasivos</th><th>Misiones</th></tr>{filas}</table>{nota}</section>")
+                    f"<th>Órdenes</th><th>Rechazadas</th><th>Horas sin órdenes</th><th>Misiones</th></tr>{filas}</table>{nota}</section>")
     dias.append('<section class="dia"><h2>Preguntas para la discusión</h2><ul>' + "".join(f"<li>{e(p)}</li>" for p in PREGUNTAS) + "</ul></section>")
     return (f'<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Diapositivas · {e(esc["nombre"])}</title>'
             f"<style>{_ESTILO}</style></head><body>{''.join(dias)}<div class='nav' id='nav'></div><script>{_SCRIPT}</script></body></html>")

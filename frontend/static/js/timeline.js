@@ -136,7 +136,7 @@
       const L = layout(datos, { ...estado, ancho: Math.max(720, Math.min(1200, $("tl-svg-wrap").clientWidth - 8 || 940)) });
       const svg = $("tl-svg");
       limpiar(svg);
-      if (L.vacio) { svg.setAttribute("height", 60); svg.appendChild(el("text", { x: 12, y: 32, fill: "#8D99AE" }, "Aún no se resolvió ningún turno.")); return; }
+      if (L.vacio) { svg.setAttribute("height", 60); svg.appendChild(el("text", { x: 12, y: 32, fill: "#8D99AE" }, "Aún no se cumplió ninguna hora del ejercicio.")); return; }
       svg.setAttribute("viewBox", `0 0 ${L.ancho} ${L.alto}`);
       svg.setAttribute("width", L.ancho);
       svg.setAttribute("height", L.alto);

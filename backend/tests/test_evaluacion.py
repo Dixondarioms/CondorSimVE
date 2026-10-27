@@ -25,7 +25,7 @@ def test_la_rubrica_trae_indicadores_doctrinales_y_una_nota_de_1_a_20(db_session
     db_session.commit()
     d = aar.construir_rubrica(db_session, esc)["bandos"]["azul"]["doctrina"]
     ind = {i["id"]: i for i in d["indicadores"]}
-    assert ind["reaccion"]["puntaje"] == 100 and "1.0 turno" in ind["reaccion"]["valor"]
+    assert ind["reaccion"]["puntaje"] == 100 and "1.0 hora" in ind["reaccion"]["valor"]
     assert ind["coordinacion"]["puntaje"] is None  # nadie trabajo con puestos especializados
     assert ind["economia"]["puntaje"] == round(100 * 5 / 15)  # el azul inflige 5 y sufre 10
     assert 1 <= d["nota"] <= 20 and all(i["criterio"] for i in d["indicadores"])

@@ -3,7 +3,7 @@
  * boton del instructor, la tecla V o el parametro de URL ?modo=videowall (opcional: &escenario=ID&vista=azul). */
 (function (raiz) {
   "use strict";
-  const { textoHora, horaSimulada, etiquetaClima, formatoTiempo, segundosRestantes } = Logica;
+  const { etiquetaClima } = Logica;
 
   function parametrosDeUrl() {
     const p = new URLSearchParams(location.search);
@@ -59,18 +59,15 @@
       const esc = data.escenario;
       $("hud-escenario").textContent = esc.nombre;
       $("hud-turno").textContent = String(esc.turno_actual);
-      $("hud-hora").textContent = textoHora(horaSimulada(esc.hora_inicio_min, esc.turno_actual));
       $("hud-clima").textContent = etiquetaClima(esc.clima).toUpperCase();
-      $("hud-azul").classList.toggle("listo", esc.listo_azul);
-      $("hud-rojo").classList.toggle("listo", esc.listo_rojo);
       if (data.marcador) {
         $("hud-marcador-azul").textContent = String(data.marcador.azul.total);
         $("hud-marcador-rojo").textContent = String(data.marcador.rojo.total);
       }
       const eAzul = Logica.etiquetaBandoNacion("azul", esc, ctx.naciones()).toUpperCase();
       const eRojo = Logica.etiquetaBandoNacion("rojo", esc, ctx.naciones()).toUpperCase();
-      $("hud-azul").textContent = esc.listo_azul ? `${eAzul} LISTO` : eAzul;
-      $("hud-rojo").textContent = esc.listo_rojo ? `${eRojo} LISTO` : eRojo;
+      $("hud-azul").textContent = eAzul;
+      $("hud-rojo").textContent = eRojo;
       const ul = $("hud-alertas");
       while (ul.firstChild) ul.removeChild(ul.firstChild);
       for (const a of alertas.slice(0, 3)) {
@@ -79,20 +76,16 @@
         li.textContent = a.texto;
         ul.appendChild(li);
       }
-      actualizarReloj(data);
     }
 
-    function actualizarReloj(data, recibidoEn) {
+    /** Reloj del tiempo real: hora simulada en curso, marcha o pausa y velocidad (lo llama la app cada 250 ms). */
+    function actualizarReloj(data, hora, estado, velocidad) {
       if (!activo || !data) return;
-      const esc = data.escenario;
+      $("hud-hora").textContent = hora;
       const r = $("hud-reloj");
-      r.classList.remove("urgente", "inactivo");
-      if (esc.estado === "finalizado") { r.textContent = "FINALIZADO"; r.classList.add("inactivo"); return; }
-      if (esc.estado === "pausado") { r.textContent = "PAUSADO"; r.classList.add("inactivo"); return; }
-      if (!esc.decision_termina_en) { r.textContent = "SIN LÍMITE"; r.classList.add("inactivo"); return; }
-      const seg = segundosRestantes(esc.decision_termina_en, data.ahora, recibidoEn);
-      r.textContent = formatoTiempo(seg);
-      r.classList.toggle("urgente", seg !== null && seg <= 15);
+      r.classList.remove("urgente");
+      r.classList.toggle("inactivo", estado !== "activo");
+      r.textContent = estado === "finalizado" ? "FINALIZADO" : estado === "activo" ? `▶ ${velocidad}×` : "⏸ DETENIDO";
     }
 
     function conectar() {

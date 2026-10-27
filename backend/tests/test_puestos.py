@@ -113,8 +113,7 @@ def test_personal_e_inteligencia_ven_pero_no_ordenan_ni_confirman(api):
         assert c.get(base).status_code == 200  # misma vista que el resto del bando
         r = _mover(c, base, a)
         assert r.status_code == 403 and "Operaciones (A-3)" in r.json()["detail"], r.text
-        r = c.post(f"{base}/listo", json={"listo": True})
-        assert r.status_code == 403 and "Comandante" in r.json()["detail"]
+        assert c.post(f"{base}/listo", json={"listo": True}).status_code == 400  # tiempo real: no hay LISTO
 
 
 def test_operaciones_conduce_la_maniobra_pero_no_la_defensa_aerea_ni_confirma(api):
@@ -127,7 +126,7 @@ def test_operaciones_conduce_la_maniobra_pero_no_la_defensa_aerea_ni_confirma(ap
         assert _mover(a3, base, u).status_code == 200, u["nombre"]
     r = _mover(a3, base, radar)
     assert r.status_code == 403 and "Defensa Aerea (A-3 D/A)" in r.json()["detail"]
-    assert a3.post(f"{base}/listo", json={"listo": True}).status_code == 403
+    assert a3.post(f"{base}/listo", json={"listo": True}).status_code == 400  # tiempo real: no hay LISTO
 
 
 def test_defensa_aerea_conduce_radares_antiaereas_y_la_caza(api):
@@ -197,7 +196,7 @@ def test_el_comandante_y_el_jem_hacen_todo(api):
         c = api(nombre)
         for u in (a, caza, ing, radar):
             assert _mover(c, base, u).status_code == 200, (nombre, u["nombre"])
-        assert c.post(f"{base}/listo", json={"listo": True}).status_code == 200
+        assert c.post(f"{base}/listo", json={"listo": True}).status_code == 400  # tiempo real: no hay LISTO
 
 
 def test_cambiar_la_reparticion_revoca_la_sesion_y_aplica_al_volver_a_entrar(api):

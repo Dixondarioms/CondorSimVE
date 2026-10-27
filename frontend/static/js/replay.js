@@ -142,14 +142,17 @@
   const tiempoDeSlider = (valor, n) => acotar((parseInt(valor, 10) || 0) / PASOS_SLIDER, n);
   const sliderMax = (n) => Math.max(0, n - 1) * PASOS_SLIDER;
 
-  /** Texto del rotulo: "Turno 2 de 5 · 08:00h · Lluvia · Marcador azul 12 - rojo 4". */
+  /** Texto del rotulo: "Turno 2 de 5 · 08:00h · Lluvia · Marcador azul 12 - rojo 4"; en tiempo real,
+   * "08:35 · hora 3 del ejercicio · Lluvia · Marcador azul 12 - rojo 4". */
   function textoRotulo(turnos, estado, horaInicioMin) {
     if (!estado.turno) return "";
     const t = estado.turno;
     const ultimo = turnos[turnos.length - 1].turno;
     const clima = Logica ? Logica.etiquetaClima(t.clima) : (t.clima || "");
     const partes = [];
-    if (t.turno === 0) partes.push("Despliegue inicial");
+    if (t.hora) {  // tiempo real: un cuadro cada pocos minutos, con su hora simulada
+      partes.push(t.sim_segundos === 0 ? `${t.hora} · Inicio del ejercicio` : `${t.hora} · hora ${t.turno} del ejercicio`);
+    } else if (t.turno === 0) partes.push("Despliegue inicial");
     else {
       partes.push(`Turno ${t.turno} de ${ultimo}`);
       if (Logica) partes.push(Logica.textoHora(Logica.horaSimulada(horaInicioMin, t.turno)));
@@ -257,7 +260,7 @@
       if (!reproduciendo) return;
       const dt = ultimo ? ahora - ultimo : 0;
       ultimo = ahora;
-      tiempo = avanzar(tiempo, dt, velocidad, turnos.length);
+      tiempo = avanzar(tiempo, dt, velocidad, turnos.length, (escenario && escenario.duracion_cuadro_ms) || DURACION_TURNO_MS);
       dibujar();
       if (tiempo >= turnos.length - 1) return pausar();
       cuadro = requestAnimationFrame(paso);
