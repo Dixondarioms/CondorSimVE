@@ -43,12 +43,13 @@ CREDITOS = FOTOS / "CREDITOS.md"
 SALIDA = Path(__file__).resolve().parent / "salida"
 ORIGINALES = Path(__file__).resolve().parent / "originales"  # fotos reducidas sin encuadrar (para --uniformar)
 FOTOS_CATALOGO = ("f16.jpg", "su30.jpg")  # fotos del catalogo que tambien se encuadran
-ANCHO, ALTO = 720, 405  # 16:9, como las ilustraciones SVG (640 x 360)
+ANCHO, ALTO = 960, 540  # 16:9, como las ilustraciones SVG (640 x 360), con resolucion para pantallas densas
 API = "https://commons.wikimedia.org/w/api.php"
 # Wikimedia pide un User-Agent que identifique la herramienta.
 AGENTE = "SIETE-simulador/1.0 (fotos de referencia; https://github.com/Dixondarioms/simulador-fenix)"
-LADO_MAX = 720
+LADO_MAX = 1280
 CANDIDATAS = 8
+CANDIDATAS_AUTO = 16  # con --auto se revisan hasta estas por unidad
 INICIO_TABLA, FIN_TABLA = "<!-- referencias:inicio -->", "<!-- referencias:fin -->"
 
 # (seccion, clave, que representa, busquedas en orden de preferencia). "modelos": modelos de aeronave de
@@ -148,7 +149,7 @@ def licencia_libre(nombre: str) -> bool:
     return n.startswith(("cc by", "cc-by", "cc0", "public domain", "pd")) or n == "attribution"
 
 
-_PROPS = {"prop": "imageinfo", "iiprop": "url|size|mime|extmetadata", "iiurlwidth": "1280",
+_PROPS = {"prop": "imageinfo", "iiprop": "url|size|mime|extmetadata", "iiurlwidth": "1600",
           "iiextmetadatafilter": "Artist|LicenseShortName|LicenseUrl|ObjectName"}
 
 
@@ -184,10 +185,11 @@ def _candidata(pagina: dict) -> dict | None:
 DESCARTAR = re.compile(r"operators|operadores|\bmap\b|mapa|stamp|booklet|sailors|secretary|ceremon|cerim|flag|logo|"
                        r"diagram|insignia|patch|cockpit|interior|crew|personnel|soldiers|wreck|destroyed|"
                        r"explosion|shock\s*trial|airport|aeroporto|aeropuerto|rendering|model\b|toy|stamp|"
-                       r"зоны|caracal-\d|blenny|escenius", re.IGNORECASE)
+                       r"зоны|caracal-\d|blenny|escenius|formation|formacion|\bpair\b|\b\d+\s*x\s|\band\b|\bwith\b|\bteam\b|"
+                       r"flypast|lineup|line-up|parade|desfile", re.IGNORECASE)
 
 
-def buscar(busquedas: list[str]) -> list[dict]:
+def buscar(busquedas: list[str], cuantas: int = CANDIDATAS) -> list[dict]:
     """Candidatas con licencia libre, apaisadas y de buen tamano, en el orden de las busquedas."""
     vistas, candidatas = set(), []
     for consulta in busquedas:
@@ -200,9 +202,9 @@ def buscar(busquedas: list[str]) -> list[dict]:
                     and not DESCARTAR.search(c["titulo"])):
                 vistas.add(c["titulo"])
                 candidatas.append(c)
-        if len(candidatas) >= CANDIDATAS:
+        if len(candidatas) >= cuantas:
             break
-    return candidatas[:CANDIDATAS]
+    return candidatas[:cuantas]
 
 
 def por_titulo(titulo: str) -> dict:
@@ -266,6 +268,37 @@ def solo_lo_principal(alfa: Image.Image, minimo: float = 0.3) -> Image.Image:
     return Image.fromarray(np.where(np.isin(etiquetas, quedan), np.array(alfa), 0).astype("uint8"))
 
 
+def evaluar(img: Image.Image) -> tuple[bool, str]:
+    """La foto sirve de referencia si, recortado el fondo, queda una sola pieza grande (sin otra aeronave, personas ni
+    vehiculos al lado), entera (no cortada por dos bordes) y con resolucion (al menos 520 px de ancho)."""
+    import numpy as np
+    from scipy import ndimage
+    r = _rembg()
+    if r is None:
+        return True, "sin rembg: no se revisa"
+    rembg, sesion = r
+    alfa = np.array(rembg.remove(img.convert("RGB"), session=sesion, post_process_mask=True,
+                                 only_mask=True)) > 24
+    etiquetas, n = ndimage.label(alfa)
+    if n == 0:
+        return False, "no se distingue nada"
+    areas = ndimage.sum(alfa, etiquetas, range(1, n + 1))
+    principal = int(np.argmax(areas)) + 1
+    otras = sum(1 for i, a in enumerate(areas) if i + 1 != principal and a >= 0.05 * areas.max())
+    if otras:
+        return False, f"{otras} pieza(s) mas ademas de la principal (otra aeronave, personas o vehiculos)"
+    ys, xs = np.nonzero(etiquetas == principal)
+    x0, x1, y0, y1 = xs.min(), xs.max(), ys.min(), ys.max()
+    if x1 - x0 < 520:
+        return False, f"la aeronave mide solo {x1 - x0} px de ancho"
+    bordes = (x0 <= 2) + (x1 >= img.width - 3) + (y0 <= 2) + (y1 >= img.height - 3)
+    if bordes >= 2:
+        return False, "la aeronave sale cortada por los bordes"
+    if (x1 - x0) * (y1 - y0) > 0.92 * img.width * img.height:
+        return False, "el recorte ocupa toda la foto (no separo la aeronave del fondo)"
+    return True, "ok"
+
+
 def encuadrar(img: Image.Image) -> Image.Image | None:
     """La aeronave o el buque recortado, centrado y a la misma escala sobre el fondo comun (None sin rembg)."""
     from PIL import ImageDraw, ImageFilter
@@ -314,12 +347,35 @@ def uniformar_todas() -> None:
         print(f"  {original.name}: encuadrada")
 
 
-def guardar_foto(clave: str, c: dict) -> str:
+def bajar_imagen(c: dict) -> Image.Image:
     img = Image.open(io.BytesIO(_bajar(c["miniatura"]))).convert("RGB")
     img.thumbnail((LADO_MAX, LADO_MAX), Image.LANCZOS)
+    return img
+
+
+def guardar_foto(clave: str, c: dict, img: Image.Image | None = None) -> str:
     nombre = f"ref_{clave}.jpg"
-    publicar(img, nombre)
+    publicar(img or bajar_imagen(c), nombre)
     return f"/static/fotos/{nombre}"
+
+
+def elegir_automatica(clave: str, busquedas: list[str]) -> tuple[dict | None, Image.Image | None, list[str]]:
+    """La primera candidata que pasa el control de calidad (evaluar), y el motivo de cada descarte."""
+    motivos = []
+    for i, c in enumerate(buscar(busquedas, CANDIDATAS_AUTO), 1):
+        try:
+            img = bajar_imagen(c)
+        except OSError as e:
+            motivos.append(f"{i}: no se pudo bajar ({e})")
+            continue
+        if min(img.size) < 500:
+            motivos.append(f"{i}: foto chica ({img.width} x {img.height})")
+            continue
+        ok, motivo = evaluar(img)
+        if ok:
+            return c, img, motivos
+        motivos.append(f"{i} ({c['titulo'][5:60]}): {motivo}")
+    return None, None, motivos
 
 
 def leer_manifiesto() -> dict:
@@ -405,6 +461,8 @@ def main() -> int:
     ap.add_argument("--quitar", action="append", metavar="CLAVE", help="quitar la foto (vuelve a la ilustracion)")
     ap.add_argument("--uniformar", action="store_true", help="rehacer el encuadre de todas desde los originales")
     ap.add_argument("--solo", action="append", metavar="CLAVE", help="procesar solo estas claves (se puede repetir)")
+    ap.add_argument("--auto", action="store_true",
+                    help="elegir sola la primera candidata con una sola aeronave, entera, sin personas y con resolucion")
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")  # consola de Windows: autores con caracteres fuera de su codificacion
     if args.uniformar:
@@ -437,6 +495,19 @@ def main() -> int:
         try:
             if clave in archivos:
                 c = por_titulo(archivos[clave])
+            elif args.auto and clave not in elegir:
+                c, img, motivos = elegir_automatica(clave, busquedas)
+                for mo in motivos:
+                    print(f"    descartada {mo}")
+                if c is None:
+                    print(f"  {clave}: ninguna candidata paso el control de calidad")
+                    faltan.append(clave)
+                    continue
+                foto = guardar_foto(clave, c, img)
+                m[seccion][clave] = {"foto": foto, "obra": c["obra"], "autor": c["autor"], "licencia": c["licencia"],
+                                     "url_licencia": c["url_licencia"], "pagina": c["pagina"]}
+                print(f"  {clave}: {c['obra']} ({c['autor']}, {c['licencia']})")
+                continue
             else:
                 candidatas[clave] = buscar(busquedas)
                 n = elegir.get(clave, 1)

@@ -17,5 +17,5 @@
     <rect x="-34" y="124" width="68" height="5" rx="2" fill="#2b2d31"/>
     <path d="M-12 -30 H12 M-10 20 H10" stroke="#5c6773" stroke-width="1"/>
   </g>
-  <text x="20" y="340" font-family="system-ui, sans-serif" font-size="14" fill="#cfe2f3" opacity=".85">UAV de reconocimiento · ilustración genérica</text>
+  <text x="20" y="340" font-family="system-ui, sans-serif" font-size="14" fill="#cfe2f3" opacity=".85">UAV de reconocimiento · ilustración</text>
 </svg>

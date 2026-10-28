@@ -686,9 +686,32 @@
   }
   document.querySelectorAll("[data-capa]").forEach((chk) => chk.addEventListener("change", () => alternarCapa(chk.dataset.capa, chk.checked)));
 
-  // ayuda (boton Ayuda o F1) y recorrido guiado paso a paso por la pantalla
+  // paneles plegables: el de la izquierda (pestañas) y las tarjetas de la derecha; el mapa ocupa el lugar que dejan
+  const TEXTO_PLIEGUE = {
+    izq: ["◀", "Esconder el panel de la izquierda (pestañas)", "▶", "Mostrar el panel de la izquierda (pestañas)"],
+    der: ["▶", "Esconder las tarjetas de la derecha", "◀", "Mostrar las tarjetas de la derecha"],
+  };
+  function plegar(lado, oculto) {
+    document.body.classList.toggle(`${lado}-oculto`, oculto);
+    const b = $(`btn-pliegue-${lado}`);
+    const [abierto, tituloAbierto, cerrado, tituloCerrado] = TEXTO_PLIEGUE[lado];
+    b.textContent = oculto ? cerrado : abierto;
+    b.title = oculto ? tituloCerrado : tituloAbierto;
+    b.setAttribute("aria-label", b.title);
+    b.setAttribute("aria-expanded", String(!oculto));
+    try { localStorage.setItem(`condor.oculto.${lado}`, oculto ? "1" : "0"); } catch (_) { /* sin almacenamiento */ }
+    if (app.map) setTimeout(() => app.map.invalidateSize(), 60);
+  }
+  for (const lado of ["izq", "der"]) {
+    let oculto = false;
+    try { oculto = localStorage.getItem(`condor.oculto.${lado}`) === "1"; } catch (_) { /* sin almacenamiento */ }
+    plegar(lado, oculto);
+    $(`btn-pliegue-${lado}`).addEventListener("click", () => plegar(lado, !document.body.classList.contains(`${lado}-oculto`)));
+  }
+
+  // ayuda (boton Ayuda o F1) y recorrido guiado paso a paso por la pantalla (con los paneles a la vista)
   app.recorrido = Recorrido.crear({ esInstructor });
-  app.ayuda = Ayuda.crear({ esInstructor, recorrido: () => app.recorrido.iniciar() });
+  app.ayuda = Ayuda.crear({ esInstructor, recorrido: () => { plegar("izq", false); plegar("der", false); app.recorrido.iniciar(); } });
   app.ayuda.conectar();
 
   // estelas: cuanto tiempo simulado recuerdan; zonas meteorologicas: radio o satelite (preferencias de cada puesto)

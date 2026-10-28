@@ -3,11 +3,11 @@
   "modelos": {
     "a10": {
       "foto": "/static/fotos/ref_a10.jpg",
-      "obra": "Fairchild Republic A-10 Thunderbolt II - 32156159151",
-      "autor": "Master Sgt. William Greer, U.S. Air Force",
-      "licencia": "Public domain",
+      "obra": "A-10 Thunderbolt 9875",
+      "autor": "Łukasz Golowanow",
+      "licencia": "Attribution",
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Fairchild_Republic_A-10_Thunderbolt_II_-_32156159151.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:A-10_Thunderbolt_9875.JPG"
     },
     "a29": {
       "foto": "/static/fotos/ref_a29.jpg",
@@ -43,11 +43,11 @@
     },
     "ah1z": {
       "foto": "/static/fotos/ref_ah1z.jpg",
-      "obra": "Bell AH-1Z 168964 of USMC HMLA-773 FDK MD5",
+      "obra": "Bell AH-1Z 169611 of USMC HMLA-773 FDK MD4",
       "autor": "Acroterion",
       "licencia": "CC BY-SA 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Bell_AH-1Z_168964_of_USMC_HMLA-773_FDK_MD5.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:Bell_AH-1Z_169611_of_USMC_HMLA-773_FDK_MD4.jpg"
     },
     "ah64e": {
       "foto": "/static/fotos/ref_ah64e.jpg",
@@ -67,11 +67,11 @@
     },
     "akinci": {
       "foto": "/static/fotos/ref_akinci.jpg",
-      "obra": "Bayraktar Akıncı UCAV",
-      "autor": "ArmyInForm",
+      "obra": "Bayraktar Akıncı in Azerbaijani Air Force 2",
+      "autor": "Press Service of the President of the Republic of Azerbaijan",
       "licencia": "CC BY 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Bayraktar_Ak%C4%B1nc%C4%B1_UCAV.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:Bayraktar_Ak%C4%B1nc%C4%B1_in_Azerbaijani_Air_Force_2.jpg"
     },
     "amx30": {
       "foto": "/static/fotos/ref_amx30.jpg",
@@ -107,11 +107,11 @@
     },
     "at27": {
       "foto": "/static/fotos/ref_at27.jpg",
-      "obra": "Embraer EMB-312 AT-27 Tucano de la AMBV",
-      "autor": "Carlos E. Perez S.L",
-      "licencia": "CC BY-SA 4.0",
-      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Embraer_EMB-312_AT-27_Tucano_de_la_AMBV.jpg"
+      "obra": "EMB-312 Tucano Fuerza Aérea Venezolana - García-Rivera",
+      "autor": "José M. García-Rivera - [1]",
+      "licencia": "Attribution",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:EMB-312_Tucano_Fuerza_A%C3%A9rea_Venezolana_-_Garc%C3%ADa-Rivera.jpg"
     },
     "ataque_ligero": {
       "foto": "/static/fotos/ref_ataque_ligero.jpg",
@@ -123,11 +123,11 @@
     },
     "b1b": {
       "foto": "/static/fotos/ref_b1b.jpg",
-      "obra": "A B-1B Lancer",
-      "autor": "Master Sgt. Nicholas Priest",
-      "licencia": "Public domain",
-      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
-      "pagina": "https://commons.wikimedia.org/wiki/File:A_B-1B_Lancer.jpg"
+      "obra": "20180512 B-1B Lancer Dyess AFB Air Show 2018 18",
+      "autor": "Balon Greyjoy",
+      "licencia": "CC0",
+      "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:20180512_B-1B_Lancer_Dyess_AFB_Air_Show_2018_18.jpg"
     },
     "b52h": {
       "foto": "/static/fotos/ref_b52h.jpg",
@@ -163,11 +163,11 @@
     },
     "bell412": {
       "foto": "/static/fotos/ref_bell412.jpg",
-      "obra": "Bell 412EP Fuerza Aérea Argentina",
-      "autor": "Fuerza Aérea Argentina",
-      "licencia": "CC BY 4.0",
-      "url_licencia": "https://creativecommons.org/licenses/by/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Bell_412EP_Fuerza_A%C3%A9rea_Argentina.jpg"
+      "obra": "Agusta-Bell 412 6O-AAG in flight, used by Gamtecs for Somali Air Force pilot training",
+      "autor": "Mohamed A. Muhumed, founder of Clavius Viator Photography",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Agusta-Bell_412_6O-AAG_in_flight,_used_by_Gamtecs_for_Somali_Air_Force_pilot_training.jpg"
     },
     "bm21": {
       "foto": "/static/fotos/ref_bm21.jpg",
@@ -211,11 +211,11 @@
     },
     "brahmos": {
       "foto": "/static/fotos/ref_brahmos.jpg",
-      "obra": "BrahMos",
-      "autor": "anurag",
+      "obra": "BrahMos missile at Engineering Technologies 2012 02",
+      "autor": "Mike1979 Russia",
       "licencia": "CC BY-SA 3.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:BrahMos.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:BrahMos_missile_at_Engineering_Technologies_2012_02.jpg"
     },
     "brdm2": {
       "foto": "/static/fotos/ref_brdm2.jpg",
@@ -299,11 +299,11 @@
     },
     "crucero": {
       "foto": "/static/fotos/ref_crucero.jpg",
-      "obra": "Tomahawk Block IV cruise missile -crop",
-      "autor": "U.S. Navy derivative work: The High Fin Sperm Whale",
-      "licencia": "Public domain",
-      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Tomahawk_Block_IV_cruise_missile_-crop.jpg"
+      "obra": "BGM-109 Tomahawk Ship-launched Cruise Missile underview",
+      "autor": "Cliff",
+      "licencia": "CC BY 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:BGM-109_Tomahawk_Ship-launched_Cruise_Missile_underview.jpg"
     },
     "d30": {
       "foto": "/static/fotos/ref_d30.jpg",
@@ -323,11 +323,11 @@
     },
     "e3g": {
       "foto": "/static/fotos/ref_e3g.jpg",
-      "obra": "E-3 Sentry Airborne Warning and Control System (AWACS) conducts a mission",
-      "autor": "Senior Airman Roslyn Ward",
-      "licencia": "Public domain",
-      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
-      "pagina": "https://commons.wikimedia.org/wiki/File:E-3_Sentry_Airborne_Warning_and_Control_System_(AWACS)_conducts_a_mission.jpg"
+      "obra": "Boeing E-3 Sentry AWAC (26583045740)",
+      "autor": "Ronnie Macdonald from Chelmsford and Largs, United Kingdom",
+      "licencia": "CC BY 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Boeing_E-3_Sentry_AWAC_(26583045740).jpg"
     },
     "e99": {
       "foto": "/static/fotos/ref_e99.jpg",
@@ -339,11 +339,11 @@
     },
     "ea18g": {
       "foto": "/static/fotos/ref_ea18g.jpg",
-      "obra": "Boeing EA-18G Growler of VAQ-141 in flight on 24 March 2012",
-      "autor": "ぽりたんく",
-      "licencia": "CC BY-SA 3.0",
-      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Boeing_EA-18G_Growler_of_VAQ-141_in_flight_on_24_March_2012.jpg"
+      "obra": "168375 EA-18G Growler Electronic Attack Squadron 140 (VAQ-140) \"Patriots\" (33906567240)",
+      "autor": "Tomás Del Coro from Las Vegas, Nevada, USA",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:168375_EA-18G_Growler_Electronic_Attack_Squadron_140_(VAQ-140)_%22Patriots%22_(33906567240).jpg"
     },
     "ec130h": {
       "foto": "/static/fotos/ref_ec130h.jpg",
@@ -371,19 +371,19 @@
     },
     "f15e": {
       "foto": "/static/fotos/ref_f15e.jpg",
-      "obra": "Green Flag West 11-08",
-      "autor": "Senior Airman Brett Clashman",
+      "obra": "F-15EX Eagle II",
+      "autor": "Ethan Wagner",
       "licencia": "Public domain",
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Green_Flag_West_11-08.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:F-15EX_Eagle_II.jpg"
     },
     "f16_b70": {
       "foto": "/static/fotos/ref_f16_b70.jpg",
-      "obra": "The ROCAF First F-16C Block 70 Arrives in Taiwan",
-      "autor": "Unknown authorUnknown author",
-      "licencia": "Attribution",
+      "obra": "Royal Bahraini Air Force F-16 Block 70 lands at Edwards Air Force Base",
+      "autor": "US Air Force",
+      "licencia": "Public domain",
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
-      "pagina": "https://commons.wikimedia.org/wiki/File:The_ROCAF_First_F-16C_Block_70_Arrives_in_Taiwan.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:Royal_Bahraini_Air_Force_F-16_Block_70_lands_at_Edwards_Air_Force_Base.jpg"
     },
     "f22": {
       "foto": "/static/fotos/ref_f22.jpg",
@@ -395,11 +395,11 @@
     },
     "f35a": {
       "foto": "/static/fotos/ref_f35a.jpg",
-      "obra": "F-35 Heritage Flight Team performs in Bell Fort Worth Alliance AirShow",
-      "autor": "Airman 1st Class Alexander Cook",
-      "licencia": "Public domain",
-      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
-      "pagina": "https://commons.wikimedia.org/wiki/File:F-35_Heritage_Flight_Team_performs_in_Bell_Fort_Worth_Alliance_AirShow.jpg"
+      "obra": "Lockheed Martin F-35 Lightning II (52709921114)",
+      "autor": "Ashwin Kumar from Bengaluru, India",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Lockheed_Martin_F-35_Lightning_II_(52709921114).jpg"
     },
     "f35b": {
       "foto": "/static/fotos/ref_f35b.jpg",
@@ -475,11 +475,11 @@
     },
     "gripen": {
       "foto": "/static/fotos/ref_gripen.jpg",
-      "obra": "2 x Saab JAS-39 Gripen and 2 x Aero L-159 of the Czech Air Force, based at AFB Čáslav, inflight",
-      "autor": "Milan Nykodym",
-      "licencia": "CC BY-SA 2.0",
-      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:2_x_Saab_JAS-39_Gripen_and_2_x_Aero_L-159_of_the_Czech_Air_Force,_based_at_AFB_%C4%8C%C3%A1slav,_inflight.jpg"
+      "obra": "JAS-39 Gripen down under",
+      "autor": "Łukasz Golowanow & Maciek Hypś, Konflikty.pl; upgraded by Chrumps",
+      "licencia": "Attribution",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:JAS-39_Gripen_down_under.JPG"
     },
     "guaicamacuto": {
       "foto": "/static/fotos/ref_guaicamacuto.jpg",
@@ -499,11 +499,11 @@
     },
     "h225m": {
       "foto": "/static/fotos/ref_h225m.jpg",
-      "obra": "Airbus Helicopters EC725 Caracal",
-      "autor": "Dsgn",
-      "licencia": "CC BY-SA 4.0",
-      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Airbus_Helicopters_EC725_Caracal.jpg"
+      "obra": "French Air Force EC725 lift off",
+      "autor": "Dylan Agbagni",
+      "licencia": "CC0",
+      "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:French_Air_Force_EC725_lift_off.jpg"
     },
     "harpoon": {
       "foto": "/static/fotos/ref_harpoon.jpg",
@@ -515,11 +515,11 @@
     },
     "helo_ataque": {
       "foto": "/static/fotos/ref_helo_ataque.jpg",
-      "obra": "Mil Mi-35M (51 yellow)",
-      "autor": "Yevgeny Volkov",
-      "licencia": "CC BY 3.0",
-      "url_licencia": "https://creativecommons.org/licenses/by/3.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Mil_Mi-35M_(51_yellow).jpg"
+      "obra": "Mi-35 (7450522962)",
+      "autor": "Aeroprints.com",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Mi-35_(7450522962).jpg"
     },
     "helo_transporte": {
       "foto": "/static/fotos/ref_helo_transporte.jpg",
@@ -531,19 +531,19 @@
     },
     "hermes450": {
       "foto": "/static/fotos/ref_hermes450.jpg",
-      "obra": "Hermes 450 Hermes 900 in formation",
+      "obra": "NGP DSC 0364",
       "autor": "Nehemia Gershuni-Aylho",
       "licencia": "CC BY-SA 3.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Hermes_450_Hermes_900_in_formation.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:NGP_DSC_0364.jpg"
     },
     "heron": {
       "foto": "/static/fotos/ref_heron.jpg",
-      "obra": "IAI Eitan cropped",
-      "autor": "I-View_250_unmanned_aircraft.jpg: Wikibob derivative work: NatanFlayer (talk)",
+      "obra": "IAI Heron 1 in flight 2",
+      "autor": "SSGT REYNALDO RAMON, USAF",
       "licencia": "Public domain",
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
-      "pagina": "https://commons.wikimedia.org/wiki/File:IAI_Eitan_cropped.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:IAI_Heron_1_in_flight_2.JPEG"
     },
     "himars": {
       "foto": "/static/fotos/ref_himars.jpg",
@@ -579,11 +579,11 @@
     },
     "il78": {
       "foto": "/static/fotos/ref_il78.jpg",
-      "obra": "IL-78 Midas",
-      "autor": "Vitaly Kuzmin",
-      "licencia": "CC BY-SA 3.0",
-      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:IL-78_Midas.jpg"
+      "obra": "RK-3452 Ilyushin IL-78MKI Indian AF 78 Sqdn. (2993322560)",
+      "autor": "Jerry Gunner from Lincoln, UK",
+      "licencia": "CC BY 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:RK-3452_Ilyushin_IL-78MKI_Indian_AF_78_Sqdn._(2993322560).jpg"
     },
     "iris_t_slm": {
       "foto": "/static/fotos/ref_iris_t_slm.jpg",
@@ -603,27 +603,27 @@
     },
     "j10c": {
       "foto": "/static/fotos/ref_j10c.jpg",
-      "obra": "J-10CE for Pakistan air force in Zhuhai airshow 2024",
-      "autor": "Z3144228",
-      "licencia": "CC0",
-      "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
-      "pagina": "https://commons.wikimedia.org/wiki/File:J-10CE_for_Pakistan_air_force_in_Zhuhai_airshow_2024.jpg"
+      "obra": "Chengdu J-10 - 殲-10",
+      "autor": "Russian Ministry of Defence",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Chengdu_J-10_-_%E6%AE%B2-10.jpg"
     },
     "j15": {
       "foto": "/static/fotos/ref_j15.jpg",
-      "obra": "PLAN Shenyang J-15 carrier-based fighter aircraft 20220504",
+      "obra": "PLAN Shenyang J-15 carrier-based fighter aircraft 20220509",
       "autor": "日本防衛省・統合幕僚監部",
       "licencia": "CC BY 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:PLAN_Shenyang_J-15_carrier-based_fighter_aircraft_20220504.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:PLAN_Shenyang_J-15_carrier-based_fighter_aircraft_20220509.jpg"
     },
     "jf17": {
       "foto": "/static/fotos/ref_jf17.jpg",
-      "obra": "Two JF-17 readying for take-off",
-      "autor": "x_man",
-      "licencia": "CC BY-SA 3.0",
-      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Two_JF-17_readying_for_take-off.jpg"
+      "obra": "PAK Kamra JF-17 Thunder at PAris Air Show, June 2019 (2)",
+      "autor": "Ibex73",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:PAK_Kamra_JF-17_Thunder_at_PAris_Air_Show,_June_2019_(2).jpg"
     },
     "ka52": {
       "foto": "/static/fotos/ref_ka52.jpg",
@@ -635,11 +635,11 @@
     },
     "kalibr": {
       "foto": "/static/fotos/ref_kalibr.jpg",
-      "obra": "3M-14E submarine launched land attack cruise missile from Kalibr-PLE-Club-S system 01",
-      "autor": "Vitaly V. Kuzmin (vitalykuzmin.net)",
+      "obra": "3M-14E submarine launched land attack cruise missile from Kalibr-PLE-Club-S system 02",
+      "autor": "This file comes from http://vitalykuzmin.net and is copyrighted.Note: All photos on...",
       "licencia": "CC BY-SA 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:3M-14E_submarine_launched_land_attack_cruise_missile_from_Kalibr-PLE-Club-S_system_01.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:3M-14E_submarine_launched_land_attack_cruise_missile_from_Kalibr-PLE-Club-S_system_02.jpg"
     },
     "kamaz6350": {
       "foto": "/static/fotos/ref_kamaz6350.jpg",
@@ -659,27 +659,27 @@
     },
     "kc135": {
       "foto": "/static/fotos/ref_kc135.jpg",
-      "obra": "931st Air Refueling Group - Boeing KC-135R-BN Stratotanker 60-0336",
-      "autor": "United States Air Force",
-      "licencia": "Public domain",
-      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
-      "pagina": "https://commons.wikimedia.org/wiki/File:931st_Air_Refueling_Group_-_Boeing_KC-135R-BN_Stratotanker_60-0336.jpg"
+      "obra": "USAF KC-135R Stratotanker (26582980550)",
+      "autor": "Ronnie Macdonald from Chelmsford and Largs, United Kingdom",
+      "licencia": "CC BY 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:USAF_KC-135R_Stratotanker_(26582980550).jpg"
     },
     "kc767": {
       "foto": "/static/fotos/ref_kc767.jpg",
-      "obra": "KC-767 - RIAT 2012 (16462708142)",
-      "autor": "Airwolfhound from Hertfordshire, UK",
-      "licencia": "CC BY-SA 2.0",
-      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:KC-767_-_RIAT_2012_(16462708142).jpg"
+      "obra": "BOEING KC-767 McConnell AFB",
+      "autor": "BOEING_KC767_McConnellAFB.JPG: Jordan Martin derivative work: Altair78 (talk)",
+      "licencia": "CC BY 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:BOEING_KC-767_McConnell_AFB.JPG"
     },
     "kfir": {
       "foto": "/static/fotos/ref_kfir.jpg",
-      "obra": "Kfir C-10 Fuerza Aerea Colombiana",
-      "autor": "Maj. Matthew Booth",
-      "licencia": "Public domain",
-      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Kfir_C-10_Fuerza_Aerea_Colombiana.jpg"
+      "obra": "Avión kfir c-13",
+      "autor": "Facmilitar",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Avi%C3%B3n_kfir_c-13.jpg"
     },
     "kh35": {
       "foto": "/static/fotos/ref_kh35.jpg",
@@ -723,11 +723,11 @@
     },
     "l39": {
       "foto": "/static/fotos/ref_l39.jpg",
-      "obra": "Aero L-39 Albatros Czech",
-      "autor": "Fahad Faisal",
-      "licencia": "CC BY-SA 4.0",
-      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Aero_L-39_Albatros_Czech.jpg"
+      "obra": "Kecskemet 2010 Breitling photo 9",
+      "autor": "Łukasz Golowanow",
+      "licencia": "Attribution",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Kecskemet_2010_Breitling_photo_9.jpg"
     },
     "lancet3": {
       "foto": "/static/fotos/ref_lancet3.jpg",
@@ -819,19 +819,19 @@
     },
     "merodeadora": {
       "foto": "/static/fotos/ref_merodeadora.jpg",
-      "obra": "IAI Harop PAS 2013 02",
+      "obra": "IAI Harop PAS 2013 01",
       "autor": "Julian Herzog (Website)",
       "licencia": "CC BY 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:IAI_Harop_PAS_2013_02.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:IAI_Harop_PAS_2013_01.jpg"
     },
     "mh47g": {
       "foto": "/static/fotos/ref_mh47g.jpg",
-      "obra": "Special Boat Team takes flight with Nightstalkers 140521-A-PP158-057",
-      "autor": "Sgt. Christopher Prows",
-      "licencia": "Public domain",
-      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Special_Boat_Team_takes_flight_with_Nightstalkers_140521-A-PP158-057.jpg"
+      "obra": "Boeing CH-47 Chinook 13 (53788175406)",
+      "autor": "Tony Hisgett from Birmingham, UK",
+      "licencia": "CC BY 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Boeing_CH-47_Chinook_13_(53788175406).jpg"
     },
     "mh60dap": {
       "foto": "/static/fotos/ref_mh60dap.jpg",
@@ -843,19 +843,19 @@
     },
     "mh60m": {
       "foto": "/static/fotos/ref_mh60m.jpg",
-      "obra": "Sikorsky UH-60 Black Hawk - 04",
+      "obra": "Sikorsky UH-60 Black Hawk - 05",
       "autor": "Oleg Yunakov",
       "licencia": "CC BY-SA 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Sikorsky_UH-60_Black_Hawk_-_04.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:Sikorsky_UH-60_Black_Hawk_-_05.jpg"
     },
     "mh6m": {
       "foto": "/static/fotos/ref_mh6m.jpg",
-      "obra": "US Army 160th SOAR MH-6",
-      "autor": "U.S. Army",
+      "obra": "MH-6 Little Bird deck landing",
+      "autor": "USASOC",
       "licencia": "Public domain",
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
-      "pagina": "https://commons.wikimedia.org/wiki/File:US_Army_160th_SOAR_MH-6.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:MH-6_Little_Bird_deck_landing.jpg"
     },
     "mi26": {
       "foto": "/static/fotos/ref_mi26.jpg",
@@ -867,11 +867,11 @@
     },
     "mi28ne": {
       "foto": "/static/fotos/ref_mi28ne.jpg",
-      "obra": "Mi-28N (RF-91091)",
-      "autor": "Yevgeny Volkov",
-      "licencia": "CC BY 3.0",
-      "url_licencia": "https://creativecommons.org/licenses/by/3.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Mi-28N_(RF-91091).jpg"
+      "obra": "Mil Mi-28N ‘RF-95326 - 03 white’ (36563520243)",
+      "autor": "Alan Wilson from Stilton, Peterborough, Cambs, UK",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Mil_Mi-28N_%E2%80%98RF-95326_-_03_white%E2%80%99_(36563520243).jpg"
     },
     "mi8amtsh": {
       "foto": "/static/fotos/ref_mi8amtsh.jpg",
@@ -883,19 +883,19 @@
     },
     "mig21": {
       "foto": "/static/fotos/ref_mig21.jpg",
-      "obra": "Mikoyan-Gurevich Mig-21 (14260361948)",
-      "autor": "SDASM Archives",
-      "licencia": "Public domain",
-      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Mikoyan-Gurevich_Mig-21_(14260361948).jpg"
+      "obra": "MiG-21 LanceR in flight",
+      "autor": "claudiu_ne2000",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:MiG-21_LanceR_in_flight.jpg"
     },
     "mig29": {
       "foto": "/static/fotos/ref_mig29.jpg",
-      "obra": "Polish MiG-29 flight demonstration at 2015 RIAT (1)",
-      "autor": "Tim Felce",
+      "obra": "Mikoyan MiG-29 Fulcrum 10 blue (8605744566)",
+      "autor": "Alan Wilson",
       "licencia": "CC BY-SA 2.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Polish_MiG-29_flight_demonstration_at_2015_RIAT_(1).jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:Mikoyan_MiG-29_Fulcrum_10_blue_(8605744566).jpg"
     },
     "mim23": {
       "foto": "/static/fotos/ref_mim23.jpg",
@@ -979,11 +979,11 @@
     },
     "nh90": {
       "foto": "/static/fotos/ref_nh90.jpg",
-      "obra": "NH Industries NH90 NTH Sea Lion Deutsche Marine (German Navy)",
-      "autor": "u278",
-      "licencia": "CC0",
-      "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
-      "pagina": "https://commons.wikimedia.org/wiki/File:NH_Industries_NH90_NTH_Sea_Lion_Deutsche_Marine_(German_Navy).jpg"
+      "obra": "NHIndustries NH90 EAY 1",
+      "autor": "New York-air",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:NHIndustries_NH90_EAY_1.jpg"
     },
     "nimitz": {
       "foto": "/static/fotos/ref_nimitz.jpg",
@@ -1027,11 +1027,11 @@
     },
     "orlan10": {
       "foto": "/static/fotos/ref_orlan10.jpg",
-      "obra": "Orlan-10 at Army-2018",
-      "autor": "Boevaya mashina",
+      "obra": "Orlan-10 UAV Army-2022 2022-08-20 2475",
+      "autor": "Mike1979 Russia",
       "licencia": "CC BY-SA 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Orlan-10_at_Army-2018.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:Orlan-10_UAV_Army-2022_2022-08-20_2475.jpg"
     },
     "osa_akm": {
       "foto": "/static/fotos/ref_osa_akm.jpg",
@@ -1043,11 +1043,11 @@
     },
     "ov10": {
       "foto": "/static/fotos/ref_ov10.jpg",
-      "obra": "North American OV-10 Bronco (28445525124)",
-      "autor": "Falcon® Photography from France, France",
-      "licencia": "CC BY-SA 2.0",
-      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:North_American_OV-10_Bronco_(28445525124).jpg"
+      "obra": "20170624 OV-10 Bronco Krakow 9287",
+      "autor": "Jakub Hałun",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:20170624_OV-10_Bronco_Krakow_9287.jpg"
     },
     "p18": {
       "foto": "/static/fotos/ref_p18.jpg",
@@ -1251,11 +1251,11 @@
     },
     "su25": {
       "foto": "/static/fotos/ref_su25.jpg",
-      "obra": "MOD Sukhoi Su-25 (2)",
-      "autor": "Ministry of Defence",
-      "licencia": "CC BY 4.0",
-      "url_licencia": "https://creativecommons.org/licenses/by/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:MOD_Sukhoi_Su-25_(2).jpg"
+      "obra": "Su-25 Slovakia (21551312934)",
+      "autor": "Rob Schleiffert from Holland",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Su-25_Slovakia_(21551312934).jpg"
     },
     "su27": {
       "foto": "/static/fotos/ref_su27.jpg",
@@ -1291,11 +1291,11 @@
     },
     "su57": {
       "foto": "/static/fotos/ref_su57.jpg",
-      "obra": "Sukhoi Design Bureau, 054, Sukhoi Su-57 (49581306132)",
+      "obra": "Sukhoi Design Bureau, 054, Sukhoi T-50 (Su-57 prototype) (49581303977)",
       "autor": "Anna Zvereva from Tallinn, Estonia",
       "licencia": "CC BY-SA 2.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Sukhoi_Design_Bureau,_054,_Sukhoi_Su-57_(49581306132).jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:Sukhoi_Design_Bureau,_054,_Sukhoi_T-50_(Su-57_prototype)_(49581303977).jpg"
     },
     "t129": {
       "foto": "/static/fotos/ref_t129.jpg",
@@ -1331,11 +1331,11 @@
     },
     "tb2": {
       "foto": "/static/fotos/ref_tb2.jpg",
-      "obra": "Bayraktar TB2 Runway",
-      "autor": "Bayhaluk",
+      "obra": "PAF Bayraktar TB2",
+      "autor": "Perriquito",
       "licencia": "CC BY-SA 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Bayraktar_TB2_Runway.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:PAF_Bayraktar_TB2.jpg"
     },
     "ticonderoga": {
       "foto": "/static/fotos/ref_ticonderoga.jpg",
@@ -1411,19 +1411,19 @@
     },
     "uav_armado": {
       "foto": "/static/fotos/ref_uav_armado.jpg",
-      "obra": "7-(Drone Mohajer 6- Army ground force)-پهپاد مهاجر 6- نیروی زمینی ارتش",
-      "autor": "Mehr News Agency",
+      "obra": "IRGC Ground New Equipment 2021 (09)",
+      "autor": "Hadi Hirbodvash",
       "licencia": "CC BY 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:7-(Drone_Mohajer_6-_Army_ground_force)-%D9%BE%D9%87%D9%BE%D8%A7%D8%AF_%D9%85%D9%87%D8%A7%D8%AC%D8%B1_6-_%D9%86%DB%8C%D8%B1%D9%88%DB%8C_%D8%B2%D9%85%DB%8C%D9%86%DB%8C_%D8%A7%D8%B1%D8%AA%D8%B4.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:IRGC_Ground_New_Equipment_2021_(09).jpg"
     },
     "uav_reco": {
       "foto": "/static/fotos/ref_uav_reco.jpg",
-      "obra": "Insitu ScanEagle – 2017 Sola Airshow (28630372098)",
-      "autor": "Alan Wilson from Stilton, Peterborough, Cambs, UK",
-      "licencia": "CC BY-SA 2.0",
-      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Insitu_ScanEagle_%E2%80%93_2017_Sola_Airshow_(28630372098).jpg"
+      "obra": "US Navy 1005268-N-RC844-159 A Scan Eagle Unmanned Aerial Vehicle (UAV)",
+      "autor": "U.S. Navy photo /Released",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:US_Navy_1005268-N-RC844-159_A_Scan_Eagle_Unmanned_Aerial_Vehicle_(UAV).jpg"
     },
     "uh60l": {
       "foto": "/static/fotos/ref_uh60l.jpg",
@@ -1467,11 +1467,11 @@
     },
     "wingloong2": {
       "foto": "/static/fotos/ref_wingloong2.jpg",
-      "obra": "Wing Loong II side view",
-      "autor": "Mztourist",
+      "obra": "Ударный китайский БПЛА Wing Loong II - МАКС-2017 02",
+      "autor": "Vitaly V. Kuzmin",
       "licencia": "CC BY-SA 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Wing_Loong_II_side_view.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:%D0%A3%D0%B4%D0%B0%D1%80%D0%BD%D1%8B%D0%B9_%D0%BA%D0%B8%D1%82%D0%B0%D0%B9%D1%81%D0%BA%D0%B8%D0%B9_%D0%91%D0%9F%D0%9B%D0%90_Wing_Loong_II_-_%D0%9C%D0%90%D0%9A%D0%A1-2017_02.jpg"
     },
     "y8w": {
       "foto": "/static/fotos/ref_y8w.jpg",
@@ -1483,11 +1483,11 @@
     },
     "yak130": {
       "foto": "/static/fotos/ref_yak130.jpg",
-      "obra": "Yakovlev Yak-130 bd",
-      "autor": "Fahad Faisal",
+      "obra": "Yak-130 Singapore Airshow 2014",
+      "autor": "Alert5",
       "licencia": "CC BY-SA 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
-      "pagina": "https://commons.wikimedia.org/wiki/File:Yakovlev_Yak-130_bd.jpg"
+      "pagina": "https://commons.wikimedia.org/wiki/File:Yak-130_Singapore_Airshow_2014.jpg"
     },
     "zsu23_4": {
       "foto": "/static/fotos/ref_zsu23_4.jpg",
