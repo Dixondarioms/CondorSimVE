@@ -259,7 +259,8 @@
       id: "graficos", seccion: "El mapa", titulo: "Gráficos tácticos y herramientas",
       claves: "graficos tacticos linea de fase eje de avance zona de reunion punto de control dibujar regla medir distancia convertir coordenadas",
       texto: `<p>En el panel <b>Gráficos tácticos</b> (sobre el mapa) se dibujan líneas de fase, ejes de avance, zonas de reunión y
-        puntos de control, visibles para todos o solo para su bando. La <b>Regla</b> mide distancias y <b>Convertir</b> pasa
+        puntos de control, visibles para todos o solo para su bando. Con <b>▲ Esconder</b> el cuadro queda reducido a su
+        título (<b>▼ Mostrar</b> lo vuelve a abrir). La <b>Regla</b> mide distancias y <b>Convertir</b> pasa
         coordenadas de un formato a otro.</p>`,
     },
     {

@@ -260,6 +260,9 @@ summary { cursor: pointer; font-weight: 700; padding: 7px 0; font-size: 12px; le
 .leaflet-tooltip-top::before { border-top-color: var(--borde); }
 .nombre-lugar { background: none !important; border: none !important; box-shadow: none !important; color: #1c1c1c; font-size: 11px; font-weight: 600; text-shadow: 0 0 3px #fff, 0 0 3px #fff; padding: 0; }
 .nombre-lugar::before { display: none !important; }
+/* ciudades segun el zoom (Logica.lugaresOcultos): de lejos solo las grandes y sin nombre */
+.sin-punto-lp1 .lugar-punto.lp1, .sin-punto-lp2 .lugar-punto.lp2, .sin-punto-lp3 .lugar-punto.lp3, .sin-punto-lp4 .lugar-punto.lp4,
+.sin-nombre-lp1 .nombre-lugar.lp1, .sin-nombre-lp2 .nombre-lugar.lp2, .sin-nombre-lp3 .nombre-lugar.lp3, .sin-nombre-lp4 .nombre-lugar.lp4 { display: none; }
 .etiqueta-mapa {
   position: absolute; z-index: 900; background: rgba(21, 21, 22, .88); border: 1px solid var(--borde);
   border-radius: var(--radio); box-shadow: var(--sombra); padding: 5px 10px; font-size: 11px; color: var(--texto-sec);

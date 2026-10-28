@@ -42,3 +42,10 @@ backend/cuentas_video.json
 
 # ajustes del instructor de cada equipo (p. ej., los topes del ejercicio Operación Guri)
 backend/data/ajustes_catalogo.json
+
+# region "mundo" del mapa (tools/preparar_terreno.py y preparar_satelite.py --region mundo): viaja en el paquete
+# de datos de mapa, no por GitHub
+frontend/static/tiles/mundo/
+frontend/static/tiles_sat/mundo/
+frontend/static/geo/mundo/
+backend/data/terreno/mundo/

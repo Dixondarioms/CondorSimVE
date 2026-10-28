@@ -4,6 +4,11 @@
 /* ---- barra de graficos tacticos (Leaflet.draw) ---- */
 #barra-graficos { left: 12px; top: 56px; width: 236px; display: flex; flex-direction: column; gap: 6px; }
 #barra-graficos b { color: var(--texto); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+#barra-graficos .graf-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#barra-graficos .graf-cab button { padding: 2px 7px; font-size: 10.5px; white-space: nowrap; }
+#barra-graficos .graf-cuerpo { display: flex; flex-direction: column; gap: 6px; }
+#barra-graficos.plegado { width: auto; }
+#barra-graficos.plegado .graf-cuerpo { display: none; }
 #barra-graficos .herramientas { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 #barra-graficos button { margin: 0; padding: 5px 4px; font-size: 11px; }
 #barra-graficos button.activa { background: var(--azul); border-color: var(--azul); color: #fff; font-weight: 700; }

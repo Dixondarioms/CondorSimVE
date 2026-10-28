@@ -1297,6 +1297,14 @@
       "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:Sukhoi_Design_Bureau,_054,_Sukhoi_T-50_(Su-57_prototype)_(49581303977).jpg"
     },
+    "switchblade600": {
+      "foto": "/static/fotos/ref_switchblade600.jpg",
+      "obra": "LASSO drone launch",
+      "autor": "Bronco Brigade",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:LASSO_drone_launch.jpg"
+    },
     "t129": {
       "foto": "/static/fotos/ref_t129.jpg",
       "obra": "TAI Agusta Westland T129 ATAK Turkish Army Teknofest2023 (1)",

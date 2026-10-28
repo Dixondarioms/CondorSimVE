@@ -1104,6 +1104,34 @@
   const ZOOM_ALCANCES = 9; // desde aca, cada unidad desplegada muestra el anillo de su alcance
   const ZOOM_CARRETERAS = 7; // desde aca se dibujan las carreteras reales
 
+  // ---- ciudades segun el zoom: de lejos solo las grandes, y los nombres aparecen al acercarse ----
+  /** Nivel de una ciudad por su poblacion: 1 metropolis (5 millones o mas), 2 de un millon, 3 de 300 000, 4 el resto. */
+  function nivelLugar(pop) {
+    const p = Number(pop) || 0;
+    return p >= 5e6 ? 1 : p >= 1e6 ? 2 : p >= 3e5 ? 3 : 4;
+  }
+  const ZOOM_PUNTO_LUGAR = { 1: 3, 2: 5, 3: 6, 4: 7 }; // desde que zoom se ve el punto de cada nivel
+  const ZOOM_NOMBRE_LUGAR = { 1: 5, 2: 6, 3: 7, 4: 8 }; // y desde cual su nombre
+  /** Niveles de ciudad cuyo punto o cuyo nombre se esconden a este zoom. */
+  function lugaresOcultos(zoom) {
+    const niveles = [1, 2, 3, 4];
+    return { puntos: niveles.filter((n) => zoom < ZOOM_PUNTO_LUGAR[n]), nombres: niveles.filter((n) => zoom < ZOOM_NOMBRE_LUGAR[n]) };
+  }
+  /**
+   * Filtro de ciudades repetidas: cada region del mapa trae sus propias ciudades, y donde se superponen (Venezuela
+   * dentro de America, America dentro del mundo) la misma ciudad llega dos o tres veces con coordenadas casi iguales.
+   */
+  function filtroLugaresRepetidos() {
+    const vistos = new Map();
+    return (nombre, lon, lat) => {
+      const previos = vistos.get(nombre) || [];
+      if (previos.some(([x, y]) => Math.abs(x - lon) < 0.5 && Math.abs(y - lat) < 0.5)) return false;
+      previos.push([lon, lat]);
+      vistos.set(nombre, previos);
+      return true;
+    };
+  }
+
   /** Rotulo de un tramo de carretera apto como pista de un PRO (tools/preparar_tramos_pro.py). */
   function textoTramoPro(p) {
     const via = [p.ref, p.nombre].filter(Boolean).join(" ") || "Carretera";
@@ -1131,7 +1159,8 @@
   }
 
   const api = {
-    MAPA_VENEZUELA, ordenarMapas, limitesDe, limitesDeMapas, textoMapa, ZOOM_ROTULOS, ZOOM_ALCANCES, ZOOM_CARRETERAS, textoTramoPro, escalaUnidad, unidadesConAlcance,
+    MAPA_VENEZUELA, ordenarMapas, limitesDe, limitesDeMapas, textoMapa, ZOOM_ROTULOS, ZOOM_ALCANCES, ZOOM_CARRETERAS, textoTramoPro,
+    nivelLugar, lugaresOcultos, filtroLugaresRepetidos, escalaUnidad, unidadesConAlcance,
     PERFILES_VUELO, textoPerfil, muestraCobertura, resumenSistemaDA, UNIDADES, convertir, sistemaMedidas, medida,
     filasFicha, entraEnPista,
     NIVELES_OBJETIVO, arbolObjetivos, superioresPosibles, textoCalendario, nombreFase, CONDUCCION,

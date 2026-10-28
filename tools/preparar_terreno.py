@@ -98,7 +98,7 @@ class Region:
 REGIONES = {
     "venezuela": Region("venezuela", "Venezuela y vecinos", (-73.5, 0.5, -59.5, 12.5), 9, 5, "10m", 30000),
     "america": Region("america", "América", (-170.0, -56.0, -30.0, 72.0), 7, 3, "50m", 250000),
-    "mundo": Region("mundo", "Mundo", (-180.0, -60.0, 180.0, 75.0), 6, 2, "110m", 1000000),
+    "mundo": Region("mundo", "Mundo", (-180.0, -60.0, 180.0, 84.0), 6, 2, "110m", 1000000),  # hasta donde llega WorldCover
 }
 BBOX = REGIONES["venezuela"].bbox  # area de detalle (la usa preparar_satelite.py)
 

@@ -613,12 +613,14 @@
       onEachFeature: (f, capa) => capa.bindTooltip(Logica.textoTramoPro(f.properties), { sticky: true }),
     });
     const lagos = L.geoJSON(null, { style: { color: "#2f6fb0", weight: 1, fillColor: "#78aacd", fillOpacity: 0.7 } }).addTo(c.referencias);
+    // ciudades: cada una con su nivel (lp1 a lp4) para que ajustarPorZoom esconda de lejos las chicas y los nombres
+    const lugarNuevo = Logica.filtroLugaresRepetidos();
     const lugares = L.geoJSON(null, {
+      filter: (f) => lugarNuevo(f.properties.name || "", ...f.geometry.coordinates),
       pointToLayer: (f, ll) => {
-        const m = L.circleMarker(ll, { radius: 3, color: "#222", weight: 1, fillColor: "#fff", fillOpacity: 1 });
-        m.bindTooltip(f.properties.name || "", {
-          permanent: (f.properties.pop || 0) >= 400000, direction: "right", className: "nombre-lugar", offset: [4, 0],
-        });
+        const n = Logica.nivelLugar(f.properties.pop);
+        const m = L.circleMarker(ll, { radius: n === 1 ? 3.5 : 3, color: "#222", weight: 1, fillColor: "#fff", fillOpacity: 1, className: `lugar-punto lp${n}` });
+        m.bindTooltip(f.properties.name || "", { permanent: true, direction: "right", className: `nombre-lugar lp${n}`, offset: [4, 0] });
         return m;
       },
     }).addTo(c.referencias);
@@ -709,6 +711,21 @@
     b.title = oculto ? "Mostrar los datos de la unidad seleccionada" : "Esconder los datos de la unidad seleccionada";
     b.setAttribute("aria-expanded", String(!oculto));
     try { localStorage.setItem("condor.oculto.abajo", oculto ? "1" : "0"); } catch (_) { /* sin almacenamiento */ }
+  }
+  // el cuadro de graficos tacticos se reduce a su titulo
+  function plegarGraficos(oculto) {
+    $("barra-graficos").classList.toggle("plegado", oculto);
+    const b = $("btn-plegar-graficos");
+    b.textContent = oculto ? "▼ Mostrar" : "▲ Esconder";
+    b.title = oculto ? "Mostrar las herramientas de dibujo" : "Esconder las herramientas de dibujo";
+    b.setAttribute("aria-expanded", String(!oculto));
+    try { localStorage.setItem("condor.oculto.graficos", oculto ? "1" : "0"); } catch (_) { /* sin almacenamiento */ }
+  }
+  {
+    let oculto = false;
+    try { oculto = localStorage.getItem("condor.oculto.graficos") === "1"; } catch (_) { /* sin almacenamiento */ }
+    plegarGraficos(oculto);
+    $("btn-plegar-graficos").addEventListener("click", () => plegarGraficos(!$("barra-graficos").classList.contains("plegado")));
   }
   {
     let oculto = false;
@@ -907,7 +924,13 @@
   function ajustarPorZoom() {
     if (!app.map) return;
     const z = app.map.getZoom();
-    app.map.getContainer().classList.toggle("z-sin-rotulos", z < Logica.ZOOM_ROTULOS);
+    const contenedor = app.map.getContainer();
+    contenedor.classList.toggle("z-sin-rotulos", z < Logica.ZOOM_ROTULOS);
+    const ocultos = Logica.lugaresOcultos(z);
+    for (const n of [1, 2, 3, 4]) {
+      contenedor.classList.toggle(`sin-punto-lp${n}`, ocultos.puntos.includes(n));
+      contenedor.classList.toggle(`sin-nombre-lp${n}`, ocultos.nombres.includes(n));
+    }
     const on = app.capaActiva.alcances && app.capaActiva.unidades && z >= Logica.ZOOM_ALCANCES;
     if (on) app.capas.alcances.addTo(app.map);
     else app.map.removeLayer(app.capas.alcances);

@@ -870,7 +870,9 @@
         </section>
 
         <div id="barra-graficos" class="etiqueta-mapa solo-dibuja" aria-label="Gráficos tácticos">
-          <b>Gráficos tácticos</b>
+          <div class="graf-cab"><b>Gráficos tácticos</b>
+            <button id="btn-plegar-graficos" type="button" class="mini secundario" aria-expanded="true" aria-controls="graf-cuerpo">▲ Esconder</button></div>
+          <div id="graf-cuerpo" class="graf-cuerpo">
           <div class="herramientas">
             <button type="button" data-grafico="linea_fase" title="Línea de fase (línea punteada)">Línea de fase</button>
             <button type="button" data-grafico="eje_avance" title="Eje de avance (flecha)">Eje de avance</button>
@@ -885,6 +887,7 @@
           </select>
           <p id="graf-ayuda" class="ayuda">Elija una herramienta y trace sobre el mapa (doble clic o clic en el último punto para terminar). Lo verá todo su bando.</p>
           <button type="button" id="graf-cancelar" class="secundario" hidden>Cancelar trazado</button>
+          </div>
         </div>
 
         <div id="botones-movil" aria-label="Paneles del mapa">
