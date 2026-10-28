@@ -38,7 +38,8 @@
         (trabajo de Estado Mayor) y, para el director, <b>CONSOLA</b>.</li>
         <li><b>Centro</b>: el mapa con las unidades, rutas, zonas y contactos.</li>
         <li><b>Derecha</b>: estado del escenario (hora, clima, reloj), objetivos y puntaje, capas del mapa, comunicaciones y alertas.</li>
-        <li><b>Abajo</b>: el reloj del ejercicio y quién conduce cada bando.</li></ul>
+        <li><b>Abajo</b>: al elegir una unidad, sus datos (foto, misión, estado, capacidades y armamento); y el reloj del
+        ejercicio y quién conduce cada bando.</li></ul>
         <p>Las pestañitas <b>◀</b> y <b>▶</b> en los bordes del mapa esconden el panel de la izquierda o las tarjetas de
         la derecha, para ver el mapa más grande; con un clic vuelven a aparecer.</p>`,
     },

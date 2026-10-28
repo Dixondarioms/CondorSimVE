@@ -155,11 +155,6 @@
             <button id="doc-aplicar" type="button">Aplicar doctrina</button>
           </section>
 
-          <section class="bloque" aria-live="polite">
-            <h2>Unidad seleccionada</h2>
-            <div id="detalle-contenido"><p class="vacio">Seleccione una unidad en la lista o en el mapa.</p></div>
-          </section>
-
           <section class="bloque solo-alumno" id="sec-puesto">
             <h2>Mi repartición <span id="puesto-nombre" class="contador azul-suave"></span></h2>
             <p class="ayuda" id="puesto-desc"></p>
@@ -801,6 +796,16 @@
       <div id="zona-mapa">
         <button id="btn-pliegue-izq" class="pliegue pliegue-izq" type="button" aria-controls="panel-izq" aria-expanded="true">◀</button>
         <button id="btn-pliegue-der" class="pliegue pliegue-der" type="button" aria-controls="panel-der" aria-expanded="true">▶</button>
+        <section id="panel-unidad" class="panel-unidad" aria-label="Unidad seleccionada" aria-live="polite">
+          <div class="pu-cab">
+            <h2>Unidad seleccionada</h2>
+            <span class="pu-botones">
+              <button id="btn-pliegue-abajo" class="mini secundario" type="button" aria-controls="detalle-contenido" aria-expanded="true">▼ Esconder</button>
+              <button id="btn-cerrar-unidad" class="mini secundario" type="button" title="Quitar la selección y cerrar el panel" aria-label="Quitar la selección">✕</button>
+            </span>
+          </div>
+          <div id="detalle-contenido" class="pu-cuerpo"><p class="vacio">Seleccione una unidad en la lista o en el mapa.</p></div>
+        </section>
         <div id="map" aria-label="Mapa táctico"></div>
         <!-- pausa automatica: por que se detuvo el reloj; avisos en vivo (contacto, ataque, perdida...) -->
         <div id="banner-pausa" class="banner-pausa" role="alert" hidden>

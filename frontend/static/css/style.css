@@ -314,6 +314,50 @@ body.der-oculto #panel-der { display: none; }
 body.izq-oculto #principal { grid-template-columns: minmax(0, 1fr); }
 body.izq-oculto #panel-izq { display: none; }
 
+/* ---------- panel inferior: la unidad seleccionada (app.js: renderDetalle) ---------- */
+:root { --alto-unidad: 262px; }
+.panel-unidad {
+  position: absolute; left: 0; right: calc(var(--ancho-der) + 24px); bottom: 0; z-index: 1050; display: none;
+  height: var(--alto-unidad); flex-direction: column; background: rgba(15, 15, 16, .96); border-top: 1px solid var(--borde);
+  border-right: 1px solid var(--borde); box-shadow: 0 -6px 18px rgba(0, 0, 0, .5); backdrop-filter: blur(6px);
+}
+body.con-unidad .panel-unidad { display: flex; }
+body.der-oculto .panel-unidad { right: 0; border-right: 0; }
+body.abajo-oculto .panel-unidad { height: auto; }
+body.abajo-oculto .pu-cuerpo { display: none; }
+.pu-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 10px; border-bottom: 1px solid var(--borde); }
+.pu-cab h2 { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--texto-sec); }
+.pu-cab button { width: auto; margin: 0; }
+.pu-botones { display: flex; gap: 6px; }
+.pu-cuerpo { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(150px, 210px) minmax(190px, 1fr) minmax(230px, 1.4fr) minmax(190px, 1.1fr); gap: 10px; padding: 8px 10px; overflow: hidden; }
+.pu-cuerpo > .vacio { grid-column: 1 / -1; }
+.pu-col { min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; overflow-wrap: anywhere; }
+.pu-foto .foto-modelo { margin: 0; }
+.pu-foto .foto-modelo img { width: 100%; border-radius: var(--radio); display: block; }
+.pu-foto figcaption { font-size: 9.5px; color: var(--texto-sec); margin-top: 3px; line-height: 1.25; }
+.pu-sinfoto { display: grid; place-items: center; height: 100%; background: var(--panel-2); border-radius: var(--radio); }
+.pu-principal .det-titulo { margin-bottom: 6px; }
+.pu-principal .det-titulo h3 { font-size: 14px; }
+.pu-principal .det-titulo .simbolo { width: 36px; height: 30px; }
+.pu-foto .foto-modelo img { max-height: none; }
+.pu-etq { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--texto-sec); margin-bottom: 2px; }
+.pu-mision { margin: 8px 0 6px; padding: 6px 8px; background: var(--panel-2); border: 1px solid var(--borde); border-left: 3px solid var(--ambar); border-radius: var(--radio); }
+.pu-mision b { display: block; font-size: 13px; }
+.pu-mision .chip { margin-top: 4px; display: inline-block; }
+.pu-datos .det-datos { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 0; }
+.pu-efect { margin-top: 8px; }
+.pu-barra { display: grid; grid-template-columns: 48px 1fr 46px; align-items: center; gap: 6px; font-size: 11px; margin: 2px 0; }
+.pu-barra i { height: 6px; background: var(--panel-2); border: 1px solid var(--borde); border-radius: 3px; overflow: hidden; }
+.pu-barra i b { display: block; height: 100%; background: var(--azul); }
+.pu-barra em { font-style: normal; text-align: right; color: var(--texto-sec); }
+.pu-notas .nota { margin: 4px 0; }
+.pu-notas button { width: auto; }
+/* con el panel abierto, los controles de abajo del mapa suben */
+body.con-unidad:not(.abajo-oculto) .leaflet-bottom, body.con-unidad:not(.abajo-oculto) #leyenda-mapa { bottom: calc(var(--alto-unidad) + 4px); }
+body.con-unidad.abajo-oculto .leaflet-bottom, body.con-unidad.abajo-oculto #leyenda-mapa { bottom: 40px; }
+@media (max-width: 1200px) { .pu-cuerpo { grid-template-columns: 150px minmax(190px, 1fr) minmax(220px, 1.4fr); } .pu-notas { display: none; } }
+@media (min-width: 1700px) { .pu-datos .det-datos { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
 /* ---------- 4. panel derecho flotante ---------- */
 #panel-der {
   position: absolute; top: 12px; right: 12px; width: var(--ancho-der); max-height: calc(100% - 24px); overflow-y: auto;
@@ -528,6 +572,11 @@ fieldset.pausa-auto legend { font-size: 12px; color: var(--texto-sec); padding: 
   .cab-der { gap: 6px; }
   #panel-izq { border-right: 0; border-bottom: 1px solid var(--borde); }
   #panel-der, #leyenda-mapa, .pliegue-der { display: none; }
+  .panel-unidad { right: 0; }
+  :root { --alto-unidad: 46vh; }
+  .pu-cuerpo { grid-template-columns: 1fr; overflow-y: auto; }
+  .pu-col { overflow: visible; }
+  .pu-notas { display: block; }
   body.izq-oculto #principal { grid-template-rows: minmax(0, 1fr); }
   .pliegue-izq { top: 8px; transform: none; height: 40px; }
   .sel-escenario select { width: 120px; }

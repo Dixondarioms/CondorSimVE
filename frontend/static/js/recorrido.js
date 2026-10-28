@@ -26,9 +26,10 @@
     { sel: "#sec-doctrina", pestana: "fuerzas", titulo: "Doctrina y reglas de enfrentamiento", texto: `<p>Decide cómo actúan sus
       unidades por su cuenta: si tiran solas contra aeronaves y contra blancos de superficie (libre, solo identificados o solo con
       orden), cuántos misiles por blanco, a qué distancia abren fuego y cuándo regresan las aeronaves.</p>` },
-    { sel: "#detalle-contenido", pestana: "fuerzas", marco: "section", titulo: "La unidad seleccionada", texto: `<p>Todo lo de la
-      unidad elegida: fuerza, combustible, munición, velocidad, alcances, terreno y clima donde está, y lo que está haciendo. De
-      una unidad enemiga solo se ve lo que su bando sabe de ella.</p>` },
+    { sel: "#panel-unidad", titulo: "La unidad seleccionada (abajo)", texto: `<p>Al elegir una unidad, en la parte de
+      abajo de la pantalla aparece todo lo suyo: su foto, su <b>misión</b> (la orden que cumple), fuerza, combustible y munición,
+      capacidades (velocidad, alcances, detección, efectividad contra aire, tierra y mar) y su armamento. Con <b>▼ Esconder</b>
+      se achica. De una unidad enemiga solo se ve lo que su bando sabe de ella.</p>` },
     { sel: "#sec-aviacion", pestana: "fuerzas", solo: "alumno", titulo: "Aviación", texto: `<p>Desde aquí despegan los aviones, drones
       y aviones de guerra electrónica: <b>Enviar aeronaves o drones…</b>, elija el tipo, cuántos y la base. Arriba se ve cuántas
       quedan del tope del bando.</p>` },

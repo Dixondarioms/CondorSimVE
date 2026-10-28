@@ -702,6 +702,24 @@
     try { localStorage.setItem(`condor.oculto.${lado}`, oculto ? "1" : "0"); } catch (_) { /* sin almacenamiento */ }
     if (app.map) setTimeout(() => app.map.invalidateSize(), 60);
   }
+  function plegarAbajo(oculto) {
+    document.body.classList.toggle("abajo-oculto", oculto);
+    const b = $("btn-pliegue-abajo");
+    b.textContent = oculto ? "▲ Mostrar" : "▼ Esconder";
+    b.title = oculto ? "Mostrar los datos de la unidad seleccionada" : "Esconder los datos de la unidad seleccionada";
+    b.setAttribute("aria-expanded", String(!oculto));
+    try { localStorage.setItem("condor.oculto.abajo", oculto ? "1" : "0"); } catch (_) { /* sin almacenamiento */ }
+  }
+  {
+    let oculto = false;
+    try { oculto = localStorage.getItem("condor.oculto.abajo") === "1"; } catch (_) { /* sin almacenamiento */ }
+    plegarAbajo(oculto);
+    $("btn-pliegue-abajo").addEventListener("click", () => plegarAbajo(!document.body.classList.contains("abajo-oculto")));
+    $("btn-cerrar-unidad").addEventListener("click", () => {
+      app.seleccion = null;
+      if (app.data) { renderOOBSeleccion(); renderDetalle(); dibujarSeleccion(); marcarSeleccionEnMapa(); }
+    });
+  }
   for (const lado of ["izq", "der"]) {
     let oculto = false;
     try { oculto = localStorage.getItem(`condor.oculto.${lado}`) === "1"; } catch (_) { /* sin almacenamiento */ }
@@ -1523,6 +1541,7 @@
     const cont = $("detalle-contenido");
     const c = app.contactosPorId.get(app.seleccion);
     const u = app.porId.get(app.seleccion) || (c ? { ...c, fuerza: null, combustible: null, municion: null, velocidad_kmh: null, alcance_km: null, deteccion_km: null, autonomia_km: null, carga: null, recarga_restante: null, despliegue_restante: null, terreno: "?" } : null);
+    document.body.classList.toggle("con-unidad", !!u);
     if (!u) { cont.innerHTML = '<p class="vacio">Seleccione una unidad en la lista o en el mapa.</p>'; return; }
     const cl = claseDe(u);
     const est = c && !app.porId.get(app.seleccion) ? { texto: `Último contacto T${c.turno_visto}`, clase: "fuego" } : Logica.estadoUnidad(u, pendientes());
@@ -1604,28 +1623,46 @@
     const origen = modelo ? `${escapar(modelo.fabricante)} · ${escapar(modelo.pais)}. ` : "";
     const obra = ref && ref.credito.obra ? `Referencia: ${escapar(ref.credito.obra)}. ` : "";
     const foto = ref
-      ? `<figure class="foto-modelo"><img src="${escapar(ref.foto)}" alt="${escapar(ref.nombre)}">`
+      ? `<figure class="foto-modelo"><img src="${escapar(ref.foto)}" fetchpriority="high" alt="${escapar(ref.nombre)}">`
         + `<figcaption>${origen}${obra}${ref.foto.endsWith(".svg") ? "Imagen" : "Foto"}: ${escapar(ref.credito.autor)}, ${escapar(ref.credito.licencia)}</figcaption></figure>`
       : "";
-    cont.innerHTML = foto + `<div class="det-titulo"><span class="simbolo">${simboloSvg(u.sidc, 30)}</span>`
+    // mision: la orden en curso (o la pendiente) de la unidad, o lo que esta haciendo por su cuenta
+    const ordenActual = !oculto && app.data
+      ? app.data.ordenes.find((o) => o.unidad_id === u.id && o.estado === "en_ejecucion")
+        || app.data.ordenes.find((o) => o.unidad_id === u.id && o.estado === "pendiente") : null;
+    const textoMision = oculto ? "Desconocida (unidad enemiga)"
+      : ordenActual ? textoOrden(ordenActual)
+        : u.mision === "patrulla" ? "Patrulla: intercepta lo que entre a su alcance"
+          : u.mision === "impacto" ? "Vuela hacia su blanco"
+            : u.tipo === "aerea" && u.en_tierra ? "En tierra, a la espera de órdenes"
+              : "Sin orden: mantiene su posición";
+    const chipMision = ordenActual ? `<span class="chip ${CHIP[ordenActual.estado][0]}">${CHIP[ordenActual.estado][1]}</span>` : "";
+    const mision = `<div class="pu-mision"><span class="pu-etq">Misión</span><b>${escapar(textoMision)}</b>${chipMision}</div>`;
+    // capacidades: efectividad contra aire, tierra y mar (la del modelo o la de su clase)
+    const atk = !oculto ? (modelo ? modelo.ataque_vs : cl ? cl.ataque_vs : null) : null;
+    const efectividad = atk && Object.values(atk).some((v) => v > 0)
+      ? `<div class="pu-efect"><span class="pu-etq">Efectividad</span>${[["Aire", "aerea"], ["Tierra", "terrestre"], ["Mar", "naval"]].map(([n, k]) =>
+        `<div class="pu-barra"><span>${n}</span><i><b style="width:${Math.min(100, Math.round(((atk[k] || 0) / 2) * 100))}%"></b></i><em>×${(atk[k] || 0).toFixed(2)}</em></div>`).join("")}</div>`
+      : "";
+    const principal = `<div class="det-titulo"><span class="simbolo">${simboloSvg(u.sidc, 30)}</span>`
       + `<div><h3>${escapar(u.nombre)}</h3><small>Bando ${nombreBando} · ${rama}${u.echelon ? " · " + escapar(u.echelon) : ""}</small></div></div>`
-      + `<span class="insignia ${est.clase}">${escapar(est.texto)}</span>`
+      + `<span class="insignia ${est.clase}">${escapar(est.texto)}</span>` + mision
       + (cl && cl.infraestructura
         ? barra("Capacidad operativa", u.fuerza)
         : barra("Fuerza", u.fuerza) + barra("Combustible", u.combustible) + barra("Munición", u.municion))
       + (cl && cl.carga_max ? barra("Suministros del convoy", u.carga) : "")
       + (cl && cl.stock_max && !oculto && u.stock_combustible !== null && u.stock_combustible !== undefined
         ? barra("Combustible en depósito", Logica.pctStock(u.stock_combustible, cl)) + barra("Munición en depósito", Logica.pctStock(u.stock_municion, cl))
-        : "")
-      + `<dl class="det-datos">${dato("Clase", u.clase || u.tipo)}${dato("Terreno", u.terreno || "?")}`
+        : "");
+    const capacidades = `<dl class="det-datos">${dato("Clase", u.clase || u.tipo)}${dato("Terreno", u.terreno || "?")}`
       + (cl && cl.infraestructura ? ""
         : `${dato("Velocidad", u.velocidad_kmh === null ? "?" : Logica.medida(medidas, "velocidad", u.velocidad_kmh))}`
         + `${dato("Alcance", u.alcance_km === null ? "?" : Logica.medida(medidas, "distancia", u.alcance_km))}`
         + `${dato("Detección", u.deteccion_km === null ? "?" : Logica.medida(medidas, "distancia", u.deteccion_km))}`
         + `${dato("Autonomía", u.autonomia_km === null ? "?" : Logica.medida(medidas, "distancia", u.autonomia_km))}`)
       + (u.personal_inicial ? dato("Personal", `${u.personal_actual} de ${u.personal_inicial} efectivos`) : "")
-      + `${extra.join("")}</dl>`
-      + (da ? `<table class="tabla-armas"><thead><tr><th>Arma</th><th>Alcance</th><th>Altura</th><th>Prob.</th>`
+      + `${extra.join("")}</dl>` + efectividad;
+    const armamento = (da ? `<table class="tabla-armas"><thead><tr><th>Arma</th><th>Alcance</th><th>Altura</th><th>Prob.</th>`
         + `${oculto ? "" : '<th title="Listos en los lanzadores / capacidad (+ reserva para recargar)">Listos</th>'}</tr></thead><tbody>`
         + da.armas.map((a) => `<tr title="${escapar(`${a.tipo} · ${a.categoria} · ${a.salva} · recarga ${a.recarga}`)}"><td>${escapar(a.nombre)}</td>`
           + `<td>${escapar(a.alcance)}</td><td>${escapar(a.altura)}</td><td>${escapar(a.pk)}</td>`
@@ -1646,6 +1683,18 @@
           + `<p class="ayuda">${escapar(Logica.PERFILES_VUELO[u.perfil_actual] ? Logica.PERFILES_VUELO[u.perfil_actual].ayuda : "")} Rige de inmediato.</p>`
         : "")
       + (esInstructor() && app.porId.get(app.seleccion) ? '<button id="btn-eliminar-unidad" class="peligro mini" type="button">Eliminar unidad del escenario</button>' : "");
+    // la columna de la foto no se toca entre redibujos (cada estado nuevo): si se la saca de la pagina aunque sea un
+    // instante, el navegador cancela la descarga y la foto nunca llega a verse
+    const fotoPrevia = cont.querySelector(".pu-foto");
+    const claveFoto = `${u.id}|${ref ? ref.foto : ""}`;
+    const resto = `<div class="pu-col pu-principal">${principal}</div><div class="pu-col pu-datos">${capacidades}</div>`
+      + `<div class="pu-col pu-notas"><span class="pu-etq">Armamento y notas</span>${armamento}</div>`;
+    if (fotoPrevia && fotoPrevia.dataset.clave === claveFoto) {
+      [...cont.children].forEach((n) => { if (n !== fotoPrevia) n.remove(); });
+      fotoPrevia.insertAdjacentHTML("afterend", resto);
+    } else {
+      cont.innerHTML = `<div class="pu-col pu-foto" data-clave="${escapar(claveFoto)}">${foto || `<div class="pu-sinfoto">${simboloSvg(u.sidc, 60)}</div>`}</div>` + resto;
+    }
     const emision = $("btn-emision");
     if (emision) emision.addEventListener("click", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { emitiendo: u.emitiendo === false })));
     const fuego = $("btn-fuego");
