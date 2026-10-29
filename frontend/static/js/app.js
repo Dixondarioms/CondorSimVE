@@ -528,6 +528,7 @@
     const map = L.map("map", { zoomControl: false, attributionControl: false, minZoom: zoomMin, maxZoom: 17, maxBounds: bounds.pad(0.1), maxBoundsViscosity: 0.85 });
     map.fitBounds(L.latLngBounds(Logica.limitesDe(principal)));
     app.map = map;
+    window.__mapa = map; // lo usan las herramientas de capturas del manual (tools/manual/navegador.py)
     L.control.zoom({ position: "bottomright" }).addTo(map);
     L.control.attribution({ position: "bottomleft", prefix: false })
       .addAttribution("Satélite: Sentinel-2 cloudless (EOX, CC BY 4.0) · Relieve: SRTM/GMTED (AWS Terrain Tiles) · Cobertura: ESA WorldCover · Vectores: Natural Earth · Aeródromos y carreteras: © colaboradores de OpenStreetMap (ODbL) y Natural Earth").addTo(map);

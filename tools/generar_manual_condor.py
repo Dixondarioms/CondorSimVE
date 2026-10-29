@@ -1,0 +1,567 @@
+"""Genera el manual de usuario del Cóndor en PDF (docs/Manual_Usuario_Condor.pdf): guía, con capturas, de cada parte de
+la interfaz para el director del ejercicio y los alumnos de cada repartición.
+
+Las capturas salen de tools/manual/capturas_condor.py (interfaz real sobre una copia de la base). El aspecto (fuentes,
+colores, tablas, créditos) es el de los manuales del SIETE (tools/generar_manual.py), del que se reusan las piezas. El
+catálogo del anexo se lee del código (backend/app/engine/catalogo.py), así que siempre coincide con el simulador.
+
+    backend\\venv\\Scripts\\python tools/generar_manual_condor.py
+"""
+
+import argparse
+import sys
+from datetime import date
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from generar_manual import (ANCHO_TEXTO, AZUL, CLARO, LINEA, LOGO_DIDA, RAIZ, UNIDAD, S, Bul, H1, H2, Manual, Nota, Num, P,  # noqa: E402
+                            Tbl, credito_portada)
+from reportlab.lib import colors  # noqa: E402
+from reportlab.lib.enums import TA_CENTER  # noqa: E402
+from reportlab.lib.styles import ParagraphStyle  # noqa: E402
+from reportlab.lib.units import cm  # noqa: E402
+from reportlab.platypus import Image, KeepTogether, PageBreak, Paragraph, Spacer, Table, TableStyle  # noqa: E402
+from reportlab.platypus.tableofcontents import TableOfContents  # noqa: E402
+
+from app.engine import catalogo  # noqa: E402  (generar_manual ya agrega backend/ a la ruta)
+
+from reportlab.pdfbase import pdfmetrics  # noqa: E402
+from reportlab.pdfbase.ttfonts import TTFont  # noqa: E402
+
+# los botones del Cóndor usan simbolos que Arial no tiene (◀ ▶ ✕ ■): van con la fuente de simbolos de Windows
+pdfmetrics.registerFont(TTFont("Simbolos", r"C:\Windows\Fonts\seguisym.ttf"))
+SIMBOLOS = "◀▶✕■"
+
+IMG = RAIZ / "tools" / "manual" / "salida" / "condor"
+FIG = [0]
+S["h2"].keepWithNext = S["h3"].keepWithNext = 1
+VERSION = "1.0"
+
+
+def figura(nombre: str, pie: str, ancho=ANCHO_TEXTO, alto_max=21 * cm, celda=False) -> list:
+    """Captura con su pie numerado (a lo ancho o al ancho indicado, sin pasar de alto_max). `celda`: para ponerla en una
+    tabla junto al texto (reportlab no sabe partir un KeepTogether dentro de una celda)."""
+    ruta = IMG / f"{nombre}.jpg"
+    if not ruta.exists():
+        return [Paragraph(f"[captura no disponible: {nombre}]", S["cap"])]
+    FIG[0] += 1
+    im = Image(str(ruta))
+    k = min(ancho / im.imageWidth, alto_max / im.imageHeight)
+    im.drawWidth, im.drawHeight = im.imageWidth * k, im.imageHeight * k
+    pie = Paragraph(f"Figura {FIG[0]}. {pie}", S["cap"])
+    return [im, pie] if celda else [KeepTogether([im, pie])]
+
+
+def titulos_con_su_figura(h: list) -> list:
+    """Un subtitulo seguido de una figura o una tabla va en el mismo bloque (para que no quede solo al pie de pagina)."""
+    salida = []
+    for f in h:
+        while (salida and isinstance(f, (KeepTogether, Table)) and isinstance(salida[-1], Paragraph)
+               and salida[-1].style.name in ("h1", "h2", "h3")):
+            # sin anidar KeepTogether: reportlab calcula mal el alto de los anidados y dejaba el titulo solo en su pagina
+            f = KeepTogether([salida.pop()] + (list(f._content) if isinstance(f, KeepTogether) else [f]))
+        salida.append(f)
+    return salida
+
+
+def B(t: str) -> str:
+    return f"<b>{t}</b>"
+
+
+def tabla_catalogo() -> list:
+    """Anexo: todos los modelos del catalogo, agrupados por clase de unidad."""
+    por_clase: dict[str, list] = {}
+    for m in catalogo.MODELOS.values():
+        por_clase.setdefault(m.clase, []).append(m)
+    h = []
+    for clase_id, modelos in sorted(por_clase.items(), key=lambda kv: catalogo.CLASES[kv[0]].nombre if kv[0] in catalogo.CLASES else kv[0]):
+        nombre = catalogo.CLASES[clase_id].nombre if clase_id in catalogo.CLASES else clase_id
+        filas = [[m.nombre, m.pais or "-", m.funcion or "-"] for m in sorted(modelos, key=lambda m: m.nombre)]
+        h += [Paragraph(f"{nombre} ({len(modelos)})", S["h3"]),
+              Tbl(["Modelo", "País", "Función"], filas, [6.2 * cm, 3.4 * cm, ANCHO_TEXTO - 9.6 * cm], tam=8.2)]
+    return h
+
+
+def creditos() -> list:
+    h = H1("Créditos")
+    if LOGO_DIDA.exists():
+        im = Image(str(LOGO_DIDA))
+        im.drawWidth, im.drawHeight = 7.0 * cm, 7.0 * cm * im.imageHeight / im.imageWidth
+        h += [im, Spacer(1, 10)]
+    centrado = ParagraphStyle("credc", parent=S["p"], alignment=TA_CENTER, fontSize=11, leading=16)
+    h += [Paragraph(f"El simulador Cóndor fue concebido, diseñado y desarrollado en la <b>{UNIDAD}</b> de la Aviación "
+                    "Militar Bolivariana, a partir de la experiencia del S.I.E.T.E. y de las recomendaciones del personal del "
+                    "CODAI, de logística de la AMB, de pilotos instructores y de usuarios de simuladores de juegos de guerra.",
+                    centrado), Spacer(1, 6), Paragraph("<i>«El infinito es el límite»</i>", centrado), Spacer(1, 14)]
+    filas = [["Unidad", UNIDAD], ["Componente", "Aviación Militar Bolivariana · Fuerza Armada Nacional Bolivariana"],
+             ["Imágenes", "Fotos de referencia de Wikimedia Commons con licencias libres (autor y licencia en cada ficha); "
+                          "satélite Sentinel-2 cloudless (EOX, CC BY 4.0); relieve SRTM/GMTED; cobertura ESA WorldCover; "
+                          "vectores Natural Earth; aeródromos y carreteras © colaboradores de OpenStreetMap (ODbL)."]]
+    t = Table([[Paragraph(f"<b>{a}</b>", S["celda"]), Paragraph(b, S["celda"])] for a, b in filas],
+              colWidths=[3.6 * cm, ANCHO_TEXTO - 3.6 * cm], hAlign="CENTER")
+    t.setStyle(TableStyle([("ROWBACKGROUNDS", (0, 0), (-1, -1), [CLARO, colors.white]), ("GRID", (0, 0), (-1, -1), 0.4, LINEA),
+                           ("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
+    return h + [t]
+
+
+def construir(salida: Path) -> None:
+    doc = Manual(str(salida), titulo="Cóndor · Manual de usuario")
+    doc.author = UNIDAD
+    hoy = date.today()
+    meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+    fecha = f"{meses[hoy.month - 1].capitalize()} de {hoy.year}"
+    ancho_medio = ANCHO_TEXTO * 0.62
+    h = []
+
+    # ---------------------------------------------------------------- portada
+    h += [Spacer(1, 0.6 * cm)]
+    logo = RAIZ / "frontend" / "static" / "img" / "condor_posado.png"
+    if logo.exists():
+        im = Image(str(logo))
+        im.drawWidth, im.drawHeight = 7.5 * cm, 7.5 * cm * im.imageHeight / im.imageWidth
+        h += [im, Spacer(1, 10)]
+    h += [Paragraph("CÓNDOR", S["titulo"]), Spacer(1, 6),
+          Paragraph("Simulador de entrenamiento táctico y estratégico en tiempo real", S["subtitulo"]), Spacer(1, 24),
+          Paragraph("MANUAL DE USUARIO", ParagraphStyle("mu", parent=S["subtitulo"], fontName="Texto-B", fontSize=20, textColor=AZUL)),
+          Spacer(1, 8), Paragraph("Guía para el director del ejercicio y los alumnos de cada repartición", S["subtitulo"]),
+          Spacer(1, 24)]
+    h += credito_portada()
+    h += [Spacer(1, 10), Paragraph(f"{fecha} · versión {VERSION}", S["subtitulo"]), PageBreak()]
+
+    toc = TableOfContents()
+    toc.levelStyles = [S["toc1"], S["toc2"]]
+    h += [Paragraph("Contenido", ParagraphStyle("h1toc", parent=S["h1"])), toc]
+
+    # ---------------------------------------------------------------- 1 introduccion
+    h += H1("1. Introducción")
+    h += [H2("1.1 Qué es el Cóndor"),
+          P("El Cóndor es un simulador de entrenamiento táctico y estratégico <b>en tiempo real</b>: las unidades se mueven, "
+            "detectan y combaten mientras corre el reloj, y las órdenes se cumplen en el acto, sin esperar al fin de un turno. "
+            "Se enfrentan dos bandos, <b>Azul</b> y <b>Rojo</b>; cada bando es un Estado Mayor en el que cada persona entra con "
+            "la cuenta de su repartición y ordena solo las unidades que le corresponden."),
+          P("El simulador trae un catálogo de cerca de 200 modelos reales (aviones, helicópteros, drones, misiles, vehículos, "
+            "defensa antiaérea, radares y buques de muchos ejércitos), cada uno con su ficha y foto de referencia, y mapas "
+            "propios que funcionan sin internet: Venezuela con detalle, el continente americano, el mundo entero y un teatro "
+            "ficticio para ejercicios sin geografía real."),
+          H2("1.2 Quién hace qué"),
+          Tbl(["Rol", "Qué hace", "Capítulos"], [
+              ["Director del ejercicio", "Prepara el escenario, maneja el reloj, ve a los dos bandos, inyecta eventos y administra las cuentas.", "2, 3, 13"],
+              ["Comandante y JEM", "Conducen todo su bando: reúnen las funciones de todas las reparticiones y fijan la doctrina.", "2 a 12"],
+              ["Reparticiones (A-1 a C-E)", "Cada una ordena las unidades de su función (ver 2.8).", "2 a 12"],
+              ["Observador", "Sigue el ejercicio sin dar órdenes.", "2, 10, 12"],
+          ], [4.2 * cm, ANCHO_TEXTO - 6.0 * cm, 1.8 * cm]),
+          H2("1.3 Qué se necesita"),
+          Bul(["<b>Una PC servidor</b> con el Cóndor (la versión portable se abre con el acceso directo <b>Condor</b>). Su "
+               "ventana negra es el servidor: debe quedar abierta mientras dure el ejercicio.",
+               "<b>Una PC por puesto</b> con Chrome o Edge, en la misma red que el servidor. No hace falta instalar nada.",
+               "La <b>dirección</b> del servidor, que da el director: es la de su PC y termina en <b>:8001</b> "
+               "(por ejemplo, <font face='Mono'>http://192.168.1.10:8001</font>).",
+               "Una <b>cuenta</b> por puesto (usuario y contraseña), que entrega el director."]),
+          Nota("Este manual se lee junto al simulador. Dentro del Cóndor, el botón <b>Ayuda</b> (o la tecla <b>F1</b>) responde "
+               "preguntas sobre cada tema y ofrece un recorrido guiado por la pantalla.")]
+
+    # ---------------------------------------------------------------- 2 primeros pasos
+    h += H1("2. Primeros pasos")
+    h += [H2("2.1 Entrar y elegir el ejercicio")]
+    h += figura("acceso", "Pantalla de acceso.", ancho=6.5 * cm)
+    h += [Num(["Abra Chrome o Edge y escriba la dirección que le dio el director (termina en <b>:8001</b>).",
+               "Escriba su <b>usuario</b> y su <b>contraseña</b> tal como figuran en su tarjeta, respetando mayúsculas y guiones, "
+               "y pulse <b>Ingresar</b>.",
+               "Arriba, en la lista <b>Escenario</b>, elija el ejercicio (una cuenta puede tener más de uno)."]),
+          P("Si no tiene cuenta, <b>Solicitar una cuenta</b> envía el pedido al director, que lo aprueba. Para cambiar la "
+            "contraseña o salir, use el botón del usuario (arriba a la derecha) → <b>Cambiar contraseña</b> o <b>Cerrar sesión</b>. "
+            "Use una sola cuenta por vez en cada navegador.")]
+    h += [H2("2.2 Las partes de la pantalla")]
+    h += figura("pantalla", "La pantalla del Cóndor con una unidad seleccionada. Los números se explican en la tabla siguiente.")
+    h += [Tbl(["N.º", "Parte", "Qué contiene"], [
+        ["1", "Cabecera", "Escenario, botones del director, conexión, reloj de tiempo real, Videowall, Ayuda, Informe y usuario."],
+        ["2", "Panel izquierdo", "Pestañas FUERZAS (orden de batalla, doctrina, aviación, misiones, nueva orden y cola), SITUACIÓN, "
+                                 "TIEM y, para el director, CONSOLA."],
+        ["3", "Mapa", "Unidades, rutas, zonas, contactos, gráficos tácticos y herramientas (regla y convertidor)."],
+        ["4", "Panel derecho", "Estado del escenario (hora, clima, reloj), objetivos y puntaje, capas, comunicaciones y alertas."],
+        ["5", "Unidad seleccionada", "Foto, misión, estado, capacidades y armamento de la unidad elegida."],
+        ["6", "Reloj del ejercicio", "Hora, velocidad, botones del reloj (director) y quién conduce cada bando."],
+    ], [1.2 * cm, 3.4 * cm, ANCHO_TEXTO - 4.6 * cm])]
+    h += [H2("2.3 Paneles que se esconden"),
+          P("Las pestañitas <b><font face='Simbolos'>◀</font></b> y <b><font face='Simbolos'>▶</font></b> en los bordes del mapa esconden el panel izquierdo y las tarjetas de la derecha "
+            "para ver el mapa más grande; con otro clic vuelven a aparecer. El panel de la unidad seleccionada se reduce con "
+            "<b>▼ Esconder</b> y se cierra con <b><font face='Simbolos'>✕</font></b>. El Cóndor recuerda en cada PC qué paneles dejó escondidos.")]
+    h += figura("paneles_escondidos", "Los paneles laterales escondidos: el mapa ocupa casi toda la pantalla.")
+    h += [H2("2.4 La cabecera")]
+    h += figura("cabecera", "Cabecera.")
+    h += [Tbl(["Control", "Para qué sirve"], [
+        ["Escenario", "Elige el ejercicio. «archivados» muestra también los ejercicios terminados."],
+        ["Nuevo · Desde plantilla… · Guardar como plantilla…", "Solo el director: crear ejercicios y reutilizarlos (capítulo 13)."],
+        ["Punto de conexión", "Verde: conectado. Rojo: se perdió la conexión (recargue con F5)."],
+        ["Tiempo real", "Estado del reloj: DETENIDO o EN MARCHA."],
+        ["Videowall", "Mapa a pantalla completa para un proyector (10.5)."],
+        ["Ayuda", "Preguntas y respuestas sobre el simulador y recorrido guiado (2.9). También con F1."],
+        ["Informe", "Resumen, línea de tiempo, repetición y rúbrica (capítulo 12)."],
+        ["Usuario", "Cambiar contraseña o cerrar sesión."],
+    ], [5.4 * cm, ANCHO_TEXTO - 5.4 * cm])]
+    h += [H2("2.5 El orden de batalla")]
+    h += [Table([[figura("orden_batalla", "Orden de batalla (pestaña FUERZAS).", ancho=6.3 * cm, alto_max=14 * cm, celda=True),
+                  [P("En la pestaña <b>FUERZAS</b>, el <b>orden de batalla</b> lista las unidades de su bando (el director ve los "
+                     "dos), agrupadas por tipo: infantería, artillería, aviación, bases y logística, infraestructura y buques."),
+                   P("Cada fila muestra el nombre, el símbolo y el estado (Operativa, En base · lista, En vuelo, Dañada…). Con un "
+                     "clic se elige la unidad: el mapa la marca y abajo aparecen sus datos. El buscador de arriba filtra por "
+                     "nombre, clase o modelo."),
+                   P("Con <b>Ctrl+clic</b> se suman varias unidades propias para darles la misma orden (4.6).")]]],
+                colWidths=[6.6 * cm, ANCHO_TEXTO - 6.6 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += [H2("2.6 La unidad seleccionada")]
+    h += figura("panel_unidad", "Datos de una aeronave seleccionada: foto, misión, estado, capacidades y armamento.")
+    h += [P("Al elegir una unidad, en la parte inferior de la pantalla aparecen sus datos en cuatro columnas:"),
+          Bul(["<b>Foto de referencia</b> del modelo, con su fabricante, país, autor y licencia.",
+               "<b>Nombre, bando y estado</b>; la <b>misión</b> en curso (la orden que cumple o lo que hace por su cuenta: «En tierra, "
+               "a la espera de órdenes», «Sin orden: mantiene su posición»…) y las barras de <b>fuerza</b>, <b>combustible</b> y munición.",
+               "<b>Capacidades</b>: clase, terreno donde está, velocidad, alcance de armas, detección, autonomía, personal y movilidad.",
+               "<b>Armamento y notas</b>: lo que lleva y, según la unidad, controles propios (perfil de vuelo, armas de la defensa "
+               "antiaérea, emisión del radar)."]),
+          P("De una unidad enemiga solo se ve lo que su bando sabe de ella (capítulo 7).")]
+    h += figura("panel_unidad_da", "Datos de un sistema de defensa antiaérea: armas, alcances y probabilidad de impacto.")
+    h += [H2("2.7 El catálogo de modelos"),
+          P("Cada unidad puede ser un <b>modelo real</b> con su ficha: cazas (F-16, Su-30, Rafale, Gripen, Kfir…), ataque "
+            "(A-29 Super Tucano, AT-27 Tucano, K-8W, Su-25…), helicópteros, drones, misiles, tanques, artillería, defensa "
+            "antiaérea, radares y buques. La ficha aparece al pasar el cursor sobre una unidad en el mapa y en la unidad "
+            "seleccionada. La lista completa está en el <b>Anexo A</b>."),
+          Nota("Las cifras del catálogo son didácticas: sirven para comparar plataformas entre sí, no son datos oficiales.")]
+    h += [H2("2.8 Qué ordena cada repartición"),
+          Tbl(["Repartición", "Qué conduce"], [
+              ["Comandante y JEM", "Todo: reúnen las funciones de todas las reparticiones y fijan la doctrina del bando."],
+              ["A-1 Personal", "Sigue efectivos, bajas y moral. No ordena unidades."],
+              ["A-2 Inteligencia", "Sigue al enemigo y conduce el reconocimiento (unidades y drones de reconocimiento)."],
+              ["A-3 Operaciones", "La maniobra: despegues, caza, ataque, helicópteros, drones armados, cisternas, fuerzas de superficie "
+                                  "y lanzadores de misiles."],
+              ["A-3 D/A Defensa Aérea", "Radares, antiaérea, alerta temprana y la caza de intercepción con sus despegues."],
+              ["A-4 Logística", "Convoyes, depósitos e ingenieros (puentes y vados)."],
+              ["C-E Comunicaciones y Electrónica", "Guerra electrónica: escucha e interferencia desde tierra y aviones de guerra electrónica."],
+          ], [4.6 * cm, ANCHO_TEXTO - 4.6 * cm]),
+          P("Si una orden «corresponde a otra repartición», pídasela a quien la conduce, al Comandante o al JEM.")]
+    h += [H2("2.9 La ayuda y el recorrido guiado")]
+    h += figura("ayuda", "Ventana de ayuda: se escribe la pregunta y aparecen los temas que la responden.")
+    h += [P("El botón <b>Ayuda</b> (o <b>F1</b>) abre la ayuda del Cóndor. Escriba la pregunta con sus palabras («cómo despego "
+            "un avión», «por qué no veo al enemigo») y elija el tema; a la izquierda están todos los temas por sección. "
+            "<b>Recorrido guiado paso a paso</b> señala cada parte de la pantalla y explica para qué sirve."),
+          P("Para practicar sin riesgo, el director puede asignar el ejercicio <b>Tutorial del Cóndor</b>, que enseña la "
+            "interfaz paso a paso.")]
+
+    # ---------------------------------------------------------------- 3 reloj
+    h += H1("3. El reloj y las alertas")
+    h += [H2("3.1 El reloj: tiempo real y velocidades")]
+    h += figura("reloj", "Reloj del ejercicio detenido, con los controles del director.")
+    h += [P("El ejercicio corre en tiempo simulado. La velocidad puede ser <b>1×</b> (igual que la realidad), <b>10×</b> o "
+            "<b>60×</b> (un minuto simulado por segundo). El reloj lo ponen en marcha y lo detienen el director (y, en el ensayo "
+            "de una forma de acción, el Comandante y el JEM); <b>+1 h</b> adelanta una hora de una vez, como si hubiera corrido."),
+          P("Arriba se ven la <b>hora simulada</b> y el <b>calendario</b> de la operación (día D, hora H, fase). Con el reloj "
+            "detenido se pueden dar órdenes: se cumplen al ponerlo en marcha.")]
+    h += figura("reloj_en_marcha", "Reloj en marcha a 60×: el botón cambia a DETENER EL RELOJ.")
+    h += [H2("3.2 Alertas y pausa automática"),
+          P("Las <b>alertas</b> avisan al instante lo importante para su bando: contacto nuevo, ataque a una unidad propia, "
+            "unidad perdida, combustible crítico y misión terminada. Aparecen como aviso sobre el mapa y quedan en la tarjeta "
+            "<b>Alertas</b> (derecha); con un clic en el lugar, el mapa va hasta allí.")]
+    h += figura("alertas", "Tarjeta de alertas.", ancho=7 * cm)
+    h += [P("El director elige en CONSOLA → <b>Reloj y configuración</b> qué causas <b>detienen el reloj solas</b>. Cuando "
+            "pasa, arriba aparece la franja roja <b>PAUSA AUTOMÁTICA</b> con el motivo, <b>Ver en el mapa</b> y, para el "
+            "director, <b>Reanudar</b>.")]
+
+    # ---------------------------------------------------------------- 4 ordenes
+    h += H1("4. Órdenes")
+    h += [H2("4.1 Cómo dar una orden")]
+    h += [Table([[figura("orden_nueva", "Panel Nueva orden.", ancho=6.3 * cm, alto_max=12 * cm, celda=True),
+                  [Num(["Elija la unidad en el <b>orden de batalla</b> o con un clic en el mapa.",
+                        "En <b>Nueva orden</b>, elija el tipo (Mover, Atacar, Apoyar…). Solo aparecen los que esa unidad puede cumplir.",
+                        "Complete lo que pide: los puntos de la ruta (clic en el mapa), el blanco o el lugar. <b>Seguir carreteras</b> "
+                        "ajusta la ruta a las vías; <b>Limpiar waypoints</b> la borra.",
+                        "Pulse <b>Emitir orden</b>. La unidad empieza en el acto."]),
+                   P("Una orden nueva <b>reemplaza</b> a la que estaba cumpliendo: una aeronave en vuelo se desvía al momento.")]]],
+                colWidths=[6.6 * cm, ANCHO_TEXTO - 6.6 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += figura("orden_ruta", "Ruta marcada en el mapa antes de emitir la orden.")
+    h += [H2("4.2 Los tipos de orden"),
+          Tbl(["Orden", "Qué hace"], [
+              ["Mover", "Va por los puntos marcados (por carretera cuando conviene)."],
+              ["Atacar", "Ataca a un enemigo detectado; si hace falta, se acerca hasta tenerlo a su alcance."],
+              ["Apoyar", "Acompaña y apoya con fuego a otra unidad propia."],
+              ["Construir", "Ingenieros: puente o vado sobre un río."],
+              ["Patrullar", "Aeronaves: orbitan sobre una zona e interceptan lo que entre."],
+              ["Aterrizar", "Aeronaves en vuelo: vuelven a una base."],
+              ["Interferir", "Guerra electrónica: degrada al enemigo en una zona."],
+              ["Lanzar misiles", "Buques y baterías con misiles de crucero."],
+              ["Embarcar / Desembarcar", "Tropas a bordo de un buque de desembarco o un helicóptero de transporte."],
+          ], [4.2 * cm, ANCHO_TEXTO - 4.2 * cm])]
+    h += [H2("4.3 La cola de órdenes")]
+    h += figura("cola", "Cola de órdenes con una orden en curso.", ancho=7.5 * cm)
+    h += [P("La <b>Cola de órdenes</b> muestra las órdenes del bando, quién las dio, a qué hora y su estado (pendiente, en "
+            "curso, cumplida). El botón <b><font face='Simbolos'>■</font></b> detiene una orden: la unidad se queda donde está.")]
+    h += [H2("4.4 Mover: terreno, ríos y combustible"),
+          P("La velocidad depende del tipo de unidad, del <b>terreno</b> y del <b>clima</b>. Las unidades de tierra aprovechan "
+            "las carreteras. Los <b>vehículos pesados solo cruzan los ríos por un puente o un vado</b> (obra de ingenieros); si no "
+            "hay paso, la unidad busca otro camino y, si no lo encuentra, se detiene y avisa. Moverse gasta combustible: sin "
+            "combustible la unidad no avanza hasta que la reabastezcan (capítulo 8)."),
+          H2("4.5 Atacar y el combate"),
+          P("Solo se puede atacar a un enemigo <b>detectado</b> por su bando. La unidad se acerca hasta tenerlo a su alcance y "
+            "combate mientras dure la orden: el daño se reparte poco a poco y depende de las armas, la defensa, el terreno, el "
+            "clima y el azar. Cada ataque gasta munición; una unidad con poca fuerza queda casi sin capacidad de combate. Según "
+            "la <b>doctrina</b>, las unidades también pueden tirar solas contra lo que tengan a su alcance (6.1)."),
+          H2("4.6 Varias unidades a la vez"),
+          P("Con <b>Ctrl+clic</b> en el orden de batalla o en el mapa se suman varias unidades propias: la orden va a todas. Con "
+            "<b>formación</b>, cada una conserva su lugar respecto de las demás durante la marcha.")]
+
+    # ---------------------------------------------------------------- 5 aviacion
+    h += H1("5. Aviación")
+    h += [H2("5.1 Despegar aviones y drones")]
+    h += figura("aviacion", "Panel Aviación (pestaña FUERZAS).", ancho=8 * cm)
+    h += [Num(["En FUERZAS, panel <b>Aviación</b>, pulse <b>Enviar aeronaves o drones…</b>.",
+               "Busque el modelo por nombre, país o fabricante, o filtre por tipo (caza, ataque, dron, guerra electrónica…). Cada "
+               "tarjeta muestra la foto y los datos principales del modelo.",
+               "Elija la <b>base de origen</b> y cuántas <b>aeronaves</b> forman el grupo; si quiere, un indicativo (ej. «Halcón 1»).",
+               "Pulse <b>Enviar a despegar</b>. El grupo despega en el acto y espera órdenes en el aire."])]
+    h += figura("despegue", "Ventana para despegar: búsqueda «Tucano» con el AT-27 y el A-29.")
+    h += [P("Los despegues los ordenan A-3 y A-3 D/A (y el Comandante o el JEM). Cada bando tiene un <b>tope</b> de aeronaves y "
+            "de drones, que muestra el panel. Una aeronave que acaba de aterrizar necesita tiempo para reabastecer y rearmar "
+            "antes de volver a salir.")]
+    h += [H2("5.2 Patrullar, aterrizar y el combustible"),
+          Bul(["<b>Patrullar</b>: la aeronave vuela a la zona, orbita (gasta cerca de 8 % de combustible por hora) e intercepta a "
+               "los aviones enemigos que detecte a su alcance.",
+               "<b>Aterrizar</b>: vuelve a la base elegida. En tierra tarda unas <b>2 horas</b> en reabastecer y rearmar. Cada base "
+               "tiene un número de plazas.",
+               "Con poco combustible (por defecto 25 %) o sin armamento, la aeronave <b>regresa sola</b> a la base más cercana; "
+               "esos valores se cambian en la doctrina (6.1)."])]
+    h += [H2("5.3 Misiones aéreas planificadas")]
+    h += [Table([[figura("mision_planificar", "Planificar una misión aérea.", ancho=6.6 * cm, alto_max=12 * cm, celda=True),
+                  [P("El panel <b>Misiones aéreas</b> → <b>Planificar misión</b> arma misiones completas:"),
+                   Bul(["un grupo que ya existe o uno que despega de una base;",
+                        "el <b>rol</b> (patrulla aérea de combate, ataque, escolta, reconocimiento…);",
+                        "la ruta, con sus puntos de paso, órbitas y blanco (clic en el mapa);",
+                        "la base de aterrizaje y los datos de la <b>OTA</b> (paquete, armamento, IFF, hora sobre el blanco)."]),
+                   P("Al llegar la hora, las aeronaves despegan y cumplen la misión solas; al terminar llega la alerta «misión "
+                     "terminada».")]]],
+                colWidths=[6.9 * cm, ANCHO_TEXTO - 6.9 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += figura("cronograma", "Cronograma de misiones (flow sheet).")
+    h += [P("El <b>Cronograma</b> (flow sheet) muestra todas las misiones en el tiempo: cada fila es una misión, de color según "
+            "su rol, con una línea roja en la hora actual.")]
+
+    # ---------------------------------------------------------------- 6 defensa aerea y doctrina
+    h += H1("6. Defensa aérea y doctrina")
+    h += [H2("6.1 Doctrina y reglas de enfrentamiento")]
+    h += [Table([[figura("doctrina", "Doctrina y reglas de enfrentamiento.", ancho=6.4 * cm, alto_max=12 * cm, celda=True),
+                  [P("En FUERZAS → <b>Doctrina y reglas de enfrentamiento</b> se decide cómo actúan las unidades por su cuenta:"),
+                   Bul(["<b>Contra aeronaves</b> y <b>contra superficie</b>: <i>Libre</i> (tiran contra cualquier enemigo "
+                        "detectado), <i>Solo identificados</i> o <i>Solo con orden</i>.",
+                        "<b>Misiles por blanco</b> de la defensa aérea y <b>a qué distancia abren fuego</b> (100, 75 o 50 % del "
+                        "alcance: más cerca, más probable el impacto).",
+                        "Aeronaves: con qué <b>combustible regresan</b> y si vuelven al quedarse <b>sin armamento</b>."]),
+                   P("La doctrina del bando la fijan el Comandante y el JEM (y el director); se aplica con <b>Aplicar doctrina</b>. "
+                     "Cada unidad puede tener la suya; lo que quede en «Del bando» se toma de la doctrina del bando. Por "
+                     "defecto: contra aeronaves libre, contra superficie solo con orden.")]]],
+                colWidths=[6.7 * cm, ANCHO_TEXTO - 6.7 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += [H2("6.2 Radares y defensa antiaérea"),
+          P("Los <b>radares</b> y la antiaérea guiada detectan aeronaves según su alcance, el relieve (las montañas tapan) y la "
+            "altura a la que vuelan. La antiaérea dispara sola contra las aeronaves enemigas a su alcance, según la doctrina. "
+            "En la unidad seleccionada de un sistema antiaéreo se ven sus armas con el alcance, la altura y la probabilidad de "
+            "impacto (figura del punto 2.6), y se puede apagar o encender su radar. Los conduce A-3 D/A.")]
+
+    # ---------------------------------------------------------------- 7 inteligencia
+    h += H1("7. Inteligencia y contactos")
+    h += [H2("7.1 La niebla de guerra")]
+    h += figura("bando_azul", "Lo que ve el Comandante Azul: sus unidades y solo los enemigos que su bando detecta.")
+    h += [P("Cada bando ve solo lo que detectan sus unidades. La detección depende del alcance de cada sensor, del terreno "
+            "(bosques y ciudades ocultan), del relieve, del clima y de la noche. Para ver más: acerque unidades de "
+            "reconocimiento o drones (A-2), use radares y patrullas, o la escucha electrónica (C-E).")]
+    h += [H2("7.2 Contactos: desconocido, clasificado e identificado"),
+          P("Un enemigo recién detectado aparece como <b>desconocido</b> (solo se sabe si está en el aire o en superficie). "
+            "Mientras se lo sigue, pasa a <b>clasificado</b> (se sabe qué clase de unidad es) y luego a <b>identificado</b> (se sabe "
+            "cuál es). Es más rápido de cerca y con radar; solo por escucha electrónica es lento y no pasa de clasificado. A "
+            "menos de 8 km se identifica a ojo; las bases se conocen de antemano."),
+          P("El <b>círculo amarillo</b> alrededor de un contacto muestra dónde puede estar en realidad. Si se pierde el contacto, "
+            "queda su último lugar conocido y el círculo crece con lo que pudo moverse. Las armas en <i>Solo identificados</i> no "
+            "tiran contra desconocidos.")]
+    h += [H2("7.3 El cuadro radar")]
+    h += [Table([[figura("cuadro_radar", "Cuadro radar (pestaña SITUACIÓN).", ancho=6.0 * cm, alto_max=12 * cm, celda=True),
+                  [P("En SITUACIÓN → <b>Cuadro radar</b> se ve qué detecta ahora cada sensor del bando: los radares, la "
+                     "antiaérea, el reconocimiento y la escucha electrónica, con la distancia y el rumbo de cada contacto."),
+                   P("<b>Difundir el cuadro a la red del bando</b> comparte lo detectado con todas las reparticiones.")]]],
+                colWidths=[6.3 * cm, ANCHO_TEXTO - 6.3 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+
+    # ---------------------------------------------------------------- 8 logistica
+    h += H1("8. Logística, ingenieros y transporte")
+    h += [H2("8.1 Combustible, munición y abastecimiento"),
+          P("Las unidades gastan combustible al moverse y munición al combatir. Se reabastecen solas, poco a poco, cerca de las "
+            "<b>bases</b>, los <b>depósitos</b> y los <b>convoyes</b> propios, que llevan su carga a donde se los mande. Las "
+            "aeronaves pueden reabastecer en vuelo junto a un <b>avión cisterna</b>. Conduce A-4."),
+          H2("8.2 Ingenieros: puentes y vados"),
+          P("Elija la unidad de ingenieros → orden <b>Construir</b> → clic sobre un río a menos de 5 km. La obra tarda un tiempo; "
+            "cuando está lista, los vehículos pesados pueden cruzar por allí."),
+          H2("8.3 Embarcar y desembarcar tropas"),
+          P("<b>Embarcar</b>: la unidad sube a un buque de desembarco o a un helicóptero de transporte propio que esté a menos de "
+            "3 km. A bordo viaja con el transporte, no se la ve ni ataca por separado y sufre la mitad del daño que reciba el "
+            "transporte (se pierde si lo hunden o derriban). <b>Desembarcar</b>: elija el transporte y marque la ruta; el último "
+            "punto es el lugar de desembarco, en tierra firme."),
+          H2("8.4 Misiles de crucero"),
+          P("Buques y baterías con misiles de crucero: orden <b>Lanzar misiles</b> sobre un blanco. La salva vuela sola (unos "
+            "850 km/h) hacia donde estaba el blanco; la antiaérea y las patrullas enemigas pueden derribarla antes. Cada misil "
+            "gasta el 25 % de la munición del lanzador.")]
+
+    # ---------------------------------------------------------------- 9 guerra electronica
+    h += H1("9. Guerra electrónica")
+    h += [P("<b>Interferir</b>: con la unidad o el avión de guerra electrónica, orden <b>Interferir</b> y clic en el centro de la "
+            "zona, dentro de su alcance. Mientras dure la orden, allí el enemigo detecta mucho menos, su antiaérea guiada por "
+            "radar pierde efecto y sus drones pierden el enlace. Pero al emitir, <b>el enemigo localiza al interferidor</b>."),
+          P("La <b>escucha</b> electrónica localiza de lejos a los radares enemigos encendidos. Un radar apagado no se oye, pero "
+            "tampoco ve. Conduce C-E.")]
+
+    # ---------------------------------------------------------------- 10 mapa
+    h += H1("10. El mapa")
+    h += [H2("10.1 Regiones, satélite y relieve"),
+          P("El Cóndor trae sus mapas en la propia PC, sin internet. En la tarjeta <b>Capas</b>, los botones de región llevan la "
+            "vista a cada una:"),
+          Bul(["<b>Venezuela y vecinos</b>: el área de más detalle, para ejercicios tácticos.",
+               "<b>América</b>: todo el continente, de Alaska a Tierra del Fuego.",
+               "<b>Mundo</b>: el planeta entero, hasta el Ártico.",
+               "<b>Teatro ficticio</b>: País Azul y País Rojo, para ejercicios sin geografía real."]),
+          P("<b>Satélite</b> muestra la foto satelital real y <b>Relieve</b> el terreno coloreado por clase (llano, bosque, montaña, "
+            "pantano, ciudad, agua). Al alejarse, el mapa muestra solo las ciudades grandes y sin nombre; los nombres aparecen "
+            "al acercarse.")]
+    h += figura("mapa_mundo", "Región Mundo, vista satelital.")
+    h += figura("mapa_venezuela", "Región Venezuela y vecinos, con ciudades, aeródromos y unidades.")
+    h += [H2("10.2 Capas, estelas y símbolos")]
+    h += [Table([[figura("capas", "Tarjeta Capas.", ancho=5.0 * cm, alto_max=14 * cm, celda=True),
+                  [P("En la tarjeta <b>Capas</b> se enciende o apaga lo que muestra el mapa: terreno, cobertura de detección, "
+                     "niebla de guerra, unidades, alcances (al acercarse), últimos contactos, gráficos tácticos, objetivos, "
+                     "infraestructura, aeródromos, guerra electrónica, meteorología y misiones."),
+                   Bul(["<b>Estelas de movimiento</b>: la línea por donde pasó cada unidad, más tenue cuanto más vieja. Su largo va "
+                        "de 10 minutos a 3 horas simuladas.",
+                        "<b>Símbolos militares (APP-6)</b> en lugar de las miniaturas.",
+                        "<b>Tramos aptos para PRO</b>: tramos de carretera que sirven de pista."])]]],
+                colWidths=[5.3 * cm, ANCHO_TEXTO - 5.3 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += [H2("10.3 Clima, lluvia, tormentas y noche"),
+          P("Además del clima general, el director puede poner <b>zonas</b> de nubosidad, lluvia o tormenta, que se desplazan de "
+            "forma continua. Dentro de ellas se detecta menos, se avanza más lento y el ataque aéreo pierde efecto. De noche "
+            "también se detecta menos. En Capas → <b>Vista del clima</b>: <i>Solo el radio</i> (el círculo con su rótulo y la "
+            "flecha de hacia dónde va) o <i>Satélite meteorológico</i> (las nubes como en una imagen de satélite).")]
+    h += [H2("10.4 Gráficos tácticos y herramientas")]
+    h += [Table([[figura("graficos", "Gráficos tácticos.", ancho=5.4 * cm, celda=True),
+                  [P("En el cuadro <b>Gráficos tácticos</b> (sobre el mapa) se dibujan líneas de fase, ejes de avance, zonas de "
+                     "reunión y puntos de control. Elija la herramienta, escriba la etiqueta si quiere y trace sobre el mapa "
+                     "(doble clic o clic en el último punto para terminar). Lo verá todo su bando; el director elige si lo ve "
+                     "todo el ejercicio o un solo bando."),
+                   P("<b>▲ Esconder</b> reduce el cuadro a su título y <b>▼ Mostrar</b> lo vuelve a abrir.")]]],
+                colWidths=[5.7 * cm, ANCHO_TEXTO - 5.7 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += figura("graficos_plegado", "El cuadro escondido, con la regla y el convertidor arriba.", ancho=8 * cm)
+    h += [P("La <b>Regla</b> mide distancias y rumbos (clic en cada punto; doble clic o Esc para terminar) y <b>Convertir</b> "
+            "pasa distancias, velocidades, alturas, masas y volúmenes de una unidad a otra. Arriba a la izquierda, el mapa "
+            "muestra las coordenadas y la clase de terreno bajo el cursor.")]
+    h += [H2("10.5 Videowall (pantalla completa)")]
+    h += figura("videowall", "Videowall: el mapa a pantalla completa con el reloj, el clima y el marcador.")
+    h += [P("El botón <b>Videowall</b> (o la tecla <b>V</b>) muestra el mapa a pantalla completa, sin paneles, para un proyector "
+            "o un centro de operaciones. Con <b>Esc</b> se vuelve.")]
+
+    # ---------------------------------------------------------------- 11 situacion y TIEM
+    h += H1("11. Situación y Estado Mayor")
+    h += [Table([[figura("situacion", "Pestaña SITUACIÓN.", ancho=5.4 * cm, alto_max=12.5 * cm, celda=True),
+                  figura("tiem", "Pestaña TIEM.", ancho=5.4 * cm, alto_max=12.5 * cm, celda=True)]],
+                colWidths=[ANCHO_TEXTO / 2] * 2, style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += [H2("11.1 La pestaña SITUACIÓN"),
+          P("Reúne el estado del bando: <b>cuadro radar</b> (7.3), personal y bajas, apresto, organización, esfuerzo aéreo, "
+            "rescate, transmisiones, alerta temprana, inteligencia e <b>infraestructura crítica</b> (centrales, refinerías, "
+            "centros de comunicaciones y puentes)."),
+          H2("11.2 Trabajo de Estado Mayor (pestaña TIEM)"),
+          P("La pestaña <b>TIEM</b> guía el trabajo del Estado Mayor: el <b>calendario</b> de la operación (día D, hora H y fases), "
+            "el <b>Problema Militar Operativo</b> del bando, las apreciaciones de cada repartición, las formas de acción y su "
+            "<b>ensayo</b> (juego de guerra), la <b>Orden de Operaciones</b>, la <b>supervisión</b> de la ejecución y la "
+            "<b>evaluación</b>, con el legajo en Word o PDF."),
+          H2("11.3 Comunicaciones del bando"),
+          P("En la tarjeta <b>Comunicaciones</b> (derecha) se escriben mensajes al resto del bando. Las comunicaciones pueden "
+            "tener demoras o pérdidas si el director las simula.")]
+
+    # ---------------------------------------------------------------- 12 informe
+    h += H1("12. Informe y repetición")
+    h += figura("informe", "Barra de la repetición con sus vistas.")
+    h += [P("El botón <b>Informe</b> abre el análisis del ejercicio:"),
+          Bul(["<b>Resumen</b> de cada bando y <b>línea de tiempo</b> de combates y logística;",
+               "<b>repetición</b> del ejercicio sobre el mapa (con <b>Replay</b>, animada, con estelas y marcador);",
+               "<b>rúbrica</b> de evaluación por repartición y comparación entre ejercicios;",
+               "versión <b>imprimible</b>, <b>diapositivas</b> y exportación a <b>CSV</b>."])]
+
+    # ---------------------------------------------------------------- 13 direccion
+    h += H1("13. Dirección del ejercicio")
+    h += [Nota("Este capítulo es para el director del ejercicio: las funciones descritas no aparecen en las cuentas de los bandos.")]
+    h += [H2("13.1 Preparar un ejercicio")]
+    h += [Table([[figura("consola", "Pestaña CONSOLA.", ancho=5.6 * cm, alto_max=13 * cm, celda=True),
+                  [Bul(["<b>Nuevo</b> o <b>Desde plantilla…</b> (arriba) crea el escenario; <b>Guardar como plantilla…</b> guarda el "
+                        "actual para reutilizarlo.",
+                        "En CONSOLA: <b>Agregar unidad</b> (con el buscador del catálogo), <b>Objetivos y puntaje</b>, <b>Editar el "
+                        "escenario</b>, meteorología por zonas, calendario de la operación, identidad nacional, apresto y personal "
+                        "de cada bando.",
+                        "CONSOLA → <b>Escenario</b> → <b>Usuarios con acceso</b>: marque las cuentas que entran a este ejercicio."])]]],
+                colWidths=[5.9 * cm, ANCHO_TEXTO - 5.9 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += [H2("13.2 Conducir el ejercicio"),
+          Bul(["Abajo: <b>PONER EN MARCHA / DETENER EL RELOJ</b>, la velocidad y <b>+1 h</b>.",
+               "CONSOLA → <b>Reloj y configuración</b>: qué causas detienen el reloj solas (pausa automática), clima y hora.",
+               "CONSOLA → <b>Eventos e informes inyectados</b>: mensajes para un bando (con lugar en el mapa si quiere) y el ajuste "
+               "manual de una unidad, que queda en el informe.",
+               "CONSOLA → <b>Dirección del ejercicio</b>: interruptores del motor (niebla de guerra, fuego automático, clima, "
+               "noche, azar…) y el <b>adversario automático</b> para el bando que no tenga alumnos.",
+               "<b>Conducir Azul / Rojo</b> (arriba): dar órdenes como el comandante de un bando sin alumnos; <b>Dejar de conducir</b> "
+               "vuelve a la vista del director.",
+               "<b>Finalizar</b> cierra el ejercicio; <b>Duplicar</b> y <b>Archivar</b> están en CONSOLA → Escenario."]),
+          H2("13.3 Cuentas y usuarios"),
+          P("CONSOLA → <b>Usuarios</b>: crear cuentas, cambiar su repartición, restablecer contraseñas y aprobar las solicitudes "
+            "de cuenta pendientes. Para que una cuenta vea un ejercicio, márquela en CONSOLA → Escenario → <b>Usuarios con "
+            "acceso a este escenario</b>."),
+          Nota("Entregue las contraseñas en papel o en un documento aparte; no las publique en el aula ni en mensajes.")]
+
+    # ---------------------------------------------------------------- 14 problemas
+    h += H1("14. Problemas frecuentes")
+    h += [Tbl(["Problema", "Qué hacer"], [
+        ["«Esa acción corresponde a otra repartición»", "Cada repartición ordena solo sus unidades (2.8). Pídasela a quien la conduce, "
+                                                       "al Comandante o al JEM."],
+        ["No aparece el tipo de orden", "Esa unidad no puede cumplirla (por ejemplo, solo las aeronaves patrullan)."],
+        ["No aparece el blanco", "El enemigo no está detectado por su bando (capítulo 7)."],
+        ["La unidad no recibe órdenes", "Está embarcada, destruida o sin enlace (drones interferidos)."],
+        ["El reloj no avanza", "Si abajo dice RELOJ DETENIDO, el director debe ponerlo en marcha. Si arriba hay una franja PAUSA "
+                               "AUTOMÁTICA, el director lo reanuda. El reloj solo corre mientras alguien está conectado."],
+        ["La unidad no se mueve", "Puede estar sin combustible, varada ante un río sin paso o esperando en tierra: revise sus datos."],
+        ["La página no abre", "Revise la dirección: es la de la PC del Cóndor y termina en :8001. La PC debe estar en la misma red."],
+        ["Se desconectó", "El punto de conexión (arriba) en rojo indica que se perdió la conexión: recargue con F5."],
+        ["Se cerró el servidor", "El director lo vuelve a abrir con el acceso directo Condor; no se pierde lo hecho."],
+        ["Los cambios no se ven", "Recargue la página con Ctrl+F5."],
+    ], [5.2 * cm, ANCHO_TEXTO - 5.2 * cm])]
+
+    # ---------------------------------------------------------------- anexos
+    h += H1("Anexo A. Catálogo de modelos")
+    h += [P(f"Los {len(catalogo.MODELOS)} modelos del catálogo del Cóndor, agrupados por clase de unidad. Cada uno tiene su ficha "
+            "con foto de referencia, armamento y capacidades, que se ve en el simulador.")]
+    h += tabla_catalogo()
+    h += H1("Anexo B. Glosario")
+    h += [Tbl(["Término", "Significado"], [
+        ["APP-6", "Norma de simbología militar; alternativa a las miniaturas en el mapa."],
+        ["CAP", "Patrulla aérea de combate: aeronaves que orbitan una zona para interceptar."],
+        ["Clasificado / identificado", "Grados de conocimiento de un contacto enemigo (7.2)."],
+        ["Cuadro radar", "Lo que detecta ahora cada sensor del bando (7.3)."],
+        ["Doctrina / ROE", "Reglas con que las unidades actúan por su cuenta (6.1)."],
+        ["Estela", "Línea por donde pasó una unidad en el mapa."],
+        ["Flow sheet", "Cronograma de las misiones aéreas (5.3)."],
+        ["JEM", "Jefe de Estado Mayor."],
+        ["Niebla de guerra", "Cada bando solo ve lo que detecta."],
+        ["OTA", "Orden de tareas aéreas: datos de paquete, armamento, IFF y hora de cada misión."],
+        ["PRO", "Pista de recuperación operacional: tramo de carretera apto para operar aeronaves."],
+        ["TIEM", "Trabajo Integral de Estado Mayor (11.2)."],
+        ["TOT", "Hora sobre el blanco."],
+        ["Waypoint", "Punto de paso de una ruta."],
+    ], [4.6 * cm, ANCHO_TEXTO - 4.6 * cm])]
+    h += creditos()
+    doc.multiBuild(titulos_con_su_figura(h))
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--salida", default=str(RAIZ / "docs" / "Manual_Usuario_Condor.pdf"))
+    args = ap.parse_args()
+    salida = Path(args.salida)
+    salida.parent.mkdir(parents=True, exist_ok=True)
+    construir(salida)
+    print(f"{salida} ({salida.stat().st_size // 1024} KB, {FIG[0]} figuras)")
+
+
+if __name__ == "__main__":
+    main()

@@ -186,15 +186,27 @@ class Navegador:
         return salida
 
     def cerrar(self):
+        # Browser.close cierra Chrome entero: en Windows, terminar solo el proceso lanzado dejaba vivos al navegador y sus
+        # pestanas (cada corrida sumaba uno que seguia pidiendo teselas al servidor)
+        try:
+            self.enviar("Browser.close", espera=5)
+        except Exception:
+            pass
         try:
             self.ws.close()
-        finally:
-            self.proceso.terminate()
-            try:
-                self.proceso.wait(timeout=10)
-            except subprocess.TimeoutExpired:
+        except Exception:
+            pass
+        try:
+            self.proceso.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/T", "/F", "/PID", str(self.proceso.pid)], capture_output=True)
+            else:
                 self.proceso.kill()
+        try:
             self.perfil.cleanup()
+        except OSError:
+            pass  # algun archivo del perfil todavia en uso: queda en la carpeta temporal
 
 
 def anotar(ruta: Path, marcas: list[tuple[float, float, str]], origen=(0, 0), escala=1) -> Path:

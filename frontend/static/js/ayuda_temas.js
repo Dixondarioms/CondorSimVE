@@ -33,7 +33,7 @@
     {
       id: "pantalla", seccion: "Primeros pasos", titulo: "Las partes de la pantalla",
       claves: "pantalla paneles pestañas esconder ocultar plegar fuerzas situacion tiem consola mapa derecha izquierda estado del escenario objetivos capas comunicaciones alertas abajo reloj",
-      texto: `<ul><li><b>Izquierda</b>, en pestañas: <b>FUERZAS</b> (orden de batalla, doctrina, unidad seleccionada, aviación,
+      texto: `<ul><li><b>Izquierda</b>, en pestañas: <b>FUERZAS</b> (orden de batalla, doctrina, aviación, misiones aéreas,
         nueva orden y cola de órdenes), <b>SITUACIÓN</b> (cuadro radar, personal, apresto, infraestructura…), <b>TIEM</b>
         (trabajo de Estado Mayor) y, para el director, <b>CONSOLA</b>.</li>
         <li><b>Centro</b>: el mapa con las unidades, rutas, zonas y contactos.</li>
