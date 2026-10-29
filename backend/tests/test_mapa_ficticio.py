@@ -26,7 +26,7 @@ def test_la_region_ficticia_esta_en_pleno_atlantico_y_no_pisa_a_ninguna_otra():
     assert meta["ficticio"] is True and meta["z"] == 9
     oeste, sur, este, norte = meta["bbox"]
     for g in terreno.cargar().grillas:
-        if g.id == "teatro_ficticio":
+        if g.id in ("teatro_ficticio", "mundo"):  # el mundo cubre todo el planeta: el teatro queda encima, en el Atlantico
             continue
         o, s, e, n = g.meta["bbox"]
         assert e < oeste or o > este or n < sur or s > norte, g.id  # no se superponen

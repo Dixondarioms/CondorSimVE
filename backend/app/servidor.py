@@ -35,6 +35,14 @@ def main() -> int:
 
     import uvicorn
 
+    if sys.platform == "win32":
+        # El bucle por defecto de Windows (Proactor) cierra el puerto para siempre cuando un navegador corta de golpe
+        # una conexion que se estaba aceptando ("Accept failed on a socket", WinError 64): el simulador deja de
+        # responder sin caerse. El bucle Selector no tiene ese problema.
+        import asyncio
+
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        opciones["loop"] = "none"
     uvicorn.run("app.main:app", host=args.host, port=args.port, **opciones)
     return 0
 

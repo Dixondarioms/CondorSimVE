@@ -537,13 +537,16 @@
     // America hasta el 8), superpuesta al relieve y recortada al recuadro exacto de su region.
     const c = app.capas;
     c.baseRelieve = L.layerGroup().addTo(map);
+    // relieve de las regiones que tienen foto satelital en todos sus zooms: con la vista satelital queda tapado, asi
+    // que se quita del mapa para no pedir al servidor cientos de teselas que no se ven (con el mundo eran 8 capas)
+    c.baseRelieveCubierto = L.layerGroup().addTo(map);
     c.baseSatelite = L.layerGroup().addTo(map);
     const recortes = [];
     for (const m of mapas) {
       const limitesM = L.latLngBounds(Logica.limitesDe(m));
       L.tileLayer(`/static/tiles/${m.id}/{z}/{x}/{y}.jpg`, {
         minZoom: zoomMin, minNativeZoom: m.z_min, maxNativeZoom: m.z, maxZoom: 17, bounds: limitesM, zIndex: m.z,
-      }).addTo(c.baseRelieve);
+      }).addTo(m.satelite && m.satelite.z_min <= Math.max(zoomMin, m.z_min) ? c.baseRelieveCubierto : c.baseRelieve);
       if (!m.satelite) continue;
       const sat = L.tileLayer(`/static/tiles_sat/${m.id}/{z}/{x}/{y}.jpg`, {
         minZoom: Math.max(zoomMin, m.satelite.z_min), maxNativeZoom: m.satelite.z_max, maxZoom: 17, bounds: limitesM, zIndex: 20 + m.z,
@@ -577,8 +580,8 @@
 
     function elegirBaseMapa(nombre) {
       const satelite = nombre === "satelite";
-      if (satelite) c.baseSatelite.addTo(map);
-      else c.baseSatelite.remove();
+      if (satelite) { c.baseSatelite.addTo(map); c.baseRelieveCubierto.remove(); }
+      else { c.baseSatelite.remove(); c.baseRelieveCubierto.addTo(map); }
       $("base-satelite").classList.toggle("activa", satelite);
       $("base-satelite").setAttribute("aria-pressed", String(satelite));
       $("base-relieve").classList.toggle("activa", !satelite);
@@ -586,6 +589,7 @@
     }
     $("base-satelite").addEventListener("click", () => elegirBaseMapa("satelite"));
     $("base-relieve").addEventListener("click", () => elegirBaseMapa("relieve"));
+    elegirBaseMapa("satelite"); // la vista satelital es la de arranque
 
     c.referencias = L.layerGroup().addTo(map);
     c.bases_ven = L.layerGroup().addTo(map);
