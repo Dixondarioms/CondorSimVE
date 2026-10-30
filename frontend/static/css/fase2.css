@@ -151,6 +151,11 @@ body.videowall #replay { right: 14px; }
 .tarjeta-modelo .funcion { color: var(--texto); font-weight: 600; }
 .tarjeta-modelo .arma { color: var(--texto); }
 .tarjeta-modelo .credito a { color: var(--texto-sec); }
+.tarjeta-modelo:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
+.tarjeta-modelo .usar-modelo { margin-top: 8px; align-self: stretch; }
+/* base, cantidad y confirmacion siempre a la vista al recorrer las tarjetas */
+#dlg-aeronaves .aer-pie { position: sticky; bottom: -1px; z-index: 2; margin: 0 -4px -4px; padding: 8px 4px 4px;
+  background: var(--panel); border-top: 1px solid var(--borde); box-shadow: 0 24px 0 var(--panel); }
 .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; margin: 6px 0; }
 .specs div { background: rgba(0, 0, 0, .25); border-radius: 3px; padding: 3px 6px; }
 .specs dt { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--texto-sec); }

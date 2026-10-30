@@ -37,11 +37,15 @@
     }
 
     function tarjeta(m) {
-      const b = el("button", "tarjeta-modelo");
-      b.type = "button";
+      // la tarjeta se elige con un clic (o Enter/Espacio) y lleva su propio boton «Usar esta aeronave»
+      const b = el("div", "tarjeta-modelo");
+      b.tabIndex = 0;
       b.dataset.modelo = m.id;
       b.setAttribute("role", "radio");
       b.setAttribute("aria-checked", "false");
+      b.addEventListener("keydown", (e) => {
+        if (e.target === b && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); marcar(m.id); }
+      });
       const foto = el("img");
       foto.src = m.foto;
       foto.alt = m.nombre;
@@ -75,6 +79,12 @@
       enlace.addEventListener("click", (e) => e.stopPropagation());
       credito.appendChild(enlace);
       cuerpo.appendChild(credito);
+      const usar = el("button", "primario usar-modelo", "Usar esta aeronave");
+      usar.type = "button";
+      usar.title = modoActual && modoActual.tipo === "despegue"
+        ? "Despega en el acto, desde la base y con la cantidad elegidas abajo" : "Usa este modelo para la unidad";
+      usar.addEventListener("click", (e) => { e.stopPropagation(); usarModelo(m.id); });
+      cuerpo.appendChild(usar);
       b.append(foto, cuerpo);
       b.addEventListener("click", () => marcar(m.id));
       return b;
@@ -120,6 +130,13 @@
       sel.appendChild(Object.assign(el("option", "", `Todas (${todos.length})`), { value: "" }));
       presentes.forEach((c) => sel.appendChild(Object.assign(el("option", "", `${c.nombre} (${todos.filter((m) => m.clase === c.id).length})`), { value: c.id })));
       sel.value = presentes.some((c) => c.id === previo) ? previo : "";
+    }
+
+    /** «Usar esta aeronave»: la elige y confirma con la base y la cantidad de abajo (si el tope lo permite). */
+    function usarModelo(id) {
+      marcar(id);
+      if ($("aer-confirmar").disabled) return ctx.toast($("aer-resumen").textContent);
+      $("aer-form").requestSubmit($("aer-confirmar"));
     }
 
     function marcar(id) {
