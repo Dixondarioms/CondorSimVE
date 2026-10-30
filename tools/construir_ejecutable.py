@@ -115,6 +115,7 @@ DATOS
   El ejercicio "Juegos de Guerra 01-2026: Operacion Guri" necesita mas aeronaves por base y por bando:
   renombre backend\\data\\ajustes_catalogo.guri.json a ajustes_catalogo.json y reinicie Condor.exe.
 {nota_datos}
+Manual de usuario del Condor (pantalla por pantalla, con capturas): docs\\Manual_Usuario_Condor.pdf
 Manual de referencia del SIETE (instalacion y reglas del motor): docs\\Manual_SIETE.pdf
 
 El Condor (version en tiempo real del S.I.E.T.E.) fue desarrollado en la Division de Ingenieria y Desarrollo
@@ -177,7 +178,8 @@ def copiar_proyecto(destino: Path, fuera: set[str]) -> None:
     (destino / "frontend").mkdir(parents=True, exist_ok=True)
     shutil.copy2(RAIZ / "frontend" / "index.html", destino / "frontend" / "index.html")
     shutil.copytree(RAIZ / "frontend" / "static", destino / "frontend" / "static", ignore=ignorar)
-    for manual in (RAIZ / "docs" / "Manual_Usuario_SIETE.pdf", RAIZ / "docs" / "Manual_SIETE.pdf"):
+    for manual in (RAIZ / "docs" / "Manual_Usuario_Condor.pdf", RAIZ / "docs" / "Manual_Usuario_SIETE.pdf",
+                   RAIZ / "docs" / "Manual_SIETE.pdf"):
         if manual.exists():
             (destino / "docs").mkdir(exist_ok=True)
             shutil.copy2(manual, destino / "docs" / manual.name)
