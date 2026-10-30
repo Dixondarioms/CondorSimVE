@@ -1,0 +1,135 @@
+{
+ "a29": {
+  "modelo": "Airplane emb 314 Super Tucano",
+  "autor": "igor_ihs",
+  "licencia": "CC BY 4.0",
+  "origen": "https://www.thingiverse.com/thing:2290210 (copia: https://archive.org/details/thingiverse-2290210)",
+  "parametros": "&arriba=z&nariz=-z&color=8e99a6&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "at27": {
+  "modelo": "Short Tucano",
+  "autor": "mgg8",
+  "licencia": "CC0",
+  "origen": "https://sketchfab.com/3d-models/27e4951f09eb44a7a126184fd2681f91 (descarga: airmuseums.co.uk)",
+  "parametros": "&nariz=+z&pintar=1&color=8e99a6&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "k8": {
+  "modelo": "PAC K8 trainer",
+  "autor": "Waseem Shaukat",
+  "licencia": "CC BY 4.0",
+  "origen": "https://www.thingiverse.com/thing:5229573 (copia: https://archive.org/details/thingiverse-5229573)",
+  "parametros": "&arriba=z&nariz=+x&color=8e99a6&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "f22": {
+  "modelo": "F-22 Rapter Complete",
+  "autor": "Gabemiester08",
+  "licencia": "CC BY 4.0",
+  "origen": "https://www.thingiverse.com/thing:3699149 (copia: https://archive.org/details/thingiverse-3699149)",
+  "parametros": "&nariz=+z&color=8e99a6&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "fa18": {
+  "modelo": "F-18 Hornet",
+  "autor": "FoxFan",
+  "licencia": "CC BY 4.0",
+  "origen": "https://www.thingiverse.com/thing:5232638 (copia: https://archive.org/details/thingiverse-5232638)",
+  "parametros": "&arriba=z&nariz=+z&color=8e99a6&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "f35": {
+  "modelo": "Lockheed Martin F-35 Lightning II",
+  "autor": "mgg8",
+  "licencia": "CC0",
+  "origen": "https://sketchfab.com/3d-models/1161f64164ce481189ce67d39502c068 (descarga: airmuseums.co.uk)",
+  "parametros": "&nariz=+z&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "mi17": {
+  "modelo": "Hip H Helicopter (Mi-17)",
+  "autor": "Pfelpensson",
+  "licencia": "CC BY 4.0",
+  "origen": "https://www.thingiverse.com/thing:4592107 (copia: https://archive.org/details/thingiverse-4592107)",
+  "parametros": "&arriba=z&nariz=-z&color=6b7558&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "mi24": {
+  "modelo": "Soviet rotary wing (Mi-24D)",
+  "autor": "mgg8",
+  "licencia": "CC0",
+  "origen": "https://sketchfab.com/3d-models/21f5bfe5f831452b816391c1cbe99c5c (descarga: airmuseums.co.uk)",
+  "parametros": "&nariz=+z&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "ah64": {
+  "modelo": "AH-64 Apache and AH-1 Cobra",
+  "autor": "mgg8",
+  "licencia": "CC0",
+  "origen": "https://sketchfab.com/3d-models/d52dfce9eed74c14b602fca5869fea56 (descarga: airmuseums.co.uk)",
+  "parametros": "&nariz=+z&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "mq1": {
+  "modelo": "General Atomics MQ-1 Predator",
+  "autor": "mgg8",
+  "licencia": "CC0",
+  "origen": "https://sketchfab.com/3d-models/969dd1f037ad44fe9ae9eb82fce6bff8 (descarga: airmuseums.co.uk)",
+  "parametros": "&nariz=+z&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "shahed136": {
+  "modelo": "Shahed-136 (Geran-2) scale model",
+  "autor": "Yprit",
+  "licencia": "CC BY 4.0",
+  "origen": "https://www.thingiverse.com/thing:5807626 (copia: https://archive.org/details/thingiverse-5807626)",
+  "parametros": "&rotz=90&nariz=+z&color=b8b4a8&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "e2": {
+  "modelo": "Northrop Grumman E-2 Hawkeye",
+  "autor": "IronManMX",
+  "licencia": "CC0",
+  "origen": "https://www.thingiverse.com/thing:5371937 (copia: https://archive.org/details/thingiverse-5371937)",
+  "parametros": "&nariz=+z&color=8e99a6&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "b737": {
+  "modelo": "Boeing 707, 737 and 747",
+  "autor": "mgg8",
+  "licencia": "CC0",
+  "origen": "https://sketchfab.com/3d-models/e3224d0aa8c54f41a612ac74e35e045e (descarga: airmuseums.co.uk)",
+  "parametros": "&nariz=+z&pintar=1&color=8e99a6&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "bmp3": {
+  "modelo": "BMP-3 IFV (1/100)",
+  "autor": "thommo1137",
+  "licencia": "CC BY 4.0",
+  "origen": "https://www.thingiverse.com/thing:4087551 (copia: https://archive.org/details/thingiverse-4087551)",
+  "parametros": "&arriba=z&nariz=+z&color=5f6b40&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "2s19": {
+  "modelo": "2S19 MSTA SP Artillery",
+  "autor": "cpangracs",
+  "licencia": "CC BY 4.0",
+  "origen": "https://www.thingiverse.com/thing:4674581 (copia: https://archive.org/details/thingiverse-4674581)",
+  "parametros": "&arriba=z&nariz=+x&color=5f6b40&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "ural4320": {
+  "modelo": "Ural 4320 Truck (1/285)",
+  "autor": "Pfelpensson",
+  "licencia": "CC BY 4.0",
+  "origen": "https://www.thingiverse.com/thing:4597363 (copia: https://archive.org/details/thingiverse-4597363)",
+  "parametros": "&arriba=z&nariz=+z&color=5f6b40&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "ddg51": {
+  "modelo": "Arleigh Burke Class Destroyer",
+  "autor": "Scuderia",
+  "licencia": "CC BY 4.0",
+  "origen": "https://www.thingiverse.com/thing:4207292 (copia: https://archive.org/details/thingiverse-4207292)",
+  "parametros": "&arriba=z&nariz=+z&color=7f8a94&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "ffg7": {
+  "modelo": "USS Oliver Hazard Perry (FFG-7)",
+  "autor": "R_ain_D_own_",
+  "licencia": "CC BY 4.0",
+  "origen": "https://www.thingiverse.com/thing:3581945 (copia: https://archive.org/details/thingiverse-3581945)",
+  "parametros": "&nariz=+z&color=7f8a94&largo=10&marco=auto&pasos=24&px=256"
+ },
+ "nimitz": {
+  "modelo": "USS Carl Vinson Nimitz Class",
+  "autor": "VinnyBoomBoom",
+  "licencia": "CC BY 4.0",
+  "origen": "https://www.thingiverse.com/thing:2104619 (copia: https://archive.org/details/thingiverse-2104619)",
+  "parametros": "&arriba=z&nariz=+x&color=7f8a94&largo=10&marco=auto&pasos=24&px=256"
+ }
+}

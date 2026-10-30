@@ -11,6 +11,7 @@ guarda en --salida. Los .glb NO se copian al repositorio: sus licencias (Sketchf
 """
 
 import argparse
+import json
 import re
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -27,12 +28,24 @@ def crear_manejador(modelos: dict[str, Path], salida: Path):
 
         def do_GET(self):
             ruta = urlparse(self.path).path
+            if ruta.startswith("/partes/"):  # partes de un modelo: [{"url", "ext"}] (render.mjs las carga y las junta)
+                clave = ruta[len("/partes/"):]
+                cuerpo = json.dumps([{"url": f"/modelos/{clave}/{i}", "ext": p.suffix.lower().lstrip(".")}
+                                     for i, p in enumerate(modelos.get(clave, []))]).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(cuerpo)))
+                self.end_headers()
+                self.wfile.write(cuerpo)
+                return
             if ruta.startswith("/modelos/"):
-                archivo = modelos.get(ruta[len("/modelos/"):].removesuffix(".glb"))
+                clave, _, n = ruta[len("/modelos/"):].removesuffix(".glb").partition("/")
+                partes = modelos.get(clave, [])
+                archivo = partes[int(n)] if n.isdigit() and int(n) < len(partes) else (partes[0] if partes and not n else None)
                 if archivo is None or not archivo.is_file():
                     return self.send_error(404, "modelo no configurado")
                 self.send_response(200)
-                self.send_header("Content-Type", "model/gltf-binary")
+                self.send_header("Content-Type", "application/octet-stream")
                 self.send_header("Content-Length", str(archivo.stat().st_size))
                 self.end_headers()
                 with archivo.open("rb") as f:
@@ -61,14 +74,14 @@ def crear_manejador(modelos: dict[str, Path], salida: Path):
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--modelo", action="append", default=[], help="id=ruta.glb (repetible)")
+    ap.add_argument("--modelo", action="append", default=[], help="id=ruta (glb, stl u obj; varias partes separadas por ;) (repetible)")
     ap.add_argument("--salida", default=str(AQUI / "salida"), help="carpeta donde se guardan los PNG")
     ap.add_argument("--puerto", type=int, default=8766)
     a = ap.parse_args()
     modelos = {}
     for m in a.modelo:
         clave, _, ruta = m.partition("=")
-        modelos[clave] = Path(ruta)
+        modelos[clave] = [Path(r) for r in ruta.split(";") if r]
     servidor = ThreadingHTTPServer(("127.0.0.1", a.puerto), crear_manejador(modelos, Path(a.salida)))
     print(f"Servidor en http://127.0.0.1:{a.puerto}/render.html  (salida: {a.salida})")
     servidor.serve_forever()

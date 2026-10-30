@@ -960,7 +960,7 @@
 
   /** Si la unidad se dibuja con su miniatura 3D (y no con el simbolo APP-6). */
   function conMiniatura(u) {
-    return !app.simbolosApp6 && (Modelo3d.tieneSprite(u.modelo) || !!Modelo3d.mallaPara(u));
+    return !app.simbolosApp6 && (!!Modelo3d.spritePara(u) || !!Modelo3d.mallaPara(u));
   }
 
   /** Base aerea sobre su plano real y con el mapa cerca: una ficha pequeña que no tapa la pista. */

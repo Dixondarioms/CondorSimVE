@@ -9,6 +9,9 @@
  * (`largo` en metros y `marco` = semilado del cuadro en metros), asi que un Su-33 se ve mayor que un F-16. */
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { STLLoader } from "three/addons/loaders/STLLoader.js";
+import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 const q = new URLSearchParams(location.search);
@@ -35,10 +38,31 @@ sol.position.set(-0.45, 0.84, 0.3).multiplyScalar(40); // arriba, desde el oeste
 escena.add(sol);
 escena.add(new THREE.HemisphereLight(0xe3ecff, 0x59636f, 0.7));
 
-const cargador = new GLTFLoader();
-log(`Cargando /modelos/${id}.glb ...`);
-const gltf = await cargador.loadAsync(`/modelos/${id}.glb`, (e) => { if (e.total) estado.firstChild.textContent = `Cargando ${id}: ${Math.round((100 * e.loaded) / e.total)} %`; });
-const modelo = gltf.scene;
+// Las partes del modelo (glb con su pintura; STL u OBJ sin ella: se pintan de un solo tono, ?color=rrggbb).
+const pintura = new THREE.MeshStandardMaterial({ color: new THREE.Color(`#${q.get("color") || "8e99a6"}`), roughness: 0.62, metalness: 0.18 });
+async function cargarParte({ url, ext }) {
+  if (ext === "stl") {
+    const geo = await new STLLoader().loadAsync(url);
+    geo.computeVertexNormals();
+    return new THREE.Mesh(geo, pintura);
+  }
+  if (ext === "obj") {
+    const obj = await new OBJLoader().loadAsync(url);
+    obj.traverse((o) => { if (o.isMesh) { o.geometry.computeVertexNormals(); o.material = pintura; } });
+    return obj;
+  }
+  return (await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(url)).scene; // glb comprimidos (glTF-Transform)
+}
+log(`Cargando las partes de ${id} ...`);
+const partes = await (await fetch(`/partes/${id}`)).json();
+const modelo = new THREE.Group();
+for (const p of partes) modelo.add(await cargarParte(p));
+// los STL suelen venir con Z hacia arriba (impresion 3D): ?arriba=z los endereza (Y arriba, como glTF); ?rotz=90 gira
+// sobre Z los que vienen acostados de costado
+if (q.get("arriba") === "z") modelo.rotation.x = -Math.PI / 2;
+if (q.get("rotz")) modelo.rotation.z = (Number(q.get("rotz")) * Math.PI) / 180;
+// ?pintar=1: un solo tono tambien para los glb (p. ej. para quitar escarapelas o libreas ajenas)
+if (q.get("pintar")) modelo.traverse((o) => { if (o.isMesh) o.material = pintura; });
 escena.add(modelo);
 modelo.updateMatrixWorld(true);
 const caja = new THREE.Box3().setFromObject(modelo);
@@ -77,7 +101,7 @@ if (modo === "inspeccion") {
   // ---- render de sprites
   const nariz = q.get("nariz") || "-z";
   const largo = Number(q.get("largo") || 15);
-  const marco = Number(q.get("marco") || 13);
+  const marcoPedido = q.get("marco") || "13";
   const eje = { "+x": [1, 0, 0], "-x": [-1, 0, 0], "+z": [0, 0, 1], "-z": [0, 0, -1] }[nariz];
   const alineador = new THREE.Group();
   escena.remove(modelo);
@@ -88,6 +112,12 @@ if (modo === "inspeccion") {
   alineador.quaternion.setFromUnitVectors(new THREE.Vector3(...eje), new THREE.Vector3(0, 0, -1)); // proa al norte (-z)
   const largoModelo = Math.abs(eje[0]) ? tam.x : tam.z;
   alineador.scale.setScalar(largo / largoModelo);
+  // marco=auto: el cuadro justo para que el modelo quepa en cualquier rumbo (radio horizontal + algo de su altura)
+  giro.updateMatrixWorld(true);
+  const caja2 = new THREE.Box3().setFromObject(giro).getSize(new THREE.Vector3());
+  const marco = marcoPedido === "auto"
+    ? Math.round((1.04 * Math.hypot(caja2.x / 2, caja2.z / 2) + 0.35 * caja2.y) * 100) / 100
+    : Number(marcoPedido);
   const cam = camara(marco);
   cam.position.set(0, Math.sin(PITCH) * 100, Math.cos(PITCH) * 100);
   cam.lookAt(0, 0, 0);
@@ -106,5 +136,5 @@ if (modo === "inspeccion") {
     if (!resp.ok) { log(`ERROR guardando ${nombre}: ${resp.status}`); break; }
   }
   log(`Terminado: ${pasos} imagenes de ${id} guardadas.`);
-  document.title = `LISTO ${id}`;
+  document.title = `LISTO ${id} marco=${marco}`;
 }

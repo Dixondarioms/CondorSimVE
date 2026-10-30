@@ -22,3 +22,16 @@ Con el servidor en marcha, abra en el navegador (necesita WebGL):
 
 Si cambia el `marco` de un modelo, actualice `SPRITES` en `frontend/static/js/modelo3d.js`.
 Los `.glb` **no se versionan** (licencia Sketchfab Standard): están en `.gitignore`.
+
+## Modelos con licencia libre (STL, OBJ y glb comprimidos)
+
+`servidor.py` acepta varias partes por modelo (`--modelo t72=casco.stl;torre.stl`) y `render.mjs` lee glb (también
+comprimidos con meshopt), STL y OBJ. Parámetros extra del render:
+
+- `arriba=z`: endereza los STL de impresión 3D (Z arriba); `rotz=90`: gira los que vienen de costado;
+- `color=rrggbb`: tono de los modelos sin pintura; `pintar=1`: ese tono también para un glb (quita libreas ajenas);
+- `marco=auto`: el cuadro justo para que el modelo quepa en cualquier rumbo (el título de la página dice cuál fue).
+
+Los parámetros, autor, licencia y origen de cada modelo están en `modelos.json`; los modelos descargados quedan fuera
+del repositorio (en esta PC, `Documents\Modelos3D_Condor`). El `marco` y el tamaño en pantalla (`tam`) de cada uno van
+en `SPRITES` (`frontend/static/js/modelo3d.js`).

@@ -421,15 +421,61 @@
   const tamanoSugerido = (base, n) => Math.round(base * ((n || 1) <= 1 ? 1 : n === 2 ? 1.35 : 1.65));
 
   // ---------------------------------------------------------------- sprites de modelos 3D reales
-  // `marco`: semilado (m) del cuadro con el que se renderizo cada imagen; el tamaño real se conserva porque
-  // todas las imagenes se dibujan a la misma escala de pixeles por metro.
-  const SPRITES = { f16: { marco: 9.6 }, su30: { marco: 14 } };
+  // Imagenes renderizadas de modelos 3D reales (tools/sprites3d, 24 rumbos), por id de sprite:
+  //   marco: semilado (m) del cuadro con el que se renderizo; los cazas se dibujan a la misma escala de pixeles por
+  //          metro, asi conservan su tamaño relativo real;
+  //   tam:   si esta, el cuadro mide en pantalla `tam` veces el de un caza (como las mallas procedurales): vehiculos y
+  //          buques se agrandan para que se vean en el mapa;
+  //   suelo: unidad de superficie (una sola imagen, sin formacion); modelos y clases: unidades que usan el sprite.
+  const SPRITES = {
+    f16: { marco: 9.6, modelos: ["f16_b70"] },
+    su30: { marco: 14 },
+    // modelos 3D con licencia libre (frontend/static/aeronaves/CREDITOS.md, tools/sprites3d/modelos.json)
+    a29: { marco: 7.8, tam: 0.95 },
+    at27: { marco: 9.15, tam: 0.95 },
+    k8: { marco: 8.37, tam: 0.95, modelos: ["ataque_ligero"] },
+    f22: { marco: 7.12, tam: 1.1 },
+    fa18: { marco: 7.39, tam: 1, modelos: ["fa18ef", "ea18g", "caza_embarcado"] },
+    f35: { marco: 7.29, tam: 1, modelos: ["f35a", "f35b"] },
+    mi17: { marco: 6.53, tam: 1.05, modelos: ["helo_transporte", "mi8amtsh"] },
+    mi24: { marco: 7.96, tam: 1, modelos: ["helo_ataque"] },
+    ah64: { marco: 7.43, tam: 1, modelos: ["ah64e"] },
+    mq1: { marco: 11.96, tam: 0.9 },
+    shahed136: { marco: 9.22, tam: 0.62 },
+    e2: { marco: 9.65, tam: 1.3, modelos: ["e2d"] },
+    b737: { marco: 8.39, tam: 1.6, clases: ["cisterna"] },
+    bmp3: { marco: 6.61, tam: 0.88, suelo: true, clases: ["blindado"] },
+    "2s19": { marco: 6.83, tam: 0.9, suelo: true, modelos: ["msta_s"], clases: ["artilleria"] },
+    ural4320: { marco: 6.82, tam: 1.05, suelo: true, clases: ["transporte"] },
+    ddg51: { marco: 6.17, tam: 1.7, suelo: true, modelos: ["arleigh_burke"], clases: ["destructor"] },
+    ffg7: { marco: 6.23, tam: 1.5, suelo: true, clases: ["fragata"] },
+    nimitz: { marco: 6.42, tam: 2.2, suelo: true, clases: ["portaaviones"] },
+  };
+  const SPRITE_DE_MODELO = {};
+  const SPRITE_DE_CLASE = {};
+  for (const [id, s] of Object.entries(SPRITES)) {
+    for (const m of s.modelos || []) SPRITE_DE_MODELO[m] = id;
+    for (const c of s.clases || []) SPRITE_DE_CLASE[c] = id;
+  }
+  const propio = (obj, k) => k !== undefined && k !== null && Object.prototype.hasOwnProperty.call(obj, k);
   const PASO_RUMBO = 15;
   const MARCO_REF = 14; // el cuadro del Su-30 (28 m) equivale al tamaño base en pixeles
   const SEPARACION_M = 9; // metros que representa una unidad de la formacion
   const RUTA_SPRITES = "/static/aeronaves";
 
-  const tieneSprite = (modelo) => Object.prototype.hasOwnProperty.call(SPRITES, modelo);
+  const tieneSprite = (modelo) => propio(SPRITES, modelo);
+
+  /**
+   * Sprite de una unidad: el de su modelo, el de un modelo que lo comparte (F-16 Block 70 = F-16), el de su clase si
+   * su modelo no tiene malla propia mas fiel, o null.
+   */
+  function spritePara(u) {
+    if (!u) return null;
+    if (tieneSprite(u.modelo)) return u.modelo;
+    if (propio(SPRITE_DE_MODELO, u.modelo)) return SPRITE_DE_MODELO[u.modelo];
+    if (u.modelo && (propio(MALLAS, u.modelo) || propio(POR_MODELO, u.modelo))) return null;
+    return propio(SPRITE_DE_CLASE, u.clase) ? SPRITE_DE_CLASE[u.clase] : null;
+  }
 
   /** Imagen del modelo para un rumbo cualquiera (se elige la de 15 grados mas cercana). */
   function urlSprite(modelo, rumbo) {
@@ -442,8 +488,11 @@
    * `base`: pixeles que mide el cuadro de un Su-30 solo. Devuelve { ancho, alto, imagenes: [{ url, x, y, lado }] }.
    */
   function disposicion({ modelo, rumbo = 0, n = 1, base = 50 } = {}) {
-    const ppm = base / (2 * MARCO_REF);
-    const lado = 2 * SPRITES[modelo].marco * ppm;
+    const sp0 = SPRITES[modelo];
+    if (sp0.suelo) n = 1;
+    // con `tam`, la escala sale del tamaño en pantalla pedido; sin el, de los metros reales (cazas)
+    const ppm = sp0.tam ? (base * sp0.tam) / (2 * sp0.marco) : base / (2 * MARCO_REF);
+    const lado = 2 * sp0.marco * ppm;
     const th = (((rumbo % 360) + 360) % 360) * (Math.PI / 180);
     const c = Math.cos(th), s = Math.sin(th);
     const sp = Math.sin(PITCH);
@@ -465,17 +514,32 @@
   const rumboDibujo = (id, r) => (info(id).rumbo === null || info(id).rumbo === undefined ? r : info(id).rumbo);
 
   /** Tamaño relativo (respecto de un caza) con que se dibuja la miniatura de una unidad. */
-  const tamRelativo = (u) => { const id = mallaPara(u); return id ? info(id).tam : 1; };
+  const tamRelativo = (u) => {
+    const sp = spritePara(u);
+    if (sp) return SPRITES[sp].tam || SPRITES[sp].marco / MARCO_REF;
+    const id = mallaPara(u);
+    return id ? info(id).tam : 1;
+  };
 
   /**
    * Marcador de una unidad: { html, ancho, alto }. F-16 y Su-30 con sus imagenes reales; el resto con su malla
    * procedural. `base`: pixeles del cuadro de un caza solo; cada malla lo escala con su `tam`.
    */
   function marcador({ modelo, clase, rumbo = 0, bando = "neutro", n = 1, base = 50 } = {}) {
-    if (tieneSprite(modelo)) {
-      const d = disposicion({ modelo, rumbo, n, base });
+    const sprite = spritePara({ modelo, clase });
+    if (sprite) {
+      const d = disposicion({ modelo: sprite, rumbo, n, base });
       const imgs = d.imagenes.map((i) => `<img src="${i.url}" alt="" draggable="false" style="left:${i.x}px;top:${i.y}px;width:${i.lado}px;height:${i.lado}px">`).join("");
-      return { html: `<div class="avion3d-grupo ${bando}" style="width:${d.ancho}px;height:${d.alto}px">${imgs}</div>`, ancho: d.ancho, alto: d.alto };
+      const suelo = !!SPRITES[sprite].suelo;
+      // lo que esta en tierra o en el agua lleva la peana del color del bando, como las mallas
+      const cp = COLOR_PEANA[bando] || COLOR_PEANA.neutro;
+      const r = d.ancho * 0.46;
+      const f = (v) => (Math.round(v * 100) / 100).toString();
+      const peana = suelo
+        ? `<svg class="peana" width="${d.ancho}" height="${d.alto}" viewBox="${-d.ancho / 2} ${-d.alto / 2} ${d.ancho} ${d.alto}" aria-hidden="true">`
+          + `<ellipse cx="0" cy="0" rx="${f(r)}" ry="${f(r * Math.sin(PITCH))}" fill="rgba(${cp},.22)" stroke="rgba(${cp},.95)" stroke-width="${f(Math.max(1.2, d.ancho * 0.03))}"/></svg>`
+        : "";
+      return { html: `<div class="avion3d-grupo ${bando}" style="width:${d.ancho}px;height:${d.alto}px">${peana}${imgs}</div>`, ancho: d.ancho, alto: d.alto, suelo };
     }
     const id = mallaPara({ modelo, clase }) || "generico";
     const suelo = !!info(id).suelo;
@@ -484,12 +548,16 @@
   }
 
   /** Si la miniatura de esa unidad gira con su rumbo (las instalaciones fijas no). */
-  const gira = (u) => { const id = mallaPara(u); return !!id && (info(id).rumbo === null || info(id).rumbo === undefined); };
+  const gira = (u) => {
+    if (spritePara(u)) return true; // los sprites tienen sus 24 rumbos
+    const id = mallaPara(u);
+    return !!id && (info(id).rumbo === null || info(id).rumbo === undefined);
+  };
 
   const primitivas = { pieza, enCapa, fuselaje, placa, caja, espejo, secciones, cilindro, esfera, disco, transformar };
 
   const api = {
-    svg, proyectar, semilado, mallaPara, formacion, rumbo, tamanoSugerido, marcador, disposicion, urlSprite, tieneSprite,
+    svg, proyectar, semilado, mallaPara, formacion, rumbo, tamanoSugerido, marcador, disposicion, urlSprite, tieneSprite, spritePara,
     registrar, primitivas, tamRelativo, gira, info,
     get MALLAS() { return Object.keys(MALLAS); },
     SPRITES: Object.keys(SPRITES), PASO_RUMBO,

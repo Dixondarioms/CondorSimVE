@@ -13,7 +13,7 @@ test("urlSprite elige la imagen de 15 grados mas cercana y da la vuelta en 360",
   assert.equal(M.urlSprite("su30", 735), "/static/aeronaves/su30_015.png");
 });
 
-test("solo F-16 y Su-30 tienen imagenes reales; el resto usa el respaldo procedural", () => {
+test("los modelos con imagenes reales las usan; el resto, el respaldo procedural", () => {
   assert.equal(M.tieneSprite("f16"), true);
   assert.equal(M.tieneSprite("su30"), true);
   assert.equal(M.tieneSprite("generico"), false);
@@ -103,4 +103,31 @@ test("proyectar es determinista y depende del rumbo", () => {
   const a = JSON.stringify(M.proyectar({ modelo: "su30", rumbo: 30 }).caras);
   assert.equal(a, JSON.stringify(M.proyectar({ modelo: "su30", rumbo: 30 }).caras));
   assert.notEqual(a, JSON.stringify(M.proyectar({ modelo: "su30", rumbo: 120 }).caras));
+});
+
+test("spritePara: el del modelo, el de un modelo que lo comparte y nunca por el prototipo", () => {
+  assert.equal(M.spritePara({ modelo: "f16", clase: "caza" }), "f16");
+  assert.equal(M.spritePara({ modelo: "f16_b70", clase: "caza" }), "f16"); // el Block 70 usa la imagen del F-16
+  assert.equal(M.spritePara({ modelo: "su30", clase: "caza" }), "su30");
+  assert.equal(M.spritePara({ modelo: "toString", clase: "constructor" }), null);
+  assert.equal(M.spritePara(null), null);
+  assert.equal(M.gira({ modelo: "f16_b70", clase: "caza" }), true);
+});
+
+test("cada sprite tiene sus 24 rumbos en disco y las unidades de superficie llevan peana", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  for (const id of M.SPRITES) {
+    for (let r = 0; r < 360; r += M.PASO_RUMBO) {
+      const f = path.join(__dirname, "..", "static", "aeronaves", `${id}_${String(r).padStart(3, "0")}.png`);
+      assert.ok(fs.existsSync(f), f);
+    }
+  }
+  assert.equal(M.spritePara({ modelo: "a29", clase: "ataque" }), "a29");
+  assert.equal(M.spritePara({ modelo: "ataque_ligero", clase: "ataque" }), "k8");
+  assert.equal(M.spritePara({ modelo: "", clase: "destructor" }), "ddg51");
+  const buque = M.marcador({ clase: "destructor", bando: "rojo", n: 3, base: 50 });
+  assert.equal(buque.suelo, true);
+  assert.equal((buque.html.match(/<img /g) || []).length, 1); // sin formacion
+  assert.match(buque.html, /<ellipse cx="0" cy="0"[^>]*rgba\(239,35,60/);
 });
