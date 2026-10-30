@@ -303,6 +303,22 @@ body.repitiendo #leyenda-mapa { bottom: 120px; }
 .flecha svg { overflow: visible; filter: drop-shadow(0 0 3px rgba(0, 0, 0, .8)); }
 path.ruta-anim { animation: marcha 1.2s linear infinite; }
 
+/* ---------- zoom y centrado del mapa (app.js: initMapa), junto a la pestañita del panel derecho ---------- */
+.controles-mapa {
+  position: absolute; top: calc(50% - 160px); right: calc(var(--ancho-der) + 38px); z-index: 1150;
+  display: flex; flex-direction: column; border: 1px solid var(--borde); border-radius: 8px; overflow: hidden;
+  background: rgba(21, 21, 22, .93); box-shadow: var(--sombra);
+}
+.controles-mapa button {
+  width: 38px; height: 38px; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
+  color: var(--texto); font-size: 22px; font-weight: 600; line-height: 1; cursor: pointer; display: grid; place-items: center;
+}
+.controles-mapa button + button { border-top: 1px solid var(--borde); }
+.controles-mapa button:hover { background: var(--azul); color: #fff; }
+.controles-mapa svg { width: 20px; height: 20px; }
+body.der-oculto .controles-mapa { right: 30px; }
+body.videowall .controles-mapa { opacity: 0; pointer-events: none; }
+
 /* ---------- paneles plegables (app.js: plegar) ---------- */
 .pliegue {
   position: absolute; top: 50%; transform: translateY(-50%); z-index: 1150; width: 18px; height: 64px; padding: 0; margin: 0;
@@ -575,6 +591,8 @@ fieldset.pausa-auto legend { font-size: 12px; color: var(--texto-sec); padding: 
   .cab-der { gap: 6px; }
   #panel-izq { border-right: 0; border-bottom: 1px solid var(--borde); }
   #panel-der, #leyenda-mapa, .pliegue-der { display: none; }
+  .controles-mapa { top: 56px; right: 8px; }
+  .controles-mapa button { width: 44px; height: 44px; }
   .panel-unidad { right: 0; }
   :root { --alto-unidad: 46vh; }
   .pu-cuerpo { grid-template-columns: 1fr; overflow-y: auto; }

@@ -43,6 +43,8 @@
     { sel: "#map", titulo: "El mapa", texto: `<p>Rueda del ratón: acercar o alejar. Arrastrar: mover el mapa. Clic sobre una unidad:
       seleccionarla. Pase el cursor sobre una unidad para ver su tarjeta.</p><p>Un enemigo dudoso lleva un <b>círculo amarillo</b>
       (dónde puede estar en realidad); las unidades que se mueven dejan una <b>estela</b>.</p>` },
+    { sel: "#controles-mapa", titulo: "Acercar, alejar y centrar", texto: `<p><b>+</b> y <b>−</b> acercan y alejan el mapa. La
+      <b>mira</b> lo centra en la unidad seleccionada o, sin selección, en todas las de su bando.</p>` },
     { sel: "#barra-graficos", titulo: "Gráficos tácticos", texto: `<p>Para dibujar líneas de fase, ejes de avance, zonas de reunión y
       puntos de control, visibles para todos o solo para su bando.</p>` },
     { sel: "#barra-herramientas", titulo: "Herramientas del mapa", texto: `<p>La <b>Regla</b> mide distancias y <b>Convertir</b> pasa

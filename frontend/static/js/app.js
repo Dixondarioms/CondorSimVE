@@ -529,7 +529,10 @@
     map.fitBounds(L.latLngBounds(Logica.limitesDe(principal)));
     app.map = map;
     window.__mapa = map; // lo usan las herramientas de capturas del manual (tools/manual/navegador.py)
-    L.control.zoom({ position: "bottomright" }).addTo(map);
+    // zoom y centrado: botones propios sobre el borde del mapa (el control de Leaflet quedaba tapado por el panel derecho)
+    $("btn-zoom-mas").addEventListener("click", () => map.zoomIn());
+    $("btn-zoom-menos").addEventListener("click", () => map.zoomOut());
+    $("btn-centrar").addEventListener("click", centrarMapa);
     L.control.attribution({ position: "bottomleft", prefix: false })
       .addAttribution("Satélite: Sentinel-2 cloudless (EOX, CC BY 4.0) · Relieve: SRTM/GMTED (AWS Terrain Tiles) · Cobertura: ESA WorldCover · Vectores: Natural Earth · Aeródromos y carreteras: © colaboradores de OpenStreetMap (ODbL) y Natural Earth").addTo(map);
 
@@ -956,6 +959,20 @@
       const color = enemiga ? "#EF233C" : "#3A86FF";
       L.circle([u.lat, u.lon], { radius: u.alcance_km * 1000, color, weight: 1, opacity: 0.6, dashArray: "4 6", fillColor: color, fillOpacity: 0.035, interactive: false }).addTo(g);
     }
+  }
+
+  /** Centra el mapa en la unidad seleccionada o, sin seleccion, en todas las unidades activas de su bando (el
+   * director, en las de los dos). */
+  function centrarMapa() {
+    if (!app.map || !app.data) return;
+    const sel = app.porId.get(app.seleccion);
+    if (sel) {
+      app.map.setView([sel.lat, sel.lon], Math.max(app.map.getZoom(), 9));
+      return;
+    }
+    const vista = bandoVista();
+    const puntos = app.data.unidades.filter((u) => u.estado === "activa" && (!vista || u.bando === vista)).map((u) => [u.lat, u.lon]);
+    if (puntos.length) app.map.fitBounds(puntos, { padding: [80, 80], maxZoom: 10 });
   }
 
   /** Si la unidad se dibuja con su miniatura 3D (y no con el simbolo APP-6). */

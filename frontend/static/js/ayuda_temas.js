@@ -32,7 +32,7 @@
     },
     {
       id: "pantalla", seccion: "Primeros pasos", titulo: "Las partes de la pantalla",
-      claves: "pantalla paneles pestañas esconder ocultar plegar fuerzas situacion tiem consola mapa derecha izquierda estado del escenario objetivos capas comunicaciones alertas abajo reloj",
+      claves: "pantalla zoom acercar alejar centrar mira paneles pestañas esconder ocultar plegar fuerzas situacion tiem consola mapa derecha izquierda estado del escenario objetivos capas comunicaciones alertas abajo reloj",
       texto: `<ul><li><b>Izquierda</b>, en pestañas: <b>FUERZAS</b> (orden de batalla, doctrina, aviación, misiones aéreas,
         nueva orden y cola de órdenes), <b>SITUACIÓN</b> (cuadro radar, personal, apresto, infraestructura…), <b>TIEM</b>
         (trabajo de Estado Mayor) y, para el director, <b>CONSOLA</b>.</li>
@@ -41,7 +41,10 @@
         <li><b>Abajo</b>: al elegir una unidad, sus datos (foto, misión, estado, capacidades y armamento); y el reloj del
         ejercicio y quién conduce cada bando.</li></ul>
         <p>Las pestañitas <b>◀</b> y <b>▶</b> en los bordes del mapa esconden el panel de la izquierda o las tarjetas de
-        la derecha, para ver el mapa más grande; con un clic vuelven a aparecer.</p>`,
+        la derecha, para ver el mapa más grande; con un clic vuelven a aparecer.</p>
+        <p>Junto al borde derecho del mapa están <b>+</b> y <b>−</b> para acercar y alejar, y el botón <b>Centrar</b> (la mira):
+        lleva el mapa a la unidad seleccionada o, sin selección, encuadra todas las unidades de su bando. También se acerca
+        con la rueda del ratón o las teclas + y −.</p>`,
     },
     {
       id: "reparticiones", seccion: "Primeros pasos", titulo: "Qué ordena cada repartición",
