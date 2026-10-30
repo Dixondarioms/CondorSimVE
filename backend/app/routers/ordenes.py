@@ -157,6 +157,17 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         if unidad.recarga_hasta and unidad.recarga_hasta > (esc.sim_segundos or 0.0):
             minutos = max(1, round((unidad.recarga_hasta - (esc.sim_segundos or 0.0)) / 60))
             raise HTTPException(status_code=400, detail=f"El lanzador está recargando: faltan {minutos} min para otra salva")
+    elif payload.tipo == "rumbo":
+        if unidad.tipo != "aerea" or unidad.en_tierra:
+            raise HTTPException(status_code=400, detail="Solo una aeronave en vuelo recibe un rumbo: en tierra, ordene Mover para despegar")
+        if unidad.combustible <= 0:
+            raise HTTPException(status_code=400, detail="La aeronave no tiene combustible")
+        if payload.rumbo_modo is None or payload.rumbo_grados is None:
+            raise HTTPException(status_code=400, detail="Indique si vira unos grados o toma un rumbo, y cuántos grados")
+        if payload.rumbo_modo == "virar" and payload.rumbo_sentido not in ("derecha", "izquierda"):
+            raise HTTPException(status_code=400, detail="Indique si vira a la derecha o a la izquierda")
+        if payload.rumbo_modo == "virar" and not 0 < payload.rumbo_grados < 360:
+            raise HTTPException(status_code=400, detail="El viraje va de 1 a 359 grados")
     elif payload.tipo == "mover":
         if unidad.tipo == "base" or unidad.velocidad_kmh <= 0:
             raise HTTPException(status_code=400, detail="Esta unidad no puede moverse")
@@ -210,6 +221,8 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
             if payload.tipo == "despegar"
             else misiles_mod.codificar(payload.misiles) if payload.tipo == "lanzar"
             else (payload.parte or "") if payload.tipo == "atacar"
+            else json.dumps({"modo": payload.rumbo_modo, "grados": payload.rumbo_grados,
+                             "sentido": payload.rumbo_sentido or "corto"}) if payload.tipo == "rumbo"
             else payload.detalle or "" if payload.tipo == "construir" else ""
         ),
         turno_emitida=esc.turno_actual,

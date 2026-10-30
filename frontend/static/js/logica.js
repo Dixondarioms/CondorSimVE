@@ -413,6 +413,48 @@
     return 2 * 6371 * Math.asin(Math.sqrt(a));
   }
 
+  /** Punto a `km` de (lat, lon) siguiendo el rumbo verdadero `rumbo` (0 = norte, 90 = este). */
+  function destinoPorRumbo(lat, lon, rumbo, km) {
+    const r = Math.PI / 180;
+    const d = km / 6371;
+    const la1 = lat * r;
+    const lo1 = lon * r;
+    const la2 = Math.asin(Math.sin(la1) * Math.cos(d) + Math.cos(la1) * Math.sin(d) * Math.cos(rumbo * r));
+    const lo2 = lo1 + Math.atan2(Math.sin(rumbo * r) * Math.sin(d) * Math.cos(la1), Math.cos(d) - Math.sin(la1) * Math.sin(la2));
+    return [la2 / r, ((lo2 / r + 540) % 360) - 180];
+  }
+
+  /**
+   * Orden de rumbo, como el control de transito aereo (igual que tiempo_real.rumbo_objetivo): "virar" N grados a la
+   * derecha o a la izquierda, o tomar el "rumbo" N por el lado pedido o por el mas corto. Devuelve el rumbo final, el
+   * lado del viraje y cuantos grados gira.
+   */
+  function rumboObjetivo(actual, modo, grados, sentido) {
+    const a = (((Number(actual) || 0) % 360) + 360) % 360;
+    const g = Number(grados) || 0;
+    let objetivo;
+    let lado = sentido;
+    if (modo === "virar") objetivo = (((sentido === "derecha" ? a + g : a - g) % 360) + 360) % 360;
+    else {
+      objetivo = ((g % 360) + 360) % 360;
+      if (sentido !== "derecha" && sentido !== "izquierda") lado = ((objetivo - a + 360) % 360) <= 180 ? "derecha" : "izquierda";
+    }
+    const giro = lado === "derecha" ? (objetivo - a + 360) % 360 : (a - objetivo + 360) % 360;
+    return { objetivo, lado, giro };
+  }
+
+  const rumbo3 = (g) => String(Math.round(g) % 360).padStart(3, "0");
+
+  /** Texto de una orden de rumbo para la cola de ordenes: «Virar a la derecha 30° (rumbo 110°)», «Rumbo 270°». */
+  function textoRumbo(detalle) {
+    let d = {};
+    try { d = JSON.parse(detalle || "{}"); } catch (_) { /* detalle viejo o vacio */ }
+    const destino = d.objetivo != null ? ` (rumbo ${rumbo3(d.objetivo)}°)` : "";
+    if (d.modo === "virar") return `Virar a la ${d.sentido} ${Math.round(d.grados)}°${destino}`;
+    const lado = d.lado || (d.sentido === "corto" ? "" : d.sentido);
+    return `Rumbo ${rumbo3(d.grados || 0)}°${lado ? `, virando a la ${lado}` : ""}`;
+  }
+
   const ETIQUETA_CANAL = { azul: "Red azul", rojo: "Red roja", todos: "Difusión", mando: "Al mando" };
   const etiquetaCanal = (c) => ETIQUETA_CANAL[c] || c;
 
@@ -1177,7 +1219,7 @@
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
-    distanciaKm, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
+    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,

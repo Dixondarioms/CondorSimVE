@@ -396,7 +396,7 @@ class UnidadOut(BaseModel):
 
 class OrdenCreate(BaseModel):
     unidad_id: int | None = None  # obligatorio salvo dentro de un lote (POST /ordenes/lote)
-    tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar", "interferir", "lanzar", "embarcar", "desembarcar"]
+    tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar", "interferir", "lanzar", "embarcar", "desembarcar", "rumbo"]
     waypoints: list[tuple[float, float]] = Field(default_factory=list, max_length=120)  # rutas por carretera largas
     objetivo_unidad_id: int | None = None
     # solo para "construir": obra que se tiende en el punto indicado
@@ -409,6 +409,11 @@ class OrdenCreate(BaseModel):
     misiles: int | None = Field(default=None, ge=1, le=4)
     # solo para "atacar" a una base aerea o portaaviones: parte que se ataca (None = ataque general)
     parte: Literal["pista", "plataforma", "combustible"] | None = None
+    # solo para "rumbo" (aeronave en vuelo, como el control de transito aereo): "virar" N grados a un lado o tomar el
+    # "rumbo" N (0-360) por el lado indicado o por el mas corto
+    rumbo_modo: Literal["virar", "rumbo"] | None = None
+    rumbo_grados: float | None = Field(default=None, ge=0, le=360)
+    rumbo_sentido: Literal["derecha", "izquierda", "corto"] | None = None
 
 
 class OrdenLote(BaseModel):

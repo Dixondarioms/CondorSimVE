@@ -81,7 +81,9 @@ AVISO_CONTACTO_S = 900.0  # un enemigo que reaparece despues de esto se informa 
 DESPLIEGUE_POR_TURNO_S = 900.0  # tiempo quieta para disparar, por cada "turno de despliegue" del catalogo
 MISIONES_CONTINUAS = frozenset({"patrulla", "espera"})
 TIPOS_DE_ORDEN = ("mover", "atacar", "patrullar", "aterrizar", "despegar", "lanzar", "interferir", "construir",
-                  "embarcar", "desembarcar", "apoyar")
+                  "embarcar", "desembarcar", "apoyar", "rumbo")
+TASA_GIRO_GPS = 3.0  # grados por segundo al virar por una orden de rumbo (viraje estandar del transito aereo)
+LEJOS_KM = 500.0  # punto de referencia por delante en el rumbo (la aeronave nunca llega: sigue el rumbo)
 TIEMPO_OBRA_S = {"vado": 1800.0, "puente": 3600.0}  # trabajo de los ingenieros en el sitio hasta que la obra queda lista
 EMBARQUE_S = 600.0  # lo que tarda una unidad en subir a su transporte
 DEMORA_MIN_S, DEMORA_MAX_S = 900.0, 2700.0  # una orden que no llega a tiempo tarda entre 15 y 45 minutos
@@ -105,6 +107,29 @@ def rumbo(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     x = (math.cos(math.radians(lat1)) * math.sin(math.radians(lat2))
          - math.sin(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.cos(math.radians(lon2 - lon1)))
     return (math.degrees(math.atan2(y, x)) + 360.0) % 360.0
+
+
+def rumbo_objetivo(actual: float, modo: str, grados: float, sentido: str) -> tuple[float, str]:
+    """Rumbo final y lado del viraje de una orden de rumbo dada con la aeronave en el rumbo `actual`.
+
+    "virar" N grados a la derecha o a la izquierda; "rumbo" N por el lado pedido o, con "corto", por el mas corto
+    (a igual distancia, a la derecha)."""
+    actual = (actual or 0.0) % 360.0
+    if modo == "virar":
+        return (actual + grados if sentido == "derecha" else actual - grados) % 360.0, sentido
+    objetivo = grados % 360.0
+    if sentido in ("derecha", "izquierda"):
+        return objetivo, sentido
+    return objetivo, "derecha" if (objetivo - actual) % 360.0 <= 180.0 else "izquierda"
+
+
+def texto_rumbo(objetivo: float, sentido: str, actual: float | None) -> str:
+    """«vira a la derecha 30° al rumbo 110°» (o «mantiene el rumbo 080°» si ya va en ese rumbo)."""
+    actual = (actual or 0.0) % 360.0
+    giro = (objetivo - actual) % 360.0 if sentido == "derecha" else (actual - objetivo) % 360.0
+    if giro < 0.5:
+        return f"mantiene el rumbo {objetivo:03.0f}°"
+    return f"vira a la {sentido} {giro:.0f}° al rumbo {objetivo:03.0f}°"
 
 
 # ------------------------------------------------------------------------------------------- estado en memoria
@@ -378,6 +403,15 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
         orden.resultado = f"[{hora}] Va a desembarcar en ({punto[0]:.3f}, {punto[1]:.3f})."
     elif orden.tipo == "apoyar":
         _poner_ruta(unidad, None)
+    elif orden.tipo == "rumbo":
+        # el viraje relativo se cuenta desde el rumbo que trae al recibir la orden (puede llegar demorada)
+        pedido = json.loads(orden.detalle or "{}")
+        objetivo, sentido = rumbo_objetivo(unidad.rumbo, pedido.get("modo", "rumbo"), float(pedido.get("grados") or 0.0),
+                                           pedido.get("sentido", "corto"))
+        orden.detalle = json.dumps({**pedido, "objetivo": round(objetivo, 1), "lado": sentido})
+        orden.resultado = f"[{hora}] Rumbo {(unidad.rumbo or 0.0) % 360:03.0f}°: {texto_rumbo(objetivo, sentido, unidad.rumbo)} y lo mantiene."
+        _poner_ruta(unidad, None)
+        unidad.mision, unidad.mision_lat, unidad.mision_lon = "", None, None
 
 
 def demora_de_orden(db: Session, esc: Escenario, unidad: Unidad, tipo: str) -> float:
@@ -524,6 +558,8 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
             _desembarcar(ctx, u, orden, h)
         elif orden is not None and orden.tipo == "apoyar":
             _apoyar(ctx, u, orden, h)
+        elif orden is not None and orden.tipo == "rumbo":
+            _volar_rumbo(ctx, u, orden, h)
         elif u.ruta_json:
             _mover(ctx, u, orden, h)
         elif u.tipo == "aerea":
@@ -576,6 +612,21 @@ def _mover(ctx: _Ctx, u: Unidad, orden: Orden | None, h: float) -> None:
         if orden is not None and orden.tipo == "patrullar":
             return
         _esperar(u)
+
+
+def _volar_rumbo(ctx: _Ctx, u: Unidad, orden: Orden, h: float) -> None:
+    """Orden de rumbo: la aeronave vira hacia el rumbo pedido (TASA_GIRO_GPS grados por segundo, del lado indicado) y
+    lo mantiene hasta otra orden o hasta que el combustible la haga regresar."""
+    datos = json.loads(orden.detalle or "{}")
+    objetivo, lado = float(datos.get("objetivo", u.rumbo or 0.0)), datos.get("lado", "derecha")
+    actual = (u.rumbo or 0.0) % 360.0
+    falta = (objetivo - actual) % 360.0 if lado == "derecha" else (actual - objetivo) % 360.0
+    giro = min(falta, TASA_GIRO_GPS * h)
+    nuevo = (actual + giro if lado == "derecha" else actual - giro) % 360.0
+    _avanzar(ctx, u, [list(geo.destino(u.lat, u.lon, nuevo, LEJOS_KM))], h)
+    u.rumbo = nuevo
+    if falta > 0 and giro >= falta:
+        orden.resultado = f"[{hora_del_dia(ctx.esc, ctx.t + h)}] En el rumbo {objetivo:03.0f}°: lo mantiene hasta otra orden."
 
 
 def _buscar_otro_camino(ctx: _Ctx, u: Unidad, orden: Orden | None, destino: list) -> bool:
@@ -1373,7 +1424,7 @@ def _combustible(ctx: _Ctx) -> None:
         doct = ctx.doctrina(u)
         sin_armas = (doct["regreso_sin_armas"] and u.municion <= 0.5 and not catalogo.obtener(u.clase, u.tipo).se_consume
                      and any(v > 0 for v in catalogo.perfil(u).ataque_vs.values()))
-        if sin_armas and (orden is None or orden.tipo not in ("aterrizar", "mover")):
+        if sin_armas and (orden is None or orden.tipo not in ("aterrizar", "mover", "rumbo")):
             base = aeronaves_mod.base_mas_cercana(u, ctx.lista)
             if base is not None:
                 _regresar(ctx, u, orden, base, "sin armamento",

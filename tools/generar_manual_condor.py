@@ -284,6 +284,7 @@ def construir(salida: Path) -> None:
               ["Construir", "Ingenieros: puente o vado sobre un río."],
               ["Patrullar", "Aeronaves: orbitan sobre una zona e interceptan lo que entre."],
               ["Aterrizar", "Aeronaves en vuelo: vuelven a una base."],
+              ["Rumbo", "Aeronaves en vuelo: viran unos grados a un lado o toman un rumbo y lo mantienen (5.3)."],
               ["Interferir", "Guerra electrónica: degrada al enemigo en una zona."],
               ["Lanzar misiles", "Buques y baterías con misiles de crucero."],
               ["Embarcar / Desembarcar", "Tropas a bordo de un buque de desembarco o un helicóptero de transporte."],
@@ -326,7 +327,16 @@ def construir(salida: Path) -> None:
                "tiene un número de plazas.",
                "Con poco combustible (por defecto 25 %) o sin armamento, la aeronave <b>regresa sola</b> a la base más cercana; "
                "esos valores se cambian en la doctrina (6.1)."])]
-    h += [H2("5.3 Misiones aéreas planificadas")]
+    h += [H2("5.3 Desviar una aeronave: waypoints o rumbo"),
+          P("Una orden nueva reemplaza en el acto a la que cumplía la aeronave. Hay dos formas de desviarla:"),
+          Bul(["<b>Mover</b> con waypoints: clic en el mapa en cada punto de la nueva ruta; la aeronave gira enseguida hacia el primero.",
+               "<b>Rumbo</b>, como el control de tránsito aéreo. En <b>Instrucción</b> elija <i>Virar … grados</i> («vire a la "
+               "derecha 25 grados») o <i>Tomar el rumbo …</i> («tome rumbo 270»); escriba los <b>grados</b> y el <b>sentido</b>: "
+               "a la derecha, a la izquierda o, para un rumbo, por el lado más corto."]),
+          P("Antes de emitir, el panel muestra el rumbo actual, hacia qué lado vira y cuántos grados, y el mapa dibuja en "
+            "amarillo la recta que seguirá. La aeronave vira 3° por segundo (el viraje estándar) y mantiene el rumbo hasta otra "
+            "orden; con combustible crítico regresa sola a la base."),
+          H2("5.4 Misiones aéreas planificadas")]
     h += [Table([[figura("mision_planificar", "Planificar una misión aérea.", ancho=6.6 * cm, alto_max=12 * cm, celda=True),
                   [P("El panel <b>Misiones aéreas</b> → <b>Planificar misión</b> arma misiones completas:"),
                    Bul(["un grupo que ya existe o uno que despega de una base;",

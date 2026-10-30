@@ -167,6 +167,56 @@ def test_la_aeronave_en_vuelo_se_desvia_al_recibir_otra_orden(db_session):
     assert c.lat == pytest.approx(norte, abs=0.01) and c.lon > 0.2 and c.rumbo == pytest.approx(90.0, abs=1)
 
 
+def test_rumbo_objetivo_como_el_transito_aereo():
+    assert tiempo_real.rumbo_objetivo(80, "virar", 30, "derecha") == (110, "derecha")
+    assert tiempo_real.rumbo_objetivo(10, "virar", 25, "izquierda") == (345, "izquierda")
+    assert tiempo_real.rumbo_objetivo(0, "rumbo", 270, "corto") == (270, "izquierda")  # por el lado mas corto
+    assert tiempo_real.rumbo_objetivo(0, "rumbo", 270, "derecha") == (270, "derecha")  # el lado que se pidio
+    assert tiempo_real.rumbo_objetivo(350, "rumbo", 360, "corto") == (0, "derecha")
+    assert tiempo_real.texto_rumbo(110, "derecha", 80) == "vira a la derecha 30° al rumbo 110°"
+
+
+def test_la_orden_de_rumbo_vira_de_a_poco_y_mantiene_el_rumbo(db_session):
+    esc = _escenario(db_session)
+    c = _unidad(db_session, esc, nombre="Caza", **CAZA)
+    _orden(db_session, esc, c, "mover", waypoints=[[2.0, 0.0]])
+    _correr(db_session, esc, 60)
+    assert c.rumbo == pytest.approx(0.0, abs=1)
+    o = _orden(db_session, esc, c, "rumbo", detalle=json.dumps({"modo": "virar", "grados": 90, "sentido": "derecha"}))
+    assert o.estado == "en_ejecucion" and c.ruta_json is None and "vira a la derecha 90° al rumbo 090°" in o.resultado
+    _correr(db_session, esc, PASO)  # 3 grados por segundo: 45 grados en un paso de 15 s
+    assert c.rumbo == pytest.approx(45.0, abs=0.5)
+    _correr(db_session, esc, 600)
+    lon = c.lon
+    assert c.rumbo == pytest.approx(90.0, abs=0.5) and "lo mantiene" in o.resultado and o.estado == "en_ejecucion"
+    _correr(db_session, esc, 600)  # sigue al este hasta otra orden
+    assert c.lon > lon + 1.0 and c.rumbo == pytest.approx(90.0, abs=0.5)
+
+
+def test_el_rumbo_por_el_lado_mas_corto_vira_a_la_izquierda(db_session):
+    esc = _escenario(db_session)
+    c = _unidad(db_session, esc, nombre="Caza", rumbo=10.0, **CAZA)
+    _orden(db_session, esc, c, "rumbo", detalle=json.dumps({"modo": "rumbo", "grados": 300, "sentido": "corto"}))
+    _correr(db_session, esc, 5)
+    assert c.rumbo == pytest.approx(355.0, abs=0.5)  # de 10 a 300 por la izquierda
+    _correr(db_session, esc, 120)
+    assert c.rumbo == pytest.approx(300.0, abs=0.5) and c.lon < 0
+
+
+def test_api_el_rumbo_solo_para_aeronaves_en_vuelo(api):
+    prof, base, a, r1, r2 = _preparar(api)
+    c = prof.post(f"{base}/unidades", json=dict(nombre="Caza", bando="azul", tipo="aerea", clase="caza", lat=0.2, lon=0.2)).json()
+    alfa = api("alfa")
+    viraje = {"tipo": "rumbo", "rumbo_modo": "virar", "rumbo_grados": 25, "rumbo_sentido": "derecha"}
+    r = alfa.post(f"{base}/ordenes", json={"unidad_id": a["id"], **viraje})
+    assert r.status_code == 400 and "aeronave en vuelo" in r.json()["detail"]
+    r = alfa.post(f"{base}/ordenes", json={"unidad_id": c["id"], **viraje, "rumbo_sentido": "corto"})
+    assert r.status_code == 400 and "derecha o a la izquierda" in r.json()["detail"]
+    r = alfa.post(f"{base}/ordenes", json={"unidad_id": c["id"], **viraje})
+    assert r.status_code == 200, r.text
+    assert r.json()["estado"] == "en_ejecucion" and "vira a la derecha 25°" in r.json()["resultado"]
+
+
 def test_al_llegar_queda_en_espera_y_detenida_orbita_donde_esta(db_session):
     esc = _escenario(db_session)
     c = _unidad(db_session, esc, nombre="Caza", **CAZA)

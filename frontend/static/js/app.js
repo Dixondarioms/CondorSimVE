@@ -1352,6 +1352,43 @@
       + (minutos ? ` (llega en ${Situacion.duracion(minutos / 60)})` : "") + `. Vigila un radio de ${u.alcance_km} km.`;
   }
 
+  /** Orden de rumbo elegida en el panel (modo, grados y sentido); "virar" no admite "el lado mas corto". */
+  function rumboPedido() {
+    const modo = $("o-rumbo-modo").value;
+    const corto = $("o-rumbo-sentido").querySelector("option[value=corto]");
+    corto.disabled = modo === "virar";
+    if (modo === "virar" && $("o-rumbo-sentido").value === "corto") $("o-rumbo-sentido").value = "derecha";
+    const grados = Number($("o-rumbo-grados").value);
+    return { modo, grados, sentido: $("o-rumbo-sentido").value };
+  }
+
+  /** Vista previa del rumbo: la recta que seguiria la aeronave los proximos 10 minutos despues de virar. */
+  function dibujarRumbo() {
+    const g = app.capas.preview;
+    g.clearLayers();
+    const u = app.porId.get(app.unidadOrden);
+    if (!u || app.modoOrden !== "rumbo") return;
+    const p = rumboPedido();
+    if (!Number.isFinite(p.grados) || p.grados < 0 || p.grados > 360) {
+      $("o-rumbo-info").textContent = "Escriba los grados (de 0 a 360).";
+      return;
+    }
+    const r = Logica.rumboObjetivo(u.rumbo, p.modo, p.grados, p.sentido);
+    const km = Math.max(5, (u.velocidad_kmh || 300) / 6);
+    const fin = Logica.destinoPorRumbo(u.lat, u.lon, r.objetivo, km);
+    const ahora = Logica.destinoPorRumbo(u.lat, u.lon, u.rumbo || 0, km / 3);
+    L.polyline([[u.lat, u.lon], ahora], { color: "#9aa4b2", weight: 2, dashArray: "4 6", interactive: false }).addTo(g);
+    L.polyline([[u.lat, u.lon], fin], { color: "#ffd166", weight: 3, dashArray: "9 7", interactive: false })
+      .bindTooltip(`Rumbo ${String(Math.round(r.objetivo) % 360).padStart(3, "0")}°`, { permanent: true, direction: "right", className: "grafico-etiqueta" })
+      .addTo(g);
+    const actual = String(Math.round(u.rumbo || 0) % 360).padStart(3, "0");
+    const nuevo = String(Math.round(r.objetivo) % 360).padStart(3, "0");
+    $("o-rumbo-info").textContent = r.giro < 0.5
+      ? `Rumbo actual ${actual}°: lo mantiene.`
+      : `Rumbo actual ${actual}° → vira a la ${r.lado} ${Math.round(r.giro)}° hasta el rumbo ${nuevo}° (unos ${Math.max(1, Math.round(r.giro / 3))} s de viraje).`;
+  }
+  ["o-rumbo-modo", "o-rumbo-grados", "o-rumbo-sentido"].forEach((id) => $(id).addEventListener("input", dibujarRumbo));
+
   /** Vista previa de la interferencia: alcance del interferidor y zona que cubriria sobre el punto elegido. */
   function dibujarInterferencia() {
     const g = app.capas.preview;
@@ -1786,6 +1823,7 @@
     const puedeAterrizar = aerea && !u.en_tierra;
     $("modo-patrullar").hidden = !aerea;
     $("modo-aterrizar").hidden = !puedeAterrizar;
+    $("modo-rumbo").hidden = !puedeAterrizar;
     const interfiere = Logica.puedeInterferir(u, cl);
     $("modo-interferir").hidden = !interfiere;
     const lanza = Logica.puedeLanzarMisiles(u, cl);
@@ -1798,7 +1836,7 @@
     if (app.modoOrden === "embarcar" && !puedeEmbarcar) app.modoOrden = "mover";
     if (app.modoOrden === "desembarcar" && !puedeDesembarcar) app.modoOrden = "mover";
     if (app.modoOrden === "patrullar" && !aerea) app.modoOrden = "mover";
-    if (app.modoOrden === "aterrizar" && !puedeAterrizar) app.modoOrden = "mover";
+    if ((app.modoOrden === "aterrizar" || app.modoOrden === "rumbo") && !puedeAterrizar) app.modoOrden = "mover";
     if (app.modoOrden === "interferir" && !interfiere) app.modoOrden = "mover";
     if (app.modoOrden === "lanzar" && !lanza) app.modoOrden = "mover";
     const espera = u && u.en_tierra && u.espera_restante > 0;
@@ -1812,6 +1850,8 @@
     $("o-patrullar").hidden = app.modoOrden !== "patrullar";
     $("o-aterrizar").hidden = app.modoOrden !== "aterrizar";
     $("o-interferir").hidden = app.modoOrden !== "interferir";
+    $("o-rumbo").hidden = app.modoOrden !== "rumbo";
+    if (app.modoOrden === "rumbo") dibujarRumbo();
     if (app.modoOrden === "aterrizar" && u) {
       const opciones = Logica.opcionesDeAterrizaje(u, data.unidades);
       llenarSelect($("o-base"), opciones.map((o) => [o.base.id, `${o.base.nombre} · ${Math.round(o.km)} km`]));
@@ -1821,7 +1861,7 @@
         : `A ${Math.round(elegida.km)} km: llega y aterriza en ${Situacion.duracion(elegida.km / Math.max(1, u.velocidad_kmh || 1))}.`
             + (elegida.alcanzaCombustible ? "" : ` Necesita ~${Math.round(elegida.combustibleNecesario)} % de combustible y tiene ${Math.round(u.combustible)} %.`);
     }
-    $("o-objetivo-box").hidden = ["mover", "construir", "patrullar", "aterrizar", "interferir", "embarcar", "desembarcar"].includes(app.modoOrden);
+    $("o-objetivo-box").hidden = ["mover", "construir", "patrullar", "aterrizar", "interferir", "embarcar", "desembarcar", "rumbo"].includes(app.modoOrden);
     $("o-lanzar").hidden = app.modoOrden !== "lanzar";
     $("o-embarcar").hidden = app.modoOrden !== "embarcar";
     $("o-desembarcar").hidden = app.modoOrden !== "desembarcar";
@@ -1903,6 +1943,11 @@
     } else if (app.modoOrden === "interferir") {
       if (!app.interferenciaPunto) return toast("Haga clic en el mapa en el centro de la zona a interferir.");
       cuerpo.waypoints = [app.interferenciaPunto];
+    } else if (app.modoOrden === "rumbo") {
+      const p = rumboPedido();
+      if (!Number.isFinite(p.grados) || p.grados < 0 || p.grados > 360) return toast("Escriba los grados (de 0 a 360).");
+      if (p.modo === "virar" && !(p.grados > 0 && p.grados < 360)) return toast("El viraje va de 1 a 359 grados.");
+      Object.assign(cuerpo, { rumbo_modo: p.modo, rumbo_grados: p.grados, rumbo_sentido: p.sentido });
     } else if (app.modoOrden === "aterrizar") {
       const base = parseInt($("o-base").value, 10);
       if (!base) return toast("Elija una base propia con plazas libres.");
@@ -1956,6 +2001,7 @@
     if (o.tipo === "embarcar") return `Embarcar en ${nombreObj}`;
     if (o.tipo === "desembarcar") return `Desembarcar en (${o.waypoints[o.waypoints.length - 1][0].toFixed(2)}, ${o.waypoints[o.waypoints.length - 1][1].toFixed(2)})`;
     if (o.tipo === "construir") return `Construir ${o.detalle || "obra"}`;
+    if (o.tipo === "rumbo") return Logica.textoRumbo(o.detalle);
     if (o.tipo === "despegar") return Logica.textoDespegue(o, app.catalogo && app.catalogo.modelos);
     if (o.tipo === "patrullar") return `Patrullar (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;
     if (o.tipo === "interferir") return `Interferir sobre (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;

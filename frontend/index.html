@@ -191,6 +191,7 @@
               <button type="button" data-modo="construir" id="modo-construir" hidden title="Solo ingenieros">Construir</button>
               <button type="button" data-modo="patrullar" id="modo-patrullar" hidden title="Solo aeronaves">Patrullar</button>
               <button type="button" data-modo="aterrizar" id="modo-aterrizar" hidden title="Solo aeronaves en vuelo">Aterrizar</button>
+              <button type="button" data-modo="rumbo" id="modo-rumbo" hidden title="Solo aeronaves en vuelo: virar unos grados o tomar un rumbo, como el control de tránsito aéreo">Rumbo</button>
               <button type="button" data-modo="interferir" id="modo-interferir" hidden title="Solo unidades de guerra electrónica">Interferir</button>
               <button type="button" data-modo="lanzar" id="modo-lanzar" hidden title="Solo buques y baterías con misiles de crucero">Lanzar misiles</button>
               <button type="button" data-modo="embarcar" id="modo-embarcar" hidden title="Subir a un buque de desembarco o helicóptero de transporte propio a menos de 3 km">Embarcar</button>
@@ -237,6 +238,22 @@
               <label class="mini">Transporte<select id="o-transporte"></select></label>
               <p id="o-embarcar-info" class="ayuda"></p>
               <p class="ayuda">A bordo la unidad viaja con el transporte, no se la ve ni ataca por separado, no recibe órdenes y sufre la mitad del daño que reciba el transporte (se pierde si lo hunden o derriban).</p>
+            </div>
+            <div id="o-rumbo" hidden>
+              <div class="fila-rumbo">
+                <label class="mini">Instrucción<select id="o-rumbo-modo">
+                  <option value="virar">Virar … grados</option>
+                  <option value="rumbo">Tomar el rumbo …</option>
+                </select></label>
+                <label class="mini">Grados<input id="o-rumbo-grados" type="number" min="0" max="360" step="5" value="30" inputmode="numeric"></label>
+                <label class="mini">Sentido<select id="o-rumbo-sentido">
+                  <option value="derecha">A la derecha</option>
+                  <option value="izquierda">A la izquierda</option>
+                  <option value="corto">Por el lado más corto</option>
+                </select></label>
+              </div>
+              <p id="o-rumbo-info" class="ayuda preview"></p>
+              <p class="ayuda">Como el control de tránsito aéreo («vire a la derecha 25 grados», «tome rumbo 270»): la aeronave vira 3° por segundo y mantiene el rumbo hasta otra orden. Con combustible crítico regresa sola a la base. Para desviarla a un lugar preciso, use <b>Mover</b> y marque los waypoints en el mapa.</p>
             </div>
             <div id="o-desembarcar" hidden>
               <p class="ayuda">Marque la ruta en el mapa; el <b>último punto</b> es el lugar de desembarco, en tierra firme. Un buque se acerca por el agua y desembarca a menos de 5 km del punto, en cuanto llega; un helicóptero vuela hasta el punto mismo.</p>

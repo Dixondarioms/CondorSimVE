@@ -101,7 +101,7 @@
     },
     {
       id: "tipos-orden", seccion: "Órdenes", titulo: "Los tipos de orden",
-      claves: "tipos de orden mover atacar apoyar construir patrullar aterrizar interferir lanzar misiles embarcar desembarcar que hace cada orden",
+      claves: "tipos de orden mover atacar apoyar construir patrullar aterrizar rumbo interferir lanzar misiles embarcar desembarcar que hace cada orden",
       texto: `<table><tr><th>Orden</th><th>Qué hace</th></tr>
         <tr><td>Mover</td><td>Va por los puntos marcados (por carretera cuando conviene).</td></tr>
         <tr><td>Atacar</td><td>Ataca a un enemigo detectado; si hace falta, se acerca hasta tenerlo a su alcance.</td></tr>
@@ -109,6 +109,7 @@
         <tr><td>Construir</td><td>Ingenieros: puente o vado sobre un río.</td></tr>
         <tr><td>Patrullar</td><td>Aeronaves: orbitan sobre una zona e interceptan lo que entre.</td></tr>
         <tr><td>Aterrizar</td><td>Aeronaves en vuelo: vuelven a una base.</td></tr>
+        <tr><td>Rumbo</td><td>Aeronaves en vuelo: viran unos grados a un lado o toman un rumbo y lo mantienen.</td></tr>
         <tr><td>Interferir</td><td>Guerra electrónica: degrada al enemigo en una zona.</td></tr>
         <tr><td>Lanzar misiles</td><td>Buques y baterías con misiles de crucero.</td></tr>
         <tr><td>Embarcar / Desembarcar</td><td>Tropas a bordo de un buque de desembarco o un helicóptero de transporte.</td></tr></table>`,
@@ -149,6 +150,16 @@
         cualquier orden de vuelo es el despegue. Cada base tiene un número de plazas.</p>
         <p>Con poco combustible (por defecto 25 %) o sin armamento, la aeronave <b>regresa sola</b> a la base más cercana; esos
         valores se cambian en la doctrina.</p>`,
+    },
+    {
+      id: "desviar", seccion: "Aviación", titulo: "Desviar una aeronave: waypoints o rumbo",
+      claves: "desviar desvio redirigir cambiar rumbo virar viraje derecha izquierda grados rumbo control de transito aereo vectorear vector",
+      texto: `<p>Una orden nueva reemplaza en el acto a la que cumplía la aeronave, así que hay dos formas de desviarla:</p>
+        <ul><li><b>Mover</b> con waypoints: clic en el mapa en cada punto de la nueva ruta; la aeronave gira enseguida hacia el primero.</li>
+        <li><b>Rumbo</b>, como el control de tránsito aéreo: <i>Virar … grados</i> a la derecha o a la izquierda («vire a la
+        derecha 25 grados»), o <i>Tomar el rumbo …</i> (de 0 a 360) por el lado que diga o por el más corto («tome rumbo 270»).
+        El mapa muestra en amarillo la recta que seguirá. La aeronave vira 3° por segundo y mantiene el rumbo hasta otra
+        orden; con combustible crítico regresa sola.</li></ul>`,
     },
     {
       id: "misiones", seccion: "Aviación", titulo: "Misiones aéreas planificadas",
