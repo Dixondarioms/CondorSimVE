@@ -45,6 +45,7 @@ from app.engine import infraestructura as infra_mod
 from app.engine import inteligencia as intel_mod
 from app.engine import misiles as misiles_mod
 from app.engine import objetivos as objetivos_mod
+from app.engine import pmi as pmi_mod
 from app.engine import orders
 from app.engine import ota as ota_mod
 from app.engine import rescate as rescate_mod
@@ -205,6 +206,7 @@ class _Ctx:
         self.pausa: dict | None = None  # la alerta que pide detener el reloj en este paso
         self.bit = _BitacoraEnVivo(self)
         self.perdidas: dict[int, float] = {}
+        self.con_pmi: set | None = None  # (bando, base) con PMI de Inteligencia: se lee al primer ataque a una pista
 
     def releer(self) -> None:
         """Unidades y ordenes en curso (de nuevo despues de que el adversario automatico da ordenes)."""
@@ -875,7 +877,12 @@ def _resolver(ctx: _Ctx, a: Unidad, d: Unidad, fraccion: float, clave: int, part
                     and geo.distancia_km(s.lat, s.lon, apoyado.lat, apoyado.lon) <= s.alcance_km:
                 _cambiar(ctx, s, "municion", s.municion - orders.MUNICION_POR_APOYO * fraccion, "apoyo")
     if catalogo.opera_aeronaves(d) and perd_d > 0:
-        bases_mod.aplicar_dano(d, perd_d, parte)
+        if parte == "pista":  # sin los PMI de Inteligencia las bombas caen dispersas sobre la pista (engine/pmi.py)
+            if ctx.con_pmi is None:
+                ctx.con_pmi = pmi_mod.entregados(ctx.db, ctx.esc.id)
+            bases_mod.aplicar_dano(d, perd_d * pmi_mod.factor_pista(a.bando, d.id, ctx.con_pmi), parte)
+        else:
+            bases_mod.aplicar_dano(d, perd_d, parte)
     return perd_a, perd_d, consumo * fraccion, res
 
 
@@ -929,7 +936,9 @@ def _fuego_continuo(ctx: _Ctx, a: Unidad, d: Unidad, orden: Orden | None, h: flo
     if ctx.t - ctx.mundo.bajo_fuego.get((a.id, d.id), -1e9) >= REPETIR_ALERTA_FUEGO_S:
         ctx.mundo.bajo_fuego[(a.id, d.id)] = ctx.t
         ctx.alerta("ataque", d.bando, f"{d.nombre} está bajo fuego enemigo.", d.lat, d.lon, "critica")
-    perd_a, perd_d, gasto, res = _resolver(ctx, a, d, h / 3600.0, clave)
+    # la parte de la base que eligio la orden (pista, plataforma o deposito) tambien vale para el fuego continuo
+    parte = orden.detalle if orden is not None and orden.tipo == "atacar" and orden.detalle in bases_mod.PARTES else None
+    perd_a, perd_d, gasto, res = _resolver(ctx, a, d, h / 3600.0, clave, parte)
     _perder(ctx, a, perd_a)
     _perder(ctx, d, perd_d)
     _cambiar(ctx, a, "municion", a.municion - gasto, "combate")

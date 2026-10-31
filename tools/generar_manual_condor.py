@@ -385,7 +385,18 @@ def construir(salida: Path) -> None:
           P("El <b>círculo amarillo</b> alrededor de un contacto muestra dónde puede estar en realidad. Si se pierde el contacto, "
             "queda su último lugar conocido y el círculo crece con lo que pudo moverse. Las armas en <i>Solo identificados</i> no "
             "tiran contra desconocidos.")]
-    h += [H2("7.3 El cuadro radar")]
+    h += [H2("7.3 Puntos medios de impacto (PMI) sobre las pistas"),
+          P("Para dejar fuera de servicio una pista hay que cortarla en tramos más cortos de lo que necesita un caza para "
+            "despegar. Esos cortes son los <b>puntos medios de impacto (PMI)</b>, y los prepara Inteligencia para Operaciones:"),
+          Num(["<b>A-3</b> (o el Comandante o el JEM), en FUERZAS → <b>Puntos medios de impacto</b>, elige la base aérea "
+               "enemiga y pulsa <b>Pedir a Inteligencia</b>.",
+               "<b>A-2</b> ve el pedido y pulsa <b>Preparar los PMI…</b>: el sistema propone los cortes sobre el eje de la pista "
+               "real del aerodromo, con sus coordenadas, de modo que ningún tramo sano llegue a 800 m. Puede arrastrar cada "
+               "punto en el mapa para correrlo.",
+               "<b>Entregar a Operaciones</b>: desde ese momento el ataque a la pista de esa base hace todo su daño."]),
+          P("Sin los PMI, las bombas caen dispersas y el ataque a la pista hace <b>la mitad</b> del daño; la orden Atacar avisa "
+            "si el bando los tiene. Los PMI entregados se ven en el mapa al acercarse a la base."),
+          H2("7.4 El cuadro radar")]
     h += [Table([[figura("cuadro_radar", "Cuadro radar (pestaña SITUACIÓN).", ancho=6.0 * cm, alto_max=12 * cm, celda=True),
                   [P("En SITUACIÓN → <b>Cuadro radar</b> se ve qué detecta ahora cada sensor del bando: los radares, la "
                      "antiaérea, el reconocimiento y la escucha electrónica, con la distancia y el rumbo de cada contacto."),
@@ -471,7 +482,7 @@ def construir(salida: Path) -> None:
                   figura("tiem", "Pestaña TIEM.", ancho=5.4 * cm, alto_max=12.5 * cm, celda=True)]],
                 colWidths=[ANCHO_TEXTO / 2] * 2, style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
     h += [H2("11.1 La pestaña SITUACIÓN"),
-          P("Reúne el estado del bando: <b>cuadro radar</b> (7.3), personal y bajas, apresto, organización, esfuerzo aéreo, "
+          P("Reúne el estado del bando: <b>cuadro radar</b> (7.4), personal y bajas, apresto, organización, esfuerzo aéreo, "
             "rescate, transmisiones, alerta temprana, inteligencia e <b>infraestructura crítica</b> (centrales, refinerías, "
             "centros de comunicaciones y puentes)."),
           H2("11.2 Trabajo de Estado Mayor (pestaña TIEM)"),
@@ -547,13 +558,14 @@ def construir(salida: Path) -> None:
         ["APP-6", "Norma de simbología militar; alternativa a las miniaturas en el mapa."],
         ["CAP", "Patrulla aérea de combate: aeronaves que orbitan una zona para interceptar."],
         ["Clasificado / identificado", "Grados de conocimiento de un contacto enemigo (7.2)."],
-        ["Cuadro radar", "Lo que detecta ahora cada sensor del bando (7.3)."],
+        ["Cuadro radar", "Lo que detecta ahora cada sensor del bando (7.4)."],
         ["Doctrina / ROE", "Reglas con que las unidades actúan por su cuenta (6.1)."],
         ["Estela", "Línea por donde pasó una unidad en el mapa."],
         ["Flow sheet", "Cronograma de las misiones aéreas (5.3)."],
         ["JEM", "Jefe de Estado Mayor."],
         ["Niebla de guerra", "Cada bando solo ve lo que detecta."],
         ["OTA", "Orden de tareas aéreas: datos de paquete, armamento, IFF y hora de cada misión."],
+        ["PMI", "Punto medio de impacto: dónde deben caer las bombas para cortar una pista (7.3)."],
         ["PRO", "Pista de recuperación operacional: tramo de carretera apto para operar aeronaves."],
         ["TIEM", "Trabajo Integral de Estado Mayor (11.2)."],
         ["TOT", "Hora sobre el blanco."],

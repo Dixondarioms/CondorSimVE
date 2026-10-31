@@ -204,6 +204,19 @@
         conocido y el círculo crece con lo que pudo moverse. Las armas en <i>Solo identificados</i> no tiran contra desconocidos.</p>`,
     },
     {
+      id: "pmi", seccion: "Inteligencia y contactos", titulo: "Puntos medios de impacto (PMI) sobre las pistas",
+      claves: "pmi punto medio de impacto dmpi pdi pista atacar base aerea inteligencia operaciones a2 a3 cortes pedir entregar blanco",
+      texto: `<p>Para dejar fuera de servicio una pista hay que cortarla en tramos más cortos de lo que necesita un caza para
+        despegar. Esos cortes son los <b>puntos medios de impacto (PMI)</b>, y los prepara Inteligencia.</p>
+        <ol><li><b>A-3</b> (o el Comandante o el JEM), en FUERZAS → <b>Puntos medios de impacto</b>: elige la base aérea enemiga
+        y pulsa <b>Pedir a Inteligencia</b>.</li>
+        <li><b>A-2</b> ve el pedido y pulsa <b>Preparar los PMI…</b>: el sistema propone los cortes sobre el eje de la pista real
+        (con sus coordenadas). Puede arrastrar cada punto en el mapa para correrlo.</li>
+        <li><b>Entregar a Operaciones</b>: desde ese momento el ataque a la pista de esa base hace <b>todo su daño</b>.</li></ol>
+        <p>Sin los PMI, las bombas caen dispersas y el ataque a la pista hace <b>la mitad</b> del daño. La orden Atacar avisa si
+        los tiene o no. Los PMI entregados se ven en el mapa al acercarse a la base.</p>`,
+    },
+    {
       id: "no-veo", seccion: "Inteligencia y contactos", titulo: "Por qué no veo al enemigo",
       claves: "no veo enemigo no aparece invisible deteccion detectar reconocimiento niebla de guerra radar alcance ocultamiento clima noche",
       texto: `<p>Cada bando ve solo lo que detectan sus unidades (<b>niebla de guerra</b>). La detección depende del alcance de cada

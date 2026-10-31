@@ -1904,7 +1904,17 @@
       const base = !!obj && Logica.operaAeronaves(obj);
       $("o-parte-fila").hidden = !base;
       if (base && !$("o-parte").options.length) llenarSelect($("o-parte"), Logica.PARTES_BASE);
-    } else $("o-parte-fila").hidden = true;
+      // la pista: con los PMI de Inteligencia, todo el daño; sin ellos, la mitad (engine/pmi.py)
+      const pista = base && $("o-parte").value === "pista";
+      $("o-parte-info").hidden = !pista;
+      if (pista) {
+        const con = app.pmi && app.pmi.conPmi(obj.id);
+        $("o-parte-info").textContent = con
+          ? "Con los puntos medios de impacto de Inteligencia: el ataque hace todo su daño a la pista."
+          : "Sin los puntos medios de impacto de Inteligencia las bombas caen dispersas: la mitad del daño a la pista. Pídalos en «Puntos medios de impacto».";
+        $("o-parte-info").classList.toggle("advertencia", !con);
+      }
+    } else { $("o-parte-fila").hidden = true; $("o-parte-info").hidden = true; }
     if (app.modoOrden === "lanzar" && u) {
       const max = Logica.misilesDisponibles(u);
       const actual = parseInt($("o-misiles").value, 10);
@@ -1939,6 +1949,7 @@
   });
   $("o-lote-limpiar").addEventListener("click", () => { app.lote.clear(); if (app.data) { actualizarNuevaOrden(app.data); renderOOBSeleccion(); marcarSeleccionEnMapa(); } });
   $("o-objetivo").addEventListener("change", () => { if (app.data) actualizarNuevaOrden(app.data); });
+  $("o-parte").addEventListener("change", () => { if (app.data) actualizarNuevaOrden(app.data); });
 
   $("btn-emitir").addEventListener("click", async () => {
     const unidad_id = app.unidadOrden;
@@ -2644,6 +2655,7 @@
     actualizarNuevaOrden(data);
     actualizarAviacion(data);
     if (app.misiones) app.misiones.render(data);
+    if (app.pmi) app.pmi.render(data);
     if (app.aerodromos) app.aerodromos.actualizar(data.unidades);
     llenarSelect($("adj-unidad"), data.unidades.map((u) => [u.id, `${u.nombre} (${u.bando})`]));
     if (app.informe && app.informe.activo()) return; // durante la repeticion no se pisa el mapa
@@ -2837,6 +2849,11 @@
       alPlanificar: (activo) => { document.body.classList.toggle("planificando-mision", activo); },
     });
     app.misiones.conectar();
+    app.pmi = Pmi.crear({
+      api, toast, rutaEsc, datos: () => app.data, map: () => app.map, puede: puedeFuncion,
+      bando: () => (esAlumno() ? app.usuario.rol : app.conduce || null),
+    });
+    app.pmi.conectar();
     app.herramientas = Herramientas.crear({ map: () => app.map, alMedir: (b) => { app.dibujando = b; } });
     Herramientas.crearConvertidor();
     app.herramientas.conectar();

@@ -176,6 +176,16 @@
             <ol id="lista-misiones" class="lista-misiones"></ol>
           </section>
 
+          <section class="bloque" id="sec-pmi">
+            <h2>Puntos medios de impacto <span id="pmi-contador" class="contador"></span></h2>
+            <p class="ayuda">Operaciones (A-3) pide a Inteligencia (A-2) los PMI de la pista de una base enemiga. Con los PMI, el ataque a esa pista hace todo su daño; sin ellos, las bombas caen dispersas y hacen la mitad.</p>
+            <div id="pmi-pedir" class="fila" hidden>
+              <select id="pmi-base" aria-label="Base aérea enemiga"></select>
+              <button id="btn-pmi-pedir" class="primario" type="button">Pedir a Inteligencia</button>
+            </div>
+            <ol id="lista-pmi" class="lista-pmi"></ol>
+          </section>
+
           <section class="bloque solo-alumno" id="sec-orden">
             <h2>Nueva orden <span id="orden-unidad" class="contador azul-suave"></span></h2>
             <div id="o-lote" class="lote" hidden>
@@ -233,6 +243,7 @@
               <select id="o-objetivo" aria-label="Objetivo"></select>
               <p id="o-objetivo-ayuda" class="ayuda"></p>
               <label class="mini" id="o-parte-fila" hidden>Qué se ataca de la base<select id="o-parte"></select></label>
+              <p id="o-parte-info" class="ayuda" hidden></p>
             </div>
             <div id="o-embarcar" hidden>
               <label class="mini">Transporte<select id="o-transporte"></select></label>
@@ -1259,6 +1270,7 @@
   <script src="/static/js/aerodromos.js"></script>
   <script src="/static/js/aviacion.js"></script>
   <script src="/static/js/misiones.js"></script>
+  <script src="/static/js/pmi.js"></script>
   <script src="/static/js/herramientas.js"></script>
   <script src="/static/js/timeline.js"></script>
   <script src="/static/js/rubrica.js"></script>

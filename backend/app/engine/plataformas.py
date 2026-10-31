@@ -191,6 +191,39 @@ def _indice_aerodromos() -> tuple[tuple[float, float, float, str], ...]:
     return tuple(filas)
 
 
+@lru_cache(maxsize=1)
+def _pistas_de_aerodromos() -> tuple[tuple[float, float, str, dict], ...]:
+    """(lat, lon, nombre de la base, pista mas larga) de cada aerodromo con plano; la pista con su referencia, largo,
+    ancho, rumbo y extremos ([[lat, lon], [lat, lon]]), para calcular sobre ella los puntos de impacto (engine/pmi.py)."""
+    filas = []
+    for archivo in sorted(AERODROMOS.glob("*.json")) if AERODROMOS.is_dir() else []:
+        try:
+            datos = json.loads(archivo.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        pistas = [f.get("properties", {}) for f in datos.get("features", [])
+                  if f.get("properties", {}).get("tipo") == "pista" and f.get("properties", {}).get("extremos")]
+        if not pistas:
+            continue
+        mayor = max(pistas, key=lambda q: q.get("largo_m") or 0)
+        pista = {k: mayor.get(k) for k in ("ref", "largo_m", "ancho_m", "rumbo", "extremos")}
+        for b in datos.get("bases", []):
+            if b.get("lat") is not None:
+                filas.append((b["lat"], b["lon"], b.get("nombre") or b.get("icao") or archivo.stem, pista))
+    return tuple(filas)
+
+
+def pista_con_extremos(lat: float, lon: float) -> dict | None:
+    """La pista mas larga (con sus extremos) del aerodromo con plano a <= RADIO_AERODROMO_KM de (lat, lon)."""
+    cerca = [(geo.distancia_km(lat, lon, a, b), n, p) for a, b, n, p in _pistas_de_aerodromos()
+             if abs(a - lat) < 0.1 and abs(b - lon) < 0.1]
+    cerca = [c for c in cerca if c[0] <= RADIO_AERODROMO_KM]
+    if not cerca:
+        return None
+    _, nombre, pista = min(cerca, key=lambda c: c[0])
+    return {**pista, "aerodromo": nombre}
+
+
 def pista_del_plano(lat: float, lon: float) -> tuple[float, str] | None:
     """Largo de la pista mas larga del aerodromo a <= RADIO_AERODROMO_KM, y su nombre."""
     cerca = [(geo.distancia_km(lat, lon, a, b), largo, n) for a, b, largo, n in _indice_aerodromos()
