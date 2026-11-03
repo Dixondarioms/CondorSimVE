@@ -1,4 +1,4 @@
 from app.models import (  # noqa: F401
     aar, asignacion, contacto, documento_tiem, escenario, evento, grafico, interferencia, mensaje, mision, obra, objetivo, orden, pmi,
-    problema_militar, sonoboya, unidad, usuario, zona, zona_clima,
+    mina, problema_militar, sonoboya, unidad, usuario, zona, zona_clima,
 )

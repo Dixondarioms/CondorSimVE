@@ -397,7 +397,7 @@ class UnidadOut(BaseModel):
 
 class OrdenCreate(BaseModel):
     unidad_id: int | None = None  # obligatorio salvo dentro de un lote (POST /ordenes/lote)
-    tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar", "interferir", "lanzar", "embarcar", "desembarcar", "rumbo", "interceptar", "torpedo", "sonoboyas", "sonar"]
+    tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar", "interferir", "lanzar", "embarcar", "desembarcar", "rumbo", "interceptar", "torpedo", "sonoboyas", "sonar", "minar", "barrer"]
     waypoints: list[tuple[float, float]] = Field(default_factory=list, max_length=120)  # rutas por carretera largas
     objetivo_unidad_id: int | None = None
     # solo para "construir": obra que se tiende en el punto indicado

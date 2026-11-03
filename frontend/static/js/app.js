@@ -840,13 +840,14 @@
       dibujarPatrulla();
       return;
     }
-    if (esAlumno() && (app.modoOrden === "sonoboyas" || app.modoOrden === "sonar") && app.unidadOrden) {
+    if (esAlumno() && ["sonoboyas", "sonar", "minar", "barrer"].includes(app.modoOrden) && app.unidadOrden) {
       app.puntoAsw = [lat, lng];
       const g = app.capas.preview;
       g.clearLayers();
       const u = app.porId.get(app.unidadOrden);
       if (u) L.polyline([[u.lat, u.lon], app.puntoAsw], { color: "#ffd166", weight: 3, dashArray: "9 7", interactive: false }).addTo(g);
-      L.circle(app.puntoAsw, { radius: (app.modoOrden === "sonar" ? 12 : 14) * 1000, color: "#48cae4", weight: 1.5, dashArray: "4 5", fillOpacity: 0.06, interactive: false }).addTo(g);
+      const radio = { sonar: 12, sonoboyas: 14, minar: 3, barrer: 3 }[app.modoOrden];
+      L.circle(app.puntoAsw, { radius: radio * 1000, color: app.modoOrden === "minar" ? "#ef476f" : "#48cae4", weight: 1.5, dashArray: "4 5", fillOpacity: 0.06, interactive: false }).addTo(g);
       if (app.data) actualizarNuevaOrden(app.data);
       return;
     }
@@ -1994,6 +1995,11 @@
     $("modo-torpedo").hidden = !torpedo;
     $("modo-sonoboyas").hidden = !boyas;
     $("modo-sonar").hidden = !sonar;
+    const mina = Logica.siembraMinas(u, app.catalogo);
+    const barre = Logica.barreMinas(u);
+    $("modo-minar").hidden = !mina;
+    $("modo-barrer").hidden = !barre;
+    if ((app.modoOrden === "minar" && !mina) || (app.modoOrden === "barrer" && !barre)) app.modoOrden = "mover";
     if ((app.modoOrden === "torpedo" && !torpedo) || (app.modoOrden === "sonoboyas" && !boyas) || (app.modoOrden === "sonar" && !sonar)) app.modoOrden = "mover";
     const intercepta = !!u && (u.tipo === "aerea" || u.tipo === "naval") && !Logica.esMisil(u);
     $("modo-interceptar").hidden = !intercepta;
@@ -2024,11 +2030,15 @@
     if (app.modoOrden === "rumbo") dibujarRumbo();
     $("o-interceptar").hidden = app.modoOrden !== "interceptar";
     $("o-torpedo").hidden = app.modoOrden !== "torpedo";
-    $("o-asw").hidden = app.modoOrden !== "sonoboyas" && app.modoOrden !== "sonar";
-    if (app.modoOrden === "sonoboyas" || app.modoOrden === "sonar") {
-      $("o-asw-ayuda").textContent = app.modoOrden === "sonoboyas"
-        ? "Haga clic en el mapa donde sembrar: el avión vuela hasta allí y deja 4 sonoboyas en cuadro que escuchan submarinos a 10 km durante 4 horas."
-        : "Haga clic en el mapa: el helicóptero vuela hasta allí, queda en vuelo estacionario y escucha con el sonar calado a 12 km mientras mantenga la orden.";
+    const conPunto = ["sonoboyas", "sonar", "minar", "barrer"].includes(app.modoOrden);
+    $("o-asw").hidden = !conPunto;
+    if (conPunto) {
+      $("o-asw-ayuda").textContent = {
+        sonoboyas: "Haga clic en el mapa donde sembrar: el avión vuela hasta allí y deja 4 sonoboyas en cuadro que escuchan submarinos a 10 km durante 4 horas.",
+        sonar: "Haga clic en el mapa: el helicóptero vuela hasta allí, queda en vuelo estacionario y escucha con el sonar calado a 12 km mientras mantenga la orden.",
+        minar: "Haga clic en el mapa donde sembrar: la unidad va hasta allí y siembra un campo de 20 minas en 3 km (un buque tarda media hora; un avión, una pasada). Las minas no distinguen bandos.",
+        barrer: "Haga clic en el campo de minas: el cazaminas va hasta allí y lo limpia (unas 5 minas por hora).",
+      }[app.modoOrden];
       $("o-asw-punto").textContent = app.puntoAsw ? `Punto: ${app.puntoAsw[0].toFixed(3)}, ${app.puntoAsw[1].toFixed(3)}.` : "Aún no eligió el punto.";
     }
     if (!$("o-intercepcion-accion").options.length) llenarSelect($("o-intercepcion-accion"), Logica.ACCIONES_INTERCEPCION);
@@ -2165,7 +2175,7 @@
       if (!app.obraSitio) return toast("Haga clic en el mapa, sobre el río, donde quiere construir.");
       cuerpo.detalle = $("o-obra").value;
       cuerpo.waypoints = [app.obraSitio];
-    } else if (app.modoOrden === "sonoboyas" || app.modoOrden === "sonar") {
+    } else if (["sonoboyas", "sonar", "minar", "barrer"].includes(app.modoOrden)) {
       if (!app.puntoAsw) return toast("Haga clic en el mapa en el punto elegido.");
       cuerpo.waypoints = [app.puntoAsw];
     } else if (app.modoOrden === "lanzar") {
@@ -2219,6 +2229,8 @@
     if (o.tipo === "interceptar") return Logica.textoIntercepcion(o.detalle, nombreObj);
     if (o.tipo === "torpedo") return `Torpedo contra ${nombreObj}`;
     if (o.tipo === "sonoboyas") return `Sembrar sonoboyas en (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;
+    if (o.tipo === "minar") return `Sembrar minas en (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;
+    if (o.tipo === "barrer") return `Barrer minas en (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;
     if (o.tipo === "sonar") return `Sonar de inmersión en (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;
     if (o.tipo === "despegar") return Logica.textoDespegue(o, app.catalogo && app.catalogo.modelos);
     if (o.tipo === "patrullar" && o.detalle && o.detalle.includes("zona")) {
@@ -3756,7 +3768,8 @@
   /** Sonoboyas propias activas y helicopteros con el sonar calado (guerra antisubmarina, engine/asw.py). */
   function renderAsw(data) {
     const helos = data.unidades.filter((u) => u.mision === "sonar" && u.estado === "activa");
-    const firma = JSON.stringify([(data.sonoboyas || []).map((b) => b.id), helos.map((u) => [u.id, u.mision_lat, u.mision_lon])]);
+    const firma = JSON.stringify([(data.sonoboyas || []).map((b) => b.id), helos.map((u) => [u.id, u.mision_lat, u.mision_lon]),
+      (data.minas || []).map((c) => [c.id, c.minas])]);
     if (app.firmaAsw === firma) return;
     app.firmaAsw = firma;
     const g = app.capas.asw;
@@ -3764,6 +3777,10 @@
     for (const b of data.sonoboyas || []) {
       L.circle([b.lat, b.lon], { radius: b.radio_km * 1000, color: "#48cae4", weight: 1, dashArray: "2 5", fillOpacity: 0.04, interactive: false }).addTo(g);
       L.circleMarker([b.lat, b.lon], { radius: 3, color: "#48cae4", fillOpacity: 1 }).bindTooltip(`Sonoboya (${b.minutos} min)`).addTo(g);
+    }
+    for (const c of data.minas || []) { // campos de minas conocidos (engine/minas.py)
+      L.circle([c.lat, c.lon], { radius: c.radio_km * 1000, color: "#ef476f", weight: 2, dashArray: "3 4", fillColor: "#ef476f", fillOpacity: 0.12 })
+        .bindTooltip(`Campo de minas${c.propio ? " propio" : " enemigo"}: unas ${c.minas} minas`, { sticky: true }).addTo(g);
     }
     for (const u of helos) {
       L.circle([u.mision_lat, u.mision_lon], { radius: (app.catalogo && app.catalogo.asw ? app.catalogo.asw.sonar_inmersion_km : 12) * 1000,

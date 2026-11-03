@@ -141,6 +141,7 @@
         <tr><td>Aterrizar</td><td>Aeronaves en vuelo: vuelven a una base.</td></tr>
         <tr><td>Rumbo</td><td>Aeronaves en vuelo: viran unos grados a un lado o toman un rumbo y lo mantienen.</td></tr>
         <tr><td>Torpedo, Sonoboyas, Sonar de inmersión</td><td>Guerra antisubmarina (ver «Guerra antisubmarina»).</td></tr>
+        <tr><td>Minar, Barrer minas</td><td>Minas navales (ver «Minas navales»).</td></tr>
         <tr><td>Interceptar</td><td>Aeronaves (también en tierra, en alerta) y buques: salen al encuentro de una aeronave o un buque enemigo para seguirlo o neutralizarlo.</td></tr>
         <tr><td>Interferir</td><td>Guerra electrónica: degrada al enemigo en una zona.</td></tr>
         <tr><td>Lanzar misiles</td><td>Buques y baterías con misiles de crucero.</td></tr>
@@ -245,6 +246,17 @@
         <li>Aeronaves: con qué <b>combustible regresan</b> y si vuelven al quedarse <b>sin armamento</b>.</li></ul>
         <p>La del bando la fijan el Comandante y el JEM (y el director). Cada unidad puede tener la suya: lo que deje en «Del
         bando» lo toma de la doctrina del bando. Por defecto: contra aeronaves libre, contra superficie solo con orden.</p>`,
+    },
+    {
+      id: "minas", seccion: "Defensa aérea y doctrina", titulo: "Minas navales: sembrar, cruzar y barrer",
+      claves: "minas mina minar sembrar campo de minas barrer barrido cazaminas minador minado",
+      texto: `<ul><li><b>Minar</b>: patrulleros, fragatas, submarinos, buques de desembarco y aviones de ataque van al punto y
+        siembran un campo de 20 minas en 3 km (el buque tarda media hora; el avión, una pasada). Gasta 25 % de munición.</li>
+        <li>Todo buque que navega dentro de un campo (también los propios: las minas no distinguen bandos) puede
+        <b>chocar una mina</b>: el riesgo crece con lo que navega adentro y las minas que quedan.</li>
+        <li>Quien sembró el campo lo ve en el mapa (círculo rojo punteado); el otro bando, recién cuando choca una mina o un
+        <b>cazaminas</b> lo detecta a 5 km.</li>
+        <li><b>Barrer minas</b>: el cazaminas va al campo y lo limpia (unas 5 minas por hora), con poco riesgo.</li></ul>`,
     },
     {
       id: "salvas", seccion: "Defensa aérea y doctrina", titulo: "Salvas de misiles y defensa de punto de los buques",

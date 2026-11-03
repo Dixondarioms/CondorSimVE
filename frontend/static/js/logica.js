@@ -532,6 +532,14 @@
     if (u.tipo === "aerea") return (esAvionAsw(u, cat) || esHeloAsw(u, cat)) && !u.en_tierra ? km.aerea || 0 : 0;
     return km[u.clase] || 0;
   }
+  /** Minas navales (engine/minas.py, datos en catalogo.minas). */
+  function siembraMinas(u, cat) {
+    const m = (cat && cat.minas) || { navales: [], aereos: [] };
+    if (!u || u.estado !== "activa") return false;
+    if (u.tipo === "naval") return m.navales.includes(u.clase);
+    return u.tipo === "aerea" && m.aereos.includes(u.clase);
+  }
+  const barreMinas = (u) => !!u && u.estado === "activa" && u.clase === "cazaminas";
   const PROFUNDIDADES = [["periscopica", "Cota periscópica"], ["profunda", "Profundidad"]];
 
   /** Se intercepta una aeronave en vuelo o un buque (no un misil). */
@@ -1330,7 +1338,7 @@
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
-    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
+    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,

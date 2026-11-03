@@ -120,6 +120,8 @@ UNIDADES = [
     ("clases", "pesquero", "Pesquero", ["fishing boat Venezuela", "fishing trawler at sea", "Margarita fishing boat"]),
     # guerra antisubmarina (engine/asw.py)
     ("clases", "torpedo", "Torpedo", ["Mark 48 torpedo", "Mk 54 torpedo", "heavyweight torpedo museum"]),
+    # minas navales (engine/minas.py)
+    ("clases", "cazaminas", "Cazaminas", ["minehunter underway", "Tripartite class minehunter", "Avenger class mine countermeasures ship"]),
 ]
 # catalogo ampliado del Condor (backend/app/engine/catalogo_ampliado.py) y modelos que cambiaron de identidad
 sys.path.insert(0, str(Path(__file__).resolve().parent))

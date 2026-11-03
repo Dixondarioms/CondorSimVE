@@ -54,6 +54,7 @@ from app.engine import rescate as rescate_mod
 from app.engine import rutas as rutas_mod
 from app.engine import transporte as transporte_mod
 from app.engine import asw as asw_mod
+from app.engine import minas as minas_mod
 from app.engine import eventos_auto
 from app.engine import sistemas as sistemas_mod
 from app.engine import trafico as trafico_mod
@@ -89,7 +90,8 @@ AVISO_CONTACTO_S = 900.0  # un enemigo que reaparece despues de esto se informa 
 DESPLIEGUE_POR_TURNO_S = 900.0  # tiempo quieta para disparar, por cada "turno de despliegue" del catalogo
 MISIONES_CONTINUAS = frozenset({"patrulla", "espera"})
 TIPOS_DE_ORDEN = ("mover", "atacar", "patrullar", "aterrizar", "despegar", "lanzar", "interferir", "construir",
-                  "embarcar", "desembarcar", "apoyar", "rumbo", "interceptar", "torpedo", "sonoboyas", "sonar")
+                  "embarcar", "desembarcar", "apoyar", "rumbo", "interceptar", "torpedo", "sonoboyas", "sonar",
+                  "minar", "barrer")
 TASA_GIRO_GPS = 3.0  # grados por segundo al virar por una orden de rumbo (viraje estandar del transito aereo)
 LEJOS_KM = 500.0  # punto de referencia por delante en el rumbo (la aeronave nunca llega: sigue el rumbo)
 TIEMPO_OBRA_S = {"vado": 1800.0, "puente": 3600.0}  # trabajo de los ingenieros en el sitio hasta que la obra queda lista
@@ -170,6 +172,7 @@ class Mundo:
     trafico_en: float = -1e9  # ultimo segundo simulado en que se mantuvo el trafico civil (engine/trafico.py)
     colateral: dict = field(default_factory=dict)  # (atacante_id, neutral_id) -> ultimo aviso de daño colateral
     punto_disparos: dict = field(default_factory=dict)  # buque_id -> disparos de defensa de punto acumulados
+    minado_desde: dict = field(default_factory=dict)  # orden_id -> segundo simulado en que el buque empezo a minar
     # eventos automaticos del director (engine/eventos_auto.py): (regla, unidad) dentro de su area
     eventos_dentro: set = field(default_factory=set)
     eventos_listo: bool = False
@@ -230,6 +233,9 @@ class _Ctx:
         self.zonas = {z.id: z for z in zonas_mod.de_escenario(db, esc.id)}  # areas y zonas (engine/zonas.py)
         asw_mod.AHORA[esc.id] = esc.sim_segundos or 0.0
         asw_mod.cargar_boyas(db, esc.id, esc.sim_segundos or 0.0)  # sonoboyas activas (engine/asw.py)
+        from app.models.mina import CampoMinas  # campos de minas con minas (engine/minas.py)
+
+        self.campos_minas = db.query(CampoMinas).filter(CampoMinas.escenario_id == esc.id, CampoMinas.densidad > 0).all()
         self.zona_armada: dict[str, set] = {}  # bando -> intrusos dentro de sus zonas con «armas» (tiran contra ellos)
 
     def releer(self) -> None:
@@ -423,7 +429,7 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
     orden.estado = "en_ejecucion"
     unidad.orden_id = orden.id
     en_alerta = unidad.en_tierra and orden.tipo == "interceptar"
-    if unidad.en_tierra and orden.tipo in ("mover", "patrullar", "atacar", "interceptar", "sonoboyas", "sonar"):
+    if unidad.en_tierra and orden.tipo in ("mover", "patrullar", "atacar", "interceptar", "sonoboyas", "sonar", "minar"):
         if armas_mod.aplica(unidad) and not armas_mod.tiene_carga(unidad):  # sale con la carga de su modelo
             armas_mod.armar(unidad, None, db.get(Unidad, unidad.base_id) if unidad.base_id else None)
         aeronaves_mod.despegar_unidad(unidad)  # una orden de vuelo a una aeronave lista en tierra es el despegue
@@ -465,6 +471,13 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
         orden.resultado = f"[{hora}] Va a desembarcar en ({punto[0]:.3f}, {punto[1]:.3f})."
     elif orden.tipo == "apoyar":
         _poner_ruta(unidad, None)
+    elif orden.tipo in ("minar", "barrer"):
+        _poner_ruta(unidad, None)
+        if unidad.tipo == "aerea":
+            unidad.mision, unidad.mision_lat, unidad.mision_lon = "", None, None
+        punto = orden.waypoints[0]
+        orden.resultado = f"[{hora}] Va a ({punto[0]:.3f}, {punto[1]:.3f}) a " + (
+            "sembrar un campo de minas." if orden.tipo == "minar" else "barrer minas.")
     elif orden.tipo in ("sonoboyas", "sonar"):
         _poner_ruta(unidad, None)
         unidad.mision, unidad.mision_lat, unidad.mision_lon = "", None, None
@@ -659,6 +672,10 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
             _sembrar_boyas(ctx, u, orden, h)
         elif orden is not None and orden.tipo == "sonar":
             _sonar_inmersion(ctx, u, orden, h)
+        elif orden is not None and orden.tipo == "minar":
+            _minar(ctx, u, orden, h)
+        elif orden is not None and orden.tipo == "barrer":
+            _barrer(ctx, u, orden, h)
         elif u.ruta_json:
             _mover(ctx, u, orden, h)
         elif u.tipo == "aerea":
@@ -666,6 +683,7 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
     aeronaves_mod.seguir_portaaviones(ctx.lista)
     transporte_mod.seguir_transporte(ctx.lista)
     _vigilar_zonas(ctx)
+    _vigilar_minas(ctx)
     if ctx.t - ctx.mundo.trafico_en >= trafico_mod.MANTENER_CADA_S:
         ctx.mundo.trafico_en = ctx.t
         trafico_mod.mantener(ctx)
@@ -1341,6 +1359,94 @@ def _sonar_inmersion(ctx: _Ctx, u: Unidad, orden: Orden, h: float) -> None:
                            f"submarinos a {asw_mod.SONAR_INMERSION_KM:.0f} km.")
         ctx.informe.cambios = True
     _cambiar(ctx, u, "combustible", u.combustible - aeronaves_mod.combustible_loiter(u) * h / 3600.0, "sonar de inmersion")
+
+
+def _minar(ctx: _Ctx, u: Unidad, orden: Orden, h: float) -> None:
+    """Orden «minar»: va al punto y siembra un campo de minas (el buque tarda; la aeronave, una pasada)."""
+    from app.models.mina import CampoMinas
+
+    punto = orden.waypoints[0]
+    if geo.distancia_km(u.lat, u.lon, punto[0], punto[1]) > minas_mod.LLEGADA_KM:
+        u.mision, u.mision_lat, u.mision_lon = "", None, None
+        mov = _avanzar(ctx, u, [list(punto)], h)
+        if mov.km_reales <= 0 and mov.nota:
+            ctx.terminar(orden, u, f"No puede llegar al punto: {mov.nota}", "cancelada")
+        return
+    if u.tipo == "naval":
+        desde = ctx.mundo.minado_desde.setdefault(orden.id, ctx.t)
+        if ctx.t - desde < minas_mod.SIEMBRA_BUQUE_S:
+            listo = hora_del_dia(ctx.esc, desde + minas_mod.SIEMBRA_BUQUE_S)
+            orden.resultado = f"[{hora_del_dia(ctx.esc)}] Sembrando minas: termina a las {listo}."
+            return
+    campo = CampoMinas(escenario_id=ctx.esc.id, bando=u.bando, unidad_id=u.id, lat=punto[0], lon=punto[1],
+                       radio_km=minas_mod.RADIO_KM, densidad=1.0, conocido_por="[]", creado_seg=ctx.t)
+    ctx.db.add(campo)
+    ctx.db.flush()
+    ctx.campos_minas.append(campo)
+    _cambiar(ctx, u, "municion", u.municion - minas_mod.MUNICION_POR_CAMPO, "minado")
+    ctx.mundo.minado_desde.pop(orden.id, None)
+    ctx.terminar(orden, u, f"Sembró un campo de {minas_mod.MINAS_POR_CAMPO} minas en ({punto[0]:.3f}, {punto[1]:.3f}), "
+                           f"radio {minas_mod.RADIO_KM:.0f} km.")
+    ctx.evento("minas", u.bando, f"{u.nombre} sembró un campo de minas.", punto[0], punto[1])
+    if u.tipo == "aerea":
+        _esperar(u)
+
+
+def _barrer(ctx: _Ctx, u: Unidad, orden: Orden, h: float) -> None:
+    """Orden «barrer»: el cazaminas va al punto y limpia el campo de minas que encuentra alli."""
+    punto = orden.waypoints[0]
+    campos = [c for c in ctx.campos_minas if c.densidad > 0 and minas_mod.dentro(c, punto[0], punto[1])]
+    if geo.distancia_km(u.lat, u.lon, punto[0], punto[1]) > minas_mod.LLEGADA_KM:
+        mov = _avanzar(ctx, u, [list(punto)], h)
+        if mov.km_reales <= 0 and mov.nota:
+            ctx.terminar(orden, u, f"No puede llegar al punto: {mov.nota}", "cancelada")
+        return
+    if not campos:
+        ctx.terminar(orden, u, "No hay minas en ese punto: el barrido terminó.")
+        return
+    c = campos[0]
+    minas_mod.revelar(c, u.bando)
+    c.densidad = max(0.0, c.densidad - minas_mod.BARRIDO_POR_HORA * h / 3600.0)
+    quedan = round(c.densidad * minas_mod.MINAS_POR_CAMPO)
+    orden.resultado = f"[{hora_del_dia(ctx.esc)}] Barriendo el campo de minas: quedan unas {quedan}."
+    if c.densidad <= 0.02:
+        c.densidad = 0.0
+        ctx.terminar(orden, u, "Campo de minas barrido: el paso quedó libre.")
+        ctx.evento("minas", u.bando, f"{u.nombre} terminó de barrer un campo de minas.", c.lat, c.lon)
+    ctx.informe.cambios = True
+
+
+def _vigilar_minas(ctx: _Ctx) -> None:
+    """Los buques que navegan dentro de un campo arriesgan chocar una mina; los cazaminas descubren los campos."""
+    campos = [c for c in ctx.campos_minas if c.densidad > 0]
+    if not campos:
+        return
+    for u in ctx.lista:
+        if u.estado != "activa" or u.tipo != "naval" or catalogo.es_misil(u) or transporte_mod.embarcada(u):
+            continue
+        previa = ctx.mundo.pos_previa.get(u.id)
+        for c in campos:
+            if minas_mod.barre(u) and geo.distancia_km(u.lat, u.lon, c.lat, c.lon) <= c.radio_km + minas_mod.DETECCION_CAZAMINAS_KM:
+                if minas_mod.revelar(c, u.bando):
+                    texto = f"{u.nombre} detectó un campo de minas."
+                    ctx.evento("minas", u.bando, texto, c.lat, c.lon)
+                    ctx.alerta("contacto", u.bando, texto, c.lat, c.lon)
+            if previa is None:
+                continue
+            km = minas_mod.km_dentro(c, previa, (u.lat, u.lon))
+            p = minas_mod.riesgo(u, km, c)
+            dano = minas_mod.choque(ctx.esc.semilla or 0, u, c, ctx.t, p, bool(ctx.esc.azar))
+            if dano <= 0:
+                continue
+            _perder(ctx, u, dano)
+            minas_mod.gastar_mina(c, 1.0 if ctx.esc.azar else p)
+            nuevo = minas_mod.revelar(c, u.bando)
+            if ctx.esc.azar or nuevo:
+                texto = f"{u.nombre} chocó una mina (−{dano:.0f} puntos de fuerza)." if ctx.esc.azar \
+                    else f"{u.nombre} entró a un campo de minas: sufre daños."
+                ctx.evento("minas", u.bando, texto, u.lat, u.lon)
+                ctx.alerta("ataque", u.bando, texto, u.lat, u.lon, "critica")
+            ctx.informe.cambios = True
 
 
 def _traza(ctx: _Ctx, orden: Orden, d: Unidad) -> dict:

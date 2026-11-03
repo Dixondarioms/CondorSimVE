@@ -1579,6 +1579,14 @@
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:MSC_HARMONY_III_(container_ship,_2006)_in_Port_Koper_(SIKOP,_2024).jpg"
     },
+    "cazaminas": {
+      "foto": "/static/fotos/ref_cazaminas.jpg",
+      "obra": "Port side view of the US Navy (USN) OSPREY CLASS (MINEHUNTER COASTAL), USS CARDINAL (MHC 60), underway on the Potomac River",
+      "autor": "Department of Defense. American Forces Information Service. Defense Visual Information Center. 1994",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Port_side_view_of_the_US_Navy_(USN)_OSPREY_CLASS_(MINEHUNTER_COASTAL),_USS_CARDINAL_(MHC_60),_underway_on_the_Potomac_River_-_DPLA_-_a48bc01b2dba545ae7e16fdf0ee327a1.jpeg"
+    },
     "destructor": {
       "foto": "/static/fotos/ref_destructor.jpg",
       "obra": "US Navy 110930-N-QN361-146 The Arleigh Burke-class guided-missile destroyer USS Sterett (DDG 104) is underway conducting a composite training unit",

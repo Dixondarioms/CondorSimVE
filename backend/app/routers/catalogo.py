@@ -3,6 +3,7 @@ from fastapi.responses import FileResponse
 
 from app import auth, schemas, state
 from app.engine import armas, asw, catalogo, clima, misiones, ota
+from app.engine import minas as minas_lib
 from app.engine import misiles as misiles_lib
 from app.engine import defensa_aerea
 from app.engine import fotos_usuario, modelos_usuario
@@ -26,6 +27,9 @@ def obtener_catalogo(_: Usuario = Depends(auth.usuario_actual)):
         "armas": armas.publico(),
         "cargas": {m: armas.cargas_de(m) for m in catalogo.MODELOS if catalogo.CLASES[catalogo.MODELOS[m].clase].tipo == "aerea"},
         "nombres_carga": armas.NOMBRES_CARGA,
+        # minas navales (engine/minas.py): quien siembra y quien barre
+        "minas": {"navales": list(minas_lib.MINADORES_NAVALES), "aereos": list(minas_lib.MINADORES_AEREOS),
+                  "radio_km": minas_lib.RADIO_KM, "minas": minas_lib.MINAS_POR_CAMPO},
         # defensa de punto de los buques contra los misiles (engine/misiles.py)
         "defensa_punto": misiles_lib.DEFENSA_PUNTO,
         # guerra antisubmarina (engine/asw.py): quien siembra sonoboyas, quien cala sonar y el alcance de los torpedos

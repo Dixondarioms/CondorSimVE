@@ -8,6 +8,7 @@ from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import armas as armas_mod
 from app.engine import asw as asw_mod
+from app.engine import minas as minas_mod
 from app.engine import catalogo, geo, infraestructura, movimiento, puestos
 from app.engine import clima as clima_mod
 from app.engine import doctrina as doctrina_mod
@@ -87,7 +88,7 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         raise HTTPException(status_code=400, detail="Solo las aeronaves pueden aterrizar u orbitar sobre un punto: "
                                                     "las demás unidades patrullan un área")
     if unidad.en_tierra and unidad.espera_restante > 0 and payload.tipo in ("mover", "atacar", "patrullar", "interceptar",
-                                                                            "sonoboyas", "sonar"):
+                                                                            "sonoboyas", "sonar", "minar"):
         raise HTTPException(
             status_code=400,
             detail=f"En tierra: le falta {_falta_texto(esc, unidad)} para reabastecer y rearmar antes de despegar",
@@ -197,6 +198,14 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         motivo = asw_mod.error_de_torpedo(unidad, blanco) if blanco is not None else "Blanco no detectado por su bando"
         if motivo:
             raise HTTPException(status_code=400, detail=motivo)
+    elif payload.tipo in ("minar", "barrer"):
+        motivo = minas_mod.error_de_siembra(unidad) if payload.tipo == "minar" else (
+            None if minas_mod.barre(unidad) else "Barren minas los cazaminas")
+        if motivo:
+            raise HTTPException(status_code=400, detail=motivo)
+        if len(payload.waypoints) != 1:
+            raise HTTPException(status_code=400, detail="Indique un único punto en el mapa")
+        _validar_waypoints(payload.waypoints)
     elif payload.tipo in ("sonoboyas", "sonar"):
         if payload.tipo == "sonoboyas" and not asw_mod.es_avion_asw(unidad):
             raise HTTPException(status_code=400, detail="Siembran sonoboyas los aviones de patrulla marítima (P-3, P-8)")
@@ -270,7 +279,7 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         unidad_id=unidad.id,
         tipo=payload.tipo,
         waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir", "patrullar", "interferir", "desembarcar",
-                                                                  "sonoboyas", "sonar") else []),
+                                                                  "sonoboyas", "sonar", "minar", "barrer") else []),
         objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar", "aterrizar", "lanzar", "embarcar", "interceptar",
                                                                     "torpedo") else None,
         detalle=(

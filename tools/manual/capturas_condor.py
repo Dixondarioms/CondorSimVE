@@ -384,6 +384,29 @@ def salvas(n: Nav) -> None:
     guardar(n, "salvas", n.rect("#map"), margen=0)
 
 
+def minas(n: Nav) -> None:
+    """Un campo de minas propio y la orden Minar de una fragata (en la COPIA de la base)."""
+    n.como("director")
+    f = _post(n, "/unidades", {"nombre": "Fragata minadora (captura)", "bando": "azul", "tipo": "naval", "clase": "fragata",
+                               "lat": 11.10, "lon": -64.30})
+    n.como("az.cmdte")
+    _post(n, "/ordenes", {"unidad_id": f["id"], "tipo": "minar", "waypoints": [[11.10, -64.30]]})
+    n.como("director")
+    n.clic("#control-turno [data-vel='60']")
+    n.clic("#btn-marcha")
+    n.pausa(40)  # media hora simulada: la fragata termina de sembrar
+    n.clic("#btn-marcha")
+    n.pausa(2)
+    n.como("az.cmdte")
+    n.elegir(f["nombre"])
+    n.vista(11.10, -64.28, 11, 3)
+    n.clic("[data-modo=minar]")
+    n.pausa(1)
+    n.clic_mapa(11.16, -64.20)
+    n.pausa(1.5)
+    guardar(n, "minas", n.rect("#map"), margen=0)
+
+
 def doctrina(n: Nav) -> None:
     n.pestana("fuerzas")
     n.js("const d = document.getElementById('sec-doctrina'); d.querySelectorAll('details').forEach((x) => x.open = true); d.scrollIntoView({block: 'start'})")
@@ -509,7 +532,7 @@ def videowall(n: Nav) -> None:
     n.tecla("Escape", 27)
 
 
-ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, eventos_auto, asw, salvas, doctrina, misiones,
+ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, eventos_auto, asw, salvas, minas, doctrina, misiones,
          situacion, tiem, consola, capas, graficos, mapas, ayuda, informe, en_marcha, bando, videowall]
 
 
@@ -523,7 +546,7 @@ def main() -> int:
             if pedidas and f.__name__ not in pedidas:
                 continue
             try:
-                if f not in (acceso, despegue, orden_mover, interceptar, zonas, carga, sistemas, asw, salvas, misiones, bando):
+                if f not in (acceso, despegue, orden_mover, interceptar, zonas, carga, sistemas, asw, salvas, minas, misiones, bando):
                     n.como("director")
                 f(n)
                 if f is acceso:

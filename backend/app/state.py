@@ -24,6 +24,7 @@ from app.engine import zonas as zonas_mod
 from app.engine import armas as armas_mod
 from app.engine import sistemas as sistemas_mod
 from app.engine import asw as asw_mod
+from app.engine import minas as minas_mod
 from app.engine import objetivos as objetivos_mod
 from app.engine import infraestructura as infra_mod
 from app.engine import personal as personal_mod
@@ -254,6 +255,7 @@ def estado_para(
         # areas de patrulla y zonas de exclusion y de no vuelo (engine/zonas.py): las propias y las del director
         "zonas": zonas_mod.visibles_para(db, escenario, rol),
         "sonoboyas": asw_mod.boyas_para(db, escenario, rol),  # guerra antisubmarina (engine/asw.py)
+        "minas": minas_mod.campos_para(db, escenario, rol),  # campos de minas que el rol conoce (engine/minas.py)
         "personal": {b: personal_mod.resumen(todas, b) for b in bandos_propios},
         # plantilla de personal por unidad con reservas y milicia, y esfuerzo aereo (engine/toe.py, disponibilidad.py)
         "personal_toe": (partes := {b: toe_mod.partes(todas, escenario, b) for b in bandos_propios}),
