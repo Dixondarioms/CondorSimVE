@@ -465,6 +465,7 @@
               <label class="chk"><input type="checkbox" data-causa="mision"><span>una misión aérea terminada</span></label>
               <label class="chk"><input type="checkbox" data-causa="intercepcion"><span>una fase nueva de una interceptación</span></label>
               <label class="chk"><input type="checkbox" data-causa="zona"><span>una intrusión en una zona de exclusión o de no vuelo</span></label>
+              <label class="chk"><input type="checkbox" data-causa="colateral"><span>daño colateral (un ataque a una unidad neutral)</span></label>
             </fieldset>
             <div class="grid">
               <label class="mini">Clima
@@ -488,6 +489,22 @@
                 <option value="rojo">Bando Rojo</option>
               </select>
             </label>
+          </details>
+
+          <details id="sec-trafico">
+            <summary>Tráfico civil y neutral</summary>
+            <p class="ayuda">Aviones comerciales por aerovías, buques mercantes y pesqueros en la zona que se ve ahora en el mapa (del bando neutral). Para cada bando son contactos desconocidos hasta clasificarlos: con las armas <i>libres</i> se les puede tirar por error, y eso es <b>daño colateral</b> (alerta y penalización en el puntaje y en el informe). Con las armas <i>restringidas</i> nunca se les tira.</p>
+            <div class="grid">
+              <label class="mini">Aviones comerciales<input id="tr-aviones" type="number" min="0" max="40" value="8"></label>
+              <label class="mini">Buques mercantes<input id="tr-mercantes" type="number" min="0" max="30" value="4"></label>
+              <label class="mini">Pesqueros<input id="tr-pesqueros" type="number" min="0" max="30" value="4"></label>
+            </div>
+            <div class="fila">
+              <button id="btn-trafico" type="button">Generar en la vista del mapa</button>
+              <button id="btn-trafico-quitar" type="button" class="secundario">Quitar el tráfico</button>
+            </div>
+            <p id="tr-info" class="ayuda preview"></p>
+            <p class="ayuda">Para las fuerzas de un país que no participa, agregue unidades con el bando <b>Neutral</b>.</p>
           </details>
 
           <details>
@@ -538,7 +555,7 @@
             <p class="ayuda">Elija la clase, complete los datos y haga clic en el mapa para ubicarla.</p>
             <div class="grid">
               <input id="u-nombre" placeholder="Nombre (ej. Cía A)" maxlength="120">
-              <select id="u-bando"><option value="azul">Azul</option><option value="rojo">Rojo</option></select>
+              <select id="u-bando"><option value="azul">Azul</option><option value="rojo">Rojo</option><option value="neutral">Neutral</option></select>
               <select id="u-clase"></select>
               <select id="u-escalon"></select>
               <label class="mini">Velocidad km/h<input id="u-velocidad" type="number" min="0"></label>
@@ -1108,6 +1125,7 @@
               </label>
               <label><input type="checkbox" data-capa="misiones" checked><span>Misiones aéreas</span></label>
               <label><input type="checkbox" data-capa="zonas" checked><span>Áreas y zonas</span></label>
+              <label><input type="checkbox" data-capa="aerovias" checked><span>Aerovías del tráfico civil</span></label>
             </div>
           </section>
 

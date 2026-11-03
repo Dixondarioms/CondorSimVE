@@ -564,7 +564,18 @@ def construir(salida: Path) -> None:
                "<b>Conducir Azul / Rojo</b> (arriba): dar órdenes como el comandante de un bando sin alumnos; <b>Dejar de conducir</b> "
                "vuelve a la vista del director.",
                "<b>Finalizar</b> cierra el ejercicio; <b>Duplicar</b> y <b>Archivar</b> están en CONSOLA → Escenario."]),
-          H2("13.3 Cuentas y usuarios"),
+          H2("13.3 Tráfico civil, neutrales y daño colateral")]
+    h += [Table([[figura("trafico", "CONSOLA → Tráfico civil y neutral.", ancho=5.6 * cm, alto_max=11 * cm, celda=True),
+                  [P("En CONSOLA → <b>Tráfico civil y neutral</b> el director pide aviones comerciales, buques mercantes y "
+                     "pesqueros en la zona que se ve en el mapa. Los aviones vuelan por <b>aerovías</b> (líneas verdes "
+                     "punteadas), los mercantes cruzan por el mar y los pesqueros van de un caladero a otro; el que sale de la "
+                     "zona se retira y entra otro."),
+                   P("Para cada bando son contactos desconocidos hasta clasificarlos. Con las armas <i>libres</i> se les puede "
+                     "tirar por error; con las <i>restringidas</i>, nunca. Tirarle a una unidad neutral es <b>daño colateral</b>: "
+                     "alerta, penalización en el puntaje (10 puntos por unidad y uno más cada 5 de fuerza) y una sección en el "
+                     "informe. Para un país que no participa, agregue unidades con el bando <b>Neutral</b>.")]]],
+                colWidths=[5.9 * cm, ANCHO_TEXTO - 5.9 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += [H2("13.4 Cuentas y usuarios"),
           P("CONSOLA → <b>Usuarios</b>: crear cuentas, cambiar su repartición, restablecer contraseñas y aprobar las solicitudes "
             "de cuenta pendientes. Para que una cuenta vea un ejercicio, márquela en CONSOLA → Escenario → <b>Usuarios con "
             "acceso a este escenario</b>."),

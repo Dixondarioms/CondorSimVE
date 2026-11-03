@@ -53,6 +53,7 @@ from app.engine import ota as ota_mod
 from app.engine import rescate as rescate_mod
 from app.engine import rutas as rutas_mod
 from app.engine import transporte as transporte_mod
+from app.engine import trafico as trafico_mod
 from app.engine import zonas as zonas_mod
 from app.models.aar import Combate, Fotograma, RegistroLogistico
 from app.models.contacto import Contacto
@@ -163,6 +164,8 @@ class Mundo:
     intercepciones: dict = field(default_factory=dict)
     en_zona: set = field(default_factory=set)  # (zona_id, unidad_id) dentro de una zona de exclusion o de no vuelo
     patrulla_idx: dict = field(default_factory=dict)  # unidad_id -> proximo vertice de su area de patrulla
+    trafico_en: float = -1e9  # ultimo segundo simulado en que se mantuvo el trafico civil (engine/trafico.py)
+    colateral: dict = field(default_factory=dict)  # (atacante_id, neutral_id) -> ultimo aviso de daño colateral
 
 
 MUNDOS: dict[int, Mundo] = {}
@@ -185,7 +188,8 @@ class Informe:
 # Causas de pausa automatica (el director elige cuales detienen el reloj) y sus nombres para la pantalla.
 CAUSAS_PAUSA = {"contacto": "Contacto nuevo", "ataque": "Ataque a una unidad propia", "perdida": "Unidad perdida",
                 "combustible": "Combustible crítico", "mision": "Misión terminada",
-                "intercepcion": "Fase de una interceptación", "zona": "Intrusión en una zona"}
+                "intercepcion": "Fase de una interceptación", "zona": "Intrusión en una zona",
+                "colateral": "Daño colateral (ataque a una unidad neutral)"}
 REPETIR_ALERTA_FUEGO_S = 900.0  # una unidad bajo fuego continuo se vuelve a avisar despues de esto
 
 
@@ -258,6 +262,15 @@ class _Ctx:
         """La doctrina de `u` le permite tirar por su cuenta contra `x` ("aire" o "superficie")."""
         if not self.esc.fuego_automatico:
             return False
+        if x.bando == "neutral":
+            # un neutral (trafico civil o un pais ajeno) solo se ataca por error: con las armas libres y mientras
+            # el bando no lo haya clasificado (sin niebla de guerra, todos saben que es neutral)
+            if not self.esc.niebla or self.doctrina(u)["armas_aire" if dominio == "aire" else "armas_superficie"] != "libre":
+                return False
+            if getattr(self.esc, f"ia_{u.bando}", False):
+                return False  # el adversario automatico no arriesga daño colateral (no puede corregir su doctrina)
+            p = self.mundo.pistas.get((u.bando, x.id))
+            return p is None or p["etapa"] == "desconocido"
         if x.id in self.zona_armada.get(u.bando, ()):
             return True  # dentro de una zona propia con «armas»: se tira aunque la doctrina las restrinja
         estado = self.doctrina(u)["armas_aire" if dominio == "aire" else "armas_superficie"]
@@ -610,6 +623,9 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
     aeronaves_mod.seguir_portaaviones(ctx.lista)
     transporte_mod.seguir_transporte(ctx.lista)
     _vigilar_zonas(ctx)
+    if ctx.t - ctx.mundo.trafico_en >= trafico_mod.MANTENER_CADA_S:
+        ctx.mundo.trafico_en = ctx.t
+        trafico_mod.mantener(ctx)
     if ctx.esc.fuego_automatico:
         _interceptar(ctx)
         _antiaerea_generica(ctx, h)
@@ -875,7 +891,7 @@ def _guardar_contactos(ctx: _Ctx, cada_s: float = 60.0) -> None:
                 c.etapa, c.puntos, c.incertidumbre_km = p["etapa"], round(p["puntos"], 2), p["inc"]
     for (bando, uid), c in existentes.items():
         u = ctx.unidades.get(uid)
-        if u is None or u.estado == "destruida":
+        if u is None or u.estado != "activa":
             ctx.db.delete(c)
 
 
@@ -941,6 +957,22 @@ def _apoyos(ctx: _Ctx) -> dict[int, list[int]]:
     return salida
 
 
+def _colateral(ctx: _Ctx, a: Unidad, d: Unidad, perdida: float) -> None:
+    """Un bando tiro contra una unidad neutral (trafico civil o un pais ajeno): daño colateral. Alerta al bando que
+    tiro (y al director) y evento para el informe; el puntaje lo descuenta engine/objetivos.py."""
+    if d.bando != "neutral" or a.bando not in ("azul", "rojo"):
+        return
+    if ctx.t - ctx.mundo.colateral.get((a.id, d.id), -1e9) < REPETIR_ALERTA_FUEGO_S:
+        return
+    ctx.mundo.colateral[(a.id, d.id)] = ctx.t
+    clase = catalogo.obtener(d.clase, d.tipo).nombre.lower()
+    texto = (f"Daño colateral: {a.nombre} tiró contra {d.nombre} ({clase}, neutral)"
+             + (f" y le quitó {perdida:.0f} puntos de fuerza." if perdida >= 0.5 else ".")
+             + " Penaliza el puntaje del bando.")
+    ctx.evento("colateral", a.bando, texto, d.lat, d.lon)
+    ctx.alerta("colateral", a.bando, texto, d.lat, d.lon, "critica")
+
+
 def _perder(ctx: _Ctx, u: Unidad, puntos: float) -> None:
     if puntos > 0:
         ctx.perdidas[u.id] = ctx.perdidas.get(u.id, 0.0) + puntos
@@ -983,6 +1015,7 @@ def _pasada(ctx: _Ctx, a: Unidad, d: Unidad, orden: Orden | None, recarga_s: flo
     _registrar_combate(ctx, a, d, orden.id if orden is not None else None, perd_a, perd_d, res.ratio,
                        "; ".join(res.efectos) + con)
     texto = f"{a.nombre} atacó a {d.nombre}{con}: {res.resumen}"
+    _colateral(ctx, a, d, perd_d)
     ctx.evento("combate", a.bando, texto, d.lat, d.lon)
     if d.bando != a.bando:
         recibido = (f"{d.nombre} fue atacado" + (f" por {a.nombre}" if ctx.visible_para(a, d.bando) else "")
@@ -1002,6 +1035,7 @@ def _fuego_continuo(ctx: _Ctx, a: Unidad, d: Unidad, orden: Orden | None, h: flo
     perd_a, perd_d, gasto, res = _resolver(ctx, a, d, h / 3600.0, clave, parte)
     _perder(ctx, a, perd_a)
     _perder(ctx, d, perd_d)
+    _colateral(ctx, a, d, perd_d)
     _cambiar(ctx, a, "municion", a.municion - gasto, "combate")
     acc = ctx.mundo.combates.setdefault((a.id, d.id), {"orden": orden.id if orden is not None else None,
                                                      "perd_a": 0.0, "perd_d": 0.0, "ratio": res.ratio,
@@ -1598,6 +1632,7 @@ def _defensa_aerea(ctx: _Ctx) -> None:
                     derribos = e["p"]
                 perdida = min(d.fuerza, derribos / total * 100.0)
                 _perder(ctx, d, perdida)
+                _colateral(ctx, bat, d, perdida)
                 _registrar_combate(ctx, bat, d, None, 0.0, perdida, e["p"],
                                    f"{arma.nombre}: {e['por_salva']} misil(es), {e['aspecto']}; " + "; ".join(e["efectos"]))
                 if derribos >= 1.0 or perdida >= d.fuerza - 0.05:

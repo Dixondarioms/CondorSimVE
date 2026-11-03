@@ -2,7 +2,7 @@
   "use strict";
   const $ = (id) => document.getElementById(id);
   const { esBando, pct } = Logica;
-  const COLOR = { azul: "#3A86FF", rojo: "#EF233C" };
+  const COLOR = { azul: "#3A86FF", rojo: "#EF233C", neutral: "#7BD389" };
   // regiones del mapa (GET /api/terreno/mapas): Venezuela en detalle, America y, si se genero, el mundo; se apilan
   // de la mas general a la mas detallada (ver tools/preparar_terreno.py y Logica.limitesDeMapas)
   const NOMBRE_TIPO = { terrestre: "Terrestres", aerea: "Aéreas", naval: "Navales", base: "Bases y logística" };
@@ -656,10 +656,11 @@
     c.ge = L.layerGroup().addTo(map);
     c.meteorologia = L.layerGroup().addTo(map);
     c.misiones = L.layerGroup().addTo(map);
+    c.aerovias = L.layerGroup().addTo(map); // aerovias del trafico civil (engine/trafico.py)
     app.rendererEstelas = L.canvas({ padding: 0.3 });
     app.meteo = ClimaMapa.crear({ L, mapa: map, capa: c.meteorologia, etiqueta: Logica.etiquetaClima, texto: Logica.textoZonaClima, escapar });
     try { if (localStorage.getItem("condor.vistaClima") === "satelite") app.meteo.fijarVista("satelite", 0); } catch (_) { /* sin almacenamiento */ }
-    app.capaActiva = { terreno: true, estelas: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, alcances: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, infraestructura: true, ge: true, meteorologia: true, misiones: true, zonas: true, tramos_pro: false };
+    app.capaActiva = { terreno: true, estelas: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, alcances: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, infraestructura: true, ge: true, meteorologia: true, misiones: true, zonas: true, aerovias: true, tramos_pro: false };
     if (app.capaActiva.niebla) c.niebla.addTo(map);
 
     let pendiente = null;
@@ -1602,7 +1603,8 @@
     limpiar(cont);
     const vista = bandoVista();
     $("oob-titulo").textContent = vista ? `Orden de batalla · ${nombreDeBando(vista)}` : "Orden de batalla · Ambos bandos";
-    const bandos = vista ? [vista] : ["azul", "rojo"];
+    // el director ve tambien a los neutrales (trafico civil y paises ajenos) si los hay
+    const bandos = vista ? [vista] : ["azul", "rojo", ...(data.unidades.some((u) => u.bando === "neutral") ? ["neutral"] : [])];
     const filtrar = (lista) => Logica.filtrarUnidades(lista, app.filtroOOB);
     for (const b of bandos) {
       const propias = filtrar(data.unidades.filter((u) => u.bando === b));
@@ -1709,7 +1711,7 @@
     const cl = claseDe(u);
     const est = c && !app.porId.get(app.seleccion) ? { texto: `Último contacto T${c.turno_visto}`, clase: "fuego" } : Logica.estadoUnidad(u, pendientes());
     const bando = u.bando || (c ? (bandoVista() === "azul" ? "rojo" : "azul") : "");
-    const nombreBando = bando === "azul" ? "Azul" : bando === "rojo" ? "Rojo" : "";
+    const nombreBando = bando === "azul" ? "Azul" : bando === "rojo" ? "Rojo" : bando === "neutral" ? "Neutral" : "";
     const rama = (Logica.RAMAS.find((r) => r[0] === Logica.ramaDe(u)) || ["", ""])[1];
     const oculto = u.fuerza === null;
     const extra = [];
@@ -2782,6 +2784,7 @@
     if (app.misiones) app.misiones.render(data);
     if (app.pmi) app.pmi.render(data);
     if (app.zonas) app.zonas.render(data);
+    renderTrafico(data.escenario);
     if (app.aerodromos) app.aerodromos.actualizar(data.unidades);
     llenarSelect($("adj-unidad"), data.unidades.map((u) => [u.id, `${u.nombre} (${u.bando})`]));
     if (app.informe && app.informe.activo()) return; // durante la repeticion no se pisa el mapa
@@ -2997,7 +3000,7 @@
     const m = data.marcador || { azul: { total: 0, objetivos: 0, bajas: 0 }, rojo: { total: 0, objetivos: 0, bajas: 0 } };
     for (const b of ["azul", "rojo"]) {
       $(`marcador-${b}`).textContent = String(m[b].total);
-      $(`marcador-${b}-det`).textContent = ` (${m[b].objetivos} obj. + ${m[b].bajas} bajas)`;
+      $(`marcador-${b}-det`).textContent = ` (${m[b].objetivos} obj. + ${m[b].bajas} bajas${m[b].colateral ? ` − ${m[b].colateral} colateral` : ""})`;
     }
     // avance de los objetivos de cada bando (cada bando ve el suyo; instructor y observador, los dos)
     const avance = $("avance-objetivos");
@@ -3660,6 +3663,34 @@
     if ($("cfg-hora").value) cuerpo.hora_inicio = $("cfg-hora").value;
     enSilencio(api("PATCH", rutaEsc("/config"), cuerpo).then(() => toast("Configuración aplicada", true)));
   });
+
+  // trafico civil: en la zona que se ve ahora en el mapa (engine/trafico.py)
+  $("btn-trafico").addEventListener("click", () => {
+    if (!app.escenarioId || !app.map) return;
+    const b = app.map.getBounds();
+    const n = (id) => Math.max(0, parseInt($(id).value, 10) || 0);
+    enSilencio(api("PUT", rutaEsc("/trafico"), {
+      aviones: Math.min(40, n("tr-aviones")), mercantes: Math.min(30, n("tr-mercantes")), pesqueros: Math.min(30, n("tr-pesqueros")),
+      zona: [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()],
+    }).then(() => toast("Tráfico civil pedido: aparece al correr el reloj", true)));
+  });
+  $("btn-trafico-quitar").addEventListener("click", () => {
+    if (app.escenarioId) enSilencio(api("DELETE", rutaEsc("/trafico")).then(() => toast("Tráfico civil retirado", true)));
+  });
+
+  /** Aerovias del trafico civil (las ven todos) y lo pedido, en la consola del director. */
+  function renderTrafico(esc) {
+    const t = esc && esc.trafico;
+    const firma = JSON.stringify(t || null);
+    if (app.firmaTrafico === firma) return;
+    app.firmaTrafico = firma;
+    app.capas.aerovias.clearLayers();
+    $("tr-info").textContent = t ? `En la zona: ${t.aviones} aviones, ${t.mercantes} mercantes y ${t.pesqueros} pesqueros (se reponen al salir).` : "Sin tráfico civil.";
+    for (const via of (t && t.aerovias) || []) {
+      L.polyline(via, { color: "#7BD389", weight: 1.5, opacity: 0.6, dashArray: "2 6", interactive: false })
+        .bindTooltip("Aerovía", { sticky: true }).addTo(app.capas.aerovias);
+    }
+  }
 
   $("btn-config-com").addEventListener("click", () => {
     if (!app.escenarioId) return;

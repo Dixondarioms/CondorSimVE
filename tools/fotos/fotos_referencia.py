@@ -115,6 +115,9 @@ UNIDADES = [
                                           "Type 209 submarine"]),
     ("clases", "buque_desembarco", "Buque de desembarco anfibio", ["Capana T-61", "clase Capana", "T-64 Los Llanos",
                                                                    "landing ship tank"]),
+    # trafico civil (engine/trafico.py)
+    ("clases", "buque_mercante", "Buque mercante", ["container ship at sea", "cargo ship Caribbean", "bulk carrier at sea"]),
+    ("clases", "pesquero", "Pesquero", ["fishing boat Venezuela", "fishing trawler at sea", "Margarita fishing boat"]),
 ]
 # catalogo ampliado del Condor (backend/app/engine/catalogo_ampliado.py) y modelos que cambiaron de identidad
 sys.path.insert(0, str(Path(__file__).resolve().parent))

@@ -57,6 +57,8 @@ class Escenario(Base):
     # doctrina y reglas de enfrentamiento de cada bando {"azul": {...}, "rojo": {...}} (engine/doctrina.py)
     doctrina_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     velocidad: Mapped[int] = mapped_column(Integer, default=60, server_default="60")
+    # trafico civil que genero el director: cantidades, zona y aerovias (engine/trafico.py)
+    trafico_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # interruptores del motor (herramientas de direccion): niebla de guerra, consumo/reabastecimiento, efectos del
     # clima y fuego automatico (patrullas y antiaerea). Apagarlos simplifica el ejercicio para fines didacticos.
@@ -104,6 +106,13 @@ class Escenario(Base):
     ensayo_bando: Mapped[str | None] = mapped_column(String(10), nullable=True)
     ensayo_fa: Mapped[str] = mapped_column(String(300), default="", server_default="")
     ensayo_desde: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    @property
+    def trafico(self) -> dict | None:
+        """Trafico civil pedido por el director (engine/trafico.py)."""
+        from app.engine.trafico import zona_publica  # importacion tardia
+
+        return zona_publica(self)
 
     @property
     def pausa_auto(self) -> dict:

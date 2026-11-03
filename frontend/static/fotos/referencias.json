@@ -1571,6 +1571,14 @@
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:Buque_de_desembarque_tipo_LST_clase_Capana_-_T-63_Goajira.JPG"
     },
+    "buque_mercante": {
+      "foto": "/static/fotos/ref_buque_mercante.jpg",
+      "obra": "MSC HARMONY III (container ship, 2006) in Port Koper (SIKOP, 2024)",
+      "autor": "Petar Milošević",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:MSC_HARMONY_III_(container_ship,_2006)_in_Port_Koper_(SIKOP,_2024).jpg"
+    },
     "destructor": {
       "foto": "/static/fotos/ref_destructor.jpg",
       "obra": "US Navy 110930-N-QN361-146 The Arleigh Burke-class guided-missile destroyer USS Sterett (DDG 104) is underway conducting a composite training unit",
@@ -1626,6 +1634,14 @@
       "licencia": "CC BY-SA 3.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:ANBV_Yavire_(GC-22).jpg"
+    },
+    "pesquero": {
+      "foto": "/static/fotos/ref_pesquero.jpg",
+      "obra": "A day of fishing aground",
+      "autor": "Wilfredor",
+      "licencia": "CC0",
+      "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:A_day_of_fishing_aground.jpg"
     },
     "portaaviones": {
       "foto": "/static/fotos/ref_portaaviones.jpg",

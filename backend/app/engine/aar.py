@@ -171,12 +171,17 @@ def construir_informe(db: Session, escenario: Escenario) -> dict:
         r["unidades"] += 1
         r["destruidas"] += 1 if u.estado == "destruida" else 0
     for c in _agrupar_fuego_continuo(combates):  # un fuego continuo cuenta como un combate por hora
-        resumen[c["atacante_bando"]]["combates_iniciados"] += 1
-        resumen[c["defensor_bando"]]["combates_recibidos"] += 1
-        resumen[c["atacante_bando"]]["fuerza_perdida"] += c["perdida_atacante"]
-        resumen[c["defensor_bando"]]["fuerza_perdida"] += c["perdida_defensor"]
-        resumen[c["atacante_bando"]]["dano_infligido"] += c["perdida_defensor"]
-        resumen[c["defensor_bando"]]["dano_infligido"] += c["perdida_atacante"]
+        ra, rd = resumen.get(c["atacante_bando"]), resumen.get(c["defensor_bando"])  # (los neutrales no suman)
+        if ra is not None:
+            ra["combates_iniciados"] += 1
+            ra["fuerza_perdida"] += c["perdida_atacante"]
+            if rd is not None:
+                ra["dano_infligido"] += c["perdida_defensor"]
+        if rd is not None:
+            rd["combates_recibidos"] += 1
+            rd["fuerza_perdida"] += c["perdida_defensor"]
+            if ra is not None:
+                rd["dano_infligido"] += c["perdida_atacante"]
     for o in ordenes:
         u = unidades.get(o.unidad_id)
         if u is not None and u.bando in resumen:
@@ -195,6 +200,9 @@ def construir_informe(db: Session, escenario: Escenario) -> dict:
         "turnos": [turnos[k] for k in sorted(turnos)],
         "resumen": resumen,
         "marcador": objetivos_mod.marcador(db, escenario),
+        # daño colateral: ataques a unidades neutrales (trafico civil o paises ajenos; engine/trafico.py)
+        "colateral": [{"bando": e.bando_destino, "turno": e.turno, "descripcion": e.descripcion}
+                      for e in eventos if e.tipo == "colateral"],
         "objetivos": [
             state.serializar_objetivo(o, unidades)
             for o in db.query(Objetivo).filter(Objetivo.escenario_id == escenario.id).order_by(Objetivo.id)
@@ -226,16 +234,23 @@ def _marcador_hasta(objetivos: list[Objetivo], combates: list[Combate], turno: i
             cuenta[o.bando]["cumplidos"] += 1
         elif o.estado == "fallido" and resuelto:
             cuenta[o.bando]["fallidos"] += 1
+    neutrales = {b: {} for b in objetivos_mod.BANDOS}
     for c in combates:
         if c.turno > turno or c.atacante_bando == c.defensor_bando:
             continue
-        if c.atacante_bando in infligido:
+        if c.defensor_bando == "neutral" and c.atacante_bando in neutrales:
+            neutrales[c.atacante_bando][c.defensor_id] = neutrales[c.atacante_bando].get(c.defensor_id, 0.0) + c.perdida_defensor
+            continue
+        if c.atacante_bando in infligido and c.defensor_bando in infligido:
             infligido[c.atacante_bando] += c.perdida_defensor
-        if c.defensor_bando in infligido:
             infligido[c.defensor_bando] += c.perdida_atacante
+    from app.engine import trafico  # importacion tardia
+
+    colateral = {b: trafico.penalidad(neutrales[b]) for b in objetivos_mod.BANDOS}
     return {
-        b: {"objetivos": puntos[b], "bajas": int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO),
-            "total": puntos[b] + int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO), **cuenta[b],
+        b: {"objetivos": puntos[b], "bajas": int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO), "colateral": colateral[b],
+            "neutrales_atacados": len(neutrales[b]),
+            "total": puntos[b] + int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO) - colateral[b], **cuenta[b],
             "cumplidos_pct": round(100 * cuenta[b]["cumplidos"] / cuenta[b]["asignados"], 1) if cuenta[b]["asignados"] else None}
         for b in objetivos_mod.BANDOS
     }

@@ -68,6 +68,8 @@ class Clase:
     # ---- infraestructura no militar (ver engine/infraestructura.py): "energia" | "combustible" | "comunicaciones" |
     # "puente". Fija, sin armas ni sensores ni personal militar; su estado pesa en lo que el bando puede hacer ----
     infraestructura: str = ""
+    # ---- trafico civil (engine/trafico.py): sin armas ni sensores, del bando neutral ----
+    civil: bool = False
 
 
 def _atk(t=1.0, a=1.0, n=1.0):
@@ -147,6 +149,10 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
           _atk(0.0, 0.0, 0.0), 0.5, movilidad="aerea", suministra=("aerea",), nodo_movil_km=40.0, carga_max=100.0,
           armamento="Reabastece de combustible en vuelo (+40 %) a las aeronaves propias a <= 40 km de su orbita; recarga "
                     "su carga en una base aerea propia. Sin armas"),
+    Clase("avion_comercial", "Avión comercial", "aerea", "A", "C-----", 850, 0, 0, 12000, _atk(0.0, 0.0, 0.0), 0.3,
+          "", movilidad="aerea", firma=1.5, civil=True,
+          armamento="Avión de pasajeros o de carga que vuela por una aerovía: sin armas ni sensores militares. Tirarle es "
+                    "daño colateral"),
     Clase("misil_crucero", "Misil de crucero", "aerea", "A", "WMCM--", 850, 5, 0, 1000, _atk(1.5, 0.0, 1.6), 0.3,
           movilidad="aerea", firma=0.3, se_consume=True, misil=True,
           armamento="Salva de misiles guiados hacia su blanco: vuela sola, se estrella contra el blanco (un solo "
@@ -172,6 +178,14 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
     Clase("buque_desembarco", "Buque de desembarco anfibio", "naval", "S", "CALS--", 35, 10, 25, 5000,
           _atk(0.4, 0.2, 0.2), 0.9, movilidad="naval",
           armamento="Transporte anfibio de tropas y vehiculos con armas de autodefensa debiles: necesita escolta"),
+    # ---- trafico civil (engine/trafico.py) ----
+    Clase("buque_mercante", "Buque mercante", "naval", "S", "XM----", 28, 0, 0, 20000, _atk(0.0, 0.0, 0.0), 0.8,
+          "", movilidad="naval", civil=True,
+          armamento="Buque civil (carga o contenedores) que cruza la zona: sin armas ni sensores militares. Tirarle es "
+                    "daño colateral"),
+    Clase("pesquero", "Pesquero", "naval", "S", "XF----", 18, 0, 0, 5000, _atk(0.0, 0.0, 0.0), 0.4, "",
+          movilidad="naval", firma=0.6, civil=True,
+          armamento="Embarcación de pesca: va de un caladero a otro dentro de la zona. Tirarle es daño colateral"),
     # ---- bases ----
     Clase("base_aerea", "Base aerea", "base", "G", "IBA---", 0, 25, 6, 0, _atk(0.0, 0.0, 0.0), 1.0, "",
           ("aerea",), movilidad="fija", stock_max=2000.0, plazas_aeronaves=12),
@@ -596,7 +610,7 @@ def modelo_dict(m: Modelo) -> dict:
 
 
 def generar_sidc(bando: str, clase: Clase, escalon: str = "") -> str:
-    afiliacion = {"azul": "F", "rojo": "H"}.get(bando, "U")
+    afiliacion = {"azul": "F", "rojo": "H", "neutral": "N"}.get(bando, "U")
     esc = ESCALONES.get(escalon or clase.escalon, "-")
     return f"S{afiliacion}{clase.dimension}P{clase.funcion}-{esc}---"
 
@@ -613,7 +627,7 @@ def como_dict(c: Clase) -> dict:
         "emisor": c.emisor, "escucha_km": c.escucha_km, "interferencia_km": c.interferencia_km, "dron": c.dron,
         "se_consume": c.se_consume, "celula": c.celula, "defensa_aerea": c.defensa_aerea, "stock_max": c.stock_max,
         "reposicion_turno": c.reposicion_turno, "misil": c.misil, "lanza_misiles": c.lanza_misiles,
-        "plazas_aeronaves": c.plazas_aeronaves, "embarcable": c.embarcable, "infraestructura": c.infraestructura,
+        "plazas_aeronaves": c.plazas_aeronaves, "embarcable": c.embarcable, "infraestructura": c.infraestructura, "civil": c.civil,
         "ataque_vs": dict(c.ataque_vs), "defensa": c.defensa,
         "foto": (FOTOS_PROPIAS.get(f"clases:{c.id}") or FOTOS_CLASE.get(c.id) or {}).get("foto"),
         "credito": (FOTOS_PROPIAS.get(f"clases:{c.id}") or FOTOS_CLASE.get(c.id) or {}).get("credito"),

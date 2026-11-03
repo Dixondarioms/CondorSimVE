@@ -291,6 +291,28 @@ def carga(n: Nav) -> None:
         guardar(n, "existencias_armas", n.rect("#panel-unidad"), margen=0)
 
 
+def trafico(n: Nav) -> None:
+    """Trafico civil sobre la costa (en la COPIA de la base): el reloj corre un rato para que aparezca."""
+    n.como("director")
+    n.sin_seleccion()
+    n.pestana("consola")
+    n.vista(10.9, -64.3, 8, 4)
+    n.js("const d = document.getElementById('sec-trafico'); d.open = true; d.scrollIntoView({block: 'start'})")
+    n.valor("#tr-aviones", 10)
+    n.valor("#tr-mercantes", 6)
+    n.valor("#tr-pesqueros", 6)
+    n.clic("#btn-trafico")
+    n.pausa(2)
+    n.clic("#control-turno [data-vel='60']")
+    n.clic("#btn-marcha")
+    n.pausa(25)
+    n.clic("#btn-marcha")  # detener
+    n.pausa(3)
+    guardar(n, "trafico", n.rect("#sec-trafico"))
+    guardar(n, "trafico_mapa", n.rect("#map"), margen=0)
+    n.pestana("fuerzas")
+
+
 def doctrina(n: Nav) -> None:
     n.pestana("fuerzas")
     n.js("const d = document.getElementById('sec-doctrina'); d.querySelectorAll('details').forEach((x) => x.open = true); d.scrollIntoView({block: 'start'})")
@@ -416,7 +438,7 @@ def videowall(n: Nav) -> None:
     n.tecla("Escape", 27)
 
 
-ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, doctrina, misiones,
+ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, doctrina, misiones,
          situacion, tiem, consola, capas, graficos, mapas, ayuda, informe, en_marcha, bando, videowall]
 
 

@@ -84,11 +84,25 @@
       id: "pausa-auto", seccion: "El reloj y las alertas", titulo: "Pausa automática y alertas",
       claves: "pausa automatica alerta aviso se detuvo solo contacto nuevo ataque unidad perdida combustible critico mision terminada reanudar ver en el mapa banner",
       texto: `<p>Las <b>alertas</b> avisan al instante lo importante para su bando: contacto nuevo, ataque a una unidad propia,
-        unidad perdida, combustible crítico y misión terminada. Aparecen como aviso sobre el mapa y quedan en el panel
+        unidad perdida, combustible crítico, misión terminada, fase de una interceptación, intrusión en una zona y daño
+        colateral. Aparecen como aviso sobre el mapa y quedan en el panel
         <b>Alertas</b> (derecha); con un clic en el lugar, el mapa va hasta allí.</p>
         <p>El director elige en CONSOLA → <b>Reloj y configuración</b> qué causas <b>detienen el reloj solas</b>. Cuando eso pasa,
         arriba aparece la franja roja <b>PAUSA AUTOMÁTICA</b> con el motivo, <b>Ver en el mapa</b> y (para el director)
         <b>Reanudar</b>.</p>`,
+    },
+    {
+      id: "trafico", seccion: "Dirección del ejercicio", titulo: "Tráfico civil, neutrales y daño colateral",
+      claves: "trafico civil neutral neutrales avion comercial aerolinea aerovia mercante buque pesquero colateral daño colateral penalizacion pais ajeno",
+      texto: `<p>El director genera tráfico civil en CONSOLA → <b>Tráfico civil y neutral</b>: cuántos aviones comerciales,
+        buques mercantes y pesqueros, en la zona que se ve en el mapa. Los aviones vuelan por <b>aerovías</b> (líneas verdes
+        punteadas), los mercantes cruzan por el mar y los pesqueros van de un caladero a otro. El que sale de la zona se
+        retira y entra otro.</p>
+        <p>Para cada bando son <b>contactos desconocidos</b> hasta que los clasifica (o los identifica a la vista). Con las
+        armas <i>libres</i> se les puede tirar por error mientras sean desconocidos; con las armas <i>restringidas</i>, nunca.
+        Tirarle a una unidad neutral es <b>daño colateral</b>: alerta al bando, penaliza su puntaje (10 puntos por unidad y uno
+        más cada 5 de fuerza) y figura en el informe.</p>
+        <p>Para las fuerzas de un país que no participa, el director agrega unidades con el bando <b>Neutral</b>.</p>`,
     },
     // ------------------------------------------------------------------ órdenes
     {

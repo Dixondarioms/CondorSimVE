@@ -250,6 +250,45 @@ async def reanudar(
     return await _difundir_y_estado(db, esc, usuario)
 
 
+@router.put("/{escenario_id}/trafico")
+async def generar_trafico(
+    payload: schemas.TraficoIn,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(solo_instructor),
+):
+    """El director pide trafico civil (aviones por aerovias, mercantes y pesqueros) en una zona (la vista del mapa);
+    el motor lo mantiene mientras corre el reloj (engine/trafico.py)."""
+    from app.engine import trafico
+
+    z = payload.zona
+    if not (-90 <= z[0] <= 90 and -90 <= z[2] <= 90 and abs(z[2] - z[0]) > 0.05 and abs(z[3] - z[1]) > 0.05):
+        raise HTTPException(status_code=400, detail="La zona del tráfico no es válida: acerque o aleje el mapa")
+    d = trafico.configurar(esc, payload.aviones, payload.mercantes, payload.pesqueros, list(z))
+    tiempo_real.mundo_de(esc.id).trafico_en = -1e9  # aparece en el proximo paso del reloj
+    db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="direccion", bando_destino="todos",
+                  sim_segundos=esc.sim_segundos,
+                  descripcion=f"[{tiempo_real.hora_del_dia(esc)}] Tráfico civil en la zona: {d['aviones']} aviones, "
+                              f"{d['mercantes']} mercantes y {d['pesqueros']} pesqueros. Con las armas libres se les puede "
+                              "tirar por error (daño colateral): conviene restringirlas."))
+    db.commit()
+    return await _difundir_y_estado(db, esc, usuario)
+
+
+@router.delete("/{escenario_id}/trafico")
+async def quitar_trafico(
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(solo_instructor),
+):
+    from app.engine import trafico
+
+    esc.trafico_json = None
+    trafico.retirar_todo(db, esc)
+    db.commit()
+    return await _difundir_y_estado(db, esc, usuario)
+
+
 @router.post("/{escenario_id}/finalizar")
 async def finalizar(
     esc: Escenario = Depends(auth.escenario_dep),

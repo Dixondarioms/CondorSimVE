@@ -725,3 +725,6 @@ fieldset.pausa-auto legend { font-size: 12px; color: var(--texto-sec); padding: 
 /* carga de armamento y existencias de armas (panel inferior) */
 .tabla-armas caption { text-align: left; font-weight: 600; padding: 4px 0 2px; }
 .tabla-armas input[type=number] { width: 72px; }
+
+/* bando neutral (trafico civil y paises ajenos; engine/trafico.py) */
+summary.neutral, h4.neutral { color: #7bd389; }

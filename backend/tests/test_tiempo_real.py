@@ -620,6 +620,6 @@ def test_api_el_director_elige_las_causas_y_al_reanudar_se_borra_el_motivo(api):
     r = prof.patch(f"{base}/config", json={"pausa_auto": {"ataque": True, "perdida": True}})
     assert r.status_code == 200
     assert r.json()["escenario"]["pausa_auto"] == {"contacto": False, "ataque": True, "perdida": True,
-                                                   "combustible": False, "mision": False, "intercepcion": False, "zona": False}
+                                                   "combustible": False, "mision": False, "intercepcion": False, "zona": False, "colateral": False}
     assert prof.patch(f"{base}/config", json={"pausa_auto": {"lluvia": True}}).status_code == 400
     assert api("alfa").patch(f"{base}/config", json={"pausa_auto": {"ataque": False}}).status_code == 403

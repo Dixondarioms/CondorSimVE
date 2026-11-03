@@ -149,7 +149,8 @@ def estado_para(
     db: Session, escenario: Escenario, rol: str, terreno: Terreno | None = None
 ) -> dict:
     terreno = terreno or get_terreno()
-    unidades = unidades_visibles_para(db, escenario, rol, terreno)
+    # el trafico civil que ya salio de la zona (engine/trafico.py) no se muestra
+    unidades = [u for u in unidades_visibles_para(db, escenario, rol, terreno) if u.estado != "retirada"]
 
     q_ordenes = db.query(Orden).filter(Orden.escenario_id == escenario.id)
     q_eventos = db.query(Evento).filter(Evento.escenario_id == escenario.id)

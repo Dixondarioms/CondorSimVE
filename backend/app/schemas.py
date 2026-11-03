@@ -92,6 +92,7 @@ class EscenarioOut(BaseModel):
     velocidad: int = 60
     pausa_auto: dict = Field(default_factory=dict)
     pausa_motivo: str | None = None
+    trafico: dict | None = None  # trafico civil que genero el director (engine/trafico.py)
     nacion_azul: str = ""
     nacion_rojo: str = ""
     # comunicaciones simuladas: solo las ve el instructor (state.estado_para las quita al resto)
@@ -267,7 +268,7 @@ class RutaIn(BaseModel):
 
 class UnidadCreate(BaseModel):
     nombre: str = Field(min_length=1, max_length=120)
-    bando: Bando
+    bando: Literal["azul", "rojo", "neutral"]  # neutral: trafico civil o un pais que no participa
     # Si se indica la clase (ver /api/catalogo), el tipo y los valores por defecto salen de ella.
     clase: str | None = Field(default=None, max_length=30)
     tipo: TipoUnidad | None = None
@@ -421,6 +422,13 @@ class OrdenCreate(BaseModel):
     accion_intercepcion: Literal["seguir", "neutralizar", "directo"] | None = None
     # solo para "patrullar": area de patrulla (engine/zonas.py) en lugar de la orbita sobre un punto
     zona_id: int | None = None
+
+
+class TraficoIn(BaseModel):
+    aviones: int = Field(default=0, ge=0, le=40)
+    mercantes: int = Field(default=0, ge=0, le=30)
+    pesqueros: int = Field(default=0, ge=0, le=30)
+    zona: tuple[float, float, float, float]  # lat_min, lon_min, lat_max, lon_max (la vista del mapa)
 
 
 class ZonaIn(BaseModel):

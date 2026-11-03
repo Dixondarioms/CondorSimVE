@@ -112,10 +112,12 @@ class _Turno:
                         and not catalogo.es_misil(u) and not transporte_mod.embarcada(u)]
         self.visibles = state.unidades_visibles_para(db, esc, bando, terreno)
         # del enemigo solo se usa lo que se ve en el mapa: id, posicion, tipo, clase y si esta en tierra
-        self.enemigos = [u for u in self.visibles if u.bando != bando and u.estado == "activa" and not catalogo.es_misil(u)]
+        # los neutrales (trafico civil, paises ajenos) no son enemigos: la IA no les tira
+        self.enemigos = [u for u in self.visibles if u.bando not in (bando, "neutral") and u.estado == "activa"
+                         and not catalogo.es_misil(u)]
         ids_vistos = {u.id for u in self.enemigos}
         # instalaciones fijas del enemigo (bases aereas, puertos, depositos): figuran en el mapa, se conoce su ubicacion
-        self.bases_enemigas = [u for u in todas if u.bando != bando and u.tipo == "base" and u.estado == "activa"]
+        self.bases_enemigas = [u for u in todas if u.bando not in (bando, "neutral") and u.tipo == "base" and u.estado == "activa"]
         self.contactos = [c for c in db.query(Contacto).filter(Contacto.escenario_id == esc.id, Contacto.bando == bando)
                           if c.unidad_id not in ids_vistos]
         self.objetivos = db.query(Objetivo).filter(Objetivo.escenario_id == esc.id, Objetivo.bando == bando,

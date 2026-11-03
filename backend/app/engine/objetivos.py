@@ -127,15 +127,23 @@ def marcador(db: Session, escenario: Escenario) -> dict:
             cuenta[o.bando]["cumplidos"] += 1
         elif o.estado == "fallido":
             cuenta[o.bando]["fallidos"] += 1
+    neutrales = {b: {} for b in BANDOS}  # bando -> {unidad neutral atacada: fuerza que le quito}
     for c in db.query(Combate).filter(Combate.escenario_id == escenario.id):
-        if c.atacante_bando in infligido and c.defensor_bando != c.atacante_bando:
+        if c.defensor_bando == "neutral" and c.atacante_bando in neutrales:  # daño colateral (engine/trafico.py)
+            neutrales[c.atacante_bando][c.defensor_id] = neutrales[c.atacante_bando].get(c.defensor_id, 0.0) + c.perdida_defensor
+            continue
+        if c.atacante_bando in infligido and c.defensor_bando in infligido and c.defensor_bando != c.atacante_bando:
             infligido[c.atacante_bando] += c.perdida_defensor
-        if c.defensor_bando in infligido and c.defensor_bando != c.atacante_bando:
+        if c.defensor_bando in infligido and c.atacante_bando in infligido and c.defensor_bando != c.atacante_bando:
             infligido[c.defensor_bando] += c.perdida_atacante
+    from app.engine import trafico  # importacion tardia
+
+    colateral = {b: trafico.penalidad(neutrales[b]) for b in BANDOS}
     return {
         b: {
             "objetivos": objetivos[b], "bajas": int(infligido[b] // FUERZA_POR_PUNTO),
-            "total": objetivos[b] + int(infligido[b] // FUERZA_POR_PUNTO),
+            "total": objetivos[b] + int(infligido[b] // FUERZA_POR_PUNTO) - colateral[b],
+            "colateral": colateral[b], "neutrales_atacados": len(neutrales[b]),
             **cuenta[b],
             "cumplidos_pct": round(100 * cuenta[b]["cumplidos"] / cuenta[b]["asignados"], 1) if cuenta[b]["asignados"] else None,
         }

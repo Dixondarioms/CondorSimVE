@@ -203,6 +203,15 @@ def render_html(informe: dict, rubrica: dict | None = None) -> str:
         partes.append("</div>")
         secciones.append("".join(partes))
 
+    # daño colateral: ataques a unidades neutrales (engine/trafico.py) y la penalizacion de cada bando
+    marcador = informe.get("marcador") or {}
+    colateral = informe.get("colateral") or []
+    colateral_html = ""
+    if colateral:
+        penal = " · ".join(f"{_bando(b)}: −{m.get('colateral', 0)} puntos" for b, m in marcador.items() if m.get("colateral"))
+        colateral_html = ("<h2>Daño colateral</h2>" + (f'<p class="meta">Penalización en el puntaje: {penal}</p>' if penal else "")
+                          + "<ul>" + "".join(f'<li>{_bando(c["bando"])}: {e(c["descripcion"])}</li>' for c in colateral) + "</ul>")
+
     # estado inicial vs final de cada unidad
     con_unidades = [t for t in turnos if t["unidades"]]
     inicial = {u["id"]: u for u in con_unidades[0]["unidades"]} if con_unidades else {}
@@ -224,6 +233,7 @@ def render_html(informe: dict, rubrica: dict | None = None) -> str:
  · creado {e(esc["creado_en"][:16].replace("T", " "))} UTC</p>
 <h2>Resumen por bando</h2>{resumen_tabla}
 <h3>Fuerza perdida acumulada</h3>{_barras(res)}
+{colateral_html}
 <h2>Estado final de las unidades</h2>{unidades_tabla}
 {_rubrica_html(rubrica)}
 <h2>Cronologia</h2>{"".join(secciones) or "<p class='meta'>Aun no se cumplio ninguna hora del ejercicio.</p>"}

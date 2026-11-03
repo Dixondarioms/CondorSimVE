@@ -1012,6 +1012,7 @@
 
   /** "Azul" o "Azul (Colombia)" segun tenga o no identidad nacional asignada. */
   function etiquetaBandoNacion(bando, esc, naciones) {
+    if (bando === "neutral") return "Neutrales (tráfico civil y países ajenos)";
     const base = bando === "azul" ? "Azul" : "Rojo";
     const n = nacionDe(bando, esc, naciones);
     return n ? `${base} (${n.nombre})` : base;

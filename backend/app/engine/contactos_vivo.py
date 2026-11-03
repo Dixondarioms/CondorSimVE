@@ -9,6 +9,9 @@ cerca, rapido; de lejos, lento; solo por escucha electronica, mas lento todavia 
 La etapa no se pierde al perder el contacto. A menos de IDENTIFICACION_VISUAL_KM se identifica a ojo, en el acto; las
 bases y la infraestructura fija se conocen de antemano.
 
+El trafico civil (engine/trafico.py) emite su transpondedor (o el AIS de los buques): seguido por radar se clasifica
+como civil en unos minutos (TASA_TRANSPONDEDOR).
+
 La posicion que ve el bando cae dentro de un circulo de incertidumbre: chico con radar de cerca, grande de lejos o solo
 por escucha. Si se pierde el contacto, el circulo crece con lo que la unidad pudo moverse desde que se la vio.
 Las pistas viven en memoria (Mundo.pistas) y se guardan con los contactos (Contacto.etapa, puntos, incertidumbre_km)
@@ -29,6 +32,7 @@ TASA_ESCUCHA = 0.15  # puntos por minuto solo por escucha electronica
 INCERTIDUMBRE_MIN_KM = 0.2
 INCERTIDUMBRE_ESCUCHA_MIN_KM = 3.0
 INCERTIDUMBRE_MAX_KM = 100.0
+TASA_TRANSPONDEDOR = 1.2  # puntos por minuto de un avion o buque civil seguido por radar: se clasifica en ~2,5 min
 ACTUALIZAR_CADA_S = 30.0  # cada cuanto tiempo simulado se suman puntos (el seguimiento es lento: no hace falta mas)
 DESPLAZAR_CADA_S = 120.0  # cada cuanto cambia la posicion aproximada dentro del circulo
 
@@ -108,6 +112,8 @@ def actualizar(ctx, bando: str, ids: set) -> None:
             p.update(etapa="identificado", inc=0.0, visto=ctx.t)
             continue
         tasa, inc, visual, solo_escucha = _medicion(detectores, x, ctx.terreno, ctx.clima, ctx.ge)
+        if not solo_escucha and catalogo.obtener(x.clase, x.tipo).civil:
+            tasa = max(tasa, TASA_TRANSPONDEDOR)  # el transpondedor (o el AIS de un buque) lo delata como civil
         if not nueva:
             p["puntos"] = min(PUNTOS_IDENTIFICADO, p["puntos"] + tasa * minutos)
         etapa = _etapa_por_puntos(p["puntos"])
