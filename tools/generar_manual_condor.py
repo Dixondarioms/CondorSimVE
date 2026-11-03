@@ -586,7 +586,18 @@ def construir(salida: Path) -> None:
                      "alerta, penalización en el puntaje (10 puntos por unidad y uno más cada 5 de fuerza) y una sección en el "
                      "informe. Para un país que no participa, agregue unidades con el bando <b>Neutral</b>.")]]],
                 colWidths=[5.9 * cm, ANCHO_TEXTO - 5.9 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
-    h += [H2("13.4 Cuentas y usuarios"),
+    h += [H2("13.4 Eventos automáticos")]
+    h += [Table([[figura("eventos_auto", "CONSOLA → Eventos automáticos.", ancho=6.2 * cm, alto_max=13 * cm, celda=True),
+                  [P("Reglas que el simulador cumple solo, con un <b>cuando</b> y uno o varios <b>entonces</b>:"),
+                   Bul(["<b>Cuando</b>: una unidad entra a un área (una zona dibujada; de un bando o una unidad concreta), llega "
+                        "una hora del ejercicio, se destruye una unidad, o se cumple o falla un objetivo.",
+                        "<b>Entonces</b>: enviar un mensaje, hacer aparecer unidades (bando, clase, cantidad y el punto en el "
+                        "mapa), cambiar el clima, dar o quitar puntos, o pausar el reloj."]),
+                   P("Cada regla se dispara una vez, salvo que se marque <b>Repetir</b>. En la lista se activan, se desactivan "
+                     "y se borran. Se guardan con el escenario y con las plantillas, junto con las áreas y zonas y el tráfico "
+                     "civil.")]]],
+                colWidths=[6.5 * cm, ANCHO_TEXTO - 6.5 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += [H2("13.5 Cuentas y usuarios"),
           P("CONSOLA → <b>Usuarios</b>: crear cuentas, cambiar su repartición, restablecer contraseñas y aprobar las solicitudes "
             "de cuenta pendientes. Para que una cuenta vea un ejercicio, márquela en CONSOLA → Escenario → <b>Usuarios con "
             "acceso a este escenario</b>."),

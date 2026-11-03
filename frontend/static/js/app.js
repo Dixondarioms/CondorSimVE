@@ -790,6 +790,7 @@
       $("ev-posicion").textContent = `Posición: ${lat.toFixed(3)}, ${lng.toFixed(3)}`;
       return;
     }
+    if (esInstructor() && app.eventosAuto && app.eventosAuto.alClicMapa(lat, lng)) return; // punto de «aparecer»
     if (esInstructor() && app.colocandoZonaClima) { // meteorologia: el clic es el centro de la zona
       app.colocandoZonaClima = false;
       $("btn-zona-clima").classList.remove("activo");
@@ -2796,6 +2797,7 @@
     if (app.misiones) app.misiones.render(data);
     if (app.pmi) app.pmi.render(data);
     if (app.zonas) app.zonas.render(data);
+    if (app.eventosAuto) app.eventosAuto.render(data);
     renderTrafico(data.escenario);
     if (app.aerodromos) app.aerodromos.actualizar(data.unidades);
     llenarSelect($("adj-unidad"), data.unidades.map((u) => [u.id, `${u.nombre} (${u.bando})`]));
@@ -3001,6 +3003,11 @@
     });
     app.zonas.conectar();
     app.capas.zonas = app.zonas.capa;
+    app.eventosAuto = EventosAuto.crear({
+      api, toast, rutaEsc, datos: () => app.data, catalogo: () => app.catalogo, esDirector: () => esInstructor(),
+      escenarioId: () => app.escenarioId,
+    });
+    app.eventosAuto.conectar();
     app.herramientas = Herramientas.crear({ map: () => app.map, alMedir: (b) => { app.dibujando = b; } });
     Herramientas.crearConvertidor();
     app.herramientas.conectar();

@@ -106,6 +106,10 @@ class Plantilla:
     ia_azul: bool = False
     ia_rojo: bool = False
     dia_noche: bool = False  # ciclo de dia y noche encendido
+    # eventos automaticos del director, areas y zonas, y trafico civil (engine/eventos_auto.py, zonas.py, trafico.py)
+    eventos_auto: tuple = field(default_factory=tuple)
+    zonas: tuple = field(default_factory=tuple)
+    trafico: dict | None = None
     # TIEM: quien conduce cada bando, calendario D/H y Problema Militar Operativo de cada bando ({bando: contenido})
     conduce_azul: str = "alumnos"
     conduce_rojo: str = "alumnos"
@@ -434,8 +438,18 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
                     dia_noche=p.dia_noche, conduce_azul=p.conduce_azul, conduce_rojo=p.conduce_rojo,
                     fecha_inicio=p.fecha_inicio, turno_h=p.turno_h, turno_final=p.turno_final,
                     fases_json=json.dumps(list(p.fases), ensure_ascii=False) if p.fases else None)
+    if p.eventos_auto:
+        esc.eventos_auto_json = json.dumps({"reglas": [dict(r, disparos=0) for r in p.eventos_auto], "puntos": []},
+                                           ensure_ascii=False)
+    if p.trafico:
+        esc.trafico_json = json.dumps(p.trafico)
     db.add(esc)
     db.flush()
+    from app.models.zona import Zona  # importacion tardia: evita el ciclo con los modelos
+
+    for z in p.zonas:
+        db.add(Zona(escenario_id=esc.id, bando=z["bando"], tipo=z["tipo"], nombre=z.get("nombre", ""),
+                    puntos_json=json.dumps(z["puntos"]), armas=bool(z.get("armas")), autor="plantilla"))
 
     unidades: dict[str, Unidad] = {}
     for u in p.unidades:
@@ -549,8 +563,9 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
         raise PlantillaInvalida("Ese nombre coincide con una plantilla del sistema: elija otro")
     descripcion = (descripcion or "").strip()[:LARGO_MAX_DESCRIPCION]
 
+    # sin las destruidas ni el trafico civil (lo genera el motor con la configuracion que se guarda aparte)
     filas = [u for u in db.query(Unidad).filter(Unidad.escenario_id == esc.id).order_by(Unidad.id)
-             if u.estado != "destruida"]
+             if u.estado not in ("destruida", "retirada") and not catalogo.obtener(u.clase, u.tipo).civil]
     nombres: dict[int, str] = {}
     unidades = []
     for u in filas:
@@ -598,6 +613,7 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
             "indicador": o.indicador or "", "umbral": o.umbral,
         })
     from app.models.problema_militar import ProblemaMilitar  # importacion tardia: solo al guardar
+    from app.engine import eventos_auto, trafico as trafico_mod, zonas as zonas_mod
 
     problemas = {pm.bando: json.loads(pm.contenido_json)
                  for pm in db.query(ProblemaMilitar).filter(ProblemaMilitar.escenario_id == esc.id)}
@@ -611,6 +627,10 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
         "fecha_inicio": esc.fecha_inicio, "turno_h": esc.turno_h, "turno_final": esc.turno_final,
         "fases": json.loads(esc.fases_json) if esc.fases_json else [], "pmo": problemas,
         "unidades": unidades, "objetivos": objetivos,
+        "eventos_auto": [{k: v for k, v in r.items() if k != "disparos"} for r in eventos_auto.config(esc)["reglas"]],
+        "zonas": [{k: v for k, v in zonas_mod.serializar(z).items() if k not in ("id", "autor")}
+                  for z in zonas_mod.de_escenario(db, esc.id)],
+        "trafico": trafico_mod.config(esc) or None,
     }
 
 
@@ -642,7 +662,7 @@ def desde_dict(datos: dict) -> Plantilla:
         clase = d.get("clase")
         if clase not in catalogo.CLASES:
             raise PlantillaInvalida(f"Clase de unidad desconocida: {clase!r}")
-        if d.get("bando") not in ("azul", "rojo"):
+        if d.get("bando") not in ("azul", "rojo", "neutral"):
             raise PlantillaInvalida("Bando de unidad invalido")
         nombre_u = str(d.get("nombre") or "").strip()
         if not nombre_u or nombre_u in vistos:
@@ -712,7 +732,33 @@ def desde_dict(datos: dict) -> Plantilla:
         fecha_inicio=str(datos["fecha_inicio"])[:10] if datos.get("fecha_inicio") else None,
         turno_h=turno_opcional("turno_h"), turno_final=turno_opcional("turno_final"), fases=fases,
         pmo={b: c for b, c in (datos.get("pmo") or {}).items() if b in ("azul", "rojo") and isinstance(c, dict)},
+        eventos_auto=_eventos_auto(datos.get("eventos_auto")), zonas=_zonas(datos.get("zonas")),
+        trafico=datos.get("trafico") if isinstance(datos.get("trafico"), dict) and datos["trafico"].get("zona") else None,
     )
+
+
+def _eventos_auto(reglas) -> tuple:
+    from app.engine import eventos_auto  # importacion tardia
+
+    if not reglas:
+        return ()
+    errores = eventos_auto.validar(reglas)
+    if errores:
+        raise PlantillaInvalida("Eventos automáticos: " + " ".join(errores[:2]))
+    return tuple(eventos_auto.normalizar(reglas, []))
+
+
+def _zonas(lista) -> tuple:
+    from app.engine import zonas as zonas_mod  # importacion tardia
+
+    salida = []
+    for z in lista or []:
+        if (not isinstance(z, dict) or z.get("tipo") not in zonas_mod.TIPOS or z.get("bando") not in ("azul", "rojo", "todos")
+                or zonas_mod.error_de_poligono([tuple(p) for p in z.get("puntos") or []])):
+            raise PlantillaInvalida("Zona mal formada en la plantilla")
+        salida.append({"bando": z["bando"], "tipo": z["tipo"], "nombre": str(z.get("nombre") or "")[:60],
+                       "puntos": [[float(a), float(b)] for a, b in z["puntos"]], "armas": bool(z.get("armas"))})
+    return tuple(salida)
 
 
 def guardar_desde_escenario(db: Session, esc: Escenario, nombre: str, descripcion: str = "",

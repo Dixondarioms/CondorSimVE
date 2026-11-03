@@ -53,6 +53,7 @@ from app.engine import ota as ota_mod
 from app.engine import rescate as rescate_mod
 from app.engine import rutas as rutas_mod
 from app.engine import transporte as transporte_mod
+from app.engine import eventos_auto
 from app.engine import sistemas as sistemas_mod
 from app.engine import trafico as trafico_mod
 from app.engine import zonas as zonas_mod
@@ -167,6 +168,9 @@ class Mundo:
     patrulla_idx: dict = field(default_factory=dict)  # unidad_id -> proximo vertice de su area de patrulla
     trafico_en: float = -1e9  # ultimo segundo simulado en que se mantuvo el trafico civil (engine/trafico.py)
     colateral: dict = field(default_factory=dict)  # (atacante_id, neutral_id) -> ultimo aviso de daño colateral
+    # eventos automaticos del director (engine/eventos_auto.py): (regla, unidad) dentro de su area
+    eventos_dentro: set = field(default_factory=set)
+    eventos_listo: bool = False
 
 
 MUNDOS: dict[int, Mundo] = {}
@@ -190,7 +194,8 @@ class Informe:
 CAUSAS_PAUSA = {"contacto": "Contacto nuevo", "ataque": "Ataque a una unidad propia", "perdida": "Unidad perdida",
                 "combustible": "Combustible crítico", "mision": "Misión terminada",
                 "intercepcion": "Fase de una interceptación", "zona": "Intrusión en una zona",
-                "colateral": "Daño colateral (ataque a una unidad neutral)"}
+                "colateral": "Daño colateral (ataque a una unidad neutral)",
+                "evento": "Mensaje de un evento automático"}
 REPETIR_ALERTA_FUEGO_S = 900.0  # una unidad bajo fuego continuo se vuelve a avisar despues de esto
 
 
@@ -643,6 +648,7 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
     for u in ctx.lista:
         armas_mod.sincronizar(u)  # el reabastecimiento en % no cambia la municion de una aeronave con carga
     _combustible(ctx)
+    eventos_auto.evaluar(ctx)  # reglas del director: disparador -> acciones
 
 
 # ------------------------------------------------------------------------------------------- movimiento

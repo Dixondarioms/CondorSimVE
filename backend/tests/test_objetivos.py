@@ -171,7 +171,7 @@ def test_cada_bando_ve_solo_sus_objetivos_pero_todos_ven_el_marcador(api):
     assert [o["nombre"] for o in listado["objetivos"]] == ["Objetivo azul"]
     assert set(listado["marcador"]) == {"azul", "rojo"}
     assert api("bravo").get(base).json()["marcador"]["azul"] == {
-        "objetivos": 0, "bajas": 0, "total": 0, "cumplidos": 0, "fallidos": 0, "asignados": 1, "cumplidos_pct": 0.0, "colateral": 0, "neutrales_atacados": 0}
+        "objetivos": 0, "bajas": 0, "total": 0, "cumplidos": 0, "fallidos": 0, "asignados": 1, "cumplidos_pct": 0.0, "colateral": 0, "neutrales_atacados": 0, "eventos": 0}
 
 
 def test_un_objetivo_se_cumple_por_la_api_y_llega_al_informe(api):

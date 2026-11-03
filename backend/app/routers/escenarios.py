@@ -275,6 +275,40 @@ async def generar_trafico(
     return await _difundir_y_estado(db, esc, usuario)
 
 
+@router.get("/{escenario_id}/eventos_auto")
+def ver_eventos_auto(
+    esc: Escenario = Depends(auth.escenario_dep),
+    _: Usuario = Depends(solo_instructor),
+):
+    from app.engine import eventos_auto
+
+    d = eventos_auto.config(esc)
+    return {"reglas": d["reglas"], "puntos": d["puntos"], "disparadores": eventos_auto.DISPARADORES,
+            "acciones": eventos_auto.ACCIONES}
+
+
+@router.put("/{escenario_id}/eventos_auto")
+async def guardar_eventos_auto(
+    payload: dict,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(solo_instructor),
+):
+    """El director reemplaza la lista de reglas (se conserva cuantas veces se disparo cada una)."""
+    from app.engine import eventos_auto
+
+    reglas = payload.get("reglas")
+    errores = eventos_auto.validar(reglas)
+    if errores:
+        raise HTTPException(status_code=400, detail=" ".join(errores[:3]))
+    d = eventos_auto.config(esc)
+    d["reglas"] = eventos_auto.normalizar(reglas, d["reglas"])
+    eventos_auto.guardar(esc, d)
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return {"reglas": d["reglas"]}
+
+
 @router.delete("/{escenario_id}/trafico")
 async def quitar_trafico(
     esc: Escenario = Depends(auth.escenario_dep),

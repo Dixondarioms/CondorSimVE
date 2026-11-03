@@ -218,7 +218,7 @@ CAMPOS_REPLAY = ("id", "nombre", "bando", "tipo", "clase", "sidc", "lat", "lon",
 TIPOS_NOVEDAD_PUBLICA = ("ajuste", "clima", "logistica")
 
 
-def _marcador_hasta(objetivos: list[Objetivo], combates: list[Combate], turno: int) -> dict:
+def _marcador_hasta(objetivos: list[Objetivo], combates: list[Combate], turno: int, escenario=None) -> dict:
     """Marcador acumulado al terminar `turno`: puntos de objetivos cumplidos hasta ese turno mas un punto por
     cada FUERZA_POR_PUNTO de fuerza infligida al enemigo (misma regla que engine/objetivos.marcador)."""
     puntos = {b: 0 for b in objetivos_mod.BANDOS}
@@ -247,10 +247,14 @@ def _marcador_hasta(objetivos: list[Objetivo], combates: list[Combate], turno: i
     from app.engine import trafico  # importacion tardia
 
     colateral = {b: trafico.penalidad(neutrales[b]) for b in objetivos_mod.BANDOS}
+    from app.engine import eventos_auto  # importacion tardia
+
+    extra = eventos_auto.puntos_de(escenario, turno) if escenario is not None else {}
     return {
         b: {"objetivos": puntos[b], "bajas": int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO), "colateral": colateral[b],
             "neutrales_atacados": len(neutrales[b]),
-            "total": puntos[b] + int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO) - colateral[b], **cuenta[b],
+            "total": puntos[b] + int(infligido[b] // objetivos_mod.FUERZA_POR_PUNTO) - colateral[b] + extra.get(b, 0),
+            "eventos": extra.get(b, 0), **cuenta[b],
             "cumplidos_pct": round(100 * cuenta[b]["cumplidos"] / cuenta[b]["asignados"], 1) if cuenta[b]["asignados"] else None}
         for b in objetivos_mod.BANDOS
     }
@@ -291,7 +295,8 @@ def _replay_en_vivo(db: Session, escenario: Escenario, fotogramas: list) -> dict
             "eventos": [{"id": e.id, "tipo": e.tipo, "descripcion": e.descripcion} for e in eventos
                         if en_cuadro(e) and (e.tipo in TIPOS_NOVEDAD_PUBLICA or e.bando_destino == "todos")],
             # el marcador de ese momento: solo los combates ocurridos hasta el cuadro
-            "marcador": _marcador_hasta(objetivos, [c for c in combates if (c.sim_segundos or 0.0) < f.sim_segundos], f.turno),
+            "marcador": _marcador_hasta(objetivos, [c for c in combates if (c.sim_segundos or 0.0) < f.sim_segundos], f.turno,
+                                        escenario),
         })
         previo = f.sim_segundos
     return {
@@ -332,7 +337,7 @@ def construir_replay(db: Session, escenario: Escenario) -> dict:
                 for e in eventos
                 if e.turno == inst.turno and (e.tipo in TIPOS_NOVEDAD_PUBLICA or e.bando_destino == "todos")
             ],
-            "marcador": _marcador_hasta(objetivos, combates, inst.turno),
+            "marcador": _marcador_hasta(objetivos, combates, inst.turno, escenario),
         })
     return {
         "escenario": {

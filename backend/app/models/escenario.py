@@ -59,6 +59,8 @@ class Escenario(Base):
     velocidad: Mapped[int] = mapped_column(Integer, default=60, server_default="60")
     # trafico civil que genero el director: cantidades, zona y aerovias (engine/trafico.py)
     trafico_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # eventos automaticos del director: reglas disparador -> acciones y puntos otorgados (engine/eventos_auto.py)
+    eventos_auto_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # interruptores del motor (herramientas de direccion): niebla de guerra, consumo/reabastecimiento, efectos del
     # clima y fuego automatico (patrullas y antiaerea). Apagarlos simplifica el ejercicio para fines didacticos.

@@ -490,6 +490,28 @@
     });
   }
 
+  /** Eventos automaticos del director (engine/eventos_auto.py) en palabras: «cuando … → …». */
+  const BANDO_TXT = { azul: "Azul", rojo: "Rojo", neutral: "Neutral", todos: "todos", cualquiera: "cualquier bando" };
+  function textoAccionAuto(a) {
+    if (!a) return "";
+    if (a.tipo === "mensaje") return `mensaje a ${BANDO_TXT[a.para] || a.para}: «${a.texto}»`;
+    if (a.tipo === "aparecer") return `aparecen ${a.cantidad} ${a.nombre || a.clase} (${BANDO_TXT[a.bando] || a.bando})`;
+    if (a.tipo === "clima") return `el clima pasa a ${a.clima}`;
+    if (a.tipo === "puntos") return `${a.puntos >= 0 ? "+" : ""}${a.puntos} puntos para ${BANDO_TXT[a.bando] || a.bando}`;
+    if (a.tipo === "pausar") return "se pausa el reloj";
+    return a.tipo;
+  }
+  function textoReglaAuto(r) {
+    const d = (r && r.disparador) || {};
+    let cuando = d.tipo;
+    if (d.tipo === "entra_area") cuando = `${d.unidad || (d.bando && d.bando !== "cualquiera" ? `una unidad ${BANDO_TXT[d.bando]}` : "una unidad")} entra a ${d.area_nombre ? `«${d.area_nombre}»` : "el área"}`;
+    else if (d.tipo === "hora") cuando = `a las ${d.hora}`;
+    else if (d.tipo === "destruida") cuando = `${d.unidad} es destruida`;
+    else if (d.tipo === "objetivo") cuando = `el objetivo «${d.objetivo}» ${d.estado === "fallido" ? "falla" : "se cumple"}`;
+    const disparos = r.disparos ? ` (disparada ${r.disparos} vez${r.disparos === 1 ? "" : "es"})` : "";
+    return `cuando ${cuando}${r.repetir ? ", cada vez" : ""} → ${(r.acciones || []).map(textoAccionAuto).join("; ")}${disparos}`;
+  }
+
   /** Se intercepta una aeronave en vuelo o un buque (no un misil). */
   const interceptable = (u) => !!u && u.estado === "activa" && !esMisil(u) && ((u.tipo === "aerea" && !u.en_tierra) || u.tipo === "naval");
   const ACCIONES_INTERCEPCION = [["neutralizar", "Identificar y neutralizar"], ["seguir", "Identificar y seguir"], ["directo", "Neutralizar sin esperar la identificación"]];
@@ -1286,7 +1308,7 @@
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
-    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
+    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,

@@ -139,10 +139,14 @@ def marcador(db: Session, escenario: Escenario) -> dict:
     from app.engine import trafico  # importacion tardia
 
     colateral = {b: trafico.penalidad(neutrales[b]) for b in BANDOS}
+    from app.engine import eventos_auto  # importacion tardia
+
+    extra = eventos_auto.puntos_de(escenario)  # puntos de los eventos automaticos del director
     return {
         b: {
             "objetivos": objetivos[b], "bajas": int(infligido[b] // FUERZA_POR_PUNTO),
-            "total": objetivos[b] + int(infligido[b] // FUERZA_POR_PUNTO) - colateral[b],
+            "total": objetivos[b] + int(infligido[b] // FUERZA_POR_PUNTO) - colateral[b] + extra.get(b, 0),
+            "eventos": extra.get(b, 0),
             "colateral": colateral[b], "neutrales_atacados": len(neutrales[b]),
             **cuenta[b],
             "cumplidos_pct": round(100 * cuenta[b]["cumplidos"] / cuenta[b]["asignados"], 1) if cuenta[b]["asignados"] else None,

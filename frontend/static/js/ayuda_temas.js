@@ -92,6 +92,19 @@
         <b>Reanudar</b>.</p>`,
     },
     {
+      id: "eventos-auto", seccion: "Dirección del ejercicio", titulo: "Eventos automáticos (disparadores y acciones)",
+      claves: "eventos automaticos disparador disparadores accion acciones regla reglas cuando entonces guion inyeccion automatica aparecer refuerzos mensaje programado hora",
+      director: true,
+      texto: `<p>En CONSOLA → <b>Eventos automáticos</b> el director arma reglas que el simulador cumple solo:</p>
+        <ul><li><b>Cuando</b>: una unidad entra a un área (una zona dibujada en «Áreas y zonas»; de un bando o una unidad
+        concreta), llega una hora del ejercicio, se destruye una unidad, o se cumple o falla un objetivo.</li>
+        <li><b>Entonces</b> (una o varias): enviar un mensaje a un bando o a todos, hacer aparecer unidades (elija bando,
+        clase, cantidad y el punto en el mapa), cambiar el clima, dar o quitar puntos, o pausar el reloj.</li></ul>
+        <p>Cada regla se dispara una vez, salvo que marque <b>Repetir</b>. En la lista se activan, se desactivan y se borran, y
+        se ve cuántas veces se dispararon. Se guardan con el escenario y con las plantillas (las unidades y los objetivos se
+        nombran por su nombre).</p>`,
+    },
+    {
       id: "trafico", seccion: "Dirección del ejercicio", titulo: "Tráfico civil, neutrales y daño colateral",
       claves: "trafico civil neutral neutrales avion comercial aerolinea aerovia mercante buque pesquero colateral daño colateral penalizacion pais ajeno",
       texto: `<p>El director genera tráfico civil en CONSOLA → <b>Tráfico civil y neutral</b>: cuántos aviones comerciales,

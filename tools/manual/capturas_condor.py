@@ -327,6 +327,25 @@ def sistemas(n: Nav) -> None:
     guardar(n, "sistemas", r, margen=4)
 
 
+def eventos_auto(n: Nav) -> None:
+    """Eventos automaticos del director (en la COPIA de la base)."""
+    n.como("director")
+    n.js(f"fetch('/api/escenarios/{ESCENARIO}/eventos_auto', {{method: 'PUT', headers: {{'Content-Type': 'application/json'}},"
+         " body: JSON.stringify({reglas: [{nombre: 'Frente de tormenta', disparador: {tipo: 'hora', hora: '09:00'},"
+         " acciones: [{tipo: 'clima', clima: 'tormenta'}, {tipo: 'mensaje', para: 'todos', texto: 'Llega un frente de tormenta'}]},"
+         " {nombre: 'Refuerzos rojos', disparador: {tipo: 'destruida', unidad: 'Base Echo (Puerto Ayacucho)'},"
+         " acciones: [{tipo: 'puntos', bando: 'rojo', puntos: 30}, {tipo: 'pausar'}]}]})})")
+    n.pausa(1)
+    n.pestana("consola")
+    n.js("const d = document.getElementById('sec-eventos-auto'); d.open = true; d.dispatchEvent(new Event('toggle'));"
+         " d.scrollIntoView({block: 'start'})")
+    n.pausa(2)
+    n.valor("#ea-accion", "aparecer")
+    n.pausa(1)
+    guardar(n, "eventos_auto", n.rect("#sec-eventos-auto"))
+    n.pestana("fuerzas")
+
+
 def doctrina(n: Nav) -> None:
     n.pestana("fuerzas")
     n.js("const d = document.getElementById('sec-doctrina'); d.querySelectorAll('details').forEach((x) => x.open = true); d.scrollIntoView({block: 'start'})")
@@ -452,7 +471,7 @@ def videowall(n: Nav) -> None:
     n.tecla("Escape", 27)
 
 
-ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, doctrina, misiones,
+ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, eventos_auto, doctrina, misiones,
          situacion, tiem, consola, capas, graficos, mapas, ayuda, informe, en_marcha, bando, videowall]
 
 
