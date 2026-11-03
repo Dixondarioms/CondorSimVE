@@ -396,7 +396,7 @@ class UnidadOut(BaseModel):
 
 class OrdenCreate(BaseModel):
     unidad_id: int | None = None  # obligatorio salvo dentro de un lote (POST /ordenes/lote)
-    tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar", "interferir", "lanzar", "embarcar", "desembarcar", "rumbo"]
+    tipo: Literal["mover", "atacar", "apoyar", "construir", "despegar", "patrullar", "aterrizar", "interferir", "lanzar", "embarcar", "desembarcar", "rumbo", "interceptar"]
     waypoints: list[tuple[float, float]] = Field(default_factory=list, max_length=120)  # rutas por carretera largas
     objetivo_unidad_id: int | None = None
     # solo para "construir": obra que se tiende en el punto indicado
@@ -414,6 +414,15 @@ class OrdenCreate(BaseModel):
     rumbo_modo: Literal["virar", "rumbo"] | None = None
     rumbo_grados: float | None = Field(default=None, ge=0, le=360)
     rumbo_sentido: Literal["derecha", "izquierda", "corto"] | None = None
+    # solo para "interceptar" (engine/interceptacion.py): identificar y seguir, identificar y neutralizar, o neutralizar
+    # sin esperar la identificacion (con las armas en estado restringido la doctrina exige identificar igual)
+    accion_intercepcion: Literal["seguir", "neutralizar", "directo"] | None = None
+
+
+class IntercepcionIn(BaseModel):
+    unidad_id: int
+    objetivo_unidad_id: int
+    accion_intercepcion: Literal["seguir", "neutralizar", "directo"] | None = None
 
 
 class OrdenLote(BaseModel):

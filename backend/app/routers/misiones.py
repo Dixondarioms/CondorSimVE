@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app import auth, legajo, schemas, state
 from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
-from app.engine import apoyo_aereo, catalogo, ota, plataformas, puestos, relieve, weaponeering
+from app.engine import apoyo_aereo, catalogo, interceptacion, ota, plataformas, puestos, relieve, weaponeering
 from app.engine import clima as clima_mod
 from app.engine import misiones as misiones_mod
 from app.engine import tiempo_real
@@ -118,7 +118,11 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
             x = visibles.get(p.objetivo_unidad_id)
             if x is None or x.bando == usuario.rol or x.estado != "activa":
                 raise HTTPException(status_code=400, detail="El blanco elegido no es un enemigo detectado por su bando")
+            if payload.rol == "INTERCEPCION" and not interceptacion.tipo_blanco(x):
+                raise HTTPException(status_code=400, detail="Se interceptan aeronaves en vuelo y buques: elija otro blanco")
             d["objetivo_unidad_id"] = x.id
+        elif p.tipo == "blanco" and payload.rol == "INTERCEPCION":
+            errores_ruta.append(f"Punto {i + 1}: la interceptación necesita un blanco (aeronave o buque detectado).")
         puntos.append(d)
     errores = misiones_mod.validar(payload.rol, puntos, clase) + errores_ruta
     if sum(1 for p in puntos if p.get("reunion")) > 1:

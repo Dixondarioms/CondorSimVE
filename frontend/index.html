@@ -201,6 +201,7 @@
               <button type="button" data-modo="construir" id="modo-construir" hidden title="Solo ingenieros">Construir</button>
               <button type="button" data-modo="patrullar" id="modo-patrullar" hidden title="Solo aeronaves">Patrullar</button>
               <button type="button" data-modo="aterrizar" id="modo-aterrizar" hidden title="Solo aeronaves en vuelo">Aterrizar</button>
+              <button type="button" data-modo="interceptar" id="modo-interceptar" hidden title="Aeronaves (también en alerta en tierra) contra aeronaves en vuelo y buques; buques contra buques">Interceptar</button>
               <button type="button" data-modo="rumbo" id="modo-rumbo" hidden title="Solo aeronaves en vuelo: virar unos grados o tomar un rumbo, como el control de tránsito aéreo">Rumbo</button>
               <button type="button" data-modo="interferir" id="modo-interferir" hidden title="Solo unidades de guerra electrónica">Interferir</button>
               <button type="button" data-modo="lanzar" id="modo-lanzar" hidden title="Solo buques y baterías con misiles de crucero">Lanzar misiles</button>
@@ -244,6 +245,11 @@
               <p id="o-objetivo-ayuda" class="ayuda"></p>
               <label class="mini" id="o-parte-fila" hidden>Qué se ataca de la base<select id="o-parte"></select></label>
               <p id="o-parte-info" class="ayuda" hidden></p>
+            </div>
+            <div id="o-interceptar" hidden>
+              <label class="mini">Al interceptar<select id="o-intercepcion-accion"></select></label>
+              <p id="o-intercepcion-info" class="ayuda preview"></p>
+              <p class="ayuda">Elija el blanco arriba (o haga clic en él en el mapa). El interceptor no va hacia donde está el blanco sino al <b>punto de encuentro</b> (puntería adelantada, línea amarilla), y avisa cada fase: vectoreo, contacto, identificación, seguimiento o ataque. Si pierde el contacto sigue la estima, busca sobre el último punto y aborta. Con las armas <i>restringidas</i> la doctrina exige identificarlo a la vista antes de tirar. Una aeronave en tierra despega en 5 minutos (alerta en tierra).</p>
             </div>
             <div id="o-embarcar" hidden>
               <label class="mini">Transporte<select id="o-transporte"></select></label>
@@ -454,6 +460,7 @@
               <label class="chk"><input type="checkbox" data-causa="perdida"><span>una unidad perdida</span></label>
               <label class="chk"><input type="checkbox" data-causa="combustible"><span>una aeronave con combustible crítico</span></label>
               <label class="chk"><input type="checkbox" data-causa="mision"><span>una misión aérea terminada</span></label>
+              <label class="chk"><input type="checkbox" data-causa="intercepcion"><span>una fase nueva de una interceptación</span></label>
             </fieldset>
             <div class="grid">
               <label class="mini">Clima

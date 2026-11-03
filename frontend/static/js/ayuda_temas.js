@@ -104,7 +104,7 @@
     },
     {
       id: "tipos-orden", seccion: "Órdenes", titulo: "Los tipos de orden",
-      claves: "tipos de orden mover atacar apoyar construir patrullar aterrizar rumbo interferir lanzar misiles embarcar desembarcar que hace cada orden",
+      claves: "tipos de orden mover atacar apoyar construir patrullar aterrizar rumbo interceptar interferir lanzar misiles embarcar desembarcar que hace cada orden",
       texto: `<table><tr><th>Orden</th><th>Qué hace</th></tr>
         <tr><td>Mover</td><td>Va por los puntos marcados (por carretera cuando conviene).</td></tr>
         <tr><td>Atacar</td><td>Ataca a un enemigo detectado; si hace falta, se acerca hasta tenerlo a su alcance.</td></tr>
@@ -113,6 +113,7 @@
         <tr><td>Patrullar</td><td>Aeronaves: orbitan sobre una zona e interceptan lo que entre.</td></tr>
         <tr><td>Aterrizar</td><td>Aeronaves en vuelo: vuelven a una base.</td></tr>
         <tr><td>Rumbo</td><td>Aeronaves en vuelo: viran unos grados a un lado o toman un rumbo y lo mantienen.</td></tr>
+        <tr><td>Interceptar</td><td>Aeronaves (también en tierra, en alerta) y buques: salen al encuentro de una aeronave o un buque enemigo para seguirlo o neutralizarlo.</td></tr>
         <tr><td>Interferir</td><td>Guerra electrónica: degrada al enemigo en una zona.</td></tr>
         <tr><td>Lanzar misiles</td><td>Buques y baterías con misiles de crucero.</td></tr>
         <tr><td>Embarcar / Desembarcar</td><td>Tropas a bordo de un buque de desembarco o un helicóptero de transporte.</td></tr></table>`,
@@ -163,6 +164,23 @@
         derecha 25 grados»), o <i>Tomar el rumbo …</i> (de 0 a 360) por el lado que diga o por el más corto («tome rumbo 270»).
         El mapa muestra en amarillo la recta que seguirá. La aeronave vira 3° por segundo y mantiene el rumbo hasta otra
         orden; con combustible crítico regresa sola.</li></ul>`,
+    },
+    {
+      id: "interceptar", seccion: "Aviación", titulo: "Interceptar una aeronave o un buque",
+      claves: "interceptar interceptacion interceptor alerta en tierra scramble punteria adelantada punto de encuentro identificar seguir neutralizar sombra vectoreo contacto identificacion seguimiento estima busqueda buque",
+      texto: `<p>Elija la aeronave (en vuelo o lista en tierra) o el buque, pulse <b>Interceptar</b>, elija el <b>blanco</b> (una
+        aeronave en vuelo o un buque enemigo detectado; también con un clic en el mapa) y <b>qué hacer</b>:</p>
+        <ul><li><b>Identificar y seguir</b>: lo identifica a la vista y lo sigue a unos kilómetros, sin tirar; el bando lo ve mientras tanto.</li>
+        <li><b>Identificar y neutralizar</b>: lo identifica y lo ataca.</li>
+        <li><b>Neutralizar sin esperar la identificación</b>: lo ataca apenas lo tiene a su alcance. Si la doctrina tiene las armas
+        <i>restringidas</i>, igual lo identifica antes de tirar.</li></ul>
+        <p>Antes de emitir, el panel dice si lo alcanza, en cuánto tiempo y a qué hora, con cuánto combustible llega y cuánto le
+        quedaría para volver a la base; el mapa dibuja en amarillo el curso al <b>punto de encuentro</b>: el interceptor no va
+        hacia donde está el blanco sino hacia donde estará (puntería adelantada).</p>
+        <p>Cada fase llega como alerta: vectoreo, contacto (sus sensores lo detectan), identificación, seguimiento o ataque. Si
+        se pierde el contacto, sigue la estima del rumbo y la velocidad del blanco, después busca sobre el último punto y, si no
+        lo encuentra, aborta. Una aeronave en tierra <b>despega en 5 minutos</b> (alerta en tierra). Un buque solo intercepta
+        buques. En el planificador de misiones está también el rol <b>Interceptación</b>.</p>`,
     },
     {
       id: "misiones", seccion: "Aviación", titulo: "Misiones aéreas planificadas",

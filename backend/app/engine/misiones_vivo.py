@@ -17,6 +17,7 @@ from collections import defaultdict
 
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import apoyo_aereo, catalogo, geo, ota, relieve
+from app.engine import interceptacion as intercep
 from app.engine import misiones as mis
 from app.engine import tiempo_real as tr
 from app.models.mision import Mision
@@ -160,6 +161,10 @@ def _volar(ctx, m: Mision, u, h: float) -> None:
     wps = [[q["lat"], q["lon"]] for q in pts[i0:j + 1]]
     if objetivo is not None and _visible(ctx, objetivo, u.bando):
         wps[-1] = [objetivo.lat, objetivo.lon]  # el blanco se movio y se lo sigue viendo: se lo persigue
+        if m.rol == "INTERCEPCION" and i0 == j:  # punteria adelantada: hacia donde estara el blanco
+            ve, vn = intercep.velocidad_de(objetivo)
+            plat, plon, _ = intercep.punto_de_mira(u.lat, u.lon, u.velocidad_kmh, objetivo.lat, objetivo.lon, ve, vn)
+            wps[-1] = [plat, plon]
     if destino["tipo"] == "aterrizaje":
         base = ctx.unidades.get(destino.get("base_id"))
         if base is not None:
@@ -199,6 +204,25 @@ def _volar(ctx, m: Mision, u, h: float) -> None:
             m.resultado = f"Vuela al corte de carretera: faltan {faltan:.0f} km."
     elif destino["tipo"] == "blanco":
         en_alcance = objetivo is not None and geo.distancia_km(u.lat, u.lon, objetivo.lat, objetivo.lon) <= u.alcance_km
+        if m.rol == "INTERCEPCION":
+            if objetivo is None or not intercep.tipo_blanco(objetivo):
+                m.indice = j + 1
+                m.resultado = "El blanco de la interceptación ya no está en vuelo o a flote: regresa."
+                _evento(ctx, m, m.resultado)
+                return
+            # con las armas restringidas se lo identifica a la vista antes de tirar (sigue el curso hasta tenerlo cerca)
+            estado = ctx.doctrina(u)[intercep.dominio(objetivo)]
+            if en_alcance and ctx.esc.niebla and estado == "restringido" and not ctx.identificado(u.bando, objetivo):
+                m.resultado = f"Se acerca a {objetivo.nombre} para identificarlo antes de tirar."
+                return
+            if not en_alcance and llego and not _visible(ctx, objetivo, u.bando):
+                m.indice = j + 1
+                m.resultado = f"No encontró a {objetivo.nombre} en el punto de encuentro: sigue la ruta."
+                _evento(ctx, m, m.resultado)
+                return
+            if not en_alcance:
+                m.resultado = f"Vuela al punto de encuentro con {objetivo.nombre}: faltan {faltan:.0f} km."
+                return
         if en_alcance or llego:
             m.indice = j + 1
             blanco = objetivo if en_alcance else _blanco_automatico(ctx, u, m.rol)

@@ -27,6 +27,7 @@
     modeloUnidad: null, baseSeleccionada: null, patrullaPunto: null, naciones: [],
     modoObjetivo: false, objetivoCentro: null, editando: false, filtroOOB: "", herramientas: null,
     rumbos: new Map(), posPrevia: new Map(), // hacia donde apunta cada aeronave (imagen 3D)
+    intercepcion: { clave: "", hora: 0 }, // ultima estimacion de interceptacion pedida (unidad:blanco:accion)
   };
 
   // ---------- utilidades ----------
@@ -1406,6 +1407,44 @@
   }
   ["o-rumbo-modo", "o-rumbo-grados", "o-rumbo-sentido"].forEach((id) => $(id).addEventListener("input", dibujarRumbo));
 
+  /**
+   * Interceptacion: el servidor estima si alcanza al blanco, cuando, donde y con cuanto combustible (POST
+   * /ordenes/interceptacion); el mapa dibuja el curso al punto de encuentro (puntería adelantada). Se vuelve a pedir al
+   * cambiar la unidad, el blanco o la accion, y cada 10 s mientras el panel esta abierto (el blanco se mueve).
+   */
+  async function estimarIntercepcion() {
+    const u = app.porId.get(app.unidadOrden);
+    const blanco = parseInt($("o-objetivo").value, 10);
+    const accion = $("o-intercepcion-accion").value;
+    if (!u || app.modoOrden !== "interceptar" || !blanco) {
+      app.capas.preview.clearLayers();
+      $("o-intercepcion-info").textContent = "";
+      return;
+    }
+    const clave = `${u.id}:${blanco}:${accion}`;
+    if (clave === app.intercepcion.clave && Date.now() - app.intercepcion.hora < 10000) return;
+    Object.assign(app.intercepcion, { clave, hora: Date.now() });
+    let e;
+    try {
+      e = await api("POST", rutaEsc("/ordenes/interceptacion"), { unidad_id: u.id, objetivo_unidad_id: blanco, accion_intercepcion: accion }, true);
+    } catch (_) { return; }
+    if (app.modoOrden !== "interceptar" || clave !== app.intercepcion.clave) return;
+    $("o-intercepcion-info").textContent = Logica.textoEstimacionIntercepcion(e);
+    $("o-intercepcion-info").classList.toggle("advertencia", !!(e.motivo_no || e.motivo || !e.alcanzable));
+    const g = app.capas.preview;
+    g.clearLayers();
+    const b = app.porId.get(blanco) || app.contactosPorId.get(blanco);
+    if (e.lat == null) {
+      if (b) L.polyline([[u.lat, u.lon], [b.lat, b.lon]], { color: "#ff5d8f", weight: 2, dashArray: "4 6", interactive: false }).addTo(g);
+      return;
+    }
+    L.polyline([[u.lat, u.lon], [e.lat, e.lon]], { color: "#ffd166", weight: 3, dashArray: "9 7", interactive: false })
+      .bindTooltip(`Encuentro en ${e.minutos} min`, { permanent: true, direction: "right", className: "grafico-etiqueta" }).addTo(g);
+    if (b) L.polyline([[b.lat, b.lon], [e.lat, e.lon]], { color: "#ff5d8f", weight: 2, dashArray: "3 5", interactive: false }).addTo(g);
+    L.circleMarker([e.lat, e.lon], { radius: 6, color: "#ffd166", weight: 2, fillOpacity: 0.3, interactive: false }).addTo(g);
+  }
+  $("o-intercepcion-accion").addEventListener("change", () => { app.intercepcion.clave = ""; estimarIntercepcion(); });
+
   /** Vista previa de la interferencia: alcance del interferidor y zona que cubriria sobre el punto elegido. */
   function dibujarInterferencia() {
     const g = app.capas.preview;
@@ -1495,8 +1534,9 @@
     if (esAlumno()) {
       const propia = u && u.bando === rol;
       const objetivo = $("o-objetivo");
-      if (origen === "mapa" && (app.modoOrden === "atacar" || app.modoOrden === "lanzar") && !propia && u && u.estado === "activa") {
+      if (origen === "mapa" && ["atacar", "lanzar", "interceptar"].includes(app.modoOrden) && !propia && u && u.estado === "activa") {
         objetivo.value = String(id);
+        if (app.modoOrden === "interceptar") app.intercepcion.clave = "";
       } else if (origen === "mapa" && app.modoOrden === "apoyar" && propia && app.unidadOrden && id !== app.unidadOrden && u.tipo !== "base") {
         objetivo.value = String(id);
       } else if (propia && Logica.operaAeronaves(u)) {
@@ -1845,6 +1885,9 @@
     $("modo-interferir").hidden = !interfiere;
     const lanza = Logica.puedeLanzarMisiles(u, cl);
     $("modo-lanzar").hidden = !lanza;
+    const intercepta = !!u && (u.tipo === "aerea" || u.tipo === "naval") && !Logica.esMisil(u);
+    $("modo-interceptar").hidden = !intercepta;
+    if (app.modoOrden === "interceptar" && !intercepta) app.modoOrden = "mover";
     const transportes = u ? Logica.transportesCercanos(u, data.unidades, claseDe) : [];
     const puedeEmbarcar = transportes.length > 0;
     const puedeDesembarcar = !!u && Logica.esTransporte(u) && Logica.aBordo(u, data.unidades).length > 0;
@@ -1869,6 +1912,8 @@
     $("o-interferir").hidden = app.modoOrden !== "interferir";
     $("o-rumbo").hidden = app.modoOrden !== "rumbo";
     if (app.modoOrden === "rumbo") dibujarRumbo();
+    $("o-interceptar").hidden = app.modoOrden !== "interceptar";
+    if (!$("o-intercepcion-accion").options.length) llenarSelect($("o-intercepcion-accion"), Logica.ACCIONES_INTERCEPCION);
     if (app.modoOrden === "aterrizar" && u) {
       const opciones = Logica.opcionesDeAterrizaje(u, data.unidades);
       llenarSelect($("o-base"), opciones.map((o) => [o.base.id, `${o.base.nombre} · ${Math.round(o.km)} km`]));
@@ -1890,11 +1935,13 @@
       const carga = Logica.aBordo(u, data.unidades).map((x) => x.nombre).join(", ");
       $("o-desembarcar-info").textContent = `A bordo: ${carga}. ${app.waypoints.length ? `Punto de desembarco: ${app.waypoints[app.waypoints.length - 1].map((v) => v.toFixed(3)).join(", ")}.` : "Marque la ruta y el punto de desembarco en el mapa."}`;
     }
-    if (app.modoOrden === "atacar" || app.modoOrden === "apoyar" || app.modoOrden === "lanzar") {
+    if (["atacar", "apoyar", "lanzar", "interceptar"].includes(app.modoOrden)) {
       const lista = Logica.objetivosDisponibles(data.unidades, app.usuario.rol, app.modoOrden, app.unidadOrden);
       llenarSelect($("o-objetivo"), lista.map((x) => [x.id, x.nombre]));
       $("o-objetivo-ayuda").textContent = app.modoOrden === "apoyar"
         ? "Unidad propia a apoyar (dentro de su alcance; consume 10% de munición). También puede hacer clic en el mapa."
+        : app.modoOrden === "interceptar"
+          ? (lista.length ? "Blanco: una aeronave en vuelo o un buque enemigo detectado. También puede hacer clic en el mapa." : "No hay aeronaves ni buques enemigos detectados.")
         : app.modoOrden === "lanzar"
           ? (lista.length ? "Blanco de los misiles: una unidad enemiga detectada en tierra o en el mar (a menos de 1 000 km). También puede hacer clic en el mapa." : "No hay blancos detectados.")
           : lista.length ? "Solo puede atacar unidades detectadas por su bando. También puede hacer clic en el mapa." : "No hay enemigos detectados.";
@@ -1915,6 +1962,7 @@
         $("o-parte-info").classList.toggle("advertencia", !con);
       }
     } else { $("o-parte-fila").hidden = true; $("o-parte-info").hidden = true; }
+    if (app.modoOrden === "interceptar") estimarIntercepcion();
     if (app.modoOrden === "lanzar" && u) {
       const max = Logica.misilesDisponibles(u);
       const actual = parseInt($("o-misiles").value, 10);
@@ -1996,6 +2044,7 @@
       if (!obj) return toast("Elija una unidad objetivo.");
       cuerpo.objetivo_unidad_id = obj;
       if (app.modoOrden === "atacar" && !$("o-parte-fila").hidden && $("o-parte").value) cuerpo.parte = $("o-parte").value;
+      if (app.modoOrden === "interceptar") cuerpo.accion_intercepcion = $("o-intercepcion-accion").value;
     }
     try {
       if (app.lote.size) {
@@ -2030,6 +2079,7 @@
     if (o.tipo === "desembarcar") return `Desembarcar en (${o.waypoints[o.waypoints.length - 1][0].toFixed(2)}, ${o.waypoints[o.waypoints.length - 1][1].toFixed(2)})`;
     if (o.tipo === "construir") return `Construir ${o.detalle || "obra"}`;
     if (o.tipo === "rumbo") return Logica.textoRumbo(o.detalle);
+    if (o.tipo === "interceptar") return Logica.textoIntercepcion(o.detalle, nombreObj);
     if (o.tipo === "despegar") return Logica.textoDespegue(o, app.catalogo && app.catalogo.modelos);
     if (o.tipo === "patrullar") return `Patrullar (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;
     if (o.tipo === "interferir") return `Interferir sobre (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;

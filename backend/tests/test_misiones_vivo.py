@@ -69,6 +69,29 @@ def test_interdiccion_ataca_al_tener_el_blanco_a_su_alcance_y_regresa(db_session
     assert m.estado == "cumplida" and caza.en_tierra
 
 
+def test_la_mision_de_interceptacion_apunta_adelante_ataca_y_regresa(db_session):
+    from app.engine import misiones
+    from tests.test_tiempo_real import _orden
+
+    esc = _escenario(db_session)
+    base = _base(db_session, esc, lat=0.0)
+    caza = _caza(db_session, esc, nombre="Interceptor", lat=0.0)
+    intruso = _caza(db_session, esc, nombre="Intruso", bando="rojo", lat=150 * KM, lon=0.5)
+    _orden(db_session, esc, intruso, "mover", waypoints=[[150 * KM, -3.0]])
+    _unidad(db_session, esc, nombre="Radar", lat=0.0, deteccion_km=300)  # el radar propio lo sigue
+    assert not misiones.validar("INTERCEPCION", [{"tipo": "blanco", "lat": 1, "lon": 0}, aterrizaje(base)],
+                                misiones.clase_de_modelo("f16"))
+    m = _mision(db_session, esc, "INTERCEPCION",
+                [{"tipo": "blanco", "lat": intruso.lat, "lon": intruso.lon, "objetivo_unidad_id": intruso.id},
+                 aterrizaje(base)], unidad=caza)
+    _correr(db_session, esc, 30)
+    assert caza.lon < 0.0  # hacia donde estara el intruso, que va al oeste
+    _correr(db_session, esc, 600)
+    assert intruso.fuerza < 100 and m.indice == 1
+    _correr(db_session, esc, 1800)
+    assert m.estado == "cumplida" and caza.en_tierra
+
+
 def test_una_orden_directa_reemplaza_la_mision(db_session, api):
     from tests.test_api import _preparar
 

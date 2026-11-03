@@ -42,6 +42,7 @@ from app.engine import doctrina as doctrina_mod
 from app.engine import defensa_aerea as da_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import infraestructura as infra_mod
+from app.engine import interceptacion as intercep_mod
 from app.engine import inteligencia as intel_mod
 from app.engine import misiles as misiles_mod
 from app.engine import objetivos as objetivos_mod
@@ -82,7 +83,7 @@ AVISO_CONTACTO_S = 900.0  # un enemigo que reaparece despues de esto se informa 
 DESPLIEGUE_POR_TURNO_S = 900.0  # tiempo quieta para disparar, por cada "turno de despliegue" del catalogo
 MISIONES_CONTINUAS = frozenset({"patrulla", "espera"})
 TIPOS_DE_ORDEN = ("mover", "atacar", "patrullar", "aterrizar", "despegar", "lanzar", "interferir", "construir",
-                  "embarcar", "desembarcar", "apoyar", "rumbo")
+                  "embarcar", "desembarcar", "apoyar", "rumbo", "interceptar")
 TASA_GIRO_GPS = 3.0  # grados por segundo al virar por una orden de rumbo (viraje estandar del transito aereo)
 LEJOS_KM = 500.0  # punto de referencia por delante en el rumbo (la aeronave nunca llega: sigue el rumbo)
 TIEMPO_OBRA_S = {"vado": 1800.0, "puente": 3600.0}  # trabajo de los ingenieros en el sitio hasta que la obra queda lista
@@ -156,6 +157,8 @@ class Mundo:
     pistas: dict = field(default_factory=dict)
     pistas_cargadas: bool = False
     pistas_en: dict = field(default_factory=dict)  # bando -> ultimo segundo simulado en que se sumaron puntos
+    # interceptaciones en curso: orden_id -> ultima traza del blanco {lat, lon, t, ve, vn} (engine/interceptacion.py)
+    intercepciones: dict = field(default_factory=dict)
 
 
 MUNDOS: dict[int, Mundo] = {}
@@ -177,7 +180,8 @@ class Informe:
 
 # Causas de pausa automatica (el director elige cuales detienen el reloj) y sus nombres para la pantalla.
 CAUSAS_PAUSA = {"contacto": "Contacto nuevo", "ataque": "Ataque a una unidad propia", "perdida": "Unidad perdida",
-                "combustible": "Combustible crítico", "mision": "Misión terminada"}
+                "combustible": "Combustible crítico", "mision": "Misión terminada",
+                "intercepcion": "Fase de una interceptación"}
 REPETIR_ALERTA_FUEGO_S = 900.0  # una unidad bajo fuego continuo se vuelve a avisar despues de esto
 
 
@@ -370,7 +374,8 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
             _esperar(unidad)
     orden.estado = "en_ejecucion"
     unidad.orden_id = orden.id
-    if unidad.en_tierra and orden.tipo in ("mover", "patrullar", "atacar"):
+    en_alerta = unidad.en_tierra and orden.tipo == "interceptar"
+    if unidad.en_tierra and orden.tipo in ("mover", "patrullar", "atacar", "interceptar"):
         aeronaves_mod.despegar_unidad(unidad)  # una orden de vuelo a una aeronave lista en tierra es el despegue
         unidad.espera_hasta = None
     if orden.tipo == "mover":
@@ -405,6 +410,21 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
         orden.resultado = f"[{hora}] Va a desembarcar en ({punto[0]:.3f}, {punto[1]:.3f})."
     elif orden.tipo == "apoyar":
         _poner_ruta(unidad, None)
+    elif orden.tipo == "interceptar":
+        _poner_ruta(unidad, None)
+        unidad.mision, unidad.mision_lat, unidad.mision_lon = "", None, None
+        datos = intercep_mod.decodificar(orden.detalle)
+        accion = datos.get("accion", "neutralizar")
+        blanco = db.get(Unidad, orden.objetivo_unidad_id)
+        extra = {"despega": round(esc.sim_segundos + intercep_mod.ALERTA_TIERRA_S)} if en_alerta else {}
+        orden.detalle = intercep_mod.codificar(accion, "alerta" if en_alerta else "vectoreo", **extra)
+        est = intercep_mod.estimar(unidad, blanco, db.query(Unidad).filter(Unidad.escenario_id == esc.id).all())             if blanco is not None else {}
+        cuando = (f" Punto de encuentro estimado en {est['minutos']} min, a {est['km']} km." if est.get("alcanzable")
+                  else " El blanco se aleja más rápido: lo persigue por si cambia de rumbo." if est else "")
+        orden.resultado = (f"[{hora}] " + ("Alerta en tierra: despega en 5 min y " if en_alerta else "")
+                           + f"vectorea hacia {blanco.nombre if blanco else 'el blanco'} para "
+                           + intercep_mod.ACCIONES.get(accion, accion).lower() + "." + cuando)
+        mundo_de(esc.id).intercepciones.pop(orden.id, None)
     elif orden.tipo == "rumbo":
         # el viraje relativo se cuenta desde el rumbo que trae al recibir la orden (puede llegar demorada)
         pedido = json.loads(orden.detalle or "{}")
@@ -562,6 +582,8 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
             _apoyar(ctx, u, orden, h)
         elif orden is not None and orden.tipo == "rumbo":
             _volar_rumbo(ctx, u, orden, h)
+        elif orden is not None and orden.tipo == "interceptar":
+            _intercepcion(ctx, u, orden, h)
         elif u.ruta_json:
             _mover(ctx, u, orden, h)
         elif u.tipo == "aerea":
@@ -914,7 +936,8 @@ def _registrar_combate(ctx: _Ctx, a: Unidad, d: Unidad, orden_id: int | None, pe
 def _pasada(ctx: _Ctx, a: Unidad, d: Unidad, orden: Orden | None, recarga_s: float) -> str:
     """Un ataque completo (pasada de una aeronave, impacto de un misil, enfrentamiento aire-aire)."""
     clave = orden.id if orden is not None else int(ctx.t)
-    perd_a, perd_d, gasto, res = _resolver(ctx, a, d, 1.0, clave, orden.detalle if orden is not None else None)
+    parte = orden.detalle if orden is not None and orden.tipo == "atacar" else None
+    perd_a, perd_d, gasto, res = _resolver(ctx, a, d, 1.0, clave, parte)
     _perder(ctx, a, perd_a)
     _perder(ctx, d, perd_d)
     _cambiar(ctx, a, "municion", a.municion - gasto, "combate")
@@ -1051,6 +1074,151 @@ def _atacar(ctx: _Ctx, a: Unidad, orden: Orden, h: float) -> None:
     if motivo:
         return
     _fuego_continuo(ctx, a, d, orden, h)
+
+
+def _traza(ctx: _Ctx, orden: Orden, d: Unidad) -> dict:
+    """Ultima traza del blanco que tiene el interceptor: posicion, hora y velocidad estimada con dos posiciones
+    (como una pista de radar); sin dos posiciones todavia, la de su marcha (engine/interceptacion.py)."""
+    tr = ctx.mundo.intercepciones.get(orden.id)
+    if tr is None:
+        ve, vn = intercep_mod.velocidad_de(d)
+        tr = ctx.mundo.intercepciones[orden.id] = {"lat": d.lat, "lon": d.lon, "t": ctx.t, "ve": ve, "vn": vn,
+                                                  "lat0": d.lat, "lon0": d.lon, "t0": ctx.t}
+    return tr
+
+
+def _actualizar_traza(ctx: _Ctx, tr: dict, d: Unidad) -> None:
+    tr["lat"], tr["lon"], tr["t"] = d.lat, d.lon, ctx.t
+    dt = ctx.t - tr["t0"]
+    if dt >= intercep_mod.TRAZA_MIN_S:
+        x, y = intercep_mod._km(tr["lat0"], tr["lon0"], d.lat, d.lon)
+        tr["ve"], tr["vn"] = x / (dt / 3600.0), y / (dt / 3600.0)
+        tr["lat0"], tr["lon0"], tr["t0"] = d.lat, d.lon, ctx.t
+
+
+def _fase_intercepcion(ctx: _Ctx, a: Unidad, orden: Orden, datos: dict, fase: str, texto: str,
+                       x: Unidad | None = None) -> None:
+    """Cambio de fase: queda en la orden y se avisa al bando (vectoreo, contacto, identificacion, seguimiento...)."""
+    if datos.get("fase") == fase:
+        return
+    datos["fase"] = fase
+    extra = {k: v for k, v in datos.items() if k not in ("accion", "fase")}
+    orden.detalle = intercep_mod.codificar(datos.get("accion", "neutralizar"), fase, **extra)
+    nombre = intercep_mod.FASES.get(fase, fase)
+    orden.resultado = f"[{hora_del_dia(ctx.esc)}] {nombre[0].upper() + nombre[1:]}: {texto}"
+    lat, lon = (x.lat, x.lon) if x is not None else (a.lat, a.lon)
+    ctx.evento("intercepcion", a.bando, f"{a.nombre} ({nombre}): {texto}", lat, lon)
+    ctx.alerta("intercepcion", a.bando, f"{a.nombre} ({nombre}): {texto}", lat, lon,
+               "critica" if fase == "ataque" else "aviso")
+
+
+def _intercepcion(ctx: _Ctx, a: Unidad, orden: Orden, h: float) -> None:
+    """Orden de interceptacion: curso con punteria adelantada hacia el punto de encuentro, fases con avisos y, segun la
+    accion elegida, seguimiento a distancia o ataque (engine/interceptacion.py)."""
+    datos = intercep_mod.decodificar(orden.detalle)
+    accion = datos.get("accion", "neutralizar")
+    d = ctx.unidades.get(orden.objetivo_unidad_id)
+
+    def fin(texto: str, estado: str = "resuelta") -> None:
+        ctx.terminar(orden, a, texto, estado)
+        ctx.mundo.intercepciones.pop(orden.id, None)
+        if a.tipo == "aerea" and a.estado == "activa":
+            _esperar(a)
+        ctx.alerta("intercepcion", a.bando, f"{a.nombre}: {texto}", a.lat, a.lon)
+
+    if d is None or d.estado != "activa":
+        fin(f"{d.nombre if d is not None else 'El blanco'} quedó fuera de combate: interceptación terminada.")
+        return
+    if not intercep_mod.tipo_blanco(d):
+        fin(f"{d.nombre} aterrizó: interceptación terminada.")
+        return
+    if ge_mod.enlace_perdido(a, ctx.ge):
+        fin(ge_mod.MOTIVO_SIN_ENLACE, "cancelada")
+        return
+    if datos.get("despega") and ctx.t < datos["despega"]:  # alerta en tierra: carreteo y despegue
+        return
+    if datos.get("fase") == "alerta":
+        _fase_intercepcion(ctx, a, orden, datos, "vectoreo", f"despegó y vectorea hacia {d.nombre}.", d)
+    tr = _traza(ctx, orden, d)
+    visto = ctx.visible_para(d, a.bando)
+    if visto:
+        _actualizar_traza(ctx, tr, d)
+    sin_ver = ctx.t - tr["t"]
+    if sin_ver > intercep_mod.ESTIMA_S + intercep_mod.BUSQUEDA_S:
+        fin(f"Se perdió el contacto con {d.nombre}: tras buscar sobre el último punto conocido, la interceptación "
+            "se abortó.", "cancelada")
+        return
+    if not visto and sin_ver > intercep_mod.ESTIMA_S:  # busqueda: orbita sobre el ultimo punto estimado
+        lat, lon = intercep_mod.estimada(tr["lat"], tr["lon"], tr["ve"], tr["vn"], intercep_mod.ESTIMA_S)
+        _fase_intercepcion(ctx, a, orden, datos, "busqueda",
+                           f"sin contacto con {d.nombre}: busca sobre el último punto estimado.")
+        if a.tipo == "aerea":
+            mision = a.mision
+            a.mision, a.mision_lat, a.mision_lon = "espera", lat, lon
+            _orbitar(ctx, a, h)
+            a.mision = mision
+        else:
+            _avanzar(ctx, a, [[lat, lon]], h)
+        return
+    if visto:
+        tlat, tlon = d.lat, d.lon
+    else:
+        tlat, tlon = intercep_mod.estimada(tr["lat"], tr["lon"], tr["ve"], tr["vn"], sin_ver)
+        _fase_intercepcion(ctx, a, orden, datos, "estima",
+                           f"se perdió el contacto con {d.nombre}: sigue la estima de su rumbo y velocidad.")
+    dist = geo.distancia_km(a.lat, a.lon, tlat, tlon)
+    estado_armas = ctx.doctrina(a)[intercep_mod.dominio(d)]
+    hace_falta_id = ctx.esc.niebla and intercep_mod.necesita_identificar(accion, estado_armas)
+    identificado = visto and ctx.identificado(a.bando, d)
+    if visto and datos.get("fase") in ("vectoreo", "estima", "busqueda") \
+            and vision.detecta(a, d, ctx.terreno, ctx.clima, ctx.ge):
+        _fase_intercepcion(ctx, a, orden, datos, "contacto",
+                           f"tiene a {_rotulo_contacto(ctx, a.bando, d)} en sus sensores, a {dist:.0f} km.", d)
+    lista_para_actuar = visto and (identificado or not hace_falta_id)
+    if visto and not lista_para_actuar and datos.get("fase") == "contacto" \
+            and dist <= 3 * contactos_vivo.IDENTIFICACION_VISUAL_KM:
+        _fase_intercepcion(ctx, a, orden, datos, "identificacion", "se acerca para identificarlo a la vista.", d)
+    # el curso: punto de encuentro con punteria adelantada (o detras del blanco, a distancia, al seguirlo)
+    seguir = accion == "seguir" and lista_para_actuar
+    if seguir:
+        km_seg = intercep_mod.DISTANCIA_SEGUIMIENTO_KM["aerea" if d.tipo == "aerea" else "naval"]
+        if math.hypot(tr["ve"], tr["vn"]) > 1.0:
+            rumbo_b = math.degrees(math.atan2(tr["ve"], tr["vn"])) % 360.0
+        else:
+            rumbo_b = rumbo(a.lat, a.lon, tlat, tlon)
+        objetivo = list(geo.destino(tlat, tlon, (rumbo_b + 180.0) % 360.0, km_seg))
+        if datos.get("fase") != "seguimiento":
+            _fase_intercepcion(ctx, a, orden, datos, "seguimiento",
+                               f"identificó a {d.nombre} y lo sigue a {km_seg:.0f} km, a la vista del bando.", d)
+    else:
+        plat, plon, _ = intercep_mod.punto_de_mira(a.lat, a.lon, a.velocidad_kmh, tlat, tlon, tr["ve"], tr["vn"])
+        objetivo = [plat, plon]
+    alcance = a.alcance_km * ctx.doctrina(a)["distancia_pct"] / 100.0
+    al_alcance = visto and dist <= alcance and not relieve.fuera_de_techo(a, d)
+    # un buque al alcance se queda a tirar; los demas siguen el curso (en posicion de seguimiento, no se mueve)
+    quieto = (a.tipo == "naval" and al_alcance and lista_para_actuar and not seguir) or (seguir and geo.distancia_km(a.lat, a.lon, *objetivo) < 1.0)
+    if not quieto:
+        mov = _avanzar(ctx, a, [objetivo], h)
+        if mov.km_reales <= 0 and mov.nota:
+            fin(f"No puede acercarse a {d.nombre}: {mov.nota}", "cancelada")
+            return
+    if seguir or not lista_para_actuar or not al_alcance:
+        return
+    if datos.get("fase") != "ataque":
+        _fase_intercepcion(ctx, a, orden, datos, "ataque", f"ataca a {d.nombre}.", d)
+    if a.municion <= 0:
+        fin("Sin munición: la interceptación terminó.")
+        return
+    if a.tipo == "aerea":
+        if a.recarga_hasta and a.recarga_hasta > ctx.t:
+            return
+        _pasada(ctx, a, d, orden, RECARGA_AIRE_AIRE_S if d.tipo == "aerea" else RECARGA_PASADA_S)
+        if catalogo.obtener(a.clase, a.tipo).se_consume:
+            a.estado, a.fuerza = "destruida", 0.0
+            ctx.terminar(orden, a, f"Impactó contra {d.nombre} (munición merodeadora).")
+        return
+    if not _puede_disparar(ctx, a):
+        _fuego_continuo(ctx, a, d, orden, h)
 
 
 def _construir(ctx: _Ctx, u: Unidad, orden: Orden) -> None:
@@ -1433,7 +1601,7 @@ def _combustible(ctx: _Ctx) -> None:
         doct = ctx.doctrina(u)
         sin_armas = (doct["regreso_sin_armas"] and u.municion <= 0.5 and not catalogo.obtener(u.clase, u.tipo).se_consume
                      and any(v > 0 for v in catalogo.perfil(u).ataque_vs.values()))
-        if sin_armas and (orden is None or orden.tipo not in ("aterrizar", "mover", "rumbo")):
+        if sin_armas and (orden is None or orden.tipo not in ("aterrizar", "mover", "rumbo", "interceptar")):
             base = aeronaves_mod.base_mas_cercana(u, ctx.lista)
             if base is not None:
                 _regresar(ctx, u, orden, base, "sin armamento",

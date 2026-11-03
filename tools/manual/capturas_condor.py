@@ -25,7 +25,9 @@ from navegador import Navegador, anotar  # noqa: E402
 
 BASE = os.environ.get("CONDOR_URL", "http://127.0.0.1:8130")
 ESCENARIO = int(os.environ.get("CONDOR_ESCENARIO", "15"))  # Operación Guri: dos bandos completos en Bolívar
-CUENTAS = {c["usuario"]: c["clave"] for c in json.loads(Path(os.environ["CONDOR_CUENTAS"]).read_text(encoding="utf-8"))}
+# lista [{usuario, clave}] o {nombre: {usuario, clave}}
+_cuentas = json.loads(Path(os.environ["CONDOR_CUENTAS"]).read_text(encoding="utf-8"))
+CUENTAS = {c["usuario"]: c["clave"] for c in (_cuentas.values() if isinstance(_cuentas, dict) else _cuentas)}
 SALIDA = Path(os.environ.get("CONDOR_CAPTURAS") or Path(__file__).resolve().parent / "salida" / "condor")
 LISTO = "!document.getElementById('app').hidden && document.querySelectorAll('#oob .oob-item').length > 0 && window.__mapa"
 GURI = (7.76, -62.99)
@@ -203,6 +205,33 @@ def orden_mover(n: Nav) -> None:
     guardar(n, "cola", union(titulo, n.rect("#cola")))
 
 
+def _post(n: Nav, ruta: str, cuerpo: dict):
+    return n.js(f"fetch('/api/escenarios/{ESCENARIO}{ruta}', {{method: 'POST', headers: {{'Content-Type': 'application/json'}},"
+                f" body: {json.dumps(json.dumps(cuerpo))}}}).then((r) => r.json())")
+
+
+def interceptar(n: Nav) -> None:
+    """Un caza en alerta en tierra intercepta a un bandido que el director hace aparecer (en la COPIA de la base)."""
+    n.como("director")
+    bandido = _post(n, "/unidades", {"nombre": "Bandido (captura)", "bando": "rojo", "tipo": "aerea", "clase": "caza",
+                                     "lat": 5.9, "lon": -67.3})
+    n.como("ro.cmdte")
+    _post(n, "/ordenes", {"unidad_id": bandido["id"], "tipo": "mover", "waypoints": [[5.9, -65.0]]})
+    n.como("az.cmdte")
+    nombre = "Escuadrón F-16 Block 70 1 (Echo)"
+    u = n.unidad(nombre)
+    n.elegir(nombre)
+    n.vista(u["lat"] - 0.1, u["lon"] + 0.9, 8, 4)
+    n.clic("[data-modo=interceptar]")
+    n.pausa(1)
+    n.js(f"const s = document.getElementById('o-objetivo'); s.value = '{bandido['id']}'; s.dispatchEvent(new Event('change'))")
+    n.pausa(3)
+    n.js("document.getElementById('sec-orden').scrollIntoView({block: 'start'})")
+    n.pausa(0.5)
+    guardar(n, "interceptar", n.rect("#sec-orden"))
+    guardar(n, "interceptar_mapa", n.rect("#map"), margen=0)
+
+
 def doctrina(n: Nav) -> None:
     n.pestana("fuerzas")
     n.js("const d = document.getElementById('sec-doctrina'); d.querySelectorAll('details').forEach((x) => x.open = true); d.scrollIntoView({block: 'start'})")
@@ -328,7 +357,7 @@ def videowall(n: Nav) -> None:
     n.tecla("Escape", 27)
 
 
-ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, doctrina, misiones,
+ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, doctrina, misiones,
          situacion, tiem, consola, capas, graficos, mapas, ayuda, informe, en_marcha, bando, videowall]
 
 
@@ -342,7 +371,7 @@ def main() -> int:
             if pedidas and f.__name__ not in pedidas:
                 continue
             try:
-                if f not in (acceso, despegue, orden_mover, misiones, bando):
+                if f not in (acceso, despegue, orden_mover, interceptar, misiones, bando):
                     n.como("director")
                 f(n)
                 if f is acceso:

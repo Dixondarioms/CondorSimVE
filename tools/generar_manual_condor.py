@@ -285,6 +285,7 @@ def construir(salida: Path) -> None:
               ["Patrullar", "Aeronaves: orbitan sobre una zona e interceptan lo que entre."],
               ["Aterrizar", "Aeronaves en vuelo: vuelven a una base."],
               ["Rumbo", "Aeronaves en vuelo: viran unos grados a un lado o toman un rumbo y lo mantienen (5.3)."],
+              ["Interceptar", "Aeronaves y buques: salen al encuentro de una aeronave o un buque enemigo (5.4)."],
               ["Interferir", "Guerra electrónica: degrada al enemigo en una zona."],
               ["Lanzar misiles", "Buques y baterías con misiles de crucero."],
               ["Embarcar / Desembarcar", "Tropas a bordo de un buque de desembarco o un helicóptero de transporte."],
@@ -336,7 +337,24 @@ def construir(salida: Path) -> None:
           P("Antes de emitir, el panel muestra el rumbo actual, hacia qué lado vira y cuántos grados, y el mapa dibuja en "
             "amarillo la recta que seguirá. La aeronave vira 3° por segundo (el viraje estándar) y mantiene el rumbo hasta otra "
             "orden; con combustible crítico regresa sola a la base."),
-          H2("5.4 Misiones aéreas planificadas")]
+          H2("5.4 Interceptar una aeronave o un buque")]
+    h += [Table([[figura("interceptar", "Orden Interceptar con la estimación y el curso al punto de encuentro.", ancho=6.6 * cm,
+                         alto_max=12 * cm, celda=True),
+                  [P("Elija la aeronave (en vuelo o lista en tierra) o el buque, pulse <b>Interceptar</b>, elija el <b>blanco</b> "
+                     "(una aeronave en vuelo o un buque enemigo detectado) y <b>qué hacer</b>:"),
+                   Bul(["<b>Identificar y seguir</b>: lo identifica a la vista y lo sigue a unos kilómetros, sin tirar.",
+                        "<b>Identificar y neutralizar</b>: lo identifica y lo ataca.",
+                        "<b>Neutralizar sin esperar la identificación</b>: lo ataca apenas lo tiene a su alcance; con las armas "
+                        "<i>restringidas</i> (6.1) igual lo identifica antes."]),
+                   P("Antes de emitir, el panel dice si lo alcanza, en cuánto tiempo, con cuánto combustible llega y cuánto le "
+                     "quedaría para volver; el mapa dibuja en amarillo el curso al <b>punto de encuentro</b> (puntería "
+                     "adelantada: hacia donde estará el blanco).")]]],
+                colWidths=[6.9 * cm, ANCHO_TEXTO - 6.9 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += [P("Cada fase llega como alerta: vectoreo, contacto, identificación, seguimiento o ataque. Si se pierde el contacto "
+            "sigue la estima del rumbo y la velocidad del blanco, busca sobre el último punto y, si no lo encuentra, aborta. "
+            "Una aeronave en tierra despega en 5 minutos (alerta en tierra). Un buque solo intercepta buques. El planificador "
+            "de misiones tiene también el rol <b>Interceptación</b>."),
+          H2("5.5 Misiones aéreas planificadas")]
     h += [Table([[figura("mision_planificar", "Planificar una misión aérea.", ancho=6.6 * cm, alto_max=12 * cm, celda=True),
                   [P("El panel <b>Misiones aéreas</b> → <b>Planificar misión</b> arma misiones completas:"),
                    Bul(["un grupo que ya existe o uno que despega de una base;",
@@ -561,7 +579,7 @@ def construir(salida: Path) -> None:
         ["Cuadro radar", "Lo que detecta ahora cada sensor del bando (7.4)."],
         ["Doctrina / ROE", "Reglas con que las unidades actúan por su cuenta (6.1)."],
         ["Estela", "Línea por donde pasó una unidad en el mapa."],
-        ["Flow sheet", "Cronograma de las misiones aéreas (5.3)."],
+        ["Flow sheet", "Cronograma de las misiones aéreas (5.5)."],
         ["JEM", "Jefe de Estado Mayor."],
         ["Niebla de guerra", "Cada bando solo ve lo que detecta."],
         ["OTA", "Orden de tareas aéreas: datos de paquete, armamento, IFF y hora de cada misión."],

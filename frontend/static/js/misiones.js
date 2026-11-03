@@ -5,7 +5,7 @@
   "use strict";
 
   const TIPO = Logica.TIPOS_PUNTO_MISION;
-  const COLOR_ROL = { CAP: "#4cc9f0", INTERDICCION: "#f77f00", CAS: "#fcbf49", SEAD: "#ef476f", RECO: "#90be6d", GE: "#c77dff", TRASLADO: "#adb5bd",
+  const COLOR_ROL = { CAP: "#4cc9f0", INTERCEPCION: "#ff5d8f", INTERDICCION: "#f77f00", CAS: "#fcbf49", SEAD: "#ef476f", RECO: "#90be6d", GE: "#c77dff", TRASLADO: "#adb5bd",
     AAR: "#80ed99", AEW: "#48cae4", CSAR: "#ffbe0b" };
   const LETRA = { orbita: "O", blanco: "✕", aterrizaje: "▼" };
   const NS = "http://www.w3.org/2000/svg";
@@ -42,7 +42,9 @@
     const grupos = () => delBando((u) => u.tipo === "aerea" && conduce(u));
     const conduceId = (id) => { const u = datos() && datos().unidades.find((x) => x.id === id); return !!u && conduce(u); };
     const bases = () => delBando((u) => u.tipo === "base" && Logica.operaAeronaves(u)); // bases aereas y PRO
-    const enemigos = () => (datos() ? datos().unidades.filter((u) => u.bando !== bando() && u.estado === "activa" && (u.tipo !== "aerea" || u.en_tierra)) : []);
+    // en una interceptacion el blanco es una aeronave en vuelo o un buque; en las demas, algo en tierra o en el mar
+    const enemigos = () => (datos() ? datos().unidades.filter((u) => u.bando !== bando() && u.estado === "activa"
+      && (borrador && borrador.rol === "INTERCEPCION" ? Logica.interceptable(u) : (u.tipo !== "aerea" || u.en_tierra))) : []);
     const puedeGrupos = () => esAlumno() && grupos().length > 0;
     const puedeBases = () => esAlumno() && ctx.puede("despegar");
     const turnoActual = () => (datos() ? datos().escenario.turno_actual : 1);

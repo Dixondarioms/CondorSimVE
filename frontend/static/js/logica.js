@@ -39,6 +39,10 @@
     if (tipoOrden === "apoyar") {
       return activas.filter((u) => u.bando === rol && u.tipo !== "base" && String(u.id) !== String(unidadId));
     }
+    if (tipoOrden === "interceptar") { // aeronaves en vuelo y buques; un buque solo alcanza a otros buques
+      const propia = unidades.find((u) => String(u.id) === String(unidadId));
+      return activas.filter((u) => u.bando !== rol && interceptable(u) && !(propia && propia.tipo === "naval" && u.tipo === "aerea"));
+    }
     if (tipoOrden === "lanzar") { // un misil de crucero no persigue aeronaves en vuelo
       return activas.filter((u) => u.bando !== rol && (u.tipo !== "aerea" || u.en_tierra));
     }
@@ -453,6 +457,37 @@
     if (d.modo === "virar") return `Virar a la ${d.sentido} ${Math.round(d.grados)}°${destino}`;
     const lado = d.lado || (d.sentido === "corto" ? "" : d.sentido);
     return `Rumbo ${rumbo3(d.grados || 0)}°${lado ? `, virando a la ${lado}` : ""}`;
+  }
+
+  /** Se intercepta una aeronave en vuelo o un buque (no un misil). */
+  const interceptable = (u) => !!u && u.estado === "activa" && !esMisil(u) && ((u.tipo === "aerea" && !u.en_tierra) || u.tipo === "naval");
+  const ACCIONES_INTERCEPCION = [["neutralizar", "Identificar y neutralizar"], ["seguir", "Identificar y seguir"], ["directo", "Neutralizar sin esperar la identificación"]];
+  const FASES_INTERCEPCION = { alerta: "alerta en tierra", vectoreo: "vectoreo", contacto: "contacto", identificacion: "identificación",
+    seguimiento: "seguimiento", ataque: "ataque", estima: "estima (contacto perdido)", busqueda: "búsqueda" };
+
+  /** Cola de ordenes: «Interceptar a Bandido (identificar y seguir) · fase: contacto». */
+  function textoIntercepcion(detalle, nombreObj) {
+    let d = {};
+    try { d = JSON.parse(detalle || "{}"); } catch (_) { /* detalle vacio */ }
+    const accion = (ACCIONES_INTERCEPCION.find(([k]) => k === d.accion) || [null, "Identificar y neutralizar"])[1].toLowerCase();
+    return `Interceptar a ${nombreObj} (${accion})` + (d.fase ? ` · fase: ${FASES_INTERCEPCION[d.fase] || d.fase}` : "");
+  }
+
+  /** Estimacion de una interceptacion antes de emitirla (POST /ordenes/interceptacion) en palabras. */
+  function textoEstimacionIntercepcion(e) {
+    if (!e) return "";
+    if (e.motivo_no) return e.motivo_no;
+    const partes = [];
+    if (e.despegue_min) partes.push(`Despega en ${e.despegue_min} min (alerta en tierra).`);
+    if (!e.alcanzable) partes.push(e.motivo || "No lo alcanza: lo perseguirá por si cambia de rumbo.");
+    else {
+      partes.push(`Lo alcanza en ${e.minutos} min${e.hora ? ` (a las ${e.hora})` : ""}, a ${e.km} km; llega con ${Math.max(0, Math.round(e.combustible_llegada))} % de combustible.`);
+      if (e.combustible_regreso != null) partes.push(`Para volver a ${e.base} le quedaría ${Math.round(e.combustible_regreso)} %.`);
+      if (e.motivo) partes.push(e.motivo);
+    }
+    partes.push(`Blanco a ${e.velocidad_blanco_kmh} km/h; propio a ${e.velocidad_propia_kmh} km/h.`);
+    if (e.identifica) partes.push(e.armas === "restringido" ? "Armas restringidas: lo identificará a la vista antes de tirar." : "Lo identificará a la vista (a menos de 8 km) antes de actuar.");
+    return partes.join(" ");
   }
 
   const ETIQUETA_CANAL = { azul: "Red azul", rojo: "Red roja", todos: "Difusión", mando: "Al mando" };
@@ -1219,7 +1254,7 @@
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
-    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
+    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,

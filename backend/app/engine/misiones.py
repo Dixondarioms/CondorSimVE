@@ -41,6 +41,10 @@ ROLES: dict[str, Rol] = {r.id: r for r in [
     Rol("CAP", "Patrulla aerea de combate (CAP)",
         "Vuela a una orbita, la mantiene las horas indicadas interceptando a los aviones enemigos detectados a su "
         "alcance y regresa a la base.", ("orbita",), ("blanco",), "aire"),
+    Rol("INTERCEPCION", "Interceptacion (aeronave o buque enemigo)",
+        "Despega y sale al encuentro del blanco con punteria adelantada (hacia donde estara, no hacia donde esta); si "
+        "la doctrina lo exige, lo identifica a la vista antes de tirar; lo ataca y regresa a la base.",
+        ("blanco",), ("orbita",), "intercepcion"),
     Rol("INTERDICCION", "Interdiccion (ataque a un blanco)",
         "Vuela hasta el blanco, lo ataca al tenerlo a su alcance y regresa. Si el blanco ya no esta, ataca al enemigo "
         "detectado mas cercano.", ("blanco",), (), "superficie"),
@@ -138,6 +142,8 @@ def validar(rol_id: str, puntos: list, clase) -> list[str]:
         errores.append(f"{clase.nombre} no puede interceptar aviones: no sirve para {rol.nombre}.")
     if rol.capacidad == "superficie" and max(clase.ataque_vs.get("terrestre", 0.0), clase.ataque_vs.get("naval", 0.0)) <= 0:
         errores.append(f"{clase.nombre} no puede atacar blancos de superficie: no sirve para {rol.nombre}.")
+    if rol.capacidad == "intercepcion" and max(clase.ataque_vs.get("aerea", 0.0), clase.ataque_vs.get("naval", 0.0)) <= 0:
+        errores.append(f"{clase.nombre} no tiene armas contra aeronaves ni buques: no sirve para {rol.nombre}.")
     if rol.capacidad == "interferencia" and clase.interferencia_km <= 0:
         errores.append(f"{clase.nombre} no puede interferir: no sirve para {rol.nombre}.")
     if rol.capacidad == "cisterna" and not (clase.nodo_movil_km and "aerea" in clase.suministra):

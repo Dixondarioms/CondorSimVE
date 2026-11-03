@@ -8,7 +8,9 @@ from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import catalogo, geo, infraestructura, movimiento, puestos
 from app.engine import clima as clima_mod
+from app.engine import doctrina as doctrina_mod
 from app.engine import guerra_electronica as ge_mod
+from app.engine import interceptacion as intercep_mod
 from app.engine import misiles as misiles_mod
 from app.engine import transporte as transporte_mod
 from app.engine import misiones as misiones_mod
@@ -72,7 +74,7 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
     auth.exigir_funcion(usuario, puestos.funcion_de_orden(unidad, payload.tipo, clase))
     if payload.tipo in ("patrullar", "aterrizar") and unidad.tipo != "aerea":
         raise HTTPException(status_code=400, detail="Solo las aeronaves pueden patrullar o aterrizar")
-    if unidad.en_tierra and unidad.espera_restante > 0 and payload.tipo in ("mover", "atacar", "patrullar"):
+    if unidad.en_tierra and unidad.espera_restante > 0 and payload.tipo in ("mover", "atacar", "patrullar", "interceptar"):
         raise HTTPException(
             status_code=400,
             detail=f"En tierra: le falta {_falta_texto(esc, unidad)} para reabastecer y rearmar antes de despegar",
@@ -168,6 +170,13 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
             raise HTTPException(status_code=400, detail="Indique si vira a la derecha o a la izquierda")
         if payload.rumbo_modo == "virar" and not 0 < payload.rumbo_grados < 360:
             raise HTTPException(status_code=400, detail="El viraje va de 1 a 359 grados")
+    elif payload.tipo == "interceptar":
+        blanco = _blanco_de_intercepcion(db, esc, usuario, payload.objetivo_unidad_id)
+        motivo = intercep_mod.puede_interceptar(unidad, blanco, payload.accion_intercepcion or "")
+        if motivo:
+            raise HTTPException(status_code=400, detail=motivo)
+        if unidad.combustible <= aeronaves_mod.COMBUSTIBLE_CRITICO:
+            raise HTTPException(status_code=400, detail="Combustible insuficiente para interceptar: aterrice y reabastezca")
     elif payload.tipo == "mover":
         if unidad.tipo == "base" or unidad.velocidad_kmh <= 0:
             raise HTTPException(status_code=400, detail="Esta unidad no puede moverse")
@@ -215,7 +224,7 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         unidad_id=unidad.id,
         tipo=payload.tipo,
         waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir", "patrullar", "interferir", "desembarcar") else []),
-        objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar", "aterrizar", "lanzar", "embarcar") else None,
+        objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar", "aterrizar", "lanzar", "embarcar", "interceptar") else None,
         detalle=(
             aeronaves_mod.codificar(payload.modelo, payload.aeronaves, (payload.indicativo or "").strip())
             if payload.tipo == "despegar"
@@ -223,6 +232,7 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
             else (payload.parte or "") if payload.tipo == "atacar"
             else json.dumps({"modo": payload.rumbo_modo, "grados": payload.rumbo_grados,
                              "sentido": payload.rumbo_sentido or "corto"}) if payload.tipo == "rumbo"
+            else intercep_mod.codificar(payload.accion_intercepcion) if payload.tipo == "interceptar"
             else payload.detalle or "" if payload.tipo == "construir" else ""
         ),
         turno_emitida=esc.turno_actual,
@@ -241,6 +251,15 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         return orden
     tiempo_real.aplicar_orden(db, esc, orden, unidad)
     return orden
+
+
+def _blanco_de_intercepcion(db: Session, esc: Escenario, usuario: Usuario, blanco_id: int | None) -> Unidad:
+    if blanco_id is None:
+        raise HTTPException(status_code=400, detail="Elija el blanco a interceptar")
+    blanco = {u.id: u for u in state.unidades_visibles_para(db, esc, usuario.rol)}.get(blanco_id)
+    if blanco is None or blanco.estado != "activa" or blanco.bando == usuario.rol:
+        raise HTTPException(status_code=404, detail="Blanco no detectado por su bando")
+    return blanco
 
 
 def _falta_texto(esc: Escenario, unidad: Unidad) -> str:
@@ -333,6 +352,30 @@ def previsualizar(
         == [round(payload.waypoints[-1][0], 5), round(payload.waypoints[-1][1], 5)],
         "nota": mov.nota,
     }
+
+
+@router.post("/interceptacion")
+def estimar_intercepcion(
+    payload: schemas.IntercepcionIn,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.conductor),
+):
+    """Antes de emitir la orden: si alcanza al blanco, en cuanto tiempo, donde, con cuanto combustible llega y con
+    cuanto le queda para volver a la base; y si la doctrina le exige identificarlo antes de tirar."""
+    unidad = _unidad_propia(db, esc, payload.unidad_id, usuario)
+    blanco = _blanco_de_intercepcion(db, esc, usuario, payload.objetivo_unidad_id)
+    accion = payload.accion_intercepcion or "neutralizar"
+    salida = {"motivo_no": intercep_mod.puede_interceptar(unidad, blanco, accion)}
+    if salida["motivo_no"] is None:
+        propias = db.query(Unidad).filter(Unidad.escenario_id == esc.id, Unidad.bando == usuario.rol).all()
+        salida.update(intercep_mod.estimar(unidad, blanco, propias))
+        estado = doctrina_mod.de_unidad(esc, unidad)[intercep_mod.dominio(blanco)]
+        salida["identifica"] = bool(esc.niebla) and intercep_mod.necesita_identificar(accion, estado)
+        salida["armas"] = estado
+        if salida.get("minutos") is not None:
+            salida["hora"] = tiempo_real.hora_del_dia(esc, (esc.sim_segundos or 0.0) + salida["minutos"] * 60.0)
+    return salida
 
 
 @router.post("/ruta")
