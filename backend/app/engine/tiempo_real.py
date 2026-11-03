@@ -54,6 +54,7 @@ from app.engine import rescate as rescate_mod
 from app.engine import rutas as rutas_mod
 from app.engine import transporte as transporte_mod
 from app.engine import asw as asw_mod
+from app.engine import balisticos as balisticos_mod
 from app.engine import minas as minas_mod
 from app.engine import eventos_auto
 from app.engine import sistemas as sistemas_mod
@@ -173,6 +174,7 @@ class Mundo:
     colateral: dict = field(default_factory=dict)  # (atacante_id, neutral_id) -> ultimo aviso de daño colateral
     punto_disparos: dict = field(default_factory=dict)  # buque_id -> disparos de defensa de punto acumulados
     minado_desde: dict = field(default_factory=dict)  # orden_id -> segundo simulado en que el buque empezo a minar
+    antimisil_disparos: dict = field(default_factory=dict)  # bateria_id -> interceptores antimisil acumulados
     # eventos automaticos del director (engine/eventos_auto.py): (regla, unidad) dentro de su area
     eventos_dentro: set = field(default_factory=set)
     eventos_listo: bool = False
@@ -399,6 +401,26 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
         orden.resultado = f"[{hora}] {unidad.nombre} lanzó un torpedo contra {blanco.nombre} (llega en unos {llega:.0f} min)."
         db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, sim_segundos=esc.sim_segundos, tipo="lanzamiento",
                       bando_destino=unidad.bando, descripcion=orden.resultado))
+        return
+    if orden.tipo == "lanzar" and balisticos_mod.lanza(unidad):
+        blanco = db.get(Unidad, orden.objetivo_unidad_id)
+        n = misiles_mod.decodificar(orden.detalle).get("misiles")
+        for misil in balisticos_mod.crear(unidad, blanco, n):
+            misil.rumbo = rumbo(unidad.lat, unidad.lon, blanco.lat, blanco.lon)
+            db.add(misil)
+        unidad.municion = max(0.0, unidad.municion - balisticos_mod.MUNICION_POR_MISIL * n)
+        unidad.recarga_hasta = esc.sim_segundos + RECARGA_LANZADOR_S
+        db.flush()
+        km = geo.distancia_km(unidad.lat, unidad.lon, blanco.lat, blanco.lon)
+        impacto = hora_del_dia(esc, (esc.sim_segundos or 0.0) + balisticos_mod.minutos_de_vuelo(km) * 60.0)
+        orden.estado = "resuelta"
+        orden.resultado = f"[{hora}] {unidad.nombre} lanzó {n} misil(es) balístico(s) contra {blanco.nombre}: impacto a las {impacto}."
+        db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, sim_segundos=esc.sim_segundos, tipo="lanzamiento",
+                      bando_destino=unidad.bando, descripcion=orden.resultado))
+        db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, sim_segundos=esc.sim_segundos, tipo="radar",
+                      bando_destino=blanco.bando, lat=blanco.lat, lon=blanco.lon, hasta_turno=esc.turno_actual + 1,
+                      descripcion=f"[{hora}] Alerta temprana: lanzamiento de {n} misil(es) balístico(s) enemigo(s) hacia "
+                                  f"la zona de {blanco.nombre}; impacto estimado a las {impacto}."))
         return
     if orden.tipo == "lanzar":
         blanco = db.get(Unidad, orden.objetivo_unidad_id)
@@ -688,6 +710,7 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
         ctx.mundo.trafico_en = ctx.t
         trafico_mod.mantener(ctx)
     _defensa_de_punto(ctx, h)  # los buques se defienden de los misiles aunque el fuego automatico este apagado
+    _defensa_antimisil(ctx, h)  # y los sistemas antimisil, de los balisticos
     if ctx.esc.fuego_automatico:
         _interceptar(ctx)
         _antiaerea_generica(ctx, h)
@@ -1698,6 +1721,19 @@ def _guiar_misil(ctx: _Ctx, m: Unidad, h: float) -> None:
         m.estado, m.fuerza = "destruida", 0.0  # agoto su autonomia sin alcanzar el blanco
         ctx.evento("combate", m.bando, f"{m.nombre} no alcanzó su blanco y se perdió.")
         return
+    if balisticos_mod.es_balistico(m):  # trayectoria balistica: cae donde estaba el blanco al lanzar
+        _avanzar(ctx, m, [[m.mision_lat, m.mision_lon]], h)
+        if geo.distancia_km(m.lat, m.lon, m.mision_lat, m.mision_lon) <= balisticos_mod.LLEGADA_KM:
+            blanco = ctx.unidades.get(m.blanco_id) if m.blanco_id else None
+            if (blanco is not None and blanco.estado == "activa"
+                    and geo.distancia_km(blanco.lat, blanco.lon, m.mision_lat, m.mision_lon) <= balisticos_mod.RADIO_IMPACTO_KM):
+                _impacto_misil(ctx, m, blanco)
+            else:
+                ctx.evento("combate", m.bando, f"{m.nombre} cayó en el punto previsto, pero el blanco ya no estaba.",
+                           m.lat, m.lon)
+            m.estado, m.fuerza = "destruida", 0.0
+            ctx.informe.cambios = True
+        return
     blanco = ctx.unidades.get(m.blanco_id) if m.blanco_id else None
     guiado = misiles_mod.blanco_valido(blanco) and blanco.bando != m.bando
     if guiado:
@@ -1750,7 +1786,8 @@ def _impacto_misil(ctx: _Ctx, m: Unidad, blanco: Unidad) -> None:
 def _defensa_de_punto(ctx: _Ctx, h: float) -> None:
     """Defensa de punto de los buques (cañones y misiles de corto alcance): cada canal tira a un misil enemigo en
     vuelo a su alcance por ciclo; una salva grande satura los canales (engine/misiles.py)."""
-    misiles = [x for x in ctx.lista if x.estado == "activa" and x.tipo == "aerea" and catalogo.es_misil(x)]
+    misiles = [x for x in ctx.lista if x.estado == "activa" and x.tipo == "aerea" and catalogo.es_misil(x)
+               and not balisticos_mod.es_balistico(x)]
     if not misiles:
         return
     for b in ctx.lista:
@@ -1786,11 +1823,71 @@ def _defensa_de_punto(ctx: _Ctx, h: float) -> None:
             ctx.informe.cambios = True
 
 
+def _defensa_antimisil(ctx: _Ctx, h: float) -> None:
+    """Sistemas antimisil contra los misiles balisticos enemigos en fase terminal a su alcance (engine/balisticos.py)."""
+    balisticos = [x for x in ctx.lista if x.estado == "activa" and balisticos_mod.es_balistico(x)
+                  and balisticos_mod.fase(x) == "terminal"]
+    if not balisticos:
+        return
+    for b in ctx.lista:
+        am = balisticos_mod.antimisil(b)
+        if am is None or b.estado != "activa":
+            continue
+        if catalogo.obtener(b.clase, b.tipo).emisor and not ge_mod.emite_radar(b):
+            continue  # con el radar apagado no hay solucion de tiro
+        cerca = sorted((geo.distancia_km(b.lat, b.lon, x.lat, x.lon), x.id, x) for x in balisticos
+                       if x.bando != b.bando and x.estado == "activa" and geo.distancia_km(b.lat, b.lon, x.lat, x.lon) <= am["km"])
+        if not cerca:
+            continue
+        acumulado = ctx.mundo.antimisil_disparos.get(b.id, 0.0) + am["canales"] * h / balisticos_mod.CICLO_ANTIMISIL_S
+        disparos = int(acumulado)
+        ctx.mundo.antimisil_disparos[b.id] = acumulado - disparos
+        s = da_mod.sistema(b)
+        listos = da_mod.cargas(b, s) if s is not None else None
+        reserva = da_mod.reservas(b, s) if s is not None else None
+        pk = am["pk"] * sistemas_mod.factor(b, "armas")
+        derribados = tirados = 0
+        for _, _, x in cerca:
+            while disparos > 0 and x.estado == "activa":
+                if listos is not None:  # gasta un misil del arma de mas alcance que tenga lista
+                    arma = max((a for a in s.armas if listos[a.id] > 0), key=lambda a: a.alcance_max_km, default=None)
+                    if arma is None:
+                        disparos = 0
+                        break
+                    listos[arma.id] -= 1
+                elif b.municion < balisticos_mod.MUNICION_POR_INTERCEPTOR:
+                    disparos = 0
+                    break
+                else:
+                    b.municion -= balisticos_mod.MUNICION_POR_INTERCEPTOR
+                disparos -= 1
+                tirados += 1
+                if ctx.esc.azar:
+                    clave = f"{ctx.esc.semilla}:antimisil:{b.id}:{x.id}:{ctx.t:.0f}:{disparos}"
+                    rng = random.Random(int.from_bytes(hashlib.sha256(clave.encode()).digest()[:8], "big"))
+                    x.fuerza = 0.0 if rng.random() < pk else x.fuerza
+                else:
+                    x.fuerza = max(0.0, x.fuerza - pk * 100.0)
+                if x.fuerza <= 0.5:
+                    x.estado, x.fuerza = "destruida", 0.0
+                    derribados += 1
+            if disparos <= 0:
+                break
+        if listos is not None and tirados:
+            da_mod.guardar_cargas(b, listos, reserva)
+        if tirados:
+            ctx.evento("combate", b.bando, f"{b.nombre} lanzó {tirados} interceptor(es) antimisil: derribó {derribados} "
+                                           "misil(es) balístico(s).", b.lat, b.lon)
+            ctx.informe.cambios = True
+
+
 def _amenazas_aereas(ctx: _Ctx, u: Unidad, alcance_km: float, linea_de_vista: bool = False) -> list:
     lista = []
     for x in ctx.lista:
         if x.bando == u.bando or not aeronaves_mod.en_vuelo(x) or not ctx.visible_para(x, u.bando):
             continue
+        if balisticos_mod.es_balistico(x):
+            continue  # solo los sistemas antimisil pueden con un misil balistico (_defensa_antimisil)
         dist = geo.distancia_km(u.lat, u.lon, x.lat, x.lon)
         if dist > alcance_km:
             continue

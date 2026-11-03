@@ -286,10 +286,10 @@ def construir(salida: Path) -> None:
               ["Aterrizar", "Aeronaves en vuelo: vuelven a una base."],
               ["Rumbo", "Aeronaves en vuelo: viran unos grados a un lado o toman un rumbo y lo mantienen (5.3)."],
               ["Interceptar", "Aeronaves y buques: salen al encuentro de una aeronave o un buque enemigo (5.4)."],
-              ["Torpedo, Sonoboyas, Sonar", "Guerra antisubmarina (6.5)."],
-              ["Minar, Barrer minas", "Minas navales (6.4)."],
+              ["Torpedo, Sonoboyas, Sonar", "Guerra antisubmarina (6.6)."],
+              ["Minar, Barrer minas", "Minas navales (6.5)."],
               ["Interferir", "Guerra electrónica: degrada al enemigo en una zona."],
-              ["Lanzar misiles", "Buques y baterías con misiles de crucero."],
+              ["Lanzar misiles", "Buques y baterías con misiles de crucero; lanzadores balísticos (6.4)."],
               ["Embarcar / Desembarcar", "Tropas a bordo de un buque de desembarco o un helicóptero de transporte."],
           ], [4.2 * cm, ANCHO_TEXTO - 4.2 * cm])]
     h += [H2("4.3 La cola de órdenes")]
@@ -405,7 +405,16 @@ def construir(salida: Path) -> None:
             "canales a 12 km, fragatas 2 a 8 km, portaaviones 2 a 6 km, patrulleros y buques de desembarco 1 a 4 km. Cada "
             "canal tira una vez cada 10 segundos: una <b>salva grande satura</b> los canales y pasan más misiles.")]
     h += figura("salvas", "Salva de 4 misiles de crucero recién lanzada desde un submarino: cada misil vuela por separado.")
-    h += [H2("6.4 Minas navales")]
+    h += [H2("6.4 Misiles balísticos y defensa antimisil")]
+    h += [Table([[figura("balisticos", "Salva balística en vuelo: trayectoria y punto de impacto previsto.", ancho=7.2 * cm,
+                         alto_max=9 * cm, celda=True),
+                  [P("El <b>lanzador de misiles balísticos</b> (tipo Iskander) lanza contra un blanco de superficie a 500 km o "
+                     "menos. Cada misil vuela por separado con trayectoria alta (unos 6 minutos) y cae <b>donde estaba el blanco "
+                     "al lanzar</b>. El bando del blanco recibe la <b>alerta temprana</b> con la hora del impacto."),
+                   P("Solo los <b>sistemas antimisil</b> (S-300VM, S-400, Patriot, HQ-9 y los destructores Arleigh Burke y "
+                     "Ticonderoga) los derriban, en su fase final y con el radar encendido; la antiaérea común no puede.")]]],
+                colWidths=[7.5 * cm, ANCHO_TEXTO - 7.5 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += [H2("6.5 Minas navales")]
     h += [Bul(["<b>Minar</b>: patrulleros, fragatas, submarinos, buques de desembarco y aviones de ataque siembran sobre el "
                "punto un campo de 20 minas en 3 km (el buque tarda media hora; el avión, una pasada).",
                "Todo buque que navega dentro (también los propios) puede <b>chocar una mina</b>; el riesgo crece con lo que "
@@ -413,7 +422,7 @@ def construir(salida: Path) -> None:
                "Quien sembró el campo lo ve en el mapa; el otro bando, cuando choca una mina o un <b>cazaminas</b> lo detecta "
                "a 5 km. <b>Barrer minas</b>: el cazaminas limpia el campo (unas 5 minas por hora) con poco riesgo."])]
     h += figura("minas", "Campo de minas propio en el mapa y la orden Minar.")
-    h += [H2("6.5 Guerra antisubmarina")]
+    h += [H2("6.6 Guerra antisubmarina")]
     h += [Table([[figura("asw", "Submarino con su profundidad y la orden Torpedo.", ancho=6.4 * cm, alto_max=11 * cm, celda=True),
                   [P("Un submarino sumergido solo se detecta con <b>sonar</b>; al atacar se delata unos 10 minutos."),
                    Bul(["<b>Profundidad</b> (panel de abajo): a cota periscópica un radar lo ve a menos de 8 km y puede lanzar "
@@ -424,7 +433,7 @@ def construir(salida: Path) -> None:
                         "<b>Torpedo</b>: de submarinos (30 km), fragatas y destructores (10 km) y aeronaves antisubmarinas (8 km) "
                         "contra un buque o submarino detectado; navega a unos 40 nudos y golpea al llegar."])]]],
                 colWidths=[6.7 * cm, ANCHO_TEXTO - 6.7 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
-    h += [H2("6.6 Daño por sistemas y control de averías")]
+    h += [H2("6.7 Daño por sistemas y control de averías")]
     h += [Table([[figura("sistemas", "Panel de abajo: sistemas de una unidad dañada.", ancho=6.4 * cm, alto_max=9 * cm, celda=True),
                   [P("Los buques y las unidades de tierra tienen cuatro <b>sistemas</b> que se dañan por separado (panel de abajo):"),
                    Bul(["<b>Sensores</b>: con daño detecta menos; sin ellos, solo a ojo.",
@@ -435,7 +444,7 @@ def construir(salida: Path) -> None:
                      "promedio); al 75 % queda <b>fuera de servicio</b> y llega una alerta. El <b>control de averías</b> repara "
                      "unos 10 puntos por hora; las averías graves solo se terminan de reparar junto a un puerto o base propia.")]]],
                 colWidths=[6.7 * cm, ANCHO_TEXTO - 6.7 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
-    h += [H2("6.7 Áreas de patrulla y zonas de exclusión o de no vuelo")]
+    h += [H2("6.8 Áreas de patrulla y zonas de exclusión o de no vuelo")]
     h += [Table([[figura("zonas", "Tarjeta «Áreas y zonas».", ancho=5.4 * cm, alto_max=11 * cm, celda=True),
                   [P("En la tarjeta <b>Áreas y zonas</b> (panel derecho) elija el tipo, escriba un nombre y pulse <b>Dibujar en "
                      "el mapa</b>: clic en cada vértice y, para terminar, clic en el primero. El director las dibuja para todos o "

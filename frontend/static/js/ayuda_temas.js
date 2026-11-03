@@ -248,6 +248,17 @@
         bando» lo toma de la doctrina del bando. Por defecto: contra aeronaves libre, contra superficie solo con orden.</p>`,
     },
     {
+      id: "balisticos", seccion: "Defensa aérea y doctrina", titulo: "Misiles balísticos y defensa antimisil",
+      claves: "balistico balisticos iskander misil balistico antimisil defensa antimisil interceptor s-300 s-400 patriot hq-9 sm-3 alerta temprana trayectoria apogeo",
+      texto: `<p>El <b>lanzador de misiles balísticos</b> (tipo Iskander) usa la orden <b>Lanzar misiles</b> contra un blanco de
+        superficie detectado a 500 km o menos. Cada misil vuela por separado con trayectoria alta (unos 6 minutos) y cae
+        <b>donde estaba el blanco al lanzar</b>: si el blanco se movió, no le pega. El mapa muestra en naranja la trayectoria
+        y el punto de impacto de los propios; el bando del blanco recibe la <b>alerta temprana</b> con la hora del impacto.</p>
+        <p>La antiaérea común, las patrullas y la defensa de punto no pueden con ellos. Solo los <b>sistemas antimisil</b>
+        (S-300VM, S-400, Patriot, HQ-9 y los destructores Arleigh Burke y Ticonderoga) los derriban en su <b>fase final</b>,
+        con el radar encendido y a su alcance; cada interceptor gasta un misil de la batería.</p>`,
+    },
+    {
       id: "minas", seccion: "Defensa aérea y doctrina", titulo: "Minas navales: sembrar, cruzar y barrer",
       claves: "minas mina minar sembrar campo de minas barrer barrido cazaminas minador minado",
       texto: `<ul><li><b>Minar</b>: patrulleros, fragatas, submarinos, buques de desembarco y aviones de ataque van al punto y

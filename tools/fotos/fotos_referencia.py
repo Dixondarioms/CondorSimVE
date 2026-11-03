@@ -120,6 +120,8 @@ UNIDADES = [
     ("clases", "pesquero", "Pesquero", ["fishing boat Venezuela", "fishing trawler at sea", "Margarita fishing boat"]),
     # guerra antisubmarina (engine/asw.py)
     ("clases", "torpedo", "Torpedo", ["Mark 48 torpedo", "Mk 54 torpedo", "heavyweight torpedo museum"]),
+    # misiles balisticos (engine/balisticos.py)
+    ("clases", "lanzador_balistico", "Lanzador de misiles balísticos", ["Iskander-M launcher", "9K720 Iskander", "Iskander TEL"]),
     # minas navales (engine/minas.py)
     ("clases", "cazaminas", "Cazaminas", ["minehunter underway", "Tripartite class minehunter", "Avenger class mine countermeasures ship"]),
 ]

@@ -8,6 +8,7 @@ from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import armas as armas_mod
 from app.engine import asw as asw_mod
+from app.engine import balisticos as balisticos_mod
 from app.engine import minas as minas_mod
 from app.engine import catalogo, geo, infraestructura, movimiento, puestos
 from app.engine import clima as clima_mod
@@ -174,7 +175,8 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         blanco = visibles.get(payload.objetivo_unidad_id)
         if blanco is None or blanco.estado != "activa":
             raise HTTPException(status_code=404, detail="Blanco no visible o inexistente")
-        motivo = misiles_mod.error_de_lanzamiento(unidad, blanco, payload.misiles)
+        motivo = (balisticos_mod.error_de_lanzamiento(unidad, blanco, payload.misiles) if balisticos_mod.lanza(unidad)
+                  else misiles_mod.error_de_lanzamiento(unidad, blanco, payload.misiles))
         if motivo:
             raise HTTPException(status_code=400, detail=motivo)
         if asw_mod.es_submarino(unidad) and asw_mod.profundidad(unidad) == "profunda":

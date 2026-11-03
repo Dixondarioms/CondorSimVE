@@ -1771,6 +1771,7 @@
       extra.push(dato("Refugios reforzados", `${u.refugios || 0} (protegen a los primeros ${u.refugios || 0} grupos estacionados; ${abordo.length} a bordo)`));
     }
     if (cl && cl.lanza_misiles && !oculto) extra.push(dato("Misiles de crucero", `${Logica.misilesDisponibles(u)} listos (25 % de munición cada uno)`));
+    if (u.antimisil) extra.push(dato("Antimisil", `contra balísticos en fase final a ${u.antimisil.km} km, ${u.antimisil.canales} canal(es)`));
     const punto = Logica.textoDefensaPunto(u, app.catalogo);
     if (punto) extra.push(`<div class="ancho-completo"><dt>Defensa de punto contra misiles</dt><dd>${escapar(punto)}</dd></div>`);
     if (Logica.embarcada(u) && app.data) {
@@ -2109,6 +2110,7 @@
       if (actual && actual <= max) $("o-misiles").value = String(actual);
       $("o-lanzar-info").textContent = max
         ? `Munición ${Math.round(u.municion)} %: hasta ${max} misil${max === 1 ? "" : "es"} en esta salva.`
+          + (u.clase === "lanzador_balistico" ? " Balísticos: hasta 500 km, unos 6 minutos de vuelo; caen donde estaba el blanco al lanzar." : "")
         : "Sin munición suficiente para un misil (25 % cada uno): reabastezca en un puerto o depósito.";
     }
   }
@@ -3769,7 +3771,7 @@
   function renderAsw(data) {
     const helos = data.unidades.filter((u) => u.mision === "sonar" && u.estado === "activa");
     const firma = JSON.stringify([(data.sonoboyas || []).map((b) => b.id), helos.map((u) => [u.id, u.mision_lat, u.mision_lon]),
-      (data.minas || []).map((c) => [c.id, c.minas])]);
+      (data.minas || []).map((c) => [c.id, c.minas]), data.unidades.filter((u) => u.balistico).map((u) => u.id)]);
     if (app.firmaAsw === firma) return;
     app.firmaAsw = firma;
     const g = app.capas.asw;
@@ -3777,6 +3779,12 @@
     for (const b of data.sonoboyas || []) {
       L.circle([b.lat, b.lon], { radius: b.radio_km * 1000, color: "#48cae4", weight: 1, dashArray: "2 5", fillOpacity: 0.04, interactive: false }).addTo(g);
       L.circleMarker([b.lat, b.lon], { radius: 3, color: "#48cae4", fillOpacity: 1 }).bindTooltip(`Sonoboya (${b.minutos} min)`).addTo(g);
+    }
+    for (const u of data.unidades) { // trayectoria de los misiles balisticos propios (engine/balisticos.py)
+      const b = u.balistico;
+      if (!b || !b.origen || u.estado !== "activa") continue;
+      L.polyline([b.origen, b.impacto], { color: "#ff9f1c", weight: 2, dashArray: "8 6", interactive: false }).addTo(g);
+      L.circle(b.impacto, { radius: 1500, color: "#ff9f1c", weight: 2, fillOpacity: 0.15 }).bindTooltip(`Impacto previsto (${b.minutos} min)`).addTo(g);
     }
     for (const c of data.minas || []) { // campos de minas conocidos (engine/minas.py)
       L.circle([c.lat, c.lon], { radius: c.radio_km * 1000, color: "#ef476f", weight: 2, dashArray: "3 4", fillColor: "#ef476f", fillOpacity: 0.12 })

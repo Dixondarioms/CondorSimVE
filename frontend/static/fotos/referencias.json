@@ -1627,6 +1627,14 @@
       "url_licencia": "https://creativecommons.org/licenses/by/2.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:IMR_engineering_vehicle_(_Military-historical_Museum_of_Artillery,_Engineer_and_Signal_Corps).jpg"
     },
+    "lanzador_balistico": {
+      "foto": "/static/fotos/ref_lanzador_balistico.jpg",
+      "obra": "9P78-1 TEL Iskander-M",
+      "autor": "Boevaya mashina",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:9P78-1_TEL_Iskander-M.JPG"
+    },
     "lanzador_misiles": {
       "foto": "/static/fotos/ref_lanzador_misiles.jpg",
       "obra": "Caracas, Canciller Ricardo Patiño participó en los actos de conmemoración de la muerte de Hugo Chávez (12960876943)",

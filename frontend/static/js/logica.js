@@ -63,7 +63,7 @@
   const textoPartesBase = (u) => `Pista ${Math.round(u.dano_pista || 0)} % · Plataforma ${Math.round(u.dano_plataforma || 0)} % · Depósito ${Math.round(u.dano_combustible || 0)} %`;
   const CLASES_EMBARCABLES = ["helicoptero", "helicoptero_artillado", "dron_reconocimiento", "dron_ataque", "municion_merodeadora"];
   const MODELOS_EMBARCABLES = ["caza_embarcado", "fa18ef", "ea18g", "e2d", "f35b"]; // como `embarcable` en catalogo.py
-  const LANZAN_MISILES = ["fragata", "destructor", "submarino", "lanzador_misiles"];
+  const LANZAN_MISILES = ["fragata", "destructor", "submarino", "lanzador_misiles", "lanzador_balistico"];
   const MAX_MISILES_SALVA = 4;
   const MUNICION_POR_MISIL = 25;
 
@@ -104,7 +104,8 @@
     return (modelos || []).filter((m) => (!clase || m.clase === clase) && (!q || `${m.nombre} ${m.corto} ${m.pais} ${m.fabricante} ${m.funcion}`
       .toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)));
   }
-  const puedeLanzarMisiles = (u, clase) => !!u && u.estado === "activa" && (clase ? !!clase.lanza_misiles : LANZAN_MISILES.includes(u.clase || ""));
+  const puedeLanzarMisiles = (u, clase) => !!u && u.estado === "activa"
+    && (u.clase === "lanzador_balistico" || (clase ? !!clase.lanza_misiles : LANZAN_MISILES.includes(u.clase || "")));
   /** Misiles que la municion del lanzador permite en una salva (0 a 4). */
   const misilesDisponibles = (u) => Math.max(0, Math.min(MAX_MISILES_SALVA, Math.floor(((u && u.municion) || 0) / MUNICION_POR_MISIL)));
 
@@ -113,6 +114,10 @@
     const blanco = (unidades || []).find((x) => x.id === u.blanco_id);
     const hacia = blanco ? blanco.nombre : "su blanco";
     if (u.clase === "torpedo") return `Torpedo en recorrido hacia ${hacia}`;
+    if (u.clase === "misil_balistico") {
+      const b = u.balistico;
+      return b ? `Misil balístico en fase ${b.fase}: impacto en ${b.minutos} min (apogeo ${b.apogeo_km} km)` : `Misil balístico hacia ${hacia}`;
+    }
     if ((u.aeronaves || 1) === 1) return `Misil en vuelo hacia ${hacia}${u.fuerza != null && u.fuerza < 100 ? ` (dañado: ${Math.round(u.fuerza)} %)` : ""}`;
     return `${u.aeronaves} misiles en vuelo hacia ${hacia}`;
   }

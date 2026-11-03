@@ -109,6 +109,11 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
           10, 400, _atk(0.0, 0.0, 0.0), 0.7, "compania", despliegue_turnos=1, lanza_misiles=True,
           armamento="Sin fuego directo: lanza salvas de misiles de crucero contra blancos terrestres y navales; debe "
                     "desplegarse (1 turno quieto) tras moverse"),
+    Clase("lanzador_balistico", "Lanzador de misiles balísticos (tipo Iskander)", "terrestre", "G", "UCMS--", 40, 0,
+          10, 500, _atk(0.0, 0.0, 0.0), 0.8, "compania", despliegue_turnos=1,
+          armamento="Misiles balísticos de corto alcance (hasta 500 km, unos 6 minutos de vuelo): caen donde estaba el "
+                    "blanco al lanzar; solo los derriban los sistemas antimisil (S-300VM, S-400, Patriot, HQ-9, "
+                    "destructores con SM-3). Debe desplegarse (1 turno quieto) tras moverse"),
     # ---- sensores (A-3 D/A) y guerra electronica (C-E) terrestres ----
     Clase("radar", "Radar de vigilancia aerea", "terrestre", "G", "ESR---", 15, 0, 150, 150, _atk(0.0, 0.0, 0.0), 0.5,
           "", movilidad="pesada", solo_aereo=True, emisor=True, celula="ge",
@@ -153,6 +158,10 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
           "", movilidad="aerea", firma=1.5, civil=True,
           armamento="Avión de pasajeros o de carga que vuela por una aerovía: sin armas ni sensores militares. Tirarle es "
                     "daño colateral"),
+    Clase("misil_balistico", "Misil balístico de corto alcance", "aerea", "A", "WMB---", 5000, 1.5, 0, 750,
+          _atk(2.4, 0.0, 1.4), 0.3, "", movilidad="aerea", firma=0.5, se_consume=True, misil=True,
+          armamento="Misil balístico en vuelo (engine/balisticos.py): trayectoria alta y muy rápida hacia el punto donde "
+                    "estaba el blanco; solo lo derriban los sistemas antimisil en su fase final"),
     Clase("misil_crucero", "Misil de crucero", "aerea", "A", "WMCM--", 850, 5, 0, 1000, _atk(1.5, 0.0, 1.6), 0.3,
           movilidad="aerea", firma=0.3, se_consume=True, misil=True,
           armamento="Salva de misiles guiados hacia su blanco: vuela sola, se estrella contra el blanco (un solo "

@@ -407,6 +407,29 @@ def minas(n: Nav) -> None:
     guardar(n, "minas", n.rect("#map"), margen=0)
 
 
+def balisticos(n: Nav) -> None:
+    """Salva balistica en vuelo contra la base Echo (en la COPIA de la base)."""
+    n.como("director")
+    lanz = _post(n, "/unidades", {"nombre": "Iskander (captura)", "bando": "rojo", "tipo": "terrestre",
+                                  "clase": "lanzador_balistico", "lat": 7.30, "lon": -66.20})
+    base = n.unidad("Base Echo (Puerto Ayacucho)")
+    _post(n, "/unidades", {"nombre": "Reconocimiento rojo (captura)", "bando": "rojo", "tipo": "terrestre",
+                           "clase": "reconocimiento", "lat": base["lat"] + 0.05, "lon": base["lon"] + 0.05})
+    n.como("ro.cmdte")
+    r = _post(n, "/ordenes", {"unidad_id": lanz["id"], "tipo": "lanzar", "objetivo_unidad_id": base["id"], "misiles": 2})
+    print("   lanzamiento:", (r or {}).get("resultado") or r)
+    n.como("director")
+    n.clic("#control-turno [data-vel='10']")
+    n.clic("#btn-marcha")
+    n.pausa(7)
+    n.clic("#btn-marcha")
+    n.pausa(2)
+    n.como("ro.cmdte")
+    n.sin_seleccion()
+    n.vista(6.45, -66.9, 8, 4)
+    guardar(n, "balisticos", n.rect("#map"), margen=0)
+
+
 def doctrina(n: Nav) -> None:
     n.pestana("fuerzas")
     n.js("const d = document.getElementById('sec-doctrina'); d.querySelectorAll('details').forEach((x) => x.open = true); d.scrollIntoView({block: 'start'})")
@@ -532,7 +555,7 @@ def videowall(n: Nav) -> None:
     n.tecla("Escape", 27)
 
 
-ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, eventos_auto, asw, salvas, minas, doctrina, misiones,
+ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, eventos_auto, asw, salvas, minas, balisticos, doctrina, misiones,
          situacion, tiem, consola, capas, graficos, mapas, ayuda, informe, en_marcha, bando, videowall]
 
 
@@ -546,7 +569,7 @@ def main() -> int:
             if pedidas and f.__name__ not in pedidas:
                 continue
             try:
-                if f not in (acceso, despegue, orden_mover, interceptar, zonas, carga, sistemas, asw, salvas, minas, misiones, bando):
+                if f not in (acceso, despegue, orden_mover, interceptar, zonas, carga, sistemas, asw, salvas, minas, balisticos, misiones, bando):
                     n.como("director")
                 f(n)
                 if f is acceso:
