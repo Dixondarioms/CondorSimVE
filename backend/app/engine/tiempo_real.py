@@ -31,6 +31,7 @@ from dataclasses import dataclass, field
 
 from sqlalchemy.orm import Session
 
+from app.engine import armas as armas_mod
 from app.engine import aar, bases as bases_mod, catalogo, combat, geo, logistica, movimiento, relieve, vision
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import apoyo_aereo as apoyo_mod
@@ -346,11 +347,13 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
         grupo = aeronaves_mod.crear_grupo(unidad, modelo_id, n, datos.get("indicativo", ""), lanzados % 6)
         _esperar(grupo, unidad.lat, unidad.lon)
         grupo.rumbo = 0.0
+        carga = armas_mod.armar(grupo, datos.get("carga"), unidad)
         logistica.descontar_despegue(unidad, n)
         db.add(grupo)
         db.flush()
         orden.estado = "resuelta"
-        orden.resultado = f"[{hora}] {grupo.nombre} ({catalogo.MODELOS[modelo_id].corto} x{n}) despegó de {unidad.nombre} y espera órdenes sobre la base."
+        orden.resultado = (f"[{hora}] {grupo.nombre} ({catalogo.MODELOS[modelo_id].corto} x{n}) despegó de {unidad.nombre}"
+                           + (f" con {carga}" if carga else "") + " y espera órdenes sobre la base.")
         db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, sim_segundos=esc.sim_segundos, tipo="despegue", bando_destino=unidad.bando,
                       descripcion=f"[{hora}] Despegó {grupo.nombre} desde {unidad.nombre}."))
         return
@@ -383,6 +386,8 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
     unidad.orden_id = orden.id
     en_alerta = unidad.en_tierra and orden.tipo == "interceptar"
     if unidad.en_tierra and orden.tipo in ("mover", "patrullar", "atacar", "interceptar"):
+        if armas_mod.aplica(unidad) and not armas_mod.tiene_carga(unidad):  # sale con la carga de su modelo
+            armas_mod.armar(unidad, None, db.get(Unidad, unidad.base_id) if unidad.base_id else None)
         aeronaves_mod.despegar_unidad(unidad)  # una orden de vuelo a una aeronave lista en tierra es el despegue
         unidad.espera_hasta = None
     if orden.tipo == "mover":
@@ -611,6 +616,8 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
         _fuego_de_oportunidad(ctx, h)
     _defensa_aerea(ctx)
     _aplicar_perdidas(ctx)
+    for u in ctx.lista:
+        armas_mod.sincronizar(u)  # el reabastecimiento en % no cambia la municion de una aeronave con carga
     _combustible(ctx)
 
 
@@ -797,7 +804,9 @@ def _esperas_en_tierra(ctx: _Ctx) -> None:
         falta = u.espera_hasta - ctx.t
         if falta <= 0:
             u.espera_hasta, u.espera_restante = None, 0
-            ctx.evento("logistica", u.bando, f"{u.nombre} terminó de reabastecer y rearmar: lista para despegar.")
+            carga = armas_mod.rearmar(u, ctx.unidades.get(u.base_id)) if armas_mod.aplica(u) else ""
+            ctx.evento("logistica", u.bando, f"{u.nombre} terminó de reabastecer y rearmar: lista para despegar"
+                       + (f" ({carga})." if carga else "."))
         else:
             u.espera_restante = max(1, math.ceil(falta / 3600.0))
 
@@ -900,7 +909,7 @@ def _resolver(ctx: _Ctx, a: Unidad, d: Unidad, fraccion: float, clave: int, part
         * apoyo_mod.factor_control(a, d, ctx.lista, lambda x, b: ctx.visible_para(x, b)),
         factor_defensa=clase_d.defensa * catalogo.factor_grupo(d),
         factor_clima=clima_mod.factor_ataque_aereo(ctx.clima, d.lat, d.lon) if a.tipo == "aerea" else 1.0,
-        factor_municion=min(1.0, a.municion / max(consumo * fraccion, 1e-9)),
+        factor_municion=1.0 if armas_mod.tiene_carga(a) else min(1.0, a.municion / max(consumo * fraccion, 1e-9)),
         azar=_azar(ctx, clave, a, d), sorpresa=sorpresa, cadencia=clase_a.cadencia_fuego,
     )
     # perdidas de la tabla (puntos por hora de combate) por la fraccion de hora; no se calculan sobre la fuerza que
@@ -949,17 +958,31 @@ def _registrar_combate(ctx: _Ctx, a: Unidad, d: Unidad, orden_id: int | None, pe
 
 
 def _pasada(ctx: _Ctx, a: Unidad, d: Unidad, orden: Orden | None, recarga_s: float) -> str:
-    """Un ataque completo (pasada de una aeronave, impacto de un misil, enfrentamiento aire-aire)."""
+    """Un ataque completo (pasada de una aeronave, impacto de un misil, enfrentamiento aire-aire). Una aeronave con
+    carga de armamento (engine/armas.py) tira con el arma que mejor sirve contra el blanco a esa distancia y la gasta;
+    sin un arma que sirva, no hay pasada ("")."""
+    arma = None
+    if armas_mod.tiene_carga(a):
+        arma = armas_mod.elegir(a, d, geo.distancia_km(a.lat, a.lon, d.lat, d.lon))
+        if arma is None:
+            return ""
+        a.arma_elegida = arma
     clave = orden.id if orden is not None else int(ctx.t)
     parte = orden.detalle if orden is not None and orden.tipo == "atacar" else None
     perd_a, perd_d, gasto, res = _resolver(ctx, a, d, 1.0, clave, parte)
     _perder(ctx, a, perd_a)
     _perder(ctx, d, perd_d)
-    _cambiar(ctx, a, "municion", a.municion - gasto, "combate")
+    con = ""
+    if arma is not None:
+        tiradas = armas_mod.gastar(a, arma)
+        _cambiar(ctx, a, "municion", armas_mod.municion_pct(a), "combate")
+        con = f" con {tiradas} {ota_mod.ARMAMENTO[arma][0]}"
+    else:
+        _cambiar(ctx, a, "municion", a.municion - gasto, "combate")
     a.recarga_hasta = ctx.t + recarga_s
     _registrar_combate(ctx, a, d, orden.id if orden is not None else None, perd_a, perd_d, res.ratio,
-                       "; ".join(res.efectos))
-    texto = f"{a.nombre} atacó a {d.nombre}: {res.resumen}"
+                       "; ".join(res.efectos) + con)
+    texto = f"{a.nombre} atacó a {d.nombre}{con}: {res.resumen}"
     ctx.evento("combate", a.bando, texto, d.lat, d.lon)
     if d.bando != a.bando:
         recibido = (f"{d.nombre} fue atacado" + (f" por {a.nombre}" if ctx.visible_para(a, d.bando) else "")
@@ -1050,8 +1073,12 @@ def _atacar(ctx: _Ctx, a: Unidad, orden: Orden, h: float) -> None:
         if a.tipo == "aerea":
             _esperar(a)
         return
+    if armas_mod.tiene_carga(a) and not armas_mod.utiles(a, d):
+        ctx.terminar(orden, a, f"No le quedan armas que sirvan contra {d.nombre}: el ataque terminó.")
+        _esperar(a)
+        return
     distancia = geo.distancia_km(a.lat, a.lon, d.lat, d.lon)
-    alcance = a.alcance_km * (0.9 if a.tipo != "aerea" else 1.0)
+    alcance = armas_mod.alcance(a, d) if a.tipo == "aerea" else a.alcance_km * 0.9
     if distancia > alcance or not visto:
         if a.velocidad_kmh > 0 and a.tipo != "base":
             objetivo = [d.lat, d.lon] if visto else list(ctx.mundo.pos_previa.get(d.id, (d.lat, d.lon)))
@@ -1143,13 +1170,15 @@ def _patrullar_zona(ctx: _Ctx, u: Unidad, orden: Orden, h: float) -> None:
                 continue
             if clase.ataque_vs.get(orders.tipo_efectivo(x), 0.0) <= 0 or not ctx.visible_para(x, u.bando):
                 continue
+            if armas_mod.tiene_carga(u) and not armas_mod.utiles(u, x):
+                continue
             if not zonas_mod.dentro(x.lat, x.lon, poligono):
                 continue
             if ctx.autoriza(u, x, "aire" if aeronaves_mod.en_vuelo(x) else "superficie"):
                 blancos.append((geo.distancia_km(u.lat, u.lon, x.lat, x.lon), x))
     if blancos:
         dist, x = min(blancos, key=lambda b: b[0])
-        alcance = u.alcance_km * ctx.doctrina(u)["distancia_pct"] / 100.0
+        alcance = (armas_mod.alcance(u, x) if u.tipo == "aerea" else u.alcance_km) * ctx.doctrina(u)["distancia_pct"] / 100.0
         if dist > alcance and u.velocidad_kmh > 0:
             ve, vn = intercep_mod.velocidad_de(x)
             plat, plon, _ = intercep_mod.punto_de_mira(u.lat, u.lon, u.velocidad_kmh, x.lat, x.lon, ve, vn)
@@ -1293,7 +1322,10 @@ def _intercepcion(ctx: _Ctx, a: Unidad, orden: Orden, h: float) -> None:
     else:
         plat, plon, _ = intercep_mod.punto_de_mira(a.lat, a.lon, a.velocidad_kmh, tlat, tlon, tr["ve"], tr["vn"])
         objetivo = [plat, plon]
-    alcance = a.alcance_km * ctx.doctrina(a)["distancia_pct"] / 100.0
+    if accion != "seguir" and armas_mod.tiene_carga(a) and not armas_mod.utiles(a, d):
+        fin(f"No le quedan armas que sirvan contra {d.nombre}: la interceptación terminó.")
+        return
+    alcance = armas_mod.alcance(a, d) * ctx.doctrina(a)["distancia_pct"] / 100.0
     al_alcance = visto and dist <= alcance and not relieve.fuera_de_techo(a, d)
     # un buque al alcance se queda a tirar; los demas siguen el curso (en posicion de seguimiento, no se mueve)
     quieto = (a.tipo == "naval" and al_alcance and lista_para_actuar and not seguir) or (seguir and geo.distancia_km(a.lat, a.lon, *objetivo) < 1.0)
@@ -1459,8 +1491,9 @@ def _interceptar(ctx: _Ctx) -> None:
             continue
         if catalogo.perfil(u).ataque_vs.get("aerea", 0.0) <= 0:
             continue
-        alcance = u.alcance_km * ctx.doctrina(u)["distancia_pct"] / 100.0
-        amenazas = [x for x in _amenazas_aereas(ctx, u, alcance) if ctx.autoriza(u, x, "aire")]
+        pct = ctx.doctrina(u)["distancia_pct"] / 100.0
+        amenazas = [x for x in _amenazas_aereas(ctx, u, u.alcance_km * pct) if ctx.autoriza(u, x, "aire")
+                    and geo.distancia_km(u.lat, u.lon, x.lat, x.lon) <= armas_mod.alcance(u, x) * pct]
         if amenazas:
             _pasada(ctx, u, amenazas[0], None, RECARGA_AIRE_AIRE_S)
 

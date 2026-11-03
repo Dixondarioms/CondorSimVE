@@ -146,6 +146,22 @@
         aterrizar necesita tiempo para reabastecer y rearmar antes de volver a salir.</p>`,
     },
     {
+      id: "cargas", seccion: "Aviación", titulo: "Cargas de armamento y existencias de armas",
+      claves: "carga cargas armamento misiles bombas aire-aire ataque antibuque sead reconocimiento existencias pañol rearmar municion armas pk probabilidad alcance arma",
+      texto: `<p>Al despegar se elige la <b>carga de armamento</b> según el modelo: <i>aire-aire</i>, <i>ataque</i>,
+        <i>antibuque</i>, <i>SEAD</i> (misiles antirradiación) o <i>reconocimiento</i>. Cada carga lleva una cantidad real de
+        misiles y bombas por aeronave. También se elige en el planificador de misiones y, para una aeronave en tierra, en la
+        Nueva orden («Carga de armamento al despegar»).</p>
+        <ul><li>Cada pasada gasta armas reales: un misil por aeronave, o la mitad de las bombas o los cohetes. La munición en %
+        se calcula con lo que queda.</li>
+        <li>Se tira con el arma que sirve contra ese blanco y desde su alcance: los misiles aire-aire contra aviones, los
+        antibuque contra buques, los antirradiación contra radares que emiten. Las bombas se sueltan casi encima del blanco.</li>
+        <li>El daño de cada pasada sale de la misma tabla de combate de siempre; el arma guiada o antirradiación suma.</li></ul>
+        <p>En el panel de abajo se ven la carga (con alcance y probabilidad de impacto de cada arma) y, en las bases y los
+        portaaviones, las <b>existencias de armas</b>: despegar y rearmar las toma de ahí. Son abundantes; el director las
+        puede cambiar y guardar.</p>`,
+    },
+    {
       id: "patrulla", seccion: "Aviación", titulo: "Patrullar, aterrizar y el combustible",
       claves: "patrulla patrullar cap orbitar interceptar aterrizar regreso base combustible bingo winchester reabastecer rearmar 2 horas plazas",
       texto: `<p><b>Patrullar</b>: la aeronave vuela a la zona, orbita (gasta cerca de 8 % de combustible por hora) e intercepta a

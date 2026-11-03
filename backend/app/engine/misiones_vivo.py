@@ -17,6 +17,7 @@ from collections import defaultdict
 
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import apoyo_aereo, catalogo, geo, ota, relieve
+from app.engine import armas as armas_mod
 from app.engine import interceptacion as intercep
 from app.engine import misiones as mis
 from app.engine import tiempo_real as tr
@@ -72,7 +73,7 @@ def _blanco_automatico(ctx, u, rol_id: str):
     candidatos = [x for x in ctx.lista
                   if x.bando != u.bando and x.estado == "activa" and mis._tipo_efectivo(x) != "aerea"
                   and clase.ataque_vs.get(mis._tipo_efectivo(x), 0.0) > 0
-                  and geo.distancia_km(u.lat, u.lon, x.lat, x.lon) <= u.alcance_km and _visible(ctx, x, u.bando)]
+                  and geo.distancia_km(u.lat, u.lon, x.lat, x.lon) <= armas_mod.alcance(u, x) and _visible(ctx, x, u.bando)]
     if rol_id == "SEAD":
         from app.engine import guerra_electronica as ge_mod
         emisores = [x for x in candidatos if ge_mod.emite_radar(x) or ctx.ge.emite(x)]
@@ -203,7 +204,7 @@ def _volar(ctx, m: Mision, u, h: float) -> None:
         else:
             m.resultado = f"Vuela al corte de carretera: faltan {faltan:.0f} km."
     elif destino["tipo"] == "blanco":
-        en_alcance = objetivo is not None and geo.distancia_km(u.lat, u.lon, objetivo.lat, objetivo.lon) <= u.alcance_km
+        en_alcance = objetivo is not None and geo.distancia_km(u.lat, u.lon, objetivo.lat, objetivo.lon) <= armas_mod.alcance(u, objetivo)
         if m.rol == "INTERCEPCION":
             if objetivo is None or not intercep.tipo_blanco(objetivo):
                 m.indice = j + 1

@@ -721,3 +721,7 @@ fieldset.pausa-auto legend { font-size: 12px; color: var(--texto-sec); padding: 
 .zonas-lista li.zona-no_vuelo { border-left-color: #ef233c; }
 .zonas-lista li .fila { margin-top: 4px; gap: 6px; align-items: center; }
 .zona-etiqueta { font-weight: 600; }
+
+/* carga de armamento y existencias de armas (panel inferior) */
+.tabla-armas caption { text-align: left; font-weight: 600; padding: 4px 0 2px; }
+.tabla-armas input[type=number] { width: 72px; }

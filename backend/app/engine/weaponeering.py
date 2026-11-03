@@ -78,13 +78,15 @@ def dmpi_de(u, tipo: str) -> int:
 
 
 def calcular(arma: str, tipo: str, criterio: str | None = None, angulo: int = 45, dmpi: int = 1, aeronaves: int = 0,
-             area_m2: float | None = None) -> dict | None:
+             area_m2: float | None = None, por_aeronave: int | None = None) -> dict | None:
     """Armas en el blanco y a lanzar para lograr el criterio de dano; None si el arma no es aire-superficie.
-    `area_m2`: area del blanco (un solo DMPI que la cubre), en lugar de la tipica de cada DMPI."""
+    `area_m2`: area del blanco (un solo DMPI que la cubre), en lugar de la tipica de cada DMPI. `por_aeronave`: las
+    que lleva cada aeronave en la carga elegida (engine/armas.py), en lugar de las tipicas del arma."""
     eq = EQUIVALENTE.get(arma or "")
     if eq is None or tipo not in NOMBRE_BLANCO:
         return None
-    bomba, escala, guiada, por_aeronave, escombros = eq
+    bomba, escala, guiada, tipicas, escombros = eq
+    por_aeronave = por_aeronave or tipicas
     criterio = criterio if (tipo, criterio) in MAE else CRITERIOS[tipo][0][0]
     angulo = min(ANGULOS, key=lambda a: abs(a - int(angulo or 45)))
     mae_m2 = MAE[(tipo, criterio)][angulo][BOMBAS.index(bomba)] * escala * FT2_A_M2

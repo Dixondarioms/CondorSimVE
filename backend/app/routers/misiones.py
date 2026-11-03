@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app import auth, legajo, schemas, state
 from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
+from app.engine import armas as armas_mod
 from app.engine import apoyo_aereo, catalogo, interceptacion, ota, plataformas, puestos, relieve, weaponeering
 from app.engine import clima as clima_mod
 from app.engine import misiones as misiones_mod
@@ -181,7 +182,9 @@ def _preparar(payload: schemas.MisionIn, esc: Escenario, db: Session, usuario: U
     if arma and pb is not None:
         x = db.get(Unidad, pb["objetivo_unidad_id"])
         tipo_b = weaponeering.tipo_de_blanco(x)
-        w = weaponeering.calcular(arma, tipo_b, dmpi=weaponeering.dmpi_de(x, tipo_b), aeronaves=n)
+        carga = armas_mod.cargas_de(modelo, clase).get((datos_ota or {}).get("carga") or "", {})
+        w = weaponeering.calcular(arma, tipo_b, dmpi=weaponeering.dmpi_de(x, tipo_b), aeronaves=n,
+                                  por_aeronave=carga.get(arma) or None)
         if w is not None:
             plan["weaponeering"] = w
             if not w["suficiente"]:

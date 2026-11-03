@@ -141,12 +141,19 @@
 
     function marcar(id) {
       elegido = id;
+      llenarSelectCarga($("aer-carga"), Logica.opcionesDeCarga(ctx.catalogo(), id));
+      $("aer-carga-fila").hidden = modoActual.tipo !== "despegue" || !$("aer-carga").options.length;
       document.querySelectorAll("#aer-tarjetas .tarjeta-modelo").forEach((t) => {
         const sel = t.dataset.modelo === id;
         t.classList.toggle("sel", sel);
         t.setAttribute("aria-checked", sel ? "true" : "false");
       });
       actualizarResumen();
+    }
+
+    function llenarSelectCarga(sel, opciones) {
+      limpiar(sel);
+      opciones.forEach(([v, t]) => { const o = el("option", "", t); o.value = v; sel.appendChild(o); });
     }
 
     function actualizarResumen() {
@@ -225,6 +232,7 @@
           const cuerpo = {
             unidad_id: parseInt($("aer-base").value, 10), tipo: "despegar", modelo: elegido,
             aeronaves: parseInt($("aer-cantidad").value, 10), indicativo: $("aer-indicativo").value.trim(),
+            carga: $("aer-carga").value || null,
           };
           await ctx.api("POST", ctx.rutaEsc("/ordenes"), cuerpo);
           ctx.toast("El grupo despegó y espera órdenes sobre la base", true);

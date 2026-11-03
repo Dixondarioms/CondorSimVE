@@ -22,8 +22,11 @@ FUERZA_MINIMA_BASE = 25.0  # una base muy danada no puede lanzar grupos (ni reab
 DESPLAZAMIENTO_GRADOS = 0.018  # el grupo aparece ~2 km al noreste de la base para poder seleccionarlo
 
 
-def codificar(modelo: str, aeronaves: int, indicativo: str) -> str:
-    return json.dumps({"modelo": modelo, "aeronaves": aeronaves, "indicativo": indicativo}, ensure_ascii=False)
+def codificar(modelo: str, aeronaves: int, indicativo: str, carga: str | None = None) -> str:
+    d = {"modelo": modelo, "aeronaves": aeronaves, "indicativo": indicativo}
+    if carga:
+        d["carga"] = carga  # carga de armamento (engine/armas.py)
+    return json.dumps(d, ensure_ascii=False)
 
 
 def decodificar(detalle: str) -> dict:

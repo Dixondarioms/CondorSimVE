@@ -84,7 +84,7 @@
         baseId: (bases()[0] || {}).id ?? null, modelo: ((cat().modelos || [])[0] || {}).id ?? null, aeronaves: 2,
         turno: turnoActual(), nombre: "", rol: "CAP", puntos: [], aterrizajeId: (bases()[0] || {}).id ?? null,
         escoltaDe: null, escolta: "",
-        ota: { paquete: "", funcion: "-", alerta: 1, armamento_primario: "", armamento_secundario: "", iff: "", codigo: "", pdi: "", tot_turno: null },
+        ota: { paquete: "", funcion: "-", alerta: 1, carga: null, armamento_primario: "", armamento_secundario: "", iff: "", codigo: "", pdi: "", tot_turno: null },
       };
       for (const id of ["pm-paquete-nombre", "pm-iff", "pm-pdi"]) $(id).value = "";
       $("pm-funcion").value = "-";
@@ -141,8 +141,15 @@
       opciones($("pm-codigo"), [["", propio ? `${propio[0]} · ${nombreCod[propio[0]] || ""}` : "—"],
         ...((catOta.codigos_opcionales || {})[borrador.rol] || []).map((c) => [c, `${c} · ${nombreCod[c] || ""}`])], o.codigo);
       const modelo = borrador.origen === "grupo" ? ((datos().unidades.find((x) => x.id === borrador.unidadId) || {}).modelo) : borrador.modelo;
-      opciones($("pm-arma1"), [["", "—"], ...Logica.armasParaRol(catOta, modelo, borrador.rol, true)], o.armamento_primario);
-      opciones($("pm-arma2"), [["", "—"], ...Logica.armasParaRol(catOta, modelo, borrador.rol, false)], o.armamento_secundario);
+      // carga de armamento (engine/armas.py): la del rol por defecto; el armamento de la OTA sale de esa carga
+      const cargas = Logica.opcionesDeCarga(cat(), modelo);
+      const sugerida = Logica.cargaParaRol(borrador.rol, cargas.map(([v]) => v));
+      opciones($("pm-carga"), cargas.length ? cargas : [["", "—"]], o.carga && cargas.some(([v]) => v === o.carga) ? o.carga : sugerida);
+      o.carga = $("pm-carga").value || null;
+      const enCarga = o.carga ? Object.keys(((cat().cargas || {})[modelo] || {})[o.carga] || {}) : null;
+      const filtrar = (lista) => (enCarga ? lista.filter(([c]) => enCarga.includes(c)) : lista);
+      opciones($("pm-arma1"), [["", "—"], ...filtrar(Logica.armasParaRol(catOta, modelo, borrador.rol, true))], o.armamento_primario);
+      opciones($("pm-arma2"), [["", "—"], ...filtrar(Logica.armasParaRol(catOta, modelo, borrador.rol, false))], o.armamento_secundario);
       opciones($("pm-tot"), [["", "Sin TOT (según el despegue)"], ...Array.from({ length: 25 }, (_, i) => [t0 + i, `Hora ${t0 + i} · ${ctx.horaDeTurno(t0 + i)}`])], o.tot_turno ?? "");
       o.codigo = $("pm-codigo").value;
       o.armamento_primario = $("pm-arma1").value;
@@ -619,6 +626,7 @@
       alCambiar("pm-funcion", (v) => { borrador.ota.funcion = v; });
       alCambiar("pm-alerta", (v) => { borrador.ota.alerta = parseInt(v, 10) || 1; });
       alCambiar("pm-codigo", (v) => { borrador.ota.codigo = v; });
+      alCambiar("pm-carga", (v) => { borrador.ota.carga = v || null; borrador.ota.armamento_primario = ""; borrador.ota.armamento_secundario = ""; });
       alCambiar("pm-arma1", (v) => { borrador.ota.armamento_primario = v; });
       alCambiar("pm-arma2", (v) => { borrador.ota.armamento_secundario = v; });
       alCambiar("pm-tot", (v) => { borrador.ota.tot_turno = parseInt(v, 10) || null; });

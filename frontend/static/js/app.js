@@ -1664,8 +1664,44 @@
 
   const turnosTxt = (n) => (n > 0 ? `${n} turno${n === 1 ? "" : "s"}` : "lista");
 
+  /** Carga de armamento de una aeronave (engine/armas.py): cada arma con su tipo, alcance, Pk y lo que le queda. */
+  function tablaCarga(u, oculto) {
+    const c = !oculto && u.armamento;
+    if (!c || !app.catalogo) return "";
+    const n = Math.max(1, u.aeronaves || 1);
+    const filas = Object.entries(c.quedan).map(([a, q]) => {
+      const d = (app.catalogo.armas || {})[a] || { nombre: a, tipo_nombre: "", alcance_km: 0, pk: 0 };
+      const total = ((c.por_aeronave || {})[a] || 0) * n;
+      return `<tr><td>${escapar(d.nombre)}</td><td>${escapar(d.tipo_nombre)}</td><td>${Math.round(d.alcance_km)} km</td>`
+        + `<td>${String(d.pk).replace(".", ",")}</td><td>${q} / ${total}</td></tr>`;
+    }).join("");
+    const nombre = (app.catalogo.nombres_carga || {})[c.nombre] || c.nombre;
+    return `<table class="tabla-armas"><caption>Carga: ${escapar(nombre)}</caption><thead><tr><th>Arma</th><th>Tipo</th><th>Alcance</th>`
+      + `<th title="Probabilidad de impacto">Pk</th><th title="Quedan / carga completa del grupo">Quedan</th></tr></thead><tbody>`
+      + (filas || '<tr><td colspan="5">Sin armas (reconocimiento)</td></tr>') + "</tbody></table>";
+  }
+
+  /** Existencias de armas de una base o un buque; el director las puede cambiar. */
+  function tablaExistencias(u, oculto) {
+    const ex = !oculto && u.existencias_armas;
+    if (!ex || !app.catalogo || !Object.keys(ex).length) return "";
+    const editable = esInstructor() && app.porId.get(app.seleccion);
+    const filas = Object.entries(ex).map(([a, n]) => {
+      const d = (app.catalogo.armas || {})[a] || { nombre: a, tipo_nombre: "" };
+      const celda = editable ? `<input type="number" min="0" max="100000" value="${n}" data-existencia="${escapar(a)}" aria-label="${escapar(d.nombre)}">` : String(n);
+      return `<tr><td>${escapar(d.nombre)}</td><td>${escapar(d.tipo_nombre)}</td><td>${celda}</td></tr>`;
+    }).join("");
+    return `<table class="tabla-armas"><caption>${u.tipo === "naval" ? "Pañol de armas" : "Existencias de armas"}</caption>`
+      + `<thead><tr><th>Arma</th><th>Tipo</th><th>Cantidad</th></tr></thead><tbody>${filas}</tbody></table>`
+      + (editable ? '<button id="btn-existencias" class="mini secundario" type="button">Guardar existencias</button>' : "")
+      + '<p class="nota">Despegar y rearmar toma las armas de aquí.</p>';
+  }
+
   function renderDetalle() {
     const cont = $("detalle-contenido");
+    // el director esta escribiendo existencias de armas: no se redibuja hasta que deje el campo
+    if (document.activeElement && document.activeElement.dataset && document.activeElement.dataset.existencia !== undefined
+      && cont.contains(document.activeElement)) return;
     const c = app.contactosPorId.get(app.seleccion);
     const u = app.porId.get(app.seleccion) || (c ? { ...c, fuerza: null, combustible: null, municion: null, velocidad_kmh: null, alcance_km: null, deteccion_km: null, autonomia_km: null, carga: null, recarga_restante: null, despliegue_restante: null, terreno: "?" } : null);
     document.body.classList.toggle("con-unidad", !!u);
@@ -1795,6 +1831,7 @@
           + `<td>${escapar(a.alcance)}</td><td>${escapar(a.altura)}</td><td>${escapar(a.pk)}</td>`
           + (oculto ? "" : `<td>${escapar(a.carga)}</td>`) + "</tr>").join("")
         + "</tbody></table>" + `<p class="nota">${escapar(da.nota)}</p>` : "")
+      + tablaCarga(u, oculto) + tablaExistencias(u, oculto)
 
       + notas.map((n) => `<p class="nota">${escapar(n)}</p>`).join("")
       + (!oculto && app.porId.get(app.seleccion) && cl && u.estado === "activa" && puedeDefensa(u)
@@ -1826,6 +1863,12 @@
     if (emision) emision.addEventListener("click", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { emitiendo: u.emitiendo === false })));
     const fuego = $("btn-fuego");
     if (fuego) fuego.addEventListener("click", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { fuego_libre: u.fuego_libre === false })));
+    const guardarEx = $("btn-existencias");
+    if (guardarEx) guardarEx.addEventListener("click", async () => {
+      const cuerpo = {};
+      cont.querySelectorAll("[data-existencia]").forEach((i) => { cuerpo[i.dataset.existencia] = Math.max(0, parseInt(i.value, 10) || 0); });
+      try { await api("PUT", rutaEsc(`/unidades/${u.id}/existencias`), cuerpo); toast("Existencias guardadas", true); } catch (_) { /* toast ya mostrado */ }
+    });
     const selArma = $("sel-arma-da");
     if (selArma) selArma.addEventListener("change", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { arma: selArma.value })));
     cont.querySelectorAll("[data-perfil]").forEach((b) => b.addEventListener("click", () => {
@@ -1898,6 +1941,16 @@
     $("modo-interferir").hidden = !interfiere;
     const lanza = Logica.puedeLanzarMisiles(u, cl);
     $("modo-lanzar").hidden = !lanza;
+    // una aeronave en tierra sale con la carga elegida (engine/armas.py); se toma de las existencias de su base
+    const conCarga = !!u && u.tipo === "aerea" && u.en_tierra && ["mover", "patrullar", "atacar", "interceptar"].includes(app.modoOrden);
+    const opcionesCarga = conCarga ? Logica.opcionesDeCarga(app.catalogo, u.modelo) : [];
+    $("o-carga-fila").hidden = opcionesCarga.length < 2;
+    if (opcionesCarga.length) {
+      const sel = $("o-carga");
+      const actual = (u.armamento && u.armamento.nombre) || sel.value;
+      if (sel.dataset.modelo !== u.modelo) { llenarSelect(sel, opcionesCarga); sel.dataset.modelo = u.modelo || ""; }
+      if (actual && opcionesCarga.some(([v]) => v === actual) && document.activeElement !== sel) sel.value = actual;
+    }
     const intercepta = !!u && (u.tipo === "aerea" || u.tipo === "naval") && !Logica.esMisil(u);
     $("modo-interceptar").hidden = !intercepta;
     if (app.modoOrden === "interceptar" && !intercepta) app.modoOrden = "mover";
@@ -2017,6 +2070,7 @@
     const unidad_id = app.unidadOrden;
     if (!unidad_id) return toast("Seleccione una unidad propia que pueda recibir órdenes.");
     const cuerpo = { unidad_id, tipo: app.modoOrden, waypoints: [], objetivo_unidad_id: null };
+    if (!$("o-carga-fila").hidden && $("o-carga").value) cuerpo.carga = $("o-carga").value;
     if (app.modoOrden === "mover") {
       if (!app.waypoints.length) return toast("Marque al menos un waypoint en el mapa.");
       cuerpo.waypoints = app.waypoints;

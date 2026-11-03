@@ -242,6 +242,7 @@
               <p class="ayuda">Haga clic en el mapa en el centro de la zona a interferir (dentro del alcance del interferidor). Mientras mantenga la orden (hasta detenerla o darle otra), en esa zona el enemigo detecta al 30 % (sus radares al 20 %), su antiaérea guiada por radar pierde efecto y sus drones pierden el enlace. Al emitir, el enemigo localiza al interferidor.</p>
               <p id="o-interferencia-info" class="ayuda preview"></p>
             </div>
+            <label class="mini" id="o-carga-fila" hidden title="La aeronave está en tierra: sale con esta carga, que toma de las existencias de su base">Carga de armamento al despegar<select id="o-carga"></select></label>
             <div id="o-objetivo-box" hidden>
               <select id="o-objetivo" aria-label="Objetivo"></select>
               <p id="o-objetivo-ayuda" class="ayuda"></p>
@@ -895,6 +896,7 @@
               </select></label>
               <label class="mini">Código de misión<select id="pm-codigo"></select></label>
               <label class="mini">Alerta<select id="pm-alerta"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
+              <label class="mini">Carga de armamento<select id="pm-carga"></select></label>
               <label class="mini">Armamento primario<select id="pm-arma1"></select></label>
               <label class="mini">Armamento secundario<select id="pm-arma2"></select></label>
               <label class="mini">IFF (modo y código)<input id="pm-iff" maxlength="5" inputmode="numeric" placeholder="31701"></label>
@@ -1260,6 +1262,7 @@
             <p id="aer-nota-pista" class="nota" hidden></p>
         <label class="mini">Aeronaves en el grupo<select id="aer-cantidad"></select></label>
         <label class="mini" id="aer-indicativo-fila">Indicativo (opcional)<input id="aer-indicativo" maxlength="40" placeholder="Ej. Halcón 1"></label>
+        <label class="mini" id="aer-carga-fila">Carga de armamento (por aeronave)<select id="aer-carga"></select></label>
       </div>
       <p id="aer-resumen" class="ayuda preview"></p>
       <div class="fila">

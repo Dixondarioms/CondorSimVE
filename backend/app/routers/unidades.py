@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -322,3 +324,34 @@ async def ajustar_unidad(
     db.refresh(unidad)
     await manager.difundir_estado(db, esc)
     return unidad
+
+
+@router.put("/{unidad_id}/existencias")
+async def fijar_existencias(
+    unidad_id: int,
+    payload: dict[str, int],
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    _: Usuario = Depends(solo_instructor),
+):
+    """El director fija las existencias de armas de una base o un buque ({codigo de la OTA: cantidad}); queda en el
+    informe como un ajuste."""
+    from app.engine import armas as armas_mod, ota
+
+    unidad = db.get(Unidad, unidad_id)
+    if unidad is None or unidad.escenario_id != esc.id or not armas_mod.deposito_de(unidad):
+        raise HTTPException(status_code=404, detail="Elija una base aérea o un buque que opere aeronaves")
+    ex = armas_mod.existencias(unidad)
+    detalle = []
+    for codigo, n in payload.items():
+        if codigo not in ota.ARMAMENTO or not 0 <= int(n) <= 100000:
+            raise HTTPException(status_code=400, detail=f"Arma o cantidad no válida: {codigo}")
+        if ex.get(codigo) != int(n):
+            detalle.append(f"{ota.ARMAMENTO[codigo][0]} {int(n)}")
+        ex[codigo] = int(n)
+    unidad.existencias_json = json.dumps(ex, sort_keys=True)
+    if detalle:
+        aar.registrar_ajuste(db, esc, f"Existencias de armas de {unidad.nombre}: " + ", ".join(detalle))
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return armas_mod.existencias(unidad)

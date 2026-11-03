@@ -321,6 +321,14 @@ def construir(salida: Path) -> None:
     h += [P("Los despegues los ordenan A-3 y A-3 D/A (y el Comandante o el JEM). Cada bando tiene un <b>tope</b> de aeronaves y "
             "de drones, que muestra el panel. Una aeronave que acaba de aterrizar necesita tiempo para reabastecer y rearmar "
             "antes de volver a salir.")]
+    h += [P("<b>Carga de armamento.</b> En la misma ventana se elige la carga según el modelo: aire-aire, ataque, antibuque, "
+            "SEAD (antirradiación) o reconocimiento, cada una con una cantidad real de misiles y bombas por aeronave. También se "
+            "elige en el planificador de misiones y, para una aeronave en tierra, en la Nueva orden. Cada pasada gasta armas "
+            "reales (un misil por aeronave, o la mitad de las bombas) y se tira con el arma que sirve contra ese blanco y desde "
+            "su alcance; el daño sale de la misma tabla de combate. Las armas salen de las <b>existencias</b> de la base o del "
+            "pañol del portaaviones, que el director puede cambiar en el panel de abajo.")]
+    h += figura("carga_panel", "Panel de abajo de un grupo con su carga: cada arma con su alcance, su probabilidad de impacto y "
+                "lo que le queda.")
     h += [H2("5.2 Patrullar, aterrizar y el combustible"),
           Bul(["<b>Patrullar</b>: la aeronave vuela a la zona, orbita (gasta cerca de 8 % de combustible por hora) e intercepta a "
                "los aviones enemigos que detecte a su alcance.",

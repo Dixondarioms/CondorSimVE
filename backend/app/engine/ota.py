@@ -64,7 +64,8 @@ CODIGOS_AERONAVE = {
 
 
 # armamento: codigo -> (nombre, tipo, guiada, alcance_km)
-#   tipo: "aa" misil aire-aire | "as" misil aire-superficie | "ar" antirradiacion | "bomba" | "helo" (cañon, cohetes)
+#   tipo: "aa" misil aire-aire | "as" misil aire-superficie | "ar" antirradiacion | "ab" antibuque | "bomba" |
+#   "helo" (cañon, cohetes)
 ARMAMENTO = {
     "MAA": ("RVV-AE (R-77)", "aa", True, 80), "MAB": ("R-27ER1", "aa", True, 60), "MAC": ("R-27ET1", "aa", True, 50),
     "MAD": ("R-73E", "aa", True, 20), "MPA": ("Python 4", "aa", True, 15), "MPB": ("AIM-9L", "aa", True, 15),
@@ -73,6 +74,8 @@ ARMAMENTO = {
     "MA4": ("Kh-29TE", "as", True, 30), "MA5": ("Kh-59ME", "as", True, 115),
     "HRM": ("AGM-88 HARM (antirradiación)", "ar", True, 100), "JSW": ("AGM-154 JSOW", "as", True, 110),
     "HLF": ("AGM-114 Hellfire", "as", True, 8),
+    "HPN": ("AGM-84 Harpoon (antibuque)", "ab", True, 120), "EXO": ("AM39 Exocet (antibuque)", "ab", True, 70),
+    "MA6": ("Kh-35 (antibuque)", "ab", True, 130),
     "BKR": ("KAB-500KR (guiada TV)", "bomba", True, 9), "BOD": ("KAB-500OD (aire-combustible)", "bomba", False, 0),
     "BRK": ("KAB-1500KR (guiada TV)", "bomba", True, 9), "BMK": ("Mk 82 (227 kg)", "bomba", False, 0),
     "BKM": ("Mk 84 (907 kg)", "bomba", False, 0), "BGB": ("GBU-10 (láser)", "bomba", True, 12),
@@ -80,16 +83,16 @@ ARMAMENTO = {
     "JDM": ("GBU-31 JDAM", "bomba", True, 24),
     "CKH": ("Cañón", "helo", False, 2), "CKL": ("Cohetes", "helo", False, 6), "ALP": ("Ametralladoras laterales", "helo", False, 1),
 }
-_ORIENTAL = {"aa": ["MAA", "MAB", "MAC", "MAD"], "sup": ["MA1", "MA2", "MA3", "MA4", "MA5", "BKR", "BOD", "BRK"]}
-_OCCIDENTAL = {"aa": ["M120", "M9X", "MPB"], "sup": ["HRM", "JSW", "BGB", "BBU", "JDM", "BMK", "BKM"]}
+_ORIENTAL = {"aa": ["MAA", "MAB", "MAC", "MAD"], "sup": ["MA1", "MA2", "MA3", "MA4", "MA5", "BKR", "BOD", "BRK", "MA6"]}
+_OCCIDENTAL = {"aa": ["M120", "M9X", "MPB"], "sup": ["HRM", "JSW", "BGB", "BBU", "JDM", "BMK", "BKM", "HPN"]}
 ARMAMENTO_POR_MODELO = {
     "su30": _ORIENTAL["aa"] + _ORIENTAL["sup"],
-    "f16": ["MPA", "MPB", "M120", "M9X", "BMK", "BKM", "BGB", "BBU", "HRM"],
+    "f16": ["MPA", "MPB", "M120", "M9X", "BMK", "BKM", "BGB", "BBU", "HRM", "HPN"],
     "ataque_ligero": ["MPB", "BMK", "BTK", "CKL"],
     "caza_embarcado": _OCCIDENTAL["aa"] + _OCCIDENTAL["sup"],
     "f22": ["M120", "M9X", "JDM"], "f35a": ["M120", "M9X", "JDM", "BBU", "JSW", "HRM"],
     "f35b": ["M120", "M9X", "JDM", "BBU"], "fa18ef": _OCCIDENTAL["aa"] + _OCCIDENTAL["sup"],
-    "ea18g": ["M120", "HRM"], "b1b": ["JDM", "BMK", "BKM", "JSW"], "p8a": ["JDM", "BMK"],
+    "ea18g": ["M120", "HRM"], "b1b": ["JDM", "BMK", "BKM", "JSW", "HPN"], "p8a": ["JDM", "BMK", "HPN"],
     "mq9": ["HLF", "BBU"], "uav_armado": ["HLF", "BBU"],
     "helo_ataque": ["CKH", "CKL", "HLF"], "helo_transporte": ["CKH", "CKL", "ALP"],
     "mh60dap": ["CKH", "CKL", "HLF"], "ah6m": ["CKH", "CKL", "HLF"], "mh60m": ["ALP"], "mh6m": ["ALP"], "mh47g": ["ALP"],
@@ -170,6 +173,22 @@ def validar(rol: str, modelo_id: str | None, clase, ota: dict) -> list[str]:
             errores.append(f"Armamento {titulo} desconocido: {a}.")
         elif armas and a not in armas:
             errores.append(f"{ARMAMENTO[a][0]} no es armamento de esta aeronave (armamento {titulo}).")
+    carga = ota.get("carga")
+    if carga:
+        from app.engine import armas as armas_mod  # importacion tardia: armas usa este modulo
+
+        cargas = armas_mod.cargas_de(modelo_id, clase)
+        if carga not in cargas:
+            errores.append(f"Esa aeronave no lleva la carga «{armas_mod.NOMBRES_CARGA.get(carga, carga)}».")
+        elif rol in ("CAP", "ESCOLTA", "INTERCEPCION") and carga in ("ataque", "sead", "reconocimiento") and rol != "INTERCEPCION":
+            errores.append(f"Para {rol} la carga debe ser aire-aire.")
+        elif rol in ("INTERDICCION", "CAS") and carga in ("aire_aire", "reconocimiento"):
+            errores.append(f"Para {rol} la carga debe ser de ataque o antibuque.")
+        elif rol == "SEAD" and carga != "sead" and "sead" in cargas:
+            errores.append("Para SEAD la carga debe ser SEAD (misiles antirradiación).")
+        elif p_arma := ota.get("armamento_primario"):
+            if p_arma not in cargas[carga]:
+                errores.append(f"{ARMAMENTO.get(p_arma, (p_arma,))[0]} no va en la carga elegida.")
     p = ota.get("armamento_primario")
     if p in ARMAMENTO:
         tipo = ARMAMENTO[p][1]

@@ -366,6 +366,9 @@ def activar(db, escenario, unidades: dict, lista: list, turno: int, lanzados_en_
 
             disp_mod.sumar(escenario, base.bando, salidas=m.aeronaves)
             grupo = aeronaves_mod.crear_grupo(base, m.modelo, m.aeronaves, m.nombre, lanzados_en_base[base.id])
+            from app.engine import armas as armas_mod  # importacion tardia: armas usa ota y weaponeering
+
+            carga = armas_mod.armar(grupo, ota.datos(m).get("carga"), base)
             lanzados_en_base[base.id] += 1
             logistica.descontar_despegue(base, m.aeronaves)
             db.add(grupo)
@@ -373,7 +376,7 @@ def activar(db, escenario, unidades: dict, lista: list, turno: int, lanzados_en_
             unidades[grupo.id] = grupo
             lista.append(grupo)
             m.unidad_id = grupo.id
-            _evento(db, m, turno, f"{grupo.nombre} despego de {base.nombre}.")
+            _evento(db, m, turno, f"{grupo.nombre} despego de {base.nombre}" + (f" con {carga}." if carga else "."))
         else:
             u = unidades.get(m.unidad_id)
             if u is None or u.estado != "activa":
@@ -383,6 +386,14 @@ def activar(db, escenario, unidades: dict, lista: list, turno: int, lanzados_en_
                 m.resultado = f"Espera en tierra: le falta(n) {u.espera_restante} h para reabastecer y rearmar."
                 continue
             if u.en_tierra:
+                from app.engine import armas as armas_mod  # importacion tardia
+
+                pedida = ota.datos(m).get("carga")
+                if armas_mod.aplica(u) and (pedida or not armas_mod.tiene_carga(u)):
+                    deposito = unidades.get(u.base_id)
+                    if deposito is not None and armas_mod.tiene_carga(u):
+                        armas_mod.devolver(deposito, armas_mod.datos(u)["quedan"])
+                    armas_mod.armar(u, pedida, deposito)
                 aeronaves_mod.despegar_unidad(u)
             u.mision, u.mision_lat, u.mision_lon = "", None, None
         m.estado, m.indice, m.espera = "en_curso", 0, -1

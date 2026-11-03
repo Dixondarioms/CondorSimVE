@@ -257,6 +257,40 @@ def zonas(n: Nav) -> None:
     n.js("document.getElementById('panel-der').scrollTop = 0")
 
 
+def carga(n: Nav) -> None:
+    """Carga de armamento: la ventana de despegue con la carga y el panel de abajo de un grupo armado (en la COPIA)."""
+    n.como("az.cmdte")
+    n.pestana("fuerzas")
+    n.clic("#btn-enviar-caza")
+    n.pausa(1.5)
+    n.valor("#aer-buscar", "F-16")
+    n.js("document.getElementById('aer-buscar').dispatchEvent(new Event('input', {bubbles: true}))")
+    n.pausa(1.5)
+    n.js("const t = document.querySelector('#aer-tarjetas .tarjeta-modelo'); if (t) t.click();")
+    n.pausa(1)
+    n.js("const s = document.getElementById('aer-carga'); s.value = 'ataque'; s.dispatchEvent(new Event('change'));"
+         " document.getElementById('aer-carga-fila').scrollIntoView({block: 'center'})")
+    n.pausa(1)
+    guardar(n, "despegue_carga", n.rect("#dlg-aeronaves"), margen=2)
+    n.clic("#aer-cancelar")
+    n.pausa(0.5)
+    nombre = "Escuadrón F-16 Block 70 2 (Echo)"
+    u = n.unidad(nombre)
+    _post(n, "/ordenes", {"unidad_id": u["id"], "tipo": "mover", "waypoints": [[u["lat"] + 0.2, u["lon"] + 0.2]], "carga": "ataque"})
+    n.pausa(2)
+    n.elegir(nombre)
+    n.pausa(2)
+    guardar(n, "carga_panel", n.rect("#panel-unidad"), margen=0)
+    n.como("director")
+    base = next((x for x in n.js(f"fetch('/api/escenarios/{ESCENARIO}').then((r) => r.json()).then((e) => e.unidades)")
+                 if x.get("existencias_armas")), None)
+    if base:
+        n.elegir(base["nombre"])
+        n.pausa(2)
+        n.js("const t = document.querySelector('.pu-notas'); if (t) t.scrollTop = t.scrollHeight;")
+        guardar(n, "existencias_armas", n.rect("#panel-unidad"), margen=0)
+
+
 def doctrina(n: Nav) -> None:
     n.pestana("fuerzas")
     n.js("const d = document.getElementById('sec-doctrina'); d.querySelectorAll('details').forEach((x) => x.open = true); d.scrollIntoView({block: 'start'})")
@@ -382,7 +416,7 @@ def videowall(n: Nav) -> None:
     n.tecla("Escape", 27)
 
 
-ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, doctrina, misiones,
+ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, doctrina, misiones,
          situacion, tiem, consola, capas, graficos, mapas, ayuda, informe, en_marcha, bando, videowall]
 
 
@@ -396,7 +430,7 @@ def main() -> int:
             if pedidas and f.__name__ not in pedidas:
                 continue
             try:
-                if f not in (acceso, despegue, orden_mover, interceptar, zonas, misiones, bando):
+                if f not in (acceso, despegue, orden_mover, interceptar, zonas, carga, misiones, bando):
                     n.como("director")
                 f(n)
                 if f is acceso:

@@ -459,6 +459,37 @@
     return `Rumbo ${rumbo3(d.grados || 0)}°${lado ? `, virando a la ${lado}` : ""}`;
   }
 
+  /**
+   * Cargas de armamento del modelo (catalogo.cargas, engine/armas.py) para un select: [[id, «Aire-aire: AIM-120 ×4,
+   * AIM-9X ×2»], ...]; la primera es la que el servidor elige si no se pide otra.
+   */
+  function opcionesDeCarga(cat, modeloId) {
+    const cargas = (cat && cat.cargas && cat.cargas[modeloId]) || {};
+    return Object.entries(cargas).map(([id, armas]) => [id, textoCarga(cat, id, armas)]);
+  }
+
+  /** Carga que conviene a un rol de mision, entre las que tiene el modelo. */
+  function cargaParaRol(rol, disponibles) {
+    const quiere = { CAP: "aire_aire", ESCOLTA: "aire_aire", INTERCEPCION: "aire_aire", INTERDICCION: "ataque", CAS: "ataque",
+      SEAD: "sead", RECO: "reconocimiento" }[rol];
+    return disponibles.includes(quiere) ? quiere : disponibles[0] || "";
+  }
+
+  /** «Aire-aire: AIM-120 AMRAAM ×4, AIM-9X ×2» (por aeronave). */
+  function textoCarga(cat, id, armas) {
+    const nombre = (cat && cat.nombres_carga && cat.nombres_carga[id]) || id;
+    const partes = Object.entries(armas || {}).map(([a, n]) => `${(cat && cat.armas && cat.armas[a] && cat.armas[a].nombre) || a} ×${n}`);
+    return `${nombre}: ${partes.length ? partes.join(", ") : "sin armas"}`;
+  }
+
+  /** Detalle de cada arma de una carga: alcance y probabilidad de impacto («AIM-120 AMRAAM: 75 km, Pk 0,6»). */
+  function detalleArmas(cat, armas) {
+    return Object.keys(armas || {}).map((a) => {
+      const d = cat && cat.armas && cat.armas[a];
+      return d ? `${d.nombre}: ${d.tipo_nombre}, ${Math.round(d.alcance_km)} km, Pk ${String(d.pk).replace(".", ",")}` : a;
+    });
+  }
+
   /** Se intercepta una aeronave en vuelo o un buque (no un misil). */
   const interceptable = (u) => !!u && u.estado === "activa" && !esMisil(u) && ((u.tipo === "aerea" && !u.en_tierra) || u.tipo === "naval");
   const ACCIONES_INTERCEPCION = [["neutralizar", "Identificar y neutralizar"], ["seguir", "Identificar y seguir"], ["directo", "Neutralizar sin esperar la identificación"]];
@@ -1254,7 +1285,7 @@
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
-    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
+    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,

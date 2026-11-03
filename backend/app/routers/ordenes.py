@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app import auth, schemas, state
 from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
+from app.engine import armas as armas_mod
 from app.engine import catalogo, geo, infraestructura, movimiento, puestos
 from app.engine import clima as clima_mod
 from app.engine import doctrina as doctrina_mod
@@ -101,6 +102,9 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
             aeronaves_mod.aeronaves_comprometidas(db, esc.id, usuario.rol, previa.id if previa else None,
                                                   aeronaves_mod.es_dron_modelo(payload.modelo)),
         )
+        if motivo:
+            raise HTTPException(status_code=400, detail=motivo)
+        motivo = armas_mod.error_de_carga(payload.modelo, payload.carga, payload.aeronaves or 1, unidad)
         if motivo:
             raise HTTPException(status_code=400, detail=motivo)
     elif payload.tipo == "aterrizar":
@@ -217,6 +221,15 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         if payload.tipo == "atacar" and payload.parte and not catalogo.opera_aeronaves(objetivo):
             raise HTTPException(status_code=400, detail="Solo una base aerea o un portaaviones tiene partes (pista, plataforma, combustible)")
 
+    # Una aeronave en tierra sale con la carga pedida: devuelve la que tenia y se arma con la nueva desde su base.
+    if payload.carga and payload.tipo != "despegar" and unidad.en_tierra and armas_mod.aplica(unidad):
+        base = db.get(Unidad, unidad.base_id) if unidad.base_id else None
+        motivo = armas_mod.error_de_carga(unidad.modelo, payload.carga, unidad.aeronaves or 1, base)
+        if motivo:
+            raise HTTPException(status_code=400, detail=motivo)
+        if base is not None and armas_mod.tiene_carga(unidad):
+            armas_mod.devolver(base, armas_mod.datos(unidad)["quedan"])
+        armas_mod.armar(unidad, payload.carga, base)
     # Una orden directa a un grupo aereo reemplaza su mision (redireccionamiento).
     if unidad.tipo == "aerea":
         misiones_mod.cancelar_por_orden(db, unidad, payload.tipo)
@@ -240,7 +253,7 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir", "patrullar", "interferir", "desembarcar") else []),
         objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar", "aterrizar", "lanzar", "embarcar", "interceptar") else None,
         detalle=(
-            aeronaves_mod.codificar(payload.modelo, payload.aeronaves, (payload.indicativo or "").strip())
+            aeronaves_mod.codificar(payload.modelo, payload.aeronaves, (payload.indicativo or "").strip(), payload.carga)
             if payload.tipo == "despegar"
             else misiles_mod.codificar(payload.misiles) if payload.tipo == "lanzar"
             else (payload.parte or "") if payload.tipo == "atacar"

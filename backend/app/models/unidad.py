@@ -72,6 +72,10 @@ class Unidad(Base):
     # camino que recorrio en el ultimo turno ([[lat, lon], ...]; por la carretera si su ruta la seguia)
     recorrido_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     arma_elegida: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    # aeronaves: carga de armamento real ({"nombre", "por_aeronave", "quedan"}; engine/armas.py). None = municion en %
+    armamento_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # bases aereas y buques que operan aeronaves: existencias de armas por codigo de la OTA (engine/armas.py)
+    existencias_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # bases aereas: largo de la pista fijado por el instructor (None = el del plano del aerodromo o el por defecto)
     pista_m: Mapped[float | None] = mapped_column(Float, nullable=True)

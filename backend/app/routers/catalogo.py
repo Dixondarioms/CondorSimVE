@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 
 from app import auth, schemas, state
-from app.engine import catalogo, clima, misiones, ota
+from app.engine import armas, catalogo, clima, misiones, ota
 from app.engine import defensa_aerea
 from app.engine import fotos_usuario, modelos_usuario
 from app.models.usuario import Usuario
@@ -21,6 +21,10 @@ def obtener_catalogo(_: Usuario = Depends(auth.usuario_actual)):
         "climas": list(clima.CLIMAS),
         "misiones": misiones.roles_publicos(),
         "ota": ota.armamento_publico(),
+        # cargas de armamento por modelo y datos de cada arma (engine/armas.py)
+        "armas": armas.publico(),
+        "cargas": {m: armas.cargas_de(m) for m in catalogo.MODELOS if catalogo.CLASES[catalogo.MODELOS[m].clase].tipo == "aerea"},
+        "nombres_carga": armas.NOMBRES_CARGA,
         "sistemas_da": {k: defensa_aerea.sistema_dict(v) for k, v in defensa_aerea.SISTEMAS.items()},
     }
 
