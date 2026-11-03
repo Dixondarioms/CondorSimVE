@@ -62,6 +62,9 @@
       afecta al movimiento y a los ataques aéreos, la hora simulada y el estado del reloj.</p>` },
     { sel: "#tarjeta-objetivos", titulo: "Objetivos y puntaje", texto: `<p>Los objetivos de cada bando, su avance y los puntos. Al
       final del ejercicio deciden el resultado.</p>` },
+    { sel: "#tarjeta-zonas", titulo: "Áreas y zonas", texto: `<p>Dibuje <b>áreas de patrulla</b> (la unidad con la orden Patrullar
+      las recorre y ataca lo que entra) y <b>zonas de exclusión</b> o <b>de no vuelo</b>: quien las cruza dispara una alerta y,
+      si lo marca, las armas propias le tiran.</p>` },
     { sel: "#base-satelite", marco: "section", titulo: "Capas del mapa", texto: `<p>Qué se ve en el mapa: satélite o relieve, niebla
       de guerra, cobertura de detección, <b>estelas</b> (y su largo), símbolos militares APP-6, meteorología (<b>solo el radio</b> o
       <b>satélite meteorológico</b>), objetivos y más.</p>` },

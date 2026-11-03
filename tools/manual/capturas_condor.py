@@ -232,6 +232,31 @@ def interceptar(n: Nav) -> None:
     guardar(n, "interceptar_mapa", n.rect("#map"), margen=0)
 
 
+def zonas(n: Nav) -> None:
+    """Areas de patrulla y zonas de exclusion y no vuelo (en la COPIA de la base) y la orden Patrullar sobre un area."""
+    n.como("director")
+    _post(n, "/zonas", {"tipo": "no_vuelo", "nombre": "Puerto Ayacucho", "bando": "todos",
+                        "puntos": [[5.55, -67.75], [5.75, -67.75], [5.75, -67.5], [5.55, -67.5]]})
+    n.como("az.cmdte")
+    _post(n, "/zonas", {"tipo": "patrulla", "nombre": "Sector Orinoco", "puntos": [[6.0, -67.6], [6.3, -67.2], [6.0, -66.8], [5.8, -67.2]]})
+    _post(n, "/zonas", {"tipo": "exclusion", "nombre": "Represa", "armas": True,
+                        "puntos": [[5.85, -67.0], [5.95, -66.85], [5.8, -66.75], [5.7, -66.9]]})
+    n.como("az.cmdte")  # recarga para ver las zonas nuevas
+    nombre = "Escuadrón Kfir 1 (Echo)"
+    u = n.unidad(nombre)
+    n.elegir(nombre)
+    n.vista(u["lat"] + 0.25, u["lon"] + 0.4, 9, 4)
+    n.clic("[data-modo=patrullar]")
+    n.pausa(1)
+    n.js("const s = document.getElementById('o-patrulla-area'); s.value = s.options[s.options.length - 1].value; s.dispatchEvent(new Event('change'))")
+    n.pausa(2)
+    n.js("document.getElementById('sec-orden').scrollIntoView({block: 'start'})")
+    guardar(n, "patrulla_area", n.rect("#sec-orden"))
+    guardar(n, "zonas_mapa", n.rect("#map"), margen=0)
+    guardar(n, "zonas", tarjeta(n, "Áreas y zonas"))
+    n.js("document.getElementById('panel-der').scrollTop = 0")
+
+
 def doctrina(n: Nav) -> None:
     n.pestana("fuerzas")
     n.js("const d = document.getElementById('sec-doctrina'); d.querySelectorAll('details').forEach((x) => x.open = true); d.scrollIntoView({block: 'start'})")
@@ -357,7 +382,7 @@ def videowall(n: Nav) -> None:
     n.tecla("Escape", 27)
 
 
-ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, doctrina, misiones,
+ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, doctrina, misiones,
          situacion, tiem, consola, capas, graficos, mapas, ayuda, informe, en_marcha, bando, videowall]
 
 
@@ -371,7 +396,7 @@ def main() -> int:
             if pedidas and f.__name__ not in pedidas:
                 continue
             try:
-                if f not in (acceso, despegue, orden_mover, interceptar, misiones, bando):
+                if f not in (acceso, despegue, orden_mover, interceptar, zonas, misiones, bando):
                     n.como("director")
                 f(n)
                 if f is acceso:

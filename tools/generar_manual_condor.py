@@ -387,6 +387,19 @@ def construir(salida: Path) -> None:
             "altura a la que vuelan. La antiaérea dispara sola contra las aeronaves enemigas a su alcance, según la doctrina. "
             "En la unidad seleccionada de un sistema antiaéreo se ven sus armas con el alcance, la altura y la probabilidad de "
             "impacto (figura del punto 2.6), y se puede apagar o encender su radar. Los conduce A-3 D/A.")]
+    h += [H2("6.3 Áreas de patrulla y zonas de exclusión o de no vuelo")]
+    h += [Table([[figura("zonas", "Tarjeta «Áreas y zonas».", ancho=5.4 * cm, alto_max=11 * cm, celda=True),
+                  [P("En la tarjeta <b>Áreas y zonas</b> (panel derecho) elija el tipo, escriba un nombre y pulse <b>Dibujar en "
+                     "el mapa</b>: clic en cada vértice y, para terminar, clic en el primero. El director las dibuja para todos o "
+                     "para un bando; cada bando, las suyas."),
+                   Bul(["<b>Área de patrulla</b>: con la orden <b>Patrullar</b> y el área elegida en «Dónde», la unidad (aeronave, "
+                        "buque o tropa) la recorre de vértice en vértice y ataca lo que entra si su doctrina lo permite.",
+                        "<b>Zona de exclusión</b>: nadie ajeno debe entrar. <b>Zona de no vuelo</b>: ninguna aeronave ajena.",
+                        "Quien cruza una de ellas dispara una alerta (y la pausa automática, si el director la eligió). Con "
+                        "<b>«Las armas propias tiran contra quien entre»</b> se le tira aunque la doctrina restrinja las armas."])]]],
+                colWidths=[5.7 * cm, ANCHO_TEXTO - 5.7 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += figura("zonas_mapa", "Área de patrulla (amarillo, elegida para la orden), zona de exclusión con armas libres "
+                "(naranja) y zona de no vuelo de la dirección (rojo).")
 
     # ---------------------------------------------------------------- 7 inteligencia
     h += H1("7. Inteligencia y contactos")

@@ -659,7 +659,7 @@
     app.rendererEstelas = L.canvas({ padding: 0.3 });
     app.meteo = ClimaMapa.crear({ L, mapa: map, capa: c.meteorologia, etiqueta: Logica.etiquetaClima, texto: Logica.textoZonaClima, escapar });
     try { if (localStorage.getItem("condor.vistaClima") === "satelite") app.meteo.fijarVista("satelite", 0); } catch (_) { /* sin almacenamiento */ }
-    app.capaActiva = { terreno: true, estelas: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, alcances: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, infraestructura: true, ge: true, meteorologia: true, misiones: true, tramos_pro: false };
+    app.capaActiva = { terreno: true, estelas: true, cobertura: false, niebla: esBando(app.usuario.rol), unidades: true, alcances: true, contactos: true, referencias: true, graficos: true, bases_ven: true, aerodromos: true, objetivos: true, infraestructura: true, ge: true, meteorologia: true, misiones: true, zonas: true, tramos_pro: false };
     if (app.capaActiva.niebla) c.niebla.addTo(map);
 
     let pendiente = null;
@@ -832,7 +832,7 @@
       dibujarSitioObra();
       return;
     }
-    if (esAlumno() && app.modoOrden === "patrullar" && app.unidadOrden) {
+    if (esAlumno() && app.modoOrden === "patrullar" && app.unidadOrden && !$("o-patrulla-area").value) {
       app.patrullaPunto = [lat, lng];
       dibujarPatrulla();
       return;
@@ -1359,6 +1359,11 @@
     g.clearLayers();
     const u = app.porId.get(app.unidadOrden);
     if (!u || app.modoOrden !== "patrullar") return;
+    const area = app.zonas && app.zonas.areasDePatrulla(app.data).find((z) => String(z.id) === $("o-patrulla-area").value);
+    if (area) {
+      L.polygon(area.puntos, { color: "#ffd166", weight: 3, dashArray: "9 7", fillOpacity: 0.08, interactive: false }).addTo(g);
+      return;
+    }
     if (!app.patrullaPunto) { $("o-patrulla-punto").textContent = "Aún no eligió el punto de patrulla."; return; }
     const [lat, lon] = app.patrullaPunto;
     const d = Logica.distanciaKm(u.lat, u.lon, lat, lon);
@@ -1878,7 +1883,15 @@
     if (app.modoOrden === "construir" && !puedeConstruir) app.modoOrden = "mover";
     const aerea = !!(u && u.tipo === "aerea");
     const puedeAterrizar = aerea && !u.en_tierra;
-    $("modo-patrullar").hidden = !aerea;
+    const areas = app.zonas ? app.zonas.areasDePatrulla(data) : [];
+    const patrulla = aerea || (!!u && u.velocidad_kmh > 0 && areas.length > 0 && !Logica.esMisil(u));
+    $("modo-patrullar").hidden = !patrulla;
+    llenarSelect($("o-patrulla-area"), [...(aerea ? [["", "Órbita sobre un punto (clic en el mapa)"]] : []),
+      ...areas.map((z) => [z.id, `Área «${z.nombre || "sin nombre"}»`])]);
+    const conArea = !!$("o-patrulla-area").value;
+    $("o-patrulla-ayuda-punto").hidden = conArea;
+    $("o-patrulla-ayuda-area").hidden = !conArea;
+    $("o-patrulla-punto").hidden = conArea;
     $("modo-aterrizar").hidden = !puedeAterrizar;
     $("modo-rumbo").hidden = !puedeAterrizar;
     const interfiere = Logica.puedeInterferir(u, cl);
@@ -1895,7 +1908,7 @@
     $("modo-desembarcar").hidden = !puedeDesembarcar;
     if (app.modoOrden === "embarcar" && !puedeEmbarcar) app.modoOrden = "mover";
     if (app.modoOrden === "desembarcar" && !puedeDesembarcar) app.modoOrden = "mover";
-    if (app.modoOrden === "patrullar" && !aerea) app.modoOrden = "mover";
+    if (app.modoOrden === "patrullar" && !patrulla) app.modoOrden = "mover";
     if ((app.modoOrden === "aterrizar" || app.modoOrden === "rumbo") && !puedeAterrizar) app.modoOrden = "mover";
     if (app.modoOrden === "interferir" && !interfiere) app.modoOrden = "mover";
     if (app.modoOrden === "lanzar" && !lanza) app.modoOrden = "mover";
@@ -1998,6 +2011,7 @@
   $("o-lote-limpiar").addEventListener("click", () => { app.lote.clear(); if (app.data) { actualizarNuevaOrden(app.data); renderOOBSeleccion(); marcarSeleccionEnMapa(); } });
   $("o-objetivo").addEventListener("change", () => { if (app.data) actualizarNuevaOrden(app.data); });
   $("o-parte").addEventListener("change", () => { if (app.data) actualizarNuevaOrden(app.data); });
+  $("o-patrulla-area").addEventListener("change", () => { app.capas.preview.clearLayers(); if (app.data) actualizarNuevaOrden(app.data); dibujarPatrulla(); });
 
   $("btn-emitir").addEventListener("click", async () => {
     const unidad_id = app.unidadOrden;
@@ -2014,8 +2028,10 @@
       if (!t) return toast("Elija el transporte.");
       cuerpo.objetivo_unidad_id = t;
     } else if (app.modoOrden === "patrullar") {
-      if (!app.patrullaPunto) return toast("Haga clic en el mapa donde quiere que patrulle.");
-      cuerpo.waypoints = [app.patrullaPunto];
+      const area = parseInt($("o-patrulla-area").value, 10);
+      if (area) cuerpo.zona_id = area;
+      else if (!app.patrullaPunto) return toast("Haga clic en el mapa donde quiere que patrulle.");
+      else cuerpo.waypoints = [app.patrullaPunto];
     } else if (app.modoOrden === "interferir") {
       if (!app.interferenciaPunto) return toast("Haga clic en el mapa en el centro de la zona a interferir.");
       cuerpo.waypoints = [app.interferenciaPunto];
@@ -2081,6 +2097,11 @@
     if (o.tipo === "rumbo") return Logica.textoRumbo(o.detalle);
     if (o.tipo === "interceptar") return Logica.textoIntercepcion(o.detalle, nombreObj);
     if (o.tipo === "despegar") return Logica.textoDespegue(o, app.catalogo && app.catalogo.modelos);
+    if (o.tipo === "patrullar" && o.detalle && o.detalle.includes("zona")) {
+      let z = null;
+      try { z = ((app.data && app.data.zonas) || []).find((x) => x.id === JSON.parse(o.detalle).zona); } catch (_) { /* detalle viejo */ }
+      return `Patrullar el área «${z ? z.nombre || "sin nombre" : "borrada"}»`;
+    }
     if (o.tipo === "patrullar") return `Patrullar (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;
     if (o.tipo === "interferir") return `Interferir sobre (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;
     if (o.tipo === "aterrizar") {
@@ -2706,6 +2727,7 @@
     actualizarAviacion(data);
     if (app.misiones) app.misiones.render(data);
     if (app.pmi) app.pmi.render(data);
+    if (app.zonas) app.zonas.render(data);
     if (app.aerodromos) app.aerodromos.actualizar(data.unidades);
     llenarSelect($("adj-unidad"), data.unidades.map((u) => [u.id, `${u.nombre} (${u.bando})`]));
     if (app.informe && app.informe.activo()) return; // durante la repeticion no se pisa el mapa
@@ -2904,6 +2926,12 @@
       bando: () => (esAlumno() ? app.usuario.rol : app.conduce || null),
     });
     app.pmi.conectar();
+    app.zonas = Zonas.crear({
+      api, toast, rutaEsc, datos: () => app.data, map: () => app.map, rol: () => app.usuario.rol,
+      alDibujar: (b) => { app.dibujando = b; },
+    });
+    app.zonas.conectar();
+    app.capas.zonas = app.zonas.capa;
     app.herramientas = Herramientas.crear({ map: () => app.map, alMedir: (b) => { app.dibujando = b; } });
     Herramientas.crearConvertidor();
     app.herramientas.conectar();

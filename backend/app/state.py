@@ -20,6 +20,7 @@ from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
 from app.engine import misiones as misiones_mod
 from app.engine import pmi as pmi_mod
+from app.engine import zonas as zonas_mod
 from app.engine import objetivos as objetivos_mod
 from app.engine import infraestructura as infra_mod
 from app.engine import personal as personal_mod
@@ -240,6 +241,8 @@ def estado_para(
         # puntos medios de impacto de Inteligencia sobre las pistas enemigas (engine/pmi.py): cada bando, los suyos
         "pmi": pmi_mod.visibles_para(db, escenario, rol),
         "pmi_bases": pmi_mod.bases_conocidas(db, escenario, rol),
+        # areas de patrulla y zonas de exclusion y de no vuelo (engine/zonas.py): las propias y las del director
+        "zonas": zonas_mod.visibles_para(db, escenario, rol),
         "personal": {b: personal_mod.resumen(todas, b) for b in bandos_propios},
         # plantilla de personal por unidad con reservas y milicia, y esfuerzo aereo (engine/toe.py, disponibilidad.py)
         "personal_toe": (partes := {b: toe_mod.partes(todas, escenario, b) for b in bandos_propios}),

@@ -228,7 +228,9 @@
               <p id="o-sitio" class="ayuda preview"></p>
             </div>
             <div id="o-patrullar" hidden>
-              <p class="ayuda">Haga clic en el mapa donde quiere la patrulla. La aeronave vuela hasta allí, orbita sobre la zona (gasta 8 % de combustible por hora) e intercepta a los aviones enemigos que detecte a su alcance. Con combustible crítico regresa sola a la base más cercana.</p>
+              <label class="mini">Dónde<select id="o-patrulla-area"></select></label>
+              <p class="ayuda" id="o-patrulla-ayuda-punto">Haga clic en el mapa donde quiere la patrulla. La aeronave vuela hasta allí, orbita sobre la zona (gasta 8 % de combustible por hora) e intercepta a los aviones enemigos que detecte a su alcance. Con combustible crítico regresa sola a la base más cercana.</p>
+              <p class="ayuda" id="o-patrulla-ayuda-area" hidden>La unidad recorre el área de vértice en vértice y ataca a los enemigos que entran en ella si su doctrina lo permite. Las áreas se dibujan en la tarjeta «Áreas y zonas».</p>
               <p id="o-patrulla-punto" class="ayuda preview"></p>
             </div>
             <div id="o-aterrizar" hidden>
@@ -461,6 +463,7 @@
               <label class="chk"><input type="checkbox" data-causa="combustible"><span>una aeronave con combustible crítico</span></label>
               <label class="chk"><input type="checkbox" data-causa="mision"><span>una misión aérea terminada</span></label>
               <label class="chk"><input type="checkbox" data-causa="intercepcion"><span>una fase nueva de una interceptación</span></label>
+              <label class="chk"><input type="checkbox" data-causa="zona"><span>una intrusión en una zona de exclusión o de no vuelo</span></label>
             </fieldset>
             <div class="grid">
               <label class="mini">Clima
@@ -1036,6 +1039,32 @@
             <ul id="objetivos-lista"></ul>
           </section>
 
+          <section class="tarjeta" id="tarjeta-zonas">
+            <h2>Áreas y zonas</h2>
+            <div id="zona-form">
+              <div class="grid">
+                <label class="mini">Tipo<select id="zona-tipo">
+                  <option value="patrulla">Área de patrulla</option>
+                  <option value="exclusion">Zona de exclusión</option>
+                  <option value="no_vuelo">Zona de no vuelo</option>
+                </select></label>
+                <label class="mini">Nombre<input id="zona-nombre" maxlength="60" placeholder="ej. Sector Norte"></label>
+              </div>
+              <label class="mini" id="zona-bando-fila" hidden>Para<select id="zona-bando">
+                <option value="todos">Todos (la dirección)</option>
+                <option value="azul">Bando Azul</option>
+                <option value="rojo">Bando Rojo</option>
+              </select></label>
+              <label class="chk" id="zona-armas-fila" hidden><input type="checkbox" id="zona-armas"><span>Las armas propias tiran contra quien entre</span></label>
+              <div class="fila">
+                <button type="button" id="zona-dibujar" class="mini">Dibujar en el mapa</button>
+                <button type="button" id="zona-cancelar" class="mini" hidden>Cancelar</button>
+              </div>
+              <p class="ayuda">Un <b>área de patrulla</b> la recorre la unidad que recibe la orden Patrullar sobre ella, y ataca lo que entra si su doctrina lo permite. Quien cruza una <b>zona de exclusión</b> (todo lo que se mueve) o de <b>no vuelo</b> (aeronaves) dispara una alerta.</p>
+            </div>
+            <ul id="zonas-lista" class="zonas-lista"></ul>
+          </section>
+
           <section class="tarjeta">
             <h2>Capas</h2>
             <div class="fila-base-mapa" role="radiogroup" aria-label="Fondo del mapa">
@@ -1076,6 +1105,7 @@
                 </select>
               </label>
               <label><input type="checkbox" data-capa="misiones" checked><span>Misiones aéreas</span></label>
+              <label><input type="checkbox" data-capa="zonas" checked><span>Áreas y zonas</span></label>
             </div>
           </section>
 
@@ -1278,6 +1308,7 @@
   <script src="/static/js/aviacion.js"></script>
   <script src="/static/js/misiones.js"></script>
   <script src="/static/js/pmi.js"></script>
+  <script src="/static/js/zonas.js"></script>
   <script src="/static/js/herramientas.js"></script>
   <script src="/static/js/timeline.js"></script>
   <script src="/static/js/rubrica.js"></script>

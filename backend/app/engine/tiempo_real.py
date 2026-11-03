@@ -52,6 +52,7 @@ from app.engine import ota as ota_mod
 from app.engine import rescate as rescate_mod
 from app.engine import rutas as rutas_mod
 from app.engine import transporte as transporte_mod
+from app.engine import zonas as zonas_mod
 from app.models.aar import Combate, Fotograma, RegistroLogistico
 from app.models.contacto import Contacto
 from app.models.escenario import Escenario
@@ -159,6 +160,8 @@ class Mundo:
     pistas_en: dict = field(default_factory=dict)  # bando -> ultimo segundo simulado en que se sumaron puntos
     # interceptaciones en curso: orden_id -> ultima traza del blanco {lat, lon, t, ve, vn} (engine/interceptacion.py)
     intercepciones: dict = field(default_factory=dict)
+    en_zona: set = field(default_factory=set)  # (zona_id, unidad_id) dentro de una zona de exclusion o de no vuelo
+    patrulla_idx: dict = field(default_factory=dict)  # unidad_id -> proximo vertice de su area de patrulla
 
 
 MUNDOS: dict[int, Mundo] = {}
@@ -181,7 +184,7 @@ class Informe:
 # Causas de pausa automatica (el director elige cuales detienen el reloj) y sus nombres para la pantalla.
 CAUSAS_PAUSA = {"contacto": "Contacto nuevo", "ataque": "Ataque a una unidad propia", "perdida": "Unidad perdida",
                 "combustible": "Combustible crítico", "mision": "Misión terminada",
-                "intercepcion": "Fase de una interceptación"}
+                "intercepcion": "Fase de una interceptación", "zona": "Intrusión en una zona"}
 REPETIR_ALERTA_FUEGO_S = 900.0  # una unidad bajo fuego continuo se vuelve a avisar despues de esto
 
 
@@ -211,6 +214,8 @@ class _Ctx:
         self.bit = _BitacoraEnVivo(self)
         self.perdidas: dict[int, float] = {}
         self.con_pmi: set | None = None  # (bando, base) con PMI de Inteligencia: se lee al primer ataque a una pista
+        self.zonas = {z.id: z for z in zonas_mod.de_escenario(db, esc.id)}  # areas y zonas (engine/zonas.py)
+        self.zona_armada: dict[str, set] = {}  # bando -> intrusos dentro de sus zonas con «armas» (tiran contra ellos)
 
     def releer(self) -> None:
         """Unidades y ordenes en curso (de nuevo despues de que el adversario automatico da ordenes)."""
@@ -252,6 +257,8 @@ class _Ctx:
         """La doctrina de `u` le permite tirar por su cuenta contra `x` ("aire" o "superficie")."""
         if not self.esc.fuego_automatico:
             return False
+        if x.id in self.zona_armada.get(u.bando, ()):
+            return True  # dentro de una zona propia con «armas»: se tira aunque la doctrina las restrinja
         estado = self.doctrina(u)["armas_aire" if dominio == "aire" else "armas_superficie"]
         if estado == "retenido":
             return False
@@ -382,6 +389,11 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
         _poner_ruta(unidad, orden.waypoints)
         if unidad.tipo == "aerea":
             unidad.mision, unidad.mision_lat, unidad.mision_lon = "", None, None
+    elif orden.tipo == "patrullar" and zonas_mod.zona_de_orden(orden):
+        # area de patrulla: la recorre de vertice en vertice (_patrullar_zona) y reacciona a lo que entra
+        unidad.mision, unidad.mision_lat, unidad.mision_lon = "", None, None
+        _poner_ruta(unidad, None)
+        mundo_de(esc.id).patrulla_idx.pop(unidad.id, None)
     elif orden.tipo == "patrullar":
         punto = orden.waypoints[-1]
         unidad.mision, unidad.mision_lat, unidad.mision_lon = "patrulla", punto[0], punto[1]
@@ -584,12 +596,15 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
             _volar_rumbo(ctx, u, orden, h)
         elif orden is not None and orden.tipo == "interceptar":
             _intercepcion(ctx, u, orden, h)
+        elif orden is not None and orden.tipo == "patrullar" and zonas_mod.zona_de_orden(orden):
+            _patrullar_zona(ctx, u, orden, h)
         elif u.ruta_json:
             _mover(ctx, u, orden, h)
         elif u.tipo == "aerea":
             _orbitar(ctx, u, h)
     aeronaves_mod.seguir_portaaviones(ctx.lista)
     transporte_mod.seguir_transporte(ctx.lista)
+    _vigilar_zonas(ctx)
     if ctx.esc.fuego_automatico:
         _interceptar(ctx)
         _antiaerea_generica(ctx, h)
@@ -1076,6 +1091,91 @@ def _atacar(ctx: _Ctx, a: Unidad, orden: Orden, h: float) -> None:
     _fuego_continuo(ctx, a, d, orden, h)
 
 
+def _vigilar_zonas(ctx: _Ctx) -> None:
+    """Zonas de exclusion y de no vuelo (engine/zonas.py): quien entra dispara una alerta (al dueno de la zona, si lo
+    ve; en las del director, al bando del intruso) y, en las zonas con «armas», queda como blanco autorizado."""
+    ctx.zona_armada = {}
+    vigentes = set()
+    for z in ctx.zonas.values():
+        if z.tipo not in ("exclusion", "no_vuelo"):
+            continue
+        poligono = zonas_mod.puntos(z)
+        if len(poligono) < 3:
+            continue
+        for u in ctx.lista:
+            if not zonas_mod.ajena(z, u) or not zonas_mod.afecta(z, u) or not zonas_mod.dentro(u.lat, u.lon, poligono):
+                continue
+            vigentes.add((z.id, u.id))
+            if z.armas and z.bando != "todos":
+                ctx.zona_armada.setdefault(z.bando, set()).add(u.id)
+            if (z.id, u.id) in ctx.mundo.en_zona:
+                continue
+            if z.bando == "todos":
+                texto = f"{u.nombre} entró a la {zonas_mod.nombre(z)} fijada por la dirección del ejercicio."
+                ctx.evento("zona", u.bando, texto, u.lat, u.lon)
+                ctx.alerta("zona", u.bando, texto, u.lat, u.lon, "critica")
+            elif ctx.visible_para(u, z.bando):
+                texto = (f"Intrusión: {_rotulo_contacto(ctx, z.bando, u)} entró a la {zonas_mod.nombre(z)}"
+                         + (": las armas propias tiran contra él." if z.armas else "."))
+                ctx.evento("zona", z.bando, texto, u.lat, u.lon)
+                ctx.alerta("zona", z.bando, texto, u.lat, u.lon, "critica")
+            else:
+                continue  # no se lo ve: se avisara cuando se lo detecte adentro
+    ctx.mundo.en_zona = {k for k in ctx.mundo.en_zona if k in vigentes} | {
+        k for k in vigentes if ctx.zonas[k[0]].bando == "todos" or ctx.visible_para(ctx.unidades[k[1]], ctx.zonas[k[0]].bando)}
+
+
+def _patrullar_zona(ctx: _Ctx, u: Unidad, orden: Orden, h: float) -> None:
+    """Orden «patrullar» sobre un area: recorre el poligono de vertice en vertice y, si entra un enemigo que su bando
+    ve y su doctrina le permite atacar, sale contra el y lo ataca; despues sigue patrullando."""
+    z = ctx.zonas.get(zonas_mod.zona_de_orden(orden))
+    poligono = zonas_mod.puntos(z) if z is not None else []
+    if len(poligono) < 3:
+        ctx.terminar(orden, u, "El área de patrulla ya no existe.", "cancelada")
+        if u.tipo == "aerea":
+            _esperar(u)
+        return
+    clase = catalogo.perfil(u)
+    blancos = []
+    if u.municion > 0:
+        for x in ctx.lista:
+            if x.bando == u.bando or x.estado != "activa" or transporte_mod.embarcada(x) or catalogo.es_misil(x):
+                continue
+            if clase.ataque_vs.get(orders.tipo_efectivo(x), 0.0) <= 0 or not ctx.visible_para(x, u.bando):
+                continue
+            if not zonas_mod.dentro(x.lat, x.lon, poligono):
+                continue
+            if ctx.autoriza(u, x, "aire" if aeronaves_mod.en_vuelo(x) else "superficie"):
+                blancos.append((geo.distancia_km(u.lat, u.lon, x.lat, x.lon), x))
+    if blancos:
+        dist, x = min(blancos, key=lambda b: b[0])
+        alcance = u.alcance_km * ctx.doctrina(u)["distancia_pct"] / 100.0
+        if dist > alcance and u.velocidad_kmh > 0:
+            ve, vn = intercep_mod.velocidad_de(x)
+            plat, plon, _ = intercep_mod.punto_de_mira(u.lat, u.lon, u.velocidad_kmh, x.lat, x.lon, ve, vn)
+            _avanzar(ctx, u, [[plat, plon]], h)
+            return
+        if dist <= alcance and not relieve.fuera_de_techo(u, x):
+            if u.tipo == "aerea":
+                if not (u.recarga_hasta and u.recarga_hasta > ctx.t):
+                    _pasada(ctx, u, x, None, RECARGA_AIRE_AIRE_S if aeronaves_mod.en_vuelo(x) else RECARGA_PASADA_S)
+                else:
+                    _orbitar_sobre(ctx, u, x, h)
+            elif not _puede_disparar(ctx, u):
+                _fuego_continuo(ctx, u, x, None, h)
+            return
+    if u.velocidad_kmh <= 0:
+        return
+    i = ctx.mundo.patrulla_idx.get(u.id)
+    if i is None:  # empieza por el vertice mas cercano
+        i = min(range(len(poligono)), key=lambda k: geo.distancia_km(u.lat, u.lon, *poligono[k]))
+    destino = poligono[i % len(poligono)]
+    mov = _avanzar(ctx, u, [list(destino)], h)
+    if geo.distancia_km(u.lat, u.lon, *destino) <= zonas_mod.LLEGADA_VERTICE_KM or (mov.km_reales <= 0 and mov.nota):
+        i += 1  # al vertice siguiente (si uno no se puede alcanzar, lo saltea)
+    ctx.mundo.patrulla_idx[u.id] = i % len(poligono)
+
+
 def _traza(ctx: _Ctx, orden: Orden, d: Unidad) -> dict:
     """Ultima traza del blanco que tiene el interceptor: posicion, hora y velocidad estimada con dos posiciones
     (como una pista de radar); sin dos posiciones todavia, la de su marcha (engine/interceptacion.py)."""
@@ -1370,7 +1470,8 @@ def _fuego_de_oportunidad(ctx: _Ctx, h: float) -> None:
     enemigo de superficie mas cercano que tiene a su alcance y su bando ve (o tiene identificado)."""
     for u in ctx.lista:
         if (u.estado != "activa" or u.tipo in ("base", "aerea") or u.orden_id is not None or u.ruta_json
-                or transporte_mod.embarcada(u) or ctx.doctrina(u)["armas_superficie"] == "retenido"):
+                or transporte_mod.embarcada(u)
+                or (ctx.doctrina(u)["armas_superficie"] == "retenido" and not ctx.zona_armada.get(u.bando))):
             continue
         clase = catalogo.perfil(u)
         if not any(clase.ataque_vs.get(t, 0.0) > 0 for t in ("terrestre", "naval")) or _puede_disparar(ctx, u):
@@ -1488,7 +1589,8 @@ def _defensa_aerea(ctx: _Ctx) -> None:
         libres = max(1, s.canales) - len(enf)
         orden = ctx.orden_de(bat)
         doct = ctx.doctrina(bat)
-        automatico = ctx.esc.fuego_automatico and bat.fuego_libre is not False and doct["armas_aire"] != "retenido"
+        automatico = ctx.esc.fuego_automatico and bat.fuego_libre is not False and (
+            doct["armas_aire"] != "retenido" or bool(ctx.zona_armada.get(bat.bando)))
         if libres > 0 and (automatico or (orden is not None and orden.tipo == "atacar")):
             quieta = ctx.t - ctx.mundo.movio_en.get(bat.id, -1e9)
             if quieta >= (s.repliegue_min + s.despliegue_min) * 60.0:

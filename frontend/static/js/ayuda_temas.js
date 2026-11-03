@@ -203,6 +203,21 @@
         bando» lo toma de la doctrina del bando. Por defecto: contra aeronaves libre, contra superficie solo con orden.</p>`,
     },
     {
+      id: "zonas", seccion: "Defensa aérea y doctrina", titulo: "Áreas de patrulla y zonas de exclusión o de no vuelo",
+      claves: "zona zonas area areas de patrulla exclusion no vuelo poligono dibujar intrusion intruso armas libres sector referencia",
+      texto: `<p>En la tarjeta <b>Áreas y zonas</b> (panel derecho) elija el tipo, escriba un nombre y pulse <b>Dibujar en el
+        mapa</b>: clic en cada vértice y, para terminar, clic en el primero. El director las dibuja para todos o para un
+        bando; cada bando, las suyas (el otro bando no las ve).</p>
+        <ul><li><b>Área de patrulla</b>: elija una unidad (aeronave, buque o tropa), orden <b>Patrullar</b> y, en «Dónde», el
+        área. La unidad la recorre de vértice en vértice y ataca a los enemigos que entran en ella si su doctrina lo permite.</li>
+        <li><b>Zona de exclusión</b>: nadie ajeno debe entrar (aeronaves, buques ni tropas). <b>Zona de no vuelo</b>: ninguna
+        aeronave ajena debe volar sobre ella.</li></ul>
+        <p>Quien cruza una zona de exclusión o de no vuelo dispara una alerta (al dueño de la zona si lo ve; en las de la
+        dirección, al bando del intruso), y la pausa automática si el director la eligió. Con <b>«Las armas propias tiran
+        contra quien entre»</b>, la antiaérea, las patrullas y las unidades al alcance le tiran aunque la doctrina tenga las
+        armas restringidas o retenidas.</p>`,
+    },
+    {
       id: "defensa-aerea", seccion: "Defensa aérea y doctrina", titulo: "Radares y defensa antiaérea",
       claves: "defensa aerea antiaerea misiles radar alerta temprana derribar interceptar salva alcance techo relieve fuego libre sistema",
       texto: `<p>Los <b>radares</b> y la antiaérea guiada detectan aeronaves según su alcance, el relieve (las montañas tapan) y la

@@ -417,6 +417,21 @@ class OrdenCreate(BaseModel):
     # solo para "interceptar" (engine/interceptacion.py): identificar y seguir, identificar y neutralizar, o neutralizar
     # sin esperar la identificacion (con las armas en estado restringido la doctrina exige identificar igual)
     accion_intercepcion: Literal["seguir", "neutralizar", "directo"] | None = None
+    # solo para "patrullar": area de patrulla (engine/zonas.py) en lugar de la orbita sobre un punto
+    zona_id: int | None = None
+
+
+class ZonaIn(BaseModel):
+    tipo: Literal["patrulla", "exclusion", "no_vuelo"]
+    nombre: str = Field(default="", max_length=60)
+    puntos: list[tuple[float, float]] = Field(min_length=3, max_length=61)  # [[lat, lon], ...]
+    armas: bool = False
+    bando: Literal["azul", "rojo", "todos"] | None = None  # solo el director elige (por defecto, para todos)
+
+
+class ZonaCambio(BaseModel):
+    nombre: str | None = Field(default=None, max_length=60)
+    armas: bool | None = None
 
 
 class IntercepcionIn(BaseModel):

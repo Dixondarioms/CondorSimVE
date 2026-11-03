@@ -13,6 +13,7 @@ from app.engine import guerra_electronica as ge_mod
 from app.engine import interceptacion as intercep_mod
 from app.engine import misiles as misiles_mod
 from app.engine import transporte as transporte_mod
+from app.engine import zonas as zonas_mod
 from app.engine import misiones as misiones_mod
 from app.engine import rutas as rutas_mod
 from app.engine import tiempo_real
@@ -23,6 +24,7 @@ from app.models.obra import Obra
 from app.models.orden import Orden
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
+from app.models.zona import Zona
 from app.terreno import get_terreno
 from app.ws_manager import manager
 
@@ -72,8 +74,16 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
 
     clase = catalogo.perfil(unidad)
     auth.exigir_funcion(usuario, puestos.funcion_de_orden(unidad, payload.tipo, clase))
-    if payload.tipo in ("patrullar", "aterrizar") and unidad.tipo != "aerea":
-        raise HTTPException(status_code=400, detail="Solo las aeronaves pueden patrullar o aterrizar")
+    area = None
+    if payload.tipo == "patrullar" and payload.zona_id is not None:
+        area = db.get(Zona, payload.zona_id)
+        if area is None or area.escenario_id != esc.id or not zonas_mod.visible(area, usuario.rol) or area.tipo != "patrulla":
+            raise HTTPException(status_code=404, detail="Elija un área de patrulla de su bando o de la dirección")
+        if unidad.velocidad_kmh <= 0:
+            raise HTTPException(status_code=400, detail="Esta unidad no puede moverse")
+    if (payload.tipo == "aterrizar" or (payload.tipo == "patrullar" and area is None)) and unidad.tipo != "aerea":
+        raise HTTPException(status_code=400, detail="Solo las aeronaves pueden aterrizar u orbitar sobre un punto: "
+                                                    "las demás unidades patrullan un área")
     if unidad.en_tierra and unidad.espera_restante > 0 and payload.tipo in ("mover", "atacar", "patrullar", "interceptar"):
         raise HTTPException(
             status_code=400,
@@ -101,6 +111,10 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         motivo = aeronaves_mod.error_de_aterrizaje(unidad, base, todas)
         if motivo:
             raise HTTPException(status_code=400, detail=motivo)
+    elif payload.tipo == "patrullar" and area is not None:
+        payload.waypoints = [zonas_mod.centro(zonas_mod.puntos(area))]
+        if unidad.tipo == "aerea" and unidad.combustible <= aeronaves_mod.COMBUSTIBLE_CRITICO:
+            raise HTTPException(status_code=400, detail="Combustible insuficiente para patrullar: aterrice y reabastezca")
     elif payload.tipo == "patrullar":
         if len(payload.waypoints) != 1:
             raise HTTPException(status_code=400, detail="Indique un unico punto de patrulla")
@@ -233,6 +247,7 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
             else json.dumps({"modo": payload.rumbo_modo, "grados": payload.rumbo_grados,
                              "sentido": payload.rumbo_sentido or "corto"}) if payload.tipo == "rumbo"
             else intercep_mod.codificar(payload.accion_intercepcion) if payload.tipo == "interceptar"
+            else json.dumps({"zona": payload.zona_id}) if payload.tipo == "patrullar" and payload.zona_id is not None
             else payload.detalle or "" if payload.tipo == "construir" else ""
         ),
         turno_emitida=esc.turno_actual,
