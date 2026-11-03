@@ -134,9 +134,15 @@ def simular(unidad, waypoints: list, terreno: Terreno, clima: str = "despejado",
         return mov
 
     clase = catalogo.obtener(unidad.clase, unidad.tipo)
+    from app.engine import sistemas  # importacion tardia: propulsion dañada (engine/sistemas.py)
+
+    propulsion = sistemas.factor(unidad, "propulsion")
+    if propulsion <= 0:
+        mov.nota = f"{sistemas.nombre(unidad, 'propulsion')} fuera de servicio: la unidad no puede moverse."
+        return mov
     presupuesto = (
         unidad.velocidad_kmh * horas * clima_mod.factor_movimiento(clima, unidad.tipo, unidad.lat, unidad.lon)
-        * (1.0 - clase.penalizacion_movilidad)
+        * (1.0 - clase.penalizacion_movilidad) * propulsion
     )
     # las aeronaves gastan segun su perfil de vuelo: a baja cota rinden menos kilometros por punto de combustible
     autonomia = max(unidad.autonomia_km, 1e-9) / relieve.factor_consumo(unidad)
@@ -197,8 +203,13 @@ def tiempo_recorrido(unidad, waypoints: list, terreno: Terreno, clima: str = "de
         salida["bloqueo"] = "La unidad no puede moverse." if waypoints else ""
         return salida
     clase = catalogo.obtener(unidad.clase, unidad.tipo)
+    from app.engine import sistemas  # importacion tardia
+
     velocidad = (unidad.velocidad_kmh * clima_mod.factor_movimiento(clima, unidad.tipo, unidad.lat, unidad.lon)
-                 * (1.0 - clase.penalizacion_movilidad))
+                 * (1.0 - clase.penalizacion_movilidad) * sistemas.factor(unidad, "propulsion"))
+    if velocidad <= 0:
+        salida["bloqueo"] = "Propulsión fuera de servicio: la unidad no puede moverse."
+        return salida
     autonomia = max(unidad.autonomia_km, 1e-9) / relieve.factor_consumo(unidad)
     salida["km_combustible"] = round(max(0.0, unidad.combustible) / 100.0 * autonomia, 1)
     aerea = unidad.tipo == "aerea"

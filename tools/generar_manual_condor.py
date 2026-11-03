@@ -395,7 +395,18 @@ def construir(salida: Path) -> None:
             "altura a la que vuelan. La antiaérea dispara sola contra las aeronaves enemigas a su alcance, según la doctrina. "
             "En la unidad seleccionada de un sistema antiaéreo se ven sus armas con el alcance, la altura y la probabilidad de "
             "impacto (figura del punto 2.6), y se puede apagar o encender su radar. Los conduce A-3 D/A.")]
-    h += [H2("6.3 Áreas de patrulla y zonas de exclusión o de no vuelo")]
+    h += [H2("6.3 Daño por sistemas y control de averías")]
+    h += [Table([[figura("sistemas", "Panel de abajo: sistemas de una unidad dañada.", ancho=6.4 * cm, alto_max=9 * cm, celda=True),
+                  [P("Los buques y las unidades de tierra tienen cuatro <b>sistemas</b> que se dañan por separado (panel de abajo):"),
+                   Bul(["<b>Sensores</b>: con daño detecta menos; sin ellos, solo a ojo.",
+                        "<b>Armas</b>: su fuego y su defensa aérea pierden efecto en proporción.",
+                        "<b>Propulsión</b> o movilidad: va más lento; fuera de servicio, queda inmóvil.",
+                        "<b>Comunicaciones</b>: sus órdenes tardan más en llegar."]),
+                   P("Cada punto de fuerza perdido puede causar un impacto crítico en un sistema (unos 25 puntos dañan uno en "
+                     "promedio); al 75 % queda <b>fuera de servicio</b> y llega una alerta. El <b>control de averías</b> repara "
+                     "unos 10 puntos por hora; las averías graves solo se terminan de reparar junto a un puerto o base propia.")]]],
+                colWidths=[6.7 * cm, ANCHO_TEXTO - 6.7 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += [H2("6.4 Áreas de patrulla y zonas de exclusión o de no vuelo")]
     h += [Table([[figura("zonas", "Tarjeta «Áreas y zonas».", ancho=5.4 * cm, alto_max=11 * cm, celda=True),
                   [P("En la tarjeta <b>Áreas y zonas</b> (panel derecho) elija el tipo, escriba un nombre y pulse <b>Dibujar en "
                      "el mapa</b>: clic en cada vértice y, para terminar, clic en el primero. El director las dibuja para todos o "

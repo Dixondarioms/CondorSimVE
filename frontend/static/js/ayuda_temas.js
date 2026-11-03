@@ -233,6 +233,20 @@
         bando» lo toma de la doctrina del bando. Por defecto: contra aeronaves libre, contra superficie solo con orden.</p>`,
     },
     {
+      id: "sistemas", seccion: "Defensa aérea y doctrina", titulo: "Daño por sistemas y control de averías",
+      claves: "sistemas daño averia averias control de averias sensores radar sonar armas propulsion movilidad comunicaciones fuera de servicio reparar puerto",
+      texto: `<p>Los buques y las unidades de tierra tienen cuatro sistemas que se dañan por separado; se ven en el panel de
+        abajo, en <b>Sistemas</b>:</p>
+        <ul><li><b>Sensores</b> (radar y sonar): con daño detecta menos; sin ellos, solo a ojo.</li>
+        <li><b>Armas</b>: su fuego (y la defensa aérea) pierde efecto en proporción.</li>
+        <li><b>Propulsión</b> (o movilidad): va más lento; fuera de servicio, queda inmóvil.</li>
+        <li><b>Comunicaciones</b>: sus órdenes tardan más en llegar.</li></ul>
+        <p>Cada punto de fuerza que pierde puede causar un impacto crítico en un sistema (perder unos 25 puntos daña uno en
+        promedio). Un sistema al 75 % de daño queda <b>fuera de servicio</b> y llega una alerta. El <b>control de averías</b>
+        repara unos 10 puntos por hora; las averías graves (más del 40 %) solo se terminan de reparar junto a un puerto,
+        depósito o base propia.</p>`,
+    },
+    {
       id: "zonas", seccion: "Defensa aérea y doctrina", titulo: "Áreas de patrulla y zonas de exclusión o de no vuelo",
       claves: "zona zonas area areas de patrulla exclusion no vuelo poligono dibujar intrusion intruso armas libres sector referencia",
       texto: `<p>En la tarjeta <b>Áreas y zonas</b> (panel derecho) elija el tipo, escriba un nombre y pulse <b>Dibujar en el

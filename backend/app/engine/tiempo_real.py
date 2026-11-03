@@ -53,6 +53,7 @@ from app.engine import ota as ota_mod
 from app.engine import rescate as rescate_mod
 from app.engine import rutas as rutas_mod
 from app.engine import transporte as transporte_mod
+from app.engine import sistemas as sistemas_mod
 from app.engine import trafico as trafico_mod
 from app.engine import zonas as zonas_mod
 from app.models.aar import Combate, Fotograma, RegistroLogistico
@@ -476,6 +477,7 @@ def demora_de_orden(db: Session, esc: Escenario, unidad: Unidad, tipo: str) -> f
 
     todas = db.query(Unidad).filter(Unidad.escenario_id == esc.id).all()
     extra = infra_mod.demora_extra_pct(todas, unidad.bando) + trans_mod.demora_extra_pct(esc, unidad.bando, esc.turno_actual)
+    extra += sistemas_mod.DEMORA_COMUNICACIONES_PCT * sistemas_mod.dano(unidad, "comunicaciones") / 100.0
     p = orders.prob_demora(esc, unidad, ge_mod.contexto(db, esc), extra)
     if p <= 0:
         return 0.0
@@ -546,6 +548,12 @@ def _logistica(ctx: _Ctx) -> None:
     if ctx.t - m.logistica_en >= LOGISTICA_CADA_S:
         fraccion = (ctx.t - m.logistica_en) / 3600.0
         m.logistica_en = ctx.t
+        for u in ctx.lista:  # control de averias de los sistemas dañados (engine/sistemas.py)
+            if u.estado == "activa" and u.sistemas_json:
+                for s in sistemas_mod.reparar(u, fraccion, ctx.lista):
+                    ctx.evento("logistica", u.bando, f"{u.nombre}: el control de averías volvió a poner en servicio "
+                                                     f"{sistemas_mod.nombre(u, s).lower()}.")
+                ctx.informe.cambios = True
         orders._reabastecer(ctx.lista, ctx.bit, {b: infra_mod.factor_combustible(ctx.lista, b) for b in ("azul", "rojo")},
                             fraccion)
     if ctx.t - m.cisternas_en >= CISTERNA_CADA_S:
@@ -919,7 +927,7 @@ def _resolver(ctx: _Ctx, a: Unidad, d: Unidad, fraccion: float, clave: int, part
         cobertura_aerea_atacante=orders._tiene_cobertura_aerea(a.bando, a.lat, a.lon, ctx.lista),
         bono_atacante=orders._bono_apoyo(a, apoyos, ctx.unidades),
         bono_defensor=orders._bono_apoyo(d, apoyos, ctx.unidades),
-        factor_ataque=clase_a.ataque_vs.get(t_d, 1.0) * catalogo.factor_grupo(a)
+        factor_ataque=clase_a.ataque_vs.get(t_d, 1.0) * catalogo.factor_grupo(a) * sistemas_mod.factor(a, "armas")
         * (ge_mod.FACTOR_ANTIAEREA if aaa_interferida else 1.0) * (ge_mod.FACTOR_TIRO_OPTICO if aaa_optica else 1.0)
         * relieve.factor_portatil(a, d) * ota_mod.factor_ataque(a, d) * apresto_mod.factor_adiestramiento(ctx.esc, a.bando)
         * apoyo_mod.factor_control(a, d, ctx.lista, lambda x, b: ctx.visible_para(x, b)),
@@ -1687,6 +1695,7 @@ def _defensa_aerea(ctx: _Ctx) -> None:
                     tripulada = not (cx.dron or cx.misil or cx.se_consume)
                     pk, efectos, _ = da_mod.pk_efectivo(arma, d, interferida=interferida, noche=noche, tripulada=tripulada,
                                                         firma=catalogo.firma(d), altura_m=altura)
+                    pk *= sistemas_mod.factor(bat, "armas")  # armas dañadas (engine/sistemas.py)
                     cercano = dist <= arma.alcance_max_km * da_mod.ZONA_CERCANA
                     por_salva = min(listos[arma.id], arma.por_blanco if cercano or arma.tipo == "canon" else 1)
                     if doct["disparos_por_blanco"] and arma.tipo != "canon":  # la doctrina fija los misiles por salva
@@ -1713,6 +1722,11 @@ def _aplicar_perdidas(ctx: _Ctx) -> None:
         if u.estado != "activa":
             continue
         u.fuerza = max(0.0, u.fuerza - perdida)
+        if u.fuerza > 0.05:  # el impacto daña uno o dos de sus sistemas (engine/sistemas.py)
+            for s in sistemas_mod.recibir(u, perdida, ctx.esc.semilla or 0, ctx.t):
+                texto = f"{u.nombre}: {sistemas_mod.nombre(u, s).lower()} fuera de servicio."
+                ctx.evento("combate", u.bando, texto, u.lat, u.lon)
+                ctx.alerta("ataque", u.bando, texto, u.lat, u.lon, "critica")
         if u.fuerza <= 0.05:
             u.fuerza, u.estado = 0.0, "destruida"
             ctx.terminar(ctx.orden_de(u), u, "La unidad quedó fuera de combate.")

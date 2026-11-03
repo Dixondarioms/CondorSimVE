@@ -51,6 +51,11 @@ def radio_efectivo(detector, objetivo, terreno: Terreno, clima: str = "despejado
     if ge is not None and ge.interferido(detector):
         factor = ge_mod.FACTOR_RADAR if clase_d.solo_aereo else ge_mod.FACTOR_SENSOR
         radio = max(min(radio, ge_mod.RADIO_VISUAL_KM), radio * factor)
+    from app.engine import sistemas  # importacion tardia: sensores dañados (engine/sistemas.py)
+
+    sanos = sistemas.factor(detector, "sensores")
+    if sanos < 1.0:  # con los sensores dañados ve menos; sin ellos, a ojo
+        radio = max(min(radio, ge_mod.RADIO_VISUAL_KM), radio * sanos)
     return radio
 
 

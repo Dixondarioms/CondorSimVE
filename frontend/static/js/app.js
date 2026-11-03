@@ -1666,6 +1666,17 @@
 
   const turnosTxt = (n) => (n > 0 ? `${n} turno${n === 1 ? "" : "s"}` : "lista");
 
+  /** Daño por sistemas de un buque o una unidad de tierra (engine/sistemas.py): lo que funciona de cada sistema. */
+  function bloqueSistemas(u, oculto) {
+    const s = !oculto && u.sistemas;
+    if (!s) return "";
+    const filas = Object.values(s).map((x) => barra(x.fuera ? `${escapar(x.nombre)} · fuera de servicio` : escapar(x.nombre), 100 - x.dano));
+    const daniado = Object.values(s).some((x) => x.dano > 0);
+    return `<div class="pu-sistemas"><span class="pu-etq">Sistemas</span>${filas.join("")}`
+      + (daniado ? '<p class="nota">Control de averías: repara unos 10 puntos por hora (las averías graves, solo en un puerto o base propia).</p>' : "")
+      + "</div>";
+  }
+
   /** Carga de armamento de una aeronave (engine/armas.py): cada arma con su tipo, alcance, Pk y lo que le queda. */
   function tablaCarga(u, oculto) {
     const c = !oculto && u.armamento;
@@ -1816,6 +1827,7 @@
         ? barra("Capacidad operativa", u.fuerza)
         : barra("Fuerza", u.fuerza) + barra("Combustible", u.combustible) + barra("Munición", u.municion))
       + (cl && cl.carga_max ? barra("Suministros del convoy", u.carga) : "")
+      + bloqueSistemas(u, oculto)
       + (cl && cl.stock_max && !oculto && u.stock_combustible !== null && u.stock_combustible !== undefined
         ? barra("Combustible en depósito", Logica.pctStock(u.stock_combustible, cl)) + barra("Munición en depósito", Logica.pctStock(u.stock_municion, cl))
         : "");

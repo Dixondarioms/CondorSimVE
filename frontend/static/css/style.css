@@ -728,3 +728,7 @@ fieldset.pausa-auto legend { font-size: 12px; color: var(--texto-sec); padding: 
 
 /* bando neutral (trafico civil y paises ajenos; engine/trafico.py) */
 summary.neutral, h4.neutral { color: #7bd389; }
+
+/* daño por sistemas (panel inferior; engine/sistemas.py) */
+.pu-sistemas { margin-top: 6px; }
+.pu-sistemas .barra { margin: 2px 0; }

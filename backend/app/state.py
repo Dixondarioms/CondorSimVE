@@ -22,6 +22,7 @@ from app.engine import misiones as misiones_mod
 from app.engine import pmi as pmi_mod
 from app.engine import zonas as zonas_mod
 from app.engine import armas as armas_mod
+from app.engine import sistemas as sistemas_mod
 from app.engine import objetivos as objetivos_mod
 from app.engine import infraestructura as infra_mod
 from app.engine import personal as personal_mod
@@ -50,7 +51,7 @@ BANDOS = ("azul", "rojo")
 # De una unidad enemiga detectada solo se conoce lo que se ve desde afuera.
 CAMPOS_OCULTOS = (
     "fuerza", "velocidad_kmh", "alcance_km", "deteccion_km", "combustible", "municion", "autonomia_km",
-    "carga", "armamento", "armamento_texto", "existencias_armas", "recarga_restante", "despliegue_restante", "modelo", "aeronaves",
+    "carga", "armamento", "armamento_texto", "existencias_armas", "sistemas", "recarga_restante", "despliegue_restante", "modelo", "aeronaves",
     "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id",
     "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios",
     "transporte_id", "personal_inicial", "personal_actual", "sistema_da", "pista_largo_m", "pista_util_m", "recorrido",
@@ -195,6 +196,7 @@ def estado_para(
         d["armamento"] = armas_mod.datos(u) if u.tipo == "aerea" else None
         d["armamento_texto"] = armas_mod.texto(u) if d["armamento"] else ""
         d["existencias_armas"] = armas_mod.resumen_existencias(u, unidades) if armas_mod.deposito_de(u) else None
+        d["sistemas"] = sistemas_mod.publico(u)  # daño por sistemas de buques y unidades de tierra
         if es_bando(rol) and u.bando != rol:
             for oculto in CAMPOS_OCULTOS:
                 d[oculto] = None

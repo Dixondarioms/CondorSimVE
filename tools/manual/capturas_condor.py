@@ -313,6 +313,20 @@ def trafico(n: Nav) -> None:
     n.pestana("fuerzas")
 
 
+def sistemas(n: Nav) -> None:
+    """Sistemas de una unidad con averias (la COPIA de la base se edita antes con tools: ver la nota de abajo)."""
+    n.como("az.cmdte")
+    nombre = "1.er Batallón de Asalto Aéreo (Echo)"
+    n.elegir(nombre)
+    n.pausa(2)
+    n.js("const c = document.querySelector('.pu-principal'); if (c) c.scrollIntoView({block: 'start'});"
+         " const s = document.querySelector('.pu-sistemas'); if (s) s.scrollIntoView({block: 'end'});")
+    n.pausa(1)
+    r = n.js("(() => { const s = document.querySelector('.pu-principal'); const b = s.getBoundingClientRect();"
+             " return {x: b.left, y: b.top, w: b.width, h: b.height}; })()")
+    guardar(n, "sistemas", r, margen=4)
+
+
 def doctrina(n: Nav) -> None:
     n.pestana("fuerzas")
     n.js("const d = document.getElementById('sec-doctrina'); d.querySelectorAll('details').forEach((x) => x.open = true); d.scrollIntoView({block: 'start'})")
@@ -438,7 +452,7 @@ def videowall(n: Nav) -> None:
     n.tecla("Escape", 27)
 
 
-ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, doctrina, misiones,
+ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, doctrina, misiones,
          situacion, tiem, consola, capas, graficos, mapas, ayuda, informe, en_marcha, bando, videowall]
 
 
@@ -452,7 +466,7 @@ def main() -> int:
             if pedidas and f.__name__ not in pedidas:
                 continue
             try:
-                if f not in (acceso, despegue, orden_mover, interceptar, zonas, carga, misiones, bando):
+                if f not in (acceso, despegue, orden_mover, interceptar, zonas, carga, sistemas, misiones, bando):
                     n.como("director")
                 f(n)
                 if f is acceso:

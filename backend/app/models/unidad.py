@@ -76,6 +76,8 @@ class Unidad(Base):
     armamento_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     # bases aereas y buques que operan aeronaves: existencias de armas por codigo de la OTA (engine/armas.py)
     existencias_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # buques y unidades de tierra: % de daño de sensores, armas, propulsion y comunicaciones (engine/sistemas.py)
+    sistemas_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # bases aereas: largo de la pista fijado por el instructor (None = el del plano del aerodromo o el por defecto)
     pista_m: Mapped[float | None] = mapped_column(Float, nullable=True)
