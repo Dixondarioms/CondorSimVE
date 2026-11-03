@@ -173,11 +173,16 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
                     "sus existencias junto a un puerto propio. Armas propias debiles: necesita escolta"),
     Clase("submarino", "Submarino", "naval", "U", "SC----", 35, 30, 25, 6000, _atk(0.0, 0.0, 1.6), 1.0,
           movilidad="naval", firma=0.25, lanza_misiles=True,
-          armamento="Torpedos contra buques y misiles de crucero. Sumergido, se lo detecta a un cuarto de la "
-                    "distancia. No puede atacar aeronaves"),
+          armamento="Torpedos contra buques y submarinos (30 km) y misiles de crucero a cota periscópica. Sumergido solo "
+                    "lo detecta el sonar (a cota periscópica, también un radar o un vigía a menos de 8 km); al atacar se "
+                    "delata. No puede atacar aeronaves"),
     Clase("buque_desembarco", "Buque de desembarco anfibio", "naval", "S", "CALS--", 35, 10, 25, 5000,
           _atk(0.4, 0.2, 0.2), 0.9, movilidad="naval",
           armamento="Transporte anfibio de tropas y vehiculos con armas de autodefensa debiles: necesita escolta"),
+    Clase("torpedo", "Torpedo", "naval", "U", "WT----", 75, 1, 0, 50, _atk(0.0, 0.0, 2.2), 0.2, "",
+          movilidad="naval", firma=0.4, se_consume=True, misil=True,
+          armamento="Torpedo en recorrido hacia su blanco (engine/asw.py): navega solo y lo golpea al llegar; si no lo "
+                    "alcanza en su autonomía, se pierde"),
     # ---- trafico civil (engine/trafico.py) ----
     Clase("buque_mercante", "Buque mercante", "naval", "S", "XM----", 28, 0, 0, 20000, _atk(0.0, 0.0, 0.0), 0.8,
           "", movilidad="naval", civil=True,
@@ -244,7 +249,8 @@ def es_portaaviones(unidad) -> bool:
 
 
 def es_misil(unidad) -> bool:
-    return unidad.tipo == "aerea" and obtener(getattr(unidad, "clase", None), unidad.tipo).misil
+    """Arma autoguiada en recorrido: misil de crucero (aereo) o torpedo (naval). No admite ordenes."""
+    return obtener(getattr(unidad, "clase", None), unidad.tipo).misil
 
 
 # ---------------------------------------------------------------------------------------------------------

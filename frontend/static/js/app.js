@@ -657,6 +657,7 @@
     c.meteorologia = L.layerGroup().addTo(map);
     c.misiones = L.layerGroup().addTo(map);
     c.aerovias = L.layerGroup().addTo(map); // aerovias del trafico civil (engine/trafico.py)
+    c.asw = L.layerGroup().addTo(map); // sonoboyas y sonar de inmersion propios (engine/asw.py)
     app.rendererEstelas = L.canvas({ padding: 0.3 });
     app.meteo = ClimaMapa.crear({ L, mapa: map, capa: c.meteorologia, etiqueta: Logica.etiquetaClima, texto: Logica.textoZonaClima, escapar });
     try { if (localStorage.getItem("condor.vistaClima") === "satelite") app.meteo.fijarVista("satelite", 0); } catch (_) { /* sin almacenamiento */ }
@@ -837,6 +838,16 @@
     if (esAlumno() && app.modoOrden === "patrullar" && app.unidadOrden && !$("o-patrulla-area").value) {
       app.patrullaPunto = [lat, lng];
       dibujarPatrulla();
+      return;
+    }
+    if (esAlumno() && (app.modoOrden === "sonoboyas" || app.modoOrden === "sonar") && app.unidadOrden) {
+      app.puntoAsw = [lat, lng];
+      const g = app.capas.preview;
+      g.clearLayers();
+      const u = app.porId.get(app.unidadOrden);
+      if (u) L.polyline([[u.lat, u.lon], app.puntoAsw], { color: "#ffd166", weight: 3, dashArray: "9 7", interactive: false }).addTo(g);
+      L.circle(app.puntoAsw, { radius: (app.modoOrden === "sonar" ? 12 : 14) * 1000, color: "#48cae4", weight: 1.5, dashArray: "4 5", fillOpacity: 0.06, interactive: false }).addTo(g);
+      if (app.data) actualizarNuevaOrden(app.data);
       return;
     }
     if (esAlumno() && app.modoOrden === "interferir" && app.unidadOrden) {
@@ -1541,7 +1552,7 @@
     if (esAlumno()) {
       const propia = u && u.bando === rol;
       const objetivo = $("o-objetivo");
-      if (origen === "mapa" && ["atacar", "lanzar", "interceptar"].includes(app.modoOrden) && !propia && u && u.estado === "activa") {
+      if (origen === "mapa" && ["atacar", "lanzar", "interceptar", "torpedo"].includes(app.modoOrden) && !propia && u && u.estado === "activa") {
         objetivo.value = String(id);
         if (app.modoOrden === "interceptar") app.intercepcion.clave = "";
       } else if (origen === "mapa" && app.modoOrden === "apoyar" && propia && app.unidadOrden && id !== app.unidadOrden && u.tipo !== "base") {
@@ -1861,6 +1872,11 @@
           `<button type="button" class="mini ${p === u.perfil_actual ? "primario" : "secundario"}" data-perfil="${p}" title="${escapar(Logica.PERFILES_VUELO[p].ayuda)}">${escapar(Logica.PERFILES_VUELO[p].nombre)}</button>`).join("")}</div>`
           + `<p class="ayuda">${escapar(Logica.PERFILES_VUELO[u.perfil_actual] ? Logica.PERFILES_VUELO[u.perfil_actual].ayuda : "")} Rige de inmediato.</p>`
         : "")
+      + (!oculto && u.profundidad && u.estado === "activa" && app.porId.get(app.seleccion) && puedeDefensa(u)
+        ? `<div class="perfil-vuelo" role="group" aria-label="Profundidad"><span>Profundidad</span>${Logica.PROFUNDIDADES.map(([p, n]) =>
+          `<button type="button" class="mini ${p === u.profundidad ? "primario" : "secundario"}" data-profundidad="${p}">${n}</button>`).join("")}</div>`
+          + `<p class="ayuda">${u.profundidad === "profunda" ? "A profundidad solo lo oye el sonar, y menos; no puede lanzar misiles." : "A cota periscópica un radar o un vigía lo ven a menos de 8 km; puede lanzar misiles."} Al atacar se delata.</p>`
+        : "")
       + (esInstructor() && app.porId.get(app.seleccion) ? '<button id="btn-eliminar-unidad" class="peligro mini" type="button">Eliminar unidad del escenario</button>' : "");
     // la columna de la foto no se toca entre redibujos (cada estado nuevo): si se la saca de la pagina aunque sea un
     // instante, el navegador cancela la descarga y la foto nunca llega a verse
@@ -1886,6 +1902,9 @@
     });
     const selArma = $("sel-arma-da");
     if (selArma) selArma.addEventListener("change", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { arma: selArma.value })));
+    cont.querySelectorAll("[data-profundidad]").forEach((b) => b.addEventListener("click", () => {
+      if (b.dataset.profundidad !== u.profundidad) enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/profundidad`), { profundidad: b.dataset.profundidad }));
+    }));
     cont.querySelectorAll("[data-perfil]").forEach((b) => b.addEventListener("click", () => {
       if (b.dataset.perfil !== u.perfil_actual) enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/perfil`), { perfil_vuelo: b.dataset.perfil }));
     }));
@@ -1966,6 +1985,14 @@
       if (sel.dataset.modelo !== u.modelo) { llenarSelect(sel, opcionesCarga); sel.dataset.modelo = u.modelo || ""; }
       if (actual && opcionesCarga.some(([v]) => v === actual) && document.activeElement !== sel) sel.value = actual;
     }
+    // guerra antisubmarina (engine/asw.py)
+    const torpedo = Logica.alcanceTorpedo(u, app.catalogo) > 0;
+    const boyas = Logica.esAvionAsw(u, app.catalogo);
+    const sonar = Logica.esHeloAsw(u, app.catalogo);
+    $("modo-torpedo").hidden = !torpedo;
+    $("modo-sonoboyas").hidden = !boyas;
+    $("modo-sonar").hidden = !sonar;
+    if ((app.modoOrden === "torpedo" && !torpedo) || (app.modoOrden === "sonoboyas" && !boyas) || (app.modoOrden === "sonar" && !sonar)) app.modoOrden = "mover";
     const intercepta = !!u && (u.tipo === "aerea" || u.tipo === "naval") && !Logica.esMisil(u);
     $("modo-interceptar").hidden = !intercepta;
     if (app.modoOrden === "interceptar" && !intercepta) app.modoOrden = "mover";
@@ -1994,6 +2021,14 @@
     $("o-rumbo").hidden = app.modoOrden !== "rumbo";
     if (app.modoOrden === "rumbo") dibujarRumbo();
     $("o-interceptar").hidden = app.modoOrden !== "interceptar";
+    $("o-torpedo").hidden = app.modoOrden !== "torpedo";
+    $("o-asw").hidden = app.modoOrden !== "sonoboyas" && app.modoOrden !== "sonar";
+    if (app.modoOrden === "sonoboyas" || app.modoOrden === "sonar") {
+      $("o-asw-ayuda").textContent = app.modoOrden === "sonoboyas"
+        ? "Haga clic en el mapa donde sembrar: el avión vuela hasta allí y deja 4 sonoboyas en cuadro que escuchan submarinos a 10 km durante 4 horas."
+        : "Haga clic en el mapa: el helicóptero vuela hasta allí, queda en vuelo estacionario y escucha con el sonar calado a 12 km mientras mantenga la orden.";
+      $("o-asw-punto").textContent = app.puntoAsw ? `Punto: ${app.puntoAsw[0].toFixed(3)}, ${app.puntoAsw[1].toFixed(3)}.` : "Aún no eligió el punto.";
+    }
     if (!$("o-intercepcion-accion").options.length) llenarSelect($("o-intercepcion-accion"), Logica.ACCIONES_INTERCEPCION);
     if (app.modoOrden === "aterrizar" && u) {
       const opciones = Logica.opcionesDeAterrizaje(u, data.unidades);
@@ -2016,11 +2051,13 @@
       const carga = Logica.aBordo(u, data.unidades).map((x) => x.nombre).join(", ");
       $("o-desembarcar-info").textContent = `A bordo: ${carga}. ${app.waypoints.length ? `Punto de desembarco: ${app.waypoints[app.waypoints.length - 1].map((v) => v.toFixed(3)).join(", ")}.` : "Marque la ruta y el punto de desembarco en el mapa."}`;
     }
-    if (["atacar", "apoyar", "lanzar", "interceptar"].includes(app.modoOrden)) {
+    if (["atacar", "apoyar", "lanzar", "interceptar", "torpedo"].includes(app.modoOrden)) {
       const lista = Logica.objetivosDisponibles(data.unidades, app.usuario.rol, app.modoOrden, app.unidadOrden);
       llenarSelect($("o-objetivo"), lista.map((x) => [x.id, x.nombre]));
       $("o-objetivo-ayuda").textContent = app.modoOrden === "apoyar"
         ? "Unidad propia a apoyar (dentro de su alcance; consume 10% de munición). También puede hacer clic en el mapa."
+        : app.modoOrden === "torpedo"
+          ? (lista.length ? "Blanco del torpedo: un buque o submarino enemigo detectado." : "No hay buques ni submarinos enemigos detectados.")
         : app.modoOrden === "interceptar"
           ? (lista.length ? "Blanco: una aeronave en vuelo o un buque enemigo detectado. También puede hacer clic en el mapa." : "No hay aeronaves ni buques enemigos detectados.")
         : app.modoOrden === "lanzar"
@@ -2044,6 +2081,15 @@
       }
     } else { $("o-parte-fila").hidden = true; $("o-parte-info").hidden = true; }
     if (app.modoOrden === "interceptar") estimarIntercepcion();
+    if (app.modoOrden === "torpedo" && u) {
+      const obj = app.porId.get(parseInt($("o-objetivo").value, 10));
+      const km = Logica.alcanceTorpedo(u, app.catalogo);
+      const d = obj ? Logica.distanciaKm(u.lat, u.lon, obj.lat, obj.lon) : null;
+      $("o-torpedo-info").textContent = d === null ? `Alcance del torpedo: ${km} km.`
+        : d <= km ? `A ${d.toFixed(1)} km (alcance ${km} km): llega en unos ${Math.max(1, Math.round(d / 75 * 60))} min.`
+          : `Está a ${d.toFixed(0)} km y el torpedo llega a ${km} km: acérquese primero.`;
+      $("o-torpedo-info").classList.toggle("advertencia", d !== null && d > km);
+    }
     if (app.modoOrden === "lanzar" && u) {
       const max = Logica.misilesDisponibles(u);
       const actual = parseInt($("o-misiles").value, 10);
@@ -2117,6 +2163,9 @@
       if (!app.obraSitio) return toast("Haga clic en el mapa, sobre el río, donde quiere construir.");
       cuerpo.detalle = $("o-obra").value;
       cuerpo.waypoints = [app.obraSitio];
+    } else if (app.modoOrden === "sonoboyas" || app.modoOrden === "sonar") {
+      if (!app.puntoAsw) return toast("Haga clic en el mapa en el punto elegido.");
+      cuerpo.waypoints = [app.puntoAsw];
     } else if (app.modoOrden === "lanzar") {
       const obj = parseInt($("o-objetivo").value, 10);
       if (!obj) return toast("Elija el blanco de los misiles.");
@@ -2144,6 +2193,7 @@
       app.obraSitio = null;
       app.patrullaPunto = null;
       app.interferenciaPunto = null;
+      app.puntoAsw = null;
       dibujarWaypoints();
       app.capas.preview.clearLayers();
       $("o-sitio").textContent = "";
@@ -2165,6 +2215,9 @@
     if (o.tipo === "construir") return `Construir ${o.detalle || "obra"}`;
     if (o.tipo === "rumbo") return Logica.textoRumbo(o.detalle);
     if (o.tipo === "interceptar") return Logica.textoIntercepcion(o.detalle, nombreObj);
+    if (o.tipo === "torpedo") return `Torpedo contra ${nombreObj}`;
+    if (o.tipo === "sonoboyas") return `Sembrar sonoboyas en (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;
+    if (o.tipo === "sonar") return `Sonar de inmersión en (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;
     if (o.tipo === "despegar") return Logica.textoDespegue(o, app.catalogo && app.catalogo.modelos);
     if (o.tipo === "patrullar" && o.detalle && o.detalle.includes("zona")) {
       let z = null;
@@ -2799,6 +2852,7 @@
     if (app.zonas) app.zonas.render(data);
     if (app.eventosAuto) app.eventosAuto.render(data);
     renderTrafico(data.escenario);
+    renderAsw(data);
     if (app.aerodromos) app.aerodromos.actualizar(data.unidades);
     llenarSelect($("adj-unidad"), data.unidades.map((u) => [u.id, `${u.nombre} (${u.bando})`]));
     if (app.informe && app.informe.activo()) return; // durante la repeticion no se pisa el mapa
@@ -3696,6 +3750,24 @@
   $("btn-trafico-quitar").addEventListener("click", () => {
     if (app.escenarioId) enSilencio(api("DELETE", rutaEsc("/trafico")).then(() => toast("Tráfico civil retirado", true)));
   });
+
+  /** Sonoboyas propias activas y helicopteros con el sonar calado (guerra antisubmarina, engine/asw.py). */
+  function renderAsw(data) {
+    const helos = data.unidades.filter((u) => u.mision === "sonar" && u.estado === "activa");
+    const firma = JSON.stringify([(data.sonoboyas || []).map((b) => b.id), helos.map((u) => [u.id, u.mision_lat, u.mision_lon])]);
+    if (app.firmaAsw === firma) return;
+    app.firmaAsw = firma;
+    const g = app.capas.asw;
+    g.clearLayers();
+    for (const b of data.sonoboyas || []) {
+      L.circle([b.lat, b.lon], { radius: b.radio_km * 1000, color: "#48cae4", weight: 1, dashArray: "2 5", fillOpacity: 0.04, interactive: false }).addTo(g);
+      L.circleMarker([b.lat, b.lon], { radius: 3, color: "#48cae4", fillOpacity: 1 }).bindTooltip(`Sonoboya (${b.minutos} min)`).addTo(g);
+    }
+    for (const u of helos) {
+      L.circle([u.mision_lat, u.mision_lon], { radius: (app.catalogo && app.catalogo.asw ? app.catalogo.asw.sonar_inmersion_km : 12) * 1000,
+        color: "#48cae4", weight: 1.5, dashArray: "6 4", fillOpacity: 0.05, interactive: false }).bindTooltip(`Sonar de ${u.nombre}`).addTo(g);
+    }
+  }
 
   /** Aerovias del trafico civil (las ven todos) y lo pedido, en la consola del director. */
   function renderTrafico(esc) {

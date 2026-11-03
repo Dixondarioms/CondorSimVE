@@ -78,6 +78,8 @@ class Unidad(Base):
     existencias_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     # buques y unidades de tierra: % de daño de sensores, armas, propulsion y comunicaciones (engine/sistemas.py)
     sistemas_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # submarinos: "periscopica" (por defecto) | "profunda" (engine/asw.py)
+    profundidad: Mapped[str | None] = mapped_column(String(12), nullable=True)
 
     # bases aereas: largo de la pista fijado por el instructor (None = el del plano del aerodromo o el por defecto)
     pista_m: Mapped[float | None] = mapped_column(Float, nullable=True)

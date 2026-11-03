@@ -118,6 +118,8 @@ UNIDADES = [
     # trafico civil (engine/trafico.py)
     ("clases", "buque_mercante", "Buque mercante", ["container ship at sea", "cargo ship Caribbean", "bulk carrier at sea"]),
     ("clases", "pesquero", "Pesquero", ["fishing boat Venezuela", "fishing trawler at sea", "Margarita fishing boat"]),
+    # guerra antisubmarina (engine/asw.py)
+    ("clases", "torpedo", "Torpedo", ["Mark 48 torpedo", "Mk 54 torpedo", "heavyweight torpedo museum"]),
 ]
 # catalogo ampliado del Condor (backend/app/engine/catalogo_ampliado.py) y modelos que cambiaron de identidad
 sys.path.insert(0, str(Path(__file__).resolve().parent))

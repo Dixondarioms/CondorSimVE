@@ -42,7 +42,10 @@ def radio_efectivo(detector, objetivo, terreno: Terreno, clima: str = "despejado
     radio = detector.deteccion_km
     if clase_d.solo_aereo and not _en_vuelo(objetivo):
         radio = min(radio, RADIO_LOCAL_SENSOR_KM)
-    radio *= ocultamiento * clima_mod.factor_deteccion(clima, objetivo.lat, objetivo.lon) * catalogo.firma(objetivo)
+    from app.engine import asw  # importacion tardia: submarinos (engine/asw.py)
+
+    submarino = asw.es_submarino(objetivo)
+    radio *= ocultamiento * clima_mod.factor_deteccion(clima, objetivo.lat, objetivo.lon) * (1.0 if submarino else catalogo.firma(objetivo))
     radio *= clima_mod.factor_nocturno(clase_d, getattr(clima, "periodo", "dia"))
     if ge is not None and clase_d.id == "radar":  # radar fijo: sin energia trabaja con generadores (menos alcance)
         radio *= ge.factor_energia(detector.bando)
@@ -56,6 +59,8 @@ def radio_efectivo(detector, objetivo, terreno: Terreno, clima: str = "despejado
     sanos = sistemas.factor(detector, "sensores")
     if sanos < 1.0:  # con los sensores dañados ve menos; sin ellos, a ojo
         radio = max(min(radio, ge_mod.RADIO_VISUAL_KM), radio * sanos)
+    if submarino:  # sumergido: solo el sonar (o a cota periscopica, de cerca); al atacar se delata
+        radio = asw.radio_contra_submarino(detector, objetivo, radio)
     return radio
 
 
@@ -136,4 +141,8 @@ def unidades_visibles(unidades, bando: str, terreno: Terreno, clima: str = "desp
             continue  # lo que viaja a bordo de un transporte no se ve por separado
         if (ge is not None and ge.emite(enemiga)) or any(detecta(d, enemiga, terreno, clima, ge) for d in detectores):
             visibles.append(enemiga)
+    from app.engine import asw  # importacion tardia: lo que oyen las sonoboyas del bando
+
+    ya = {u.id for u in visibles}
+    visibles += [u for u in asw.por_boyas(unidades, bando) if u.id not in ya]
     return visibles

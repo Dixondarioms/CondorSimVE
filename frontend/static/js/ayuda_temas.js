@@ -140,6 +140,7 @@
         <tr><td>Patrullar</td><td>Aeronaves: orbitan sobre una zona e interceptan lo que entre.</td></tr>
         <tr><td>Aterrizar</td><td>Aeronaves en vuelo: vuelven a una base.</td></tr>
         <tr><td>Rumbo</td><td>Aeronaves en vuelo: viran unos grados a un lado o toman un rumbo y lo mantienen.</td></tr>
+        <tr><td>Torpedo, Sonoboyas, Sonar de inmersión</td><td>Guerra antisubmarina (ver «Guerra antisubmarina»).</td></tr>
         <tr><td>Interceptar</td><td>Aeronaves (también en tierra, en alerta) y buques: salen al encuentro de una aeronave o un buque enemigo para seguirlo o neutralizarlo.</td></tr>
         <tr><td>Interferir</td><td>Guerra electrónica: degrada al enemigo en una zona.</td></tr>
         <tr><td>Lanzar misiles</td><td>Buques y baterías con misiles de crucero.</td></tr>
@@ -244,6 +245,22 @@
         <li>Aeronaves: con qué <b>combustible regresan</b> y si vuelven al quedarse <b>sin armamento</b>.</li></ul>
         <p>La del bando la fijan el Comandante y el JEM (y el director). Cada unidad puede tener la suya: lo que deje en «Del
         bando» lo toma de la doctrina del bando. Por defecto: contra aeronaves libre, contra superficie solo con orden.</p>`,
+    },
+    {
+      id: "asw", seccion: "Defensa aérea y doctrina", titulo: "Guerra antisubmarina: sonar, sonoboyas y torpedos",
+      claves: "antisubmarina submarino sonar sonoboya sonoboyas torpedo profundidad periscopica periscopio inmersion helicoptero p-3 p-8 orion poseidon nh90",
+      texto: `<p>Un submarino sumergido no se ve con radar ni a ojo: se lo detecta con <b>sonar</b>.</p>
+        <ul><li><b>Profundidad</b> (panel de abajo del submarino): a <i>cota periscópica</i> un radar o un vigía lo ven a menos
+        de 8 km y puede lanzar misiles; a <i>profundidad</i> solo lo oye el sonar, al 60 % de su alcance.</li>
+        <li><b>Sonar de casco</b>: fragatas (25 km), destructores (30 km) y submarinos (35 km).</li>
+        <li><b>Sonoboyas</b>: un P-3 o P-8 con la orden <b>Sonoboyas</b> vuela al punto y deja 4 boyas que escuchan a 10 km
+        durante 4 horas (se ven en el mapa en celeste).</li>
+        <li><b>Sonar de inmersión</b>: un helicóptero antisubmarino (NH90) con la orden <b>Sonar de inmersión</b> va al punto,
+        queda en vuelo estacionario y escucha a 12 km mientras mantenga la orden.</li>
+        <li><b>Torpedos</b>: orden <b>Torpedo</b> de submarinos (30 km), fragatas y destructores (10 km) y aeronaves
+        antisubmarinas (8 km; carga «antisubmarina») contra un buque o submarino detectado. El torpedo navega a unos 40 nudos
+        y golpea al llegar.</li></ul>
+        <p>Al atacar (fuego, misiles o torpedos) el submarino se <b>delata</b> unos 10 minutos: se lo ve como a un buque.</p>`,
     },
     {
       id: "sistemas", seccion: "Defensa aérea y doctrina", titulo: "Daño por sistemas y control de averías",

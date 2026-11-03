@@ -53,6 +53,7 @@ from app.engine import ota as ota_mod
 from app.engine import rescate as rescate_mod
 from app.engine import rutas as rutas_mod
 from app.engine import transporte as transporte_mod
+from app.engine import asw as asw_mod
 from app.engine import eventos_auto
 from app.engine import sistemas as sistemas_mod
 from app.engine import trafico as trafico_mod
@@ -88,7 +89,7 @@ AVISO_CONTACTO_S = 900.0  # un enemigo que reaparece despues de esto se informa 
 DESPLIEGUE_POR_TURNO_S = 900.0  # tiempo quieta para disparar, por cada "turno de despliegue" del catalogo
 MISIONES_CONTINUAS = frozenset({"patrulla", "espera"})
 TIPOS_DE_ORDEN = ("mover", "atacar", "patrullar", "aterrizar", "despegar", "lanzar", "interferir", "construir",
-                  "embarcar", "desembarcar", "apoyar", "rumbo", "interceptar")
+                  "embarcar", "desembarcar", "apoyar", "rumbo", "interceptar", "torpedo", "sonoboyas", "sonar")
 TASA_GIRO_GPS = 3.0  # grados por segundo al virar por una orden de rumbo (viraje estandar del transito aereo)
 LEJOS_KM = 500.0  # punto de referencia por delante en el rumbo (la aeronave nunca llega: sigue el rumbo)
 TIEMPO_OBRA_S = {"vado": 1800.0, "puente": 3600.0}  # trabajo de los ingenieros en el sitio hasta que la obra queda lista
@@ -226,6 +227,8 @@ class _Ctx:
         self.perdidas: dict[int, float] = {}
         self.con_pmi: set | None = None  # (bando, base) con PMI de Inteligencia: se lee al primer ataque a una pista
         self.zonas = {z.id: z for z in zonas_mod.de_escenario(db, esc.id)}  # areas y zonas (engine/zonas.py)
+        asw_mod.AHORA[esc.id] = esc.sim_segundos or 0.0
+        asw_mod.cargar_boyas(db, esc.id, esc.sim_segundos or 0.0)  # sonoboyas activas (engine/asw.py)
         self.zona_armada: dict[str, set] = {}  # bando -> intrusos dentro de sus zonas con «armas» (tiran contra ellos)
 
     def releer(self) -> None:
@@ -376,6 +379,20 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
         db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, sim_segundos=esc.sim_segundos, tipo="despegue", bando_destino=unidad.bando,
                       descripcion=f"[{hora}] Despegó {grupo.nombre} desde {unidad.nombre}."))
         return
+    if orden.tipo == "torpedo":
+        blanco = db.get(Unidad, orden.objetivo_unidad_id)
+        torpedo = asw_mod.crear_torpedo(unidad, blanco, esc.sim_segundos or 0.0)
+        torpedo.rumbo = rumbo(unidad.lat, unidad.lon, blanco.lat, blanco.lon)
+        asw_mod.gastar_torpedo(unidad)
+        asw_mod.exponer(unidad, (esc.sim_segundos or 0.0) + asw_mod.EXPUESTO_S)
+        db.add(torpedo)
+        db.flush()
+        orden.estado = "resuelta"
+        llega = geo.distancia_km(unidad.lat, unidad.lon, blanco.lat, blanco.lon) / asw_mod.VELOCIDAD_TORPEDO_KMH * 60
+        orden.resultado = f"[{hora}] {unidad.nombre} lanzó un torpedo contra {blanco.nombre} (llega en unos {llega:.0f} min)."
+        db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, sim_segundos=esc.sim_segundos, tipo="lanzamiento",
+                      bando_destino=unidad.bando, descripcion=orden.resultado))
+        return
     if orden.tipo == "lanzar":
         blanco = db.get(Unidad, orden.objetivo_unidad_id)
         n = misiles_mod.decodificar(orden.detalle).get("misiles")
@@ -383,6 +400,7 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
         salva.rumbo = rumbo(unidad.lat, unidad.lon, blanco.lat, blanco.lon)
         unidad.municion = max(0.0, unidad.municion - misiles_mod.MUNICION_POR_MISIL * n)
         unidad.recarga_hasta = esc.sim_segundos + RECARGA_LANZADOR_S
+        asw_mod.exponer(unidad, (esc.sim_segundos or 0.0) + asw_mod.EXPUESTO_S)  # un submarino que lanza se delata
         db.add(salva)
         db.flush()
         orden.estado = "resuelta"
@@ -404,7 +422,7 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
     orden.estado = "en_ejecucion"
     unidad.orden_id = orden.id
     en_alerta = unidad.en_tierra and orden.tipo == "interceptar"
-    if unidad.en_tierra and orden.tipo in ("mover", "patrullar", "atacar", "interceptar"):
+    if unidad.en_tierra and orden.tipo in ("mover", "patrullar", "atacar", "interceptar", "sonoboyas", "sonar"):
         if armas_mod.aplica(unidad) and not armas_mod.tiene_carga(unidad):  # sale con la carga de su modelo
             armas_mod.armar(unidad, None, db.get(Unidad, unidad.base_id) if unidad.base_id else None)
         aeronaves_mod.despegar_unidad(unidad)  # una orden de vuelo a una aeronave lista en tierra es el despegue
@@ -446,6 +464,12 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
         orden.resultado = f"[{hora}] Va a desembarcar en ({punto[0]:.3f}, {punto[1]:.3f})."
     elif orden.tipo == "apoyar":
         _poner_ruta(unidad, None)
+    elif orden.tipo in ("sonoboyas", "sonar"):
+        _poner_ruta(unidad, None)
+        unidad.mision, unidad.mision_lat, unidad.mision_lon = "", None, None
+        punto = orden.waypoints[0]
+        orden.resultado = (f"[{hora}] Vuela a ({punto[0]:.3f}, {punto[1]:.3f}) a "
+                           + ("sembrar 4 sonoboyas." if orden.tipo == "sonoboyas" else "calar el sonar de inmersión."))
     elif orden.tipo == "interceptar":
         _poner_ruta(unidad, None)
         unidad.mision, unidad.mision_lat, unidad.mision_lon = "", None, None
@@ -596,6 +620,7 @@ def _pensar_ia(ctx: _Ctx) -> None:
 
 def _subpaso(ctx: _Ctx, h: float) -> None:
     ctx.perdidas = {}
+    asw_mod.AHORA[ctx.esc.id] = ctx.t
     for u in ctx.lista:
         if u.estado == "activa":
             ctx.mundo.pos_previa[u.id] = (u.lat, u.lon)
@@ -629,6 +654,10 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
             _intercepcion(ctx, u, orden, h)
         elif orden is not None and orden.tipo == "patrullar" and zonas_mod.zona_de_orden(orden):
             _patrullar_zona(ctx, u, orden, h)
+        elif orden is not None and orden.tipo == "sonoboyas":
+            _sembrar_boyas(ctx, u, orden, h)
+        elif orden is not None and orden.tipo == "sonar":
+            _sonar_inmersion(ctx, u, orden, h)
         elif u.ruta_json:
             _mover(ctx, u, orden, h)
         elif u.tipo == "aerea":
@@ -1030,6 +1059,7 @@ def _pasada(ctx: _Ctx, a: Unidad, d: Unidad, orden: Orden | None, recarga_s: flo
                        "; ".join(res.efectos) + con)
     texto = f"{a.nombre} atacó a {d.nombre}{con}: {res.resumen}"
     _colateral(ctx, a, d, perd_d)
+    asw_mod.exponer(a, ctx.t + asw_mod.EXPUESTO_S)  # un submarino que ataca se delata
     ctx.evento("combate", a.bando, texto, d.lat, d.lon)
     if d.bando != a.bando:
         recibido = (f"{d.nombre} fue atacado" + (f" por {a.nombre}" if ctx.visible_para(a, d.bando) else "")
@@ -1050,6 +1080,7 @@ def _fuego_continuo(ctx: _Ctx, a: Unidad, d: Unidad, orden: Orden | None, h: flo
     _perder(ctx, a, perd_a)
     _perder(ctx, d, perd_d)
     _colateral(ctx, a, d, perd_d)
+    asw_mod.exponer(a, ctx.t + asw_mod.EXPUESTO_S)
     _cambiar(ctx, a, "municion", a.municion - gasto, "combate")
     acc = ctx.mundo.combates.setdefault((a.id, d.id), {"orden": orden.id if orden is not None else None,
                                                      "perd_a": 0.0, "perd_d": 0.0, "ratio": res.ratio,
@@ -1251,6 +1282,44 @@ def _patrullar_zona(ctx: _Ctx, u: Unidad, orden: Orden, h: float) -> None:
     if geo.distancia_km(u.lat, u.lon, *destino) <= zonas_mod.LLEGADA_VERTICE_KM or (mov.km_reales <= 0 and mov.nota):
         i += 1  # al vertice siguiente (si uno no se puede alcanzar, lo saltea)
     ctx.mundo.patrulla_idx[u.id] = i % len(poligono)
+
+
+def _sembrar_boyas(ctx: _Ctx, u: Unidad, orden: Orden, h: float) -> None:
+    """Orden «sonoboyas»: el avion de patrulla maritima vuela al punto y siembra un cuadro de 4 sonoboyas
+    (engine/asw.py); despues queda en espera alli."""
+    from app.models.sonoboya import Sonoboya
+
+    punto = orden.waypoints[0]
+    if geo.distancia_km(u.lat, u.lon, punto[0], punto[1]) > asw_mod.LLEGADA_KM:
+        u.mision, u.mision_lat, u.mision_lon = "", None, None
+        _avanzar(ctx, u, [list(punto)], h)
+        return
+    for lat, lon in asw_mod.cuadro_de_boyas(punto[0], punto[1]):
+        ctx.db.add(Sonoboya(escenario_id=ctx.esc.id, bando=u.bando, unidad_id=u.id, lat=lat, lon=lon,
+                            radio_km=asw_mod.BOYA_RADIO_KM, desde_seg=ctx.t, hasta_seg=ctx.t + asw_mod.BOYA_VIDA_S))
+    ctx.db.flush()
+    asw_mod.cargar_boyas(ctx.db, ctx.esc.id, ctx.t)
+    hasta = hora_del_dia(ctx.esc, ctx.t + asw_mod.BOYA_VIDA_S)
+    ctx.terminar(orden, u, f"Sembró 4 sonoboyas sobre ({punto[0]:.3f}, {punto[1]:.3f}): escuchan submarinos a "
+                           f"{asw_mod.BOYA_RADIO_KM:.0f} km hasta las {hasta}.")
+    ctx.evento("asw", u.bando, f"{u.nombre} sembró sonoboyas (escuchan hasta las {hasta}).", punto[0], punto[1])
+    _esperar(u, punto[0], punto[1])
+
+
+def _sonar_inmersion(ctx: _Ctx, u: Unidad, orden: Orden, h: float) -> None:
+    """Orden «sonar»: el helicoptero antisubmarino va al punto, queda en vuelo estacionario y escucha con el sonar
+    calado mientras mantenga la orden (engine/asw.py)."""
+    punto = orden.waypoints[0]
+    if geo.distancia_km(u.lat, u.lon, punto[0], punto[1]) > asw_mod.ESTACIONARIO_KM * 0.5:
+        u.mision, u.mision_lat, u.mision_lon = "", None, None
+        _avanzar(ctx, u, [list(punto)], h)
+        return
+    if u.mision != "sonar":
+        u.mision, u.mision_lat, u.mision_lon = "sonar", punto[0], punto[1]
+        orden.resultado = (f"[{hora_del_dia(ctx.esc)}] Sonar calado en ({punto[0]:.3f}, {punto[1]:.3f}): escucha "
+                           f"submarinos a {asw_mod.SONAR_INMERSION_KM:.0f} km.")
+        ctx.informe.cambios = True
+    _cambiar(ctx, u, "combustible", u.combustible - aeronaves_mod.combustible_loiter(u) * h / 3600.0, "sonar de inmersion")
 
 
 def _traza(ctx: _Ctx, orden: Orden, d: Unidad) -> dict:
@@ -1498,6 +1567,10 @@ def _orbitar_sobre(ctx: _Ctx, a: Unidad, d: Unidad, h: float) -> None:
 
 
 def _guiar_misil(ctx: _Ctx, m: Unidad, h: float) -> None:
+    if m.clase == "torpedo" and m.espera_hasta is not None and ctx.t > m.espera_hasta:
+        m.estado, m.fuerza = "destruida", 0.0  # agoto su autonomia sin alcanzar el blanco
+        ctx.evento("combate", m.bando, f"{m.nombre} no alcanzó su blanco y se perdió.")
+        return
     blanco = ctx.unidades.get(m.blanco_id) if m.blanco_id else None
     guiado = misiles_mod.blanco_valido(blanco) and blanco.bando != m.bando
     if guiado:
@@ -1560,7 +1633,8 @@ def _fuego_de_oportunidad(ctx: _Ctx, h: float) -> None:
         alcance = u.alcance_km * ctx.doctrina(u)["distancia_pct"] / 100.0
         candidatos = []
         for x in ctx.lista:
-            if x.bando == u.bando or x.estado != "activa" or aeronaves_mod.en_vuelo(x) or transporte_mod.embarcada(x):
+            if (x.bando == u.bando or x.estado != "activa" or aeronaves_mod.en_vuelo(x) or transporte_mod.embarcada(x)
+                    or catalogo.es_misil(x)):
                 continue
             if clase.ataque_vs.get(orders.tipo_efectivo(x), 0.0) <= 0 or not ctx.visible_para(x, u.bando):
                 continue

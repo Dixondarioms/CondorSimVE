@@ -39,6 +39,7 @@
     if (tipoOrden === "apoyar") {
       return activas.filter((u) => u.bando === rol && u.tipo !== "base" && String(u.id) !== String(unidadId));
     }
+    if (tipoOrden === "torpedo") return activas.filter((u) => u.bando !== rol && u.tipo === "naval" && !esMisil(u));
     if (tipoOrden === "interceptar") { // aeronaves en vuelo y buques; un buque solo alcanza a otros buques
       const propia = unidades.find((u) => String(u.id) === String(unidadId));
       return activas.filter((u) => u.bando !== rol && interceptable(u) && !(propia && propia.tipo === "naval" && u.tipo === "aerea"));
@@ -66,7 +67,7 @@
   const MAX_MISILES_SALVA = 4;
   const MUNICION_POR_MISIL = 25;
 
-  const esMisil = (u) => !!u && u.clase === "misil_crucero";
+  const esMisil = (u) => !!u && (u.clase === "misil_crucero" || u.clase === "torpedo"); // armas autoguiadas en recorrido
 
   // transporte de tropas (engine/transporte.py): buque de desembarco (3 unidades) y helicoptero de transporte (1 ligera)
   const CAPACIDAD_TRANSPORTE = { buque_desembarco: 3, helicoptero_artillado: 1 };
@@ -511,6 +512,18 @@
     const disparos = r.disparos ? ` (disparada ${r.disparos} vez${r.disparos === 1 ? "" : "es"})` : "";
     return `cuando ${cuando}${r.repetir ? ", cada vez" : ""} → ${(r.acciones || []).map(textoAccionAuto).join("; ")}${disparos}`;
   }
+
+  /** Guerra antisubmarina (engine/asw.py, datos en catalogo.asw). */
+  const aswDe = (cat) => (cat && cat.asw) || { aviones: [], helos: [], torpedo_km: {} };
+  const esAvionAsw = (u, cat) => !!u && u.tipo === "aerea" && aswDe(cat).aviones.includes(u.modelo);
+  const esHeloAsw = (u, cat) => !!u && u.tipo === "aerea" && aswDe(cat).helos.includes(u.modelo);
+  function alcanceTorpedo(u, cat) {
+    if (!u || u.estado !== "activa") return 0;
+    const km = aswDe(cat).torpedo_km || {};
+    if (u.tipo === "aerea") return (esAvionAsw(u, cat) || esHeloAsw(u, cat)) && !u.en_tierra ? km.aerea || 0 : 0;
+    return km[u.clase] || 0;
+  }
+  const PROFUNDIDADES = [["periscopica", "Cota periscópica"], ["profunda", "Profundidad"]];
 
   /** Se intercepta una aeronave en vuelo o un buque (no un misil). */
   const interceptable = (u) => !!u && u.estado === "activa" && !esMisil(u) && ((u.tipo === "aerea" && !u.en_tierra) || u.tipo === "naval");
@@ -1308,7 +1321,7 @@
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
-    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
+    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,

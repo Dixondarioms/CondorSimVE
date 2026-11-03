@@ -201,6 +201,9 @@
               <button type="button" data-modo="construir" id="modo-construir" hidden title="Solo ingenieros">Construir</button>
               <button type="button" data-modo="patrullar" id="modo-patrullar" hidden title="Solo aeronaves">Patrullar</button>
               <button type="button" data-modo="aterrizar" id="modo-aterrizar" hidden title="Solo aeronaves en vuelo">Aterrizar</button>
+              <button type="button" data-modo="torpedo" id="modo-torpedo" hidden title="Submarinos, fragatas, destructores y aeronaves antisubmarinas: torpedo contra un buque o submarino a su alcance">Torpedo</button>
+              <button type="button" data-modo="sonoboyas" id="modo-sonoboyas" hidden title="Aviones de patrulla marítima: siembran 4 sonoboyas sobre el punto">Sonoboyas</button>
+              <button type="button" data-modo="sonar" id="modo-sonar" hidden title="Helicópteros antisubmarinos: van al punto y calan el sonar">Sonar de inmersión</button>
               <button type="button" data-modo="interceptar" id="modo-interceptar" hidden title="Aeronaves (también en alerta en tierra) contra aeronaves en vuelo y buques; buques contra buques">Interceptar</button>
               <button type="button" data-modo="rumbo" id="modo-rumbo" hidden title="Solo aeronaves en vuelo: virar unos grados o tomar un rumbo, como el control de tránsito aéreo">Rumbo</button>
               <button type="button" data-modo="interferir" id="modo-interferir" hidden title="Solo unidades de guerra electrónica">Interferir</button>
@@ -248,6 +251,14 @@
               <p id="o-objetivo-ayuda" class="ayuda"></p>
               <label class="mini" id="o-parte-fila" hidden>Qué se ataca de la base<select id="o-parte"></select></label>
               <p id="o-parte-info" class="ayuda" hidden></p>
+            </div>
+            <div id="o-torpedo" hidden>
+              <p id="o-torpedo-info" class="ayuda preview"></p>
+              <p class="ayuda">Elija arriba el buque o submarino enemigo detectado (o haga clic en él). El torpedo navega a unos 40 nudos hacia su blanco y lo golpea al llegar; si no lo alcanza, se pierde. Un submarino que lanza se delata unos 10 minutos.</p>
+            </div>
+            <div id="o-asw" hidden>
+              <p id="o-asw-ayuda" class="ayuda"></p>
+              <p id="o-asw-punto" class="ayuda preview"></p>
             </div>
             <div id="o-interceptar" hidden>
               <label class="mini">Al interceptar<select id="o-intercepcion-accion"></select></label>

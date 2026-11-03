@@ -23,6 +23,7 @@ from app.engine import pmi as pmi_mod
 from app.engine import zonas as zonas_mod
 from app.engine import armas as armas_mod
 from app.engine import sistemas as sistemas_mod
+from app.engine import asw as asw_mod
 from app.engine import objetivos as objetivos_mod
 from app.engine import infraestructura as infra_mod
 from app.engine import personal as personal_mod
@@ -51,7 +52,7 @@ BANDOS = ("azul", "rojo")
 # De una unidad enemiga detectada solo se conoce lo que se ve desde afuera.
 CAMPOS_OCULTOS = (
     "fuerza", "velocidad_kmh", "alcance_km", "deteccion_km", "combustible", "municion", "autonomia_km",
-    "carga", "armamento", "armamento_texto", "existencias_armas", "sistemas", "recarga_restante", "despliegue_restante", "modelo", "aeronaves",
+    "carga", "armamento", "armamento_texto", "existencias_armas", "sistemas", "profundidad", "recarga_restante", "despliegue_restante", "modelo", "aeronaves",
     "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id",
     "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios",
     "transporte_id", "personal_inicial", "personal_actual", "sistema_da", "pista_largo_m", "pista_util_m", "recorrido",
@@ -197,6 +198,7 @@ def estado_para(
         d["armamento_texto"] = armas_mod.texto(u) if d["armamento"] else ""
         d["existencias_armas"] = armas_mod.resumen_existencias(u, unidades) if armas_mod.deposito_de(u) else None
         d["sistemas"] = sistemas_mod.publico(u)  # daño por sistemas de buques y unidades de tierra
+        d["profundidad"] = asw_mod.profundidad(u) if asw_mod.es_submarino(u) else None
         if es_bando(rol) and u.bando != rol:
             for oculto in CAMPOS_OCULTOS:
                 d[oculto] = None
@@ -251,6 +253,7 @@ def estado_para(
         "pmi_bases": pmi_mod.bases_conocidas(db, escenario, rol),
         # areas de patrulla y zonas de exclusion y de no vuelo (engine/zonas.py): las propias y las del director
         "zonas": zonas_mod.visibles_para(db, escenario, rol),
+        "sonoboyas": asw_mod.boyas_para(db, escenario, rol),  # guerra antisubmarina (engine/asw.py)
         "personal": {b: personal_mod.resumen(todas, b) for b in bandos_propios},
         # plantilla de personal por unidad con reservas y milicia, y esfuerzo aereo (engine/toe.py, disponibilidad.py)
         "personal_toe": (partes := {b: toe_mod.partes(todas, escenario, b) for b in bandos_propios}),

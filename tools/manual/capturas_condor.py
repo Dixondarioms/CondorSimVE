@@ -346,6 +346,23 @@ def eventos_auto(n: Nav) -> None:
     n.pestana("fuerzas")
 
 
+def asw(n: Nav) -> None:
+    """Un submarino propio y una fragata enemiga en el Caribe (en la COPIA de la base): profundidad y orden Torpedo."""
+    n.como("director")
+    sub = _post(n, "/unidades", {"nombre": "Submarino Sábalo (captura)", "bando": "azul", "tipo": "naval", "clase": "submarino",
+                                 "lat": 11.30, "lon": -64.05})
+    _post(n, "/unidades", {"nombre": "Fragata roja (captura)", "bando": "rojo", "tipo": "naval", "clase": "fragata",
+                           "lat": 11.36, "lon": -64.02})
+    n.como("az.cmdte")
+    n.elegir(sub["nombre"])
+    n.vista(11.33, -64.03, 11, 3)
+    n.clic("[data-modo=torpedo]")
+    n.pausa(1.5)
+    n.js("document.getElementById('sec-orden').scrollIntoView({block: 'start'})")
+    guardar(n, "asw", n.rect("#sec-orden"))
+    guardar(n, "asw_panel", n.rect("#panel-unidad"), margen=0)
+
+
 def doctrina(n: Nav) -> None:
     n.pestana("fuerzas")
     n.js("const d = document.getElementById('sec-doctrina'); d.querySelectorAll('details').forEach((x) => x.open = true); d.scrollIntoView({block: 'start'})")
@@ -471,7 +488,7 @@ def videowall(n: Nav) -> None:
     n.tecla("Escape", 27)
 
 
-ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, eventos_auto, doctrina, misiones,
+ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, eventos_auto, asw, doctrina, misiones,
          situacion, tiem, consola, capas, graficos, mapas, ayuda, informe, en_marcha, bando, videowall]
 
 
@@ -485,7 +502,7 @@ def main() -> int:
             if pedidas and f.__name__ not in pedidas:
                 continue
             try:
-                if f not in (acceso, despegue, orden_mover, interceptar, zonas, carga, sistemas, misiones, bando):
+                if f not in (acceso, despegue, orden_mover, interceptar, zonas, carga, sistemas, asw, misiones, bando):
                     n.como("director")
                 f(n)
                 if f is acceso:

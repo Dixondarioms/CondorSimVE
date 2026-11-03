@@ -65,7 +65,7 @@ CODIGOS_AERONAVE = {
 
 # armamento: codigo -> (nombre, tipo, guiada, alcance_km)
 #   tipo: "aa" misil aire-aire | "as" misil aire-superficie | "ar" antirradiacion | "ab" antibuque | "bomba" |
-#   "helo" (cañon, cohetes)
+#   "helo" (cañon, cohetes) | "torp" (torpedo ligero: lo lanza la orden «torpedo», engine/asw.py)
 ARMAMENTO = {
     "MAA": ("RVV-AE (R-77)", "aa", True, 80), "MAB": ("R-27ER1", "aa", True, 60), "MAC": ("R-27ET1", "aa", True, 50),
     "MAD": ("R-73E", "aa", True, 20), "MPA": ("Python 4", "aa", True, 15), "MPB": ("AIM-9L", "aa", True, 15),
@@ -76,6 +76,7 @@ ARMAMENTO = {
     "HLF": ("AGM-114 Hellfire", "as", True, 8),
     "HPN": ("AGM-84 Harpoon (antibuque)", "ab", True, 120), "EXO": ("AM39 Exocet (antibuque)", "ab", True, 70),
     "MA6": ("Kh-35 (antibuque)", "ab", True, 130),
+    "TOR": ("Torpedo ligero Mk 54", "torp", True, 8),
     "BKR": ("KAB-500KR (guiada TV)", "bomba", True, 9), "BOD": ("KAB-500OD (aire-combustible)", "bomba", False, 0),
     "BRK": ("KAB-1500KR (guiada TV)", "bomba", True, 9), "BMK": ("Mk 82 (227 kg)", "bomba", False, 0),
     "BKM": ("Mk 84 (907 kg)", "bomba", False, 0), "BGB": ("GBU-10 (láser)", "bomba", True, 12),
@@ -92,7 +93,8 @@ ARMAMENTO_POR_MODELO = {
     "caza_embarcado": _OCCIDENTAL["aa"] + _OCCIDENTAL["sup"],
     "f22": ["M120", "M9X", "JDM"], "f35a": ["M120", "M9X", "JDM", "BBU", "JSW", "HRM"],
     "f35b": ["M120", "M9X", "JDM", "BBU"], "fa18ef": _OCCIDENTAL["aa"] + _OCCIDENTAL["sup"],
-    "ea18g": ["M120", "HRM"], "b1b": ["JDM", "BMK", "BKM", "JSW", "HPN"], "p8a": ["JDM", "BMK", "HPN"],
+    "ea18g": ["M120", "HRM"], "b1b": ["JDM", "BMK", "BKM", "JSW", "HPN"], "p8a": ["JDM", "BMK", "HPN", "TOR"], "p3c": ["HPN", "BMK", "TOR"],
+    "nh90": ["TOR", "HLF"],
     "mq9": ["HLF", "BBU"], "uav_armado": ["HLF", "BBU"],
     "helo_ataque": ["CKH", "CKL", "HLF"], "helo_transporte": ["CKH", "CKL", "ALP"],
     "mh60dap": ["CKH", "CKL", "HLF"], "ah6m": ["CKH", "CKL", "HLF"], "mh60m": ["ALP"], "mh6m": ["ALP"], "mh47g": ["ALP"],

@@ -326,6 +326,30 @@ async def ajustar_unidad(
     return unidad
 
 
+@router.post("/{unidad_id}/profundidad")
+async def cambiar_profundidad(
+    unidad_id: int,
+    payload: dict,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.requiere_roles("azul", "rojo", "instructor")),
+):
+    """Un submarino sube a cota periscopica o baja a profundidad (engine/asw.py)."""
+    from app.engine import asw
+
+    unidad = db.get(Unidad, unidad_id)
+    if unidad is None or unidad.escenario_id != esc.id or (usuario.rol != "instructor" and unidad.bando != usuario.rol):
+        raise HTTPException(status_code=404, detail="Unidad no encontrada")
+    if not asw.es_submarino(unidad):
+        raise HTTPException(status_code=400, detail="Solo los submarinos cambian de profundidad")
+    if payload.get("profundidad") not in ("periscopica", "profunda"):
+        raise HTTPException(status_code=400, detail="Elija cota periscópica o profundidad")
+    unidad.profundidad = payload["profundidad"]
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return {"profundidad": unidad.profundidad}
+
+
 @router.put("/{unidad_id}/existencias")
 async def fijar_existencias(
     unidad_id: int,

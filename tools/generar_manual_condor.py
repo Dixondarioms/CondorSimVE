@@ -286,6 +286,7 @@ def construir(salida: Path) -> None:
               ["Aterrizar", "Aeronaves en vuelo: vuelven a una base."],
               ["Rumbo", "Aeronaves en vuelo: viran unos grados a un lado o toman un rumbo y lo mantienen (5.3)."],
               ["Interceptar", "Aeronaves y buques: salen al encuentro de una aeronave o un buque enemigo (5.4)."],
+              ["Torpedo, Sonoboyas, Sonar", "Guerra antisubmarina (6.3)."],
               ["Interferir", "Guerra electrónica: degrada al enemigo en una zona."],
               ["Lanzar misiles", "Buques y baterías con misiles de crucero."],
               ["Embarcar / Desembarcar", "Tropas a bordo de un buque de desembarco o un helicóptero de transporte."],
@@ -395,7 +396,18 @@ def construir(salida: Path) -> None:
             "altura a la que vuelan. La antiaérea dispara sola contra las aeronaves enemigas a su alcance, según la doctrina. "
             "En la unidad seleccionada de un sistema antiaéreo se ven sus armas con el alcance, la altura y la probabilidad de "
             "impacto (figura del punto 2.6), y se puede apagar o encender su radar. Los conduce A-3 D/A.")]
-    h += [H2("6.3 Daño por sistemas y control de averías")]
+    h += [H2("6.3 Guerra antisubmarina")]
+    h += [Table([[figura("asw", "Submarino con su profundidad y la orden Torpedo.", ancho=6.4 * cm, alto_max=11 * cm, celda=True),
+                  [P("Un submarino sumergido solo se detecta con <b>sonar</b>; al atacar se delata unos 10 minutos."),
+                   Bul(["<b>Profundidad</b> (panel de abajo): a cota periscópica un radar lo ve a menos de 8 km y puede lanzar "
+                        "misiles; a profundidad solo lo oye el sonar, al 60 % de su alcance.",
+                        "<b>Sonar de casco</b>: fragatas 25 km, destructores 30 km, submarinos 35 km.",
+                        "<b>Sonoboyas</b> (P-3, P-8): 4 boyas sobre el punto que escuchan a 10 km durante 4 horas.",
+                        "<b>Sonar de inmersión</b> (NH90): en vuelo estacionario sobre el punto, escucha a 12 km.",
+                        "<b>Torpedo</b>: de submarinos (30 km), fragatas y destructores (10 km) y aeronaves antisubmarinas (8 km) "
+                        "contra un buque o submarino detectado; navega a unos 40 nudos y golpea al llegar."])]]],
+                colWidths=[6.7 * cm, ANCHO_TEXTO - 6.7 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += [H2("6.4 Daño por sistemas y control de averías")]
     h += [Table([[figura("sistemas", "Panel de abajo: sistemas de una unidad dañada.", ancho=6.4 * cm, alto_max=9 * cm, celda=True),
                   [P("Los buques y las unidades de tierra tienen cuatro <b>sistemas</b> que se dañan por separado (panel de abajo):"),
                    Bul(["<b>Sensores</b>: con daño detecta menos; sin ellos, solo a ojo.",
@@ -406,7 +418,7 @@ def construir(salida: Path) -> None:
                      "promedio); al 75 % queda <b>fuera de servicio</b> y llega una alerta. El <b>control de averías</b> repara "
                      "unos 10 puntos por hora; las averías graves solo se terminan de reparar junto a un puerto o base propia.")]]],
                 colWidths=[6.7 * cm, ANCHO_TEXTO - 6.7 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
-    h += [H2("6.4 Áreas de patrulla y zonas de exclusión o de no vuelo")]
+    h += [H2("6.5 Áreas de patrulla y zonas de exclusión o de no vuelo")]
     h += [Table([[figura("zonas", "Tarjeta «Áreas y zonas».", ancho=5.4 * cm, alto_max=11 * cm, celda=True),
                   [P("En la tarjeta <b>Áreas y zonas</b> (panel derecho) elija el tipo, escriba un nombre y pulse <b>Dibujar en "
                      "el mapa</b>: clic en cada vértice y, para terminar, clic en el primero. El director las dibuja para todos o "

@@ -7,6 +7,7 @@ from app import auth, schemas, state
 from app.db import get_db
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import armas as armas_mod
+from app.engine import asw as asw_mod
 from app.engine import catalogo, geo, infraestructura, movimiento, puestos
 from app.engine import clima as clima_mod
 from app.engine import doctrina as doctrina_mod
@@ -85,7 +86,8 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
     if (payload.tipo == "aterrizar" or (payload.tipo == "patrullar" and area is None)) and unidad.tipo != "aerea":
         raise HTTPException(status_code=400, detail="Solo las aeronaves pueden aterrizar u orbitar sobre un punto: "
                                                     "las demás unidades patrullan un área")
-    if unidad.en_tierra and unidad.espera_restante > 0 and payload.tipo in ("mover", "atacar", "patrullar", "interceptar"):
+    if unidad.en_tierra and unidad.espera_restante > 0 and payload.tipo in ("mover", "atacar", "patrullar", "interceptar",
+                                                                            "sonoboyas", "sonar"):
         raise HTTPException(
             status_code=400,
             detail=f"En tierra: le falta {_falta_texto(esc, unidad)} para reabastecer y rearmar antes de despegar",
@@ -174,6 +176,8 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         motivo = misiles_mod.error_de_lanzamiento(unidad, blanco, payload.misiles)
         if motivo:
             raise HTTPException(status_code=400, detail=motivo)
+        if asw_mod.es_submarino(unidad) and asw_mod.profundidad(unidad) == "profunda":
+            raise HTTPException(status_code=400, detail="A profundidad no se lanzan misiles: suba a cota periscópica")
         if unidad.recarga_hasta and unidad.recarga_hasta > (esc.sim_segundos or 0.0):
             minutos = max(1, round((unidad.recarga_hasta - (esc.sim_segundos or 0.0)) / 60))
             raise HTTPException(status_code=400, detail=f"El lanzador está recargando: faltan {minutos} min para otra salva")
@@ -188,6 +192,21 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
             raise HTTPException(status_code=400, detail="Indique si vira a la derecha o a la izquierda")
         if payload.rumbo_modo == "virar" and not 0 < payload.rumbo_grados < 360:
             raise HTTPException(status_code=400, detail="El viraje va de 1 a 359 grados")
+    elif payload.tipo == "torpedo":
+        blanco = {u.id: u for u in state.unidades_visibles_para(db, esc, usuario.rol)}.get(payload.objetivo_unidad_id or -1)
+        motivo = asw_mod.error_de_torpedo(unidad, blanco) if blanco is not None else "Blanco no detectado por su bando"
+        if motivo:
+            raise HTTPException(status_code=400, detail=motivo)
+    elif payload.tipo in ("sonoboyas", "sonar"):
+        if payload.tipo == "sonoboyas" and not asw_mod.es_avion_asw(unidad):
+            raise HTTPException(status_code=400, detail="Siembran sonoboyas los aviones de patrulla marítima (P-3, P-8)")
+        if payload.tipo == "sonar" and not asw_mod.es_helo_asw(unidad):
+            raise HTTPException(status_code=400, detail="El sonar de inmersión es de los helicópteros antisubmarinos")
+        if len(payload.waypoints) != 1:
+            raise HTTPException(status_code=400, detail="Indique un único punto en el mapa")
+        _validar_waypoints(payload.waypoints)
+        if unidad.combustible <= aeronaves_mod.COMBUSTIBLE_CRITICO:
+            raise HTTPException(status_code=400, detail="Combustible insuficiente: aterrice y reabastezca")
     elif payload.tipo == "interceptar":
         blanco = _blanco_de_intercepcion(db, esc, usuario, payload.objetivo_unidad_id)
         motivo = intercep_mod.puede_interceptar(unidad, blanco, payload.accion_intercepcion or "")
@@ -240,7 +259,7 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
     demora = tiempo_real.demora_de_orden(db, esc, unidad, payload.tipo)
     # Una unidad cumple una sola orden a la vez: la nueva reemplaza a la que estaba cumpliendo (al instante). El
     # despegue y el lanzamiento son de la base o del lanzador y no interrumpen lo que hace.
-    if payload.tipo not in ("despegar", "lanzar") and not demora:
+    if payload.tipo not in ("despegar", "lanzar", "torpedo") and not demora:
         tiempo_real.cancelar_ordenes_de(db, unidad, "Reemplazada por una nueva orden.", tiempo_real.hora_del_dia(esc))
     elif demora:  # una orden demorada reemplaza a otra que tambien esperaba llegar
         for previa in db.query(Orden).filter(Orden.unidad_id == unidad.id, Orden.estado == "pendiente"):
@@ -250,8 +269,10 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         escenario_id=esc.id,
         unidad_id=unidad.id,
         tipo=payload.tipo,
-        waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir", "patrullar", "interferir", "desembarcar") else []),
-        objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar", "aterrizar", "lanzar", "embarcar", "interceptar") else None,
+        waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir", "patrullar", "interferir", "desembarcar",
+                                                                  "sonoboyas", "sonar") else []),
+        objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar", "aterrizar", "lanzar", "embarcar", "interceptar",
+                                                                    "torpedo") else None,
         detalle=(
             aeronaves_mod.codificar(payload.modelo, payload.aeronaves, (payload.indicativo or "").strip(), payload.carga)
             if payload.tipo == "despegar"

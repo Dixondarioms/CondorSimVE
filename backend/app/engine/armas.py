@@ -22,16 +22,16 @@ from app.engine import catalogo, ota
 
 # tipo de arma -> nombre, probabilidad de impacto tipica y existencias iniciales en una base (varias recargas)
 TIPOS = {"aa": "aire-aire", "as": "aire-superficie", "ar": "antirradiación", "ab": "antibuque", "bomba": "bomba",
-         "helo": "cañón o cohetes"}
+         "helo": "cañón o cohetes", "torp": "torpedo"}
 PK = {"M120": 0.6, "MAA": 0.55, "MAB": 0.45, "MAC": 0.4, "M9X": 0.75, "MAD": 0.7, "MPA": 0.65, "MPB": 0.6,
       "HRM": 0.65, "MA3": 0.6, "HPN": 0.75, "EXO": 0.75, "MA6": 0.7, "MA2": 0.7}
-PK_TIPO = {"aa": 0.6, "as": 0.7, "ar": 0.6, "ab": 0.75, "bomba": 0.4, "helo": 0.3}
+PK_TIPO = {"aa": 0.6, "as": 0.7, "ar": 0.6, "ab": 0.75, "bomba": 0.4, "helo": 0.3, "torp": 0.7}
 PK_GUIADA = 0.8  # bombas guiadas (laser, TV, GPS)
-EXISTENCIAS = {"aa": 160, "as": 80, "ar": 40, "ab": 40, "bomba": 300, "helo": 400}
+EXISTENCIAS = {"aa": 160, "as": 80, "ar": 40, "ab": 40, "bomba": 300, "helo": 400, "torp": 40}
 FACTOR_PANOL = 0.5  # el pañol de un buque guarda la mitad que una base
 ALCANCE_BOMBA_KM = 3.0  # una bomba se suelta casi encima del blanco (las guiadas, desde su alcance)
 NOMBRES_CARGA = {"aire_aire": "Aire-aire", "ataque": "Ataque", "antibuque": "Antibuque", "sead": "SEAD (antirradiación)",
-                 "reconocimiento": "Reconocimiento"}
+                 "antisubmarina": "Antisubmarina (torpedos)", "reconocimiento": "Reconocimiento"}
 CANTIDAD = {"aa_largo": 4, "aa_corto": 2, "as": 2, "ar": 2, "ab": 2, "CKH": 6, "CKL": 4, "ALP": 6, "HLF": 4}
 
 
@@ -84,7 +84,7 @@ def cargas_de(modelo_id: str | None, clase=None) -> dict[str, dict[str, int]]:
     if aa:
         cargas["aire_aire"] = ({largo[0]: CANTIDAD["aa_largo"]} if largo else {}) | (
             {corto[0]: CANTIDAD["aa_corto"] if largo else CANTIDAD["aa_largo"]} if corto else {})
-    helo = [a for a in armas if tipo(a) == "helo" or a == "HLF" and not aa]
+    helo = [a for a in armas if (tipo(a) == "helo" or a == "HLF" and not aa) and tipo(a) != "torp"]
     superficie = [a for a in armas if tipo(a) in ("as", "bomba")]
     guiadas = [a for a in superficie if _arma(a)[2]]
     if helo:
@@ -101,6 +101,9 @@ def cargas_de(modelo_id: str | None, clase=None) -> dict[str, dict[str, int]]:
     ar = [a for a in armas if tipo(a) == "ar"]
     if ar:
         cargas["sead"] = {ar[0]: CANTIDAD["ar"]} | autodefensa
+    if "TOR" in armas:  # patrulla maritima y helicopteros antisubmarinos (engine/asw.py)
+        aerea = clase is not None and clase.id in ("helicoptero", "helicoptero_artillado")
+        cargas["antisubmarina"] = {"TOR": 2 if aerea else 4}
     cargas["reconocimiento"] = dict(autodefensa)
     return cargas
 
@@ -109,6 +112,8 @@ def carga_por_defecto(modelo_id: str | None, clase=None) -> str:
     cargas = cargas_de(modelo_id, clase)
     cid = getattr(clase, "id", "") or (catalogo.MODELOS[modelo_id].clase if modelo_id in catalogo.MODELOS else "")
     preferida = "aire_aire" if cid in ("caza", "caza_embarcado") else "ataque"
+    if "antisubmarina" in cargas and modelo_id in ("p3c", "p8a", "nh90"):
+        preferida = "antisubmarina"
     return preferida if preferida in cargas else next(iter(cargas))
 
 
@@ -187,7 +192,7 @@ def _sirve(codigo: str, blanco, emite: bool) -> bool:
         return False
     if t == "ar":
         return emite
-    if t == "ab":
+    if t in ("ab", "torp"):
         return blanco.tipo == "naval"
     return True  # bombas, misiles aire-superficie, cañon y cohetes contra todo lo de superficie
 

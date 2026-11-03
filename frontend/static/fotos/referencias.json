@@ -1675,6 +1675,14 @@
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:Submarino_Oce%C3%A1nico_Tipo_U-209_S-31_Sabalo.JPG"
     },
+    "torpedo": {
+      "foto": "/static/fotos/ref_torpedo.jpg",
+      "obra": "Mk 48 torpedo maintenance 1982",
+      "autor": "United States Navy",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Mk_48_torpedo_maintenance_1982.JPEG"
+    },
     "transporte": {
       "foto": "/static/fotos/ref_transporte.jpg",
       "obra": "TB2015ExhibitionP1-58",
