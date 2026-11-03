@@ -247,6 +247,17 @@
         bando» lo toma de la doctrina del bando. Por defecto: contra aeronaves libre, contra superficie solo con orden.</p>`,
     },
     {
+      id: "salvas", seccion: "Defensa aérea y doctrina", titulo: "Salvas de misiles y defensa de punto de los buques",
+      claves: "salva salvas misil misiles crucero antibuque harpoon exocet kalibr defensa de punto ciws saturacion saturar impacto probabilidad",
+      texto: `<p>Cada misil de una salva (de crucero, antibuque o los antibuque que tiran los aviones con la carga
+        «antibuque») <b>vuela por separado</b> y se ve en el mapa. Al llegar impacta con su probabilidad (Harpoon, Exocet y
+        Kh-35 0,8; Tomahawk, Kalibr y NSM 0,85) y hace su parte del daño de la salva completa.</p>
+        <p>Los buques tienen <b>defensa de punto</b> (cañones y misiles de corto alcance) que tira sola contra los misiles
+        enemigos a su alcance: destructores 4 canales a 12 km, fragatas 2 a 8 km, portaaviones 2 a 6 km, patrulleros y
+        buques de desembarco 1 a 4 km (se ve en el panel de abajo del buque). Cada canal tira una vez cada 10 segundos:
+        una <b>salva grande satura</b> los canales y pasan más misiles. La antiaérea y las patrullas también los derriban.</p>`,
+    },
+    {
       id: "asw", seccion: "Defensa aérea y doctrina", titulo: "Guerra antisubmarina: sonar, sonoboyas y torpedos",
       claves: "antisubmarina submarino sonar sonoboya sonoboyas torpedo profundidad periscopica periscopio inmersion helicoptero p-3 p-8 orion poseidon nh90",
       texto: `<p>Un submarino sumergido no se ve con radar ni a ojo: se lo detecta con <b>sonar</b>.</p>

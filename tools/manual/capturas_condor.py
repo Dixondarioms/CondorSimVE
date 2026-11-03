@@ -363,6 +363,27 @@ def asw(n: Nav) -> None:
     guardar(n, "asw_panel", n.rect("#panel-unidad"), margen=0)
 
 
+def salvas(n: Nav) -> None:
+    """Una salva de 4 misiles, cada uno en vuelo por separado, contra una fragata con defensa de punto (en la COPIA)."""
+    n.como("director")
+    fragata = _post(n, "/unidades", {"nombre": "Fragata roja 3 (captura)", "bando": "rojo", "tipo": "naval", "clase": "fragata",
+                                     "lat": 11.53, "lon": -64.14})
+    sub = _post(n, "/unidades", {"nombre": "Submarino lanzador (captura)", "bando": "azul", "tipo": "naval",
+                                 "clase": "submarino", "lat": 11.30, "lon": -64.05})
+    n.como("az.cmdte")
+    r = _post(n, "/ordenes", {"unidad_id": sub["id"], "tipo": "lanzar", "objetivo_unidad_id": fragata["id"], "misiles": 4})
+    print("   lanzamiento:", (r or {}).get("resultado") or r)
+    n.como("director")
+    n.clic("#control-turno [data-vel='10']")
+    n.clic("#btn-marcha")
+    n.pausa(4)
+    n.clic("#btn-marcha")  # detener
+    n.pausa(2)
+    n.sin_seleccion()
+    n.vista(11.36, -64.07, 12, 3)
+    guardar(n, "salvas", n.rect("#map"), margen=0)
+
+
 def doctrina(n: Nav) -> None:
     n.pestana("fuerzas")
     n.js("const d = document.getElementById('sec-doctrina'); d.querySelectorAll('details').forEach((x) => x.open = true); d.scrollIntoView({block: 'start'})")
@@ -488,7 +509,7 @@ def videowall(n: Nav) -> None:
     n.tecla("Escape", 27)
 
 
-ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, eventos_auto, asw, doctrina, misiones,
+ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, eventos_auto, asw, salvas, doctrina, misiones,
          situacion, tiem, consola, capas, graficos, mapas, ayuda, informe, en_marcha, bando, videowall]
 
 
@@ -502,7 +523,7 @@ def main() -> int:
             if pedidas and f.__name__ not in pedidas:
                 continue
             try:
-                if f not in (acceso, despegue, orden_mover, interceptar, zonas, carga, sistemas, asw, misiones, bando):
+                if f not in (acceso, despegue, orden_mover, interceptar, zonas, carga, sistemas, asw, salvas, misiones, bando):
                     n.como("director")
                 f(n)
                 if f is acceso:

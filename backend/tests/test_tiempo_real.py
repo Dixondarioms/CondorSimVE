@@ -304,9 +304,10 @@ def test_el_misil_persigue_e_impacta(db_session):
     _unidad(db_session, esc, nombre="Reco", lat=0.45, deteccion_km=20)
     o = _orden(db_session, esc, lanzador, "lanzar", objetivo=r, detalle=json.dumps({"misiles": 2}))
     assert o.estado == "resuelta"
-    misil = db_session.query(Unidad).filter(Unidad.blanco_id == r.id).one()
+    misiles = db_session.query(Unidad).filter(Unidad.blanco_id == r.id).all()
+    assert len(misiles) == 2  # cada misil vuela por separado
     _correr(db_session, esc, 600)
-    assert misil.estado == "destruida" and r.fuerza < 100
+    assert all(m.estado == "destruida" for m in misiles) and r.fuerza < 100
 
 
 def test_el_lanzador_recarga_entre_salvas_y_la_ia_no_tira_sin_parar(db_session):
@@ -316,7 +317,7 @@ def test_el_lanzador_recarga_entre_salvas_y_la_ia_no_tira_sin_parar(db_session):
     _unidad(db_session, esc, nombre="Blanco", bando="azul", lat=0.5, deteccion_km=5)
     lanzador = _unidad(db_session, esc, nombre="Lanzador", bando="rojo", clase="lanzador_misiles", deteccion_km=80)
     _correr(db_session, esc, 900)  # tres decisiones de la IA en 15 minutos: una sola salva
-    salvas = db_session.query(Unidad).filter(Unidad.escenario_id == esc.id, Unidad.blanco_id.isnot(None)).count()
+    salvas = db_session.query(Orden).filter(Orden.escenario_id == esc.id, Orden.tipo == "lanzar", Orden.estado == "resuelta").count()
     assert salvas == 1 and lanzador.recarga_hasta == pytest.approx(tiempo_real.RECARGA_LANZADOR_S, abs=PASO)
 
 

@@ -128,7 +128,8 @@ def test_el_buque_intercepta_buques_y_no_aeronaves(db_session):
     o = _orden(db_session, esc, f, "interceptar", objetivo=buque, detalle=_accion("neutralizar"))
     tiempo_real.paso(db_session, esc, 5400, TerrenoFalso(lambda lat, lon: "agua"))
     db_session.commit()
-    assert _fase(o) == "ataque" and buque.fuerza < 100
+    # llego a atacar (despues puede perder el contacto si un impacto critico le daña los sensores: engine/sistemas.py)
+    assert buque.fuerza < 100 and _fase(o) in ("ataque", "estima", "busqueda")
 
 
 def test_api_estima_antes_de_emitir_y_valida(api):

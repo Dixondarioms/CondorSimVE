@@ -11,6 +11,12 @@ lo tiene a su alcance, se registra un ataque "impacto". Si el blanco desaparecio
 (mision_lat/lon) y se pierde alli. Sin combustible, se pierde. Antes del impacto (fase 3) la antiaerea y las
 patrullas enemigas pueden derribarla: sus perdidas se aplican primero y, si llega a 0, no impacta. No aterriza, no se
 reabastece y no cuenta para los topes de aeronaves del bando.
+
+Cóndor (tiempo real): cada misil vuela por separado (`crear_misiles`: una unidad por misil, con el tamaño de su salva y
+su probabilidad de impacto en `armamento_json`). Al llegar impacta con su probabilidad (PK_MISIL) y hace su parte del
+daño que la tabla de combate le asigna a la salva completa (decision del usuario: si todos impactan, como antes). La
+defensa de punto de los buques (DEFENSA_PUNTO: canales, alcance y probabilidad) los derriba de a uno: una salva grande
+satura los canales y pasan mas. Los misiles antibuque que tiran las aeronaves (Harpoon, Exocet, Kh-35) tambien vuelan.
 """
 
 import json
@@ -30,6 +36,21 @@ MISIL_DEL_LANZADOR = {
     "bastion_p": "oniks", "bal_e": "kh35", "nsm_cds": "nsm",
     "fremm": "exocet", "scorpene": "exocet", "tamandare": "exocet",
 }
+
+
+PK_MISIL = {"crucero": 0.85, "kalibr": 0.85, "brahmos": 0.85, "exocet": 0.8, "harpoon": 0.8, "oniks": 0.8, "kh35": 0.8,
+            "nsm": 0.85}
+PK_POR_DEFECTO = 0.8
+MISIL_DEL_ARMA = {"HPN": "harpoon", "EXO": "exocet", "MA6": "kh35"}  # antibuque de las aeronaves (engine/armas.py)
+# defensa de punto de los buques: canales de tiro simultaneos, alcance (km), probabilidad por disparo y ciclo (s)
+DEFENSA_PUNTO = {
+    "destructor": {"canales": 4, "km": 12.0, "pk": 0.5},
+    "fragata": {"canales": 2, "km": 8.0, "pk": 0.45},
+    "portaaviones": {"canales": 2, "km": 6.0, "pk": 0.4},
+    "patrullero": {"canales": 1, "km": 4.0, "pk": 0.3},
+    "buque_desembarco": {"canales": 1, "km": 4.0, "pk": 0.3},
+}
+CICLO_PUNTO_S = 10.0  # cada canal tira una vez por este tiempo
 
 
 def codificar(misiles: int) -> str:
@@ -86,6 +107,36 @@ def error_de_lanzamiento(lanzador, blanco, misiles: int | None) -> str | None:
     if lanzador.municion + 1e-6 < costo:
         return f"Municion insuficiente para {misiles} misil(es) ({lanzador.municion:.0f}% < {costo:.0f}%)."
     return None
+
+
+def salva_de(m) -> dict:
+    """{"salva": n, "pk": p} de un misil del Cóndor ({} en las salvas de un solo bloque, anteriores)."""
+    try:
+        d = json.loads(getattr(m, "armamento_json", None) or "{}")
+    except ValueError:
+        return {}
+    return d if isinstance(d, dict) and "salva" in d else {}
+
+
+def crear_misiles(lanzador, blanco, misiles: int, modelo_id: str | None = None) -> list:
+    """Una unidad por misil, en abanico sobre el lanzador (sin agregarlas a la sesion)."""
+    m = catalogo.MODELOS[modelo_id] if modelo_id else modelo_misil(lanzador)
+    clase = catalogo.CLASES[m.clase]
+    pk = PK_MISIL.get(m.id, PK_POR_DEFECTO)
+    salida = []
+    for i in range(misiles):
+        u = Unidad(
+            escenario_id=lanzador.escenario_id, nombre=f"{m.corto} {i + 1}/{misiles} de {lanzador.nombre}"[:120],
+            bando=lanzador.bando, tipo="aerea", clase=clase.id, modelo=m.id, aeronaves=1, echelon="",
+            lat=lanzador.lat + DESPLAZAMIENTO_GRADOS * (i % 3), lon=lanzador.lon + DESPLAZAMIENTO_GRADOS * (i // 3),
+            fuerza=100.0, velocidad_kmh=m.velocidad_kmh, alcance_km=m.alcance_km, deteccion_km=m.deteccion_km,
+            combustible=100.0, municion=100.0, autonomia_km=m.autonomia_km, en_tierra=False,
+            blanco_id=blanco.id, mision="impacto", mision_lat=blanco.lat, mision_lon=blanco.lon,
+            sidc=catalogo.generar_sidc(lanzador.bando, clase), estado="activa",
+        )
+        u.armamento_json = json.dumps({"salva": misiles, "pk": pk})
+        salida.append(u)
+    return salida
 
 
 def crear_salva(lanzador, blanco, misiles: int, ya_lanzadas: int = 0) -> Unidad:

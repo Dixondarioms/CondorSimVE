@@ -61,6 +61,8 @@ def radio_efectivo(detector, objetivo, terreno: Terreno, clima: str = "despejado
         radio = max(min(radio, ge_mod.RADIO_VISUAL_KM), radio * sanos)
     if submarino:  # sumergido: solo el sonar (o a cota periscopica, de cerca); al atacar se delata
         radio = asw.radio_contra_submarino(detector, objetivo, radio)
+    elif objetivo.tipo == "naval" and not catalogo.es_misil(objetivo):
+        radio = max(radio, asw.sonar_km(detector))  # el sonar tambien oye a los buques de superficie
     return radio
 
 

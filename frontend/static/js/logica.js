@@ -111,7 +111,16 @@
   /** Texto de la situacion de un misil en vuelo: "Salva x2 · hacia Deposito Norte". */
   function textoMisil(u, unidades) {
     const blanco = (unidades || []).find((x) => x.id === u.blanco_id);
-    return `${u.aeronaves || 1} misil${(u.aeronaves || 1) === 1 ? "" : "es"} en vuelo hacia ${blanco ? blanco.nombre : "su blanco"}`;
+    const hacia = blanco ? blanco.nombre : "su blanco";
+    if (u.clase === "torpedo") return `Torpedo en recorrido hacia ${hacia}`;
+    if ((u.aeronaves || 1) === 1) return `Misil en vuelo hacia ${hacia}${u.fuerza != null && u.fuerza < 100 ? ` (dañado: ${Math.round(u.fuerza)} %)` : ""}`;
+    return `${u.aeronaves} misiles en vuelo hacia ${hacia}`;
+  }
+
+  /** Defensa de punto de un buque (engine/misiles.py): «2 canales a 8 km (Pk 0,45)». */
+  function textoDefensaPunto(u, cat) {
+    const d = cat && cat.defensa_punto && cat.defensa_punto[u.clase];
+    return d && u.tipo === "naval" ? `${d.canales} canal${d.canales === 1 ? "" : "es"} a ${d.km} km (Pk ${String(d.pk).replace(".", ",")} por disparo)` : "";
   }
 
   const ETIQUETA_CLIMA = { despejado: "Despejado", nublado: "Nublado", lluvia: "Lluvia", tormenta: "Tormenta" };
@@ -1321,7 +1330,7 @@
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
-    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
+    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,

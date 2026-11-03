@@ -5,6 +5,8 @@ alumno (autor registrado en cada orden y mision)."""
 import csv
 import io
 
+import pytest
+
 from app import auth
 from app.engine import aar
 from app.models.aar import RegistroLogistico
@@ -23,6 +25,15 @@ def test_motivo_generico_agrupa_cifras_y_parentesis():
     assert aar.motivo_generico("Recargando (2 turno(s) restante(s)).") == "Recargando"
     assert aar.motivo_generico("En tierra: faltan 2 turno(s) para reabastecer.") == "En tierra: faltan N turno para reabastecer"
     assert aar.motivo_generico("") == "(sin motivo)"
+
+
+@pytest.fixture(autouse=True)
+def sin_impactos_criticos(monkeypatch):
+    """Esta prueba cuenta ordenes y perdidas: los impactos criticos al azar en los sensores (engine/sistemas.py) podrian
+    hacer perder de vista al blanco y cambiar las cuentas."""
+    from app.engine import sistemas
+
+    monkeypatch.setattr(sistemas, "IMPACTO_POR_PUNTO", 0.0)
 
 
 def _jugar(api):

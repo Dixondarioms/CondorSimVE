@@ -169,6 +169,7 @@ class Mundo:
     patrulla_idx: dict = field(default_factory=dict)  # unidad_id -> proximo vertice de su area de patrulla
     trafico_en: float = -1e9  # ultimo segundo simulado en que se mantuvo el trafico civil (engine/trafico.py)
     colateral: dict = field(default_factory=dict)  # (atacante_id, neutral_id) -> ultimo aviso de daño colateral
+    punto_disparos: dict = field(default_factory=dict)  # buque_id -> disparos de defensa de punto acumulados
     # eventos automaticos del director (engine/eventos_auto.py): (regla, unidad) dentro de su area
     eventos_dentro: set = field(default_factory=set)
     eventos_listo: bool = False
@@ -396,12 +397,12 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
     if orden.tipo == "lanzar":
         blanco = db.get(Unidad, orden.objetivo_unidad_id)
         n = misiles_mod.decodificar(orden.detalle).get("misiles")
-        salva = misiles_mod.crear_salva(unidad, blanco, n)
-        salva.rumbo = rumbo(unidad.lat, unidad.lon, blanco.lat, blanco.lon)
+        for misil in misiles_mod.crear_misiles(unidad, blanco, n):  # cada misil vuela por separado
+            misil.rumbo = rumbo(unidad.lat, unidad.lon, blanco.lat, blanco.lon)
+            db.add(misil)
         unidad.municion = max(0.0, unidad.municion - misiles_mod.MUNICION_POR_MISIL * n)
         unidad.recarga_hasta = esc.sim_segundos + RECARGA_LANZADOR_S
         asw_mod.exponer(unidad, (esc.sim_segundos or 0.0) + asw_mod.EXPUESTO_S)  # un submarino que lanza se delata
-        db.add(salva)
         db.flush()
         orden.estado = "resuelta"
         orden.resultado = f"[{hora}] {unidad.nombre} lanzó {n} misil(es) de crucero contra {blanco.nombre}."
@@ -668,6 +669,7 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
     if ctx.t - ctx.mundo.trafico_en >= trafico_mod.MANTENER_CADA_S:
         ctx.mundo.trafico_en = ctx.t
         trafico_mod.mantener(ctx)
+    _defensa_de_punto(ctx, h)  # los buques se defienden de los misiles aunque el fuego automatico este apagado
     if ctx.esc.fuego_automatico:
         _interceptar(ctx)
         _antiaerea_generica(ctx, h)
@@ -1042,6 +1044,8 @@ def _pasada(ctx: _Ctx, a: Unidad, d: Unidad, orden: Orden | None, recarga_s: flo
         if arma is None:
             return ""
         a.arma_elegida = arma
+        if arma in misiles_mod.MISIL_DEL_ARMA and d.tipo == "naval":
+            return _lanzar_antibuque(ctx, a, d, arma, recarga_s)
     clave = orden.id if orden is not None else int(ctx.t)
     parte = orden.detalle if orden is not None and orden.tipo == "atacar" else None
     perd_a, perd_d, gasto, res = _resolver(ctx, a, d, 1.0, clave, parte)
@@ -1066,6 +1070,23 @@ def _pasada(ctx: _Ctx, a: Unidad, d: Unidad, orden: Orden | None, recarga_s: flo
                     + f": perdió {perd_d:.0f} puntos de fuerza.")
         ctx.evento("combate", d.bando, recibido, d.lat, d.lon)
         ctx.alerta("ataque", d.bando, recibido, d.lat, d.lon, "critica")
+    return texto
+
+
+def _lanzar_antibuque(ctx: _Ctx, a: Unidad, d: Unidad, arma: str, recarga_s: float) -> str:
+    """La aeronave suelta sus misiles antibuque: cada uno vuela por separado hasta el buque (engine/misiles.py)."""
+    tiradas = armas_mod.gastar(a, arma)
+    _cambiar(ctx, a, "municion", armas_mod.municion_pct(a), "combate")
+    a.recarga_hasta = ctx.t + recarga_s
+    for x in misiles_mod.crear_misiles(a, d, tiradas, misiles_mod.MISIL_DEL_ARMA[arma]):
+        x.rumbo = rumbo(a.lat, a.lon, d.lat, d.lon)
+        ctx.db.add(x)
+        ctx.db.flush()
+        ctx.unidades[x.id] = x
+        ctx.lista.append(x)
+    texto = f"{a.nombre} lanzó {tiradas} {ota_mod.ARMAMENTO[arma][0]} contra {d.nombre}."
+    ctx.evento("combate", a.bando, texto, d.lat, d.lon)
+    ctx.informe.cambios = True
     return texto
 
 
@@ -1580,13 +1601,83 @@ def _guiar_misil(ctx: _Ctx, m: Unidad, h: float) -> None:
         return
     _avanzar(ctx, m, [[m.mision_lat, m.mision_lon]], h)
     if guiado and geo.distancia_km(m.lat, m.lon, blanco.lat, blanco.lon) <= m.alcance_km:
-        _pasada(ctx, m, blanco, None, 0.0)
+        if misiles_mod.salva_de(m):
+            _impacto_misil(ctx, m, blanco)
+        else:
+            _pasada(ctx, m, blanco, None, 0.0)  # salva de un solo bloque (anterior a los misiles por separado)
         m.estado = "destruida"
         m.fuerza = 0.0
         ctx.informe.cambios = True
     elif not guiado and geo.distancia_km(m.lat, m.lon, m.mision_lat, m.mision_lon) <= misiles_mod.LLEGADA_KM:
         m.estado, m.fuerza = "destruida", 0.0
         ctx.evento("combate", m.bando, f"{m.nombre} no encontró su blanco en el último punto conocido y se perdió.")
+
+
+def _impacto_misil(ctx: _Ctx, m: Unidad, blanco: Unidad) -> None:
+    """Un misil de la salva llega: impacta con su probabilidad y hace su parte del daño que la tabla de combate le da
+    a la salva completa (engine/misiles.py). Sin azar, el daño esperado (por la probabilidad y lo que le quedo de
+    fuerza tras la defensa de punto)."""
+    d = misiles_mod.salva_de(m)
+    n, pk = max(1, int(d.get("salva") or 1)), float(d.get("pk") or misiles_mod.PK_POR_DEFECTO)
+    if ctx.esc.azar:
+        clave = f"{ctx.esc.semilla}:impacto:{m.id}:{blanco.id}:{ctx.t:.0f}"
+        rng = random.Random(int.from_bytes(hashlib.sha256(clave.encode()).digest()[:8], "big"))
+        escala = 1.0 if rng.random() < pk else 0.0
+    else:
+        escala = pk * max(0.0, m.fuerza) / 100.0
+    if escala <= 0:
+        ctx.evento("combate", m.bando, f"{m.nombre} falló contra {blanco.nombre}.", blanco.lat, blanco.lon)
+        return
+    m.aeronaves = n  # la tabla de combate, para la salva completa
+    _, perd_d, _, res = _resolver(ctx, m, blanco, 1.0, m.id)
+    m.aeronaves = 1
+    perd_d = min(blanco.fuerza, perd_d * escala / n)
+    _perder(ctx, blanco, perd_d)
+    _registrar_combate(ctx, m, blanco, None, 0.0, perd_d, res.ratio, f"impacto de 1 de {n} misiles; " + "; ".join(res.efectos))
+    ctx.evento("combate", m.bando, f"{m.nombre} impactó en {blanco.nombre} (−{perd_d:.0f} puntos de fuerza).", blanco.lat, blanco.lon)
+    texto = f"{blanco.nombre} recibió el impacto de un misil enemigo (−{perd_d:.0f} puntos de fuerza)."
+    ctx.evento("combate", blanco.bando, texto, blanco.lat, blanco.lon)
+    ctx.alerta("ataque", blanco.bando, texto, blanco.lat, blanco.lon, "critica")
+    _colateral(ctx, m, blanco, perd_d)
+
+
+def _defensa_de_punto(ctx: _Ctx, h: float) -> None:
+    """Defensa de punto de los buques (cañones y misiles de corto alcance): cada canal tira a un misil enemigo en
+    vuelo a su alcance por ciclo; una salva grande satura los canales (engine/misiles.py)."""
+    misiles = [x for x in ctx.lista if x.estado == "activa" and x.tipo == "aerea" and catalogo.es_misil(x)]
+    if not misiles:
+        return
+    for b in ctx.lista:
+        dp = misiles_mod.DEFENSA_PUNTO.get(b.clase or "")
+        if dp is None or b.estado != "activa" or b.tipo != "naval":
+            continue
+        cerca = sorted((geo.distancia_km(b.lat, b.lon, x.lat, x.lon), x.id, x) for x in misiles
+                       if x.bando != b.bando and x.estado == "activa" and geo.distancia_km(b.lat, b.lon, x.lat, x.lon) <= dp["km"])
+        if not cerca:
+            continue
+        acumulado = ctx.mundo.punto_disparos.get(b.id, 0.0) + dp["canales"] * h / misiles_mod.CICLO_PUNTO_S
+        disparos = int(acumulado)
+        ctx.mundo.punto_disparos[b.id] = acumulado - disparos
+        pk = dp["pk"] * sistemas_mod.factor(b, "armas")
+        derribados = 0
+        for _, _, x in cerca:
+            if disparos <= 0:
+                break
+            while disparos > 0 and x.estado == "activa":
+                disparos -= 1
+                if ctx.esc.azar:
+                    clave = f"{ctx.esc.semilla}:punto:{b.id}:{x.id}:{ctx.t:.0f}:{disparos}"
+                    rng = random.Random(int.from_bytes(hashlib.sha256(clave.encode()).digest()[:8], "big"))
+                    x.fuerza = 0.0 if rng.random() < pk else x.fuerza
+                else:
+                    x.fuerza = max(0.0, x.fuerza - pk * 100.0)
+                if x.fuerza <= 0.5:
+                    x.estado, x.fuerza = "destruida", 0.0
+                    derribados += 1
+        if derribados:
+            ctx.evento("combate", b.bando, f"La defensa de punto de {b.nombre} derribó {derribados} misil(es) enemigo(s).",
+                       b.lat, b.lon)
+            ctx.informe.cambios = True
 
 
 def _amenazas_aereas(ctx: _Ctx, u: Unidad, alcance_km: float, linea_de_vista: bool = False) -> list:

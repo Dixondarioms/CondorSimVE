@@ -1770,6 +1770,8 @@
       extra.push(dato("Refugios reforzados", `${u.refugios || 0} (protegen a los primeros ${u.refugios || 0} grupos estacionados; ${abordo.length} a bordo)`));
     }
     if (cl && cl.lanza_misiles && !oculto) extra.push(dato("Misiles de crucero", `${Logica.misilesDisponibles(u)} listos (25 % de munición cada uno)`));
+    const punto = Logica.textoDefensaPunto(u, app.catalogo);
+    if (punto) extra.push(`<div class="ancho-completo"><dt>Defensa de punto contra misiles</dt><dd>${escapar(punto)}</dd></div>`);
     if (Logica.embarcada(u) && app.data) {
       const t = app.porId.get(u.transporte_id);
       extra.push(`<div class="ancho-completo"><dt>Situación</dt><dd>A bordo de ${escapar(t ? t.nombre : "un transporte")}: viaja con él y no puede recibir órdenes hasta desembarcar.</dd></div>`);

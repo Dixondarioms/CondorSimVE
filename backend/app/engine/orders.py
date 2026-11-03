@@ -402,7 +402,7 @@ def procesar_ordenes(
         if motivo:
             rechazar(orden, motivo)
             continue
-        salva = misiles_mod.crear_salva(lanzador, blanco, n, salvas_de[lanzador.id])
+        salva = misiles_mod.crear_salva(lanzador, blanco, n, salvas_de[lanzador.id])  # SIETE por turnos: un bloque
         salvas_de[lanzador.id] += 1
         bit.poner(lanzador, "municion", lanzador.municion - misiles_mod.MUNICION_POR_MISIL * n, "lanzamiento", orden.id)
         db.add(salva)
