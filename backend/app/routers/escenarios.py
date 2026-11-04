@@ -108,8 +108,10 @@ MOTIVO_SIN_TURNOS = "En el Cóndor el tiempo avanza solo: use la pausa y la velo
 
 def _exigir_reloj(esc: Escenario, usuario: Usuario) -> None:
     """El reloj lo maneja el director; en un ensayo (juego de guerra del TIEM), el Comandante o el JEM del bando que
-    ensaya, que juega solo contra el enemigo."""
+    ensaya, que juega solo contra el enemigo; en un ejercicio de practica (como el Tutorial), el alumno."""
     if usuario.rol == "instructor":
+        return
+    if getattr(esc, "practica", False) and usuario.rol in ("azul", "rojo"):
         return
     if esc.ensayo_de is not None and usuario.rol == esc.ensayo_bando and puestos.puede(usuario.puesto, "listo"):
         return
@@ -233,8 +235,9 @@ async def guardar_transmisiones(
 async def pausar(
     esc: Escenario = Depends(auth.escenario_dep),
     db: Session = Depends(get_db),
-    usuario: Usuario = Depends(solo_instructor),
+    usuario: Usuario = Depends(auth.usuario_actual),
 ):
+    _exigir_reloj(esc, usuario)
     clock.pausar(db, esc)
     return await _difundir_y_estado(db, esc, usuario)
 
@@ -243,8 +246,9 @@ async def pausar(
 async def reanudar(
     esc: Escenario = Depends(auth.escenario_dep),
     db: Session = Depends(get_db),
-    usuario: Usuario = Depends(solo_instructor),
+    usuario: Usuario = Depends(auth.usuario_actual),
 ):
+    _exigir_reloj(esc, usuario)
     if esc.estado == "finalizado":
         raise HTTPException(status_code=400, detail="El escenario ya finalizo")
     clock.reanudar(db, esc)
@@ -379,7 +383,8 @@ async def configurar(
             cambios.append(f"hora simulada inicial {payload.hora_inicio}")
     for campo, etiqueta in (("niebla", "niebla de guerra"), ("logistica", "consumo y reabastecimiento"),
                             ("efectos_clima", "efectos del clima"), ("fuego_automatico", "fuego automatico (patrullas y antiaerea)"),
-                            ("enlace_datos", "imagen comun por enlace de datos")):
+                            ("enlace_datos", "imagen comun por enlace de datos"),
+                            ("practica", "ejercicio de practica (el alumno maneja el reloj)")):
         nuevo = getattr(payload, campo)
         if nuevo is not None and nuevo != getattr(esc, campo):
             setattr(esc, campo, nuevo)

@@ -2582,6 +2582,7 @@
         set(id, (e) => { e.checked = esc[campo] !== false; });
       }
       set("dir-enlace", (e) => { e.checked = !!esc.enlace_datos; });
+      set("dir-practica", (e) => { e.checked = !!esc.practica; });
       set("dir-cond-azul", (e) => { e.value = esc.conduccion_azul || "alumnos"; });
       set("dir-cond-rojo", (e) => { e.value = esc.conduccion_rojo || "alumnos"; });
       set("cal-fecha", (e) => { e.value = esc.fecha_inicio || ""; });
@@ -2641,8 +2642,10 @@
       el.querySelector("i").classList.toggle("pulso", esc.estado === "activo");
       el.querySelector(".rotulo-bando").textContent = nombreDeBando(bando).toUpperCase();
     }
-    // el reloj lo maneja el director; en un ensayo del TIEM, tambien el Comandante y el JEM del bando que ensaya
-    const manejaReloj = esInstructor() || (esAlumno() && !!esc.ensayo_de && esc.ensayo_bando === app.usuario.rol && puedeFuncion("listo"));
+    // el reloj lo maneja el director; en un ensayo del TIEM, tambien el Comandante y el JEM del bando que ensaya; en un
+    // ejercicio de practica (como el Tutorial), el alumno
+    const manejaReloj = esInstructor() || (esAlumno() && !!esc.practica)
+      || (esAlumno() && !!esc.ensayo_de && esc.ensayo_bando === app.usuario.rol && puedeFuncion("listo"));
     $("controles-reloj").hidden = !manejaReloj;
     if (manejaReloj) {
       const enMarcha = esc.estado === "activo";
@@ -2718,7 +2721,7 @@
     const visible = esc.estado === "pausado" && !!esc.pausa_motivo;
     $("banner-pausa").hidden = !visible;
     if (visible) $("banner-pausa-texto").textContent = esc.pausa_motivo;
-    $("banner-pausa-reanudar").hidden = !esInstructor();
+    $("banner-pausa-reanudar").hidden = !(esInstructor() || (esAlumno() && !!esc.practica));
     if (esInstructor()) {
       document.querySelectorAll("[data-causa]").forEach((c) => {
         if (document.activeElement !== c) c.checked = !!(esc.pausa_auto || {})[c.dataset.causa];
@@ -3239,7 +3242,7 @@
     app.zonas.conectar();
     app.capas.zonas = app.zonas.capa;
     // tarjetas y capas plegables, atajos de teclado y filtros de las alertas (interfaz.js)
-    app.interfaz = Interfaz.crear({ esDirector: () => esInstructor(), alCambiarFiltro: () => renderAlertas() });
+    app.interfaz = Interfaz.crear({ esDirector: () => !$("controles-reloj").hidden, alCambiarFiltro: () => renderAlertas() });
     app.interfaz.conectar();
     app.eventosAuto = EventosAuto.crear({
       api, toast, rutaEsc, datos: () => app.data, catalogo: () => app.catalogo, esDirector: () => esInstructor(),
@@ -3751,7 +3754,7 @@
     if (!app.escenarioId) return;
     enSilencio(api("PATCH", rutaEsc("/config"), {
       niebla: $("dir-niebla").checked, logistica: $("dir-logistica").checked,
-      efectos_clima: $("dir-clima").checked, fuego_automatico: $("dir-fuego").checked, enlace_datos: $("dir-enlace").checked,
+      efectos_clima: $("dir-clima").checked, fuego_automatico: $("dir-fuego").checked, enlace_datos: $("dir-enlace").checked, practica: $("dir-practica").checked,
       conduccion_azul: $("dir-cond-azul").value, conduccion_rojo: $("dir-cond-rojo").value,
       dia_noche: $("dir-noche").checked, ia_nivel: $("dir-ia-nivel").value, fallas: $("dir-fallas").checked,
     }).then(() => toast("Interruptores aplicados", true)));

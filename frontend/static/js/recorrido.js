@@ -128,7 +128,7 @@
       escriba su pregunta con sus palabras.</p><p>Atajos: <b>M</b> Mover, <b>A</b> Atacar, <b>I</b> Interceptar, <b>P</b> Patrullar,
       <b>C</b> centrar el mapa. Las tarjetas de la derecha se pliegan con un clic en su título.</p>` },
     { titulo: "Ahora, a practicar", texto: `<p>En el ejercicio <b>«Tutorial del Cóndor»</b> (el director lo crea desde
-      <b>Desde plantilla…</b> y pone el reloj en marcha) usted conduce el Azul y la computadora el Rojo. Los mensajes del
+      <b>Desde plantilla…</b>; el reloj lo maneja usted, abajo) usted conduce el Azul y la computadora el Rojo. Los mensajes del
       director automático le irán diciendo qué hacer. En este orden:</p><ol class="rec-lista">
       <li><b>Comunicaciones</b>: lea los mensajes y conteste «Recibido».</li>
       <li><b>Doctrina</b>: contra aeronaves, «solo identificados» (hay vuelos civiles).</li>

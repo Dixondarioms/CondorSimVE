@@ -248,3 +248,18 @@ def test_los_niveles_del_adversario_de_las_plantillas_son_los_del_adversario():
     from app import adversario
 
     assert set(plantillas.NIVELES_IA) == set(adversario.NIVELES)
+
+
+def test_el_tutorial_es_un_ejercicio_de_practica_y_el_alumno_maneja_el_reloj(api):
+    """Con «practica», el alumno pone en marcha, detiene y cambia la velocidad del reloj; sin ella, no."""
+    from tests.test_api import _preparar
+
+    prof, base, a, r1, r2 = _preparar(api)
+    alfa = api("alfa")
+    assert alfa.post(f"{base}/reloj", json={"estado": "activo"}).status_code == 403
+    assert prof.patch(f"{base}/config", json={"practica": True}).status_code == 200
+    assert alfa.post(f"{base}/reloj", json={"estado": "activo", "velocidad": 10}).status_code == 200
+    assert alfa.post(f"{base}/pausar").status_code == 200
+    assert alfa.post(f"{base}/reanudar").status_code == 200
+    assert prof.get(base).json()["escenario"]["practica"] is True
+    assert plantillas.PLANTILLAS["tutorial_condor"].practica

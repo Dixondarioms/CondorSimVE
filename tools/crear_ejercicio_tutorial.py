@@ -92,8 +92,8 @@ PRACTICAS = [
 
 DESCRIPCION = (
     "Ejercicio para aprender a usar TODO el Cóndor, solo y paso a paso. Usted conduce el bando Azul; el Rojo lo conduce "
-    "el adversario automático. El director crea el ejercicio, pone el reloj en marcha (10×; 1× si quiere ir con calma) y "
-    "lo deja correr: los mensajes automáticos (Comunicaciones y Alertas) le van diciendo qué practicar. Antes, haga el "
+    "el adversario automático. El director crea el ejercicio; el reloj lo maneja usted (abajo: PONER EN MARCHA, 1×, 10× o "
+    "60×; deténgalo cuando necesite pensar): los mensajes automáticos (Comunicaciones y Alertas) le van diciendo qué practicar. Antes, haga el "
     "recorrido guiado (Ayuda → Recorrido guiado paso a paso). Prácticas, en orden: "
     + " ".join(f"{i}) {p}" for i, p in enumerate(PRACTICAS, 1))
 )
@@ -227,7 +227,7 @@ def plantilla() -> dict:
         "id": "tutorial_condor", "nombre": "Tutorial del Cóndor", "descripcion": DESCRIPCION,
         "clima": "despejado", "hora_inicio_min": 480, "nacion_azul": base.get("nacion_azul", "valdoria"),
         "nacion_rojo": base.get("nacion_rojo", "ostrania"), "ia_azul": False, "ia_rojo": True, "dia_noche": False,
-        "ia_nivel": "prudente", "doctrina": {"azul": {"armas_aire": "restringido"}},
+        "ia_nivel": "prudente", "doctrina": {"azul": {"armas_aire": "restringido"}}, "practica": True,
         "con_estado": False, "conduce_azul": "alumnos", "conduce_rojo": "alumnos", "turno_final": 8,
         "unidades": unidades, "objetivos": objetivos, "eventos_auto": eventos(), "zonas": zonas(),
         "trafico": trafico(), "minas": [{"bando": "rojo", "lat": MINAS[0], "lon": MINAS[1], "radio_km": 3.0}],

@@ -90,7 +90,8 @@
       claves: "tutorial practicar practica solo aprender empezar primera vez ejercicio de practica entrenamiento guia guiado paso a paso mensajes del director",
       texto: `<p>El ejercicio <b>«Tutorial del Cóndor»</b> enseña todo el simulador a una sola persona: usted conduce el
         <b>Azul</b> y la computadora el <b>Rojo</b>. El director lo crea desde <b>CONSOLA → Desde plantilla…</b>, le da acceso a
-        su cuenta y pone el reloj en marcha (10×, o 1× para ir con calma).</p>
+        su cuenta. Es un <b>ejercicio de práctica</b>: el reloj lo maneja usted (abajo, PONER EN MARCHA y la velocidad;
+        deténgalo cuando necesite pensar).</p>
         <p>Los <b>mensajes automáticos del director</b> (en Comunicaciones y en Alertas) le dicen qué hacer en cada momento y
         lo felicitan al cumplir. Las prácticas, en orden:</p>
         <ol><li>Leer los mensajes y contestar.</li><li>Doctrina: «solo identificados» contra aeronaves (hay vuelos civiles).</li>

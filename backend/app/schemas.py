@@ -105,6 +105,7 @@ class EscenarioOut(BaseModel):
     efectos_clima: bool = True
     fuego_automatico: bool = True
     enlace_datos: bool = False
+    practica: bool = False  # ejercicio de practica: el alumno maneja el reloj
     ia_azul: bool = False
     ia_rojo: bool = False
     ia_nivel: str = "normal"
@@ -224,6 +225,7 @@ class EscenarioConfig(BaseModel):
     efectos_clima: bool | None = None
     fuego_automatico: bool | None = None
     enlace_datos: bool | None = None  # imagen comun por enlace de datos (engine/enlace.py)
+    practica: bool | None = None  # ejercicio de practica: el alumno maneja el reloj
     # adversario automatico: el simulador conduce ese bando
     ia_azul: bool | None = None
     ia_rojo: bool | None = None

@@ -117,6 +117,7 @@ class Plantilla:
     ia_nivel: str = "normal"
     doctrina: dict | None = None
     enlace_datos: bool = False  # imagen comun por enlace de datos (engine/enlace.py)
+    practica: bool = False  # ejercicio de practica: el alumno maneja el reloj
     # TIEM: quien conduce cada bando, calendario D/H y Problema Militar Operativo de cada bando ({bando: contenido})
     conduce_azul: str = "alumnos"
     conduce_rojo: str = "alumnos"
@@ -443,7 +444,7 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
     esc = Escenario(nombre=p.nombre, clima=p.clima, hora_inicio_min=p.hora_inicio_min,
                     nacion_azul=p.nacion_azul, nacion_rojo=p.nacion_rojo, ia_azul=p.ia_azul, ia_rojo=p.ia_rojo,
                     dia_noche=p.dia_noche, conduce_azul=p.conduce_azul, conduce_rojo=p.conduce_rojo, ia_nivel=p.ia_nivel,
-                    enlace_datos=p.enlace_datos,
+                    enlace_datos=p.enlace_datos, practica=p.practica,
                     fecha_inicio=p.fecha_inicio, turno_h=p.turno_h, turno_final=p.turno_final,
                     fases_json=json.dumps(list(p.fases), ensure_ascii=False) if p.fases else None)
     if p.eventos_auto:
@@ -649,7 +650,7 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
         "con_estado": bool(con_estado), "clima": esc.clima, "hora_inicio_min": esc.hora_inicio_min,
         "nacion_azul": esc.nacion_azul or "", "nacion_rojo": esc.nacion_rojo or "",
         "ia_azul": bool(esc.ia_azul), "ia_rojo": bool(esc.ia_rojo), "dia_noche": bool(esc.dia_noche),
-        "ia_nivel": esc.ia_nivel or "normal", "enlace_datos": bool(esc.enlace_datos), "doctrina": json.loads(esc.doctrina_json) if esc.doctrina_json else None,
+        "ia_nivel": esc.ia_nivel or "normal", "enlace_datos": bool(esc.enlace_datos), "practica": bool(esc.practica), "doctrina": json.loads(esc.doctrina_json) if esc.doctrina_json else None,
         "conduce_azul": esc.conduce_azul or "alumnos", "conduce_rojo": esc.conduce_rojo or "alumnos",
         "fecha_inicio": esc.fecha_inicio, "turno_h": esc.turno_h, "turno_final": esc.turno_final,
         "fases": json.loads(esc.fases_json) if esc.fases_json else [], "pmo": problemas,
@@ -769,6 +770,7 @@ def desde_dict(datos: dict) -> Plantilla:
         ia_nivel=datos.get("ia_nivel") if datos.get("ia_nivel") in NIVELES_IA else "normal",
         doctrina=_doctrina(datos.get("doctrina")),
         enlace_datos=bool(datos.get("enlace_datos")),
+        practica=bool(datos.get("practica")),
     )
 
 

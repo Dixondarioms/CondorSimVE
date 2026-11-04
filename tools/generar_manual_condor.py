@@ -264,8 +264,9 @@ def construir(salida: Path) -> None:
     h += [H2("2.11 Practicar solo: el Tutorial del Cóndor"),
           P("El ejercicio <b>Tutorial del Cóndor</b> enseña todo el simulador a <b>una sola persona</b>: el alumno conduce el "
             "Azul y el adversario automático el Rojo, sobre el mapa ficticio (País Azul y País Rojo). El director lo crea desde "
-            "CONSOLA → <b>Desde plantilla…</b>, marca la cuenta del alumno en <b>Usuarios con acceso</b> y pone el reloj en "
-            "marcha (10×; 1× para ir con calma). Para que el alumno no pierda todo antes de aprender, el adversario es "
+            "CONSOLA → <b>Desde plantilla…</b> y marca la cuenta del alumno en <b>Usuarios con acceso</b>. Es un <b>ejercicio de "
+            "práctica</b>: el alumno maneja el reloj (lo pone en marcha, lo detiene y elige la velocidad). Cualquier "
+            "ejercicio puede serlo con el interruptor de CONSOLA → Dirección del ejercicio. Para que el alumno no pierda todo antes de aprender, el adversario es "
             "«prudente», el Rojo no tiene aviación propia y las armas azules contra aeronaves empiezan restringidas (hay "
             "vuelos civiles).")]
     h += figura("tutorial", "Tutorial del Cóndor: el Azul junto a Capital Azul, con su fragata, submarino y cazaminas en el "
