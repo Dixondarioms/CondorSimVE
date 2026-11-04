@@ -212,6 +212,10 @@ def render_html(informe: dict, rubrica: dict | None = None) -> str:
         colateral_html = ("<h2>Daño colateral</h2>" + (f'<p class="meta">Penalización en el puntaje: {penal}</p>' if penal else "")
                           + "<ul>" + "".join(f'<li>{_bando(c["bando"])}: {e(c["descripcion"])}</li>' for c in colateral) + "</ul>")
 
+    fa = informe.get("fuego_amigo") or []
+    fuego_amigo_html = ("<h2>Fuego amigo</h2><ul>" + "".join(f'<li>{_bando(c["bando"])}: {e(c["descripcion"])}</li>' for c in fa)
+                        + "</ul>") if fa else ""
+
     # perdidas y gastos por bando (engine/gastos.py)
     pg = informe.get("perdidas_gastos") or {}
     perdidas_html = ""
@@ -247,6 +251,7 @@ def render_html(informe: dict, rubrica: dict | None = None) -> str:
 <h2>Resumen por bando</h2>{resumen_tabla}
 <h3>Fuerza perdida acumulada</h3>{_barras(res)}
 {colateral_html}
+{fuego_amigo_html}
 {perdidas_html}
 <h2>Estado final de las unidades</h2>{unidades_tabla}
 {_rubrica_html(rubrica)}

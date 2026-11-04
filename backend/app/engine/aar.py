@@ -206,6 +206,9 @@ def construir_informe(db: Session, escenario: Escenario) -> dict:
         "perdidas_gastos": gastos_mod.resumen(db, escenario),
         "colateral": [{"bando": e.bando_destino, "turno": e.turno, "descripcion": e.descripcion}
                       for e in eventos if e.tipo == "colateral"],
+        # fuego amigo: la defensa aerea propia contra aeronaves propias con el IFF apagado (engine/iff.py)
+        "fuego_amigo": [{"bando": e.bando_destino, "turno": e.turno, "descripcion": e.descripcion}
+                        for e in eventos if e.tipo == "fuego_amigo"],
         "objetivos": [
             state.serializar_objetivo(o, unidades)
             for o in db.query(Objetivo).filter(Objetivo.escenario_id == escenario.id).order_by(Objetivo.id)

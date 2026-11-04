@@ -26,6 +26,11 @@ def test_con_el_iff_apagado_y_armas_libres_la_antiaerea_propia_le_tira(db_sessio
     esc, aa, caza = _cuadro(db_session)
     _correr(db_session, esc, 600)
     assert caza.fuerza < 100 and _fuego_amigo(db_session)
+    from app.engine import aar
+    from app.informe_html import render_html
+
+    informe = aar.construir_informe(db_session, esc)
+    assert informe["fuego_amigo"] and "Fuego amigo" in render_html(informe)
 
 
 def test_con_el_iff_encendido_armas_restringidas_o_sin_interruptor_no(db_session):
