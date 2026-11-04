@@ -25,6 +25,7 @@ from app.engine import aeronaves as aeronaves_mod
 from app.engine import armas as armas_mod
 from app.engine import contramedidas as contramedidas_mod
 from app.engine import enlace as enlace_mod
+from app.routers import grupos as grupos_mod
 from app.engine import sistemas as sistemas_mod
 from app.engine import asw as asw_mod
 from app.engine import balisticos as balisticos_mod
@@ -273,6 +274,8 @@ def estado_para(
         "pmi_bases": pmi_mod.bases_conocidas(db, escenario, rol),
         # areas de patrulla y zonas de exclusion y de no vuelo (engine/zonas.py): las propias y las del director
         "zonas": zonas_mod.visibles_para(db, escenario, rol),
+        # grupos de tarea del bando (app/routers/grupos.py), sin las unidades perdidas
+        "grupos": grupos_mod.para(db, escenario, rol, {u.id for u in unidades if u.estado == "activa"}),
         "sonoboyas": asw_mod.boyas_para(db, escenario, rol),  # guerra antisubmarina (engine/asw.py)
         "minas": minas_mod.campos_para(db, escenario, rol),  # campos de minas que el rol conoce (engine/minas.py)
         "personal": {b: personal_mod.resumen(todas, b) for b in bandos_propios},

@@ -1747,6 +1747,46 @@
   const ACTIVAS = new Set(["pendiente", "en_ejecucion"]);
   const pendientes = () => (app.data ? app.data.ordenes.filter((o) => ACTIVAS.has(o.estado)) : []);
 
+  /** Grupos de tarea del bando (routers/grupos.py): un clic elige todas sus unidades para una orden en formacion. */
+  function listaGrupos(grupos) {
+    const det = document.createElement("details");
+    det.open = true;
+    const sum = document.createElement("summary");
+    sum.append("Grupos de tarea");
+    sum.appendChild(Object.assign(document.createElement("span"), { className: "n", textContent: `${grupos.length}` }));
+    det.appendChild(sum);
+    const ul = document.createElement("ul");
+    for (const g of grupos) {
+      const li = document.createElement("li");
+      li.className = "grupo-tarea";
+      const b = Object.assign(document.createElement("button"), { type: "button", className: "oob-grupo",
+        textContent: `${g.nombre} · ${g.unidad_ids.length} un.`, title: g.unidad_ids.map((i) => (app.porId.get(i) || {}).nombre).filter(Boolean).join(", ") });
+      b.addEventListener("click", () => elegirGrupo(g));
+      li.appendChild(b);
+      if (esAlumno()) {
+        const x = Object.assign(document.createElement("button"), { type: "button", className: "mini secundario", textContent: "Disolver" });
+        x.addEventListener("click", async () => {
+          if (!confirm(`¿Disolver el grupo «${g.nombre}»? Las unidades siguen como están.`)) return;
+          try { await api("DELETE", rutaEsc(`/grupos/${g.id}`)); } catch (_) { /* toast ya mostrado */ }
+        });
+        li.appendChild(x);
+      }
+      ul.appendChild(li);
+    }
+    det.appendChild(ul);
+    return det;
+  }
+
+  function elegirGrupo(g) {
+    const ids = g.unidad_ids.filter((i) => app.porId.has(i));
+    if (!ids.length) return;
+    app.lote.clear();
+    seleccionar(ids[0], "lista");
+    for (const id of ids.slice(1)) alternarEnLote(id);
+    $("o-formacion").checked = true;
+    toast(`Grupo «${g.nombre}»: ${ids.length} unidades elegidas; la orden se da a todas en formación.`, true);
+  }
+
   function renderOOB(data) {
     const cont = $("oob");
     const abiertas = new Set([...cont.querySelectorAll("details[open] > summary")].map((s) => s.firstChild.textContent));
@@ -1758,7 +1798,12 @@
     const filtrar = (lista) => Logica.filtrarUnidades(lista, app.filtroOOB);
     for (const b of bandos) {
       const propias = filtrar(data.unidades.filter((u) => u.bando === b));
-      if (vista) { cont.appendChild(ramas(propias)); continue; }
+      if (vista) {
+        const grupos = (data.grupos || []).filter((g) => g.bando === b && g.unidad_ids.length);
+        if (grupos.length) cont.appendChild(listaGrupos(grupos));
+        cont.appendChild(ramas(propias));
+        continue;
+      }
       const det = document.createElement("details");
       det.open = true;
       const sum = document.createElement("summary");
@@ -2287,6 +2332,16 @@
     if (app.data) actualizarNuevaOrden(app.data);
   }));
   $("btn-limpiar-wp").addEventListener("click", () => { app.waypoints = []; dibujarWaypoints(); });
+  $("o-lote-grupo").addEventListener("click", async () => {
+    const ids = [app.unidadOrden, ...app.lote].filter(Boolean);
+    if (ids.length < 2) return toast("Elija antes varias unidades (Ctrl+clic).");
+    const nombre = (prompt("Nombre del grupo de tarea (por ejemplo «Grupo Naval 1»):") || "").trim();
+    if (!nombre) return;
+    try {
+      await api("POST", rutaEsc("/grupos"), { nombre, unidad_ids: ids });
+      toast(`Grupo «${nombre}» guardado: aparece arriba en el orden de batalla.`, true);
+    } catch (_) { /* toast ya mostrado */ }
+  });
   $("btn-ruta-vias").addEventListener("click", async () => {
     if (!app.unidadOrden || !app.waypoints.length) return toast("Seleccione la unidad y marque el destino en el mapa.");
     const destino = app.waypoints[app.waypoints.length - 1];

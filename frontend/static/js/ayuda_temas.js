@@ -185,6 +185,16 @@
         <tr><td>Embarcar / Desembarcar</td><td>Tropas a bordo de un buque de desembarco o un helicóptero de transporte.</td></tr></table>`,
     },
     {
+      id: "grupos", seccion: "Órdenes", titulo: "Grupos de tarea",
+      claves: "grupo grupos de tarea agrupar formacion fuerza de tarea grupo naval escuadrilla varias unidades juntas lote",
+      texto: `<p>Elija varias unidades propias con <b>Ctrl+clic</b> (en el orden de batalla o en el mapa) y, en la Nueva orden,
+        pulse <b>Guardar como grupo de tarea…</b> y escriba un nombre (por ejemplo «Grupo Naval 1»).</p>
+        <p>El grupo aparece arriba en el <b>orden de batalla</b>, en «Grupos de tarea». Con un clic en su nombre quedan elegidas
+        todas sus unidades: la orden que dé (Mover, Patrullar, Atacar…) se emite a todas y, con «Mantener la formación»,
+        cada una conserva su lugar. <b>Disolver</b> borra el grupo sin tocar las unidades. Las unidades perdidas salen solas
+        del grupo.</p>`,
+    },
+    {
       id: "mover", seccion: "Órdenes", titulo: "Mover: terreno, ríos y combustible",
       claves: "mover marcha desplazar ruta camino carretera terreno rio cruzar puente velocidad lento no avanza varada combustible se detuvo llegar",
       texto: `<p>La velocidad depende del tipo de unidad, del <b>terreno</b> y del <b>clima</b>. Las unidades de tierra aprovechan las
