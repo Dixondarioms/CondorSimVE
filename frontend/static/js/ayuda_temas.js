@@ -277,7 +277,10 @@
         y el punto de impacto de los propios; el bando del blanco recibe la <b>alerta temprana</b> con la hora del impacto.</p>
         <p>La antiaérea común, las patrullas y la defensa de punto no pueden con ellos. Solo los <b>sistemas antimisil</b>
         (S-300VM, S-400, Patriot, HQ-9 y los destructores Arleigh Burke y Ticonderoga) los derriban en su <b>fase final</b>,
-        con el radar encendido y a su alcance; cada interceptor gasta un misil de la batería.</p>`,
+        con el radar encendido y a su alcance; cada interceptor gasta un misil de la batería.</p>
+        <p>El <b>adversario automático</b> también los usa: su lanzador tira solo contra lo que su bando ve a su alcance,
+        primero las instalaciones fijas (bases, depósitos), y vuelve a tirar cuando termina de recargar (30 minutos).
+        Busque el lanzador y destrúyalo pronto.</p>`,
     },
     {
       id: "minas", seccion: "Defensa aérea y doctrina", titulo: "Minas navales: sembrar, cruzar y barrer",

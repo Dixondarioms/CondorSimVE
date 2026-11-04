@@ -155,3 +155,40 @@ def test_guardar_como_plantilla_conserva_el_adversario(db_session, tmp_path, mon
     esc = plantillas.crear_desde_plantilla(db_session, "interdiccion_llanos")
     p = plantillas.guardar_desde_escenario(db_session, esc, "Llanos con IA")
     assert p.ia_rojo and not p.ia_azul
+
+
+def _balistico(db, esc, **kw):
+    datos = dict(nombre="Lanzador rojo", bando="rojo", tipo="terrestre", clase="lanzador_balistico", lat=0.0, lon=0.0,
+                 velocidad_kmh=40, alcance_km=500, deteccion_km=10, municion=100.0)
+    datos.update(kw)
+    return _unidad(db, esc, **datos)
+
+
+def test_el_lanzador_balistico_tira_primero_a_la_instalacion_fija_que_ve(db_session):
+    esc = _escenario(db_session)
+    esc.ia_rojo = True
+    db_session.commit()
+    lanzador = _balistico(db_session, esc)
+    _unidad(db_session, esc, nombre="Observador", bando="rojo", clase="reconocimiento", lat=1.95, lon=0.0, deteccion_km=20)
+    base = _unidad(db_session, esc, nombre="Base azul", bando="azul", tipo="base", clase="base_aerea", lat=2.0, lon=0.0,
+                   velocidad_kmh=0)
+    _unidad(db_session, esc, nombre="Infantería azul", bando="azul", clase="infanteria", lat=1.97, lon=0.0)
+    _jugar(db_session, esc)
+    o = db_session.query(Orden).filter(Orden.unidad_id == lanzador.id, Orden.tipo == "lanzar").one()
+    assert o.objetivo_unidad_id == base.id and o.estado == "resuelta"
+    misiles = db_session.query(Unidad).filter(Unidad.escenario_id == esc.id, Unidad.clase == "misil_balistico").all()
+    assert len(misiles) == 2 and all(m.bando == "rojo" for m in misiles)
+    _jugar(db_session, esc)  # recargando: no vuelve a tirar enseguida
+    assert db_session.query(Orden).filter(Orden.unidad_id == lanzador.id, Orden.tipo == "lanzar").count() == 1
+
+
+def test_el_lanzador_balistico_no_tira_a_lo_que_no_ve_ni_fuera_de_alcance(db_session):
+    esc = _escenario(db_session)
+    esc.ia_rojo = True
+    db_session.commit()
+    lanzador = _balistico(db_session, esc)
+    _unidad(db_session, esc, nombre="Base oculta", bando="azul", tipo="base", clase="base_aerea", lat=2.0, lon=0.0, velocidad_kmh=0)
+    _unidad(db_session, esc, nombre="Observador", bando="rojo", clase="reconocimiento", lat=5.95, lon=0.0, deteccion_km=20)
+    _unidad(db_session, esc, nombre="Base lejana", bando="azul", tipo="base", clase="base_aerea", lat=6.0, lon=0.0, velocidad_kmh=0)
+    _jugar(db_session, esc)
+    assert db_session.query(Orden).filter(Orden.unidad_id == lanzador.id).count() == 0

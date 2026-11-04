@@ -156,7 +156,8 @@ def eventos() -> list:
                         "Mire en Alertas cómo su S-300VM (Defensa antiaérea de Capital Azul) intenta derribarlos. Salieron "
                         "del este del Área de patrulla Norte: mande a patrullarla a sus cazas (si volvieron a cargar "
                         "combustible, otra vez) y, cuando el lanzador aparezca en el mapa, láncele su Lanzador balístico "
-                        "azul (orden Lanzar misiles; puede hacer falta una segunda salva).")),
+                        "azul (orden Lanzar misiles; puede hacer falta una segunda salva). Hágalo pronto: a los 30 "
+                        "minutos puede volver a tirar.")),
         _regla("contrabateria", "Lanzador rojo destruido", {"tipo": "destruida", "unidad": "Lanzador balístico rojo"},
                {"tipo": "puntos", "bando": "azul", "puntos": 15},
                _mensaje("Director: lanzador balístico rojo destruido (+15). Excelente contrabatería.")),

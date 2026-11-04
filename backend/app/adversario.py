@@ -19,6 +19,8 @@ Conducta (didactica y legible, no optima):
     favorable; si no, van a sus objetivos (ocupar una zona, destruir o neutralizar una unidad conocida, proteger una propia) o se
     acercan al enemigo detectado. Los convoyes van hacia las unidades mas necesitadas.
   - Mar: salvas de misiles contra blancos a su alcance, ataque directo o acercamiento por el agua.
+  - Lanzadores balisticos: tiran contra lo que su bando ve a su alcance, primero las instalaciones fijas (el misil cae
+    donde estaba el blanco al lanzar: contra algo que se mueve suele errar); la recarga los limita.
   - Bases y portaaviones: lanzan un grupo de caza si el enemigo tiene aviacion a la vista y la propia no alcanza.
 """
 
@@ -31,6 +33,7 @@ from sqlalchemy.orm import Session
 
 from app import schemas, state
 from app.engine import aeronaves as aeronaves_mod
+from app.engine import balisticos as balisticos_mod
 from app.engine import catalogo, defensa_aerea, geo
 from app.engine import guerra_electronica as ge_mod
 from app.engine import misiles as misiles_mod
@@ -412,6 +415,9 @@ class _Turno:
         clase = catalogo.obtener(u.clase, u.tipo)
         if clase.lanza_misiles and self.salva(u):
             return
+        if balisticos_mod.lanza(u):
+            self.balistico(u)  # en posicion: solo lanza
+            return
         if clase.interferencia_km and self.interferir(u):
             return
         if clase.carga_max:
@@ -489,6 +495,21 @@ class _Turno:
         for e in blancos:
             n = 2 if u.municion >= 50 else 1
             if misiles_mod.error_de_lanzamiento(u, e, n) is None and self.ordenar(u, tipo="lanzar", objetivo_unidad_id=e.id, misiles=n):
+                return True
+        return False
+
+    def balistico(self, u) -> bool:
+        """Salva balistica contra el mejor blanco visible a su alcance: las instalaciones fijas primero, porque el misil
+        cae donde estaba el blanco al lanzar (no ataca aeronaves en vuelo ni buques, que se mueven)."""
+        def puntaje(e):
+            fijo = e.tipo == "base" or getattr(e, "en_tierra", False)
+            d = geo.distancia_km(u.lat, u.lon, e.lat, e.lon)
+            return -(PRIORIDAD.get(e.clase or "", 1.0) * (2.0 if fijo else 1.0) / (1 + d / 200))
+        blancos = sorted((e for e in self.enemigos if e.tipo in ("base", "terrestre") or getattr(e, "en_tierra", False)),
+                         key=puntaje)
+        n = 2 if u.municion >= 2 * balisticos_mod.MUNICION_POR_MISIL else 1
+        for e in blancos:
+            if balisticos_mod.error_de_lanzamiento(u, e, n) is None and self.ordenar(u, tipo="lanzar", objetivo_unidad_id=e.id, misiles=n):
                 return True
         return False
 

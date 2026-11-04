@@ -433,7 +433,9 @@ def construir(salida: Path) -> None:
                      "menos. Cada misil vuela por separado con trayectoria alta (unos 6 minutos) y cae <b>donde estaba el blanco "
                      "al lanzar</b>. El bando del blanco recibe la <b>alerta temprana</b> con la hora del impacto."),
                    P("Solo los <b>sistemas antimisil</b> (S-300VM, S-400, Patriot, HQ-9 y los destructores Arleigh Burke y "
-                     "Ticonderoga) los derriban, en su fase final y con el radar encendido; la antiaérea común no puede.")]]],
+                     "Ticonderoga) los derriban, en su fase final y con el radar encendido; la antiaérea común no puede."),
+                   P("El <b>adversario automático</b> también los usa: su lanzador tira solo contra lo que su bando ve a su "
+                     "alcance, primero las instalaciones fijas, y vuelve a tirar al terminar de recargar (30 minutos).")]]],
                 colWidths=[7.5 * cm, ANCHO_TEXTO - 7.5 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
     h += [H2("6.5 Minas navales")]
     h += [Bul(["<b>Minar</b>: patrulleros, fragatas, submarinos, buques de desembarco y aviones de ataque siembran sobre el "
