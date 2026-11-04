@@ -23,3 +23,12 @@ test("los atajos no se disparan al escribir ni con una ventana abierta, y el rel
   assert.equal(I.accionDeTecla(tecla("3"), true, false), "vel-60");
   assert.ok(I.ATAJOS.length >= 8 && I.FILTROS[0][0] === "todas");
 });
+
+test("las señales del icono muestran lo urgente de una unidad propia y nada del enemigo", () => {
+  const L = require("../static/js/logica.js");
+  const propia = { estado: "activa", tipo: "aerea", combustible: 20, municion: 0, enlace: false,
+    apresto: { minutos: 15, despega_en_min: 7 }, sistemas: { radar: { nombre: "Radar", fuera: true } } };
+  assert.deepEqual(L.senalesUnidad(propia).map((s) => s.clase), ["despega", "combustible", "municion", "enlace", "averia"]);
+  assert.deepEqual(L.senalesUnidad({ estado: "activa", tipo: "terrestre", combustible: 80, municion: 60 }), []);
+  assert.deepEqual(L.senalesUnidad({ estado: "activa", tipo: "terrestre", combustible: null, municion: null }), []);  // enemiga
+});

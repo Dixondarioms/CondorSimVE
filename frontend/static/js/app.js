@@ -1008,7 +1008,10 @@
     // la cota solo se anota cuando no es la media: "rasante" o "alto" importan para leer el mapa
     const cota = u.tipo === "aerea" && !u.en_tierra && u.perfil_actual && u.perfil_actual !== "medio" && u.clase !== "misil_crucero" ? u.perfil_actual : "";
     const sub = [rotuloModelo(u), u.en_tierra ? "en base" : u.mision === "patrulla" ? "patrulla" : "", cota].filter(Boolean).join(" · ");
-    const rotulos = `<div class="rotulo">${escapar(u.nombre || "")}</div>` + (sub ? `<div class="rotulo modelo">${escapar(sub)}</div>` : "");
+    const senales = Logica.senalesUnidad(u);  // lo urgente de una unidad propia (combustible, municion, enlace...)
+    const rotulos = `<div class="rotulo">${escapar(u.nombre || "")}</div>` + (sub ? `<div class="rotulo modelo">${escapar(sub)}</div>` : "")
+      + (senales.length ? `<div class="senales">${senales.map((x) => `<span class="senal ${x.clase}" title="${escapar(x.ayuda)}">${escapar(x.texto)}</span>`).join("")}</div>` : "");
+    const extraAlto = senales.length ? 14 : 0;
     if (conMiniatura(u) && enPlanoAerodromo(u)) {
       return L.divIcon({
         className: `marca ${clases}`,
@@ -1025,7 +1028,7 @@
       return L.divIcon({
         className: `marca miniatura ${clases}`,
         html: `<div class="cuerpo"><div class="avion3d" style="height:${av.alto}px">${av.html}</div>${rotulos}</div>`,
-        iconSize: [ancho, av.alto + (sub ? 30 : 16)],
+        iconSize: [ancho, av.alto + (sub ? 30 : 16) + extraAlto],
         iconAnchor: [ancho / 2, av.alto / 2],
       });
     }
@@ -1037,7 +1040,7 @@
     return L.divIcon({
       className: `marca ${clases}`,
       html: `<div class="cuerpo">${sym.asSVG()}${rotulos}</div>`,
-      iconSize: [ancho, tam.height + (sub ? 30 : 16)],
+      iconSize: [ancho, tam.height + (sub ? 30 : 16) + extraAlto],
       iconAnchor: [ancho / 2 + (anc.x - tam.width / 2), anc.y],
     });
   }
@@ -1144,7 +1147,7 @@
       const mini = conMiniatura(u);
       const rumbo = mini && Modelo3d.gira(u) ? Math.round(rumboDe(u) / 5) * 5 : 0;
       const plano = mini && enPlanoAerodromo(u) ? "p" : "";
-      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}${u.perfil_actual || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${mini ? baseAvion() : `s${tamApp6()}`}|${plano}`;
+      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}${u.perfil_actual || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${mini ? baseAvion() : `s${tamApp6()}`}|${plano}|${Logica.senalesUnidad(u).map((x) => x.texto).join(",")}`;
       // aeronaves estacionadas: sobre la plataforma real de su base cuando se ve el plano del aerodromo
       const estacionada = mini && app.capaActiva.aerodromos && app.aerodromos && app.map.getZoom() >= app.aerodromos.zoomDetalle
         ? app.aerodromos.posicionEstacionada(u, unidades) : null;

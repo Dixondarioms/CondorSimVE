@@ -547,6 +547,23 @@
   }
   const barreMinas = (u) => !!u && u.estado === "activa" && u.clase === "cazaminas";
   const PROFUNDIDADES = [["periscopica", "Cota periscópica"], ["profunda", "Profundidad"]];
+  /** Señales sobre el icono de una unidad propia: lo urgente, de un vistazo (del enemigo no se sabe: ninguna). */
+  const COMBUSTIBLE_BAJO = 25;
+  function senalesUnidad(u) {
+    if (!u || u.estado !== "activa" || u.combustible === null || u.combustible === undefined || u.tipo === "base") return [];
+    const s = [];
+    if (u.apresto && u.apresto.despega_en_min !== null && u.apresto.despega_en_min !== undefined) {
+      s.push({ clase: "despega", texto: `↗ ${u.apresto.despega_en_min}'`, ayuda: `Carreteando: despega en ${u.apresto.despega_en_min} min` });
+    }
+    if (u.apresto && u.apresto.minutos === 0 && u.en_tierra) s.push({ clase: "averia", texto: "MANT", ayuda: "En mantenimiento" });
+    if (u.combustible < COMBUSTIBLE_BAJO) s.push({ clase: "combustible", texto: "COMB", ayuda: `Poco combustible (${Math.round(u.combustible)} %)` });
+    if (u.municion !== null && u.municion !== undefined && u.municion <= 5) s.push({ clase: "municion", texto: "MUN", ayuda: "Sin munición" });
+    if (u.enlace === false) s.push({ clase: "enlace", texto: "S/E", ayuda: "Sin enlace de datos: su bando no ve lo que detecta" });
+    const sistemas = u.sistemas ? Object.values(u.sistemas) : [];
+    if (sistemas.some((x) => x.fuera)) s.push({ clase: "averia", texto: "AVER", ayuda: `Fuera de servicio: ${sistemas.filter((x) => x.fuera).map((x) => x.nombre).join(", ")}` });
+    return s;
+  }
+
   /** Velocidad elegida de aeronaves y buques (engine/movimiento.py). */
   const VELOCIDADES = [["economica", "Económica"], ["crucero", "Crucero"], ["maxima", "Máxima"]];
   const AYUDA_VELOCIDAD = {
@@ -1368,7 +1385,7 @@
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
-    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, APRESTOS, textoApresto, VELOCIDADES, AYUDA_VELOCIDAD, textoTramo, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
+    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, APRESTOS, textoApresto, senalesUnidad, VELOCIDADES, AYUDA_VELOCIDAD, textoTramo, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,
