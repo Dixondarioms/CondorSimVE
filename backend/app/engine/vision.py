@@ -74,7 +74,10 @@ def escucha(detector, objetivo, ge=None, terreno: Terreno | None = None) -> bool
     alcance = _clase(detector).escucha_km
     if not alcance or getattr(objetivo, "estado", "activa") != "activa":
         return False
-    emite = ge_mod.emite_radar(objetivo) or (ge is not None and ge.emite(objetivo))  # un radar apagado no se oye
+    from app.engine import iff  # importacion tardia: el transpondedor IFF tambien se oye (engine/iff.py)
+
+    emite = (ge_mod.emite_radar(objetivo) or (ge is not None and ge.emite(objetivo))  # un radar apagado no se oye
+             or iff.emite(objetivo))
     return (emite and geo.distancia_km(detector.lat, detector.lon, objetivo.lat, objetivo.lon) <= alcance
             and relieve.linea_de_vista(terreno, detector, objetivo))
 

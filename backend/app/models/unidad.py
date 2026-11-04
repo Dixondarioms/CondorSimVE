@@ -169,6 +169,8 @@ class Unidad(Base):
     velocidad_modo: Mapped[str | None] = mapped_column(String(10), nullable=True)
     # bengalas y chaff de una aeronave o señuelos de un buque que le quedan (None = llenas; engine/contramedidas.py)
     contramedidas: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # IFF de una aeronave (engine/iff.py): encendido por defecto
+    iff: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
     despega_hasta: Mapped[float | None] = mapped_column(Float, nullable=True)
     recarga_hasta: Mapped[float | None] = mapped_column(Float, nullable=True)
     # Cóndor: doctrina propia de la unidad (lo que no fija, lo hereda de su bando; engine/doctrina.py)

@@ -2111,6 +2111,12 @@
           `<button type="button" class="mini ${v === u.velocidad_actual ? "primario" : "secundario"}" data-velocidad="${v}" title="${escapar(Logica.AYUDA_VELOCIDAD[v])}">${n}</button>`).join("")}</div>`
           + `<p class="ayuda">${escapar(Logica.AYUDA_VELOCIDAD[u.velocidad_actual] || "")} Rige de inmediato.</p>`
         : "")
+      + (!oculto && u.iff !== null && u.iff !== undefined && u.estado === "activa" && app.porId.get(app.seleccion) && puedeDefensa(u)
+        ? `<div class="perfil-vuelo" role="group" aria-label="IFF"><span>IFF (identificación amigo-enemigo)</span>`
+          + `<button type="button" class="mini ${u.iff ? "primario" : "secundario"}" data-iff="1">Encendido</button>`
+          + `<button type="button" class="mini ${u.iff ? "secundario" : "primario"}" data-iff="0">Apagado</button></div>`
+          + `<p class="ayuda">${u.iff ? "Encendido: la escucha enemiga la oye de lejos." : "Apagado: el enemigo no la oye, pero la antiaérea propia con armas libres le tira. Avise a su defensa aérea."}</p>`
+        : "")
       + (!oculto && u.apresto && u.estado === "activa" && app.porId.get(app.seleccion) && puedeDefensa(u)
         ? `<div class="perfil-vuelo" role="group" aria-label="Apresto"><span>Apresto</span>${Logica.APRESTOS.map(([m, n]) =>
           `<button type="button" class="mini ${m === u.apresto.minutos ? "primario" : "secundario"}" data-apresto="${m}">${n}</button>`).join("")}</div>`
@@ -2143,6 +2149,10 @@
     if (selArma) selArma.addEventListener("change", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { arma: selArma.value })));
     cont.querySelectorAll("[data-profundidad]").forEach((b) => b.addEventListener("click", () => {
       if (b.dataset.profundidad !== u.profundidad) enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/profundidad`), { profundidad: b.dataset.profundidad }));
+    }));
+    cont.querySelectorAll("[data-iff]").forEach((b) => b.addEventListener("click", () => {
+      const iff = b.dataset.iff === "1";
+      if (iff !== u.iff) enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/iff`), { iff }));
     }));
     cont.querySelectorAll("[data-velocidad]").forEach((b) => b.addEventListener("click", () => {
       if (b.dataset.velocidad !== u.velocidad_actual) enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/velocidad`), { velocidad: b.dataset.velocidad }));
@@ -2687,6 +2697,7 @@
       }
       set("dir-enlace", (e) => { e.checked = !!esc.enlace_datos; });
       set("dir-practica", (e) => { e.checked = !!esc.practica; });
+      set("dir-fuego-amigo", (e) => { e.checked = !!esc.fuego_amigo; });
       set("dir-cond-azul", (e) => { e.value = esc.conduccion_azul || "alumnos"; });
       set("dir-cond-rojo", (e) => { e.value = esc.conduccion_rojo || "alumnos"; });
       set("cal-fecha", (e) => { e.value = esc.fecha_inicio || ""; });
@@ -3861,7 +3872,7 @@
     if (!app.escenarioId) return;
     enSilencio(api("PATCH", rutaEsc("/config"), {
       niebla: $("dir-niebla").checked, logistica: $("dir-logistica").checked,
-      efectos_clima: $("dir-clima").checked, fuego_automatico: $("dir-fuego").checked, enlace_datos: $("dir-enlace").checked, practica: $("dir-practica").checked,
+      efectos_clima: $("dir-clima").checked, fuego_automatico: $("dir-fuego").checked, enlace_datos: $("dir-enlace").checked, practica: $("dir-practica").checked, fuego_amigo: $("dir-fuego-amigo").checked,
       conduccion_azul: $("dir-cond-azul").value, conduccion_rojo: $("dir-cond-rojo").value,
       dia_noche: $("dir-noche").checked, estado_mar: $("dir-mar").value, ia_nivel: $("dir-ia-nivel").value, fallas: $("dir-fallas").checked,
     }).then(() => toast("Interruptores aplicados", true)));

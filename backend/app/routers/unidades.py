@@ -376,6 +376,26 @@ async def cambiar_velocidad(
     return unidad
 
 
+@router.post("/{unidad_id}/iff")
+async def cambiar_iff(
+    unidad_id: int,
+    payload: dict,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.requiere_roles("azul", "rojo", "instructor")),
+):
+    """Enciende o apaga el IFF de una aeronave propia (engine/iff.py; cuenta solo con el fuego amigo encendido)."""
+    unidad = db.get(Unidad, unidad_id)
+    if unidad is None or unidad.escenario_id != esc.id or (usuario.rol != "instructor" and unidad.bando != usuario.rol):
+        raise HTTPException(status_code=404, detail="Unidad no encontrada")
+    if unidad.tipo != "aerea" or catalogo.es_misil(unidad) or not isinstance(payload.get("iff"), bool):
+        raise HTTPException(status_code=400, detail="Solo las aeronaves tienen IFF (encendido o apagado)")
+    unidad.iff = payload["iff"]
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return {"iff": unidad.iff}
+
+
 @router.post("/{unidad_id}/apresto")
 async def cambiar_apresto(
     unidad_id: int,

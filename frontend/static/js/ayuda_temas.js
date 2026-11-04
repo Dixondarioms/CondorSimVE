@@ -338,6 +338,18 @@
         Busque el lanzador y destrúyalo pronto.</p>`,
     },
     {
+      id: "iff", seccion: "Defensa aérea y doctrina", titulo: "Fuego amigo e IFF",
+      claves: "fuego amigo fratricidio iff identificacion amigo enemigo transpondedor apagar iff propia derribada por la propia",
+      texto: `<p>Si el director enciende <b>Fuego amigo e IFF</b> (CONSOLA → Dirección del ejercicio), cada aeronave tiene su
+        <b>IFF</b> (identificación amigo-enemigo), que se enciende o apaga abajo, en el panel de la unidad:</p>
+        <ul><li><b>Encendido</b>: la escucha electrónica enemiga la oye de lejos.</li>
+        <li><b>Apagado</b>: el enemigo no la oye, pero la antiaérea y las patrullas propias con las armas aire
+        <b>libres</b> no la distinguen de un enemigo y le tiran (<b>fuego amigo</b>). Con las armas restringidas (solo
+        identificados) no le tiran.</li></ul>
+        <p>Si apaga el IFF de una misión, avise a su defensa aérea y restrinja sus armas mientras esa aeronave pase. El
+        fuego amigo queda en las alertas y en el informe.</p>`,
+    },
+    {
       id: "contramedidas", seccion: "Defensa aérea y doctrina", titulo: "Contramedidas: bengalas, chaff y señuelos",
       claves: "contramedidas bengalas chaff señuelos senuelos evadir misil engañar misil maniobra evasiva antirradiacion apagar radar sead",
       texto: `<p>Las aeronaves tripuladas llevan <b>bengalas y chaff</b> (4 por avión del grupo) y los buques <b>señuelos</b>

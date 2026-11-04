@@ -107,6 +107,7 @@ class EscenarioOut(BaseModel):
     enlace_datos: bool = False
     practica: bool = False  # ejercicio de practica: el alumno maneja el reloj
     estado_mar: str = "calmo"  # engine/mar.py
+    fuego_amigo: bool = False  # engine/iff.py
     ia_azul: bool = False
     ia_rojo: bool = False
     ia_nivel: str = "normal"
@@ -228,6 +229,7 @@ class EscenarioConfig(BaseModel):
     enlace_datos: bool | None = None  # imagen comun por enlace de datos (engine/enlace.py)
     practica: bool | None = None  # ejercicio de practica: el alumno maneja el reloj
     estado_mar: Literal["calmo", "moderado", "grueso", "muy_grueso"] | None = None  # engine/mar.py
+    fuego_amigo: bool | None = None  # fuego amigo e IFF (engine/iff.py)
     # adversario automatico: el simulador conduce ese bando
     ia_azul: bool | None = None
     ia_rojo: bool | None = None

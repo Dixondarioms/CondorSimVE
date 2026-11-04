@@ -74,6 +74,8 @@ class Escenario(Base):
     practica: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     # estado del mar (engine/mar.py): calmo | moderado | grueso | muy_grueso
     estado_mar: Mapped[str] = mapped_column(String(12), default="calmo", server_default="calmo")
+    # fuego amigo e IFF (engine/iff.py): la defensa aerea propia con armas libres tira a las aeronaves con el IFF apagado
+    fuego_amigo: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     # adversario automatico: el simulador da las ordenes de ese bando al abrirse cada turno (ver app/adversario.py)
     ia_azul: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     ia_rojo: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())

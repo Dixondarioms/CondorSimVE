@@ -25,6 +25,7 @@ from app.engine import aeronaves as aeronaves_mod
 from app.engine import armas as armas_mod
 from app.engine import contramedidas as contramedidas_mod
 from app.engine import enlace as enlace_mod
+from app.engine import iff as iff_mod
 from app.engine import mar as mar_mod
 from app.routers import grupos as grupos_mod
 from app.engine import sistemas as sistemas_mod
@@ -63,7 +64,7 @@ CAMPOS_OCULTOS = (
     "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id",
     "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios",
     "transporte_id", "personal_inicial", "personal_actual", "sistema_da", "pista_largo_m", "pista_util_m", "recorrido",
-    "ruta", "orden_id", "doctrina", "apresto", "velocidad_actual", "contramedidas", "enlace",
+    "ruta", "orden_id", "doctrina", "apresto", "velocidad_actual", "contramedidas", "enlace", "iff",
 )
 TURNOS_ORDENES = 3  # ordenes ya resueltas que viajan con el estado (el historial completo esta en el AAR)
 CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct", "com_ordenes_pct", "inteligencia", "apresto")
@@ -161,6 +162,7 @@ def estado_para(
 ) -> dict:
     terreno = terreno or get_terreno()
     mar_mod.fijar(escenario)  # estado del mar (engine/mar.py): lo usan los sonares al calcular lo que se ve
+    iff_mod.fijar(escenario)  # fuego amigo e IFF (engine/iff.py): el transpondedor se oye
     # el trafico civil que ya salio de la zona (engine/trafico.py) no se muestra
     unidades = [u for u in unidades_visibles_para(db, escenario, rol, terreno) if u.estado != "retirada"]
 
@@ -214,6 +216,8 @@ def estado_para(
         d["balistico"] = balisticos_mod.info(u)  # trayectoria de un misil balistico (engine/balisticos.py)
         d["antimisil"] = balisticos_mod.antimisil(u)
         d["contramedidas"] = contramedidas_mod.publico(u)  # bengalas y chaff o señuelos (engine/contramedidas.py)
+        # IFF de la aeronave, solo con el fuego amigo encendido (engine/iff.py)
+        d["iff"] = bool(u.iff) if escenario.fuego_amigo and u.tipo == "aerea" and armas_mod.aplica(u) else None
         # en la red de enlace de datos (None: el director no la encendio; engine/enlace.py)
         d["enlace"] = (u.id in red[u.bando]) if red.get(u.bando) is not None and u.estado == "activa" else None
         if u.tipo == "aerea" and armas_mod.aplica(u):  # apresto de la aeronave (engine/aeronaves.py)

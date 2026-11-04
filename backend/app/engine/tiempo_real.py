@@ -41,6 +41,7 @@ from app.engine import clima as clima_mod
 from app.engine import contramedidas as contra_mod
 from app.engine import enlace as enlace_mod
 from app.engine import gastos as gastos_mod
+from app.engine import iff as iff_mod
 from app.engine import mar as mar_mod
 from app.engine import contactos_vivo
 from app.engine import doctrina as doctrina_mod
@@ -287,6 +288,8 @@ class _Ctx:
         """La doctrina de `u` le permite tirar por su cuenta contra `x` ("aire" o "superficie")."""
         if not self.esc.fuego_automatico:
             return False
+        if x.bando == u.bando:  # fuego amigo (engine/iff.py): con armas libres, a la aeronave propia con el IFF apagado
+            return dominio == "aire" and iff_mod.sin_iff(x) and self.doctrina(u)["armas_aire"] == "libre"
         if x.bando == "neutral":
             # un neutral (trafico civil o un pais ajeno) solo se ataca por error: con las armas libres y mientras
             # el bando no lo haya clasificado (sin niebla de guerra, todos saben que es neutral)
@@ -684,6 +687,7 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
     ctx.perdidas = {}
     asw_mod.AHORA[ctx.esc.id] = ctx.t
     mar_mod.fijar(ctx.esc)
+    iff_mod.fijar(ctx.esc)
     for u in ctx.lista:
         if u.estado == "activa":
             ctx.mundo.pos_previa[u.id] = (u.lat, u.lon)
@@ -1114,6 +1118,11 @@ def _perder(ctx: _Ctx, u: Unidad, puntos: float) -> None:
 
 def _registrar_combate(ctx: _Ctx, a: Unidad, d: Unidad, orden_id: int | None, perd_a: float, perd_d: float,
                        ratio: float, efectos: str, desde: float | None = None) -> None:
+    if a.bando == d.bando and perd_d > 0:  # fuego amigo (engine/iff.py)
+        texto = (f"Fuego amigo: {a.nombre} le tiró a {d.nombre}, que volaba con el IFF apagado "
+                 f"(−{perd_d:.0f} puntos de fuerza).")
+        ctx.evento("fuego_amigo", a.bando, texto, d.lat, d.lon)
+        ctx.alerta("ataque", a.bando, texto, d.lat, d.lon, "critica")
     ctx.db.add(Combate(
         escenario_id=ctx.esc.id, turno=ctx.esc.turno_actual, orden_id=orden_id, atacante_id=a.id, defensor_id=d.id,
         atacante_nombre=a.nombre, defensor_nombre=d.nombre, atacante_bando=a.bando, defensor_bando=d.bando,
@@ -2010,7 +2019,8 @@ def _defensa_antimisil(ctx: _Ctx, h: float) -> None:
 def _amenazas_aereas(ctx: _Ctx, u: Unidad, alcance_km: float, linea_de_vista: bool = False) -> list:
     lista = []
     for x in ctx.lista:
-        if x.bando == u.bando or not aeronaves_mod.en_vuelo(x) or not ctx.ve(u, x):
+        propia = x.bando == u.bando
+        if (propia and not iff_mod.sin_iff(x)) or not aeronaves_mod.en_vuelo(x) or not (propia or ctx.ve(u, x)):
             continue
         if balisticos_mod.es_balistico(x):
             continue  # solo los sistemas antimisil pueden con un misil balistico (_defensa_antimisil)
