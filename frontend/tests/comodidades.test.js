@@ -32,3 +32,16 @@ test("las señales del icono muestran lo urgente de una unidad propia y nada del
   assert.deepEqual(L.senalesUnidad({ estado: "activa", tipo: "terrestre", combustible: 80, municion: 60 }), []);
   assert.deepEqual(L.senalesUnidad({ estado: "activa", tipo: "terrestre", combustible: null, municion: null }), []);  // enemiga
 });
+
+test("la ruta estima cuando llega y con cuanto combustible a cada punto, con la velocidad de cada tramo", () => {
+  const L = require("../static/js/logica.js");
+  const caza = { tipo: "aerea", lat: 0, lon: 0, velocidad_kmh: 900, autonomia_km: 1800, combustible: 100 };
+  const pts = [[0, 1], [0, 2]];  // unos 111 km cada tramo
+  const [a, b] = L.estimarRuta(caza, pts, []);
+  assert.ok(Math.abs(a.minutos - 7) <= 1 && Math.abs(b.minutos - 15) <= 1);
+  assert.ok(Math.abs(a.combustible - 94) <= 1);
+  const [, rapido] = L.estimarRuta(caza, pts, [{}, { velocidad: "maxima" }]);
+  assert.ok(rapido.minutos < b.minutos && rapido.combustible < b.combustible);
+  assert.match(L.textoPuntoRuta(1, b), /^W2 · en \d+ min · combustible \d+ %/);
+  assert.deepEqual(L.estimarRuta({ ...caza, velocidad_kmh: 0 }, pts), []);
+});

@@ -564,6 +564,38 @@
     return s;
   }
 
+  /** Cuanto tarda y con cuanto combustible llega a cada punto de una ruta (en linea recta, aproximado: el servidor
+   * calcula el terreno y las carreteras en la previsualizacion). Los tramos cambian la velocidad y la altura como
+   * la orden (engine/movimiento.py): el tramo i es el que lleva al punto i. */
+  const FACTOR_VELOCIDAD = { economica: [0.75, 0.85], crucero: [1, 1], maxima: [1.3, 2.2] };
+  const CONSUMO_PERFIL = { alto: 0.85, medio: 1, rasante: 1.3 };
+  function estimarRuta(u, waypoints, tramos) {
+    if (!u || !(u.velocidad_kmh > 0)) return [];
+    let lat = u.lat;
+    let lon = u.lon;
+    let horas = 0;
+    let comb = u.combustible === null || u.combustible === undefined ? 100 : u.combustible;
+    let modo = u.velocidad_actual || "crucero";
+    let perfil = u.perfil_actual || "medio";
+    return (waypoints || []).map((w, i) => {
+      const t = (tramos || [])[i] || {};
+      if (t.velocidad) modo = t.velocidad;
+      if (t.perfil) perfil = t.perfil;
+      const [fv, fc] = FACTOR_VELOCIDAD[modo] || [1, 1];
+      const km = distanciaKm(lat, lon, w[0], w[1]);
+      horas += km / (u.velocidad_kmh * fv);
+      if (u.autonomia_km > 0) comb -= (km / u.autonomia_km) * 100 * fc * (u.tipo === "aerea" ? CONSUMO_PERFIL[perfil] || 1 : 1);
+      [lat, lon] = w;
+      return { minutos: Math.round(horas * 60), combustible: Math.round(comb), km: Math.round(km) };
+    });
+  }
+  /** Texto de un punto de la ruta: "W2 · en 14 min · combustible 63 %". */
+  function textoPuntoRuta(i, e) {
+    if (!e) return `W${i + 1}`;
+    const t = e.minutos >= 120 ? `${Math.floor(e.minutos / 60)} h ${e.minutos % 60} min` : `${e.minutos} min`;
+    return `W${i + 1} · en ${t} · ${e.combustible < 0 ? "no llega: sin combustible" : `combustible ${e.combustible} %`} (aprox.)`;
+  }
+
   /** Velocidad elegida de aeronaves y buques (engine/movimiento.py). */
   const VELOCIDADES = [["economica", "Económica"], ["crucero", "Crucero"], ["maxima", "Máxima"]];
   const AYUDA_VELOCIDAD = {
@@ -1385,7 +1417,7 @@
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
-    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, APRESTOS, textoApresto, senalesUnidad, VELOCIDADES, AYUDA_VELOCIDAD, textoTramo, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
+    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, APRESTOS, textoApresto, senalesUnidad, estimarRuta, textoPuntoRuta, VELOCIDADES, AYUDA_VELOCIDAD, textoTramo, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,

@@ -873,8 +873,32 @@
     const g = app.capas.waypoints;
     if (g) {
       g.clearLayers();
-      app.waypoints.forEach((wp, i) => L.circleMarker(wp, { radius: 5, color: "#fff", fillColor: "#3A86FF", fillOpacity: 1 }).bindTooltip(`W${i + 1}`).addTo(g));
-      if (app.waypoints.length > 1) L.polyline(app.waypoints, { dashArray: "5 5", color: "#fff" }).addTo(g);
+      app.tramos = app.waypoints.map((_, i) => (app.tramos || [])[i] || {});  // un tramo por punto
+      const u = app.porId.get(app.unidadOrden);
+      const est = app.modoOrden === "mover" ? Logica.estimarRuta(u, app.waypoints, app.tramos) : [];
+      const linea = app.waypoints.length > 1 ? L.polyline(app.waypoints, { dashArray: "5 5", color: "#fff", interactive: false }).addTo(g) : null;
+      // cada punto se arrastra para moverlo y se quita con clic derecho; su tarjeta dice cuando llega y con cuanto combustible
+      app.waypoints.forEach((wp, i) => {
+        const m = L.marker(wp, {
+          draggable: true, keyboard: false, bubblingMouseEvents: false,
+          icon: L.divIcon({ className: "wp wp-editable", html: `<span>W${i + 1}</span>`, iconSize: [22, 22], iconAnchor: [11, 11] }),
+        }).addTo(g);
+        m.bindTooltip(`${Logica.textoPuntoRuta(i, est[i])}<br><small>Arrastre para moverlo · clic derecho para quitarlo</small>`, { direction: "top", offset: [0, -10] });
+        m.on("drag", () => { if (linea) { const pts = app.waypoints.slice(); pts[i] = [m.getLatLng().lat, m.getLatLng().lng]; linea.setLatLngs(pts); } });
+        m.on("dragend", () => {
+          const p = m.getLatLng();
+          app.waypoints[i] = [p.lat, p.lng];
+          dibujarWaypoints();
+          if (app.modoOrden === "mover") pedirPreview();
+        });
+        m.on("contextmenu", (e) => {
+          L.DomEvent.stop(e);
+          app.waypoints.splice(i, 1);
+          app.tramos.splice(i, 1);
+          dibujarWaypoints();
+          if (app.modoOrden === "mover") pedirPreview();
+        });
+      });
     }
     app.tramos = app.waypoints.map((_, i) => (app.tramos || [])[i] || {});  // un tramo por punto
     $("o-waypoints").textContent = app.waypoints.length

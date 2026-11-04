@@ -593,6 +593,8 @@ a.boton-enlace:hover { border-color: var(--azul); }
 .menu-contextual button { display: block; width: 100%; text-align: left; margin: 0; border: 0; background: transparent;
   padding: 6px 10px; border-radius: 4px; font-size: 13px; }
 .menu-contextual button:hover, .menu-contextual button:focus { background: var(--azul); color: #fff; outline: none; }
+.wp-editable span { cursor: grab; }
+.wp-editable:active span { cursor: grabbing; }
 .marca .senal.en-base { background: #2b2d42; border: 1px solid #8d99ae; }
 .marca .senales { display: flex; gap: 2px; margin-top: 1px; pointer-events: auto; }
 .marca .senal { font: 800 9px/12px system-ui, sans-serif; padding: 0 3px; border-radius: 3px; color: #fff; letter-spacing: .03em;
