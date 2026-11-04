@@ -192,6 +192,7 @@
               <span id="o-lote-texto"></span>
               <label class="chk"><input type="checkbox" id="o-formacion" checked><span>Mantener la formación</span></label>
               <button type="button" id="o-lote-limpiar" class="mini">Dejar solo una</button>
+              <button type="button" id="o-lote-grupo" class="mini secundario" title="Guarda estas unidades como un grupo de tarea: aparece en el orden de batalla y con un clic se eligen juntas">Guardar como grupo de tarea…</button>
               <p class="ayuda">Ctrl+clic en el orden de batalla o en el mapa para sumar o quitar unidades propias. La orden se emite a todas; con formación, cada una conserva su posición relativa al moverse.</p>
             </div>
             <div class="modos" role="tablist">
@@ -252,6 +253,7 @@
               <p class="ayuda" id="o-patrulla-ayuda-punto">Haga clic en el mapa donde quiere la patrulla. La aeronave vuela hasta allí, orbita sobre la zona (gasta 8 % de combustible por hora) e intercepta a los aviones enemigos que detecte a su alcance. Con combustible crítico regresa sola a la base más cercana.</p>
               <p class="ayuda" id="o-patrulla-ayuda-area" hidden>La unidad recorre el área de vértice en vértice y ataca a los enemigos que entran en ella si su doctrina lo permite. Las áreas se dibujan en la tarjeta «Áreas y zonas».</p>
               <p id="o-patrulla-punto" class="ayuda preview"></p>
+              <label class="chk" id="o-permanente-fila" hidden title="Cuando le quede poco combustible, sale de una base propia otra aeronave igual con la misma orden"><input type="checkbox" id="o-permanente"><span>Patrulla permanente: la base manda el relevo antes de que se vaya</span></label>
             </div>
             <div id="o-aterrizar" hidden>
               <label class="mini">Base de destino<select id="o-base"></select></label>
@@ -840,7 +842,12 @@
             <label class="chk"><input type="checkbox" id="dir-logistica" checked><span>Consumo de combustible y munición</span></label>
             <label class="chk"><input type="checkbox" id="dir-clima" checked><span>Efectos del clima y de las zonas meteorológicas</span></label>
             <label class="chk"><input type="checkbox" id="dir-fuego" checked><span>Fuego automático (patrullas, antiaérea, destructores)</span></label>
+            <label class="chk" title="Cada aeronave tiene su IFF: encendido, la escucha enemiga la oye de lejos; apagado, la antiaérea propia con armas libres no la distingue de un enemigo y le tira"><input type="checkbox" id="dir-fuego-amigo"><span>Fuego amigo e IFF (la antiaérea propia con armas libres tira a las aeronaves propias con el IFF apagado)</span></label>
+            <label class="chk"><input type="checkbox" id="dir-practica"><span>Ejercicio de práctica: el alumno maneja el reloj (pone en marcha, detiene y cambia la velocidad)</span></label>
             <label class="chk" title="Lo que detecta una unidad lejos de la red (bases, radares, centros de comunicaciones y unidades conectadas) o dentro de una interferencia enemiga no lo ve su bando"><input type="checkbox" id="dir-enlace"><span>Imagen común por enlace de datos (solo se comparte lo que ven las unidades conectadas a la red)</span></label>
+            <label class="mini" title="Con mar gruesa los helicópteros no calan el sonar, las sonoboyas y los sonares oyen menos, los buques chicos van más lentos y no se reabastece en el mar">Estado del mar<select id="dir-mar">
+              <option value="calmo">Calmo</option><option value="moderado">Moderado</option><option value="grueso">Grueso</option><option value="muy_grueso">Muy grueso</option>
+            </select></label>
             <label class="chk"><input type="checkbox" id="dir-noche"><span>Ciclo de día y noche (de noche se detecta menos a simple vista; el radar no cambia)</span></label>
             <label class="chk"><input type="checkbox" id="dir-fallas"><span>Disponibilidad y fallas de las aeronaves (no todas están listas para despegar y pueden fallar en vuelo)</span></label>
             <div class="fila avanzar-varios">
@@ -1056,6 +1063,12 @@
           <button id="btn-regla" type="button" class="mini secundario" title="Medir distancias y rumbos: clic para cada punto; doble clic o Esc para terminar">Regla</button>
           <button id="btn-regla-limpiar" type="button" class="mini secundario" hidden>Limpiar</button>
           <span id="regla-info" class="regla-info"></span>
+          <button id="btn-desde-aqui" type="button" class="mini secundario" title="¿Qué se ve desde aquí? Clic en el mapa: hasta dónde vería un observador o un radar en ese punto, según el relieve">¿Qué se ve?</button>
+          <span id="desde-aqui-opciones" class="desde-aqui-opciones" hidden>
+            <select id="desde-altura" aria-label="Altura del observador"><option value="3">Tropa (3 m)</option><option value="25" selected>Radar (25 m)</option><option value="100">Torre o cerro (100 m)</option></select>
+            <select id="desde-alcance" aria-label="Hasta dónde mirar"><option value="50">50 km</option><option value="150" selected>150 km</option><option value="300">300 km</option></select>
+            <button id="btn-desde-limpiar" type="button" class="mini secundario">Quitar</button>
+          </span>
           <button id="btn-convertir" type="button" class="mini secundario" aria-expanded="false" title="Convertidor de unidades: distancia, velocidad, altura, masa y volumen">Convertir</button>
           <div id="convertidor" class="convertidor" hidden>
             <label>Magnitud <select id="cv-magnitud"></select></label>
@@ -1137,6 +1150,7 @@
               <div id="esc-calendario-fila" hidden><dt>Calendario</dt><dd id="esc-calendario">-</dd></div>
               <div><dt>Movimiento terrestre</dt><dd id="clima-mov">-</dd></div>
               <div><dt>Ataques aéreos</dt><dd id="clima-aire">-</dd></div>
+              <div><dt>Estado del mar</dt><dd id="esc-mar">-</dd></div>
               <div><dt>Reloj</dt><dd id="esc-fase">-</dd></div>
               <div><dt>Modo</dt><dd id="esc-modo">-</dd></div>
             </dl>

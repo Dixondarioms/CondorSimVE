@@ -252,6 +252,7 @@ def construir(salida: Path) -> None:
           Bul(["<b>Clic derecho</b> sobre el mapa (con una unidad propia elegida): Mover aquí, Patrullar aquí, sonoboyas, "
                "sonar, minar o barrer aquí, centrar. Sobre una unidad: elegirla y Atacar, Interceptar, Torpedo, Lanzar misiles "
                "o Aterrizar en ella. Sobre una base: la lista de sus aviones en tierra, que se cuentan sobre ella («✈ 5»).",
+               "<b>Anillos de alcance</b>: al elegir una unidad se ve el alcance de cada una de sus armas, con su nombre.",
                "<b>Atajos</b>: M (Mover), A (Atacar), I (Interceptar), P (Patrullar), C (centrar), Esc (cancelar), V "
                "(videowall), F1 (ayuda); el director, espacio (reloj) y 1, 2, 3 (velocidad).",
                "La <b>ruta</b> de la orden Mover se corrige sobre el mapa: cada punto se arrastra o se quita con clic derecho, y "
@@ -346,6 +347,9 @@ def construir(salida: Path) -> None:
             "<b>formación</b>, cada una conserva su lugar respecto de las demás durante la marcha.")]
 
     # ---------------------------------------------------------------- 5 aviacion
+    h += [P("<b>Grupos de tarea</b>: con varias unidades elegidas (Ctrl+clic), <b>Guardar como grupo de tarea…</b> les da "
+            "un nombre. El grupo aparece arriba en el orden de batalla: con un clic se eligen todas y la orden se da en "
+            "formación. <b>Disolver</b> borra el grupo sin tocar las unidades.")]
     h += H1("5. Aviación")
     h += [H2("5.1 Despegar aviones y drones")]
     h += figura("aviacion", "Panel Aviación (pestaña FUERZAS).", ancho=8 * cm)
@@ -373,6 +377,9 @@ def construir(salida: Path) -> None:
                "tiene un número de plazas.",
                "Con poco combustible (por defecto 25 %) o sin armamento, la aeronave <b>regresa sola</b> a la base más cercana; "
                "esos valores se cambian en la doctrina (6.1)."])]
+    h += [P("<b>Patrulla permanente</b>: marcada al dar la orden Patrullar, cuando a la aeronave le queda poco combustible "
+            "sale de una base propia otra de la misma clase, lista y sin orden, con la misma patrulla; si no hay ninguna, "
+            "avisa.")]
     h += [H2("5.3 Desviar una aeronave: waypoints o rumbo"),
           P("Una orden nueva reemplaza en el acto a la que cumplía la aeronave. Hay dos formas de desviarla:"),
           Bul(["<b>Mover</b> con waypoints: clic en el mapa en cada punto de la nueva ruta; la aeronave gira enseguida hacia el primero.",
@@ -525,6 +532,12 @@ def construir(salida: Path) -> None:
             "<b>Emisión</b>) lo protege, pero mientras tanto no ve.")]
 
     # ---------------------------------------------------------------- 7 inteligencia
+    h += [H2("6.10 Fuego amigo e IFF"),
+          P("Con <b>Fuego amigo e IFF</b> encendido por el director, cada aeronave tiene su IFF (panel de abajo). Encendido, "
+            "la escucha electrónica enemiga la oye de lejos; apagado, el enemigo no la oye, pero la antiaérea y las patrullas "
+            "propias con las armas aire <b>libres</b> no la distinguen de un enemigo y le tiran. Si apaga el IFF de una "
+            "misión, restrinja las armas de su defensa aérea mientras pase. El fuego amigo queda en las alertas y en el "
+            "informe.")]
     h += H1("7. Inteligencia y contactos")
     h += [H2("7.1 La niebla de guerra")]
     h += figura("bando_azul", "Lo que ve el Comandante Azul: sus unidades y solo los enemigos que su bando detecta.")
@@ -641,6 +654,13 @@ def construir(salida: Path) -> None:
     h += [P("La <b>Regla</b> mide distancias y rumbos (clic en cada punto; doble clic o Esc para terminar) y <b>Convertir</b> "
             "pasa distancias, velocidades, alturas, masas y volúmenes de una unidad a otra. Arriba a la izquierda, el mapa "
             "muestra las coordenadas y la clase de terreno bajo el cursor.")]
+    h += [P("<b>¿Qué se ve?</b>: elija la altura del observador (tropa, radar o torre) y hasta dónde mirar, y haga clic en "
+            "el mapa. Se pinta hasta dónde vería desde ese punto según el relieve: en verde un avión a cota media, en naranja "
+            "uno rasante y en rojo lo que está en tierra. Sirve para elegir dónde poner un radar o por dónde entrar sin ser "
+            "visto."),
+          P("<b>Estado del mar</b> (lo fija el director en Dirección del ejercicio): con mar grueso los helicópteros no calan "
+            "el sonar, las sonoboyas y los sonares oyen menos, los buques chicos van más lentos y se suspende el "
+            "reabastecimiento en el mar.")]
     h += [H2("10.5 Videowall (pantalla completa)")]
     h += figura("videowall", "Videowall: el mapa a pantalla completa con el reloj, el clima y el marcador.")
     h += [P("El botón <b>Videowall</b> (o la tecla <b>V</b>) muestra el mapa a pantalla completa, sin paneles, para un proyector "
