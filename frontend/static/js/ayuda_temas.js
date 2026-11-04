@@ -432,10 +432,13 @@
     // ------------------------------------------------------------------ logística
     {
       id: "logistica", seccion: "Logística, ingenieros y transporte", titulo: "Combustible, munición y abastecimiento",
-      claves: "logistica combustible municion abastecer reabastecer deposito convoy cisterna base sin combustible stock suministro",
+      claves: "logistica combustible municion abastecer reabastecer deposito convoy cisterna base sin combustible stock suministro reabastecimiento en el mar buque logistico petrolero puerto",
       texto: `<p>Las unidades gastan combustible al moverse y munición al combatir. Se reabastecen solas, poco a poco, cerca de
         las <b>bases</b>, los <b>depósitos</b> y los <b>convoyes</b> propios (que llevan su carga a donde se los mande). Las
-        aeronaves pueden reabastecer en vuelo junto a un <b>avión cisterna</b>. Conduce A-4.</p>`,
+        aeronaves pueden reabastecer en vuelo junto a un <b>avión cisterna</b>. Conduce A-4.</p>
+        <p><b>Reabastecimiento en el mar</b>: el <b>buque logístico</b> (petrolero de flota) es el convoy de la flota. Llévelo
+        con la orden Mover a 5 km o menos de los buques que necesitan combustible o munición: les da +40 % por hora y les
+        repone los señuelos. Se recarga junto a un <b>puerto</b> propio. Tiene armas débiles: escóltelo.</p>`,
     },
     {
       id: "ingenieros", seccion: "Logística, ingenieros y transporte", titulo: "Ingenieros: puentes y vados",

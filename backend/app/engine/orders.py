@@ -33,6 +33,7 @@ from app.engine import defensa_aerea as da_mod
 from app.engine import disponibilidad as disp_mod
 from app.engine import toe as toe_mod
 from app.engine import ota as ota_mod
+from app.engine import contramedidas as contra_mod
 from app.engine import apoyo_aereo as apoyo_mod
 from app.engine import rescate as rescate_mod
 from app.engine import weaponeering as weap_mod
@@ -174,6 +175,8 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora, factor_combustible: dic
             if b.tipo != "base" and u.base_id != b.id:
                 continue  # un portaaviones solo abastece a las aeronaves estacionadas a bordo
             if geo.distancia_km(b.lat, b.lon, u.lat, u.lon) <= b.alcance_km:
+                if u.tipo == "naval":
+                    contra_mod.reponer(u)  # en puerto repone sus señuelos (engine/contramedidas.py)
                 for variable in logistica.VARIABLES:
                     dar = min(REABASTECIMIENTO_POR_TURNO * fraccion, 100.0 - getattr(u, variable), logistica.stock(b, variable))
                     if dar > 0.05:
@@ -202,7 +205,9 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora, factor_combustible: dic
             if r.combustible >= 100 and r.municion >= 100:
                 continue
             if geo.distancia_km(conv.lat, conv.lon, r.lat, r.lon) <= clase.nodo_movil_km:
-                causa = "reabastecimiento en vuelo" if cisterna else "convoy"
+                causa = "reabastecimiento en vuelo" if cisterna else "reabastecimiento en el mar" if r.tipo == "naval" else "convoy"
+                if r.tipo == "naval":
+                    contra_mod.reponer(r)
                 bit.poner(r, "combustible", r.combustible + REABASTECIMIENTO_CONVOY * fraccion, causa)
                 if not cisterna:
                     bit.poner(r, "municion", r.municion + REABASTECIMIENTO_CONVOY * fraccion, causa)

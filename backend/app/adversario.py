@@ -516,6 +516,8 @@ class _Turno:
     # ---------------------------------------------------------------- mar
     def naval(self, u):
         clase = catalogo.obtener(u.clase, u.tipo)
+        if clase.carga_max and clase.nodo_movil_km:  # buque logistico: como un convoy, hacia los buques que lo necesitan
+            return self.convoy(u)
         if clase.lanza_misiles and self.salva(u):
             return
         blanco = self.mejor_blanco(u, u.alcance_km)

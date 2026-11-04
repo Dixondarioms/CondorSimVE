@@ -192,6 +192,11 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
           movilidad="naval",
           armamento="Sonar de minas y vehículos submarinos: descubre los campos de minas a 5 km y los barre (orden "
                     "«Barrer minas»); dentro de ellos corre poco riesgo"),
+    Clase("buque_logistico", "Buque logístico (reabastecimiento en el mar)", "naval", "S", "NR----", 35, 5, 20, 12000,
+          _atk(0.05, 0.1, 0.05), 0.7, "", ("naval",), movilidad="naval", nodo_movil_km=5.0, carga_max=300.0,
+          armamento="Petrolero de flota: reabastece en el mar (combustible y munición, +40 % por hora) a los buques propios "
+                    "a 5 km o menos y repone sus señuelos; se recarga en un puerto propio. Armas de autodefensa débiles: "
+                    "necesita escolta"),
     Clase("torpedo", "Torpedo", "naval", "U", "WT----", 75, 1, 0, 50, _atk(0.0, 0.0, 2.2), 0.2, "",
           movilidad="naval", firma=0.4, se_consume=True, misil=True,
           armamento="Torpedo en recorrido hacia su blanco (engine/asw.py): navega solo y lo golpea al llegar; si no lo "
