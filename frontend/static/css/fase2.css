@@ -595,6 +595,8 @@ a.boton-enlace:hover { border-color: var(--azul); }
 .menu-contextual button:hover, .menu-contextual button:focus { background: var(--azul); color: #fff; outline: none; }
 .marca.rotulo-tapado .rotulo { display: none; }
 .marca.rotulo-tapado:hover .rotulo { display: block; }
+.anillo-arma span { display: inline-block; transform: translate(-50%, -100%); white-space: nowrap;
+  font: 700 10px system-ui, sans-serif; color: #ffbf69; text-shadow: 0 0 3px #000, 0 0 3px #000; }
 .wp-editable span { cursor: grab; }
 .wp-editable:active span { cursor: grabbing; }
 .marca .senal.en-base { background: #2b2d42; border: 1px solid #8d99ae; }

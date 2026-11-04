@@ -51,3 +51,16 @@ test("de los nombres que se pisan se ve uno solo, el de la unidad elegida si est
   const tapados = L.rotulosTapados([{ id: 1, x: 100, y: 100 }, { id: 2, x: 110, y: 105, prioridad: 2 }, { id: 3, x: 400, y: 100 }]);
   assert.deepEqual([...tapados], [1]);
 });
+
+test("los anillos de alcance de cada arma: antiaerea, carga, torpedo, defensa de punto y balistico", () => {
+  const L = require("../static/js/logica.js");
+  const cat = {
+    sistemas_da: { s300vm: { armas: [{ nombre: "9M83", alcance_max_km: 75 }, { nombre: "9M82", alcance_max_km: 200 }] } },
+    armas: { M120: { nombre: "AIM-120", alcance_km: 70 }, M9X: { nombre: "AIM-9X", alcance_km: 18 } },
+    asw: { aviones: [], helos: [], torpedo_km: { fragata: 10 } }, defensa_punto: { fragata: { canales: 2, km: 8, pk: 0.45 } },
+  };
+  assert.deepEqual(L.anillosArmas({ estado: "activa", modelo: "s300vm" }, cat).map((a) => a.km), [200, 75]);
+  assert.deepEqual(L.anillosArmas({ estado: "activa", tipo: "aerea", armamento: { quedan: { M120: 4, M9X: 0 } } }, cat).map((a) => a.nombre), ["AIM-120"]);
+  assert.deepEqual(L.anillosArmas({ estado: "activa", tipo: "naval", clase: "fragata" }, cat).map((a) => a.nombre), ["Torpedo", "Defensa de punto"]);
+  assert.equal(L.anillosArmas({ estado: "activa", clase: "lanzador_balistico" }, cat)[0].km, 500);
+});

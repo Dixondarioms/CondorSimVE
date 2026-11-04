@@ -1631,6 +1631,13 @@
       L.circle([u.lat, u.lon], { radius: u.velocidad_kmh * 1000, color: "#81d4fa", weight: 1, dashArray: "2 5", fill: false, interactive: false })
         .bindTooltip("Avance máximo en 1 turno (en llano, despejado)").addTo(g);
     }
+    // el alcance de cada arma, con su nombre sobre el anillo (lo que se sabe: de una unidad enemiga, nada)
+    Logica.anillosArmas(u, app.catalogo).forEach((a) => {
+      L.circle([u.lat, u.lon], { radius: a.km * 1000, color: "#ff9f1c", weight: 1.2, opacity: 0.85, dashArray: "8 4", fill: false, interactive: false }).addTo(g);
+      const norte = [u.lat + a.km / 111.32, u.lon];
+      L.marker(norte, { interactive: false, keyboard: false, icon: L.divIcon({ className: "anillo-arma", iconSize: null,
+        html: `<span>${escapar(a.nombre)} · ${a.km < 10 ? a.km.toFixed(1) : Math.round(a.km)} km</span>` }) }).addTo(g);
+    });
   }
 
   /** Cobertura del sensor seleccionado segun el relieve (GET .../cobertura): hasta donde ve una aeronave a baja cota

@@ -564,6 +564,29 @@
     return s;
   }
 
+  /** Anillos de alcance de cada arma de una unidad (de mayor a menor): su antiaerea, las armas de la carga que le
+   * quedan, torpedos, defensa de punto, antimisil y misil balistico. */
+  function anillosArmas(u, cat) {
+    if (!u || u.estado !== "activa") return [];
+    const out = [];
+    const sumar = (km, nombre) => {
+      if (km > 0 && !out.some((o) => o.nombre === nombre && Math.abs(o.km - km) < 0.5)) out.push({ km: Number(km), nombre });
+    };
+    const da = cat && cat.sistemas_da && u.modelo ? cat.sistemas_da[u.modelo] : null;
+    if (da) for (const a of da.armas || []) sumar(a.alcance_max_km, a.nombre);
+    const quedan = (u.armamento && u.armamento.quedan) || {};
+    for (const [codigo, n] of Object.entries(quedan)) {
+      const d = cat && cat.armas && cat.armas[codigo];
+      if (d && n > 0) sumar(d.alcance_km, d.nombre);
+    }
+    sumar(alcanceTorpedo(u, cat), "Torpedo");
+    const dp = cat && cat.defensa_punto && u.tipo === "naval" ? cat.defensa_punto[u.clase] : null;
+    if (dp) sumar(dp.km, "Defensa de punto");
+    if (u.antimisil) sumar(u.antimisil.km, "Antimisil");
+    if (u.clase === "lanzador_balistico") sumar(500, "Misil balístico");
+    return out.sort((a, b) => b.km - a.km);
+  }
+
   /** Nombres que se pisan en la pantalla: de cada grupo de puntos a menos de `px` pixeles entre si, solo el primero
    * (el elegido, si esta) muestra su nombre; devuelve los ids que lo esconden. puntos: [{id, x, y, prioridad}]. */
   function rotulosTapados(puntos, px = 26) {
@@ -1430,7 +1453,7 @@
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
-    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, APRESTOS, textoApresto, senalesUnidad, estimarRuta, textoPuntoRuta, rotulosTapados, VELOCIDADES, AYUDA_VELOCIDAD, textoTramo, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
+    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, APRESTOS, textoApresto, senalesUnidad, estimarRuta, textoPuntoRuta, rotulosTapados, anillosArmas, VELOCIDADES, AYUDA_VELOCIDAD, textoTramo, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,
