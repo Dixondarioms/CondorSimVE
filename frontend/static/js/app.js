@@ -1774,6 +1774,7 @@
       extra.push(dato("Refugios reforzados", `${u.refugios || 0} (protegen a los primeros ${u.refugios || 0} grupos estacionados; ${abordo.length} a bordo)`));
     }
     if (cl && cl.lanza_misiles && !oculto) extra.push(dato("Misiles de crucero", `${Logica.misilesDisponibles(u)} listos (25 % de munición cada uno)`));
+    if (u.contramedidas && !oculto) extra.push(dato(u.contramedidas.nombre, `${u.contramedidas.quedan} de ${u.contramedidas.maximo} (cada una baja 30 % la probabilidad de un misil)`));
     if (u.antimisil) extra.push(dato("Antimisil", `contra balísticos en fase final a ${u.antimisil.km} km, ${u.antimisil.canales} canal(es)`));
     const punto = Logica.textoDefensaPunto(u, app.catalogo);
     if (punto) extra.push(`<div class="ancho-completo"><dt>Defensa de punto contra misiles</dt><dd>${escapar(punto)}</dd></div>`);

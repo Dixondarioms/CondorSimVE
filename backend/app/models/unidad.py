@@ -167,6 +167,8 @@ class Unidad(Base):
     apresto_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # velocidad elegida de aeronaves y buques: "economica" | "crucero" | "maxima" (None = crucero; engine/movimiento.py)
     velocidad_modo: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    # bengalas y chaff de una aeronave o señuelos de un buque que le quedan (None = llenas; engine/contramedidas.py)
+    contramedidas: Mapped[int | None] = mapped_column(Integer, nullable=True)
     despega_hasta: Mapped[float | None] = mapped_column(Float, nullable=True)
     recarga_hasta: Mapped[float | None] = mapped_column(Float, nullable=True)
     # Cóndor: doctrina propia de la unidad (lo que no fija, lo hereda de su bando; engine/doctrina.py)

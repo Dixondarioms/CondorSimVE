@@ -38,6 +38,7 @@ from app.engine import apoyo_aereo as apoyo_mod
 from app.engine import apresto as apresto_mod
 from app.engine import azar as azar_mod
 from app.engine import clima as clima_mod
+from app.engine import contramedidas as contra_mod
 from app.engine import gastos as gastos_mod
 from app.engine import contactos_vivo
 from app.engine import doctrina as doctrina_mod
@@ -935,6 +936,7 @@ def _esperas_en_tierra(ctx: _Ctx) -> None:
         falta = u.espera_hasta - ctx.t
         if falta <= 0:
             u.espera_hasta, u.espera_restante = None, 0
+            contra_mod.reponer(u)
             carga = armas_mod.rearmar(u, ctx.unidades.get(u.base_id)) if armas_mod.aplica(u) else ""
             ctx.evento("logistica", u.bando, f"{u.nombre} terminó de reabastecer y rearmar: lista para despegar"
                        + (f" ({carga})." if carga else "."))
@@ -1119,6 +1121,10 @@ def _pasada(ctx: _Ctx, a: Unidad, d: Unidad, orden: Orden | None, recarga_s: flo
     clave = orden.id if orden is not None else int(ctx.t)
     parte = orden.detalle if orden is not None and orden.tipo == "atacar" else None
     perd_a, perd_d, gasto, res = _resolver(ctx, a, d, 1.0, clave, parte)
+    if arma is not None and armas_mod.tipo(arma) == "aa" and aeronaves_mod.en_vuelo(d) and contra_mod.usar(d):
+        perd_d *= contra_mod.FACTOR  # la aeronave atacada suelta bengalas y chaff
+        res.efectos.append(f"{d.nombre} soltó bengalas y chaff")
+        gastos_mod.anotar(ctx.db, ctx.esc, d, "Contramedidas", contra_mod.nombre(d), 1, ctx.t)
     _perder(ctx, a, perd_a)
     _perder(ctx, d, perd_d)
     con = ""
@@ -1798,6 +1804,9 @@ def _impacto_misil(ctx: _Ctx, m: Unidad, blanco: Unidad) -> None:
     fuerza tras la defensa de punto)."""
     d = misiles_mod.salva_de(m)
     n, pk = max(1, int(d.get("salva") or 1)), float(d.get("pk") or misiles_mod.PK_POR_DEFECTO)
+    if blanco.tipo == "naval" and contra_mod.usar(blanco):  # el buque lanza un señuelo
+        pk *= contra_mod.FACTOR
+        gastos_mod.anotar(ctx.db, ctx.esc, blanco, "Contramedidas", contra_mod.nombre(blanco), 1, ctx.t)
     if ctx.esc.azar:
         clave = f"{ctx.esc.semilla}:impacto:{m.id}:{blanco.id}:{ctx.t:.0f}"
         rng = random.Random(int.from_bytes(hashlib.sha256(clave.encode()).digest()[:8], "big"))
@@ -2042,6 +2051,10 @@ def _defensa_aerea(ctx: _Ctx) -> None:
                 ctx.evento("combate", bat.bando, f"{bat.nombre} lanzó {e['por_salva']} {arma.nombre} contra {d.nombre}.")
                 if e["tripulada"]:
                     ctx.evento("combate", d.bando, f"{d.nombre}: misil enemigo en vuelo, maniobra evasiva.")
+                    if arma.tipo != "canon" and contra_mod.usar(d):
+                        e["p"] *= contra_mod.FACTOR
+                        e["efectos"] = list(e["efectos"]) + ["bengalas y chaff"]
+                        gastos_mod.anotar(ctx.db, ctx.esc, d, "Contramedidas", contra_mod.nombre(d), 1, ctx.t)
                 ctx.alerta("ataque", d.bando, f"{d.nombre}: misil antiaéreo enemigo en vuelo.", d.lat, d.lon, "critica")
             elif e["fase"] == "vuelo":
                 e["fase"], e["hasta"] = "evaluacion", ctx.t + da_mod.EVALUACION_S

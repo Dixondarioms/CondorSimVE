@@ -308,6 +308,18 @@
         Busque el lanzador y destrúyalo pronto.</p>`,
     },
     {
+      id: "contramedidas", seccion: "Defensa aérea y doctrina", titulo: "Contramedidas: bengalas, chaff y señuelos",
+      claves: "contramedidas bengalas chaff señuelos senuelos evadir misil engañar misil maniobra evasiva antirradiacion apagar radar sead",
+      texto: `<p>Las aeronaves tripuladas llevan <b>bengalas y chaff</b> (4 por avión del grupo) y los buques <b>señuelos</b>
+        (fragata 8, destructor y portaaviones 12, patrullero 4…). Cuando a la aeronave le tiran un misil antiaéreo o
+        aire-aire, o al buque le llega un misil, suelta una sola: ese misil tiene 30 % menos de probabilidad de pegar.
+        Se gastan; las aeronaves las reponen al rearmar en tierra y los buques al reabastecerse (de un buque logístico o
+        en puerto). Cuántas le quedan se ve abajo, en el panel de la unidad, y lo gastado figura en el informe.</p>
+        <p>Los <b>misiles antirradiación</b> (carga SEAD) solo sirven contra radares encendidos: un radar que se apaga a
+        tiempo (botón <b>Emisión</b> del panel de abajo) no puede ser atacado con ellos, pero mientras está apagado tampoco
+        ve.</p>`,
+    },
+    {
       id: "minas", seccion: "Defensa aérea y doctrina", titulo: "Minas navales: sembrar, cruzar y barrer",
       claves: "minas mina minar sembrar campo de minas barrer barrido cazaminas minador minado",
       texto: `<ul><li><b>Minar</b>: patrulleros, fragatas, submarinos, buques de desembarco y aviones de ataque van al punto y
