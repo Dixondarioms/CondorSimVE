@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app import state
 from app.engine import catalogo, puestos
 from app.engine import objetivos as objetivos_mod
+from app.engine import gastos as gastos_mod
 from app.engine import orders as orders_mod
 from app.models.aar import Combate, Fotograma, Instantanea, RegistroLogistico
 from app.models.asignacion import Asignacion
@@ -201,6 +202,8 @@ def construir_informe(db: Session, escenario: Escenario) -> dict:
         "resumen": resumen,
         "marcador": objetivos_mod.marcador(db, escenario),
         # daño colateral: ataques a unidades neutrales (trafico civil o paises ajenos; engine/trafico.py)
+        # perdidas y gastos por bando (engine/gastos.py)
+        "perdidas_gastos": gastos_mod.resumen(db, escenario),
         "colateral": [{"bando": e.bando_destino, "turno": e.turno, "descripcion": e.descripcion}
                       for e in eventos if e.tipo == "colateral"],
         "objetivos": [

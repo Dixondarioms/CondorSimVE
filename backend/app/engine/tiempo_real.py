@@ -38,6 +38,7 @@ from app.engine import apoyo_aereo as apoyo_mod
 from app.engine import apresto as apresto_mod
 from app.engine import azar as azar_mod
 from app.engine import clima as clima_mod
+from app.engine import gastos as gastos_mod
 from app.engine import contactos_vivo
 from app.engine import doctrina as doctrina_mod
 from app.engine import defensa_aerea as da_mod
@@ -394,6 +395,7 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
         torpedo = asw_mod.crear_torpedo(unidad, blanco, esc.sim_segundos or 0.0)
         torpedo.rumbo = rumbo(unidad.lat, unidad.lon, blanco.lat, blanco.lon)
         asw_mod.gastar_torpedo(unidad)
+        gastos_mod.anotar(db, esc, unidad, "Torpedos", "Torpedo", 1)
         asw_mod.exponer(unidad, (esc.sim_segundos or 0.0) + asw_mod.EXPUESTO_S)
         db.add(torpedo)
         db.flush()
@@ -410,6 +412,7 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
             misil.rumbo = rumbo(unidad.lat, unidad.lon, blanco.lat, blanco.lon)
             db.add(misil)
         unidad.municion = max(0.0, unidad.municion - balisticos_mod.MUNICION_POR_MISIL * n)
+        gastos_mod.anotar(db, esc, unidad, "Misiles balísticos", "Misil balístico", n)
         unidad.recarga_hasta = esc.sim_segundos + RECARGA_LANZADOR_S
         db.flush()
         km = geo.distancia_km(unidad.lat, unidad.lon, blanco.lat, blanco.lon)
@@ -430,6 +433,7 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
             misil.rumbo = rumbo(unidad.lat, unidad.lon, blanco.lat, blanco.lon)
             db.add(misil)
         unidad.municion = max(0.0, unidad.municion - misiles_mod.MUNICION_POR_MISIL * n)
+        gastos_mod.anotar(db, esc, unidad, "Misiles de crucero", misiles_mod.modelo_misil(unidad).corto, n)
         unidad.recarga_hasta = esc.sim_segundos + RECARGA_LANZADOR_S
         asw_mod.exponer(unidad, (esc.sim_segundos or 0.0) + asw_mod.EXPUESTO_S)  # un submarino que lanza se delata
         db.flush()
@@ -1096,6 +1100,7 @@ def _pasada(ctx: _Ctx, a: Unidad, d: Unidad, orden: Orden | None, recarga_s: flo
     con = ""
     if arma is not None:
         tiradas = armas_mod.gastar(a, arma)
+        gastos_mod.arma_aerea(ctx.db, ctx.esc, a, arma, tiradas, ctx.t)
         _cambiar(ctx, a, "municion", armas_mod.municion_pct(a), "combate")
         con = f" con {tiradas} {ota_mod.ARMAMENTO[arma][0]}"
     else:
@@ -1118,6 +1123,7 @@ def _pasada(ctx: _Ctx, a: Unidad, d: Unidad, orden: Orden | None, recarga_s: flo
 def _lanzar_antibuque(ctx: _Ctx, a: Unidad, d: Unidad, arma: str, recarga_s: float) -> str:
     """La aeronave suelta sus misiles antibuque: cada uno vuela por separado hasta el buque (engine/misiles.py)."""
     tiradas = armas_mod.gastar(a, arma)
+    gastos_mod.arma_aerea(ctx.db, ctx.esc, a, arma, tiradas, ctx.t)
     _cambiar(ctx, a, "municion", armas_mod.municion_pct(a), "combate")
     a.recarga_hasta = ctx.t + recarga_s
     for x in misiles_mod.crear_misiles(a, d, tiradas, misiles_mod.MISIL_DEL_ARMA[arma]):
@@ -1360,6 +1366,7 @@ def _sembrar_boyas(ctx: _Ctx, u: Unidad, orden: Orden, h: float) -> None:
     for lat, lon in asw_mod.cuadro_de_boyas(punto[0], punto[1]):
         ctx.db.add(Sonoboya(escenario_id=ctx.esc.id, bando=u.bando, unidad_id=u.id, lat=lat, lon=lon,
                             radio_km=asw_mod.BOYA_RADIO_KM, desde_seg=ctx.t, hasta_seg=ctx.t + asw_mod.BOYA_VIDA_S))
+    gastos_mod.anotar(ctx.db, ctx.esc, u, "Sonoboyas", "Sonoboya", 4, ctx.t)
     ctx.db.flush()
     asw_mod.cargar_boyas(ctx.db, ctx.esc.id, ctx.t)
     hasta = hora_del_dia(ctx.esc, ctx.t + asw_mod.BOYA_VIDA_S)
@@ -1407,6 +1414,7 @@ def _minar(ctx: _Ctx, u: Unidad, orden: Orden, h: float) -> None:
     ctx.db.add(campo)
     ctx.db.flush()
     ctx.campos_minas.append(campo)
+    gastos_mod.anotar(ctx.db, ctx.esc, u, "Minas navales", "Mina", minas_mod.MINAS_POR_CAMPO, ctx.t)
     _cambiar(ctx, u, "municion", u.municion - minas_mod.MUNICION_POR_CAMPO, "minado")
     ctx.mundo.minado_desde.pop(orden.id, None)
     ctx.terminar(orden, u, f"Sembró un campo de {minas_mod.MINAS_POR_CAMPO} minas en ({punto[0]:.3f}, {punto[1]:.3f}), "
@@ -1803,12 +1811,13 @@ def _defensa_de_punto(ctx: _Ctx, h: float) -> None:
         disparos = int(acumulado)
         ctx.mundo.punto_disparos[b.id] = acumulado - disparos
         pk = dp["pk"] * sistemas_mod.factor(b, "armas")
-        derribados = 0
+        derribados = tirados = 0
         for _, _, x in cerca:
             if disparos <= 0:
                 break
             while disparos > 0 and x.estado == "activa":
                 disparos -= 1
+                tirados += 1
                 if ctx.esc.azar:
                     clave = f"{ctx.esc.semilla}:punto:{b.id}:{x.id}:{ctx.t:.0f}:{disparos}"
                     rng = random.Random(int.from_bytes(hashlib.sha256(clave.encode()).digest()[:8], "big"))
@@ -1818,6 +1827,7 @@ def _defensa_de_punto(ctx: _Ctx, h: float) -> None:
                 if x.fuerza <= 0.5:
                     x.estado, x.fuerza = "destruida", 0.0
                     derribados += 1
+        gastos_mod.anotar(ctx.db, ctx.esc, b, "Defensa de punto", "Disparo de defensa de punto", tirados, ctx.t)
         if derribados:
             ctx.evento("combate", b.bando, f"La defensa de punto de {b.nombre} derribó {derribados} misil(es) enemigo(s).",
                        b.lat, b.lon)
@@ -1876,6 +1886,7 @@ def _defensa_antimisil(ctx: _Ctx, h: float) -> None:
                 break
         if listos is not None and tirados:
             da_mod.guardar_cargas(b, listos, reserva)
+        gastos_mod.anotar(ctx.db, ctx.esc, b, "Interceptores antimisil", "Interceptor antimisil", tirados, ctx.t)
         if tirados:
             ctx.evento("combate", b.bando, f"{b.nombre} lanzó {tirados} interceptor(es) antimisil: derribó {derribados} "
                                            "misil(es) balístico(s).", b.lat, b.lon)
@@ -1996,6 +2007,8 @@ def _defensa_aerea(ctx: _Ctx) -> None:
                     enf.remove(e)
                     continue
                 listos[arma.id] -= e["por_salva"]
+                gastos_mod.anotar(ctx.db, ctx.esc, bat, "Cañones antiaéreos" if arma.tipo == "canon" else "Misiles antiaéreos",
+                                  arma.nombre, e["por_salva"], ctx.t)
                 cambio = True
                 e["fase"], e["hasta"] = "vuelo", ctx.t + dist * 1000.0 / arma.velocidad_ms
                 ctx.evento("combate", bat.bando, f"{bat.nombre} lanzó {e['por_salva']} {arma.nombre} contra {d.nombre}.")

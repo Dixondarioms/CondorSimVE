@@ -142,6 +142,19 @@
           { texto: b, clase: "tag-" + b }, x.unidades, x.destruidas, x.combates_iniciados, x.combates_recibidos,
           x.fuerza_perdida, x.dano_infligido, x.ordenes_emitidas, x.ordenes_rechazadas,
         ]), [1, 2, 3, 4, 5, 6, 7, 8]));
+      const pg = datos.perdidas_gastos;  // perdidas y gastos por bando (engine/gastos.py)
+      if (pg) {
+        const titulo = (t) => Object.assign(document.createElement("h4"), { textContent: t });
+        cont.appendChild(titulo("Pérdidas y combustible"));
+        cont.appendChild(tabla(
+          ["Bando", "Aeronaves", "Buques", "Unidades de tierra", "Instalaciones", "Combustible (tanques llenos)"],
+          Object.entries(pg).map(([b, x]) => [{ texto: b, clase: "tag-" + b }, x.perdidas.Aeronaves, x.perdidas.Buques,
+            x.perdidas["Unidades de tierra"], x.perdidas.Instalaciones, x.combustible_tanques]), [1, 2, 3, 4, 5]));
+        const gastos = Object.entries(pg).flatMap(([b, x]) => x.gastos.map((g) => [{ texto: b, clase: "tag-" + b }, g.tipo, g.arma, g.cantidad]));
+        cont.appendChild(titulo("Armas gastadas"));
+        if (gastos.length) cont.appendChild(tabla(["Bando", "Tipo", "Arma", "Cantidad"], gastos, [3]));
+        else cont.appendChild(Object.assign(document.createElement("p"), { className: "ayuda", textContent: "Todavía no se gastaron armas." }));
+      }
       const conUnidades = turnos;
       if (conUnidades.length) {
         const ini = new Map(conUnidades[0].unidades.map((u) => [u.id, u]));

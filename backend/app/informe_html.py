@@ -212,6 +212,19 @@ def render_html(informe: dict, rubrica: dict | None = None) -> str:
         colateral_html = ("<h2>Daño colateral</h2>" + (f'<p class="meta">Penalización en el puntaje: {penal}</p>' if penal else "")
                           + "<ul>" + "".join(f'<li>{_bando(c["bando"])}: {e(c["descripcion"])}</li>' for c in colateral) + "</ul>")
 
+    # perdidas y gastos por bando (engine/gastos.py)
+    pg = informe.get("perdidas_gastos") or {}
+    perdidas_html = ""
+    if pg:
+        perdidas_html = "<h2>Pérdidas y gastos</h2>" + _tabla(
+            ["Bando", "Aeronaves", "Buques", "Unidades de tierra", "Instalaciones", "Combustible (tanques llenos)"],
+            [[_bando(b), str(x["perdidas"]["Aeronaves"]), str(x["perdidas"]["Buques"]), str(x["perdidas"]["Unidades de tierra"]),
+              str(x["perdidas"]["Instalaciones"]), f'{x["combustible_tanques"]:.1f}'] for b, x in pg.items()],
+            num=(1, 2, 3, 4, 5))
+        filas = [[_bando(b), e(g["tipo"]), e(g["arma"]), str(g["cantidad"])] for b, x in pg.items() for g in x["gastos"]]
+        perdidas_html += ("<h3>Armas gastadas</h3>" + _tabla(["Bando", "Tipo", "Arma", "Cantidad"], filas, num=(3,))
+                          if filas else '<p class="meta">Todavía no se gastaron armas.</p>')
+
     # estado inicial vs final de cada unidad
     con_unidades = [t for t in turnos if t["unidades"]]
     inicial = {u["id"]: u for u in con_unidades[0]["unidades"]} if con_unidades else {}
@@ -234,6 +247,7 @@ def render_html(informe: dict, rubrica: dict | None = None) -> str:
 <h2>Resumen por bando</h2>{resumen_tabla}
 <h3>Fuerza perdida acumulada</h3>{_barras(res)}
 {colateral_html}
+{perdidas_html}
 <h2>Estado final de las unidades</h2>{unidades_tabla}
 {_rubrica_html(rubrica)}
 <h2>Cronologia</h2>{"".join(secciones) or "<p class='meta'>Aun no se cumplio ninguna hora del ejercicio.</p>"}

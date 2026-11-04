@@ -479,10 +479,14 @@
     // ------------------------------------------------------------------ informe
     {
       id: "informe", seccion: "Informe y repetición", titulo: "Informe, repetición y rúbrica",
-      claves: "informe resumen aar repeticion replay linea de tiempo rubrica evaluacion comparar ejercicios resultado final",
+      claves: "informe resumen aar repeticion replay linea de tiempo rubrica evaluacion comparar ejercicios resultado final perdidas gastos armas gastadas misiles disparados combustible consumido bajas",
       texto: `<p>El botón <b>Informe</b> abre el resumen del ejercicio de cada bando, la <b>línea de tiempo</b> (logística y
         combates), la <b>repetición</b> del ejercicio sobre el mapa, la <b>rúbrica</b> de evaluación por repartición y la
-        comparación entre ejercicios.</p>`,
+        comparación entre ejercicios.</p>
+        <p>En el resumen están las <b>pérdidas y gastos</b> de cada bando: aeronaves (por avión), buques, unidades de tierra
+        e instalaciones perdidas; el combustible consumido (en tanques llenos) y cada arma gastada: misiles y bombas de las
+        aeronaves, misiles antiaéreos, interceptores antimisil, defensa de punto, misiles de crucero y balísticos,
+        torpedos, sonoboyas, minas, bengalas y señuelos.</p>`,
     },
     // ------------------------------------------------------------------ dirección (solo director)
     {
