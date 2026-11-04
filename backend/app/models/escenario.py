@@ -68,6 +68,8 @@ class Escenario(Base):
     logistica: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
     efectos_clima: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
     fuego_automatico: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+    # imagen comun por enlace de datos (engine/enlace.py): solo comparte lo que ve una unidad conectada a la red
+    enlace_datos: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     # adversario automatico: el simulador da las ordenes de ese bando al abrirse cada turno (ver app/adversario.py)
     ia_azul: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     ia_rojo: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())

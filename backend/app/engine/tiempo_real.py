@@ -39,6 +39,7 @@ from app.engine import apresto as apresto_mod
 from app.engine import azar as azar_mod
 from app.engine import clima as clima_mod
 from app.engine import contramedidas as contra_mod
+from app.engine import enlace as enlace_mod
 from app.engine import gastos as gastos_mod
 from app.engine import contactos_vivo
 from app.engine import doctrina as doctrina_mod
@@ -236,6 +237,7 @@ class _Ctx:
         self.perdidas: dict[int, float] = {}
         self.con_pmi: set | None = None  # (bando, base) con PMI de Inteligencia: se lee al primer ataque a una pista
         self.zonas = {z.id: z for z in zonas_mod.de_escenario(db, esc.id)}  # areas y zonas (engine/zonas.py)
+        self.sin_enlace: set = set()  # unidades fuera de la red de enlace de datos (engine/enlace.py)
         asw_mod.AHORA[esc.id] = esc.sim_segundos or 0.0
         asw_mod.cargar_boyas(db, esc.id, esc.sim_segundos or 0.0)  # sonoboyas activas (engine/asw.py)
         from app.models.mina import CampoMinas  # campos de minas con minas (engine/minas.py)
@@ -301,6 +303,13 @@ class _Ctx:
 
     def visible_para(self, u: Unidad, bando: str) -> bool:
         return u.bando == bando or not self.esc.niebla or u.id in self.mundo.visibles.get(bando, ())
+
+    def ve(self, sensor: Unidad, u: Unidad) -> bool:
+        """Lo que puede tirarle `sensor`: lo que ve su bando o, si esta fuera de la red de enlace de datos, lo que ven
+        sus propios sensores (engine/enlace.py)."""
+        if self.visible_para(u, sensor.bando):
+            return True
+        return sensor.id in self.sin_enlace and vision.detecta(sensor, u, self.terreno, self.clima, self.ge)
 
     def orden_de(self, u: Unidad) -> Orden | None:
         return self.ordenes.get(u.orden_id) if u.orden_id else None
@@ -950,8 +959,12 @@ def _detectar(ctx: _Ctx, avisar: bool = False) -> None:
     if not ctx.mundo.detectado:  # recien arrancado el servidor: lo ya registrado como contacto no es nuevo
         for bando, uid in ctx.db.query(Contacto.bando, Contacto.unidad_id).filter(Contacto.escenario_id == ctx.esc.id):
             anteriores.setdefault(bando, set()).add(uid)
+    ctx.sin_enlace = set()
     for bando in ("azul", "rojo"):
-        vis = vision.unidades_visibles(ctx.lista, bando, ctx.terreno, ctx.clima, ctx.ge)
+        red = enlace_mod.para(ctx.esc, ctx.lista, bando, ctx.ge)  # imagen comun por enlace de datos
+        if red is not None:
+            ctx.sin_enlace |= {u.id for u in ctx.lista if u.bando == bando} - red
+        vis = vision.unidades_visibles(ctx.lista, bando, ctx.terreno, ctx.clima, ctx.ge, red)
         ids = {u.id for u in vis if u.bando != bando and u.estado == "activa"}
         ctx.mundo.visibles[bando] = ids
         if ctx.esc.niebla:
@@ -1933,7 +1946,7 @@ def _defensa_antimisil(ctx: _Ctx, h: float) -> None:
 def _amenazas_aereas(ctx: _Ctx, u: Unidad, alcance_km: float, linea_de_vista: bool = False) -> list:
     lista = []
     for x in ctx.lista:
-        if x.bando == u.bando or not aeronaves_mod.en_vuelo(x) or not ctx.visible_para(x, u.bando):
+        if x.bando == u.bando or not aeronaves_mod.en_vuelo(x) or not ctx.ve(u, x):
             continue
         if balisticos_mod.es_balistico(x):
             continue  # solo los sistemas antimisil pueden con un misil balistico (_defensa_antimisil)

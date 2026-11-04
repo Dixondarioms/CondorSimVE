@@ -1774,6 +1774,8 @@
       extra.push(dato("Refugios reforzados", `${u.refugios || 0} (protegen a los primeros ${u.refugios || 0} grupos estacionados; ${abordo.length} a bordo)`));
     }
     if (cl && cl.lanza_misiles && !oculto) extra.push(dato("Misiles de crucero", `${Logica.misilesDisponibles(u)} listos (25 % de munición cada uno)`));
+    if (u.enlace != null && !oculto) extra.push(dato("Enlace de datos", u.enlace ? "en la red: su bando ve lo que detecta"
+      : "sin enlace: su bando no ve lo que detecta (lejos de la red, interferida o sin comunicaciones)"));
     if (u.contramedidas && !oculto) extra.push(dato(u.contramedidas.nombre, `${u.contramedidas.quedan} de ${u.contramedidas.maximo} (cada una baja 30 % la probabilidad de un misil)`));
     if (u.antimisil) extra.push(dato("Antimisil", `contra balísticos en fase final a ${u.antimisil.km} km, ${u.antimisil.canales} canal(es)`));
     const punto = Logica.textoDefensaPunto(u, app.catalogo);
@@ -2451,6 +2453,7 @@
       for (const [id, campo] of [["dir-niebla", "niebla"], ["dir-logistica", "logistica"], ["dir-clima", "efectos_clima"], ["dir-fuego", "fuego_automatico"]]) {
         set(id, (e) => { e.checked = esc[campo] !== false; });
       }
+      set("dir-enlace", (e) => { e.checked = !!esc.enlace_datos; });
       set("dir-cond-azul", (e) => { e.value = esc.conduccion_azul || "alumnos"; });
       set("dir-cond-rojo", (e) => { e.value = esc.conduccion_rojo || "alumnos"; });
       set("cal-fecha", (e) => { e.value = esc.fecha_inicio || ""; });
@@ -3611,7 +3614,7 @@
     if (!app.escenarioId) return;
     enSilencio(api("PATCH", rutaEsc("/config"), {
       niebla: $("dir-niebla").checked, logistica: $("dir-logistica").checked,
-      efectos_clima: $("dir-clima").checked, fuego_automatico: $("dir-fuego").checked,
+      efectos_clima: $("dir-clima").checked, fuego_automatico: $("dir-fuego").checked, enlace_datos: $("dir-enlace").checked,
       conduccion_azul: $("dir-cond-azul").value, conduccion_rojo: $("dir-cond-rojo").value,
       dia_noche: $("dir-noche").checked, ia_nivel: $("dir-ia-nivel").value, fallas: $("dir-fallas").checked,
     }).then(() => toast("Interruptores aplicados", true)));

@@ -24,6 +24,7 @@ from app.engine import zonas as zonas_mod
 from app.engine import aeronaves as aeronaves_mod
 from app.engine import armas as armas_mod
 from app.engine import contramedidas as contramedidas_mod
+from app.engine import enlace as enlace_mod
 from app.engine import sistemas as sistemas_mod
 from app.engine import asw as asw_mod
 from app.engine import balisticos as balisticos_mod
@@ -60,7 +61,7 @@ CAMPOS_OCULTOS = (
     "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id",
     "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios",
     "transporte_id", "personal_inicial", "personal_actual", "sistema_da", "pista_largo_m", "pista_util_m", "recorrido",
-    "ruta", "orden_id", "doctrina", "apresto", "velocidad_actual", "contramedidas",
+    "ruta", "orden_id", "doctrina", "apresto", "velocidad_actual", "contramedidas", "enlace",
 )
 TURNOS_ORDENES = 3  # ordenes ya resueltas que viajan con el estado (el historial completo esta en el AAR)
 CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct", "com_ordenes_pct", "inteligencia", "apresto")
@@ -76,7 +77,9 @@ def unidades_visibles_para(
     unidades = db.query(Unidad).filter(Unidad.escenario_id == escenario.id).all()
     if not es_bando(rol) or not getattr(escenario, "niebla", True):
         return [u for u in unidades if not es_bando(rol) or getattr(u, "transporte_id", None) is None or u.bando == rol]
-    return unidades_visibles(unidades, rol, terreno or get_terreno(), clima_mod.contexto(db, escenario), ge_mod.contexto(db, escenario))
+    ge = ge_mod.contexto(db, escenario)
+    return unidades_visibles(unidades, rol, terreno or get_terreno(), clima_mod.contexto(db, escenario), ge,
+                             enlace_mod.para(escenario, unidades, rol, ge))
 
 
 def grafico_visible(bando_grafico: str, rol: str) -> bool:
@@ -194,6 +197,8 @@ def estado_para(
     ]
 
     unidades_out = []
+    red = {b: enlace_mod.para(escenario, unidades, b, ge_mod.contexto(db, escenario)) for b in BANDOS} \
+        if getattr(escenario, "enlace_datos", False) else {}
     for u in unidades:
         d = UnidadOut.model_validate(u).model_dump()
         d["terreno"] = terreno.clase(u.lat, u.lon)
@@ -206,6 +211,8 @@ def estado_para(
         d["balistico"] = balisticos_mod.info(u)  # trayectoria de un misil balistico (engine/balisticos.py)
         d["antimisil"] = balisticos_mod.antimisil(u)
         d["contramedidas"] = contramedidas_mod.publico(u)  # bengalas y chaff o señuelos (engine/contramedidas.py)
+        # en la red de enlace de datos (None: el director no la encendio; engine/enlace.py)
+        d["enlace"] = (u.id in red[u.bando]) if red.get(u.bando) is not None and u.estado == "activa" else None
         if u.tipo == "aerea" and armas_mod.aplica(u):  # apresto de la aeronave (engine/aeronaves.py)
             falta = (u.despega_hasta - (escenario.sim_segundos or 0.0)) if u.despega_hasta is not None else None
             d["apresto"] = {"minutos": aeronaves_mod.apresto(u), "nombre": aeronaves_mod.APRESTOS[aeronaves_mod.apresto(u)],
@@ -296,7 +303,8 @@ def estado_para(
 
 def _conocidos(db: Session, escenario: Escenario, todas: list, bando: str, terreno, clima_ctx, ge_ctx) -> list:
     """[(unidad enemiga, se ve ahora)]: las que el bando ve y las que solo conoce por un contacto anterior."""
-    ve = {u.id for u in unidades_visibles(todas, bando, terreno, clima_ctx, ge_ctx) if u.bando != bando}
+    ve = {u.id for u in unidades_visibles(todas, bando, terreno, clima_ctx, ge_ctx, enlace_mod.para(escenario, todas, bando, ge_ctx))
+          if u.bando != bando}
     por_id = {u.id: u for u in todas}
     contactos = {c.unidad_id for c in db.query(Contacto).filter(Contacto.escenario_id == escenario.id, Contacto.bando == bando)}
     return [(por_id[i], i in ve) for i in sorted(ve | contactos) if i in por_id]

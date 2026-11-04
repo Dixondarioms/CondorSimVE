@@ -378,7 +378,8 @@ async def configurar(
             esc.hora_inicio_min = nueva
             cambios.append(f"hora simulada inicial {payload.hora_inicio}")
     for campo, etiqueta in (("niebla", "niebla de guerra"), ("logistica", "consumo y reabastecimiento"),
-                            ("efectos_clima", "efectos del clima"), ("fuego_automatico", "fuego automatico (patrullas y antiaerea)")):
+                            ("efectos_clima", "efectos del clima"), ("fuego_automatico", "fuego automatico (patrullas y antiaerea)"),
+                            ("enlace_datos", "imagen comun por enlace de datos")):
         nuevo = getattr(payload, campo)
         if nuevo is not None and nuevo != getattr(esc, campo):
             setattr(esc, campo, nuevo)

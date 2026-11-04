@@ -104,6 +104,7 @@ class EscenarioOut(BaseModel):
     logistica: bool = True
     efectos_clima: bool = True
     fuego_automatico: bool = True
+    enlace_datos: bool = False
     ia_azul: bool = False
     ia_rojo: bool = False
     ia_nivel: str = "normal"
@@ -222,6 +223,7 @@ class EscenarioConfig(BaseModel):
     logistica: bool | None = None
     efectos_clima: bool | None = None
     fuego_automatico: bool | None = None
+    enlace_datos: bool | None = None  # imagen comun por enlace de datos (engine/enlace.py)
     # adversario automatico: el simulador conduce ese bando
     ia_azul: bool | None = None
     ia_rojo: bool | None = None

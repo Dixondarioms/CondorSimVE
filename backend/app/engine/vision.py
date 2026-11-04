@@ -132,10 +132,13 @@ def cuadro_sensores(unidades, bando: str, terreno: Terreno, clima="despejado", g
     return cuadro
 
 
-def unidades_visibles(unidades, bando: str, terreno: Terreno, clima: str = "despejado", ge=None) -> list:
-    """Unidades que el bando indicado puede ver (propias + enemigas detectadas + interferidores enemigos activos)."""
+def unidades_visibles(unidades, bando: str, terreno: Terreno, clima: str = "despejado", ge=None,
+                      enlazadas: set | None = None) -> list:
+    """Unidades que el bando indicado puede ver (propias + enemigas detectadas + interferidores enemigos activos).
+    Con `enlazadas` (imagen comun por enlace de datos, engine/enlace.py) solo cuentan los sensores de esas unidades."""
     propias = [u for u in unidades if u.bando == bando]
-    detectores = [u for u in propias if u.estado == "activa" and getattr(u, "transporte_id", None) is None]
+    detectores = [u for u in propias if u.estado == "activa" and getattr(u, "transporte_id", None) is None
+                  and (enlazadas is None or u.id in enlazadas)]
     visibles = list(propias)
 
     for enemiga in unidades:

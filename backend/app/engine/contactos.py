@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
-from app.engine import catalogo
+from app.engine import catalogo, enlace
 from app.engine.vision import cuadro_sensores, unidades_visibles
 from app.models.contacto import Contacto
 from app.models.evento import Evento
@@ -65,7 +65,8 @@ def actualizar_contactos(db: Session, escenario: Escenario, terreno: Terreno | N
     ge = ge_mod.contexto(db, escenario, en_resolucion=True)  # se llama al cerrar la resolucion del turno
     avisar_contactos_nuevos(db, escenario, unidades, existentes, terreno, ge)
     for bando in BANDOS:
-        for u in unidades_visibles(unidades, bando, terreno, clima_mod.contexto(db, escenario), ge):
+        for u in unidades_visibles(unidades, bando, terreno, clima_mod.contexto(db, escenario), ge,
+                                   enlace.para(escenario, unidades, bando, ge)):
             if u.bando == bando or u.estado == "destruida":
                 continue
             c = existentes.get((bando, u.id))

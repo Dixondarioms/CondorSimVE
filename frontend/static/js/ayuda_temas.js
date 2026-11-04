@@ -410,6 +410,18 @@
         conocido y el círculo crece con lo que pudo moverse. Las armas en <i>Solo identificados</i> no tiran contra desconocidos.</p>`,
     },
     {
+      id: "enlace", seccion: "Inteligencia y contactos", titulo: "Imagen común por enlace de datos",
+      claves: "enlace de datos link 16 imagen comun red datalink sin enlace no comparte contacto aislada interferida comunicaciones",
+      texto: `<p>Si el director enciende <b>Imagen común por enlace de datos</b> (CONSOLA → Dirección del ejercicio), lo que
+        detecta una unidad solo aparece en la pantalla de su bando si está <b>en la red</b>. La red nace en las bases, puertos,
+        depósitos, centros de comunicaciones, radares, aviones de alerta temprana, portaaviones y destructores, y se extiende
+        de unidad en unidad: un avión enlaza hasta 350 km, un buque 250 km, una base 150 km y una tropa 60 km.</p>
+        <p>Queda <b>sin enlace</b> la unidad lejos de la red, dentro de una interferencia enemiga o con las comunicaciones
+        destruidas. Se sigue defendiendo con sus sensores, pero su bando no ve lo que ella detecta y no puede tirarle a eso
+        desde otra unidad. En el panel de abajo de cada unidad propia dice si está en la red. Use aviones o buques como
+        <b>repetidores</b> para llevar la red lejos, y proteja los centros de comunicaciones.</p>`,
+    },
+    {
       id: "pmi", seccion: "Inteligencia y contactos", titulo: "Puntos medios de impacto (PMI) sobre las pistas",
       claves: "pmi punto medio de impacto dmpi pdi pista atacar base aerea inteligencia operaciones a2 a3 cortes pedir entregar blanco",
       texto: `<p>Para dejar fuera de servicio una pista hay que cortarla en tramos más cortos de lo que necesita un caza para
