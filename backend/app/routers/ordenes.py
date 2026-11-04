@@ -94,6 +94,9 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
             status_code=400,
             detail=f"En tierra: le falta {_falta_texto(esc, unidad)} para reabastecer y rearmar antes de despegar",
         )
+    if (unidad.en_tierra and aeronaves_mod.apresto(unidad) == aeronaves_mod.MANTENIMIENTO
+            and payload.tipo in ("mover", "atacar", "patrullar", "interceptar", "sonoboyas", "sonar", "minar")):
+        raise HTTPException(status_code=400, detail="En mantenimiento: cambie su apresto (alerta) para que pueda despegar")
     if unidad.en_tierra and payload.tipo == "apoyar":
         raise HTTPException(status_code=400, detail="Una aeronave en tierra no puede apoyar: debe despegar primero")
     if payload.tipo == "despegar":

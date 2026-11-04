@@ -456,11 +456,15 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
     orden.estado = "en_ejecucion"
     unidad.orden_id = orden.id
     en_alerta = unidad.en_tierra and orden.tipo == "interceptar"
+    alerta_s = aeronaves_mod.despegue_s(unidad)
     if unidad.en_tierra and orden.tipo in ("mover", "patrullar", "atacar", "interceptar", "sonoboyas", "sonar", "minar"):
         if armas_mod.aplica(unidad) and not armas_mod.tiene_carga(unidad):  # sale con la carga de su modelo
             armas_mod.armar(unidad, None, db.get(Unidad, unidad.base_id) if unidad.base_id else None)
-        aeronaves_mod.despegar_unidad(unidad)  # una orden de vuelo a una aeronave lista en tierra es el despegue
         unidad.espera_hasta = None
+        if en_alerta:  # la interceptacion lleva su propia cuenta del despegue (fase «alerta»)
+            aeronaves_mod.despegar_unidad(unidad)
+        else:  # carretea y despega segun su apresto (_esperas_en_tierra); mientras, sigue en tierra
+            unidad.despega_hasta = (esc.sim_segundos or 0.0) + alerta_s
     if orden.tipo == "mover":
         _poner_ruta(unidad, orden.waypoints)
         if unidad.tipo == "aerea":
@@ -517,12 +521,12 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
         datos = intercep_mod.decodificar(orden.detalle)
         accion = datos.get("accion", "neutralizar")
         blanco = db.get(Unidad, orden.objetivo_unidad_id)
-        extra = {"despega": round(esc.sim_segundos + intercep_mod.ALERTA_TIERRA_S)} if en_alerta else {}
+        extra = {"despega": round(esc.sim_segundos + alerta_s)} if en_alerta else {}
         orden.detalle = intercep_mod.codificar(accion, "alerta" if en_alerta else "vectoreo", **extra)
         est = intercep_mod.estimar(unidad, blanco, db.query(Unidad).filter(Unidad.escenario_id == esc.id).all())             if blanco is not None else {}
         cuando = (f" Punto de encuentro estimado en {est['minutos']} min, a {est['km']} km." if est.get("alcanzable")
                   else " El blanco se aleja más rápido: lo persigue por si cambia de rumbo." if est else "")
-        orden.resultado = (f"[{hora}] " + ("Alerta en tierra: despega en 5 min y " if en_alerta else "")
+        orden.resultado = (f"[{hora}] " + (f"Alerta en tierra: despega en {alerta_s / 60:.0f} min y " if en_alerta else "")
                            + f"vectorea hacia {blanco.nombre if blanco else 'el blanco'} para "
                            + intercep_mod.ACCIONES.get(accion, accion).lower() + "." + cuando)
         mundo_de(esc.id).intercepciones.pop(orden.id, None)
@@ -563,6 +567,8 @@ def cancelar_ordenes_de(db: Session, unidad: Unidad, motivo: str, hora: str) -> 
     for o in db.query(Orden).filter(Orden.unidad_id == unidad.id, Orden.estado.in_(("en_ejecucion", "pendiente"))):
         o.estado, o.resultado = "cancelada", f"[{hora}] {motivo}"
     unidad.orden_id = None
+    if getattr(unidad, "en_tierra", False):
+        unidad.despega_hasta = None  # sin orden, la aeronave que carreteaba se queda en tierra
     unidad.ruta_json = None
 
 
@@ -808,9 +814,11 @@ def _aterrizar(ctx: _Ctx, u: Unidad, base: Unidad, orden: Orden | None) -> None:
         ctx.evento("logistica", u.bando, f"{u.nombre} no pudo aterrizar en {base.nombre}: {motivo}")
         return
     aeronaves_mod.aterrizar(u, base, len(aeronaves_mod.estacionadas(base, ctx.lista)))
-    u.espera_hasta = ctx.t + u.espera_restante * 3600.0
+    rearme = aeronaves_mod.rearme_s(u, base)  # depende de la carga (engine/aeronaves.py)
+    u.espera_hasta = ctx.t + rearme
+    u.espera_restante = max(1, math.ceil(rearme / 3600.0))
     ctx.terminar(orden, u, f"Aterrizó en {base.nombre}; combustible {u.combustible:.0f} %. "
-                           f"Lista para despegar en {u.espera_restante} h (reabastecer y rearmar).")
+                           f"Lista para despegar en {rearme / 60:.0f} min (reabastecer y rearmar).")
     ctx.evento("logistica", u.bando, f"{u.nombre} aterrizó en {base.nombre}.")
 
 
@@ -905,6 +913,14 @@ def _interferencias(ctx: _Ctx) -> None:
 def _esperas_en_tierra(ctx: _Ctx) -> None:
     for u in ctx.lista:
         if not u.en_tierra or u.estado != "activa":
+            continue
+        if u.despega_hasta is not None:  # recibio una orden de vuelo: despega al cumplirse su apresto
+            if ctx.t >= u.despega_hasta:
+                base = ctx.unidades.get(u.base_id)
+                aeronaves_mod.despegar_unidad(u)
+                ctx.evento("despegue", u.bando, f"{u.nombre} despegó" + (f" de {base.nombre}" if base else "") + ".",
+                           u.lat, u.lon)
+                ctx.informe.cambios = True
             continue
         if u.espera_hasta is None:
             continue

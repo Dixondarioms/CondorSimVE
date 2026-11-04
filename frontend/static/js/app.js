@@ -1881,6 +1881,11 @@
           `<button type="button" class="mini ${p === u.profundidad ? "primario" : "secundario"}" data-profundidad="${p}">${n}</button>`).join("")}</div>`
           + `<p class="ayuda">${u.profundidad === "profunda" ? "A profundidad solo lo oye el sonar, y menos; no puede lanzar misiles." : "A cota periscópica un radar o un vigía lo ven a menos de 8 km; puede lanzar misiles."} Al atacar se delata.</p>`
         : "")
+      + (!oculto && u.apresto && u.estado === "activa" && app.porId.get(app.seleccion) && puedeDefensa(u)
+        ? `<div class="perfil-vuelo" role="group" aria-label="Apresto"><span>Apresto</span>${Logica.APRESTOS.map(([m, n]) =>
+          `<button type="button" class="mini ${m === u.apresto.minutos ? "primario" : "secundario"}" data-apresto="${m}">${n}</button>`).join("")}</div>`
+          + `<p class="ayuda">${escapar(Logica.textoApresto(u.apresto, u.en_tierra))}</p>`
+        : "")
       + (esInstructor() && app.porId.get(app.seleccion) ? '<button id="btn-eliminar-unidad" class="peligro mini" type="button">Eliminar unidad del escenario</button>' : "");
     // la columna de la foto no se toca entre redibujos (cada estado nuevo): si se la saca de la pagina aunque sea un
     // instante, el navegador cancela la descarga y la foto nunca llega a verse
@@ -1908,6 +1913,10 @@
     if (selArma) selArma.addEventListener("change", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { arma: selArma.value })));
     cont.querySelectorAll("[data-profundidad]").forEach((b) => b.addEventListener("click", () => {
       if (b.dataset.profundidad !== u.profundidad) enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/profundidad`), { profundidad: b.dataset.profundidad }));
+    }));
+    cont.querySelectorAll("[data-apresto]").forEach((b) => b.addEventListener("click", () => {
+      const m = parseInt(b.dataset.apresto, 10);
+      if (!u.apresto || m !== u.apresto.minutos) enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/apresto`), { minutos: m }));
     }));
     cont.querySelectorAll("[data-perfil]").forEach((b) => b.addEventListener("click", () => {
       if (b.dataset.perfil !== u.perfil_actual) enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/perfil`), { perfil_vuelo: b.dataset.perfil }));

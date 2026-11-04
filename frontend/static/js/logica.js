@@ -547,6 +547,15 @@
   }
   const barreMinas = (u) => !!u && u.estado === "activa" && u.clase === "cazaminas";
   const PROFUNDIDADES = [["periscopica", "Cota periscópica"], ["profunda", "Profundidad"]];
+  /** Apresto de una aeronave en tierra (engine/aeronaves.py): minutos de alerta; 0 = en mantenimiento. */
+  const APRESTOS = [[5, "Alerta 5"], [15, "Alerta 15"], [30, "Alerta 30"], [60, "Alerta 60"], [0, "Mantenimiento"]];
+  /** Texto del apresto para el panel de la unidad. */
+  function textoApresto(a, enTierra) {
+    if (!a) return "";
+    if (a.despega_en_min != null) return `Carreteando: despega en ${a.despega_en_min} min.`;
+    if (a.minutos === 0) return "En mantenimiento: no despega hasta que le cambie el apresto.";
+    return `${enTierra ? "En tierra" : "Al volver a la base"}, una orden de vuelo la hace despegar en ${a.minutos} min.`;
+  }
 
   /** Se intercepta una aeronave en vuelo o un buque (no un misil). */
   const interceptable = (u) => !!u && u.estado === "activa" && !esMisil(u) && ((u.tipo === "aerea" && !u.en_tierra) || u.tipo === "naval");
@@ -1344,7 +1353,7 @@
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
-    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
+    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, APRESTOS, textoApresto, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,

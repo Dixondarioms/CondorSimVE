@@ -33,7 +33,7 @@ DISTANCIA_SEGUIMIENTO_KM = {"aerea": 5.0, "naval": 9.0}  # a cuanto se pone el i
 FASES = {"alerta": "alerta en tierra (despegando)", "vectoreo": "vectoreo", "contacto": "contacto",
          "identificacion": "identificación", "seguimiento": "seguimiento", "ataque": "ataque",
          "estima": "estima (contacto perdido)", "busqueda": "búsqueda sobre el último punto"}
-ALERTA_TIERRA_S = 300.0  # una aeronave en alerta en tierra tarda esto en despegar al recibir la orden
+ALERTA_TIERRA_S = 300.0  # alerta por defecto (5 min); cada aeronave tiene la suya: aeronaves.despegue_s
 TRAZA_MIN_S = 20.0  # la velocidad del blanco se estima con dos posiciones separadas al menos este tiempo
 BUSQUEDA_S = 1200.0  # sin contacto ni estima util, busca sobre el ultimo punto conocido este tiempo y aborta
 ESTIMA_S = 600.0  # durante este tiempo sin contacto sigue la estima del rumbo y la velocidad del blanco
@@ -163,12 +163,12 @@ def consumo_por_km(u) -> float:
 def estimar(interceptor, blanco, unidades=()) -> dict:
     """Lo que se espera de la interceptacion: si alcanza al blanco, cuando, donde y con cuanto combustible queda para
     volver a la base propia mas cercana (aeronaves) o cuanto le queda (buques). Una aeronave en tierra suma lo que
-    tarda en despegar (ALERTA_TIERRA_S), durante el cual el blanco sigue avanzando."""
+    tarda en despegar (su apresto, aeronaves.despegue_s), durante el cual el blanco sigue avanzando."""
     from app.engine import aeronaves as aeronaves_mod
 
     ve, vn = velocidad_de(blanco)
     vb = math.hypot(ve, vn)
-    demora = ALERTA_TIERRA_S if getattr(interceptor, "en_tierra", False) else 0.0
+    demora = aeronaves_mod.despegue_s(interceptor) if getattr(interceptor, "en_tierra", False) else 0.0
     tlat, tlon = estimada(blanco.lat, blanco.lon, ve, vn, demora)
     s = solucion(interceptor.lat, interceptor.lon, interceptor.velocidad_kmh, tlat, tlon, ve, vn)
     salida = {"alcanzable": s is not None, "velocidad_blanco_kmh": round(vb), "velocidad_propia_kmh": round(interceptor.velocidad_kmh or 0),

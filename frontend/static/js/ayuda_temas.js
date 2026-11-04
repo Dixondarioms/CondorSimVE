@@ -196,6 +196,17 @@
         aterrizar necesita tiempo para reabastecer y rearmar antes de volver a salir.</p>`,
     },
     {
+      id: "apresto", seccion: "Aviación", titulo: "Apresto: alerta en tierra y rearme",
+      claves: "apresto alerta en tierra alerta 5 15 30 60 minutos mantenimiento cuanto tarda en despegar carreteo rearme rearmar reabastecer tiempo en tierra disponibilidad",
+      texto: `<p>Cada aeronave tiene su <b>apresto</b>: cuánto tarda en despegar desde que recibe una orden de vuelo estando en
+        tierra. Selecciónela y elija abajo, en el panel de la unidad: <b>Alerta 5</b>, <b>15</b>, <b>30</b> o <b>60</b>
+        minutos, o <b>Mantenimiento</b> (no despega). Si no se cambia, es alerta 5. Mientras carretea, el panel dice en
+        cuánto despega; si detiene la orden, se queda en tierra.</p>
+        <p>Después de aterrizar, el <b>reabastecimiento y rearme</b> depende de la carga: aire-aire 45 min, reconocimiento
+        30 min, antibuque, SEAD o antisubmarina 1 h 30 y ataque (bombas) 2 h. En un punto de recobre (PRO), la mitad.</p>
+        <p>Consejo: deje en alerta 5 solo los cazas de defensa aérea que deben salir ya; el resto, en alerta 15 o 30.</p>`,
+    },
+    {
       id: "cargas", seccion: "Aviación", titulo: "Cargas de armamento y existencias de armas",
       claves: "carga cargas armamento misiles bombas aire-aire ataque antibuque sead reconocimiento existencias pañol rearmar municion armas pk probabilidad alcance arma",
       texto: `<p>Al despegar se elige la <b>carga de armamento</b> según el modelo: <i>aire-aire</i>, <i>ataque</i>,

@@ -21,6 +21,7 @@ from app.engine import guerra_electronica as ge_mod
 from app.engine import misiones as misiones_mod
 from app.engine import pmi as pmi_mod
 from app.engine import zonas as zonas_mod
+from app.engine import aeronaves as aeronaves_mod
 from app.engine import armas as armas_mod
 from app.engine import sistemas as sistemas_mod
 from app.engine import asw as asw_mod
@@ -58,7 +59,7 @@ CAMPOS_OCULTOS = (
     "base_id", "espera_restante", "mision", "mision_lat", "mision_lon", "blanco_id",
     "emitiendo", "fuego_libre", "stock_combustible", "stock_municion", "dano_pista", "dano_plataforma", "dano_combustible", "refugios",
     "transporte_id", "personal_inicial", "personal_actual", "sistema_da", "pista_largo_m", "pista_util_m", "recorrido",
-    "ruta", "orden_id", "doctrina",
+    "ruta", "orden_id", "doctrina", "apresto",
 )
 TURNOS_ORDENES = 3  # ordenes ya resueltas que viajan con el estado (el historial completo esta en el AAR)
 CAMPOS_SOLO_INSTRUCTOR = ("com_latencia_ms", "com_jitter_ms", "com_perdida_pct", "com_ordenes_pct", "inteligencia", "apresto")
@@ -203,6 +204,12 @@ def estado_para(
         d["profundidad"] = asw_mod.profundidad(u) if asw_mod.es_submarino(u) else None
         d["balistico"] = balisticos_mod.info(u)  # trayectoria de un misil balistico (engine/balisticos.py)
         d["antimisil"] = balisticos_mod.antimisil(u)
+        if u.tipo == "aerea" and armas_mod.aplica(u):  # apresto de la aeronave (engine/aeronaves.py)
+            falta = (u.despega_hasta - (escenario.sim_segundos or 0.0)) if u.despega_hasta is not None else None
+            d["apresto"] = {"minutos": aeronaves_mod.apresto(u), "nombre": aeronaves_mod.APRESTOS[aeronaves_mod.apresto(u)],
+                            "despega_en_min": max(0, round(falta / 60)) if falta is not None and u.en_tierra else None}
+        else:
+            d["apresto"] = None
         if es_bando(rol) and u.bando != rol:
             for oculto in CAMPOS_OCULTOS:
                 d[oculto] = None

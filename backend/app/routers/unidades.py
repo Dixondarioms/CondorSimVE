@@ -350,6 +350,30 @@ async def cambiar_profundidad(
     return {"profundidad": unidad.profundidad}
 
 
+@router.post("/{unidad_id}/apresto")
+async def cambiar_apresto(
+    unidad_id: int,
+    payload: dict,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.requiere_roles("azul", "rojo", "instructor")),
+):
+    """Apresto de una aeronave: alerta 5, 15, 30 o 60 minutos, o mantenimiento (engine/aeronaves.py)."""
+    from app.engine import aeronaves
+
+    unidad = db.get(Unidad, unidad_id)
+    if unidad is None or unidad.escenario_id != esc.id or (usuario.rol != "instructor" and unidad.bando != usuario.rol):
+        raise HTTPException(status_code=404, detail="Unidad no encontrada")
+    if unidad.tipo != "aerea" or catalogo.es_misil(unidad) or catalogo.obtener(unidad.clase, unidad.tipo).se_consume:
+        raise HTTPException(status_code=400, detail="Solo las aeronaves tienen apresto")
+    if payload.get("minutos") not in aeronaves.APRESTOS:
+        raise HTTPException(status_code=400, detail="Elija alerta 5, 15, 30 o 60 minutos, o mantenimiento")
+    unidad.apresto_min = payload["minutos"]
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return {"apresto_min": unidad.apresto_min}
+
+
 @router.put("/{unidad_id}/existencias")
 async def fijar_existencias(
     unidad_id: int,

@@ -129,6 +129,33 @@ def crear_grupo(base: Unidad, modelo_id: str, aeronaves: int, indicativo: str, y
 # Ciclo de vuelo: aterrizar en una base propia, esperar el reabastecimiento, despegar, patrullar
 # ---------------------------------------------------------------------------------------------------------
 TIEMPO_REARME_TURNOS = 2  # turnos en tierra antes de poder despegar (reabastecer y rearmar)
+# Apresto (como en los simuladores de mando modernos): cuanto tarda en despegar una aeronave en tierra al recibir una
+# orden de vuelo. En mantenimiento no despega. El rearme despues de aterrizar depende de la carga (una carga aire-aire
+# se monta rapido; una de bombas, no); en un punto de recobre (PRO) tarda la mitad.
+APRESTOS = {5: "Alerta 5 min", 15: "Alerta 15 min", 30: "Alerta 30 min", 60: "Alerta 60 min", 0: "Mantenimiento"}
+MANTENIMIENTO = 0
+APRESTO_POR_DEFECTO = 5
+REARME_MIN = {"aire_aire": 45, "reconocimiento": 30, "antibuque": 90, "sead": 90, "antisubmarina": 90, "ataque": 120}
+REARME_MIN_POR_DEFECTO = TIEMPO_REARME_TURNOS * 60
+
+
+def apresto(u) -> int:
+    v = getattr(u, "apresto_min", None)
+    return APRESTO_POR_DEFECTO if v not in APRESTOS else v
+
+
+def despegue_s(u) -> float:
+    """Segundos que tarda en despegar desde que recibe la orden (su alerta)."""
+    return apresto(u) * 60.0
+
+
+def rearme_s(u, base) -> float:
+    """Segundos en tierra para reabastecer y rearmar, segun la carga que lleva (en un PRO, la mitad)."""
+    from app.engine import armas, recobre  # importacion tardia: evita un ciclo
+
+    d = armas.datos(u)
+    minutos = REARME_MIN.get(d.get("nombre"), REARME_MIN_POR_DEFECTO) if d else REARME_MIN_POR_DEFECTO
+    return minutos * 60.0 * recobre.turnos_rearme(base, TIEMPO_REARME_TURNOS) / TIEMPO_REARME_TURNOS
 CAPACIDAD_BASE = 12  # aeronaves que caben estacionadas en una base
 RADIO_ATERRIZAJE_KM = 3.0  # distancia a la base para considerar que aterrizo
 COMBUSTIBLE_LOITER = 8.0  # puntos de combustible por turno que gasta una patrulla sobre su punto
@@ -220,6 +247,7 @@ def despegar_unidad(u) -> None:
     u.en_tierra = False
     u.base_id = None
     u.espera_restante = 0
+    u.despega_hasta = None
 
 
 def seguir_portaaviones(unidades) -> None:
