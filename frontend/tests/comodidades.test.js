@@ -45,3 +45,9 @@ test("la ruta estima cuando llega y con cuanto combustible a cada punto, con la 
   assert.match(L.textoPuntoRuta(1, b), /^W2 · en \d+ min · combustible \d+ %/);
   assert.deepEqual(L.estimarRuta({ ...caza, velocidad_kmh: 0 }, pts), []);
 });
+
+test("de los nombres que se pisan se ve uno solo, el de la unidad elegida si esta", () => {
+  const L = require("../static/js/logica.js");
+  const tapados = L.rotulosTapados([{ id: 1, x: 100, y: 100 }, { id: 2, x: 110, y: 105, prioridad: 2 }, { id: 3, x: 400, y: 100 }]);
+  assert.deepEqual([...tapados], [1]);
+});

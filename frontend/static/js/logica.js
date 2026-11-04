@@ -564,6 +564,19 @@
     return s;
   }
 
+  /** Nombres que se pisan en la pantalla: de cada grupo de puntos a menos de `px` pixeles entre si, solo el primero
+   * (el elegido, si esta) muestra su nombre; devuelve los ids que lo esconden. puntos: [{id, x, y, prioridad}]. */
+  function rotulosTapados(puntos, px = 26) {
+    const orden = [...puntos].sort((a, b) => (b.prioridad || 0) - (a.prioridad || 0));
+    const visibles = [];
+    const tapados = new Set();
+    for (const p of orden) {
+      if (visibles.some((q) => Math.abs(q.x - p.x) < px * 2.5 && Math.abs(q.y - p.y) < px)) tapados.add(p.id);
+      else visibles.push(p);
+    }
+    return tapados;
+  }
+
   /** Cuanto tarda y con cuanto combustible llega a cada punto de una ruta (en linea recta, aproximado: el servidor
    * calcula el terreno y las carreteras en la previsualizacion). Los tramos cambian la velocidad y la altura como
    * la orden (engine/movimiento.py): el tramo i es el que lleva al punto i. */
@@ -1417,7 +1430,7 @@
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
-    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, APRESTOS, textoApresto, senalesUnidad, estimarRuta, textoPuntoRuta, VELOCIDADES, AYUDA_VELOCIDAD, textoTramo, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
+    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, APRESTOS, textoApresto, senalesUnidad, estimarRuta, textoPuntoRuta, rotulosTapados, VELOCIDADES, AYUDA_VELOCIDAD, textoTramo, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,

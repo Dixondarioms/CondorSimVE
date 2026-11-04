@@ -593,6 +593,8 @@ a.boton-enlace:hover { border-color: var(--azul); }
 .menu-contextual button { display: block; width: 100%; text-align: left; margin: 0; border: 0; background: transparent;
   padding: 6px 10px; border-radius: 4px; font-size: 13px; }
 .menu-contextual button:hover, .menu-contextual button:focus { background: var(--azul); color: #fff; outline: none; }
+.marca.rotulo-tapado .rotulo { display: none; }
+.marca.rotulo-tapado:hover .rotulo { display: block; }
 .wp-editable span { cursor: grab; }
 .wp-editable:active span { cursor: grabbing; }
 .marca .senal.en-base { background: #2b2d42; border: 1px solid #8d99ae; }

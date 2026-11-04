@@ -678,6 +678,7 @@
     });
     map.on("click", alClickMapa);
     map.on("contextmenu", menuDelMapa);
+    map.on("moveend", () => despejarRotulos());
     map.on("movestart zoomstart", () => Interfaz.cerrarMenu());
     map.on("zoomend", () => {
       app.flechas.forEach((f) => f.actualizar());
@@ -1300,11 +1301,26 @@
     marcarSeleccionEnMapa();
   }
 
+  /** Donde varios nombres de unidades caerian uno sobre otro, se ve uno solo (el resto, al pasar el cursor). */
+  function despejarRotulos() {
+    if (!app.map) return;
+    const puntos = [];
+    for (const [id, m] of app.markers) {
+      const el = m.getElement();
+      if (!el) continue;
+      const p = app.map.latLngToContainerPoint(m.getLatLng());
+      puntos.push({ id, x: p.x, y: p.y, prioridad: id === app.seleccion ? 2 : app.lote.has(id) ? 1 : 0, el });
+    }
+    const tapados = Logica.rotulosTapados(puntos);
+    for (const p of puntos) p.el.classList.toggle("rotulo-tapado", tapados.has(p.id));
+  }
+
   function marcarSeleccionEnMapa() {
     for (const [id, m] of app.markers) {
       const el = m.getElement();
       if (el) { el.classList.toggle("sel", id === app.seleccion); el.classList.toggle("sel-lote", app.lote.has(id)); }
     }
+    despejarRotulos();  // la elegida muestra su nombre aunque lo tape otra
   }
 
   /** Informes inyectados con posicion (inteligencia, poblacion...): rombo amarillo con la fuente, hasta que caduquen. */
