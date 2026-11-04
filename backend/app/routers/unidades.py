@@ -350,6 +350,32 @@ async def cambiar_profundidad(
     return {"profundidad": unidad.profundidad}
 
 
+@router.post("/{unidad_id}/velocidad", response_model=schemas.UnidadOut)
+async def cambiar_velocidad(
+    unidad_id: int,
+    payload: schemas.VelocidadIn,
+    esc: Escenario = Depends(auth.escenario_dep),
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(auth.requiere_roles("azul", "rojo", "instructor")),
+):
+    """Velocidad de una aeronave o un buque propio (economica, crucero o maxima). Rige de inmediato."""
+    from app.engine import movimiento
+
+    unidad = db.get(Unidad, unidad_id)
+    if unidad is None or unidad.escenario_id != esc.id or (usuario.rol != "instructor" and unidad.bando != usuario.rol):
+        raise HTTPException(status_code=404, detail="Unidad no encontrada")
+    if not movimiento.elige_velocidad(unidad):
+        raise HTTPException(status_code=400, detail="Solo las aeronaves y los buques eligen su velocidad")
+    if unidad.estado != "activa":
+        raise HTTPException(status_code=400, detail="La unidad ya no esta activa")
+    if usuario.rol != "instructor":
+        auth.exigir_funcion(usuario, puestos.funcion_de_orden(unidad, None, catalogo.obtener(unidad.clase, unidad.tipo)))
+    unidad.velocidad_modo = payload.velocidad
+    db.commit()
+    await manager.difundir_estado(db, esc)
+    return unidad
+
+
 @router.post("/{unidad_id}/apresto")
 async def cambiar_apresto(
     unidad_id: int,

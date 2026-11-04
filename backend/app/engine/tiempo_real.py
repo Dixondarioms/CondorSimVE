@@ -467,6 +467,9 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
             unidad.despega_hasta = (esc.sim_segundos or 0.0) + alerta_s
     if orden.tipo == "mover":
         _poner_ruta(unidad, orden.waypoints)
+        tramos = movimiento.tramos_de(orden)
+        if tramos:  # la velocidad y la altura del primer tramo rigen desde ya
+            movimiento.aplicar_tramo(unidad, tramos[0])
         if unidad.tipo == "aerea":
             unidad.mision, unidad.mision_lat, unidad.mision_lon = "", None, None
     elif orden.tipo == "patrullar" and zonas_mod.zona_de_orden(orden):
@@ -755,6 +758,11 @@ def _mover(ctx: _Ctx, u: Unidad, orden: Orden | None, h: float) -> None:
     mov = _avanzar(ctx, u, ruta, h)
     quedan = ruta[mov.alcanzados:]
     _poner_ruta(u, quedan)
+    if mov.alcanzados and orden is not None and orden.tipo == "mover":
+        tramos = movimiento.tramos_de(orden)  # al pasar un punto, la velocidad y la altura del tramo que sigue
+        pasados = len(orden.waypoints) - len(quedan)
+        if 0 <= pasados < len(tramos):
+            movimiento.aplicar_tramo(u, tramos[pasados])
     if quedan and not (mov.km_reales <= 0 and mov.nota):
         return
     if orden is not None and orden.tipo == "aterrizar" and destino_base is not None:

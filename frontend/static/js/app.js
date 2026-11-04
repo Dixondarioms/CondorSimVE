@@ -858,6 +858,8 @@
     }
     if (esAlumno() && (app.modoOrden === "mover" || app.modoOrden === "desembarcar") && app.unidadOrden) {
       app.waypoints.push([lat, lng]);
+      app.tramos = (app.tramos || []).slice(0, app.waypoints.length - 1);
+      app.tramos.push({ velocidad: $("o-tramo-vel").value || null, perfil: $("o-tramo-perfil").value || null });
       dibujarWaypoints();
       if (app.modoOrden === "mover") pedirPreview();
       else if (app.data) actualizarNuevaOrden(app.data);
@@ -871,8 +873,9 @@
       app.waypoints.forEach((wp, i) => L.circleMarker(wp, { radius: 5, color: "#fff", fillColor: "#3A86FF", fillOpacity: 1 }).bindTooltip(`W${i + 1}`).addTo(g));
       if (app.waypoints.length > 1) L.polyline(app.waypoints, { dashArray: "5 5", color: "#fff" }).addTo(g);
     }
+    app.tramos = app.waypoints.map((_, i) => (app.tramos || [])[i] || {});  // un tramo por punto
     $("o-waypoints").textContent = app.waypoints.length
-      ? app.waypoints.map((w, i) => `W${i + 1}: ${w[0].toFixed(3)}, ${w[1].toFixed(3)}`).join(" | ")
+      ? app.waypoints.map((w, i) => `${Logica.textoTramo(i, app.tramos[i])}: ${w[0].toFixed(3)}, ${w[1].toFixed(3)}`).join(" | ")
       : "(sin waypoints)";
     if (!app.waypoints.length) {
       if (app.capas.preview) app.capas.preview.clearLayers();
@@ -1881,6 +1884,11 @@
           `<button type="button" class="mini ${p === u.profundidad ? "primario" : "secundario"}" data-profundidad="${p}">${n}</button>`).join("")}</div>`
           + `<p class="ayuda">${u.profundidad === "profunda" ? "A profundidad solo lo oye el sonar, y menos; no puede lanzar misiles." : "A cota periscópica un radar o un vigía lo ven a menos de 8 km; puede lanzar misiles."} Al atacar se delata.</p>`
         : "")
+      + (!oculto && u.velocidad_actual && u.estado === "activa" && app.porId.get(app.seleccion) && puedeDefensa(u)
+        ? `<div class="perfil-vuelo" role="group" aria-label="Velocidad"><span>Velocidad</span>${Logica.VELOCIDADES.map(([v, n]) =>
+          `<button type="button" class="mini ${v === u.velocidad_actual ? "primario" : "secundario"}" data-velocidad="${v}" title="${escapar(Logica.AYUDA_VELOCIDAD[v])}">${n}</button>`).join("")}</div>`
+          + `<p class="ayuda">${escapar(Logica.AYUDA_VELOCIDAD[u.velocidad_actual] || "")} Rige de inmediato.</p>`
+        : "")
       + (!oculto && u.apresto && u.estado === "activa" && app.porId.get(app.seleccion) && puedeDefensa(u)
         ? `<div class="perfil-vuelo" role="group" aria-label="Apresto"><span>Apresto</span>${Logica.APRESTOS.map(([m, n]) =>
           `<button type="button" class="mini ${m === u.apresto.minutos ? "primario" : "secundario"}" data-apresto="${m}">${n}</button>`).join("")}</div>`
@@ -1913,6 +1921,9 @@
     if (selArma) selArma.addEventListener("change", () => enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/defensa`), { arma: selArma.value })));
     cont.querySelectorAll("[data-profundidad]").forEach((b) => b.addEventListener("click", () => {
       if (b.dataset.profundidad !== u.profundidad) enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/profundidad`), { profundidad: b.dataset.profundidad }));
+    }));
+    cont.querySelectorAll("[data-velocidad]").forEach((b) => b.addEventListener("click", () => {
+      if (b.dataset.velocidad !== u.velocidad_actual) enSilencio(api("POST", rutaEsc(`/unidades/${u.id}/velocidad`), { velocidad: b.dataset.velocidad }));
     }));
     cont.querySelectorAll("[data-apresto]").forEach((b) => b.addEventListener("click", () => {
       const m = parseInt(b.dataset.apresto, 10);
@@ -2032,6 +2043,9 @@
     $("btn-emitir").disabled = !u || data.escenario.estado === "finalizado";
     document.querySelectorAll(".modos button").forEach((b) => b.classList.toggle("activo", b.dataset.modo === app.modoOrden));
     $("o-mover").hidden = app.modoOrden !== "mover" && app.modoOrden !== "desembarcar";
+    const conTramos = app.modoOrden === "mover" && !!(u && u.velocidad_actual) && !app.lote.size;
+    $("o-tramo-fila").hidden = !conTramos;
+    $("o-tramo-ayuda").hidden = !conTramos;
     $("o-construir").hidden = app.modoOrden !== "construir";
     $("o-patrullar").hidden = app.modoOrden !== "patrullar";
     $("o-aterrizar").hidden = app.modoOrden !== "aterrizar";
@@ -2158,6 +2172,10 @@
     if (app.modoOrden === "mover") {
       if (!app.waypoints.length) return toast("Marque al menos un waypoint en el mapa.");
       cuerpo.waypoints = app.waypoints;
+      const tramos = (app.tramos || []).slice(0, app.waypoints.length);
+      if (!$("o-tramo-fila").hidden && tramos.length === app.waypoints.length && tramos.some((t) => t.velocidad || t.perfil)) {
+        cuerpo.tramos = tramos.map((t) => ({ velocidad: t.velocidad || null, perfil: t.perfil || null }));
+      }
     } else if (app.modoOrden === "desembarcar") {
       if (!app.waypoints.length) return toast("Marque en el mapa la ruta y el punto de desembarco (el último).");
       cuerpo.waypoints = app.waypoints;

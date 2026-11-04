@@ -121,6 +121,13 @@ class Unidad(Base):
         return relieve.perfil_de(self)
 
     @property
+    def velocidad_actual(self) -> str | None:
+        """Velocidad elegida (aeronaves y buques); None si la unidad no la elige."""
+        from app.engine import movimiento
+
+        return movimiento.modo_velocidad(self)
+
+    @property
     def perfiles_permitidos(self) -> list[str]:
         from app.engine import relieve
 
@@ -158,6 +165,8 @@ class Unidad(Base):
     # apresto de una aeronave en tierra (engine/aeronaves.py): minutos de alerta (5, 15, 30, 60; 0 = en mantenimiento;
     # None = el de siempre) y segundos simulados en que despega la que ya recibio una orden de vuelo
     apresto_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # velocidad elegida de aeronaves y buques: "economica" | "crucero" | "maxima" (None = crucero; engine/movimiento.py)
+    velocidad_modo: Mapped[str | None] = mapped_column(String(10), nullable=True)
     despega_hasta: Mapped[float | None] = mapped_column(Float, nullable=True)
     recarga_hasta: Mapped[float | None] = mapped_column(Float, nullable=True)
     # Cóndor: doctrina propia de la unidad (lo que no fija, lo hereda de su bando; engine/doctrina.py)

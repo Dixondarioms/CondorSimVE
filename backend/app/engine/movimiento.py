@@ -18,10 +18,59 @@ from app.engine import clima as clima_mod
 from app.terreno import FACTOR_MOVIMIENTO, FACTOR_PUENTE, FACTOR_VIA, Terreno
 
 TURNO_DURACION_HORAS = 1.0
+# Velocidad elegida de aeronaves y buques (como el acelerador de los simuladores de mando modernos): cuanto mas rapido,
+# mas combustible por kilometro. Con «maxima» una aeronave usa la postcombustion; un buque, toda su maquina.
+VELOCIDADES = {
+    "economica": {"nombre": "Económica", "velocidad": 0.75, "consumo": 0.85},
+    "crucero": {"nombre": "Crucero", "velocidad": 1.0, "consumo": 1.0},
+    "maxima": {"nombre": "Máxima", "velocidad": 1.3, "consumo": 2.2},
+}
 PASO_KM = 1.0
 OBRA_RADIO_KM = 0.8
 # Velocidad relativa al cruzar un rio por una obra: el puente casi no frena; el vado, si.
 FACTOR_OBRA = {"puente": 0.9, "vado": 0.5}
+
+
+def elige_velocidad(u) -> bool:
+    """Aeronaves y buques eligen su velocidad (no los misiles ni los torpedos, que van a la suya)."""
+    return (getattr(u, "tipo", "") in ("aerea", "naval") and not catalogo.es_misil(u)
+            and getattr(u, "clase", None) != "torpedo" and not catalogo.obtener(u.clase, u.tipo).civil)
+
+
+def modo_velocidad(u) -> str | None:
+    if not elige_velocidad(u):
+        return None
+    m = getattr(u, "velocidad_modo", None)
+    return m if m in VELOCIDADES else "crucero"
+
+
+def factor_velocidad(u) -> float:
+    m = modo_velocidad(u)
+    return VELOCIDADES[m]["velocidad"] if m else 1.0
+
+
+def factor_consumo_velocidad(u) -> float:
+    m = modo_velocidad(u)
+    return VELOCIDADES[m]["consumo"] if m else 1.0
+
+
+def aplicar_tramo(u, tramo: dict | None) -> None:
+    """La velocidad y la altura que la orden fijo para el tramo que empieza (lo que no fija, sigue como esta)."""
+    if not tramo:
+        return
+    if tramo.get("velocidad") in VELOCIDADES and elige_velocidad(u):
+        u.velocidad_modo = tramo["velocidad"]
+    if tramo.get("perfil") in relieve.perfiles_permitidos(u):
+        u.perfil_vuelo = tramo["perfil"]
+
+
+def tramos_de(orden) -> list:
+    try:
+        d = json.loads(getattr(orden, "detalle", None) or "{}")
+    except ValueError:
+        return []
+    t = d.get("tramos") if isinstance(d, dict) else None
+    return t if isinstance(t, list) else []
 
 
 @dataclass
@@ -142,10 +191,11 @@ def simular(unidad, waypoints: list, terreno: Terreno, clima: str = "despejado",
         return mov
     presupuesto = (
         unidad.velocidad_kmh * horas * clima_mod.factor_movimiento(clima, unidad.tipo, unidad.lat, unidad.lon)
-        * (1.0 - clase.penalizacion_movilidad) * propulsion
+        * (1.0 - clase.penalizacion_movilidad) * propulsion * factor_velocidad(unidad)
     )
-    # las aeronaves gastan segun su perfil de vuelo: a baja cota rinden menos kilometros por punto de combustible
-    autonomia = max(unidad.autonomia_km, 1e-9) / relieve.factor_consumo(unidad)
+    # las aeronaves gastan segun su perfil de vuelo (a baja cota rinden menos kilometros por punto de combustible) y,
+    # con los buques, segun la velocidad elegida
+    autonomia = max(unidad.autonomia_km, 1e-9) / (relieve.factor_consumo(unidad) * factor_consumo_velocidad(unidad))
     km_max_combustible = max(0.0, unidad.combustible) / 100.0 * autonomia
     aerea = unidad.tipo == "aerea"
 
@@ -206,11 +256,11 @@ def tiempo_recorrido(unidad, waypoints: list, terreno: Terreno, clima: str = "de
     from app.engine import sistemas  # importacion tardia
 
     velocidad = (unidad.velocidad_kmh * clima_mod.factor_movimiento(clima, unidad.tipo, unidad.lat, unidad.lon)
-                 * (1.0 - clase.penalizacion_movilidad) * sistemas.factor(unidad, "propulsion"))
+                 * (1.0 - clase.penalizacion_movilidad) * sistemas.factor(unidad, "propulsion") * factor_velocidad(unidad))
     if velocidad <= 0:
         salida["bloqueo"] = "Propulsión fuera de servicio: la unidad no puede moverse."
         return salida
-    autonomia = max(unidad.autonomia_km, 1e-9) / relieve.factor_consumo(unidad)
+    autonomia = max(unidad.autonomia_km, 1e-9) / (relieve.factor_consumo(unidad) * factor_consumo_velocidad(unidad))
     salida["km_combustible"] = round(max(0.0, unidad.combustible) / 100.0 * autonomia, 1)
     aerea = unidad.tipo == "aerea"
     lat, lon = unidad.lat, unidad.lon

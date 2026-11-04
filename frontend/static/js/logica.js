@@ -547,6 +547,21 @@
   }
   const barreMinas = (u) => !!u && u.estado === "activa" && u.clase === "cazaminas";
   const PROFUNDIDADES = [["periscopica", "Cota periscópica"], ["profunda", "Profundidad"]];
+  /** Velocidad elegida de aeronaves y buques (engine/movimiento.py). */
+  const VELOCIDADES = [["economica", "Económica"], ["crucero", "Crucero"], ["maxima", "Máxima"]];
+  const AYUDA_VELOCIDAD = {
+    economica: "Económica: 75 % de la velocidad; rinde más kilómetros y más tiempo en el aire o en el mar.",
+    crucero: "Crucero: la velocidad normal.",
+    maxima: "Máxima (postcombustión en los aviones): 30 % más rápido, pero gasta más del doble de combustible por kilómetro.",
+  };
+  /** Texto de un tramo de la ruta: "W2 · máxima · rasante". */
+  function textoTramo(i, tramo) {
+    const partes = [`W${i + 1}`];
+    const v = VELOCIDADES.find(([k]) => k === (tramo || {}).velocidad);
+    if (v) partes.push(v[1].toLowerCase());
+    if (tramo && tramo.perfil) partes.push(tramo.perfil);
+    return partes.join(" · ");
+  }
   /** Apresto de una aeronave en tierra (engine/aeronaves.py): minutos de alerta; 0 = en mantenimiento. */
   const APRESTOS = [[5, "Alerta 5"], [15, "Alerta 15"], [30, "Alerta 30"], [60, "Alerta 60"], [0, "Mantenimiento"]];
   /** Texto del apresto para el panel de la unidad. */
@@ -1353,7 +1368,7 @@
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
-    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, APRESTOS, textoApresto, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
+    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, APRESTOS, textoApresto, VELOCIDADES, AYUDA_VELOCIDAD, textoTramo, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,

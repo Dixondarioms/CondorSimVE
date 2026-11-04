@@ -196,6 +196,20 @@
         aterrizar necesita tiempo para reabastecer y rearmar antes de volver a salir.</p>`,
     },
     {
+      id: "velocidad", seccion: "Aviación", titulo: "Velocidad y altura de cada tramo",
+      claves: "velocidad economica crucero maxima postcombustion acelerador rapido lento consumo combustible altura perfil alto medio rasante tramo waypoint ruta por tramo buque maquina",
+      texto: `<p>Las aeronaves y los buques eligen su <b>velocidad</b> en el panel de abajo (rige de inmediato):</p>
+        <ul><li><b>Económica</b>: 75 % de la velocidad; rinde más kilómetros y dura más en el aire o en el mar.</li>
+        <li><b>Crucero</b>: la normal.</li>
+        <li><b>Máxima</b> (postcombustión en los aviones): 30 % más rápido, pero gasta más del doble de combustible por
+        kilómetro. Úsela para llegar a tiempo a una interceptación, no para todo el vuelo.</li></ul>
+        <p>La <b>altura</b> (perfil alto, medio o rasante) también se elige abajo: rasante se esconde del radar detrás del
+        relieve pero gasta más y queda expuesto a la antiaérea portátil.</p>
+        <p><b>Por tramo</b>: en la orden <b>Mover</b> de una aeronave o un buque, elija «Velocidad del tramo» y «Altura del
+        tramo» <b>antes</b> de marcar cada punto en el mapa. Al pasar cada punto, la unidad toma la velocidad y la altura
+        del tramo siguiente (por ejemplo: crucero y alto hasta la costa, máxima y rasante hasta el blanco).</p>`,
+    },
+    {
       id: "apresto", seccion: "Aviación", titulo: "Apresto: alerta en tierra y rearme",
       claves: "apresto alerta en tierra alerta 5 15 30 60 minutos mantenimiento cuanto tarda en despegar carreteo rearme rearmar reabastecer tiempo en tierra disponibilidad",
       texto: `<p>Cada aeronave tiene su <b>apresto</b>: cuánto tarda en despegar desde que recibe una orden de vuelo estando en

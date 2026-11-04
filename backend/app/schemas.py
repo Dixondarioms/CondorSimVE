@@ -315,6 +315,19 @@ class UnidadAjuste(BaseModel):
     personal: int | None = Field(default=None, ge=0, le=200000)
 
 
+class VelocidadIn(BaseModel):
+    """Velocidad elegida de una aeronave o un buque propio: rige de inmediato (engine/movimiento.py)."""
+
+    velocidad: Literal["economica", "crucero", "maxima"]
+
+
+class TramoIn(BaseModel):
+    """Velocidad y altura desde un punto de la ruta (orden «mover»); lo que no se fija sigue como esta."""
+
+    velocidad: Literal["economica", "crucero", "maxima"] | None = None
+    perfil: Literal["alto", "medio", "rasante"] | None = None
+
+
 class PerfilVueloIn(BaseModel):
     """Perfil de vuelo de una aeronave propia: rige de inmediato (ver engine/relieve.py)."""
 
@@ -375,6 +388,7 @@ class UnidadOut(BaseModel):
     # perfil efectivo y los que puede elegir (aeronaves; ver engine/relieve.py)
     perfil_actual: str | None = None
     perfiles_permitidos: list[str] = []
+    velocidad_actual: str | None = None  # aeronaves y buques: economica | crucero | maxima (engine/movimiento.py)
     stock_combustible: float | None = None
     stock_municion: float | None = None
     # personal (ver engine/personal.py) y largo de los puentes
@@ -422,6 +436,9 @@ class OrdenCreate(BaseModel):
     accion_intercepcion: Literal["seguir", "neutralizar", "directo"] | None = None
     # solo para "patrullar": area de patrulla (engine/zonas.py) en lugar de la orbita sobre un punto
     zona_id: int | None = None
+    # solo para "mover" de aeronaves y buques: la velocidad y la altura de cada tramo (uno por waypoint, el primero rige
+    # desde ya; engine/movimiento.py)
+    tramos: list[TramoIn] | None = Field(default=None, max_length=120)
 
 
 class TraficoIn(BaseModel):

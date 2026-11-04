@@ -217,6 +217,21 @@
             <p id="o-puesto" class="ayuda advertencia" hidden></p>
             <div id="o-mover">
               <p class="ayuda">Haga clic en el mapa para marcar waypoints. El terreno, el clima y el combustible limitan el avance.</p>
+              <div class="fila" id="o-tramo-fila" hidden title="Aeronaves y buques: lo que elija rige desde el próximo punto que marque">
+                <label class="mini">Velocidad del tramo<select id="o-tramo-vel">
+                  <option value="">Sin cambio</option>
+                  <option value="economica">Económica</option>
+                  <option value="crucero">Crucero</option>
+                  <option value="maxima">Máxima</option>
+                </select></label>
+                <label class="mini">Altura del tramo<select id="o-tramo-perfil">
+                  <option value="">Sin cambio</option>
+                  <option value="alto">Alto</option>
+                  <option value="medio">Medio</option>
+                  <option value="rasante">Rasante</option>
+                </select></label>
+              </div>
+              <p class="ayuda" id="o-tramo-ayuda" hidden>Elija la velocidad y la altura <b>antes</b> de marcar cada punto: rigen en el tramo que lleva a ese punto. Más rápido gasta más combustible por kilómetro; rasante se esconde del radar pero gasta más.</p>
               <div id="o-waypoints" class="ayuda"></div>
               <p id="o-preview" class="ayuda preview"></p>
               <div class="fila-botones">

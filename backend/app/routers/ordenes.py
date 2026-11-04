@@ -97,6 +97,11 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
     if (unidad.en_tierra and aeronaves_mod.apresto(unidad) == aeronaves_mod.MANTENIMIENTO
             and payload.tipo in ("mover", "atacar", "patrullar", "interceptar", "sonoboyas", "sonar", "minar")):
         raise HTTPException(status_code=400, detail="En mantenimiento: cambie su apresto (alerta) para que pueda despegar")
+    if payload.tramos is not None:
+        if payload.tipo != "mover" or not movimiento.elige_velocidad(unidad):
+            raise HTTPException(status_code=400, detail="La velocidad y la altura por tramo son para Mover aeronaves y buques")
+        if len(payload.tramos) != len(payload.waypoints):
+            raise HTTPException(status_code=400, detail="Indique la velocidad y la altura de cada tramo (uno por punto)")
     if unidad.en_tierra and payload.tipo == "apoyar":
         raise HTTPException(status_code=400, detail="Una aeronave en tierra no puede apoyar: debe despegar primero")
     if payload.tipo == "despegar":
@@ -296,7 +301,9 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
                              "sentido": payload.rumbo_sentido or "corto"}) if payload.tipo == "rumbo"
             else intercep_mod.codificar(payload.accion_intercepcion) if payload.tipo == "interceptar"
             else json.dumps({"zona": payload.zona_id}) if payload.tipo == "patrullar" and payload.zona_id is not None
-            else payload.detalle or "" if payload.tipo == "construir" else ""
+            else payload.detalle or "" if payload.tipo == "construir"
+            else json.dumps({"tramos": [t.model_dump() for t in payload.tramos]}) if payload.tipo == "mover" and payload.tramos
+            else ""
         ),
         turno_emitida=esc.turno_actual,
         **puestos.firma(usuario),
