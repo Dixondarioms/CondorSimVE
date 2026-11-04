@@ -2129,6 +2129,7 @@
     const conArea = !!$("o-patrulla-area").value;
     $("o-patrulla-ayuda-punto").hidden = conArea;
     $("o-patrulla-ayuda-area").hidden = !conArea;
+    $("o-permanente-fila").hidden = !aerea;
     $("o-patrulla-punto").hidden = conArea;
     $("modo-aterrizar").hidden = !puedeAterrizar;
     $("modo-rumbo").hidden = !puedeAterrizar;
@@ -2323,6 +2324,7 @@
       cuerpo.objetivo_unidad_id = t;
     } else if (app.modoOrden === "patrullar") {
       const area = parseInt($("o-patrulla-area").value, 10);
+      if (!$("o-permanente-fila").hidden && $("o-permanente").checked) cuerpo.permanente = true;
       if (area) cuerpo.zona_id = area;
       else if (!app.patrullaPunto) return toast("Haga clic en el mapa donde quiere que patrulle.");
       else cuerpo.waypoints = [app.patrullaPunto];

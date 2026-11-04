@@ -438,8 +438,10 @@ class OrdenCreate(BaseModel):
     # solo para "interceptar" (engine/interceptacion.py): identificar y seguir, identificar y neutralizar, o neutralizar
     # sin esperar la identificacion (con las armas en estado restringido la doctrina exige identificar igual)
     accion_intercepcion: Literal["seguir", "neutralizar", "directo"] | None = None
-    # solo para "patrullar": area de patrulla (engine/zonas.py) en lugar de la orbita sobre un punto
+    # solo para "patrullar": area de patrulla (engine/zonas.py) en lugar de la orbita sobre un punto, y patrulla
+    # permanente de aeronaves (la base manda el relevo antes de que se vaya; tiempo_real._relevos)
     zona_id: int | None = None
+    permanente: bool = False
     # solo para "mover" de aeronaves y buques: la velocidad y la altura de cada tramo (uno por waypoint, el primero rige
     # desde ya; engine/movimiento.py)
     tramos: list[TramoIn] | None = Field(default=None, max_length=120)

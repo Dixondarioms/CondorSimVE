@@ -260,7 +260,11 @@
         <p><b>Aterrizar</b>: vuelve a la base elegida. En tierra tarda unas <b>2 horas</b> en reabastecer y rearmar; después,
         cualquier orden de vuelo es el despegue. Cada base tiene un número de plazas.</p>
         <p>Con poco combustible (por defecto 25 %) o sin armamento, la aeronave <b>regresa sola</b> a la base más cercana; esos
-        valores se cambian en la doctrina.</p>`,
+        valores se cambian en la doctrina.</p>
+        <p><b>Patrulla permanente</b>: marque «Patrulla permanente» al dar la orden Patrullar. Cuando a la aeronave le quede
+        poco combustible (20 puntos antes del de regreso), sale de una base propia otra aeronave de la misma clase, lista y
+        sin orden, con la misma patrulla; y así sucesivamente, mientras haya aeronaves. Si no hay ninguna lista, avisa.
+        Tenga aeronaves en alerta y descansadas para sostenerla.</p>`,
     },
     {
       id: "desviar", seccion: "Aviación", titulo: "Desviar una aeronave: waypoints o rumbo",

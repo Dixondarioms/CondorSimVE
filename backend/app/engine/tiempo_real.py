@@ -181,6 +181,7 @@ class Mundo:
     # eventos automaticos del director (engine/eventos_auto.py): (regla, unidad) dentro de su area
     eventos_dentro: set = field(default_factory=set)
     eventos_listo: bool = False
+    relevo_aviso: dict = field(default_factory=dict)  # orden_id -> ultimo aviso de que no hay con que relevarla
 
 
 MUNDOS: dict[int, Mundo] = {}
@@ -729,6 +730,7 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
     aeronaves_mod.seguir_portaaviones(ctx.lista)
     transporte_mod.seguir_transporte(ctx.lista)
     _vigilar_zonas(ctx)
+    _relevos(ctx)
     _vigilar_minas(ctx)
     if ctx.t - ctx.mundo.trafico_en >= trafico_mod.MANTENER_CADA_S:
         ctx.mundo.trafico_en = ctx.t
@@ -1345,6 +1347,65 @@ def _vigilar_zonas(ctx: _Ctx) -> None:
                 continue  # no se lo ve: se avisara cuando se lo detecte adentro
     ctx.mundo.en_zona = {k for k in ctx.mundo.en_zona if k in vigentes} | {
         k for k in vigentes if ctx.zonas[k[0]].bando == "todos" or ctx.visible_para(ctx.unidades[k[1]], ctx.zonas[k[0]].bando)}
+
+
+RELEVO_MARGEN = 20.0  # puntos de combustible sobre el de regreso: con esto sale el relevo de una patrulla permanente
+RELEVO_AVISO_S = 1800.0  # cada cuanto se repite el aviso de que no hay con que relevar
+
+
+def _detalle_json(orden) -> dict:
+    try:
+        d = json.loads(orden.detalle or "{}")
+    except ValueError:
+        return {}
+    return d if isinstance(d, dict) else {}
+
+
+def _candidato_relevo(ctx: _Ctx, u: Unidad, punto) -> Unidad | None:
+    """Aeronave propia en tierra, lista, de la misma clase, sin orden y no en mantenimiento: la mas cercana al punto."""
+    listas = [a for a in ctx.lista if a.bando == u.bando and a.tipo == "aerea" and a.estado == "activa" and a.en_tierra
+              and a.clase == u.clase and not a.orden_id and a.despega_hasta is None and a.espera_hasta is None
+              and aeronaves_mod.apresto(a) != aeronaves_mod.MANTENIMIENTO]
+    return min(listas, key=lambda a: geo.distancia_km(a.lat, a.lon, punto[0], punto[1]), default=None)
+
+
+def _relevos(ctx: _Ctx) -> None:
+    """Patrulla permanente: cuando a la aeronave que patrulla le queda poco combustible (el de regreso mas
+    RELEVO_MARGEN), sale de una base propia otra igual con la misma orden, para que el punto o el area no queden sin
+    cubrir. La que se va regresa sola al llegar a su combustible de regreso."""
+    patrullas = [o for o in ctx.ordenes.values() if o.tipo == "patrullar"]
+    relevadas = {_detalle_json(o).get("relevo_de") for o in patrullas}
+    for o in patrullas:
+        d = _detalle_json(o)
+        if not d.get("permanente") or o.id in relevadas:
+            continue
+        u = ctx.unidades.get(o.unidad_id)
+        if u is None or u.estado != "activa" or not aeronaves_mod.en_vuelo(u):
+            continue
+        if u.combustible > ctx.doctrina(u)["combustible_regreso"] + RELEVO_MARGEN:
+            continue
+        z = ctx.zonas.get(zonas_mod.zona_de_orden(o))
+        punto = zonas_mod.centro(zonas_mod.puntos(z)) if z is not None else (o.waypoints[-1] if o.waypoints else (u.lat, u.lon))
+        relevo = _candidato_relevo(ctx, u, punto)
+        if relevo is None:
+            if ctx.t - ctx.mundo.relevo_aviso.get(o.id, -1e9) >= RELEVO_AVISO_S:
+                ctx.mundo.relevo_aviso[o.id] = ctx.t
+                ctx.evento("logistica", u.bando, f"No hay aeronaves listas en tierra para relevar a {u.nombre} en su "
+                                                 "patrulla permanente.", u.lat, u.lon)
+            continue
+        nueva = Orden(escenario_id=ctx.esc.id, unidad_id=relevo.id, tipo="patrullar", waypoints_json=o.waypoints_json,
+                      detalle=json.dumps({**{k: v for k, v in d.items() if k != "relevo_de"}, "relevo_de": o.id}),
+                      turno_emitida=ctx.esc.turno_actual)
+        ctx.db.add(nueva)
+        ctx.db.flush()
+        aplicar_orden(ctx.db, ctx.esc, nueva, relevo)
+        if nueva.estado == "en_ejecucion":
+            ctx.ordenes[nueva.id] = nueva
+        relevadas.add(o.id)
+        base = ctx.unidades.get(relevo.base_id)
+        ctx.evento("despegue", u.bando, f"Relevo: {relevo.nombre} sale" + (f" de {base.nombre}" if base else "")
+                   + f" para relevar a {u.nombre} en su patrulla.", u.lat, u.lon)
+        ctx.informe.cambios = True
 
 
 def _patrullar_zona(ctx: _Ctx, u: Unidad, orden: Orden, h: float) -> None:

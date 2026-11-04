@@ -97,6 +97,8 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
     if (unidad.en_tierra and aeronaves_mod.apresto(unidad) == aeronaves_mod.MANTENIMIENTO
             and payload.tipo in ("mover", "atacar", "patrullar", "interceptar", "sonoboyas", "sonar", "minar")):
         raise HTTPException(status_code=400, detail="En mantenimiento: cambie su apresto (alerta) para que pueda despegar")
+    if payload.permanente and (payload.tipo != "patrullar" or unidad.tipo != "aerea"):
+        raise HTTPException(status_code=400, detail="La patrulla permanente (con relevo) es de las aeronaves que patrullan")
     if payload.tramos is not None:
         if payload.tipo != "mover" or not movimiento.elige_velocidad(unidad):
             raise HTTPException(status_code=400, detail="La velocidad y la altura por tramo son para Mover aeronaves y buques")
@@ -300,7 +302,8 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
             else json.dumps({"modo": payload.rumbo_modo, "grados": payload.rumbo_grados,
                              "sentido": payload.rumbo_sentido or "corto"}) if payload.tipo == "rumbo"
             else intercep_mod.codificar(payload.accion_intercepcion) if payload.tipo == "interceptar"
-            else json.dumps({"zona": payload.zona_id}) if payload.tipo == "patrullar" and payload.zona_id is not None
+            else json.dumps({k: v for k, v in (("zona", payload.zona_id), ("permanente", payload.permanente)) if v})
+            if payload.tipo == "patrullar" and (payload.zona_id is not None or payload.permanente)
             else payload.detalle or "" if payload.tipo == "construir"
             else json.dumps({"tramos": [t.model_dump() for t in payload.tramos]}) if payload.tipo == "mover" and payload.tramos
             else ""
