@@ -677,6 +677,8 @@
       }, 250);
     });
     map.on("click", alClickMapa);
+    map.on("contextmenu", menuDelMapa);
+    map.on("movestart zoomstart", () => Interfaz.cerrarMenu());
     map.on("zoomend", () => {
       app.flechas.forEach((f) => f.actualizar());
       ajustarPorZoom();
@@ -1004,11 +1006,90 @@
     return !!app.aerodromos && app.capaActiva.aerodromos && app.map.getZoom() >= app.aerodromos.zoomDetalle && app.aerodromos.cubre(u);
   }
 
+  /** Aeronave en tierra que no se dibuja sola: se cuenta en su base, salvo sobre el plano del aerodromo. */
+  function enTierraAgrupada(u) {
+    if (u.tipo !== "aerea" || !u.en_tierra || !u.base_id || !app.porId.has(u.base_id)) return false;
+    return !(app.capaActiva.aerodromos && app.aerodromos && app.map && app.map.getZoom() >= app.aerodromos.zoomDetalle);
+  }
+
+  function aeronavesEnBase(b) {
+    if (!app.data || !Logica.operaAeronaves(b)) return [];
+    return app.data.unidades.filter((a) => a.base_id === b.id && a.estado === "activa" && a.en_tierra && enTierraAgrupada(a));
+  }
+
+  /** La unidad elegida si el alumno puede darle ordenes (es de su reparticion); si no, null. */
+  function unidadOrdenable() {
+    if (!esAlumno() || !app.data || !app.seleccion) return null;
+    const u = app.porId.get(app.seleccion);
+    if (!u || u.estado !== "activa" || u.tipo === "base") return null;
+    const propias = Logica.unidadesDelPuesto(app.data.unidades, bandoVista() || app.usuario.rol, puestoActual(), claseDe);
+    return propias.some((p) => p.id === u.id) ? u : null;
+  }
+
+  async function ordenRapida(cuerpo, texto) {
+    try {
+      await api("POST", rutaEsc("/ordenes"), cuerpo);
+      toast(texto, true);
+    } catch (_) { /* toast ya mostrado */ }
+  }
+
+  /** Clic derecho en el mapa: las ordenes sobre ese punto para la unidad elegida. */
+  function menuDelMapa(e) {
+    if (app.dibujando) return;
+    const { lat, lng } = e.latlng;
+    const u = unidadOrdenable();
+    const punto = [[lat, lng]];
+    const ops = [];
+    if (u && u.velocidad_kmh > 0) {
+      ops.push({ texto: "Mover aquí", accion: () => ordenRapida({ unidad_id: u.id, tipo: "mover", waypoints: punto }, `${u.nombre}: Mover`) });
+      if (u.tipo === "aerea" && !Logica.esMisil(u)) {
+        ops.push({ texto: "Patrullar aquí", accion: () => ordenRapida({ unidad_id: u.id, tipo: "patrullar", waypoints: punto }, `${u.nombre}: Patrullar`) });
+      }
+      if (Logica.esAvionAsw(u, app.catalogo)) ops.push({ texto: "Sembrar sonoboyas aquí", accion: () => ordenRapida({ unidad_id: u.id, tipo: "sonoboyas", waypoints: punto }, `${u.nombre}: Sonoboyas`) });
+      if (Logica.esHeloAsw(u, app.catalogo)) ops.push({ texto: "Calar el sonar aquí", accion: () => ordenRapida({ unidad_id: u.id, tipo: "sonar", waypoints: punto }, `${u.nombre}: Sonar de inmersión`) });
+      if (Logica.siembraMinas(u, app.catalogo)) ops.push({ texto: "Sembrar minas aquí", accion: () => ordenRapida({ unidad_id: u.id, tipo: "minar", waypoints: punto }, `${u.nombre}: Minar`) });
+      if (Logica.barreMinas(u)) ops.push({ texto: "Barrer minas aquí", accion: () => ordenRapida({ unidad_id: u.id, tipo: "barrer", waypoints: punto }, `${u.nombre}: Barrer minas`) });
+    }
+    ops.push({ texto: "Centrar el mapa aquí", accion: () => app.map.panTo([lat, lng]) });
+    const titulo = u ? `${u.nombre} · a ${Logica.distanciaKm(u.lat, u.lon, lat, lng).toFixed(0)} km` : `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+    Interfaz.abrirMenu(e.originalEvent.clientX, e.originalEvent.clientY, titulo, ops);
+  }
+
+  /** Clic derecho sobre una unidad: elegirla y, con una unidad propia elegida, las ordenes contra o hacia ella. */
+  function menuDeUnidad(x, ev) {
+    if (!x || app.dibujando) return;
+    const u = unidadOrdenable();
+    const ops = [{ texto: `Seleccionar ${x.nombre}`, accion: () => seleccionar(x.id, "lista") }];
+    for (const a of aeronavesEnBase(x)) ops.push({ texto: `✈ ${a.nombre}`, ayuda: "Aeronave en tierra en esta base", accion: () => seleccionar(a.id, "lista") });
+    if (u && u.id !== x.id) {
+      const enemiga = x.bando !== u.bando && x.estado === "activa";
+      if (enemiga) {
+        ops.push({ texto: `Atacar a ${x.nombre}`, accion: () => ordenRapida({ unidad_id: u.id, tipo: "atacar", objetivo_unidad_id: x.id }, `${u.nombre}: Atacar`) });
+        if ((u.tipo === "aerea" || u.tipo === "naval") && Logica.interceptable(x)) {
+          ops.push({ texto: `Interceptar a ${x.nombre}`, accion: () => ordenRapida({ unidad_id: u.id, tipo: "interceptar", objetivo_unidad_id: x.id, accion_intercepcion: "neutralizar" }, `${u.nombre}: Interceptar`) });
+        }
+        if (Logica.alcanceTorpedo(u, app.catalogo) > 0 && x.tipo === "naval") {
+          ops.push({ texto: `Torpedo contra ${x.nombre}`, accion: () => ordenRapida({ unidad_id: u.id, tipo: "torpedo", objetivo_unidad_id: x.id }, `${u.nombre}: Torpedo`) });
+        }
+        const misiles = Math.min(2, Logica.misilesDisponibles(u));
+        if (Logica.puedeLanzarMisiles(u, claseDe(u)) && misiles > 0) {
+          ops.push({ texto: `Lanzar ${misiles} misil(es) contra ${x.nombre}`, accion: () => ordenRapida({ unidad_id: u.id, tipo: "lanzar", objetivo_unidad_id: x.id, misiles }, `${u.nombre}: Lanzar misiles`) });
+        }
+      } else if (x.bando === u.bando && u.tipo === "aerea" && !u.en_tierra && Logica.operaAeronaves(x) && Logica.puedeOperarEn(u, x)) {
+        ops.push({ texto: `Aterrizar en ${x.nombre}`, accion: () => ordenRapida({ unidad_id: u.id, tipo: "aterrizar", objetivo_unidad_id: x.id }, `${u.nombre}: Aterrizar`) });
+      }
+    }
+    ops.push({ texto: "Centrar el mapa en ella", accion: () => app.map.panTo([x.lat, x.lon]) });
+    Interfaz.abrirMenu(ev.clientX, ev.clientY, u && u.id !== x.id ? `${u.nombre} → ${x.nombre}` : x.nombre, ops);
+  }
+
   function iconoUnidad(u, clases = "", rumbo = u.bando === "rojo" ? 225 : 45) {
     // la cota solo se anota cuando no es la media: "rasante" o "alto" importan para leer el mapa
     const cota = u.tipo === "aerea" && !u.en_tierra && u.perfil_actual && u.perfil_actual !== "medio" && u.clase !== "misil_crucero" ? u.perfil_actual : "";
     const sub = [rotuloModelo(u), u.en_tierra ? "en base" : u.mision === "patrulla" ? "patrulla" : "", cota].filter(Boolean).join(" · ");
     const senales = Logica.senalesUnidad(u);  // lo urgente de una unidad propia (combustible, municion, enlace...)
+    const enBase = aeronavesEnBase(u).length;
+    if (enBase) senales.push({ clase: "en-base", texto: `✈ ${enBase}`, ayuda: `${enBase} grupo(s) en tierra: clic derecho para elegir uno` });
     const rotulos = `<div class="rotulo">${escapar(u.nombre || "")}</div>` + (sub ? `<div class="rotulo modelo">${escapar(sub)}</div>` : "")
       + (senales.length ? `<div class="senales">${senales.map((x) => `<span class="senal ${x.clase}" title="${escapar(x.ayuda)}">${escapar(x.texto)}</span>`).join("")}</div>` : "");
     const extraAlto = senales.length ? 14 : 0;
@@ -1139,6 +1220,7 @@
     const vivas = new Set();
     for (const u of unidades) {
       if (u.estado === "destruida" || Logica.embarcada(u)) continue; // lo embarcado viaja dentro de su transporte
+      if (enTierraAgrupada(u)) continue; // se ve como «✈ N» sobre su base (clic derecho en la base para elegirla)
       vivas.add(u.id);
       const vista = bandoVista();
       const enemiga = vista ? u.bando !== vista : u.bando === "rojo";
@@ -1147,7 +1229,7 @@
       const mini = conMiniatura(u);
       const rumbo = mini && Modelo3d.gira(u) ? Math.round(rumboDe(u) / 5) * 5 : 0;
       const plano = mini && enPlanoAerodromo(u) ? "p" : "";
-      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}${u.perfil_actual || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${mini ? baseAvion() : `s${tamApp6()}`}|${plano}|${Logica.senalesUnidad(u).map((x) => x.texto).join(",")}`;
+      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}${u.perfil_actual || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${mini ? baseAvion() : `s${tamApp6()}`}|${plano}|${Logica.senalesUnidad(u).map((x) => x.texto).join(",")}|${aeronavesEnBase(u).length}`;
       // aeronaves estacionadas: sobre la plataforma real de su base cuando se ve el plano del aerodromo
       const estacionada = mini && app.capaActiva.aerodromos && app.aerodromos && app.map.getZoom() >= app.aerodromos.zoomDetalle
         ? app.aerodromos.posicionEstacionada(u, unidades) : null;
@@ -1168,6 +1250,7 @@
           }
         });
         m.on("click", (e) => { if (!(app.misiones && app.misiones.alClickUnidad(app.porId.get(u.id)))) seleccionar(u.id, "mapa", !!(e.originalEvent && (e.originalEvent.ctrlKey || e.originalEvent.shiftKey))); });
+        m.on("contextmenu", (e) => { L.DomEvent.stop(e); menuDeUnidad(app.porId.get(u.id), e.originalEvent); });
         app.markers.set(u.id, m);
       } else if (app.vivo.has(u.id) && !estacionada) {
         app.vivo.get(u.id).hasta = pos;  // se esta deslizando: solo se corrige el punto de llegada

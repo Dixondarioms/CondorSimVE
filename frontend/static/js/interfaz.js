@@ -35,6 +35,41 @@
     return null;
   }
 
+  let menuAbierto = null;
+
+  function cerrarMenu() {
+    if (menuAbierto) menuAbierto.remove();
+    menuAbierto = null;
+  }
+
+  /** Menu de clic derecho en (x, y) de la ventana: titulo y opciones [{texto, accion, ayuda?}]. */
+  function abrirMenu(x, y, titulo, opciones) {
+    cerrarMenu();
+    const m = document.createElement("div");
+    m.className = "menu-contextual";
+    m.setAttribute("role", "menu");
+    if (titulo) m.appendChild(Object.assign(document.createElement("div"), { className: "mc-titulo", textContent: titulo }));
+    for (const o of opciones) {
+      const b = Object.assign(document.createElement("button"), { type: "button", textContent: o.texto, title: o.ayuda || "" });
+      b.setAttribute("role", "menuitem");
+      b.addEventListener("click", (e) => { e.stopPropagation(); cerrarMenu(); o.accion(); });
+      m.appendChild(b);
+    }
+    document.body.appendChild(m);
+    const r = m.getBoundingClientRect();
+    m.style.left = `${Math.max(4, Math.min(x, window.innerWidth - r.width - 4))}px`;
+    m.style.top = `${Math.max(4, Math.min(y, window.innerHeight - r.height - 4))}px`;
+    menuAbierto = m;
+    const primero = m.querySelector("button");
+    if (primero) primero.focus({ preventScroll: true });
+  }
+
+  if (typeof document !== "undefined") {  // en el navegador (las pruebas cargan el modulo sin pagina)
+    document.addEventListener("mousedown", (e) => { if (menuAbierto && !menuAbierto.contains(e.target)) cerrarMenu(); }, true);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && menuAbierto) { e.preventDefault(); cerrarMenu(); } }, true);
+    window.addEventListener("resize", cerrarMenu);
+  }
+
   function guardado(clave) {
     try { return localStorage.getItem(clave); } catch (_) { return null; }
   }
@@ -135,7 +170,7 @@
     return { conectar, filtro: () => filtro, pasa: (a) => pasaFiltro(a, filtro) };
   }
 
-  const api = { crear, grupoAlerta, pasaFiltro, accionDeTecla, ATAJOS, FILTROS };
+  const api = { crear, grupoAlerta, pasaFiltro, accionDeTecla, abrirMenu, cerrarMenu, ATAJOS, FILTROS };
   if (typeof module !== "undefined") module.exports = api;
   raiz.Interfaz = api;
 })(typeof window !== "undefined" ? window : globalThis);
