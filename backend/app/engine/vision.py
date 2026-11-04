@@ -11,6 +11,8 @@ Ademas, con la grilla de alturas, nada se detecta sin linea de vista: el relieve
 ocultan (sombra de radar, horizonte), y las aeronaves se ven segun su perfil de vuelo (engine/relieve.py).
 """
 
+import math
+
 from app.engine import catalogo, geo, relieve
 from app.engine import clima as clima_mod
 from app.engine import guerra_electronica as ge_mod
@@ -77,9 +79,26 @@ def escucha(detector, objetivo, ge=None, terreno: Terreno | None = None) -> bool
             and relieve.linea_de_vista(terreno, detector, objetivo))
 
 
+_COTA_FACTOR: float | None = None
+
+
+def _cota_km(detector) -> float:
+    """Lo mas lejos que el detector podria ver a algo (radio_efectivo nunca pasa de esto): mas alla no hace falta
+    el calculo fino (terreno, clima, firma...). Es solo para ir mas rapido: no cambia ningun resultado."""
+    global _COTA_FACTOR
+    if _COTA_FACTOR is None:
+        from app.engine import asw  # importacion tardia: guerra antisubmarina
+
+        firmas = [c.firma for c in catalogo.CLASES.values()] + [m.firma for m in catalogo.MODELOS.values() if m.firma is not None]
+        _COTA_FACTOR = (max(firmas + [1.0]) * max(list(clima_mod.DETECCION.values()) + [1.0])
+                        * max(list(OCULTAMIENTO.values()) + [1.0]))
+        _cota_km.sonar = max(list(asw.SONAR_KM.values()) + [asw.SONAR_INMERSION_KM])
+    return max((detector.deteccion_km or 0.0) * _COTA_FACTOR, _cota_km.sonar) + 0.01
+
+
 def detecta(detector, objetivo, terreno: Terreno, clima: str = "despejado", ge=None) -> bool:
-    if (geo.distancia_km(detector.lat, detector.lon, objetivo.lat, objetivo.lon)
-            <= radio_efectivo(detector, objetivo, terreno, clima, ge)
+    d = geo.distancia_km(detector.lat, detector.lon, objetivo.lat, objetivo.lon)
+    if (d <= _cota_km(detector) and d <= radio_efectivo(detector, objetivo, terreno, clima, ge)
             and relieve.linea_de_vista(terreno, detector, objetivo)):
         return True
     return escucha(detector, objetivo, ge, terreno)
@@ -140,11 +159,20 @@ def unidades_visibles(unidades, bando: str, terreno: Terreno, clima: str = "desp
     detectores = [u for u in propias if u.estado == "activa" and getattr(u, "transporte_id", None) is None
                   and (enlazadas is None or u.id in enlazadas)]
     visibles = list(propias)
+    # para ir rapido: de cada sensor, hasta donde podria ver (en grados) y si escucha emisores (eso llega mas lejos)
+    sensores = [(d, d.lat, d.lon, _cota_km(d) / 110.57, bool(_clase(d).escucha_km)) for d in detectores]
 
     for enemiga in unidades:
         if enemiga.bando == bando or enemiga.estado == "destruida" or getattr(enemiga, "transporte_id", None) is not None:
             continue  # lo que viaja a bordo de un transporte no se ve por separado
-        if (ge is not None and ge.emite(enemiga)) or any(detecta(d, enemiga, terreno, clima, ge) for d in detectores):
+        if ge is not None and ge.emite(enemiga):
+            visibles.append(enemiga)
+            continue
+        lat, lon = enemiga.lat, enemiga.lon
+        ancho = 1.0 / max(0.05, math.cos(math.radians(lat)))  # un grado de longitud se achica hacia los polos
+        cerca = (d for d, dl, do, cota, oye in sensores
+                 if oye or (abs(dl - lat) <= cota and abs(do - lon) <= cota * ancho))
+        if any(detecta(d, enemiga, terreno, clima, ge) for d in cerca):
             visibles.append(enemiga)
     from app.engine import asw  # importacion tardia: lo que oyen las sonoboyas del bando
 

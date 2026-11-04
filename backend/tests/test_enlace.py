@@ -48,3 +48,19 @@ def test_api_el_director_la_enciende(api):
     r = prof.patch(f"{base}/config", json={"enlace_datos": True})
     assert r.status_code == 200, r.text
     assert prof.get(base).json()["escenario"]["enlace_datos"] is True
+
+
+def test_el_descarte_rapido_por_distancia_no_cambia_lo_que_se_ve(db_session):
+    """vision._cota_km: mas alla de la cota no hace falta el calculo fino; con y sin el descarte se ve lo mismo."""
+    from app.engine import vision
+    from tests.conftest import TerrenoFalso
+
+    esc, cerca, lejos, r1, r2 = _cuadro(db_session)
+    todas = db_session.query(type(cerca)).filter_by(escenario_id=esc.id).all()
+    for d in todas:
+        for o in todas:
+            if d.bando != o.bando:
+                radio = vision.radio_efectivo(d, o, TerrenoFalso())
+                assert radio <= vision._cota_km(d)
+    ve = {u.id for u in vision.unidades_visibles(todas, "azul", TerrenoFalso())}
+    assert {r1.id, r2.id} <= ve
