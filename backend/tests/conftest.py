@@ -60,6 +60,8 @@ def terreno_llano(monkeypatch):
     from app.engine import tiempo_real
     monkeypatch.setattr(tiempo_real, "get_terreno", lambda: TerrenoFalso())
     monkeypatch.setattr(auth, "ITERACIONES", 1000)  # hash rapido solo en tests
+    from app.engine import mar
+    monkeypatch.setattr(mar, "_POR_ESCENARIO", {})  # el estado del mar de cada escenario: cada prueba empieza en calma
 
 
 @pytest.fixture(autouse=True)

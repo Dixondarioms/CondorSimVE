@@ -72,6 +72,8 @@ class Escenario(Base):
     enlace_datos: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     # ejercicio de practica: el alumno maneja el reloj (pone en marcha, detiene, cambia la velocidad), como en el Tutorial
     practica: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    # estado del mar (engine/mar.py): calmo | moderado | grueso | muy_grueso
+    estado_mar: Mapped[str] = mapped_column(String(12), default="calmo", server_default="calmo")
     # adversario automatico: el simulador da las ordenes de ese bando al abrirse cada turno (ver app/adversario.py)
     ia_azul: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     ia_rojo: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())

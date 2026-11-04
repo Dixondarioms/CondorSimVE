@@ -25,6 +25,7 @@ from app.engine import aeronaves as aeronaves_mod
 from app.engine import armas as armas_mod
 from app.engine import contramedidas as contramedidas_mod
 from app.engine import enlace as enlace_mod
+from app.engine import mar as mar_mod
 from app.routers import grupos as grupos_mod
 from app.engine import sistemas as sistemas_mod
 from app.engine import asw as asw_mod
@@ -159,6 +160,7 @@ def estado_para(
     db: Session, escenario: Escenario, rol: str, terreno: Terreno | None = None
 ) -> dict:
     terreno = terreno or get_terreno()
+    mar_mod.fijar(escenario)  # estado del mar (engine/mar.py): lo usan los sonares al calcular lo que se ve
     # el trafico civil que ya salio de la zona (engine/trafico.py) no se muestra
     unidades = [u for u in unidades_visibles_para(db, escenario, rol, terreno) if u.estado != "retirada"]
 

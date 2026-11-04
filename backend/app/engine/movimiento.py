@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 
 from app.engine import catalogo, geo, relieve
 from app.engine import clima as clima_mod
+from app.engine import mar as mar_mod
 from app.terreno import FACTOR_MOVIMIENTO, FACTOR_PUENTE, FACTOR_VIA, Terreno
 
 TURNO_DURACION_HORAS = 1.0
@@ -191,7 +192,7 @@ def simular(unidad, waypoints: list, terreno: Terreno, clima: str = "despejado",
         return mov
     presupuesto = (
         unidad.velocidad_kmh * horas * clima_mod.factor_movimiento(clima, unidad.tipo, unidad.lat, unidad.lon)
-        * (1.0 - clase.penalizacion_movilidad) * propulsion * factor_velocidad(unidad)
+        * (1.0 - clase.penalizacion_movilidad) * propulsion * factor_velocidad(unidad) * mar_mod.factor_velocidad(unidad)
     )
     # las aeronaves gastan segun su perfil de vuelo (a baja cota rinden menos kilometros por punto de combustible) y,
     # con los buques, segun la velocidad elegida

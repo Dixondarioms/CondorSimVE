@@ -41,6 +41,7 @@ from app.engine import clima as clima_mod
 from app.engine import contramedidas as contra_mod
 from app.engine import enlace as enlace_mod
 from app.engine import gastos as gastos_mod
+from app.engine import mar as mar_mod
 from app.engine import contactos_vivo
 from app.engine import doctrina as doctrina_mod
 from app.engine import defensa_aerea as da_mod
@@ -682,6 +683,7 @@ def _pensar_ia(ctx: _Ctx) -> None:
 def _subpaso(ctx: _Ctx, h: float) -> None:
     ctx.perdidas = {}
     asw_mod.AHORA[ctx.esc.id] = ctx.t
+    mar_mod.fijar(ctx.esc)
     for u in ctx.lista:
         if u.estado == "activa":
             ctx.mundo.pos_previa[u.id] = (u.lat, u.lon)
@@ -1473,13 +1475,14 @@ def _sembrar_boyas(ctx: _Ctx, u: Unidad, orden: Orden, h: float) -> None:
         return
     for lat, lon in asw_mod.cuadro_de_boyas(punto[0], punto[1]):
         ctx.db.add(Sonoboya(escenario_id=ctx.esc.id, bando=u.bando, unidad_id=u.id, lat=lat, lon=lon,
-                            radio_km=asw_mod.BOYA_RADIO_KM, desde_seg=ctx.t, hasta_seg=ctx.t + asw_mod.BOYA_VIDA_S))
+                            radio_km=asw_mod.BOYA_RADIO_KM * mar_mod.factor_boyas(u), desde_seg=ctx.t,
+                            hasta_seg=ctx.t + asw_mod.BOYA_VIDA_S))
     gastos_mod.anotar(ctx.db, ctx.esc, u, "Sonoboyas", "Sonoboya", 4, ctx.t)
     ctx.db.flush()
     asw_mod.cargar_boyas(ctx.db, ctx.esc.id, ctx.t)
     hasta = hora_del_dia(ctx.esc, ctx.t + asw_mod.BOYA_VIDA_S)
     ctx.terminar(orden, u, f"Sembró 4 sonoboyas sobre ({punto[0]:.3f}, {punto[1]:.3f}): escuchan submarinos a "
-                           f"{asw_mod.BOYA_RADIO_KM:.0f} km hasta las {hasta}.")
+                           f"{asw_mod.BOYA_RADIO_KM * mar_mod.factor_boyas(u):.0f} km hasta las {hasta}.")
     ctx.evento("asw", u.bando, f"{u.nombre} sembró sonoboyas (escuchan hasta las {hasta}).", punto[0], punto[1])
     _esperar(u, punto[0], punto[1])
 

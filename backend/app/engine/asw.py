@@ -70,14 +70,16 @@ def es_helo_asw(u) -> bool:
 
 def sonar_km(u) -> float:
     """Alcance del sonar de la unidad ahora (0 sin sonar o sin calar)."""
+    from app.engine import mar  # importacion tardia: con mar gruesa se oye menos (engine/mar.py)
+
     if es_helo_asw(u) and not getattr(u, "en_tierra", False) and getattr(u, "mision", "") == "sonar" \
             and u.mision_lat is not None and geo.distancia_km(u.lat, u.lon, u.mision_lat, u.mision_lon) <= ESTACIONARIO_KM:
-        return SONAR_INMERSION_KM
+        return SONAR_INMERSION_KM if mar.sonar_helo(u) else 0.0
     if getattr(u, "tipo", "") != "naval":
         return 0.0
     from app.engine import sistemas  # importacion tardia: el sonar es parte de los sensores
 
-    return SONAR_KM.get(u.clase, 0.0) * sistemas.factor(u, "sensores")
+    return SONAR_KM.get(u.clase, 0.0) * sistemas.factor(u, "sensores") * mar.factor_sonar(u)
 
 
 def radio_contra_submarino(detector, objetivo, radio_normal: float) -> float:

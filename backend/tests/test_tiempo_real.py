@@ -21,11 +21,15 @@ PASO = tiempo_real.PASO_MAX_S
 
 @pytest.fixture(autouse=True)
 def mundo_limpio():
+    from app.engine import mar
+
     tiempo_real.MUNDOS.clear()
+    mar._POR_ESCENARIO.clear()  # el estado del mar de cada escenario (los ids se repiten entre pruebas)
     reloj._pendiente.clear()
     reloj._ultimo_estado.clear()
     yield
     tiempo_real.MUNDOS.clear()
+    mar._POR_ESCENARIO.clear()
 
 
 def _orden(db, esc, u, tipo, objetivo=None, waypoints=None, detalle=""):

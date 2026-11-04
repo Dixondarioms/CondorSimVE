@@ -526,12 +526,16 @@
     },
     {
       id: "clima", seccion: "El mapa", titulo: "Clima, lluvia, tormentas y noche",
-      claves: "clima meteorologia lluvia tormenta nublado zona deriva se mueve satelite meteorologico radio noche dia crepusculo visibilidad",
+      claves: "clima meteorologia lluvia tormenta nublado zona deriva se mueve satelite meteorologico radio noche dia crepusculo visibilidad estado del mar mar gruesa oleaje olas",
       texto: `<p>Además del clima general, el director puede poner <b>zonas</b> de nubosidad, lluvia o tormenta, que se desplazan
         de forma continua. Dentro de ellas se detecta menos, se avanza más lento y el ataque aéreo pierde efecto. De noche
         también se detecta menos.</p>
         <p>En Capas → <b>Vista del clima</b>: <i>Solo el radio</i> (el círculo con su rótulo y la flecha de hacia dónde va) o
-        <i>Satélite meteorológico</i> (las nubes como en una imagen de satélite).</p>`,
+        <i>Satélite meteorológico</i> (las nubes como en una imagen de satélite).</p>
+        <p><b>Estado del mar</b> (lo fija el director; se ve en «Estado del escenario»): con mar <b>grueso</b> o <b>muy
+        grueso</b> los helicópteros no calan el sonar, las sonoboyas oyen menos (las que se siembran desde entonces), los
+        sonares de los buques oyen menos, los buques chicos (patrulleros, cazaminas, pesqueros) van más lentos y se
+        suspende el reabastecimiento en el mar. Con muy grueso, también los buques grandes van algo más lentos.</p>`,
     },
     {
       id: "graficos", seccion: "El mapa", titulo: "Gráficos tácticos y herramientas",

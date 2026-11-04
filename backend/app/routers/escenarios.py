@@ -424,6 +424,14 @@ async def configurar(
         for bando, datos in payload.inteligencia.items():
             c = inteligencia.configurar(esc, bando, datos.satelites, datos.tipo)
             cambios.append(f"satélites del bando {bando.capitalize()}: {c['satelites']} ({c['tipo']})")
+    if payload.estado_mar is not None and payload.estado_mar != esc.estado_mar:
+        from app.engine import mar  # importacion tardia
+
+        esc.estado_mar = payload.estado_mar
+        mar.fijar(esc)
+        cambios.append(f"estado del mar: {mar.ESTADOS[payload.estado_mar].lower()}")
+        db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="clima", bando_destino="todos",
+                      descripcion=f"Estado del mar: {mar.ESTADOS[payload.estado_mar].lower()}."))
     if payload.dia_noche is not None and payload.dia_noche != esc.dia_noche:
         esc.dia_noche = payload.dia_noche
         cambios.append(f"ciclo de dia y noche {'activado' if payload.dia_noche else 'desactivado'}")

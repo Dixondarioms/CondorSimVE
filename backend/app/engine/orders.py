@@ -34,6 +34,7 @@ from app.engine import disponibilidad as disp_mod
 from app.engine import toe as toe_mod
 from app.engine import ota as ota_mod
 from app.engine import contramedidas as contra_mod
+from app.engine import mar as mar_mod
 from app.engine import apoyo_aereo as apoyo_mod
 from app.engine import rescate as rescate_mod
 from app.engine import weaponeering as weap_mod
@@ -204,6 +205,8 @@ def _reabastecer(unidades: list[Unidad], bit: _Bitacora, factor_combustible: dic
                 break
             if r.combustible >= 100 and r.municion >= 100:
                 continue
+            if r.tipo == "naval" and not mar_mod.reabastecer_en_el_mar(conv):
+                continue  # con mar gruesa no se reabastece en el mar (engine/mar.py)
             if geo.distancia_km(conv.lat, conv.lon, r.lat, r.lon) <= clase.nodo_movil_km:
                 causa = "reabastecimiento en vuelo" if cisterna else "reabastecimiento en el mar" if r.tipo == "naval" else "convoy"
                 if r.tipo == "naval":

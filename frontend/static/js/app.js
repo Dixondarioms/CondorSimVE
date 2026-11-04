@@ -2694,6 +2694,7 @@
       set("cal-final", (e) => { e.value = esc.turno_final || ""; });
       pintarFasesConfig(esc.calendario);
       set("dir-noche", (e) => { e.checked = !!esc.dia_noche; });
+      set("dir-mar", (e) => { e.value = esc.estado_mar || "calmo"; });
       set("dir-fallas", (e) => { e.checked = !!esc.fallas; });
       for (const b of ["azul", "rojo"]) {
         const p = (esc.personal || {})[b] || {};
@@ -2776,6 +2777,7 @@
     $("clima-mov").textContent = `×${ef.terrestre}`;
     $("clima-aire").textContent = `×${ef.ataqueAereo}`;
     $("esc-fase").textContent = ETIQUETA_RELOJ[esc.estado] || esc.estado;
+    $("esc-mar").textContent = { calmo: "Calmo", moderado: "Moderado", grueso: "Grueso", muy_grueso: "Muy grueso" }[esc.estado_mar] || "Calmo";
     $("esc-modo").textContent = `${esc.azar ? "Azar" : "Determinista"} · tiempo real ${esc.velocidad}×`;
   }
 
@@ -3861,7 +3863,7 @@
       niebla: $("dir-niebla").checked, logistica: $("dir-logistica").checked,
       efectos_clima: $("dir-clima").checked, fuego_automatico: $("dir-fuego").checked, enlace_datos: $("dir-enlace").checked, practica: $("dir-practica").checked,
       conduccion_azul: $("dir-cond-azul").value, conduccion_rojo: $("dir-cond-rojo").value,
-      dia_noche: $("dir-noche").checked, ia_nivel: $("dir-ia-nivel").value, fallas: $("dir-fallas").checked,
+      dia_noche: $("dir-noche").checked, estado_mar: $("dir-mar").value, ia_nivel: $("dir-ia-nivel").value, fallas: $("dir-fallas").checked,
     }).then(() => toast("Interruptores aplicados", true)));
   });
   $("btn-avanzar-varios").addEventListener("click", () => {

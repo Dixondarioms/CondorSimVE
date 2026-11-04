@@ -844,6 +844,9 @@
             <label class="chk"><input type="checkbox" id="dir-fuego" checked><span>Fuego automático (patrullas, antiaérea, destructores)</span></label>
             <label class="chk"><input type="checkbox" id="dir-practica"><span>Ejercicio de práctica: el alumno maneja el reloj (pone en marcha, detiene y cambia la velocidad)</span></label>
             <label class="chk" title="Lo que detecta una unidad lejos de la red (bases, radares, centros de comunicaciones y unidades conectadas) o dentro de una interferencia enemiga no lo ve su bando"><input type="checkbox" id="dir-enlace"><span>Imagen común por enlace de datos (solo se comparte lo que ven las unidades conectadas a la red)</span></label>
+            <label class="mini" title="Con mar gruesa los helicópteros no calan el sonar, las sonoboyas y los sonares oyen menos, los buques chicos van más lentos y no se reabastece en el mar">Estado del mar<select id="dir-mar">
+              <option value="calmo">Calmo</option><option value="moderado">Moderado</option><option value="grueso">Grueso</option><option value="muy_grueso">Muy grueso</option>
+            </select></label>
             <label class="chk"><input type="checkbox" id="dir-noche"><span>Ciclo de día y noche (de noche se detecta menos a simple vista; el radar no cambia)</span></label>
             <label class="chk"><input type="checkbox" id="dir-fallas"><span>Disponibilidad y fallas de las aeronaves (no todas están listas para despegar y pueden fallar en vuelo)</span></label>
             <div class="fila avanzar-varios">
@@ -1146,6 +1149,7 @@
               <div id="esc-calendario-fila" hidden><dt>Calendario</dt><dd id="esc-calendario">-</dd></div>
               <div><dt>Movimiento terrestre</dt><dd id="clima-mov">-</dd></div>
               <div><dt>Ataques aéreos</dt><dd id="clima-aire">-</dd></div>
+              <div><dt>Estado del mar</dt><dd id="esc-mar">-</dd></div>
               <div><dt>Reloj</dt><dd id="esc-fase">-</dd></div>
               <div><dt>Modo</dt><dd id="esc-modo">-</dd></div>
             </dl>
