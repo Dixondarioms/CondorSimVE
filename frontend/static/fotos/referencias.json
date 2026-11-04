@@ -1571,6 +1571,14 @@
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:Buque_de_desembarque_tipo_LST_clase_Capana_-_T-63_Goajira.JPG"
     },
+    "buque_logistico": {
+      "foto": "/static/fotos/ref_buque_logistico.jpg",
+      "obra": "Kaiser-class underway replenishment oiler USNS Rappahannock (T-AO 204) 210722-N-XB010-1013",
+      "autor": "MC2 Desmond Parks",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Kaiser-class_underway_replenishment_oiler_USNS_Rappahannock_(T-AO_204)_210722-N-XB010-1013.jpg"
+    },
     "buque_mercante": {
       "foto": "/static/fotos/ref_buque_mercante.jpg",
       "obra": "MSC HARMONY III (container ship, 2006) in Port Koper (SIKOP, 2024)",

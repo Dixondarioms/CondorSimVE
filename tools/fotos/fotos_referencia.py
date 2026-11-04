@@ -125,7 +125,7 @@ UNIDADES = [
     # minas navales (engine/minas.py)
     ("clases", "cazaminas", "Cazaminas", ["minehunter underway", "Tripartite class minehunter", "Avenger class mine countermeasures ship"]),
     # reabastecimiento en el mar (engine/orders.py, convoyes navales)
-    ("clases", "buque_logistico", "Buque logístico", ["replenishment at sea", "underway replenishment oiler", "fleet replenishment oiler"]),
+    ("clases", "buque_logistico", "Buque logístico", ["Henry J. Kaiser-class replenishment oiler underway", "Berlin-class replenishment ship", "ESPS Cantabria A15", "fleet replenishment oiler underway"]),
 ]
 # catalogo ampliado del Condor (backend/app/engine/catalogo_ampliado.py) y modelos que cambiaron de identidad
 sys.path.insert(0, str(Path(__file__).resolve().parent))
