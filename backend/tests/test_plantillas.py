@@ -175,10 +175,76 @@ def test_tutorial_del_condor_es_chico_lo_conduce_un_alumno_contra_la_ia_y_el_ene
     from app.engine import geo
 
     p = plantillas.PLANTILLAS["tutorial_condor"]
-    assert len(p.unidades) <= 24 and p.ia_rojo and not p.ia_azul
+    assert len(p.unidades) <= 32 and p.ia_rojo and not p.ia_azul
     por = {u.nombre: u for u in p.unidades}
     inf, blind = por["1.ª Brigada de Infantería azul"], por["Brigada Blindada rojo"]
     assert 60 < geo.distancia_km(inf.lat, inf.lon, blind.lat, blind.lon) < 120
     assert {o.bando for o in p.objetivos} == {"azul", "rojo"}
     esc = plantillas.crear_desde_plantilla(db_session, "tutorial_condor")
     assert esc.nombre == "Tutorial del Cóndor" and esc.ia_rojo
+
+
+def test_el_tutorial_trae_con_que_practicar_todo_y_eventos_que_guian_al_alumno(db_session):
+    """El alumno solo practica tierra, aire, mar, minas y misiles; los eventos automaticos le dicen que hacer."""
+    import json
+
+    from app.engine import minas
+    from app.models.zona import Zona
+    from app.terreno import get_terreno
+
+    p = plantillas.PLANTILLAS["tutorial_condor"]
+    por = {u.nombre: u for u in p.unidades}
+    clases_azul = {u.clase for u in p.unidades if u.bando == "azul"}
+    assert {"fragata", "submarino", "cazaminas", "helicoptero_artillado", "lanzador_balistico", "caza"} <= clases_azul
+    assert {u.modelo for u in p.unidades if u.bando == "azul"} >= {"nh90", "p8a", "s300vm"}
+    assert {u.clase for u in p.unidades if u.bando == "rojo"} >= {"submarino", "patrullero"}
+    assert not any(u.clase in ("base_aerea", "caza") for u in p.unidades if u.bando == "rojo")  # el Rojo, lo minimo
+    assert por["Defensa antiaérea de Capital Roja"].modelo == ""  # la defensa roja queda como en teatro_ficticio
+    assert p.ia_nivel == "prudente" and p.doctrina == {"azul": {"armas_aire": "restringido"}}
+    lanzar = [a for r in p.eventos_auto for a in r["acciones"] if a["tipo"] == "lanzar"]
+    en_tierra = [u for u in p.unidades if u.en_tierra and u.bando == "azul"]
+    assert len(en_tierra) >= 4 and all(u.base == "Base Aérea de Capital Azul" for u in en_tierra)
+    terreno = get_terreno()
+    if any(g.meta.get("id") == "teatro_ficticio" for g in terreno.grillas):
+        for u in p.unidades:
+            if u.clase in ("fragata", "submarino", "cazaminas", "patrullero"):
+                assert terreno.clase(u.lat, u.lon) == "agua", u.nombre
+            elif u.clase == "lanzador_balistico":
+                assert terreno.clase(u.lat, u.lon) != "agua", u.nombre
+    # los eventos: cada disparador, y los nombres que usan existen
+    tipos = {r["disparador"]["tipo"] for r in p.eventos_auto}
+    assert tipos == {"hora", "entra_area", "destruida", "objetivo"}
+    acciones = {a["tipo"] for r in p.eventos_auto for a in r["acciones"]}
+    assert {"mensaje", "aparecer", "puntos", "lanzar"} <= acciones
+    aparecen = {a["nombre"] for r in p.eventos_auto for a in r["acciones"] if a["tipo"] == "aparecer"}
+    assert lanzar and all((a["unidad"] in por or a["unidad"] in aparecen) and a["blanco"] in por for a in lanzar)
+    for r in p.eventos_auto:
+        d = r["disparador"]
+        if d["tipo"] == "destruida":
+            assert d["unidad"] in por or d["unidad"] in aparecen, d["unidad"]
+        if d["tipo"] == "objetivo":
+            assert d["objetivo"] in {o.nombre for o in p.objetivos}
+        if d.get("unidad") and d["tipo"] == "entra_area":
+            assert d["unidad"] in por
+    assert p.trafico and p.trafico["zona"] and p.trafico["aerovias"]
+    assert len(p.minas) == 1 and p.minas[0]["bando"] == "rojo"
+
+    esc = plantillas.crear_desde_plantilla(db_session, "tutorial_condor")
+    from app.engine import doctrina
+
+    assert esc.ia_nivel == "prudente" and doctrina.de_bando(esc, "azul")["armas_aire"] == "restringido"
+    assert {z.nombre for z in db_session.query(Zona).filter(Zona.escenario_id == esc.id)} >= {
+        "Área de patrulla Norte", "Área de búsqueda Oeste", "Zona de no vuelo de Capital Azul"}
+    assert len(json.loads(esc.eventos_auto_json)["reglas"]) == len(p.eventos_auto)
+    assert len(minas.campos_para(db_session, esc, "rojo")) == 1
+    assert minas.campos_para(db_session, esc, "azul") == []  # el Azul lo descubre con el cazaminas
+    # y al guardar el escenario como plantilla, el campo de minas viaja con ella
+    datos = plantillas.serializar_escenario(db_session, esc, "Copia del tutorial", "", False)
+    copia = plantillas.desde_dict(datos)
+    assert copia.minas[0]["bando"] == "rojo" and copia.ia_nivel == "prudente" and copia.doctrina == p.doctrina
+
+
+def test_los_niveles_del_adversario_de_las_plantillas_son_los_del_adversario():
+    from app import adversario
+
+    assert set(plantillas.NIVELES_IA) == set(adversario.NIVELES)

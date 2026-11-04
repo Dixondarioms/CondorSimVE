@@ -97,6 +97,7 @@ async def avanzar_turno(
     informe = tiempo_real.paso(db, esc, n * 3600.0)
     db.commit()
     await manager.difundir_alertas(esc.id, informe.alertas)
+    await manager.difundir_chats(esc.id, informe.chats)
     reloj.marcar_cambios(esc.id)
     await manager.difundir_estado(db, esc)
     return state.estado_para(db, esc, usuario.rol)

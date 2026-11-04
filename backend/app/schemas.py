@@ -407,7 +407,7 @@ class OrdenCreate(BaseModel):
     aeronaves: int | None = Field(default=None, ge=1, le=12)
     indicativo: str | None = Field(default=None, max_length=40)
     # carga de armamento (engine/armas.py): al despegar un grupo, o al darle una orden de vuelo a una aeronave en tierra
-    carga: Literal["aire_aire", "ataque", "antibuque", "sead", "reconocimiento"] | None = None
+    carga: Literal["aire_aire", "ataque", "antibuque", "sead", "antisubmarina", "reconocimiento"] | None = None
     # solo para "lanzar": misiles de crucero de la salva (el blanco va en objetivo_unidad_id)
     misiles: int | None = Field(default=None, ge=1, le=4)
     # solo para "atacar" a una base aerea o portaaviones: parte que se ataca (None = ataque general)
@@ -500,7 +500,7 @@ class OtaMisionIn(BaseModel):
     alerta: int = Field(default=1, ge=1, le=3)
     armamento_primario: str = Field(default="", max_length=5)
     armamento_secundario: str = Field(default="", max_length=5)
-    carga: Literal["aire_aire", "ataque", "antibuque", "sead", "reconocimiento"] | None = None  # carga de armamento del grupo (engine/armas.py)
+    carga: Literal["aire_aire", "ataque", "antibuque", "sead", "antisubmarina", "reconocimiento"] | None = None  # carga de armamento del grupo (engine/armas.py)
     iff: str = Field(default="", max_length=5)
     codigo: str = Field(default="", max_length=5)  # codigo de mision de la tabla (vacio: el del rol)
     pdi: str = Field(default="", max_length=30)

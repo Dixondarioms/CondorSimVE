@@ -8,6 +8,7 @@ nunca contra el del aula. Las cuentas se leen de un JSON local que no va al repo
     set SIMULADOR_DB=C:\\ruta\\copia.db & set SIMULADOR_RESPALDO_HORAS=0
     backend\\venv\\Scripts\\python -m app.servidor --port 8130
     set CONDOR_URL=http://127.0.0.1:8130 & set CONDOR_CUENTAS=C:\\ruta\\cuentas.json
+    set CONDOR_TUTORIAL=<número del Tutorial del Cóndor creado desde su plantilla en la copia, con az.cmdte asignada>
     backend\\venv\\Scripts\\python tools/manual/capturas_condor.py            # todas
     backend\\venv\\Scripts\\python tools/manual/capturas_condor.py despegue   # algunas (por nombre)
 """
@@ -25,6 +26,8 @@ from navegador import Navegador, anotar  # noqa: E402
 
 BASE = os.environ.get("CONDOR_URL", "http://127.0.0.1:8130")
 ESCENARIO = int(os.environ.get("CONDOR_ESCENARIO", "15"))  # Operación Guri: dos bandos completos en Bolívar
+# Tutorial del Cóndor creado desde su plantilla en la COPIA de la base, con la cuenta az.cmdte asignada (0: no se captura)
+TUTORIAL = int(os.environ.get("CONDOR_TUTORIAL", "0"))
 # lista [{usuario, clave}] o {nombre: {usuario, clave}}
 _cuentas = json.loads(Path(os.environ["CONDOR_CUENTAS"]).read_text(encoding="utf-8"))
 CUENTAS = {c["usuario"]: c["clave"] for c in (_cuentas.values() if isinstance(_cuentas, dict) else _cuentas)}
@@ -502,6 +505,56 @@ def ayuda(n: Nav) -> None:
     n.cerrar_dialogos()
 
 
+def _al_tutorial(n: Nav, usuario: str) -> None:
+    """Entra con esa cuenta al Tutorial del Cóndor (la proxima captura vuelve a entrar al ejercicio de siempre)."""
+    if not TUTORIAL:
+        raise RuntimeError("falta CONDOR_TUTORIAL (el número del Tutorial del Cóndor en la copia de la base)")
+    n.como(usuario)
+    n.enviar("Page.navigate", {"url": f"{BASE}/?escenario={TUTORIAL}"})
+    n.esperar(LISTO, 150)
+    n.pausa(4)
+    n.usuario = None
+
+
+def tutorial(n: Nav) -> None:
+    """Tutorial del Cóndor (en la COPIA de la base): el alumno Azul con los mensajes del director automático."""
+    n.como("director")
+    n.js(f"fetch('/api/escenarios/{TUTORIAL}/avanzar_turno?n=1', {{method: 'POST'}}).then((r) => r.status)")
+    n.pausa(2)
+    _al_tutorial(n, "az.cmdte")
+    n.sin_seleccion()
+    n.vista(10.0, -25.2, 8, 4)
+    guardar(n, "tutorial")
+    r = tarjeta(n, "Comunicaciones")
+    n.pausa(1)
+    guardar(n, "tutorial_mensajes", r)
+
+
+def recorrido(n: Nav) -> None:
+    """El recorrido guiado de un alumno: el paso de las órdenes navales y la práctica final (en el Tutorial)."""
+    _al_tutorial(n, "az.cmdte")
+    n.sin_seleccion()
+    n.clic("#btn-ayuda")
+    n.pausa(1.5)
+    n.clic("#ayuda-recorrido")
+    n.pausa(1.5)
+
+    def ir_a(titulo: str) -> None:
+        for _ in range(60):
+            if n.js("(document.querySelector('.recorrido-tarjeta .rec-titulo') || {}).textContent") == titulo:
+                n.pausa(1.2)
+                return
+            n.clic(".recorrido-tarjeta .rec-siguiente")
+            n.pausa(0.4)
+        raise RuntimeError(f"el recorrido no llega al paso {titulo}")
+
+    ir_a("Órdenes navales y misiles")
+    guardar(n, "recorrido_naval")
+    ir_a("Ahora, a practicar")
+    guardar(n, "recorrido_practica", n.rect(".recorrido-tarjeta"), margen=4)
+    n.tecla("Escape", 27)
+
+
 def informe(n: Nav) -> None:
     n.cerrar_dialogos()
     n.clic("#btn-informe")
@@ -556,7 +609,7 @@ def videowall(n: Nav) -> None:
 
 
 ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, eventos_auto, asw, salvas, minas, balisticos, doctrina, misiones,
-         situacion, tiem, consola, capas, graficos, mapas, ayuda, informe, en_marcha, bando, videowall]
+         situacion, tiem, consola, capas, graficos, mapas, ayuda, tutorial, recorrido, informe, en_marcha, bando, videowall]
 
 
 def main() -> int:
@@ -569,7 +622,8 @@ def main() -> int:
             if pedidas and f.__name__ not in pedidas:
                 continue
             try:
-                if f not in (acceso, despegue, orden_mover, interceptar, zonas, carga, sistemas, asw, salvas, minas, balisticos, misiones, bando):
+                if f not in (acceso, despegue, orden_mover, interceptar, zonas, carga, sistemas, asw, salvas, minas, balisticos, misiones, bando,
+                             tutorial, recorrido):
                     n.como("director")
                 f(n)
                 if f is acceso:

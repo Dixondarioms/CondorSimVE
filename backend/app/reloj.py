@@ -48,6 +48,7 @@ async def vuelta(db, real_s: float) -> list[int]:
             if informe.cambios:
                 _pendiente.add(esc.id)
             await manager.difundir_alertas(esc.id, informe.alertas)
+            await manager.difundir_chats(esc.id, informe.chats)
             if esc.estado != "activo":  # pausa automatica: el estado nuevo sale ya
                 _pendiente.add(esc.id)
                 _ultimo_estado[esc.id] = 0.0

@@ -528,6 +528,9 @@ button.enlace { background: none; border: none; padding: 0; margin: 0; color: va
 .recorrido-tarjeta .rec-paso { margin: 0; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #ffd166; }
 .recorrido-tarjeta h3 { margin: 2px 0 6px; font-size: 16px; }
 .recorrido-tarjeta p, .recorrido-tarjeta ol { margin: 4px 0; }
+.recorrido-tarjeta { max-height: calc(100vh - 20px); overflow-y: auto; }
+.recorrido-tarjeta .rec-lista { padding-left: 22px; font-size: 13px; line-height: 1.35; }
+.recorrido-tarjeta .rec-lista li { margin: 1px 0; }
 .recorrido-tarjeta .rec-botones { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
 .recorrido-tarjeta .rec-botones button { width: auto; margin: 0; }
 .recorrido-tarjeta .rec-salir { margin-right: auto !important; }

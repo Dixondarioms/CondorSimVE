@@ -23,7 +23,7 @@
       const d = $("ea-disparador").value;
       for (const t of ["entra_area", "hora", "destruida", "objetivo"]) $(`ea-d-${t}`).hidden = d !== t;
       const a = $("ea-accion").value;
-      for (const t of ["mensaje", "aparecer", "clima", "puntos"]) $(`ea-a-${t}`).hidden = a !== t;
+      for (const t of ["mensaje", "aparecer", "clima", "puntos", "lanzar"]) $(`ea-a-${t}`).hidden = a !== t;
     }
 
     function llenarListas() {
@@ -31,9 +31,14 @@
       if (!data) return;
       const zonas = (data.zonas || []).filter((z) => z.puntos.length >= 3);
       opciones($("ea-area"), zonas.length ? zonas.map((z) => [z.id, `${z.nombre || "Zona sin nombre"} (${z.tipo})`]) : [["", "Dibuje antes una zona en «Áreas y zonas»"]]);
+      const clasePorId = new Map(((ctx.catalogo() || {}).clases || []).map((c) => [c.id, c]));
       const nombres = [...new Set(data.unidades.filter((u) => u.estado === "activa").map((u) => u.nombre))].sort((a, b) => a.localeCompare(b, "es"));
       opciones($("ea-unidad"), nombres.map((n) => [n, n]));
       opciones($("ea-unidad-area"), [["", "Cualquier unidad"], ...nombres.map((n) => [n, n])]);
+      const lanzadores = [...new Set(data.unidades.filter((u) => Logica.puedeLanzarMisiles(u, clasePorId.get(u.clase)))
+        .map((u) => u.nombre))].sort((a, b) => a.localeCompare(b, "es"));
+      opciones($("ea-la-unidad"), lanzadores.length ? lanzadores.map((n) => [n, n]) : [["", "No hay lanzadores de misiles"]]);
+      opciones($("ea-la-blanco"), nombres.map((n) => [n, n]));
       opciones($("ea-objetivo"), (data.objetivos || []).map((o) => [o.nombre, `${o.nombre} (${o.bando})`]));
       const clases = ((ctx.catalogo() || {}).clases || []).filter((c) => c.tipo !== "base" && !c.misil);
       opciones($("ea-ap-clase"), clases.map((c) => [c.id, c.nombre]));
@@ -113,6 +118,11 @@
       }
       if (tipo === "clima") return { tipo, clima: $("ea-clima").value };
       if (tipo === "puntos") return { tipo, bando: $("ea-pt-bando").value, puntos: parseInt($("ea-pt-n").value, 10) || 0 };
+      if (tipo === "lanzar") {
+        if (!$("ea-la-unidad").value || !$("ea-la-blanco").value) return ctx.toast("Elija el lanzador y el blanco.");
+        return { tipo, unidad: $("ea-la-unidad").value, blanco: $("ea-la-blanco").value,
+          misiles: Math.max(1, Math.min(4, parseInt($("ea-la-misiles").value, 10) || 1)) };
+      }
       return { tipo };
     }
 

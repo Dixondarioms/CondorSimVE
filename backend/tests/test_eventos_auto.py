@@ -108,3 +108,51 @@ def test_api_solo_el_director_y_se_guardan_en_la_plantilla(api, db_session):
     assert r.status_code == 200, r.text
     esc = db_session.get(Escenario, r.json()["id"])
     assert json.loads(esc.eventos_auto_json)["reglas"][0]["nombre"] == "Aviso"
+
+
+def test_lanzar_misiles_programados_sin_ver_al_blanco(db_session):
+    """El director programa un ataque: el lanzador rojo tira aunque su bando no vea al blanco (a 300 km)."""
+    esc = _escenario(db_session)  # empieza a las 06:00
+    lanzador = _unidad(db_session, esc, nombre="Lanzador rojo", bando="rojo", tipo="terrestre", clase="lanzador_balistico",
+                       velocidad_kmh=40, alcance_km=500, deteccion_km=10, municion=100.0)
+    _unidad(db_session, esc, nombre="Base azul", bando="azul", tipo="base", clase="base_aerea", lat=0.0, lon=2.7, velocidad_kmh=0)
+    regla = {"nombre": "Ataque balístico", "disparador": {"tipo": "hora", "hora": "06:10"},
+             "acciones": [{"tipo": "lanzar", "unidad": "Lanzador rojo", "blanco": "Base azul", "misiles": 2}]}
+    assert eventos_auto.validar([dict(regla, acciones=[{"tipo": "lanzar", "unidad": "Lanzador rojo", "blanco": "", "misiles": 2}])])
+    assert eventos_auto.validar([dict(regla, acciones=[{"tipo": "lanzar", "unidad": "Lanzador rojo", "blanco": "Base azul", "misiles": 9}])])
+    _reglas(db_session, esc, regla)
+    _correr(db_session, esc, 900)
+    misiles = db_session.query(Unidad).filter(Unidad.escenario_id == esc.id, Unidad.clase == "misil_balistico").all()
+    assert len(misiles) == 2 and all(m.bando == "rojo" for m in misiles)
+    db_session.refresh(lanzador)
+    assert lanzador.municion < 100.0
+    assert any("Alerta temprana" in e.descripcion for e in db_session.query(Evento).filter(Evento.bando_destino == "azul"))
+
+
+def test_lanzar_sin_lanzador_avisa_al_director(db_session):
+    esc = _escenario(db_session)
+    _unidad(db_session, esc, nombre="Base azul", bando="azul", tipo="base", clase="base_aerea", velocidad_kmh=0)
+    _reglas(db_session, esc, {"nombre": "Ataque", "disparador": {"tipo": "hora", "hora": "06:00"},
+                              "acciones": [{"tipo": "lanzar", "unidad": "No existe", "blanco": "Base azul", "misiles": 1}]})
+    _correr(db_session, esc, 60)
+    assert any("no se pudo lanzar" in e.descripcion for e in db_session.query(Evento).filter(Evento.bando_destino == "instructor"))
+
+
+def test_el_mensaje_llega_tambien_al_chat_del_bando(db_session):
+    """El mensaje automatico queda en Comunicaciones (firmado por el director) y sale al instante por el reloj."""
+    from types import SimpleNamespace
+
+    from app import comunicaciones
+    from app.models.mensaje import Mensaje
+
+    esc = _escenario(db_session)
+    _reglas(db_session, esc, {"nombre": "Aviso", "disparador": {"tipo": "hora", "hora": "06:00"},
+                              "acciones": [{"tipo": "mensaje", "para": "azul", "texto": "Mueva la brigada"}]})
+    informe = tiempo_real.paso(db_session, esc, 60)
+    db_session.commit()
+    assert [m.texto for m in informe.chats] == ["Mueva la brigada"]
+    m = db_session.query(Mensaje).filter(Mensaje.escenario_id == esc.id).one()
+    assert m.canal == "azul" and m.remitente_nombre == eventos_auto.REMITENTE and m.remitente_rol == "instructor"
+    azul, rojo = SimpleNamespace(id=900, rol="azul"), SimpleNamespace(id=901, rol="rojo")
+    assert [x["mensaje"]["texto"] for x in comunicaciones.historial_para(db_session, esc, azul)] == ["Mueva la brigada"]
+    assert comunicaciones.historial_para(db_session, esc, rojo) == []

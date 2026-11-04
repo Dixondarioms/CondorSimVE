@@ -523,7 +523,7 @@
 
           <details id="sec-eventos-auto">
             <summary>Eventos automáticos</summary>
-            <p class="ayuda">Reglas que el simulador cumple solo: <b>cuando</b> una unidad entra a un área, llega una hora, se destruye una unidad o se cumple un objetivo, <b>entonces</b> manda un mensaje, hace aparecer unidades, cambia el clima, da puntos o pausa el reloj. Se guardan con el escenario y con las plantillas.</p>
+            <p class="ayuda">Reglas que el simulador cumple solo: <b>cuando</b> una unidad entra a un área, llega una hora, se destruye una unidad o se cumple un objetivo, <b>entonces</b> manda un mensaje, hace aparecer unidades, cambia el clima, da puntos, pausa el reloj o lanza misiles. Se guardan con el escenario y con las plantillas.</p>
             <ul id="ea-lista" class="ea-lista"></ul>
             <fieldset class="ea-editor">
               <legend>Nueva regla</legend>
@@ -552,6 +552,7 @@
                 <option value="clima">Cambiar el clima</option>
                 <option value="puntos">Dar o quitar puntos</option>
                 <option value="pausar">Pausar el reloj</option>
+                <option value="lanzar">Lanzar misiles</option>
               </select></label>
               <div id="ea-a-mensaje" class="grid">
                 <label class="mini">Para<select id="ea-para"><option value="todos">Todos</option><option value="azul">Azul</option><option value="rojo">Rojo</option></select></label>
@@ -569,6 +570,12 @@
               <div id="ea-a-puntos" class="grid" hidden>
                 <label class="mini">Bando<select id="ea-pt-bando"><option value="azul">Azul</option><option value="rojo">Rojo</option></select></label>
                 <label class="mini">Puntos (negativo: quitar)<input id="ea-pt-n" type="number" value="10"></label>
+              </div>
+              <div id="ea-a-lanzar" class="grid" hidden>
+                <label class="mini">Lanzador<select id="ea-la-unidad"></select></label>
+                <label class="mini">Blanco<select id="ea-la-blanco"></select></label>
+                <label class="mini">Misiles<input id="ea-la-misiles" type="number" min="1" max="4" value="2"></label>
+                <p class="ayuda">Un ataque programado: el lanzador (batería, buque o lanzador balístico) tira aunque su bando no vea al blanco, si lo tiene a su alcance.</p>
               </div>
               <div class="fila">
                 <button id="ea-agregar-accion" type="button" class="mini secundario">Agregar otra acción</button>

@@ -45,3 +45,27 @@ test("el recorrido apunta a partes que existen en la pantalla", () => {
   }
   assert.ok(HTML.includes('id="btn-ayuda"') && HTML.includes('id="dlg-ayuda"'));
 });
+
+test("el recorrido pasa por todas las pestanas y por las funciones nuevas", () => {
+  const pestanas = new Set(R.PASOS.map((p) => p.pestana).filter(Boolean));
+  for (const p of ["fuerzas", "situacion", "pmo", "consola"]) assert.ok(pestanas.has(p), p);
+  const sels = R.PASOS.map((p) => p.sel || "").join(" ");
+  for (const s of ["#sec-aviacion", "#sec-orden .modos", "#tarjeta-zonas", "#tarjeta-chat", "#tarjeta-alertas",
+    "#panel-unidad", "#sec-eventos-auto", "#sec-trafico", "#btn-informe"]) assert.ok(sels.includes(s), s);
+  const textos = R.PASOS.map((p) => p.texto).join(" ");
+  for (const t of ["Interceptar", "Torpedo", "Minar", "Barrer minas", "Sonoboyas", "defensa de punto", "antimisil",
+    "Carga de armamento", "Sistemas", "profundidad"]) assert.ok(textos.includes(t), t);
+});
+
+test("la practica del recorrido y la del ejercicio Tutorial del Condor tienen los mismos pasos", () => {
+  const plantilla = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "..", "backend", "data", "plantillas_sistema",
+    "tutorial_condor.json"), "utf8"));
+  const enDescripcion = (plantilla.descripcion.match(/\d+\) /g) || []).length;
+  const ultimo = R.PASOS[R.PASOS.length - 1];
+  const enRecorrido = (ultimo.texto.match(/<li>/g) || []).length;
+  const tema = T.TEMAS.find((t) => t.id === "tutorial");
+  assert.ok(enDescripcion >= 12);
+  assert.equal(enRecorrido, enDescripcion);
+  assert.equal((tema.texto.match(/<li>/g) || []).length, enDescripcion);
+  assert.equal(primero("quiero practicar solo"), "tutorial");
+});

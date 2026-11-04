@@ -103,6 +103,11 @@ def _payload(m: Mensaje, con_entrega: bool) -> dict:
     return {"tipo": "chat", "mensaje": d}
 
 
+def payload_de(m: Mensaje) -> dict:
+    """El mensaje tal como lo recibe la pantalla (sin los datos de entrega)."""
+    return _payload(m, False)
+
+
 def historial_para(db: Session, escenario: Escenario, usuario: Usuario) -> list[dict]:
     """Mensajes que `usuario` ya deberia haber recibido (los perdidos o aun en transito no salen)."""
     if usuario.rol not in BANDOS and usuario.rol != "instructor":

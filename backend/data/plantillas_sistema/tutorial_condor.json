@@ -1,7 +1,7 @@
 {
  "id": "tutorial_condor",
  "nombre": "Tutorial del Cóndor",
- "descripcion": "Ejercicio corto para aprender a usar el Cóndor, paso a paso. Usted conduce el bando Azul; el Rojo lo conduce el adversario automático, así puede practicar solo. Antes de empezar haga el recorrido guiado (botón Ayuda → Recorrido guiado). Práctica sugerida: 1) seleccione la 1.ª Brigada de Infantería azul y ordénele Mover hacia el Cruce central (marque 2 puntos en el mapa); 2) despegue los Cazas azules (Aviación) y ordéneles Patrullar sobre la brigada; 3) adelante el Escuadrón de Reconocimiento y mire en SITUACIÓN → Cuadro radar cómo el enemigo pasa de desconocido a identificado (círculo amarillo en el mapa); 4) ordene Atacar con la artillería o los blindados y siga el combate en Alertas; 5) ocupe el Cruce central; 6) al terminar, abra el Informe y mire la repetición.",
+ "descripcion": "Ejercicio para aprender a usar TODO el Cóndor, solo y paso a paso. Usted conduce el bando Azul; el Rojo lo conduce el adversario automático. El director crea el ejercicio, pone el reloj en marcha (10×; 1× si quiere ir con calma) y lo deja correr: los mensajes automáticos (Comunicaciones y Alertas) le van diciendo qué practicar. Antes, haga el recorrido guiado (Ayuda → Recorrido guiado paso a paso). Prácticas, en orden: 1) Comunicaciones: lea los mensajes del director automático (le dicen qué hacer en cada momento) y conteste «Recibido». 2) Doctrina: contra aeronaves, las armas están «restringidas» (solo identificados) porque hay vuelos civiles; déjelas así. 3) Mover: lleve la 1.ª Brigada de Infantería azul al Cruce central (marque 2 puntos en el mapa) y mire su estela. 4) Aviación: los Cazas azules están en tierra; ordéneles Patrullar el «Área de patrulla Norte» con la carga Aire-aire. 5) Interceptar: cuando entre el dron enemigo, mírelo en SITUACIÓN → Cuadro radar y lance los Cazas de alerta azules con Interceptar. 6) Atacar: con la artillería o los blindados, a la Brigada Blindada roja; siga el combate en Alertas y el daño por sistemas abajo. 7) Guerra antisubmarina: el NH90 con Sonar de inmersión o el P-8A con Sonoboyas sobre el «Área de búsqueda Oeste»; después, Torpedo. 8) Minas: lleve el Cazaminas Centinela a la entrada de Puerto Albán y, cuando aparezca el campo rojo, ordene Barrer minas. 9) Salva de misiles: Lanzar misiles desde la Fragata Independencia contra la Corbeta roja; mire la defensa de punto. 10) Misil balístico: mire su defensa antimisil ante los balísticos rojos; ubique el lanzador rojo con un avión y láncele el suyo. 11) Áreas y zonas: mire la «Zona de no vuelo de Capital Azul» y dibuje un área propia. 12) Ocupe el Cruce central y siga el puntaje en Objetivos; mire la pestaña TIEM. 13) Al terminar, abra el Informe y mire la repetición.",
  "clima": "despejado",
  "hora_inicio_min": 480,
  "nacion_azul": "valdoria",
@@ -9,10 +9,16 @@
  "ia_azul": false,
  "ia_rojo": true,
  "dia_noche": false,
+ "ia_nivel": "prudente",
+ "doctrina": {
+  "azul": {
+   "armas_aire": "restringido"
+  }
+ },
  "con_estado": false,
  "conduce_azul": "alumnos",
  "conduce_rojo": "alumnos",
- "turno_final": 6,
+ "turno_final": 8,
  "unidades": [
   {
    "nombre": "Base Aérea de Capital Azul",
@@ -55,7 +61,8 @@
    "bando": "azul",
    "clase": "antiaerea",
    "lat": 10.61067,
-   "lon": -26.2944
+   "lon": -26.2944,
+   "modelo": "s300vm"
   },
   {
    "nombre": "Radar de vigilancia azul",
@@ -109,24 +116,6 @@
    "lon": -24.33884
   },
   {
-   "nombre": "Base Aérea de Capital Roja",
-   "bando": "rojo",
-   "clase": "base_aerea",
-   "lat": 8.25906,
-   "lon": -21.79001
-  },
-  {
-   "nombre": "Cazas rojos",
-   "bando": "rojo",
-   "clase": "caza",
-   "lat": 8.25906,
-   "lon": -21.79001,
-   "modelo": "su30",
-   "aeronaves": 4,
-   "en_tierra": true,
-   "base": "Base Aérea de Capital Roja"
-  },
-  {
    "nombre": "Defensa antiaérea de Capital Roja",
    "bando": "rojo",
    "clase": "antiaerea",
@@ -169,6 +158,89 @@
    "clase": "reconocimiento",
    "lat": 9.45313,
    "lon": -23.56979
+  },
+  {
+   "lat": 10.53507,
+   "lon": -26.27243,
+   "nombre": "Cazas de alerta azules",
+   "bando": "azul",
+   "clase": "caza",
+   "modelo": "f16",
+   "aeronaves": 2,
+   "en_tierra": true,
+   "base": "Base Aérea de Capital Azul"
+  },
+  {
+   "lat": 10.53507,
+   "lon": -26.27243,
+   "nombre": "Helicóptero antisubmarino NH90",
+   "bando": "azul",
+   "clase": "helicoptero_artillado",
+   "modelo": "nh90",
+   "aeronaves": 1,
+   "en_tierra": true,
+   "base": "Base Aérea de Capital Azul"
+  },
+  {
+   "lat": 10.53507,
+   "lon": -26.27243,
+   "nombre": "Patrulla marítima P-8A",
+   "bando": "azul",
+   "clase": "ataque",
+   "modelo": "p8a",
+   "aeronaves": 1,
+   "en_tierra": true,
+   "base": "Base Aérea de Capital Azul"
+  },
+  {
+   "lat": 10.62,
+   "lon": -26.62,
+   "nombre": "Fragata Independencia",
+   "bando": "azul",
+   "clase": "fragata",
+   "modelo": "lupo"
+  },
+  {
+   "lat": 10.5,
+   "lon": -26.8,
+   "nombre": "Submarino Tiburón",
+   "bando": "azul",
+   "clase": "submarino",
+   "modelo": "u209"
+  },
+  {
+   "lat": 10.95,
+   "lon": -26.9,
+   "nombre": "Cazaminas Centinela",
+   "bando": "azul",
+   "clase": "cazaminas"
+  },
+  {
+   "lat": 9.65,
+   "lon": -24.9,
+   "nombre": "Lanzador balístico azul",
+   "bando": "azul",
+   "clase": "lanzador_balistico"
+  },
+  {
+   "lat": 10.42,
+   "lon": -27.1,
+   "nombre": "Submarino rojo",
+   "bando": "rojo",
+   "clase": "submarino",
+   "modelo": "kilo636",
+   "fuerza": 70,
+   "municion": 50
+  },
+  {
+   "lat": 10.05,
+   "lon": -27.3,
+   "nombre": "Corbeta roja",
+   "bando": "rojo",
+   "clase": "patrullero",
+   "modelo": "molniya",
+   "fuerza": 80,
+   "municion": 50
   }
  ],
  "objetivos": [
@@ -176,7 +248,7 @@
    "bando": "azul",
    "tipo": "ocupar",
    "nombre": "Ocupar el Cruce central",
-   "puntos": 40,
+   "puntos": 30,
    "lat": 9.43,
    "lon": -23.86,
    "radio_km": 8.0,
@@ -186,16 +258,38 @@
    "bando": "azul",
    "tipo": "destruir",
    "nombre": "Batir la Brigada Blindada roja",
-   "puntos": 30,
+   "puntos": 20,
    "unidad": "Brigada Blindada rojo"
+  },
+  {
+   "bando": "azul",
+   "tipo": "destruir",
+   "nombre": "Hundir el submarino rojo",
+   "puntos": 20,
+   "unidad": "Submarino rojo"
+  },
+  {
+   "bando": "azul",
+   "tipo": "destruir",
+   "nombre": "Hundir la corbeta roja",
+   "puntos": 15,
+   "unidad": "Corbeta roja"
   },
   {
    "bando": "azul",
    "tipo": "proteger",
    "nombre": "Conservar la Base Aérea de Capital Azul",
-   "puntos": 15,
+   "puntos": 10,
    "unidad": "Base Aérea de Capital Azul",
-   "hasta_turno": 6
+   "hasta_turno": 8
+  },
+  {
+   "bando": "azul",
+   "tipo": "proteger",
+   "nombre": "Conservar la Fragata Independencia",
+   "puntos": 10,
+   "unidad": "Fragata Independencia",
+   "hasta_turno": 8
   },
   {
    "bando": "rojo",
@@ -213,6 +307,535 @@
    "nombre": "Batir la 1.ª Brigada de Infantería azul",
    "puntos": 30,
    "unidad": "1.ª Brigada de Infantería azul"
+  },
+  {
+   "bando": "rojo",
+   "tipo": "destruir",
+   "nombre": "Hundir la Fragata Independencia",
+   "puntos": 20,
+   "unidad": "Fragata Independencia"
+  }
+ ],
+ "eventos_auto": [
+  {
+   "id": "bienvenida",
+   "nombre": "Bienvenida",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "08:00"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: bienvenido al Tutorial del Cóndor. Estos mensajes le dirán qué practicar. 1) Mire la Doctrina (FUERZAS): contra aeronaves, «restringido»: hay vuelos civiles y tirarles resta puntos. 2) Mueva la 1.ª Brigada de Infantería al Cruce central. 3) Ordene a los Cazas azules Patrullar el «Área de patrulla Norte» con la carga Aire-aire."
+    }
+   ]
+  },
+  {
+   "id": "dron",
+   "nombre": "Entra un dron enemigo",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "entra_area",
+    "area": [
+     [
+      10.05,
+      -24.7
+     ],
+     [
+      10.05,
+      -23.6
+     ],
+     [
+      9.7,
+      -23.6
+     ],
+     [
+      9.7,
+      -24.7
+     ]
+    ],
+    "bando": "azul"
+   },
+   "acciones": [
+    {
+     "tipo": "aparecer",
+     "bando": "rojo",
+     "clase": "dron_reconocimiento",
+     "cantidad": 1,
+     "nombre": "Dron de reconocimiento rojo",
+     "lat": 10.6,
+     "lon": -23.8
+    },
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: su patrulla llegó al área. Inteligencia avisa que un dron enemigo entra desde el mar, al norte, hacia sus fuerzas. Cuando aparezca (desconocido), mírelo en SITUACIÓN → Cuadro radar. Seleccione los Cazas de alerta azules (en tierra), orden Interceptar, elija el contacto y «Identificar y neutralizar»."
+    }
+   ]
+  },
+  {
+   "id": "dron_caido",
+   "nombre": "Dron derribado",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "destruida",
+    "unidad": "Dron de reconocimiento rojo"
+   },
+   "acciones": [
+    {
+     "tipo": "puntos",
+     "bando": "azul",
+     "puntos": 5
+    },
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: dron derribado, +5 puntos. Ahora ataque a la Brigada Blindada roja con la artillería o los blindados (orden Atacar) y siga el combate en Alertas."
+    }
+   ]
+  },
+  {
+   "id": "cruce_llegada",
+   "nombre": "Llegada al Cruce",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "entra_area",
+    "area": [
+     [
+      9.51,
+      -23.939999999999998
+     ],
+     [
+      9.51,
+      -23.78
+     ],
+     [
+      9.35,
+      -23.78
+     ],
+     [
+      9.35,
+      -23.939999999999998
+     ]
+    ],
+    "bando": "azul"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: llegó al Cruce central. Manténgase allí para ocuparlo; en Objetivos y puntaje verá el avance. Seleccione una unidad que haya combatido y mire abajo el daño por sistemas."
+    }
+   ]
+  },
+  {
+   "id": "mar",
+   "nombre": "Guerra antisubmarina",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "09:30"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: un pesquero vio un periscopio en el «Área de búsqueda Oeste» (en el mar, frente a Capital Azul). Seleccione el Helicóptero NH90 (en tierra), orden Sonar de inmersión, carga Antisubmarina, y marque un punto del área. O el P-8A con Sonoboyas. Al detectar el submarino rojo, ordene Torpedo."
+    }
+   ]
+  },
+  {
+   "id": "sub_hundido",
+   "nombre": "Submarino hundido",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "destruida",
+    "unidad": "Submarino rojo"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: submarino rojo hundido. Pruebe en su Submarino Tiburón la profundidad (abajo, en el panel de la unidad): a profundidad solo lo oye el sonar."
+    }
+   ]
+  },
+  {
+   "id": "minas",
+   "nombre": "Minas en Puerto Albán",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "10:30"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: se sospecha un campo de minas rojo en la entrada de Puerto Albán. No meta buques allí. Lleve el Cazaminas Centinela (orden Mover) hacia la entrada del puerto; cuando su sonar descubra el campo, ordene Barrer minas sobre él."
+    }
+   ]
+  },
+  {
+   "id": "canal",
+   "nombre": "Cazaminas en el canal",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "entra_area",
+    "area": [
+     [
+      10.9,
+      -26.82
+     ],
+     [
+      10.9,
+      -26.62
+     ],
+     [
+      10.8,
+      -26.62
+     ],
+     [
+      10.8,
+      -26.82
+     ]
+    ],
+    "unidad": "Cazaminas Centinela"
+   },
+   "acciones": [
+    {
+     "tipo": "puntos",
+     "bando": "azul",
+     "puntos": 5
+    },
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: el cazaminas llegó a la entrada de Puerto Albán (+5). Si ya ve el campo en el mapa, ordene Barrer minas con un clic sobre él; tarda unas horas en limpiarlo."
+    }
+   ]
+  },
+  {
+   "id": "misiles",
+   "nombre": "Salva de misiles",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "11:30"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: hora de los misiles. Seleccione la Fragata Independencia, orden Lanzar misiles, blanco la Corbeta roja, 2 misiles. Si la corbeta responde, mire en Alertas cómo la defensa de punto de la fragata derriba los misiles que llegan."
+    }
+   ]
+  },
+  {
+   "id": "balistico",
+   "nombre": "Ataque balístico rojo",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "12:00"
+   },
+   "acciones": [
+    {
+     "tipo": "aparecer",
+     "bando": "rojo",
+     "clase": "lanzador_balistico",
+     "cantidad": 1,
+     "nombre": "Lanzador balístico rojo",
+     "lat": 9.75,
+     "lon": -23.7
+    },
+    {
+     "tipo": "lanzar",
+     "unidad": "Lanzador balístico rojo",
+     "blanco": "Base Aérea de Capital Azul",
+     "misiles": 2
+    },
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: ¡alerta temprana! Dos misiles balísticos rojos van hacia la Base Aérea de Capital Azul. Mire en Alertas cómo su S-300VM (Defensa antiaérea de Capital Azul) intenta derribarlos. Salieron del este del Área de patrulla Norte: mande a patrullarla a sus cazas (si volvieron a cargar combustible, otra vez) y, cuando el lanzador aparezca en el mapa, láncele su Lanzador balístico azul (orden Lanzar misiles; puede hacer falta una segunda salva)."
+    }
+   ]
+  },
+  {
+   "id": "contrabateria",
+   "nombre": "Lanzador rojo destruido",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "destruida",
+    "unidad": "Lanzador balístico rojo"
+   },
+   "acciones": [
+    {
+     "tipo": "puntos",
+     "bando": "azul",
+     "puntos": 15
+    },
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: lanzador balístico rojo destruido (+15). Excelente contrabatería."
+    }
+   ]
+  },
+  {
+   "id": "corbeta",
+   "nombre": "Corbeta hundida",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "destruida",
+    "unidad": "Corbeta roja"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: Corbeta roja hundida. Muy bien."
+    }
+   ]
+  },
+  {
+   "id": "refuerzos",
+   "nombre": "Refuerzos rojos",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "destruida",
+    "unidad": "Brigada Blindada rojo"
+   },
+   "acciones": [
+    {
+     "tipo": "aparecer",
+     "bando": "rojo",
+     "clase": "blindado",
+     "cantidad": 1,
+     "nombre": "Reserva blindada roja",
+     "lat": 9.45,
+     "lon": -23.05
+    },
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: cayó la Brigada Blindada roja. Inteligencia informa una reserva blindada roja que sale de Puerto Varela hacia el Cruce: prepárese a recibirla."
+    }
+   ]
+  },
+  {
+   "id": "cruce",
+   "nombre": "Cruce ocupado",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "objetivo",
+    "objetivo": "Ocupar el Cruce central",
+    "estado": "cumplido"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: Cruce central ocupado. Ahora mire la pestaña TIEM (el trabajo de Estado Mayor) y dibuje en «Áreas y zonas» un área propia."
+    }
+   ]
+  },
+  {
+   "id": "fragata",
+   "nombre": "Fragata perdida",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "destruida",
+    "unidad": "Fragata Independencia"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: perdió la Fragata Independencia. Al terminar, mire en el Informe y en la repetición qué pasó."
+    }
+   ]
+  },
+  {
+   "id": "cierre",
+   "nombre": "Cierre",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "14:00"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "azul",
+     "texto": "Director: complete lo que le falte. Para terminar, abra el Informe: resumen, línea de tiempo y la repetición sobre el mapa. ¡Buen trabajo!"
+    }
+   ]
+  }
+ ],
+ "zonas": [
+  {
+   "bando": "azul",
+   "tipo": "patrulla",
+   "nombre": "Área de patrulla Norte",
+   "puntos": [
+    [
+     10.05,
+     -24.7
+    ],
+    [
+     10.05,
+     -23.6
+    ],
+    [
+     9.7,
+     -23.6
+    ],
+    [
+     9.7,
+     -24.7
+    ]
+   ],
+   "armas": false
+  },
+  {
+   "bando": "azul",
+   "tipo": "patrulla",
+   "nombre": "Área de búsqueda Oeste",
+   "puntos": [
+    [
+     10.55,
+     -27.3
+    ],
+    [
+     10.55,
+     -26.9
+    ],
+    [
+     10.3,
+     -26.9
+    ],
+    [
+     10.3,
+     -27.3
+    ]
+   ],
+   "armas": false
+  },
+  {
+   "bando": "azul",
+   "tipo": "no_vuelo",
+   "nombre": "Zona de no vuelo de Capital Azul",
+   "puntos": [
+    [
+     10.85,
+     -26.65
+    ],
+    [
+     10.85,
+     -25.95
+    ],
+    [
+     10.25,
+     -25.95
+    ],
+    [
+     10.25,
+     -26.65
+    ]
+   ],
+   "armas": false
+  }
+ ],
+ "trafico": {
+  "aviones": 3,
+  "mercantes": 1,
+  "pesqueros": 3,
+  "zona": [
+   9.6,
+   -27.5,
+   11.4,
+   -24.6
+  ],
+  "aerovias": [
+   [
+    [
+     11.4,
+     -25.0496
+    ],
+    [
+     10.3699,
+     -24.6
+    ]
+   ],
+   [
+    [
+     11.0134,
+     -24.6
+    ],
+    [
+     10.873,
+     -27.5
+    ]
+   ],
+   [
+    [
+     11.4,
+     -27.4255
+    ],
+    [
+     9.6,
+     -27.0703
+    ]
+   ],
+   [
+    [
+     9.9149,
+     -27.5
+    ],
+    [
+     9.6,
+     -26.8342
+    ]
+   ],
+   [
+    [
+     11.0402,
+     -24.6
+    ],
+    [
+     9.7785,
+     -27.5
+    ]
+   ]
+  ]
+ },
+ "minas": [
+  {
+   "bando": "rojo",
+   "lat": 10.85,
+   "lon": -26.72,
+   "radio_km": 3.0
   }
  ]
 }

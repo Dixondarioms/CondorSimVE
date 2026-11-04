@@ -3,8 +3,9 @@
 Cada regla tiene un disparador y una o mas acciones:
 - disparadores: una unidad entra a un area (un poligono; de un bando o una unidad concreta), llega una hora del
   ejercicio, se destruye una unidad, o se cumple (o falla) un objetivo;
-- acciones: enviar un mensaje a un bando o a todos, hacer aparecer unidades, cambiar el clima, dar (o quitar) puntos y
-  pausar el reloj.
+- acciones: enviar un mensaje a un bando o a todos, hacer aparecer unidades, cambiar el clima, dar (o quitar) puntos,
+  pausar el reloj y hacer que un lanzador tire una salva de misiles (de crucero o balísticos) contra una unidad: un
+  ataque programado por el director, que no exige que el bando del lanzador vea al blanco.
 Las unidades y los objetivos se nombran por su nombre (no por su numero): asi las reglas sirven tambien al guardar el
 escenario como plantilla y crear otro desde ella. Una regla se dispara una vez, salvo que se marque «repetir» (la de
 la hora, entonces, todos los dias; la del area, cada vez que una unidad entra).
@@ -22,11 +23,13 @@ from app.engine import zonas as zonas_mod
 DISPARADORES = {"entra_area": "Una unidad entra a un área", "hora": "Llega una hora del ejercicio",
                 "destruida": "Se destruye una unidad", "objetivo": "Se cumple o falla un objetivo"}
 ACCIONES = {"mensaje": "Enviar un mensaje", "aparecer": "Hacer aparecer unidades", "clima": "Cambiar el clima",
-            "puntos": "Dar o quitar puntos", "pausar": "Pausar el reloj"}
+            "puntos": "Dar o quitar puntos", "pausar": "Pausar el reloj", "lanzar": "Lanzar misiles"}
 BANDOS_FILTRO = ("cualquiera", "azul", "rojo", "neutral")
 MAX_REGLAS = 50
 MAX_ACCIONES = 6
 MAX_APARECER = 12
+MAX_MISILES = 4
+REMITENTE = "Director"  # firma de los mensajes automaticos en el chat
 
 
 def config(esc) -> dict:
@@ -95,6 +98,9 @@ def validar(reglas: list) -> list[str]:
                 errores.append(f"Regla {i}: clima no válido.")
             elif t == "puntos" and (a.get("bando") not in ("azul", "rojo") or not isinstance(a.get("puntos"), int)):
                 errores.append(f"Regla {i}: puntos para Azul o Rojo (un número entero).")
+            elif t == "lanzar" and (not str(a.get("unidad") or "").strip() or not str(a.get("blanco") or "").strip()
+                                    or not isinstance(a.get("misiles"), int) or not 1 <= a["misiles"] <= MAX_MISILES):
+                errores.append(f"Regla {i}: para lanzar elija el lanzador, el blanco y de 1 a {MAX_MISILES} misiles.")
     return errores
 
 
@@ -197,6 +203,7 @@ def _actuar(ctx, d: dict, r: dict, quien) -> None:
         if t == "mensaje":
             ctx.evento("mensaje", a["para"], a["texto"].strip())
             ctx.alerta("evento", a["para"], a["texto"].strip(), quien.lat if quien else None, quien.lon if quien else None)
+            mensaje_al_chat(ctx, a["para"], a["texto"].strip())
         elif t == "aparecer":
             nuevas = aparecer(ctx, a)
             if nuevas:
@@ -211,6 +218,8 @@ def _actuar(ctx, d: dict, r: dict, quien) -> None:
                                 "regla": r["nombre"], "hora": hora_del_dia(ctx.esc)})
             signo = "+" if a["puntos"] >= 0 else ""
             ctx.evento("direccion", a["bando"], f"{motivo}: {signo}{a['puntos']} puntos.")
+        elif t == "lanzar":
+            lanzar(ctx, a, motivo)
         elif t == "pausar":
             alerta = {"causa": "evento", "bando": "todos", "nivel": "aviso", "lat": None, "lon": None,
                       "texto": f"[{hora_del_dia(ctx.esc)}] {motivo}: el reloj se detiene.", "sim_segundos": ctx.t}
@@ -240,6 +249,43 @@ def aparecer(ctx, a: dict) -> list:
         ctx.lista.append(u)
         nuevas.append(u)
     return nuevas
+
+
+def mensaje_al_chat(ctx, para: str, texto: str) -> None:
+    """El mensaje queda tambien en Comunicaciones (la red del bando o la difusion), firmado por el director."""
+    from app.models.mensaje import Mensaje
+
+    m = Mensaje(escenario_id=ctx.esc.id, canal=para, remitente_id=None, remitente_nombre=REMITENTE,
+                remitente_rol="instructor", texto=texto, turno=ctx.esc.turno_actual)
+    ctx.db.add(m)
+    ctx.db.flush()
+    ctx.informe.chats.append(m)
+
+
+def lanzar(ctx, a: dict, motivo: str) -> bool:
+    """La salva de la accion «lanzar»: como la orden del lanzador, sin exigir que su bando vea al blanco."""
+    from app.engine import balisticos, misiles
+    from app.engine.tiempo_real import aplicar_orden
+    from app.models.orden import Orden
+
+    lanzador, blanco = _unidad(ctx, a["unidad"]), _unidad(ctx, a["blanco"])
+    n = int(a["misiles"])
+    if lanzador is None or blanco is None:
+        error = "no existe el lanzador o el blanco."
+    else:
+        error = (balisticos.error_de_lanzamiento(lanzador, blanco, n) if balisticos.lanza(lanzador)
+                 else misiles.error_de_lanzamiento(lanzador, blanco, n))
+    if error:
+        ctx.evento("direccion", "instructor", f"{motivo}: no se pudo lanzar ({error})")
+        return False
+    orden = Orden(escenario_id=ctx.esc.id, unidad_id=lanzador.id, tipo="lanzar", waypoints_json="[]",
+                  objetivo_unidad_id=blanco.id, detalle=misiles.codificar(n), turno_emitida=ctx.esc.turno_actual)
+    ctx.db.add(orden)
+    ctx.db.flush()
+    aplicar_orden(ctx.db, ctx.esc, orden, lanzador)
+    ctx.db.flush()
+    ctx.releer()  # los misiles vuelan desde este mismo paso
+    return True
 
 
 def puntos_de(esc, hasta_turno: int | None = None) -> dict[str, int]:

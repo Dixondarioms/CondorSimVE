@@ -110,6 +110,12 @@ class Plantilla:
     eventos_auto: tuple = field(default_factory=tuple)
     zonas: tuple = field(default_factory=tuple)
     trafico: dict | None = None
+    # campos de minas navales ya sembrados al empezar (engine/minas.py): {bando, lat, lon, radio_km, densidad}
+    minas: tuple = field(default_factory=tuple)
+    # nivel del adversario automatico (adversario.NIVELES) y doctrina inicial de cada bando ({bando: {campo: valor}},
+    # engine/doctrina.py; None = la de siempre)
+    ia_nivel: str = "normal"
+    doctrina: dict | None = None
     # TIEM: quien conduce cada bando, calendario D/H y Problema Militar Operativo de cada bando ({bando: contenido})
     conduce_azul: str = "alumnos"
     conduce_rojo: str = "alumnos"
@@ -435,7 +441,7 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
         raise KeyError(plantilla_id)
     esc = Escenario(nombre=p.nombre, clima=p.clima, hora_inicio_min=p.hora_inicio_min,
                     nacion_azul=p.nacion_azul, nacion_rojo=p.nacion_rojo, ia_azul=p.ia_azul, ia_rojo=p.ia_rojo,
-                    dia_noche=p.dia_noche, conduce_azul=p.conduce_azul, conduce_rojo=p.conduce_rojo,
+                    dia_noche=p.dia_noche, conduce_azul=p.conduce_azul, conduce_rojo=p.conduce_rojo, ia_nivel=p.ia_nivel,
                     fecha_inicio=p.fecha_inicio, turno_h=p.turno_h, turno_final=p.turno_final,
                     fases_json=json.dumps(list(p.fases), ensure_ascii=False) if p.fases else None)
     if p.eventos_auto:
@@ -443,6 +449,8 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
                                            ensure_ascii=False)
     if p.trafico:
         esc.trafico_json = json.dumps(p.trafico)
+    if p.doctrina:
+        esc.doctrina_json = json.dumps(p.doctrina)
     db.add(esc)
     db.flush()
     from app.models.zona import Zona  # importacion tardia: evita el ciclo con los modelos
@@ -450,6 +458,12 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
     for z in p.zonas:
         db.add(Zona(escenario_id=esc.id, bando=z["bando"], tipo=z["tipo"], nombre=z.get("nombre", ""),
                     puntos_json=json.dumps(z["puntos"]), armas=bool(z.get("armas")), autor="plantilla"))
+    if p.minas:
+        from app.models.mina import CampoMinas  # importacion tardia: evita el ciclo con los modelos
+
+        for c in p.minas:  # solo los conoce el bando que los sembro
+            db.add(CampoMinas(escenario_id=esc.id, bando=c["bando"], lat=c["lat"], lon=c["lon"], radio_km=c["radio_km"],
+                              densidad=c["densidad"], conocido_por="[]", creado_seg=0.0))
 
     unidades: dict[str, Unidad] = {}
     for u in p.unidades:
@@ -612,7 +626,8 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
             "nivel": o.nivel or "material", "padre": nombre_obj.get(o.padre_id), "efecto": o.efecto or "",
             "indicador": o.indicador or "", "umbral": o.umbral,
         })
-    from app.models.problema_militar import ProblemaMilitar  # importacion tardia: solo al guardar
+    from app.models.mina import CampoMinas  # importacion tardia: solo al guardar
+    from app.models.problema_militar import ProblemaMilitar
     from app.engine import eventos_auto, trafico as trafico_mod, zonas as zonas_mod
 
     problemas = {pm.bando: json.loads(pm.contenido_json)
@@ -623,6 +638,7 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
         "con_estado": bool(con_estado), "clima": esc.clima, "hora_inicio_min": esc.hora_inicio_min,
         "nacion_azul": esc.nacion_azul or "", "nacion_rojo": esc.nacion_rojo or "",
         "ia_azul": bool(esc.ia_azul), "ia_rojo": bool(esc.ia_rojo), "dia_noche": bool(esc.dia_noche),
+        "ia_nivel": esc.ia_nivel or "normal", "doctrina": json.loads(esc.doctrina_json) if esc.doctrina_json else None,
         "conduce_azul": esc.conduce_azul or "alumnos", "conduce_rojo": esc.conduce_rojo or "alumnos",
         "fecha_inicio": esc.fecha_inicio, "turno_h": esc.turno_h, "turno_final": esc.turno_final,
         "fases": json.loads(esc.fases_json) if esc.fases_json else [], "pmo": problemas,
@@ -631,6 +647,9 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
         "zonas": [{k: v for k, v in zonas_mod.serializar(z).items() if k not in ("id", "autor")}
                   for z in zonas_mod.de_escenario(db, esc.id)],
         "trafico": trafico_mod.config(esc) or None,
+        "minas": [{"bando": c.bando, "lat": round(c.lat, 5), "lon": round(c.lon, 5), "radio_km": c.radio_km,
+                   "densidad": round(c.densidad, 3)}
+                  for c in db.query(CampoMinas).filter(CampoMinas.escenario_id == esc.id, CampoMinas.densidad > 0)],
     }
 
 
@@ -734,6 +753,9 @@ def desde_dict(datos: dict) -> Plantilla:
         pmo={b: c for b, c in (datos.get("pmo") or {}).items() if b in ("azul", "rojo") and isinstance(c, dict)},
         eventos_auto=_eventos_auto(datos.get("eventos_auto")), zonas=_zonas(datos.get("zonas")),
         trafico=datos.get("trafico") if isinstance(datos.get("trafico"), dict) and datos["trafico"].get("zona") else None,
+        minas=_minas(datos.get("minas")),
+        ia_nivel=datos.get("ia_nivel") if datos.get("ia_nivel") in NIVELES_IA else "normal",
+        doctrina=_doctrina(datos.get("doctrina")),
     )
 
 
@@ -758,6 +780,35 @@ def _zonas(lista) -> tuple:
             raise PlantillaInvalida("Zona mal formada en la plantilla")
         salida.append({"bando": z["bando"], "tipo": z["tipo"], "nombre": str(z.get("nombre") or "")[:60],
                        "puntos": [[float(a), float(b)] for a, b in z["puntos"]], "armas": bool(z.get("armas"))})
+    return tuple(salida)
+
+
+NIVELES_IA = ("prudente", "normal", "agresiva")  # los de adversario.NIVELES
+
+
+def _doctrina(d) -> dict | None:
+    from app.engine import doctrina  # importacion tardia
+
+    if not d:
+        return None
+    if not isinstance(d, dict) or any(b not in ("azul", "rojo") or not isinstance(c, dict) or doctrina.errores(c)
+                                      for b, c in d.items()):
+        raise PlantillaInvalida("Doctrina mal formada en la plantilla")
+    return {b: dict(c) for b, c in d.items()}
+
+
+def _minas(lista) -> tuple:
+    salida = []
+    for c in lista or []:
+        try:
+            campo = {"bando": c["bando"], "lat": float(c["lat"]), "lon": float(c["lon"]),
+                     "radio_km": max(0.5, min(20.0, float(c.get("radio_km") or 3.0))),
+                     "densidad": max(0.05, min(1.0, float(c.get("densidad") or 1.0)))}
+        except (TypeError, ValueError, KeyError):
+            raise PlantillaInvalida("Campo de minas mal formado en la plantilla") from None
+        if campo["bando"] not in ("azul", "rojo") or not (-90 <= campo["lat"] <= 90 and -180 <= campo["lon"] <= 180):
+            raise PlantillaInvalida("Campo de minas mal formado en la plantilla")
+        salida.append(campo)
     return tuple(salida)
 
 

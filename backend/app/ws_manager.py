@@ -88,6 +88,21 @@ class ConnectionManager:
                     self.desconectar(escenario_id, c)
                     break
 
+    async def difundir_chats(self, escenario_id: int, mensajes: list) -> None:
+        """Mensajes que el director automatico escribio en el chat (eventos_auto): a su canal, al instante."""
+        if not mensajes:
+            return
+        from app import comunicaciones  # importacion tardia: comunicaciones usa este modulo
+
+        for c in self.conexiones(escenario_id):
+            for m in mensajes:
+                if c.rol == "instructor" or (state.es_bando(c.rol) and m.canal in (c.rol, "todos")):
+                    try:
+                        await c.websocket.send_json(comunicaciones.payload_de(m))
+                    except Exception:
+                        self.desconectar(escenario_id, c)
+                        break
+
     async def difundir_grafico(self, escenario_id: int, mensaje: dict, bando: str) -> None:
         """Envia un cambio de graficos tacticos solo a quienes pueden ver los del `bando`."""
         for c in self.conexiones(escenario_id):

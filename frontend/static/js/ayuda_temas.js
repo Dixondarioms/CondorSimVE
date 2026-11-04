@@ -70,6 +70,25 @@
         al agregar una unidad, el buscador encuentra el modelo por nombre, país o fabricante. Las cifras son didácticas:
         sirven para comparar plataformas entre sí, no son datos oficiales.</p>`,
     },
+    {
+      id: "tutorial", seccion: "Primeros pasos", titulo: "Practicar solo: el Tutorial del Cóndor",
+      claves: "tutorial practicar practica solo aprender empezar primera vez ejercicio de practica entrenamiento guia guiado paso a paso mensajes del director",
+      texto: `<p>El ejercicio <b>«Tutorial del Cóndor»</b> enseña todo el simulador a una sola persona: usted conduce el
+        <b>Azul</b> y la computadora el <b>Rojo</b>. El director lo crea desde <b>CONSOLA → Desde plantilla…</b>, le da acceso a
+        su cuenta y pone el reloj en marcha (10×, o 1× para ir con calma).</p>
+        <p>Los <b>mensajes automáticos del director</b> (en Comunicaciones y en Alertas) le dicen qué hacer en cada momento y
+        lo felicitan al cumplir. Las prácticas, en orden:</p>
+        <ol><li>Leer los mensajes y contestar.</li><li>Doctrina: «solo identificados» contra aeronaves (hay vuelos civiles).</li>
+        <li>Mover la brigada de infantería al Cruce central.</li><li>Patrullar con los cazas el Área de patrulla Norte, con
+        carga Aire-aire.</li><li>Interceptar el dron enemigo con los cazas de alerta.</li><li>Atacar a la brigada blindada
+        roja y mirar el daño por sistemas.</li><li>Guerra antisubmarina: sonar del NH90 o sonoboyas del P-8A, y torpedo.</li>
+        <li>Barrer el campo de minas de la entrada de Puerto Albán con el cazaminas.</li><li>Salva de misiles de la fragata
+        contra la corbeta roja (defensa de punto).</li><li>Misil balístico: ver la defensa antimisil ante los balísticos rojos y lanzarle
+        el propio al lanzador rojo.</li>
+        <li>Mirar la zona de no vuelo y dibujar un área propia.</li><li>Ocupar el Cruce central y mirar la pestaña TIEM.</li>
+        <li>Abrir el Informe y la repetición.</li></ol>
+        <p>Antes de empezar, haga el <b>recorrido guiado</b> (Ayuda → Recorrido guiado paso a paso).</p>`,
+    },
     // ------------------------------------------------------------------ reloj y alertas
     {
       id: "reloj", seccion: "El reloj y las alertas", titulo: "El reloj: tiempo real y velocidades",
@@ -93,13 +112,15 @@
     },
     {
       id: "eventos-auto", seccion: "Dirección del ejercicio", titulo: "Eventos automáticos (disparadores y acciones)",
-      claves: "eventos automaticos disparador disparadores accion acciones regla reglas cuando entonces guion inyeccion automatica aparecer refuerzos mensaje programado hora",
+      claves: "eventos automaticos disparador disparadores accion acciones regla reglas cuando entonces guion inyeccion automatica aparecer refuerzos mensaje programado hora lanzar misiles ataque programado balistico",
       director: true,
       texto: `<p>En CONSOLA → <b>Eventos automáticos</b> el director arma reglas que el simulador cumple solo:</p>
         <ul><li><b>Cuando</b>: una unidad entra a un área (una zona dibujada en «Áreas y zonas»; de un bando o una unidad
         concreta), llega una hora del ejercicio, se destruye una unidad, o se cumple o falla un objetivo.</li>
         <li><b>Entonces</b> (una o varias): enviar un mensaje a un bando o a todos, hacer aparecer unidades (elija bando,
-        clase, cantidad y el punto en el mapa), cambiar el clima, dar o quitar puntos, o pausar el reloj.</li></ul>
+        clase, cantidad y el punto en el mapa), cambiar el clima, dar o quitar puntos, pausar el reloj, o <b>lanzar
+        misiles</b>: un lanzador (batería, buque o lanzador balístico) tira una salva contra la unidad elegida, aunque su
+        bando no la vea (un ataque programado; debe tenerla a su alcance).</li></ul>
         <p>Cada regla se dispara una vez, salvo que marque <b>Repetir</b>. En la lista se activan, se desactivan y se borran, y
         se ve cuántas veces se dispararon. Se guardan con el escenario y con las plantillas (las unidades y los objetivos se
         nombran por su nombre).</p>`,

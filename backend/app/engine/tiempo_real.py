@@ -195,6 +195,7 @@ class Informe:
     cambios: bool = False
     horas: list = field(default_factory=list)
     alertas: list = field(default_factory=list)
+    chats: list = field(default_factory=list)  # mensajes del chat que escribio el director automatico (eventos_auto)
 
 
 # Causas de pausa automatica (el director elige cuales detienen el reloj) y sus nombres para la pantalla.

@@ -20,3 +20,8 @@ test("textoAccionAuto: aparecer unidades", () => {
   assert.equal(L.textoAccionAuto({ tipo: "aparecer", cantidad: 2, nombre: "Cía de reserva", clase: "infanteria", bando: "azul" }),
     "aparecen 2 Cía de reserva (Azul)");
 });
+
+test("textoAccionAuto: lanzar misiles programados", () => {
+  assert.equal(L.textoAccionAuto({ tipo: "lanzar", unidad: "Lanzador rojo", blanco: "Base azul", misiles: 2 }),
+    "Lanzador rojo lanza 2 misil(es) contra Base azul");
+});

@@ -119,3 +119,11 @@ def test_api_profundidad_y_torpedo(api):
     assert r.status_code == 400 and "patrulla marítima" in r.json()["detail"]
     cat = alfa.get("/api/catalogo").json()
     assert "p8a" in cat["asw"]["aviones"] and cat["cargas"]["p8a"]["antisubmarina"] == {"TOR": 4}
+
+
+def test_la_orden_acepta_la_carga_antisubmarina():
+    """El NH90, el P-3 y el P-8 en tierra despegan con la carga antisubmarina elegida en la Nueva orden o en la OTA."""
+    from app import schemas
+
+    assert schemas.OrdenCreate(unidad_id=1, tipo="sonar", waypoints=[(0.1, 0.1)], carga="antisubmarina").carga == "antisubmarina"
+    assert schemas.OtaMisionIn(carga="antisubmarina").carga == "antisubmarina"

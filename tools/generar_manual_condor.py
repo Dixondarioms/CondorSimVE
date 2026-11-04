@@ -24,6 +24,7 @@ from reportlab.platypus import Image, KeepTogether, PageBreak, Paragraph, Spacer
 from reportlab.platypus.tableofcontents import TableOfContents  # noqa: E402
 
 from app.engine import catalogo  # noqa: E402  (generar_manual ya agrega backend/ a la ruta)
+from crear_ejercicio_tutorial import PRACTICAS as PRACTICAS_TUTORIAL  # noqa: E402  (la misma lista que el ejercicio)
 
 from reportlab.pdfbase import pdfmetrics  # noqa: E402
 from reportlab.pdfbase.ttfonts import TTFont  # noqa: E402
@@ -241,9 +242,29 @@ def construir(salida: Path) -> None:
     h += figura("ayuda", "Ventana de ayuda: se escribe la pregunta y aparecen los temas que la responden.")
     h += [P("El botón <b>Ayuda</b> (o <b>F1</b>) abre la ayuda del Cóndor. Escriba la pregunta con sus palabras («cómo despego "
             "un avión», «por qué no veo al enemigo») y elija el tema; a la izquierda están todos los temas por sección. "
-            "<b>Recorrido guiado paso a paso</b> señala cada parte de la pantalla y explica para qué sirve."),
-          P("Para practicar sin riesgo, el director puede asignar el ejercicio <b>Tutorial del Cóndor</b>, que enseña la "
-            "interfaz paso a paso.")]
+            "<b>Recorrido guiado paso a paso</b> señala cada parte de la pantalla y explica para qué sirve: las tres pestañas "
+            "(y la CONSOLA del director), la aviación con su carga de armamento, las órdenes de aviación (Patrullar, "
+            "Interceptar, Rumbo) y las navales (Torpedo, Sonoboyas, Sonar de inmersión, Minar, Barrer minas, Lanzar misiles), "
+            "las áreas y zonas, el daño por sistemas, las comunicaciones, las alertas y el informe. Los pasos de lo que su "
+            "cuenta no ve se saltan solos.")]
+    h += figura("recorrido_naval", "Recorrido guiado: el paso de las órdenes navales y de los misiles.")
+    h += [H2("2.10 Practicar solo: el Tutorial del Cóndor"),
+          P("El ejercicio <b>Tutorial del Cóndor</b> enseña todo el simulador a <b>una sola persona</b>: el alumno conduce el "
+            "Azul y el adversario automático el Rojo, sobre el mapa ficticio (País Azul y País Rojo). El director lo crea desde "
+            "CONSOLA → <b>Desde plantilla…</b>, marca la cuenta del alumno en <b>Usuarios con acceso</b> y pone el reloj en "
+            "marcha (10×; 1× para ir con calma). Para que el alumno no pierda todo antes de aprender, el adversario es "
+            "«prudente», el Rojo no tiene aviación propia y las armas azules contra aeronaves empiezan restringidas (hay "
+            "vuelos civiles).")]
+    h += figura("tutorial", "Tutorial del Cóndor: el Azul junto a Capital Azul, con su fragata, submarino y cazaminas en el "
+                            "mar, el Área de patrulla Norte, el Área de búsqueda Oeste y la zona de no vuelo ya dibujadas.")
+    h += [P("Los <b>eventos automáticos</b> hacen de instructor: a cada hora le mandan al alumno, por <b>Comunicaciones</b> y "
+            "<b>Alertas</b>, la práctica que sigue (08:00 tierra y aire, 09:30 antisubmarina, 10:30 minas, 11:30 salva de "
+            "misiles, 12:00 ataque balístico rojo, 14:00 cierre) y, según lo que hace, lo felicitan, le dan puntos o le "
+            "inyectan una situación: un dron enemigo cuando su patrulla llega al área, refuerzos rojos cuando cae la brigada "
+            "blindada roja. Las prácticas, en orden:"),
+          Num(PRACTICAS_TUTORIAL)]
+    h += figura("recorrido_practica", "El último paso del recorrido guiado: la práctica en el Tutorial del Cóndor.",
+                ancho=9 * cm)
 
     # ---------------------------------------------------------------- 3 reloj
     h += H1("3. El reloj y las alertas")
@@ -629,11 +650,15 @@ def construir(salida: Path) -> None:
                   [P("Reglas que el simulador cumple solo, con un <b>cuando</b> y uno o varios <b>entonces</b>:"),
                    Bul(["<b>Cuando</b>: una unidad entra a un área (una zona dibujada; de un bando o una unidad concreta), llega "
                         "una hora del ejercicio, se destruye una unidad, o se cumple o falla un objetivo.",
-                        "<b>Entonces</b>: enviar un mensaje, hacer aparecer unidades (bando, clase, cantidad y el punto en el "
-                        "mapa), cambiar el clima, dar o quitar puntos, o pausar el reloj."]),
+                        "<b>Entonces</b>: enviar un mensaje (llega a Comunicaciones, firmado «Director», y como alerta), "
+                        "hacer aparecer unidades (bando, clase, cantidad y el punto en el mapa), cambiar el clima, dar o "
+                        "quitar puntos, pausar el reloj o <b>lanzar misiles</b>: un lanzador (batería, buque o lanzador "
+                        "balístico) tira una salva contra la unidad elegida aunque su bando no la vea, si la tiene a su "
+                        "alcance (un ataque programado)."]),
                    P("Cada regla se dispara una vez, salvo que se marque <b>Repetir</b>. En la lista se activan, se desactivan "
-                     "y se borran. Se guardan con el escenario y con las plantillas, junto con las áreas y zonas y el tráfico "
-                     "civil.")]]],
+                     "y se borran. Se guardan con el escenario y con las plantillas, junto con las áreas y zonas, el tráfico "
+                     "civil, los campos de minas, la doctrina y el nivel del adversario. El <b>Tutorial del Cóndor</b> (2.10) "
+                     "es un ejemplo completo.")]]],
                 colWidths=[6.5 * cm, ANCHO_TEXTO - 6.5 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
     h += [H2("13.5 Cuentas y usuarios"),
           P("CONSOLA → <b>Usuarios</b>: crear cuentas, cambiar su repartición, restablecer contraseñas y aprobar las solicitudes "
