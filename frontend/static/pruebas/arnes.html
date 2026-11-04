@@ -1191,40 +1191,50 @@
             </div>
             <div class="fila-base-mapa" id="mapas-ir" aria-label="Ir a una región del mapa" title="Regiones del mapa disponibles (tools/preparar_terreno.py); la más detallada se dibuja encima"></div>
             <div class="capas">
-              <label><input type="checkbox" data-capa="terreno" checked><span>Terreno</span></label>
-              <label><input type="checkbox" data-capa="cobertura"><span>Cobertura (detección)</span></label>
-              <label><input type="checkbox" data-capa="niebla"><span>Niebla de guerra</span></label>
-              <label><input type="checkbox" data-capa="unidades" checked><span>Unidades</span></label>
-              <label title="Por donde pasó cada unidad: la línea se desvanece cuanto más vieja es"><input type="checkbox" data-capa="estelas" checked><span>Estelas de movimiento</span></label>
-              <label class="sub-capa">Largo de la estela
-                <select id="estela-duracion" aria-label="Cuánto tiempo simulado muestra la estela">
-                  <option value="600">10 minutos</option>
-                  <option value="1800">30 minutos</option>
-                  <option value="3600">1 hora</option>
-                  <option value="10800">3 horas</option>
-                </select>
-              </label>
-              <label title="El anillo de alcance de cada unidad desplegada aparece al acercar el mapa (zoom 9 en adelante)"><input type="checkbox" data-capa="alcances" checked><span>Alcance de las unidades (al acercarse)</span></label>
-              <label><input type="checkbox" data-capa="contactos" checked><span>Últimos contactos</span></label>
-              <label><input type="checkbox" data-capa="graficos" checked><span>Gráficos tácticos</span></label>
-              <label><input type="checkbox" data-capa="referencias" checked><span>Límites y poblaciones</span></label>
-              <label><input type="checkbox" data-capa="bases_ven" checked><span>Bases aéreas y aeródromos (América)</span></label>
-              <label><input type="checkbox" data-capa="aerodromos" checked><span>Plano de los aeródromos (pistas y hangares)</span></label>
-              <label title="Tramos rectos de carreteras principales pavimentadas, anchos, casi planos y sin puentes, donde puede ir un PRO con pista (OpenStreetMap)"><input type="checkbox" data-capa="tramos_pro"><span>Tramos aptos para PRO (pistas en carretera)</span></label>
-              <label><input type="checkbox" id="ver-app6"><span>Símbolos militares (APP-6) en lugar de miniaturas</span></label>
-              <label><input type="checkbox" data-capa="objetivos" checked><span>Objetivos</span></label>
-              <label title="Centrales eléctricas, refinerías, centros de comunicaciones y puentes de Venezuela (OpenStreetMap)"><input type="checkbox" data-capa="infraestructura" checked><span>Infraestructura (energía, refinerías, comunicaciones, puentes)</span></label>
-              <label><input type="checkbox" data-capa="ge" checked><span>Guerra electrónica</span></label>
-              <label><input type="checkbox" data-capa="meteorologia" checked><span>Meteorología (zonas)</span></label>
-              <label class="sub-capa">Vista del clima
-                <select id="vista-clima" aria-label="Cómo se ven las zonas meteorológicas">
-                  <option value="radio">Solo el radio</option>
-                  <option value="satelite">Satélite meteorológico</option>
-                </select>
-              </label>
-              <label><input type="checkbox" data-capa="misiones" checked><span>Misiones aéreas</span></label>
-              <label><input type="checkbox" data-capa="zonas" checked><span>Áreas y zonas</span></label>
-              <label><input type="checkbox" data-capa="aerovias" checked><span>Aerovías del tráfico civil</span></label>
+              <details class="capas-grupo" data-grupo="mapa"><summary>Mapa</summary>
+                <label><input type="checkbox" data-capa="terreno" checked><span>Terreno</span></label>
+                <label><input type="checkbox" data-capa="referencias" checked><span>Límites y poblaciones</span></label>
+                <label><input type="checkbox" data-capa="bases_ven" checked><span>Bases aéreas y aeródromos (América)</span></label>
+                <label><input type="checkbox" data-capa="aerodromos" checked><span>Plano de los aeródromos (pistas y hangares)</span></label>
+                <label title="Centrales eléctricas, refinerías, centros de comunicaciones y puentes de Venezuela (OpenStreetMap)"><input type="checkbox" data-capa="infraestructura" checked><span>Infraestructura (energía, refinerías, comunicaciones, puentes)</span></label>
+                <label title="Tramos rectos de carreteras principales pavimentadas, anchos, casi planos y sin puentes, donde puede ir un PRO con pista (OpenStreetMap)"><input type="checkbox" data-capa="tramos_pro"><span>Tramos aptos para PRO (pistas en carretera)</span></label>
+              </details>
+              <details class="capas-grupo" data-grupo="unidades" open><summary>Unidades</summary>
+                <label><input type="checkbox" data-capa="unidades" checked><span>Unidades</span></label>
+                <label><input type="checkbox" id="ver-app6"><span>Símbolos militares (APP-6) en lugar de miniaturas</span></label>
+                <label title="Por donde pasó cada unidad: la línea se desvanece cuanto más vieja es"><input type="checkbox" data-capa="estelas" checked><span>Estelas de movimiento</span></label>
+                <label class="sub-capa">Largo de la estela
+                  <select id="estela-duracion" aria-label="Cuánto tiempo simulado muestra la estela">
+                    <option value="600">10 minutos</option>
+                    <option value="1800">30 minutos</option>
+                    <option value="3600">1 hora</option>
+                    <option value="10800">3 horas</option>
+                  </select>
+                </label>
+                <label title="El anillo de alcance de cada unidad desplegada aparece al acercar el mapa (zoom 9 en adelante)"><input type="checkbox" data-capa="alcances" checked><span>Alcance de las unidades (al acercarse)</span></label>
+              </details>
+              <details class="capas-grupo" data-grupo="inteligencia"><summary>Inteligencia</summary>
+                <label><input type="checkbox" data-capa="cobertura"><span>Cobertura (detección)</span></label>
+                <label><input type="checkbox" data-capa="niebla"><span>Niebla de guerra</span></label>
+                <label><input type="checkbox" data-capa="contactos" checked><span>Últimos contactos</span></label>
+                <label><input type="checkbox" data-capa="ge" checked><span>Guerra electrónica</span></label>
+              </details>
+              <details class="capas-grupo" data-grupo="planeamiento" open><summary>Planeamiento</summary>
+                <label><input type="checkbox" data-capa="graficos" checked><span>Gráficos tácticos</span></label>
+                <label><input type="checkbox" data-capa="objetivos" checked><span>Objetivos</span></label>
+                <label><input type="checkbox" data-capa="misiones" checked><span>Misiones aéreas</span></label>
+                <label><input type="checkbox" data-capa="zonas" checked><span>Áreas y zonas</span></label>
+                <label><input type="checkbox" data-capa="aerovias" checked><span>Aerovías del tráfico civil</span></label>
+              </details>
+              <details class="capas-grupo" data-grupo="clima"><summary>Clima</summary>
+                <label><input type="checkbox" data-capa="meteorologia" checked><span>Meteorología (zonas)</span></label>
+                <label class="sub-capa">Vista del clima
+                  <select id="vista-clima" aria-label="Cómo se ven las zonas meteorológicas">
+                    <option value="radio">Solo el radio</option>
+                    <option value="satelite">Satélite meteorológico</option>
+                  </select>
+                </label>
+              </details>
             </div>
           </section>
 
@@ -1243,6 +1253,7 @@
 
           <section class="tarjeta tarjeta-alertas" id="tarjeta-alertas">
             <h2>Alertas <span id="alertas-nuevas" class="contador" hidden>0</span></h2>
+            <div id="filtro-alertas" class="filtro-alertas" role="group" aria-label="Filtrar las alertas"></div>
             <ul id="alertas"></ul>
           </section>
         </aside>
@@ -1447,6 +1458,7 @@
   <script src="/static/js/recorrido.js"></script>
   <script src="/static/js/infraestructura.js"></script>
   <script src="/static/js/aguila.js"></script>
+  <script src="/static/js/interfaz.js"></script>
   <script src="/static/pruebas/arnes.js"></script>
   <script src="/static/js/app.js"></script>
 </body>

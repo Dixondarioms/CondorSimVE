@@ -59,7 +59,10 @@
     { sel: "#cola", pestana: "fuerzas", marco: "section", titulo: "La cola de órdenes", texto: `<p>Las órdenes en curso y las
       recientes, con su resultado. El botón <b>■</b> detiene una orden.</p>` },
     { sel: "#map", titulo: "El mapa", texto: `<p>Rueda del ratón: acercar o alejar. Arrastrar: mover el mapa. Clic sobre una unidad:
-      seleccionarla. Pase el cursor sobre una unidad para ver su tarjeta.</p><p>Un enemigo dudoso lleva un <b>círculo amarillo</b>
+      seleccionarla. Pase el cursor sobre una unidad para ver su tarjeta. <b>Clic derecho</b> sobre el mapa o una unidad: las
+      órdenes más usadas (Mover aquí, Atacar, Interceptar, Aterrizar…). Los aviones en tierra se cuentan sobre su base
+      («✈ 5»); con clic derecho en la base se elige uno.</p><p>Bajo el símbolo de sus unidades, etiquetas de color avisan lo
+      urgente: poco combustible, sin munición, sin enlace, avería.</p><p>Un enemigo dudoso lleva un <b>círculo amarillo</b>
       (dónde puede estar en realidad); las unidades que se mueven dejan una <b>estela</b>. También se ven los misiles y torpedos
       en vuelo, las sonoboyas, los campos de minas que su bando conoce y el tráfico civil.</p>` },
     { sel: "#controles-mapa", titulo: "Acercar, alejar y centrar", texto: `<p><b>+</b> y <b>−</b> acercan y alejan el mapa. La
@@ -121,8 +124,9 @@
       <b>repetición</b> sobre el mapa y la rúbrica de evaluación.</p>` },
     { sel: "#btn-videowall", titulo: "Videowall", texto: `<p>El mapa a pantalla completa para un proyector (tecla <b>V</b>; Esc
       para volver).</p>` },
-    { sel: "#btn-ayuda", titulo: "Ayuda", texto: `<p>Cuando tenga una duda, pulse <b>Ayuda</b> (o la tecla <b>F1</b>) y escriba su
-      pregunta con sus palabras.</p>` },
+    { sel: "#btn-ayuda", titulo: "Ayuda y atajos", texto: `<p>Cuando tenga una duda, pulse <b>Ayuda</b> (o la tecla <b>F1</b>) y
+      escriba su pregunta con sus palabras.</p><p>Atajos: <b>M</b> Mover, <b>A</b> Atacar, <b>I</b> Interceptar, <b>P</b> Patrullar,
+      <b>C</b> centrar el mapa. Las tarjetas de la derecha se pliegan con un clic en su título.</p>` },
     { titulo: "Ahora, a practicar", texto: `<p>En el ejercicio <b>«Tutorial del Cóndor»</b> (el director lo crea desde
       <b>Desde plantilla…</b> y pone el reloj en marcha) usted conduce el Azul y la computadora el Rojo. Los mensajes del
       director automático le irán diciendo qué hacer. En este orden:</p><ol class="rec-lista">

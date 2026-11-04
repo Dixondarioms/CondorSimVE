@@ -248,7 +248,20 @@ def construir(salida: Path) -> None:
             "las áreas y zonas, el daño por sistemas, las comunicaciones, las alertas y el informe. Los pasos de lo que su "
             "cuenta no ve se saltan solos.")]
     h += figura("recorrido_naval", "Recorrido guiado: el paso de las órdenes navales y de los misiles.")
-    h += [H2("2.10 Practicar solo: el Tutorial del Cóndor"),
+    h += [H2("2.10 Atajos, clic derecho y comodidades"),
+          Bul(["<b>Clic derecho</b> sobre el mapa (con una unidad propia elegida): Mover aquí, Patrullar aquí, sonoboyas, "
+               "sonar, minar o barrer aquí, centrar. Sobre una unidad: elegirla y Atacar, Interceptar, Torpedo, Lanzar misiles "
+               "o Aterrizar en ella. Sobre una base: la lista de sus aviones en tierra, que se cuentan sobre ella («✈ 5»).",
+               "<b>Atajos</b>: M (Mover), A (Atacar), I (Interceptar), P (Patrullar), C (centrar), Esc (cancelar), V "
+               "(videowall), F1 (ayuda); el director, espacio (reloj) y 1, 2, 3 (velocidad).",
+               "La <b>ruta</b> de la orden Mover se corrige sobre el mapa: cada punto se arrastra o se quita con clic derecho, y "
+               "su tarjeta dice en cuánto llega y con cuánto combustible (aproximado).",
+               "<b>Señales</b> bajo el símbolo de las unidades propias: COMB (poco combustible), MUN (sin munición), S/E (sin "
+               "enlace de datos), AVER (avería), MANT (mantenimiento) y los minutos para despegar.",
+               "Las tarjetas del panel derecho se <b>pliegan</b> con un clic en su título y las capas van agrupadas; donde varios "
+               "nombres se pisan en el mapa se ve uno solo. En <b>Alertas</b>, filtros por tipo y los mensajes del director en "
+               "amarillo."])]
+    h += [H2("2.11 Practicar solo: el Tutorial del Cóndor"),
           P("El ejercicio <b>Tutorial del Cóndor</b> enseña todo el simulador a <b>una sola persona</b>: el alumno conduce el "
             "Azul y el adversario automático el Rojo, sobre el mapa ficticio (País Azul y País Rojo). El director lo crea desde "
             "CONSOLA → <b>Desde plantilla…</b>, marca la cuenta del alumno en <b>Usuarios con acceso</b> y pone el reloj en "
@@ -708,7 +721,7 @@ def construir(salida: Path) -> None:
                         "alcance (un ataque programado)."]),
                    P("Cada regla se dispara una vez, salvo que se marque <b>Repetir</b>. En la lista se activan, se desactivan "
                      "y se borran. Se guardan con el escenario y con las plantillas, junto con las áreas y zonas, el tráfico "
-                     "civil, los campos de minas, la doctrina, el nivel del adversario y el enlace de datos. El <b>Tutorial del Cóndor</b> (2.10) "
+                     "civil, los campos de minas, la doctrina, el nivel del adversario y el enlace de datos. El <b>Tutorial del Cóndor</b> (2.11) "
                      "es un ejemplo completo.")]]],
                 colWidths=[6.5 * cm, ANCHO_TEXTO - 6.5 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
     h += [H2("13.5 Cuentas y usuarios"),
