@@ -254,7 +254,7 @@
     },
     {
       id: "patrulla", seccion: "Aviación", titulo: "Patrullar, aterrizar y el combustible",
-      claves: "patrulla patrullar cap orbitar interceptar aterrizar regreso base combustible bingo winchester reabastecer rearmar 2 horas plazas",
+      claves: "patrulla permanente relevo relevar patrulla patrullar cap orbitar interceptar aterrizar regreso base combustible bingo winchester reabastecer rearmar 2 horas plazas",
       texto: `<p><b>Patrullar</b>: la aeronave vuela a la zona, orbita (gasta cerca de 8 % de combustible por hora) e intercepta a
         los aviones enemigos que detecte a su alcance.</p>
         <p><b>Aterrizar</b>: vuelve a la base elegida. En tierra tarda unas <b>2 horas</b> en reabastecer y rearmar; después,
