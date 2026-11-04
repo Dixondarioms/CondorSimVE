@@ -2573,7 +2573,7 @@
     app.textosAlertas.add(m.texto);
     app.ultimaAlerta = m;
     app.alertas.unshift({ nivel: m.nivel, texto, turno: app.data ? app.data.escenario.turno_actual : 0, horaVivo: hora,
-      lat: m.lat, lon: m.lon, nueva: true });
+      lat: m.lat, lon: m.lon, nueva: true, causa: m.causa });
     app.alertasSinLeer += 1;
     app.alertas = app.alertas.slice(0, MAX_ALERTAS);
     renderAlertas();
@@ -2603,10 +2603,16 @@
   function renderAlertas() {
     const ul = $("alertas");
     limpiar(ul);
-    if (!app.alertas.length) { const li = document.createElement("li"); li.className = "info"; li.textContent = "Sin novedades."; ul.appendChild(li); }
-    for (const a of app.alertas) {
+    const lista = app.alertas.filter((a) => !app.interfaz || app.interfaz.pasa(a));
+    if (!lista.length) {
       const li = document.createElement("li");
-      li.className = a.nivel + (a.nueva ? " nueva" : "");
+      li.className = "info";
+      li.textContent = app.alertas.length ? "Sin novedades de este tipo." : "Sin novedades.";
+      ul.appendChild(li);
+    }
+    for (const a of lista) {
+      const li = document.createElement("li");
+      li.className = a.nivel + (a.nueva ? " nueva" : "") + (Interfaz.grupoAlerta(a) === "director" ? " director" : "");
       const t = document.createElement("time");
       t.textContent = a.horaVivo ? a.horaVivo : `HORA ${a.turno} · ${a.hora}`;
       li.append(t, a.texto);
@@ -3106,6 +3112,9 @@
     });
     app.zonas.conectar();
     app.capas.zonas = app.zonas.capa;
+    // tarjetas y capas plegables, atajos de teclado y filtros de las alertas (interfaz.js)
+    app.interfaz = Interfaz.crear({ esDirector: () => esInstructor(), alCambiarFiltro: () => renderAlertas() });
+    app.interfaz.conectar();
     app.eventosAuto = EventosAuto.crear({
       api, toast, rutaEsc, datos: () => app.data, catalogo: () => app.catalogo, esDirector: () => esInstructor(),
       escenarioId: () => app.escenarioId,

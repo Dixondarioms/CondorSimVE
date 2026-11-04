@@ -418,8 +418,10 @@ body.replay-animado #leyenda-mapa, body.replay-animado #rp-combates { display: n
 
 /* perfil de vuelo de una aeronave (ficha): alto / medio / rasante */
 .perfil-vuelo { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 8px 0 2px; }
-.perfil-vuelo > span { font-size: 12px; color: var(--texto-sec); margin-right: 2px; }
-.perfil-vuelo button { flex: 1 1 0; }
+.perfil-vuelo > span { font-size: 12px; color: var(--texto-sec); margin-right: 2px; flex-basis: 100%; }
+/* los botones no parten sus palabras (el panel de abajo permite cortar texto largo en cualquier letra) */
+.perfil-vuelo button { flex: 1 1 auto; white-space: nowrap; overflow-wrap: normal; word-break: normal; padding: 2px 6px; }
+.pu-col button, .pu-col select { overflow-wrap: normal; word-break: normal; }
 
 /* botones en fila (ordenes: seguir carreteras / limpiar waypoints) */
 .fila-botones { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -582,3 +584,18 @@ a.boton-enlace:hover { border-color: var(--azul); }
 #tiem-evaluacion tr.fila-nota td, #tiem-evaluacion tr.fila-nota th { color: var(--ambar); font-weight: 700; }
 #tiem-evaluacion td.num { white-space: nowrap; }
 .avion3d-grupo .peana { position: absolute; left: 0; top: 0; pointer-events: none; }
+
+/* ---------- comodidades de la pantalla (interfaz.js) ---------- */
+#panel-der .tarjeta > h2.plegable { cursor: pointer; user-select: none; }
+#panel-der .tarjeta > h2.plegable::after { content: "▾"; float: right; color: var(--texto-sec); font-size: 12px; }
+#panel-der .tarjeta.plegada > h2.plegable::after { content: "▸"; }
+#panel-der .tarjeta.plegada > :not(h2) { display: none !important; }
+.capas-grupo { border-top: 1px solid var(--borde); padding-top: 4px; }
+.capas-grupo > summary { cursor: pointer; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--texto-sec); padding: 2px 0; }
+.capas-grupo[open] > summary { margin-bottom: 4px; }
+.capas-grupo > label { margin-left: 4px; }
+.filtro-alertas { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 6px; }
+.filtro-alertas button { flex: 0 0 auto; width: auto; }
+#alertas li.director { border-left: 3px solid #ffd166; background: rgba(255, 209, 102, .08); }
+.zonas-lista .fila > button, .ea-lista .fila > button { flex: 0 0 auto; width: auto; }

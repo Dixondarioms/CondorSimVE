@@ -47,6 +47,21 @@
         con la rueda del ratón o las teclas + y −.</p>`,
     },
     {
+      id: "atajos", seccion: "Primeros pasos", titulo: "Atajos de teclado y comodidades de la pantalla",
+      claves: "atajos teclado tecla teclas rapido plegar tarjeta esconder capas grupos filtro alertas filtrar clic derecho menu",
+      texto: `<p><b>Atajos</b> (no funcionan mientras escribe en un campo):</p>
+        <table><tr><td><b>M</b> / <b>A</b> / <b>I</b> / <b>P</b></td><td>Orden Mover, Atacar, Interceptar o Patrullar (de la unidad elegida)</td></tr>
+        <tr><td><b>C</b></td><td>Centrar el mapa</td></tr>
+        <tr><td><b>Esc</b></td><td>Cancelar el dibujo, el menú o la ventana</td></tr>
+        <tr><td><b>V</b> · <b>F1</b></td><td>Videowall · Ayuda</td></tr>
+        <tr><td><b>+</b> / <b>−</b></td><td>Acercar o alejar</td></tr>
+        <tr><td><b>Espacio</b> · <b>1</b> <b>2</b> <b>3</b></td><td>Director: poner en marcha o detener el reloj · velocidad 1×, 10×, 60×</td></tr></table>
+        <p><b>Clic derecho</b> sobre el mapa o una unidad abre un menú con las órdenes más usadas.</p>
+        <p>Las tarjetas del panel derecho se <b>pliegan</b> con un clic en su título, y las capas están agrupadas (Mapa,
+        Unidades, Inteligencia, Planeamiento, Clima): la pantalla recuerda cómo las dejó. En <b>Alertas</b>, los botones
+        filtran por tipo (ataques, contactos, mensajes del director); los mensajes del director se ven en amarillo.</p>`,
+    },
+    {
       id: "reparticiones", seccion: "Primeros pasos", titulo: "Qué ordena cada repartición",
       claves: "reparticion puesto comandante jem a1 a2 a3 a3da a4 ce personal inteligencia operaciones defensa aerea logistica comunicaciones electronica quien ordena permisos funciones corresponde",
       texto: `<table><tr><th>Repartición</th><th>Qué conduce</th></tr>
