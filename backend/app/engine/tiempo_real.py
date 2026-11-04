@@ -1271,6 +1271,10 @@ def _vigilar_zonas(ctx: _Ctx) -> None:
     ve; en las del director, al bando del intruso) y, en las zonas con «armas», queda como blanco autorizado."""
     ctx.zona_armada = {}
     vigentes = set()
+    for z in ctx.zonas.values():  # las que acompañan a una unidad se corren con ella
+        u = ctx.unidades.get(z.unidad_id) if z.unidad_id else None
+        if u is not None and u.estado == "activa" and zonas_mod.seguir(z, u):
+            ctx.informe.cambios = True
     for z in ctx.zonas.values():
         if z.tipo not in ("exclusion", "no_vuelo"):
             continue

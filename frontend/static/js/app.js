@@ -3069,7 +3069,7 @@
     app.pmi.conectar();
     app.zonas = Zonas.crear({
       api, toast, rutaEsc, datos: () => app.data, map: () => app.map, rol: () => app.usuario.rol,
-      alDibujar: (b) => { app.dibujando = b; },
+      alDibujar: (b) => { app.dibujando = b; }, seleccion: () => app.porId.get(app.seleccion),
     });
     app.zonas.conectar();
     app.capas.zonas = app.zonas.capa;

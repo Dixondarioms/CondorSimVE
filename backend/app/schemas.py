@@ -434,9 +434,13 @@ class TraficoIn(BaseModel):
 class ZonaIn(BaseModel):
     tipo: Literal["patrulla", "exclusion", "no_vuelo"]
     nombre: str = Field(default="", max_length=60)
-    puntos: list[tuple[float, float]] = Field(min_length=3, max_length=61)  # [[lat, lon], ...]
+    puntos: list[tuple[float, float]] = Field(default_factory=list, max_length=61)  # [[lat, lon], ...]
     armas: bool = False
     bando: Literal["azul", "rojo", "todos"] | None = None  # solo el director elige (por defecto, para todos)
+    # zona que acompaña a una unidad (engine/zonas.py): con radio_km, un circulo alrededor de ella en lugar de los puntos
+    unidad_id: int | None = None
+    radio_km: float | None = Field(default=None, ge=1, le=300)
+    acompana: bool = True  # False: el circulo queda fijo donde esta la unidad ahora
 
 
 class ZonaCambio(BaseModel):

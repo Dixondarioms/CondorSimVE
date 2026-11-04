@@ -336,7 +336,7 @@
     },
     {
       id: "zonas", seccion: "Defensa aérea y doctrina", titulo: "Áreas de patrulla y zonas de exclusión o de no vuelo",
-      claves: "zona zonas area areas de patrulla exclusion no vuelo poligono dibujar intrusion intruso armas libres sector referencia",
+      claves: "zona zonas area areas de patrulla exclusion no vuelo poligono dibujar intrusion intruso armas libres sector referencia acompañe acompaña unidad circulo radio alrededor burbuja se mueve con la unidad",
       texto: `<p>En la tarjeta <b>Áreas y zonas</b> (panel derecho) elija el tipo, escriba un nombre y pulse <b>Dibujar en el
         mapa</b>: clic en cada vértice y, para terminar, clic en el primero. El director las dibuja para todos o para un
         bando; cada bando, las suyas (el otro bando no las ve).</p>
@@ -347,7 +347,11 @@
         <p>Quien cruza una zona de exclusión o de no vuelo dispara una alerta (al dueño de la zona si lo ve; en las de la
         dirección, al bando del intruso), y la pausa automática si el director la eligió. Con <b>«Las armas propias tiran
         contra quien entre»</b>, la antiaérea, las patrullas y las unidades al alcance le tiran aunque la doctrina tenga las
-        armas restringidas o retenidas.</p>`,
+        armas restringidas o retenidas (también a los vuelos civiles que la crucen: úselo con cuidado).</p>
+        <p><b>Zonas que acompañan a una unidad</b>: seleccione una unidad propia y marque <b>Que acompañe a la unidad
+        seleccionada</b> antes de dibujar, o escriba un <b>Radio</b> y pulse <b>Círculo alrededor de la unidad</b> (por
+        ejemplo, una zona de exclusión de 20 km alrededor de una fragata o un área de patrulla sobre un grupo naval). La zona
+        se mueve con la unidad; si la unidad se pierde, queda donde estaba.</p>`,
     },
     {
       id: "defensa-aerea", seccion: "Defensa aérea y doctrina", titulo: "Radares y defensa antiaérea",

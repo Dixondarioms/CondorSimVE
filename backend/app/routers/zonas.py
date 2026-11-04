@@ -13,6 +13,7 @@ from app.engine import tiempo_real
 from app.engine import zonas as zonas_mod
 from app.models.escenario import Escenario
 from app.models.evento import Evento
+from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.models.zona import Zona
 from app.ws_manager import manager
@@ -40,7 +41,18 @@ async def crear(payload: schemas.ZonaIn, esc: Escenario = Depends(auth.escenario
                 usuario: Usuario = Depends(puede_dibujar)):
     if esc.estado == "finalizado":
         raise HTTPException(status_code=400, detail="El escenario ya finalizó")
-    vertices = [(float(a), float(b)) for a, b in payload.puntos]
+    unidad = None
+    if payload.unidad_id is not None:  # zona alrededor de una unidad (propia; el director, cualquiera)
+        unidad = db.get(Unidad, payload.unidad_id)
+        if (unidad is None or unidad.escenario_id != esc.id or unidad.estado != "activa"
+                or (usuario.rol != "instructor" and unidad.bando != usuario.rol)):
+            raise HTTPException(status_code=404, detail="Unidad no encontrada")
+    if payload.radio_km is not None:
+        if unidad is None:
+            raise HTTPException(status_code=400, detail="Elija la unidad del centro del círculo")
+        vertices = zonas_mod.circulo(unidad.lat, unidad.lon, payload.radio_km)
+    else:
+        vertices = [(float(a), float(b)) for a, b in payload.puntos]
     if len(vertices) > 3 and vertices[0] == vertices[-1]:
         vertices = vertices[:-1]  # anillo cerrado: el ultimo repite el primero
     motivo = zonas_mod.error_de_poligono(vertices)
@@ -53,9 +65,12 @@ async def crear(payload: schemas.ZonaIn, esc: Escenario = Depends(auth.escenario
              puntos_json=json.dumps([[round(a, 5), round(b, 5)] for a, b in vertices]),
              armas=bool(payload.armas) and payload.tipo != "patrulla" and bando != "todos",
              autor=usuario.username, creada_seg=esc.sim_segundos)
+    if unidad is not None and payload.acompana:
+        zonas_mod.anclar(z, unidad)
     db.add(z)
     db.flush()
     texto = f"[{tiempo_real.hora_del_dia(esc)}] Nueva {zonas_mod.nombre(z)}" + (
+        f", que acompaña a {unidad.nombre}," if z.unidad_id else "") + (
         " (fijada por la dirección del ejercicio)." if bando == "todos" else f" (por {usuario.username}).")
     db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, tipo="zona", bando_destino=bando, descripcion=texto,
                   sim_segundos=esc.sim_segundos))

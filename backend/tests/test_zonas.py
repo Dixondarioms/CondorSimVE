@@ -2,6 +2,8 @@
 
 import json
 
+import pytest
+
 from app.engine import geo, tiempo_real, zonas
 from app.models.aar import Combate
 from app.models.evento import Evento
@@ -114,3 +116,31 @@ def test_api_zonas_por_bando_y_patrulla_de_area(api):
     assert r.json()["estado"] == "en_ejecucion" and json.loads(r.json()["detalle"]) == {"zona": zona["id"]}
     assert "zonas" in alfa.get(base).json()
     assert alfa.delete(f"{base}/zonas/{zona['id']}").status_code == 200
+
+
+def test_la_zona_que_acompana_a_una_unidad_se_mueve_con_ella(db_session):
+    esc = _escenario(db_session)
+    fragata = _unidad(db_session, esc, nombre="Brigada", velocidad_kmh=40)
+    z = _zona(db_session, esc, "exclusion", puntos=[list(p) for p in zonas.circulo(0.0, 0.0, 20)], nombre="Burbuja")
+    zonas.anclar(z, fragata)
+    db_session.commit()
+    _orden(db_session, esc, fragata, "mover", waypoints=[[0.0, 0.5]])
+    _correr(db_session, esc, 1800)
+    db_session.refresh(fragata)
+    db_session.refresh(z)
+    c = zonas.centro(zonas.puntos(z))
+    assert fragata.lon > 0.1 and geo.distancia_km(c[0], c[1], fragata.lat, fragata.lon) < 1.0
+    assert geo.distancia_km(c[0], c[1], *zonas.puntos(z)[0]) == pytest.approx(20, rel=0.05)
+
+
+def test_api_circulo_alrededor_de_la_unidad_propia(api):
+    prof, base, a, r1, r2 = _preparar(api)
+    alfa = api("alfa")
+    r = alfa.post(f"{base}/zonas", json={"tipo": "exclusion", "nombre": "Burbuja", "unidad_id": a["id"], "radio_km": 15})
+    assert r.status_code == 200, r.text
+    z = r.json()
+    assert z["unidad_id"] == a["id"] and len(z["puntos"]) == zonas.VERTICES_CIRCULO
+    fija = alfa.post(f"{base}/zonas", json={"tipo": "patrulla", "unidad_id": a["id"], "radio_km": 10, "acompana": False}).json()
+    assert fija["unidad_id"] is None
+    assert alfa.post(f"{base}/zonas", json={"tipo": "exclusion", "unidad_id": r1["id"], "radio_km": 15}).status_code == 404
+    assert alfa.post(f"{base}/zonas", json={"tipo": "exclusion", "radio_km": 15}).status_code == 400

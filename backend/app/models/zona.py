@@ -20,3 +20,7 @@ class Zona(Base):
     armas: Mapped[bool] = mapped_column(Boolean, default=False)
     autor: Mapped[str] = mapped_column(String(50), default="")
     creada_seg: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # zona que acompaña a una unidad (se mueve con ella): la unidad y donde estaba cuando se movio la zona por ultima vez
+    unidad_id: Mapped[int | None] = mapped_column(ForeignKey("unidades.id"), nullable=True)
+    ancla_lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    ancla_lon: Mapped[float | None] = mapped_column(Float, nullable=True)

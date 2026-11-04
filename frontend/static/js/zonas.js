@@ -11,7 +11,7 @@
     no_vuelo: { color: "#ef233c", weight: 2.5, fillOpacity: 0.12 },
   };
 
-  /** ctx: { api, toast, rutaEsc, datos(), map(), rol(), alDibujar(bool) } */
+  /** ctx: { api, toast, rutaEsc, datos(), map(), rol(), alDibujar(bool), seleccion() } */
   function crear(ctx) {
     const $ = (id) => document.getElementById(id);
     const grupo = L.layerGroup();
@@ -55,7 +55,8 @@
         const t = document.createElement("div");
         const b = document.createElement("b");
         b.textContent = z.nombre || TIPOS[z.tipo];
-        t.append(b, texto(` · ${TIPOS[z.tipo]} · ${dueno(z)}`));
+        const ancla = z.unidad_id && ((ctx.datos() || {}).unidades || []).find((u) => u.id === z.unidad_id);
+        t.append(b, texto(` · ${TIPOS[z.tipo]} · ${dueno(z)}${ancla ? ` · acompaña a ${ancla.nombre}` : ""}`));
         li.appendChild(t);
         if (propia(z)) {
           const fila = document.createElement("div");
@@ -123,11 +124,13 @@
       ctx.toast("Haga clic en el mapa en cada vértice; para terminar, clic en el primero.", true);
     }
 
-    async function alCrearse(e) {
-      if (!herramienta) return;
-      const anillo = e.layer.getLatLngs()[0] || [];
-      cancelar();
-      const cuerpo = { tipo: $("zona-tipo").value, nombre: $("zona-nombre").value.trim(), puntos: anillo.map((p) => [p.lat, p.lng]) };
+    /** La unidad seleccionada que puede llevar la zona (propia; el director, cualquiera), o null. */
+    function unidadAncla() {
+      const u = ctx.seleccion();
+      return u && u.estado === "activa" && (director() || u.bando === ctx.rol()) ? u : null;
+    }
+
+    async function enviar(cuerpo) {
       if (director()) cuerpo.bando = $("zona-bando").value;
       else if (cuerpo.tipo !== "patrulla") cuerpo.armas = $("zona-armas").checked;
       try {
@@ -137,12 +140,34 @@
       } catch (_) { /* toast ya mostrado */ }
     }
 
+    function circulo() {
+      const u = unidadAncla();
+      if (!u) return ctx.toast("Seleccione antes una unidad propia: el círculo va alrededor de ella.");
+      const radio = Math.max(1, Math.min(300, parseFloat($("zona-radio").value) || 20));
+      enviar({ tipo: $("zona-tipo").value, nombre: $("zona-nombre").value.trim(), unidad_id: u.id, radio_km: radio,
+        acompana: $("zona-acompana").checked });
+    }
+
+    async function alCrearse(e) {
+      if (!herramienta) return;
+      const anillo = e.layer.getLatLngs()[0] || [];
+      cancelar();
+      const cuerpo = { tipo: $("zona-tipo").value, nombre: $("zona-nombre").value.trim(), puntos: anillo.map((p) => [p.lat, p.lng]) };
+      if ($("zona-acompana").checked) {
+        const u = unidadAncla();
+        if (!u) return ctx.toast("Para que la zona acompañe a una unidad, seleccione antes una unidad propia.");
+        cuerpo.unidad_id = u.id;
+      }
+      return enviar(cuerpo);
+    }
+
     function conectar() {
       const map = ctx.map();
       grupo.addTo(map);
       map.on(L.Draw.Event.CREATED, alCrearse);
       $("zona-dibujar").addEventListener("click", iniciar);
       $("zona-cancelar").addEventListener("click", cancelar);
+      $("zona-circulo").addEventListener("click", circulo);
       $("zona-tipo").addEventListener("change", () => { $("zona-armas-fila").hidden = director() || $("zona-tipo").value === "patrulla"; });
       document.addEventListener("keydown", (e) => { if (e.key === "Escape" && herramienta) cancelar(); });
     }

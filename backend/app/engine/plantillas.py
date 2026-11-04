@@ -455,9 +455,13 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
     db.flush()
     from app.models.zona import Zona  # importacion tardia: evita el ciclo con los modelos
 
+    con_unidad = []
     for z in p.zonas:
-        db.add(Zona(escenario_id=esc.id, bando=z["bando"], tipo=z["tipo"], nombre=z.get("nombre", ""),
-                    puntos_json=json.dumps(z["puntos"]), armas=bool(z.get("armas")), autor="plantilla"))
+        zona = Zona(escenario_id=esc.id, bando=z["bando"], tipo=z["tipo"], nombre=z.get("nombre", ""),
+                    puntos_json=json.dumps(z["puntos"]), armas=bool(z.get("armas")), autor="plantilla")
+        db.add(zona)
+        if z.get("unidad"):
+            con_unidad.append((zona, z["unidad"]))
     if p.minas:
         from app.models.mina import CampoMinas  # importacion tardia: evita el ciclo con los modelos
 
@@ -488,6 +492,11 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
         db.add(unidad)
         db.flush()
         unidades[u.nombre] = unidad
+    for zona, nombre in con_unidad:  # zonas que acompañan a una unidad
+        if nombre in unidades:
+            from app.engine import zonas as zonas_mod
+
+            zonas_mod.anclar(zona, unidades[nombre])
     for u in p.unidades:
         if u.en_tierra and u.base and u.base in unidades:
             unidades[u.nombre].en_tierra = True
@@ -644,7 +653,8 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
         "fases": json.loads(esc.fases_json) if esc.fases_json else [], "pmo": problemas,
         "unidades": unidades, "objetivos": objetivos,
         "eventos_auto": [{k: v for k, v in r.items() if k != "disparos"} for r in eventos_auto.config(esc)["reglas"]],
-        "zonas": [{k: v for k, v in zonas_mod.serializar(z).items() if k not in ("id", "autor")}
+        "zonas": [dict({k: v for k, v in zonas_mod.serializar(z).items() if k not in ("id", "autor", "unidad_id")},
+                       **({"unidad": nombres[z.unidad_id]} if z.unidad_id in nombres else {}))
                   for z in zonas_mod.de_escenario(db, esc.id)],
         "trafico": trafico_mod.config(esc) or None,
         "minas": [{"bando": c.bando, "lat": round(c.lat, 5), "lon": round(c.lon, 5), "radio_km": c.radio_km,
@@ -779,7 +789,8 @@ def _zonas(lista) -> tuple:
                 or zonas_mod.error_de_poligono([tuple(p) for p in z.get("puntos") or []])):
             raise PlantillaInvalida("Zona mal formada en la plantilla")
         salida.append({"bando": z["bando"], "tipo": z["tipo"], "nombre": str(z.get("nombre") or "")[:60],
-                       "puntos": [[float(a), float(b)] for a, b in z["puntos"]], "armas": bool(z.get("armas"))})
+                       "puntos": [[float(a), float(b)] for a, b in z["puntos"]], "armas": bool(z.get("armas")),
+                       **({"unidad": str(z["unidad"])[:120]} if z.get("unidad") else {})})
     return tuple(salida)
 
 

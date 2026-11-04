@@ -1153,11 +1153,16 @@
                 <option value="rojo">Bando Rojo</option>
               </select></label>
               <label class="chk" id="zona-armas-fila" hidden><input type="checkbox" id="zona-armas"><span>Las armas propias tiran contra quien entre</span></label>
+              <label class="chk" title="La zona se mueve con la unidad seleccionada (por ejemplo, alrededor de una fragata o sobre un grupo naval)"><input type="checkbox" id="zona-acompana"><span>Que acompañe a la unidad seleccionada</span></label>
               <div class="fila">
                 <button type="button" id="zona-dibujar" class="mini">Dibujar en el mapa</button>
                 <button type="button" id="zona-cancelar" class="mini" hidden>Cancelar</button>
               </div>
-              <p class="ayuda">Un <b>área de patrulla</b> la recorre la unidad que recibe la orden Patrullar sobre ella, y ataca lo que entra si su doctrina lo permite. Quien cruza una <b>zona de exclusión</b> (todo lo que se mueve) o de <b>no vuelo</b> (aeronaves) dispara una alerta.</p>
+              <div class="fila">
+                <label class="mini">Radio (km)<input id="zona-radio" type="number" min="1" max="300" step="1" value="20" inputmode="numeric"></label>
+                <button type="button" id="zona-circulo" class="mini secundario" title="Un círculo con ese radio alrededor de la unidad seleccionada">Círculo alrededor de la unidad</button>
+              </div>
+              <p class="ayuda">Un <b>área de patrulla</b> la recorre la unidad que recibe la orden Patrullar sobre ella, y ataca lo que entra si su doctrina lo permite. Quien cruza una <b>zona de exclusión</b> (todo lo que se mueve) o de <b>no vuelo</b> (aeronaves) dispara una alerta. Con <b>Que acompañe a la unidad seleccionada</b>, la zona se mueve con esa unidad.</p>
             </div>
             <ul id="zonas-lista" class="zonas-lista"></ul>
           </section>
