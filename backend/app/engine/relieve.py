@@ -155,12 +155,15 @@ def linea_de_vista(terreno, sensor, objetivo) -> bool:
 
 
 # ---------------------------------------------------------------- cobertura de un sensor
-def cobertura(terreno, sensor, alcance_km: float, altura_blanco_m: float, rumbos: int = 72) -> list[list[float]]:
+def cobertura(terreno, sensor, alcance_km: float, altura_blanco_m: float, rumbos: int = 72,
+              altura_sensor_m: float | None = None) -> list[list[float]]:
     """Poligono [[lat, lon], ...] de lo que `sensor` ve hasta `alcance_km` de un blanco que vuela a
     `altura_blanco_m` sobre el terreno: por cada rumbo, la distancia hasta la primera sombra del relieve o del
     horizonte. Una sola pasada por rumbo: se guarda el mayor angulo de elevacion del terreno visto hasta alli y el
-    blanco se ve mientras su angulo lo supere."""
-    h0 = altura_msl(sensor, terreno)
+    blanco se ve mientras su angulo lo supere. `altura_sensor_m`: el sensor a esa altura sobre el suelo (si no, la
+    de su clase)."""
+    h0 = (altura_suelo(terreno, sensor.lat, sensor.lon) + altura_sensor_m if altura_sensor_m is not None
+          else altura_msl(sensor, terreno))
     pasos = max(1, min(MAX_MUESTRAS, int(alcance_km / PASO_KM)))
     km_por_paso = alcance_km / pasos
     anillo = []

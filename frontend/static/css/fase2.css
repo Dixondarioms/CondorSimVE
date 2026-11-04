@@ -600,6 +600,10 @@ a.boton-enlace:hover { border-color: var(--azul); }
 .grupo-tarea { display: flex; gap: 4px; align-items: center; }
 .grupo-tarea .oob-grupo { flex: 1 1 auto; text-align: left; font-weight: 700; margin: 2px 0; }
 .grupo-tarea .mini { flex: 0 0 auto; width: auto; }
+.desde-aqui-opciones { display: inline-flex; gap: 4px; align-items: center; }
+.desde-aqui-opciones select { font-size: 11px; padding: 1px 2px; }
+.desde-aqui-marca span { display: inline-block; transform: translate(-50%, -130%); white-space: nowrap; font: 700 11px system-ui, sans-serif;
+  color: #fff; background: rgba(0, 0, 0, .7); border: 1px solid #2ec4b6; border-radius: 4px; padding: 1px 5px; }
 .wp-editable span { cursor: grab; }
 .wp-editable:active span { cursor: grabbing; }
 .marca .senal.en-base { background: #2b2d42; border: 1px solid #8d99ae; }

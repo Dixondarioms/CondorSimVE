@@ -1059,6 +1059,12 @@
           <button id="btn-regla" type="button" class="mini secundario" title="Medir distancias y rumbos: clic para cada punto; doble clic o Esc para terminar">Regla</button>
           <button id="btn-regla-limpiar" type="button" class="mini secundario" hidden>Limpiar</button>
           <span id="regla-info" class="regla-info"></span>
+          <button id="btn-desde-aqui" type="button" class="mini secundario" title="¿Qué se ve desde aquí? Clic en el mapa: hasta dónde vería un observador o un radar en ese punto, según el relieve">¿Qué se ve?</button>
+          <span id="desde-aqui-opciones" class="desde-aqui-opciones" hidden>
+            <select id="desde-altura" aria-label="Altura del observador"><option value="3">Tropa (3 m)</option><option value="25" selected>Radar (25 m)</option><option value="100">Torre o cerro (100 m)</option></select>
+            <select id="desde-alcance" aria-label="Hasta dónde mirar"><option value="50">50 km</option><option value="150" selected>150 km</option><option value="300">300 km</option></select>
+            <button id="btn-desde-limpiar" type="button" class="mini secundario">Quitar</button>
+          </span>
           <button id="btn-convertir" type="button" class="mini secundario" aria-expanded="false" title="Convertidor de unidades: distancia, velocidad, altura, masa y volumen">Convertir</button>
           <div id="convertidor" class="convertidor" hidden>
             <label>Magnitud <select id="cv-magnitud"></select></label>

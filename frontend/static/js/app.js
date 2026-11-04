@@ -1747,6 +1747,46 @@
   const ACTIVAS = new Set(["pendiente", "en_ejecucion"]);
   const pendientes = () => (app.data ? app.data.ordenes.filter((o) => ACTIVAS.has(o.estado)) : []);
 
+  /** ¿Que se ve desde aqui? (GET /api/terreno/visibilidad): con el boton activo, el proximo clic en el mapa dibuja
+   * hasta donde veria un observador o un radar en ese punto (avion a cota media, rasante y lo que esta en tierra). */
+  const COLOR_VISIBILIDAD = { medio: "#2ec4b6", rasante: "#ff9f1c", tierra: "#e71d36" };
+  function conectarDesdeAqui() {
+    const capa = L.layerGroup().addTo(app.map);
+    let esperando = false;
+    const boton = $("btn-desde-aqui");
+    const terminar = () => { esperando = false; boton.classList.remove("activa"); app.dibujando = false; app.map.getContainer().style.cursor = ""; };
+    boton.addEventListener("click", () => {
+      if (esperando) return terminar();
+      esperando = true;
+      boton.classList.add("activa");
+      $("desde-aqui-opciones").hidden = false;
+      app.dibujando = true;  // el clic no da ordenes ni selecciona
+      app.map.getContainer().style.cursor = "crosshair";
+      toast("Haga clic en el mapa donde estaría el observador o el radar.", true);
+    });
+    $("btn-desde-limpiar").addEventListener("click", () => { capa.clearLayers(); $("desde-aqui-opciones").hidden = true; terminar(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && esperando) terminar(); });
+    app.map.on("click", async (e) => {
+      if (!esperando) return;
+      terminar();
+      const { lat, lng } = e.latlng;
+      const q = `lat=${lat.toFixed(5)}&lon=${lng.toFixed(5)}&altura_m=${$("desde-altura").value}&alcance_km=${$("desde-alcance").value}`;
+      try {
+        const r = await api("GET", `/api/terreno/visibilidad?${q}`, undefined, true);
+        capa.clearLayers();
+        if (!r.disponible) return toast("Esta región del mapa no tiene alturas: no se puede calcular.");
+        for (const p of r.poligonos) {
+          L.polygon(p.poligono, { color: COLOR_VISIBILIDAD[p.id], weight: 1.5, fillColor: COLOR_VISIBILIDAD[p.id], fillOpacity: 0.08, interactive: false }).addTo(capa);
+        }
+        L.marker([lat, lng], { keyboard: false, icon: L.divIcon({ className: "desde-aqui-marca", iconSize: null,
+          html: `<span>👁 ${$("desde-altura").selectedOptions[0].textContent} · suelo ${r.altura_suelo_m} m</span>` }) })
+          .bindTooltip(r.poligonos.map((p) => `<span style="color:${COLOR_VISIBILIDAD[p.id]}">■</span> ${p.nombre}`).join("<br>"), { direction: "top" })
+          .addTo(capa);
+        toast("Verde: un avión a cota media; naranja: uno rasante; rojo: lo que está en tierra. Fuera del color, no se ve (relieve u horizonte).", true);
+      } catch (_) { /* toast ya mostrado */ }
+    });
+  }
+
   /** Grupos de tarea del bando (routers/grupos.py): un clic elige todas sus unidades para una orden en formacion. */
   function listaGrupos(grupos) {
     const det = document.createElement("details");
@@ -3314,6 +3354,7 @@
     });
     app.eventosAuto.conectar();
     app.herramientas = Herramientas.crear({ map: () => app.map, alMedir: (b) => { app.dibujando = b; } });
+    conectarDesdeAqui();
     Herramientas.crearConvertidor();
     app.herramientas.conectar();
     $("btn-regla").addEventListener("click", () => { if (app.herramientas.activa()) app.graficos.cancelar(); });

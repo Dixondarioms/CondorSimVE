@@ -535,11 +535,15 @@
     },
     {
       id: "graficos", seccion: "El mapa", titulo: "Gráficos tácticos y herramientas",
-      claves: "graficos tacticos linea de fase eje de avance zona de reunion punto de control dibujar regla medir distancia convertir coordenadas",
+      claves: "graficos tacticos linea de fase eje de avance zona de reunion punto de control dibujar regla medir distancia convertir coordenadas que se ve desde aqui visibilidad linea de vista sombra relieve donde poner radar",
       texto: `<p>En el panel <b>Gráficos tácticos</b> (sobre el mapa) se dibujan líneas de fase, ejes de avance, zonas de reunión y
         puntos de control, visibles para todos o solo para su bando. Con <b>▲ Esconder</b> el cuadro queda reducido a su
         título (<b>▼ Mostrar</b> lo vuelve a abrir). La <b>Regla</b> mide distancias y <b>Convertir</b> pasa
-        coordenadas de un formato a otro.</p>`,
+        coordenadas de un formato a otro.</p>
+        <p><b>¿Qué se ve?</b>: elija la altura del observador (tropa, radar o torre) y hasta dónde mirar, y haga clic en el
+        mapa. Se pinta hasta dónde vería desde ese punto según el relieve y la curvatura de la tierra: en verde un avión a
+        cota media, en naranja uno rasante y en rojo lo que está en tierra. Fuera del color, no se ve. Sirve para elegir
+        dónde poner un radar o por dónde entrar sin ser visto. <b>Quitar</b> lo borra.</p>`,
     },
     {
       id: "videowall", seccion: "El mapa", titulo: "Videowall (pantalla completa)",

@@ -203,3 +203,19 @@ def test_la_grilla_de_alturas_se_consulta_por_celda():
     assert t.altura(*punto(1, 3)) == 30 and t.altura(*punto(2, 2)) == 40
     assert t.altura(*punto(10, 10)) is None
     assert not Terreno(grillas=[Grilla(meta, bytes(16))]).tiene_elevacion
+
+
+def test_que_se_ve_desde_aqui(api):
+    """GET /api/terreno/visibilidad: hasta donde ve un observador segun el relieve (avion medio, rasante y en tierra)."""
+    from app.terreno import get_terreno
+
+    alfa = api("alfa")
+    r = alfa.get("/api/terreno/visibilidad", params={"lat": 10.5, "lon": -26.3, "alcance_km": 60, "altura_m": 25})
+    assert r.status_code == 200
+    d = r.json()
+    if not get_terreno().tiene_elevacion:
+        assert d["disponible"] is False
+        return
+    assert [p["id"] for p in d["poligonos"]] == ["medio", "rasante", "tierra"]
+    assert all(len(p["poligono"]) == 72 for p in d["poligonos"])
+    assert alfa.get("/api/terreno/visibilidad", params={"lat": 10.5, "lon": -26.3, "alcance_km": 1000}).status_code == 422
