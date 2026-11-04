@@ -400,6 +400,23 @@ def construir(salida: Path) -> None:
             "su rol, con una línea roja en la hora actual.")]
 
     # ---------------------------------------------------------------- 6 defensa aerea y doctrina
+    h += [H2("5.6 Apresto: alerta en tierra y rearme"),
+          P("Cada aeronave tiene su <b>apresto</b>: cuánto tarda en despegar desde que recibe una orden de vuelo estando en "
+            "tierra. Se elige en el panel de abajo de la unidad: <b>Alerta 5</b>, <b>15</b>, <b>30</b> o <b>60</b> minutos, o "
+            "<b>Mantenimiento</b> (no despega). Si no se cambia, es alerta 5; la interceptación desde tierra también lo "
+            "respeta. Mientras carretea, el panel dice en cuánto despega; si se detiene la orden, se queda en tierra."),
+          P("Después de aterrizar, el <b>reabastecimiento y rearme</b> depende de la carga: aire-aire 45 min, reconocimiento "
+            "30 min, antibuque, SEAD o antisubmarina 1 h 30 y ataque (bombas) 2 h; en un punto de recobre (PRO), la mitad.")]
+    h += [H2("5.7 Velocidad y altura de cada tramo"),
+          Bul(["<b>Velocidad</b> (aeronaves y buques, en el panel de abajo; rige de inmediato): <b>Económica</b> (75 %, rinde "
+               "más kilómetros), <b>Crucero</b> (la normal) o <b>Máxima</b> (30 % más rápido, con postcombustión en los "
+               "aviones, pero más del doble de combustible por kilómetro).",
+               "<b>Altura</b>: perfil alto, medio o rasante (también abajo). Rasante se esconde del radar detrás del relieve, "
+               "pero gasta más.",
+               "<b>Por tramo</b>: en la orden <b>Mover</b>, elija «Velocidad del tramo» y «Altura del tramo» <b>antes</b> de "
+               "marcar cada punto. Al pasar cada punto, la unidad toma los del tramo siguiente (por ejemplo: crucero y alto "
+               "hasta la costa; máxima y rasante hasta el blanco)."])]
+
     h += H1("6. Defensa aérea y doctrina")
     h += [H2("6.1 Doctrina y reglas de enfrentamiento")]
     h += [Table([[figura("doctrina", "Doctrina y reglas de enfrentamiento.", ancho=6.4 * cm, alto_max=12 * cm, celda=True),
@@ -481,6 +498,18 @@ def construir(salida: Path) -> None:
     h += figura("zonas_mapa", "Área de patrulla (amarillo, elegida para la orden), zona de exclusión con armas libres "
                 "(naranja) y zona de no vuelo de la dirección (rojo).")
 
+    h += [P("<b>Zonas que acompañan a una unidad</b>: seleccione una unidad propia y marque <b>Que acompañe a la unidad "
+            "seleccionada</b> antes de dibujar, o escriba un <b>Radio</b> y pulse <b>Círculo alrededor de la unidad</b> (por "
+            "ejemplo, una zona de exclusión de 20 km alrededor de una fragata). La zona se mueve con la unidad; si la unidad "
+            "se pierde, queda donde estaba.")]
+    h += [H2("6.9 Contramedidas: bengalas, chaff y señuelos"),
+          P("Las aeronaves tripuladas llevan <b>bengalas y chaff</b> (4 por avión del grupo) y los buques <b>señuelos</b> "
+            "(fragata 8, destructor y portaaviones 12, patrullero 4). Cuando a una aeronave le tiran un misil antiaéreo o "
+            "aire-aire, o a un buque le llega un misil, suelta una: ese misil tiene 30 % menos de probabilidad de pegar. Se "
+            "gastan; las aeronaves las reponen al rearmar y los buques al reabastecerse. Lo que le queda a cada unidad se "
+            "ve en su panel. Los misiles antirradiación solo atacan radares encendidos: apagar el radar a tiempo (botón "
+            "<b>Emisión</b>) lo protege, pero mientras tanto no ve.")]
+
     # ---------------------------------------------------------------- 7 inteligencia
     h += H1("7. Inteligencia y contactos")
     h += [H2("7.1 La niebla de guerra")]
@@ -515,6 +544,17 @@ def construir(salida: Path) -> None:
                 colWidths=[6.3 * cm, ANCHO_TEXTO - 6.3 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
 
     # ---------------------------------------------------------------- 8 logistica
+    h += [H2("7.5 Imagen común por enlace de datos"),
+          P("Si el director enciende <b>Imagen común por enlace de datos</b> (CONSOLA → Dirección del ejercicio), lo que "
+            "detecta una unidad solo aparece en la pantalla de su bando si está <b>en la red</b>. La red nace en las bases, "
+            "puertos, depósitos, centros de comunicaciones, radares, aviones de alerta temprana, portaaviones y destructores, "
+            "y se extiende de unidad en unidad: un avión enlaza hasta 350 km, un buque 250 km, una base 150 km y una tropa "
+            "60 km."),
+          P("Queda <b>sin enlace</b> la unidad lejos de la red, dentro de una interferencia enemiga o con las comunicaciones "
+            "destruidas: se sigue defendiendo con sus sensores, pero su bando no ve lo que ella detecta ni puede tirarle a eso "
+            "desde otra unidad. El panel de cada unidad propia dice si está en la red. Aviones y buques sirven de "
+            "repetidores para llevar la red lejos.")]
+
     h += H1("8. Logística, ingenieros y transporte")
     h += [H2("8.1 Combustible, munición y abastecimiento"),
           P("Las unidades gastan combustible al moverse y munición al combatir. Se reabastecen solas, poco a poco, cerca de las "
@@ -534,6 +574,11 @@ def construir(salida: Path) -> None:
             "gasta el 25 % de la munición del lanzador.")]
 
     # ---------------------------------------------------------------- 9 guerra electronica
+    h += [H2("8.5 Reabastecimiento en el mar"),
+          P("El <b>buque logístico</b> (petrolero de flota) es el convoy de la flota: llévelo con la orden <b>Mover</b> a 5 km "
+            "o menos de los buques que necesitan combustible o munición. Les da +40 % por hora y les repone los señuelos. Se "
+            "recarga junto a un puerto propio. Lo conduce A-4; tiene armas débiles y necesita escolta.")]
+
     h += H1("9. Guerra electrónica")
     h += [P("<b>Interferir</b>: con la unidad o el avión de guerra electrónica, orden <b>Interferir</b> y clic en el centro de la "
             "zona, dentro de su alcance. Mientras dure la orden, allí el enemigo detecta mucho menos, su antiaérea guiada por "
@@ -612,7 +657,11 @@ def construir(salida: Path) -> None:
           Bul(["<b>Resumen</b> de cada bando y <b>línea de tiempo</b> de combates y logística;",
                "<b>repetición</b> del ejercicio sobre el mapa (con <b>Replay</b>, animada, con estelas y marcador);",
                "<b>rúbrica</b> de evaluación por repartición y comparación entre ejercicios;",
-               "versión <b>imprimible</b>, <b>diapositivas</b> y exportación a <b>CSV</b>."])]
+               "versión <b>imprimible</b>, <b>diapositivas</b> y exportación a <b>CSV</b>."]),
+          P("En el resumen están las <b>pérdidas y gastos</b> de cada bando: aeronaves (por avión), buques, unidades de tierra "
+            "e instalaciones perdidas; el combustible consumido, en tanques llenos; y cada arma gastada (misiles y bombas de "
+            "las aeronaves, misiles antiaéreos, interceptores antimisil, defensa de punto, misiles de crucero y balísticos, "
+            "torpedos, sonoboyas, minas, bengalas y señuelos).")]
 
     # ---------------------------------------------------------------- 13 direccion
     h += H1("13. Dirección del ejercicio")
@@ -659,7 +708,7 @@ def construir(salida: Path) -> None:
                         "alcance (un ataque programado)."]),
                    P("Cada regla se dispara una vez, salvo que se marque <b>Repetir</b>. En la lista se activan, se desactivan "
                      "y se borran. Se guardan con el escenario y con las plantillas, junto con las áreas y zonas, el tráfico "
-                     "civil, los campos de minas, la doctrina y el nivel del adversario. El <b>Tutorial del Cóndor</b> (2.10) "
+                     "civil, los campos de minas, la doctrina, el nivel del adversario y el enlace de datos. El <b>Tutorial del Cóndor</b> (2.10) "
                      "es un ejemplo completo.")]]],
                 colWidths=[6.5 * cm, ANCHO_TEXTO - 6.5 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
     h += [H2("13.5 Cuentas y usuarios"),

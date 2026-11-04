@@ -859,7 +859,8 @@
     if (esAlumno() && (app.modoOrden === "mover" || app.modoOrden === "desembarcar") && app.unidadOrden) {
       app.waypoints.push([lat, lng]);
       app.tramos = (app.tramos || []).slice(0, app.waypoints.length - 1);
-      app.tramos.push({ velocidad: $("o-tramo-vel").value || null, perfil: $("o-tramo-perfil").value || null });
+      app.tramos.push({ velocidad: $("o-tramo-vel").value || null,
+        perfil: $("o-tramo-perfil-fila").hidden ? null : $("o-tramo-perfil").value || null });
       dibujarWaypoints();
       if (app.modoOrden === "mover") pedirPreview();
       else if (app.data) actualizarNuevaOrden(app.data);
@@ -2048,6 +2049,7 @@
     $("o-mover").hidden = app.modoOrden !== "mover" && app.modoOrden !== "desembarcar";
     const conTramos = app.modoOrden === "mover" && !!(u && u.velocidad_actual) && !app.lote.size;
     $("o-tramo-fila").hidden = !conTramos;
+    $("o-tramo-perfil-fila").hidden = !(u && u.tipo === "aerea");  // la altura es de las aeronaves
     $("o-tramo-ayuda").hidden = !conTramos;
     $("o-construir").hidden = app.modoOrden !== "construir";
     $("o-patrullar").hidden = app.modoOrden !== "patrullar";
