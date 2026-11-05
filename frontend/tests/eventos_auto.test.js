@@ -25,3 +25,8 @@ test("textoAccionAuto: lanzar misiles programados", () => {
   assert.equal(L.textoAccionAuto({ tipo: "lanzar", unidad: "Lanzador rojo", blanco: "Base azul", misiles: 2 }),
     "Lanzador rojo lanza 2 misil(es) contra Base azul");
 });
+
+test("textoAccionAuto: retirar un bando y terminar el ejercicio", () => {
+  assert.equal(L.textoAccionAuto({ tipo: "retirar", bando: "rojo" }), "el bando Rojo se retira");
+  assert.equal(L.textoAccionAuto({ tipo: "finalizar" }), "termina el ejercicio");
+});

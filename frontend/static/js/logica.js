@@ -537,6 +537,8 @@
     if (a.tipo === "puntos") return `${a.puntos >= 0 ? "+" : ""}${a.puntos} puntos para ${BANDO_TXT[a.bando] || a.bando}`;
     if (a.tipo === "pausar") return "se pausa el reloj";
     if (a.tipo === "lanzar") return `${a.unidad} lanza ${a.misiles} misil(es) contra ${a.blanco}`;
+    if (a.tipo === "retirar") return `el bando ${BANDO_TXT[a.bando] || a.bando} se retira`;
+    if (a.tipo === "finalizar") return "termina el ejercicio";
     return a.tipo;
   }
   function textoReglaAuto(r) {

@@ -207,10 +207,22 @@ _ATAQUE_3_ENERO = Plantilla(
         "aéreos son aproximadas, y las cifras de los modelos son didácticas. El desenlace político (la captura del "
         "jefe de Estado) queda fuera del alcance de este ejercicio táctico. El bando rojo lo conduce el adversario "
         "automático: ataca desde el inicio lo que va detectando, sin seguir un plan fijo (puede apagarse en Consola → "
-        "Dirección del ejercicio para que lo jueguen alumnos)."
+        "Dirección del ejercicio para que lo jueguen alumnos). A las 04:29 el rojo se retira y el ejercicio termina: es "
+        "la hora en que, según el jefe del Estado Mayor Conjunto de EE. UU., la fuerza ya estaba sobre el mar de regreso "
+        "(3:29 hora del este de EE. UU.). Sus objetivos no logrados a esa hora cuentan como fallidos."
     ),
     clima="despejado", hora_inicio_min=60, nacion_azul="venezuela", nacion_rojo="estados_unidos", ia_rojo=True,
     dia_noche=True,
+    eventos_auto=(
+        {"id": "retirada", "nombre": "Retirada de la fuerza (04:29)", "activo": True, "repetir": False,
+         "disparador": {"tipo": "hora", "hora": "04:29"},
+         "acciones": [
+             {"tipo": "mensaje", "para": "todos",
+              "texto": "04:29: la fuerza de EE. UU. ya está sobre el mar de regreso. Fin de la operación."},
+             {"tipo": "retirar", "bando": "rojo"},
+             {"tipo": "finalizar"},
+         ]},
+    ),
     unidades=(
         # ---- Venezuela (azul) ----
         UnidadPlantilla("Base Aérea Generalísimo Francisco de Miranda (La Carlota)", "azul", "base_aerea", 10.4850, -66.8436),

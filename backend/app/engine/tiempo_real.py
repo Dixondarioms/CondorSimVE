@@ -236,6 +236,7 @@ class _Ctx:
         self.pausas = pausa_auto(esc)
         self._doctrinas: dict[int, dict] = {}
         self.pausa: dict | None = None  # la alerta que pide detener el reloj en este paso
+        self.fin: str | None = None  # un evento automatico termina el ejercicio en este paso (el motivo)
         self.bit = _BitacoraEnVivo(self)
         self.perdidas: dict[int, float] = {}
         self.con_pmi: set | None = None  # (bando, base) con PMI de Inteligencia: se lee al primer ataque a una pista
@@ -639,6 +640,9 @@ def paso(db: Session, esc: Escenario, segundos: float, terreno: Terreno | None =
             detectado = ctx.t
         while turno_de(esc.sim_segundos) > esc.turno_actual:
             _fin_de_hora(ctx)
+        if ctx.fin is not None:
+            _terminar_ejercicio(ctx)
+            break
         if ctx.pausa is not None:
             _pausa_automatica(ctx)
             break
@@ -681,6 +685,24 @@ def _pausa_automatica(ctx: _Ctx) -> None:
     a = ctx.pausa
     ctx.esc.estado, ctx.esc.pausa_motivo = "pausado", a["texto"][:300]  # el texto de la alerta ya dice que paso
     ctx.evento("direccion", "todos", f"Pausa automática ({CAUSAS_PAUSA.get(a['causa'], a['causa']).lower()}).")
+    ctx.informe.cambios = True
+
+
+def _terminar_ejercicio(ctx: _Ctx) -> None:
+    """Un evento automatico termina el ejercicio: el reloj se detiene para siempre y los alumnos pueden ver el informe
+    (como el boton «Finalizar» del director, engine/clock.finalizar)."""
+    from app.engine import aar
+
+    ctx.db.flush()
+    objetivos_mod.evaluar(ctx.db, ctx.esc)  # los que vencen en esta hora se deciden ya (el ejercicio no sigue)
+    aar.asegurar_linea_base(ctx.db, ctx.esc)
+    aar.guardar_instantanea(ctx.db, ctx.esc, ctx.esc.turno_actual - 1)
+    ctx.esc.estado = "finalizado"
+    ctx.esc.decision_termina_en = None
+    ctx.evento("direccion", "todos", ctx.fin)
+    ctx.informe.alertas.append({"causa": "evento", "bando": "todos", "nivel": "critica", "lat": None, "lon": None,
+                                "texto": f"[{hora_del_dia(ctx.esc)}] {ctx.fin} El informe ya está disponible.",
+                                "sim_segundos": ctx.t})
     ctx.informe.cambios = True
 
 

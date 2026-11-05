@@ -128,7 +128,7 @@
     },
     {
       id: "eventos-auto", seccion: "Dirección del ejercicio", titulo: "Eventos automáticos (disparadores y acciones)",
-      claves: "eventos automaticos disparador disparadores accion acciones regla reglas cuando entonces guion inyeccion automatica aparecer refuerzos mensaje programado hora lanzar misiles ataque programado balistico",
+      claves: "eventos automaticos disparador disparadores accion acciones regla reglas cuando entonces guion inyeccion automatica aparecer refuerzos mensaje programado hora lanzar misiles ataque programado balistico retirar retirada terminar finalizar fin automatico",
       director: true,
       texto: `<p>En CONSOLA → <b>Eventos automáticos</b> el director arma reglas que el simulador cumple solo:</p>
         <ul><li><b>Cuando</b>: una unidad entra a un área (una zona dibujada en «Áreas y zonas»; de un bando o una unidad
@@ -136,7 +136,10 @@
         <li><b>Entonces</b> (una o varias): enviar un mensaje a un bando o a todos, hacer aparecer unidades (elija bando,
         clase, cantidad y el punto en el mapa), cambiar el clima, dar o quitar puntos, pausar el reloj, o <b>lanzar
         misiles</b>: un lanzador (batería, buque o lanzador balístico) tira una salva contra la unidad elegida, aunque su
-        bando no la vea (un ataque programado; debe tenerla a su alcance).</li></ul>
+        bando no la vea (un ataque programado; debe tenerla a su alcance). También <b>retirar un bando</b> (deja de atacar,
+        se apaga su piloto automático, sus aeronaves vuelven a la base más cercana y sus objetivos pendientes se cierran: los
+        de proteger se cumplen si la unidad sigue viva, los demás fallan) y <b>terminar el ejercicio</b> (el reloj se detiene
+        y los alumnos ven el informe, como con «Finalizar»).</li></ul>
         <p>Cada regla se dispara una vez, salvo que marque <b>Repetir</b>. En la lista se activan, se desactivan y se borran, y
         se ve cuántas veces se dispararon. Se guardan con el escenario y con las plantillas (las unidades y los objetivos se
         nombran por su nombre).</p>`,

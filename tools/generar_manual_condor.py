@@ -749,7 +749,10 @@ def construir(salida: Path) -> None:
                         "hacer aparecer unidades (bando, clase, cantidad y el punto en el mapa), cambiar el clima, dar o "
                         "quitar puntos, pausar el reloj o <b>lanzar misiles</b>: un lanzador (batería, buque o lanzador "
                         "balístico) tira una salva contra la unidad elegida aunque su bando no la vea, si la tiene a su "
-                        "alcance (un ataque programado)."]),
+                        "alcance (un ataque programado). También <b>retirar un bando</b> (deja de atacar, se apaga su "
+                        "piloto automático, sus aeronaves vuelven a la base más cercana y sus objetivos pendientes se "
+                        "cierran) y <b>terminar el ejercicio</b> (el reloj se detiene y los alumnos ven el informe). La "
+                        "plantilla del 3 de enero los usa: a las 04:29 el rojo se retira y el ejercicio termina."]),
                    P("Cada regla se dispara una vez, salvo que se marque <b>Repetir</b>. En la lista se activan, se desactivan "
                      "y se borran. Se guardan con el escenario y con las plantillas, junto con las áreas y zonas, el tráfico "
                      "civil, los campos de minas, la doctrina, el nivel del adversario y el enlace de datos. El <b>Tutorial del Cóndor</b> (2.11) "

@@ -571,6 +571,8 @@
                 <option value="puntos">Dar o quitar puntos</option>
                 <option value="pausar">Pausar el reloj</option>
                 <option value="lanzar">Lanzar misiles</option>
+                <option value="retirar">Retirar un bando</option>
+                <option value="finalizar">Terminar el ejercicio</option>
               </select></label>
               <div id="ea-a-mensaje" class="grid">
                 <label class="mini">Para<select id="ea-para"><option value="todos">Todos</option><option value="azul">Azul</option><option value="rojo">Rojo</option></select></label>
@@ -588,6 +590,13 @@
               <div id="ea-a-puntos" class="grid" hidden>
                 <label class="mini">Bando<select id="ea-pt-bando"><option value="azul">Azul</option><option value="rojo">Rojo</option></select></label>
                 <label class="mini">Puntos (negativo: quitar)<input id="ea-pt-n" type="number" value="10"></label>
+              </div>
+              <div id="ea-a-retirar" class="grid" hidden>
+                <label class="mini">Bando que se retira<select id="ea-re-bando"><option value="rojo">Rojo</option><option value="azul">Azul</option></select></label>
+                <p class="ayuda">El bando deja de atacar: el piloto automático deja de conducirlo, sus aeronaves vuelven a la base más cercana y sus objetivos pendientes se cierran (los de proteger se cumplen si la unidad sigue viva; los demás fallan).</p>
+              </div>
+              <div id="ea-a-finalizar" class="grid" hidden>
+                <p class="ayuda">El reloj se detiene para siempre y los alumnos pueden ver el informe, como con el botón «Finalizar».</p>
               </div>
               <div id="ea-a-lanzar" class="grid" hidden>
                 <label class="mini">Lanzador<select id="ea-la-unidad"></select></label>

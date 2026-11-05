@@ -23,7 +23,8 @@ from app.engine import zonas as zonas_mod
 DISPARADORES = {"entra_area": "Una unidad entra a un área", "hora": "Llega una hora del ejercicio",
                 "destruida": "Se destruye una unidad", "objetivo": "Se cumple o falla un objetivo"}
 ACCIONES = {"mensaje": "Enviar un mensaje", "aparecer": "Hacer aparecer unidades", "clima": "Cambiar el clima",
-            "puntos": "Dar o quitar puntos", "pausar": "Pausar el reloj", "lanzar": "Lanzar misiles"}
+            "puntos": "Dar o quitar puntos", "pausar": "Pausar el reloj", "lanzar": "Lanzar misiles",
+            "retirar": "Retirar un bando", "finalizar": "Terminar el ejercicio"}
 BANDOS_FILTRO = ("cualquiera", "azul", "rojo", "neutral")
 MAX_REGLAS = 50
 MAX_ACCIONES = 6
@@ -101,6 +102,8 @@ def validar(reglas: list) -> list[str]:
             elif t == "lanzar" and (not str(a.get("unidad") or "").strip() or not str(a.get("blanco") or "").strip()
                                     or not isinstance(a.get("misiles"), int) or not 1 <= a["misiles"] <= MAX_MISILES):
                 errores.append(f"Regla {i}: para lanzar elija el lanzador, el blanco y de 1 a {MAX_MISILES} misiles.")
+            elif t == "retirar" and a.get("bando") not in ("azul", "rojo"):
+                errores.append(f"Regla {i}: elija el bando que se retira.")
     return errores
 
 
@@ -220,6 +223,10 @@ def _actuar(ctx, d: dict, r: dict, quien) -> None:
             ctx.evento("direccion", a["bando"], f"{motivo}: {signo}{a['puntos']} puntos.")
         elif t == "lanzar":
             lanzar(ctx, a, motivo)
+        elif t == "retirar":
+            retirar(ctx, a["bando"])
+        elif t == "finalizar":
+            ctx.fin = f"{motivo}: el ejercicio terminó."
         elif t == "pausar":
             alerta = {"causa": "evento", "bando": "todos", "nivel": "aviso", "lat": None, "lon": None,
                       "texto": f"[{hora_del_dia(ctx.esc)}] {motivo}: el reloj se detiene.", "sim_segundos": ctx.t}
@@ -249,6 +256,45 @@ def aparecer(ctx, a: dict) -> list:
         ctx.lista.append(u)
         nuevas.append(u)
     return nuevas
+
+
+def retirar(ctx, bando: str) -> None:
+    """El bando se retira: el adversario automatico deja de conducirlo, sus aeronaves en vuelo vuelven a la base mas
+    cercana, las demas unidades dejan lo que hacian y sus objetivos pendientes se cierran (los de proteger se cumplen
+    si la unidad sigue viva; los demas, fallan)."""
+    from app.engine import aeronaves as aeronaves_mod
+    from app.engine.tiempo_real import _regresar
+    from app.models.evento import Evento
+    from app.models.objetivo import Objetivo
+
+    setattr(ctx.esc, f"ia_{bando}", False)
+    for u in list(ctx.lista):
+        if u.bando != bando or u.estado != "activa" or getattr(u, "transporte_id", None) or catalogo.es_misil(u):
+            continue
+        orden = ctx.orden_de(u)
+        if u.tipo == "aerea" and not u.en_tierra:
+            if orden is not None and orden.tipo == "aterrizar":
+                continue  # ya vuelve
+            base = aeronaves_mod.base_mas_cercana(u, ctx.lista)
+            if base is not None:
+                _regresar(ctx, u, orden, base, "retirada", f"{u.nombre} se retira a {base.nombre}.")
+                continue
+        if orden is not None:
+            ctx.terminar(orden, u, "Cancelada: el bando se retira.", "cancelada")
+    unidades = {u.id: u for u in ctx.lista}
+    for o in ctx.db.query(Objetivo).filter(Objetivo.escenario_id == ctx.esc.id, Objetivo.bando == bando,
+                                           Objetivo.estado == "pendiente"):
+        viva = o.unidad_id in unidades and unidades[o.unidad_id].estado != "destruida"
+        o.estado = "cumplido" if o.tipo == "proteger" and viva else "fallido"
+        o.turno_resuelto = ctx.esc.turno_actual
+        palabra = "cumplido" if o.estado == "cumplido" else "fallido"
+        ctx.db.add(Evento(escenario_id=ctx.esc.id, turno=ctx.esc.turno_actual, sim_segundos=ctx.t, tipo="objetivo",
+                          bando_destino=bando, descripcion=f"Objetivo {palabra} al retirarse: {o.nombre}"
+                          + (f" (+{o.puntos} puntos)" if o.estado == "cumplido" and o.puntos else "")))
+    nombre = "Azul" if bando == "azul" else "Rojo"
+    ctx.evento("direccion", "todos", f"El bando {nombre} se retira: deja de atacar y sus aeronaves vuelven a sus bases.")
+    ctx.alerta("evento", "todos", f"El bando {nombre} se retira.", None, None)
+    ctx.informe.cambios = True
 
 
 def mensaje_al_chat(ctx, para: str, texto: str) -> None:

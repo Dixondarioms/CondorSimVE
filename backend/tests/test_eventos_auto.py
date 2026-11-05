@@ -156,3 +156,33 @@ def test_el_mensaje_llega_tambien_al_chat_del_bando(db_session):
     azul, rojo = SimpleNamespace(id=900, rol="azul"), SimpleNamespace(id=901, rol="rojo")
     assert [x["mensaje"]["texto"] for x in comunicaciones.historial_para(db_session, esc, azul)] == ["Mueva la brigada"]
     assert comunicaciones.historial_para(db_session, esc, rojo) == []
+
+
+def test_retirar_un_bando_y_terminar_el_ejercicio(db_session):
+    from app.models.orden import Orden
+
+    assert eventos_auto.validar([{"disparador": {"tipo": "hora", "hora": "07:00"}, "acciones": [{"tipo": "retirar", "bando": "verde"}]}])
+    esc = _escenario(db_session)  # empieza a las 06:00
+    esc.estado, esc.ia_rojo = "activo", True
+    base = _unidad(db_session, esc, nombre="Base roja", bando="rojo", tipo="base", clase="base_aerea", velocidad_kmh=0, lat=0.5)
+    caza = _unidad(db_session, esc, nombre="Caza rojo", bando="rojo", tipo="aerea", clase="caza", velocidad_kmh=900, lat=0.0,
+                   alcance_km=1, deteccion_km=5, autonomia_km=2000, combustible=2000)
+    blanco = _unidad(db_session, esc, nombre="Radar azul", tipo="terrestre", clase="radar", lat=-0.5)
+    tanque = _unidad(db_session, esc, nombre="Tanque rojo", bando="rojo", lat=0.2)
+    db_session.add_all([Objetivo(escenario_id=esc.id, bando="rojo", tipo="destruir", nombre="Destruir el radar", puntos=20,
+                                 unidad_id=blanco.id),
+                        Objetivo(escenario_id=esc.id, bando="rojo", tipo="proteger", nombre="Preservar el tanque", puntos=10,
+                                 unidad_id=tanque.id)])
+    db_session.commit()
+    _orden(db_session, esc, tanque, "mover", waypoints=[[0.2, 0.3]])
+    _reglas(db_session, esc, {"nombre": "Fin", "disparador": {"tipo": "hora", "hora": "06:10"},
+                              "acciones": [{"tipo": "retirar", "bando": "rojo"}, {"tipo": "finalizar"}]})
+    _correr(db_session, esc, 900)
+    assert esc.estado == "finalizado" and not esc.ia_rojo
+    regreso = db_session.get(Orden, caza.orden_id)
+    assert regreso is not None and regreso.tipo == "aterrizar" and regreso.objetivo_unidad_id == base.id
+    assert tanque.orden_id is None  # dejo lo que hacia
+    estados = {o.nombre: o.estado for o in db_session.query(Objetivo).filter_by(escenario_id=esc.id)}
+    assert estados == {"Destruir el radar": "fallido", "Preservar el tanque": "cumplido"}
+    textos = [e.descripcion for e in db_session.query(Evento).filter_by(escenario_id=esc.id)]
+    assert any("se retira" in t for t in textos) and any("terminó" in t for t in textos)

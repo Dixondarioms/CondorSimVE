@@ -23,7 +23,7 @@
       const d = $("ea-disparador").value;
       for (const t of ["entra_area", "hora", "destruida", "objetivo"]) $(`ea-d-${t}`).hidden = d !== t;
       const a = $("ea-accion").value;
-      for (const t of ["mensaje", "aparecer", "clima", "puntos", "lanzar"]) $(`ea-a-${t}`).hidden = a !== t;
+      for (const t of ["mensaje", "aparecer", "clima", "puntos", "lanzar", "retirar", "finalizar"]) $(`ea-a-${t}`).hidden = a !== t;
     }
 
     function llenarListas() {
@@ -118,6 +118,7 @@
       }
       if (tipo === "clima") return { tipo, clima: $("ea-clima").value };
       if (tipo === "puntos") return { tipo, bando: $("ea-pt-bando").value, puntos: parseInt($("ea-pt-n").value, 10) || 0 };
+      if (tipo === "retirar") return { tipo, bando: $("ea-re-bando").value };
       if (tipo === "lanzar") {
         if (!$("ea-la-unidad").value || !$("ea-la-blanco").value) return ctx.toast("Elija el lanzador y el blanco.");
         return { tipo, unidad: $("ea-la-unidad").value, blanco: $("ea-la-blanco").value,

@@ -96,3 +96,23 @@ def test_el_cisterna_lo_conduce_operaciones_y_la_alerta_temprana_defensa_aerea()
     for clase, funcion in (("cisterna", "aereo"), ("alerta_temprana", "defensa_aerea")):
         u = SimpleNamespace(tipo="aerea", clase=clase)
         assert puestos.funcion_de_orden(u, "mover", catalogo.CLASES[clase]) == funcion
+
+
+def test_a_las_0429_el_rojo_se_retira_y_termina_el_ejercicio(db_session):
+    from app.engine import tiempo_real
+    from app.models.objetivo import Objetivo
+
+    esc = plantillas.crear_desde_plantilla(db_session, "ataque_3_enero_2026")
+    esc.estado = "activo"
+    db_session.commit()
+    for _ in range(14):  # 01:00 a 04:30
+        tiempo_real.paso(db_session, esc, 900, TerrenoFalso())
+        db_session.commit()
+        if esc.estado == "finalizado":
+            break
+    assert esc.estado == "finalizado" and not esc.ia_rojo
+    assert esc.sim_segundos == pytest.approx(3 * 3600 + 29 * 60, abs=900)
+    pendientes = db_session.query(Objetivo).filter_by(escenario_id=esc.id, bando="rojo", estado="pendiente").count()
+    assert pendientes == 0  # los no logrados quedan como fallidos
+    # los del azul con plazo a las 04:00 tambien se deciden al terminar
+    assert db_session.query(Objetivo).filter_by(escenario_id=esc.id, bando="azul", tipo="proteger", estado="pendiente").count() == 0
