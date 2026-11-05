@@ -1442,6 +1442,21 @@
     return Math.max(0.35, Math.min(1.5, 0.75 + 0.15 * (zoom - 8)));
   }
 
+  /** Factor de tamaño de las aeronaves en vuelo: de cerca (zoom 10 o mas) como las demas unidades; de lejos se achican
+   * mas rapido (0,65 en el zoom 8, 0,45 en el 7, hasta 0,28), porque en un ataque hay decenas de grupos juntos. */
+  function escalaAeronave(zoom) {
+    if (zoom >= 10) return escalaUnidad(zoom);
+    return Math.max(0.28, escalaUnidad(10) - 0.2 * (10 - zoom));
+  }
+
+  /** Siluetas que dibuja un grupo aereo: la formacion completa de cerca, hasta 2 en el zoom 8 y una sola mas lejos
+   * (el numero de aviones sigue en el rotulo y en la tarjeta de la unidad). */
+  function siluetasGrupo(n, zoom) {
+    const total = Math.max(1, n || 1);
+    if (zoom >= 9) return total;
+    return Math.min(total, zoom >= 8 ? 2 : 1);
+  }
+
   /** Unidades que muestran su anillo de alcance con el mapa cerca: desplegadas y con armas o radio propio
    * (no bases, misiles en vuelo, tropas embarcadas ni aeronaves en tierra). */
   function unidadesConAlcance(unidades) {
@@ -1458,7 +1473,7 @@
 
   const api = {
     MAPA_VENEZUELA, ordenarMapas, limitesDe, limitesDeMapas, textoMapa, ZOOM_ROTULOS, ZOOM_ALCANCES, ZOOM_CARRETERAS, textoTramoPro,
-    nivelLugar, lugaresOcultos, filtroLugaresRepetidos, escalaUnidad, unidadesConAlcance,
+    nivelLugar, lugaresOcultos, filtroLugaresRepetidos, escalaUnidad, escalaAeronave, siluetasGrupo, unidadesConAlcance,
     PERFILES_VUELO, textoPerfil, muestraCobertura, resumenSistemaDA, UNIDADES, convertir, sistemaMedidas, medida,
     filasFicha, entraEnPista,
     NIVELES_OBJETIVO, arbolObjetivos, superioresPosibles, textoCalendario, nombreFase, CONDUCCION,

@@ -17,6 +17,7 @@ MODELOS_EEUU = ("f22", "f35a", "f35b", "fa18ef", "ea18g", "b1b", "p8a", "e2d", "
 def test_la_plantilla_reconstruye_el_ataque_con_los_tipos_de_aeronave_informados():
     p = plantillas.PLANTILLAS["ataque_3_enero_2026"]
     assert (p.nacion_azul, p.nacion_rojo, p.hora_inicio_min) == ("venezuela", "estados_unidos", 60)
+    assert p.ia_rojo and not p.ia_azul  # el rojo lo conduce el adversario automatico: los alumnos azules defienden
     rojas = [u for u in p.unidades if u.bando == "rojo" and catalogo.CLASES[u.clase].tipo == "aerea"]
     assert {u.modelo for u in rojas} == set(MODELOS_EEUU)  # todos los tipos de aeronave estan representados
     assert sum(u.aeronaves for u in rojas) == 73
@@ -31,7 +32,8 @@ def test_la_plantilla_reconstruye_el_ataque_con_los_tipos_de_aeronave_informados
 def test_crear_el_escenario_del_3_de_enero(db_session):
     esc = plantillas.crear_desde_plantilla(db_session, "ataque_3_enero_2026")
     unidades = {u.nombre: u for u in db_session.query(Unidad).filter_by(escenario_id=esc.id)}
-    assert len(unidades) == len(plantillas.PLANTILLAS["ataque_3_enero_2026"].unidades)
+    # todas las de la plantilla (el adversario automatico del rojo puede sumar grupos que despega en su primera jugada)
+    assert {u.nombre for u in plantillas.PLANTILLAS["ataque_3_enero_2026"].unidades} <= set(unidades)
     assert db_session.query(Objetivo).filter_by(escenario_id=esc.id).count() == 10
 
     chinook = unidades["MH-47G Chinook (fuerza de asalto)"]

@@ -64,3 +64,14 @@ test("los anillos de alcance de cada arma: antiaerea, carga, torpedo, defensa de
   assert.deepEqual(L.anillosArmas({ estado: "activa", tipo: "naval", clase: "fragata" }, cat).map((a) => a.nombre), ["Torpedo", "Defensa de punto"]);
   assert.equal(L.anillosArmas({ estado: "activa", clase: "lanzador_balistico" }, cat)[0].km, 500);
 });
+
+test("de lejos las aeronaves se achican mas y el grupo muestra menos siluetas", () => {
+  const L = require("../static/js/logica.js");
+  for (const z of [10, 11, 14]) assert.equal(L.escalaAeronave(z), L.escalaUnidad(z));  // de cerca, igual que antes
+  assert.ok(L.escalaAeronave(8) < L.escalaUnidad(8) && L.escalaAeronave(7) < L.escalaAeronave(8));
+  assert.equal(L.escalaAeronave(3), 0.28);
+  assert.equal(L.siluetasGrupo(4, 9), 4);
+  assert.equal(L.siluetasGrupo(4, 8), 2);
+  assert.equal(L.siluetasGrupo(4, 6), 1);
+  assert.equal(L.siluetasGrupo(undefined, 6), 1);
+});

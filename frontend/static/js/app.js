@@ -962,10 +962,18 @@
     return r;
   }
 
-  /** Lado (px) del cuadro de un Su-30 solo: chico con el mapa lejos (no tapa ni se enciman) y grande de cerca. */
-  function baseAvion() {
+  /** Lado (px) del cuadro de un Su-30 solo: chico con el mapa lejos (no tapa ni se enciman) y grande de cerca. Las
+   * aeronaves en vuelo se achican mas de lejos (Logica.escalaAeronave). */
+  function baseAvion(u) {
     const zoom = app.map ? app.map.getZoom() : 8;
-    return Math.round(app.tamSimbolo * 2.2 * Logica.escalaUnidad(zoom));
+    const enVuelo = !!u && u.tipo === "aerea" && !u.en_tierra;
+    return Math.round(app.tamSimbolo * 2.2 * (enVuelo ? Logica.escalaAeronave(zoom) : Logica.escalaUnidad(zoom)));
+  }
+
+  /** Siluetas del grupo aereo que se dibujan con este zoom (una sola de lejos). */
+  function siluetas(u) {
+    if (u.tipo !== "aerea") return 1;
+    return u.en_tierra ? u.aeronaves || 1 : Logica.siluetasGrupo(u.aeronaves, app.map ? app.map.getZoom() : 8);
   }
 
   /** Tamaño del simbolo APP-6, con la misma regla (un poco menos de reduccion: debe seguir leyendose). */
@@ -1129,7 +1137,7 @@
     if (conMiniatura(u)) {
       // miniatura 3D: el punto de la unidad es el centro de la imagen (la peana, para lo que esta en tierra o agua)
       const av = Modelo3d.marcador({
-        modelo: u.modelo, clase: u.clase, rumbo, bando: u.bando, n: u.tipo === "aerea" ? u.aeronaves || 1 : 1, base: baseAvion(),
+        modelo: u.modelo, clase: u.clase, rumbo, bando: u.bando, n: siluetas(u), base: baseAvion(u),
       });
       const ancho = Math.max(110, av.ancho + 10);
       return L.divIcon({
@@ -1255,7 +1263,7 @@
       const mini = conMiniatura(u);
       const rumbo = mini && Modelo3d.gira(u) ? Math.round(rumboDe(u) / 5) * 5 : 0;
       const plano = mini && enPlanoAerodromo(u) ? "p" : "";
-      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}${u.perfil_actual || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${mini ? baseAvion() : `s${tamApp6()}`}|${plano}|${Logica.senalesUnidad(u).map((x) => x.texto).join(",")}|${aeronavesEnBase(u).length}`;
+      const firma = `${app.editando ? "e" : ""}|${u.sidc}|${u.nombre}|${clases}|${app.tamSimbolo}|${rotuloModelo(u)}|${u.en_tierra ? "t" : ""}${u.mision || ""}${u.perfil_actual || ""}|${u.modelo || ""}|${u.aeronaves || ""}|${mini ? `${baseAvion(u)}x${siluetas(u)}` : `s${tamApp6()}`}|${plano}|${Logica.senalesUnidad(u).map((x) => x.texto).join(",")}|${aeronavesEnBase(u).length}`;
       // aeronaves estacionadas: sobre la plataforma real de su base cuando se ve el plano del aerodromo
       const estacionada = mini && app.capaActiva.aerodromos && app.aerodromos && app.map.getZoom() >= app.aerodromos.zoomDetalle
         ? app.aerodromos.posicionEstacionada(u, unidades) : null;
