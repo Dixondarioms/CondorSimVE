@@ -71,7 +71,8 @@
 
   // transporte de tropas (engine/transporte.py): buque de desembarco (3 unidades) y helicoptero de transporte (1 ligera)
   const CAPACIDAD_TRANSPORTE = { buque_desembarco: 3, helicoptero_artillado: 1, avion_transporte: 2 };
-  const CAPACIDAD_MODELO = { c27j: 1, an26: 1, il76md: 3, a400m: 3 };  // por avion (engine/transporte.py)
+  const CAPACIDAD_MODELO = { c27j: 1, an26: 1, an32: 1, c295: 1, cn235: 1, c212: 1, bt67: 1, dhc6: 1, c208: 1, emb110: 1,
+    il76md: 3, a400m: 3 };  // por avion (engine/transporte.py)
   const RADIO_EMBARQUE_KM = 3;
   const esTransporte = (u) => !!u && (CAPACIDAD_TRANSPORTE[u.clase] || 0) > 0;
   const esAvionTransporte = (u) => !!u && u.clase === "avion_transporte";

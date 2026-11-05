@@ -512,8 +512,9 @@
       id: "paracaidistas", seccion: "Logística, ingenieros y transporte", titulo: "Paracaidistas (tropas aerotransportadas)",
       claves: "paracaidistas paracaidas aerotransportadas avion transporte c-130 hercules salto lanzamiento zona aerotransportado",
       texto: `<p><b>1. Embarcar</b>: el avión de transporte (C-130, Y-8…) debe estar <b>en tierra</b>, en una base. Elija la
-        unidad de paracaidistas, a menos de 3 km del avión → orden <b>Embarcar</b>. Cada avión lleva 2 unidades (los chicos,
-        1; el Il-76 y el A400M, 3). También puede llevar otras tropas ligeras, pero esas no saltan: bajan al aterrizar.</p>
+        unidad de paracaidistas, a menos de 3 km del avión → orden <b>Embarcar</b>. Cada avión lleva 2 unidades (C-130, Y-8,
+        C-390); los medianos y chicos (C-295, CN-235, C-27J, An-26, An-32, C-212, BT-67, Twin Otter, Caravan, Bandeirante),
+        1; el Il-76 y el A400M, 3. También puede llevar otras tropas ligeras, pero esas no saltan: bajan al aterrizar.</p>
         <p><b>2. Lanzar</b>: elija el avión → <b>Lanzar paracaidistas</b> → clic en la zona de lanzamiento, en tierra firme (o
         clic derecho en el mapa → «Lanzar paracaidistas aquí»). El avión despega, vuela hasta allí y saltan a menos de 2 km.</p>
         <p><b>3. En tierra</b>: caen dispersos (hasta 1,5 km del punto), pierden un poco de fuerza en el salto y tardan

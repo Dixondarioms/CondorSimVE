@@ -597,7 +597,8 @@ def construir(salida: Path) -> None:
             "transporte (se pierde si lo hunden o derriban). <b>Desembarcar</b>: elija el transporte y marque la ruta; el último "
             "punto es el lugar de desembarco, en tierra firme. Un avión de transporte desembarca solo en tierra, en la base."),
           P("<b>Paracaidistas</b>: el avión de transporte (C-130, Y-8, C-390…) embarca a la unidad de paracaidistas <b>en "
-            "tierra</b>, en una base. Lleva 2 unidades por avión (el C-27J y el An-26, 1; el Il-76 y el A400M, 3). En vuelo, "
+            "tierra</b>, en una base. El C-130, el Y-8 y el C-390 llevan 2 unidades por avión; los medianos y chicos (C-295, "
+            "CN-235, C-27J, An-26, An-32, C-212, BT-67, Twin Otter, Caravan y Bandeirante), 1; el Il-76 y el A400M, 3. En vuelo, "
             "orden <b>Lanzar paracaidistas</b> → clic en la zona de lanzamiento, en tierra firme (o clic derecho en el mapa → "
             "«Lanzar paracaidistas aquí»). El avión vuela hasta allí y saltan a menos de 2 km: caen dispersos (hasta 1,5 km del "
             "punto), pierden un poco de fuerza y tardan <b>20 minutos</b> en reagruparse antes de poder disparar. Después el "

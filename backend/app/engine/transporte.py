@@ -25,7 +25,9 @@ RADIO_EMBARQUE_KM = 3.0
 RADIO_DESEMBARCO_KM = 5.0
 DANO_A_BORDO = 0.5  # fraccion del daño al transporte que sufren las unidades embarcadas
 CAPACIDAD = {"buque_desembarco": 3, "helicoptero_artillado": 1, "avion_transporte": 2}
-CAPACIDAD_MODELO = {"c27j": 1, "an26": 1, "il76md": 3, "a400m": 3}  # unidades por avion de transporte
+# unidades por avion de transporte (los chicos y medianos, 1; los grandes, 3; el resto, 2)
+CAPACIDAD_MODELO = {"c27j": 1, "an26": 1, "an32": 1, "c295": 1, "cn235": 1, "c212": 1, "bt67": 1, "dhc6": 1, "c208": 1,
+                    "emb110": 1, "il76md": 3, "a400m": 3}
 SOLO_LIGERAS = {"helicoptero_artillado", "avion_transporte"}
 SALTAN = ("paracaidistas",)  # clases que se lanzan en paracaidas
 RADIO_SALTO_KM = 2.0
