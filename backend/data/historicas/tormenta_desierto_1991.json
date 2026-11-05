@@ -1,0 +1,997 @@
+{
+ "id": "tormenta_desierto_1991",
+ "nombre": "Tormenta del Desierto: la primera noche de la campaña aérea",
+ "fecha": "1991-01-17",
+ "zona_horaria": "UTC+3 (hora de Bagdad)",
+ "hora_inicio": "01:00",
+ "hora_fin": "05:00",
+ "resumen": "En la madrugada del 17 de enero de 1991 la coalición encabezada por EE. UU. abrió la guerra contra Irak con un ataque aéreo y de misiles coordinado al minuto. Primero, helicópteros Apache guiados por helicópteros MH-53J Pave Low destruyeron a las 02:38 dos radares de alerta en la frontera con Arabia Saudita y abrieron un corredor. Al mismo tiempo, aviones furtivos F-117A atacaron centros de mando de la defensa aérea en Nukhayb y Bagdad, y buques en el Mar Rojo y el Golfo lanzaron misiles Tomahawk. Los aviones de supresión de defensas (F-4G, EF-111A, señuelos BQM-74 y misiles HARM) obligaron a los radares iraquíes a encenderse para destruirlos, mientras los F-15C derribaban a los cazas iraquíes que despegaron. La coalición perdió un avión en esas horas, el F/A-18C del capitán de corbeta Scott Speicher.",
+ "contexto": "Irak invadió Kuwait el 2 de agosto de 1990 y no se retiró antes del plazo de la ONU (15 de enero de 1991). Irak tenía una defensa aérea centralizada llamada KARI: radares, centros de intercepción y de sector conectados con Bagdad, misiles antiaéreos y miles de cañones. El plan de la coalición fue cegar y desarticular ese sistema en las primeras horas para que luego el resto de los aviones pudiera operar con menos riesgo.",
+ "unidades": [
+  {
+   "nombre": "Apache Equipo Blanco",
+   "bando": "rojo",
+   "clase": "helicoptero",
+   "modelo": "ah64a",
+   "aeronaves": 4,
+   "lat": 29.785,
+   "lon": 40.1,
+   "en_tierra_en": "Al Jouf",
+   "posicion_aproximada": false,
+   "nota": "AH-64A del 1.er Batallón, 101.º Regimiento de Aviación (101.ª División Aerotransportada). Lo dirigía el teniente coronel Dick Cody, jefe de la Fuerza de Tarea Normandy. Llevaban un tanque de combustible extra en lugar de parte de los cohetes.",
+   "carga": "ataque",
+   "perfil": "rasante"
+  },
+  {
+   "nombre": "Apache Equipo Rojo",
+   "bando": "rojo",
+   "clase": "helicoptero",
+   "modelo": "ah64a",
+   "aeronaves": 4,
+   "lat": 29.785,
+   "lon": 40.1,
+   "en_tierra_en": "Al Jouf",
+   "posicion_aproximada": false,
+   "nota": "Segundo equipo de la Fuerza de Tarea Normandy, al mando del capitán Newman Shufflebarger. Salió unos minutos después del Equipo Blanco.",
+   "carga": "ataque",
+   "perfil": "rasante"
+  },
+  {
+   "nombre": "Pave Low Equipo Blanco",
+   "bando": "rojo",
+   "clase": "helicoptero_artillado",
+   "modelo": "mh53j",
+   "aeronaves": 2,
+   "lat": 29.785,
+   "lon": 40.1,
+   "en_tierra_en": "Al Jouf",
+   "posicion_aproximada": false,
+   "nota": "MH-53J del 20.º Escuadrón de Operaciones Especiales de la Fuerza Aérea. Guiaban a los Apache con GPS y radar de seguimiento del terreno hasta un punto marcado con luces químicas.",
+   "perfil": "rasante"
+  },
+  {
+   "nombre": "Pave Low Equipo Rojo",
+   "bando": "rojo",
+   "clase": "helicoptero_artillado",
+   "modelo": "mh53j",
+   "aeronaves": 2,
+   "lat": 29.785,
+   "lon": 40.1,
+   "en_tierra_en": "Al Jouf",
+   "posicion_aproximada": false,
+   "nota": "Guía del Equipo Rojo de Apache. Las fuentes no coinciden en el total de Pave Low (2, 3 o 4); el Ejército de EE. UU. (2025) dice 4.",
+   "perfil": "rasante"
+  },
+  {
+   "nombre": "F-117A grupo Nukhayb",
+   "bando": "rojo",
+   "clase": "ataque",
+   "modelo": "f117a",
+   "aeronaves": 2,
+   "lat": 28.5,
+   "lon": 41.8,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "37.ª Ala de Caza Táctica, desde Khamis Mushait. Incluye al mayor Gregory Feest y su numeral. A la hora de inicio ya volaban hacia el norte tras reabastecerse en el corredor de cisternas sobre Arabia Saudita.",
+   "carga": "ataque"
+  },
+  {
+   "nombre": "F-117A grupo comunicaciones Bagdad",
+   "bando": "rojo",
+   "clase": "ataque",
+   "modelo": "f117a",
+   "aeronaves": 4,
+   "lat": 29.0,
+   "lon": 42.6,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Parte de la primera ola de 10 F-117A del 415.º Escuadrón. Atacaron la central telefónica internacional de Bagdad (apodada 'edificio AT&T') y la torre de comunicaciones de Al Khark con bombas guiadas por láser GBU-27.",
+   "carga": "ataque"
+  },
+  {
+   "nombre": "F-117A grupo defensa aérea Bagdad",
+   "bando": "rojo",
+   "clase": "ataque",
+   "modelo": "f117a",
+   "aeronaves": 4,
+   "lat": 29.0,
+   "lon": 43.0,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Resto de la primera ola. Sus blancos incluían la sede de la Fuerza Aérea iraquí, dos cuarteles de sector de defensa aérea y un centro de operaciones en Al Taji. El reparto exacto de aviones por blanco es una aproximación.",
+   "carga": "ataque"
+  },
+  {
+   "nombre": "USS San Jacinto",
+   "bando": "rojo",
+   "clase": "destructor",
+   "modelo": "ticonderoga",
+   "aeronaves": 1,
+   "lat": 23.0,
+   "lon": 37.6,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Crucero clase Ticonderoga (CG-56) en el Mar Rojo. Lanzó el primer Tomahawk de combate de la historia. Se usa la clase 'destructor' porque el catálogo no tiene 'crucero'."
+  },
+  {
+   "nombre": "USS Bunker Hill",
+   "bando": "rojo",
+   "clase": "destructor",
+   "modelo": "ticonderoga",
+   "aeronaves": 1,
+   "lat": 27.9,
+   "lon": 50.0,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Crucero clase Ticonderoga (CG-52) en el Golfo Pérsico. Junto al destructor Paul F. Foster empezó a lanzar Tomahawk minutos después del San Jacinto. Esa noche dispararon 9 buques en total."
+  },
+  {
+   "nombre": "F-4G Wild Weasel",
+   "bando": "rojo",
+   "clase": "avion_ge",
+   "modelo": "f4g",
+   "aeronaves": 8,
+   "lat": 29.5,
+   "lon": 45.0,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "35.ª Ala de Caza Táctica, desde Sheikh Isa (Baréin). Cazaban radares de misiles con misiles antirradar AGM-88 HARM. Un paquete típico sobre Bagdad tenía 12 F-4G; aquí se agrupan 8.",
+   "carga": "sead"
+  },
+  {
+   "nombre": "EF-111A escolta Bagdad",
+   "bando": "rojo",
+   "clase": "avion_ge",
+   "modelo": "ef111a",
+   "aeronaves": 3,
+   "lat": 29.3,
+   "lon": 43.5,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Aviones de interferencia electrónica (base de Taif). Tres EF-111A acompañaron a los F-117A hacia Bagdad para cegar los radares iraquíes."
+  },
+  {
+   "nombre": "F-15C 58.º Escuadrón",
+   "bando": "rojo",
+   "clase": "caza",
+   "modelo": "f15c",
+   "aeronaves": 8,
+   "lat": 30.8,
+   "lon": 40.5,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "33.ª Ala de Caza Táctica (base de Tabuk). Agrupa las escuadrillas 'Pennzoil' (capitán Jon Kelk) y 'Citgo' (capitán Rob Graeter), que patrullaban el oeste de Irak."
+  },
+  {
+   "nombre": "F-15C 71.º Escuadrón",
+   "bando": "rojo",
+   "clase": "caza",
+   "modelo": "f15c",
+   "aeronaves": 4,
+   "lat": 30.5,
+   "lon": 45.5,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "1.ª Ala de Caza Táctica (base de Dhahran). Escuadrilla 'Quaker' del capitán Steve Tate, protegiendo a los aviones de ataque en el este."
+  },
+  {
+   "nombre": "E-3 AWACS",
+   "bando": "rojo",
+   "clase": "alerta_temprana",
+   "modelo": "e3g",
+   "aeronaves": 1,
+   "lat": 28.8,
+   "lon": 43.5,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Avión radar E-3 Sentry (se usa el modelo e3g del catálogo, versión modernizada del mismo avión). Vigilaba el espacio aéreo iraquí desde territorio saudí y dirigía a los F-15C contra los cazas iraquíes."
+  },
+  {
+   "nombre": "KC-135 cisternas",
+   "bando": "rojo",
+   "clase": "cisterna",
+   "modelo": "kc135",
+   "aeronaves": 4,
+   "lat": 29.2,
+   "lon": 42.0,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Representa los aviones cisterna en las rutas de reabastecimiento del norte de Arabia Saudita, cerca de la frontera."
+  },
+  {
+   "nombre": "F/A-18C VFA-81",
+   "bando": "rojo",
+   "clase": "caza",
+   "modelo": "fa18a",
+   "aeronaves": 4,
+   "lat": 31.0,
+   "lon": 40.0,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Escuadrón VFA-81 del portaaviones USS Saratoga (Mar Rojo). Se usa el modelo fa18ef como el más parecido al F/A-18C de 1991. En esta formación volaba el capitán de corbeta Scott Speicher. La misión exacta del paquete no está clara en las fuentes consultadas."
+  },
+  {
+   "nombre": "B-52G Senior Surprise",
+   "bando": "rojo",
+   "clase": "ataque",
+   "modelo": "b52h",
+   "aeronaves": 7,
+   "lat": 27.0,
+   "lon": 34.5,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Siete B-52G del 2.º Ala de Bombardeo que despegaron de Barksdale (Luisiana) el 16 de enero, con 39 misiles de crucero AGM-86C (CALCM). Se usa el modelo b52h, casi igual. Lanzaron sus misiles después de esta ventana de tiempo (ver cronología)."
+  },
+  {
+   "nombre": "Radar de alerta oeste (Nebraska)",
+   "bando": "azul",
+   "clase": "radar",
+   "modelo": "p18",
+   "aeronaves": 1,
+   "lat": 31.9,
+   "lon": 41.6,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Sitio de radar de alerta temprana con cañones antiaéreos ligeros, cerca de la frontera saudí, enlazado con bases de caza y con Bagdad. El tipo exacto de radar no se confirmó; se usa p18 como aproximación. Ubicación aproximada."
+  },
+  {
+   "nombre": "Radar de alerta este (California)",
+   "bando": "azul",
+   "clase": "radar",
+   "modelo": "p18",
+   "aeronaves": 1,
+   "lat": 31.6,
+   "lon": 42.6,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Segundo sitio de radar; las fuentes dicen que estaba a unos 110 km (70 millas) del primero. Ubicación aproximada."
+  },
+  {
+   "nombre": "Centro de intercepción de Nukhayb",
+   "bando": "azul",
+   "clase": "centro_comunicaciones",
+   "modelo": null,
+   "aeronaves": 1,
+   "lat": 32.04,
+   "lon": 42.25,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Centro de operaciones de intercepción (IOC) en búnker. Unía los radares de la frontera con la sede de la defensa aérea en Bagdad."
+  },
+  {
+   "nombre": "Central telefónica de Bagdad (AT&T)",
+   "bando": "azul",
+   "clase": "centro_comunicaciones",
+   "modelo": null,
+   "aeronaves": 1,
+   "lat": 33.32,
+   "lon": 44.39,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Central telefónica internacional del centro de Bagdad, clave para el mando militar iraquí. Los pilotos la llamaban 'edificio AT&T'."
+  },
+  {
+   "nombre": "Sede de la Fuerza Aérea iraquí",
+   "bando": "azul",
+   "clase": "centro_comunicaciones",
+   "modelo": null,
+   "aeronaves": 1,
+   "lat": 33.3,
+   "lon": 44.36,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Cuartel general de la Fuerza Aérea en Bagdad. Coordenadas aproximadas."
+  },
+  {
+   "nombre": "Centro de operaciones de Al Taji",
+   "bando": "azul",
+   "clase": "centro_comunicaciones",
+   "modelo": null,
+   "aeronaves": 1,
+   "lat": 33.52,
+   "lon": 44.26,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Centro de operaciones al norte de Bagdad atacado en la primera ola de F-117A. Se representa como parte del sistema de defensa aérea KARI; su función exacta no se pudo confirmar."
+  },
+  {
+   "nombre": "Centrales eléctricas de Bagdad",
+   "bando": "azul",
+   "clase": "termoelectrica",
+   "modelo": null,
+   "aeronaves": 1,
+   "lat": 33.28,
+   "lon": 44.43,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Representa de forma general los blancos de electricidad de Bagdad; las fuentes citan centrales eléctricas entre los blancos de las primeras horas, pero no qué central atacó cada arma."
+  },
+  {
+   "nombre": "Batería SA-2 Bagdad",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "modelo": "s75_sa2",
+   "aeronaves": 1,
+   "lat": 33.22,
+   "lon": 44.25,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Representa los misiles SA-2 del anillo defensivo de Bagdad (unas 60 baterías de misiles en total alrededor de la ciudad)."
+  },
+  {
+   "nombre": "Batería SA-3 Bagdad",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "modelo": "pechora_2m",
+   "aeronaves": 1,
+   "lat": 33.42,
+   "lon": 44.52,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "SA-3 (S-125). Se usa pechora_2m, versión modernizada del mismo sistema."
+  },
+  {
+   "nombre": "Batería SA-6 Bagdad",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "modelo": "kub_sa6",
+   "aeronaves": 1,
+   "lat": 33.18,
+   "lon": 44.45,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Misiles móviles SA-6. Bagdad también tenía Roland y SA-8, no representados aquí para no exceder el total de unidades."
+  },
+  {
+   "nombre": "Artillería antiaérea de Bagdad",
+   "bando": "azul",
+   "clase": "artilleria_antiaerea",
+   "modelo": "zu23_2",
+   "aeronaves": 1,
+   "lat": 33.33,
+   "lon": 44.41,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Representa unos 3.000 cañones antiaéreos alrededor de Bagdad (de 23, 57 y 100 mm). Disparaban casi a ciegas porque no veían a los F-117A."
+  },
+  {
+   "nombre": "MiG-29 Mudaysis",
+   "bando": "azul",
+   "clase": "caza",
+   "modelo": "mig29",
+   "aeronaves": 2,
+   "lat": 32.41,
+   "lon": 41.95,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Cazas MiG-29 que despegaron esa noche en el oeste de Irak; el AWACS los detectó volando bajo unos 80 km dentro de Irak."
+  },
+  {
+   "nombre": "Mirage F1 oeste",
+   "bando": "azul",
+   "clase": "caza",
+   "modelo": "mirage_f1",
+   "aeronaves": 2,
+   "lat": 32.6,
+   "lon": 41.6,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Pareja de Mirage F1EQ cerca de la base de Mudaysis, entre las bases H-2 y H-3."
+  },
+  {
+   "nombre": "Mirage F1 este",
+   "bando": "azul",
+   "clase": "caza",
+   "modelo": "mirage_f1",
+   "aeronaves": 1,
+   "lat": 32.9,
+   "lon": 44.9,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Mirage F1EQ derribado al sureste de Bagdad por la escuadrilla Quaker. Posición aproximada."
+  },
+  {
+   "nombre": "MiG-25PD Al Asad",
+   "bando": "azul",
+   "clase": "caza",
+   "modelo": "mig25",
+   "aeronaves": 1,
+   "lat": 33.786,
+   "lon": 42.441,
+   "en_tierra_en": "Al Asad (Qadisiyah)",
+   "posicion_aproximada": false,
+   "nota": "Interceptor del 96.º Escuadrón iraquí. Según la CIA (2001) y relatos posteriores, lo pilotaba el teniente Zuhair Dawoud y derribó con un misil R-40 el F/A-18C de Speicher."
+  },
+  {
+   "nombre": "Al Jouf",
+   "bando": "rojo",
+   "clase": "base_aerea",
+   "modelo": null,
+   "aeronaves": 1,
+   "lat": 29.785,
+   "lon": 40.1,
+   "en_tierra_en": null,
+   "posicion_aproximada": false,
+   "nota": "Base de partida de la Fuerza de Tarea Normandy (Arabia Saudita)."
+  },
+  {
+   "nombre": "Al Asad (Qadisiyah)",
+   "bando": "azul",
+   "clase": "base_aerea",
+   "modelo": null,
+   "aeronaves": 1,
+   "lat": 33.786,
+   "lon": 42.441,
+   "en_tierra_en": null,
+   "posicion_aproximada": false,
+   "nota": "Base aérea iraquí del MiG-25PD."
+  }
+ ],
+ "blancos": [
+  {
+   "unidad": "Radar de alerta este (California)",
+   "por": "Apache Equipo Blanco",
+   "arma": "Misiles AGM-114 Hellfire, cohetes de 70 mm y cañón de 30 mm"
+  },
+  {
+   "unidad": "Radar de alerta oeste (Nebraska)",
+   "por": "Apache Equipo Rojo",
+   "arma": "Misiles AGM-114 Hellfire, cohetes de 70 mm y cañón de 30 mm"
+  },
+  {
+   "unidad": "Centro de intercepción de Nukhayb",
+   "por": "F-117A grupo Nukhayb",
+   "arma": "Bomba guiada por láser GBU-27"
+  },
+  {
+   "unidad": "Central telefónica de Bagdad (AT&T)",
+   "por": "F-117A grupo comunicaciones Bagdad",
+   "arma": "Bombas guiadas por láser GBU-27"
+  },
+  {
+   "unidad": "Sede de la Fuerza Aérea iraquí",
+   "por": "F-117A grupo defensa aérea Bagdad",
+   "arma": "Bombas guiadas por láser GBU-27"
+  },
+  {
+   "unidad": "Centro de operaciones de Al Taji",
+   "por": "F-117A grupo defensa aérea Bagdad",
+   "arma": "Bombas guiadas por láser GBU-27"
+  },
+  {
+   "unidad": "Batería SA-2 Bagdad",
+   "por": "F-4G Wild Weasel",
+   "arma": "Misiles antirradar AGM-88 HARM"
+  },
+  {
+   "unidad": "Batería SA-3 Bagdad",
+   "por": "F-4G Wild Weasel",
+   "arma": "Misiles antirradar AGM-88 HARM"
+  },
+  {
+   "unidad": "MiG-29 Mudaysis",
+   "por": "F-15C 58.º Escuadrón",
+   "arma": "Misil AIM-7M Sparrow"
+  },
+  {
+   "unidad": "Mirage F1 oeste",
+   "por": "F-15C 58.º Escuadrón",
+   "arma": "Misil AIM-7M Sparrow"
+  },
+  {
+   "unidad": "Mirage F1 este",
+   "por": "F-15C 71.º Escuadrón",
+   "arma": "Misil AIM-7M Sparrow"
+  },
+  {
+   "unidad": "F/A-18C VFA-81",
+   "por": "MiG-25PD Al Asad",
+   "arma": "Misil aire-aire R-40"
+  },
+  {
+   "unidad": "Centrales eléctricas de Bagdad",
+   "por": "USS San Jacinto",
+   "arma": "Tomahawk TLAM-C"
+  }
+ ],
+ "cronologia": [
+  {
+   "hora": "01:00",
+   "unidad": "Pave Low Equipo Blanco",
+   "accion": "despegar",
+   "blanco": null,
+   "destino": [
+    30.9,
+    41.1
+   ],
+   "ruta": null,
+   "texto": "Desde Al Jouf despega el Equipo Blanco de la Fuerza de Tarea Normandy: dos Pave Low guían a cuatro Apache. Vuelan con las luces apagadas, en silencio de radio y a unos 15 metros del suelo. Los Apache llevan un tanque extra para ir y volver sin reabastecerse (el simulador debe mover juntos a los Pave Low y los Apache del Equipo Blanco)."
+  },
+  {
+   "hora": "01:06",
+   "unidad": "Apache Equipo Rojo",
+   "accion": "despegar",
+   "blanco": null,
+   "destino": [
+    30.9,
+    41.3
+   ],
+   "ruta": null,
+   "texto": "Pocos minutos después despega el Equipo Rojo con sus propios Pave Low. Cada equipo tiene un radar distinto como blanco y ambos deben destruirlos casi a la vez."
+  },
+  {
+   "hora": "01:30",
+   "unidad": "USS San Jacinto",
+   "accion": "lanzar",
+   "blanco": "Centrales eléctricas de Bagdad",
+   "destino": null,
+   "ruta": null,
+   "texto": "En el Mar Rojo, el crucero San Jacinto lanza el primer misil Tomahawk usado en combate. Los misiles tardan más de una hora en llegar a Bagdad volando bajo.",
+   "misiles": 4
+  },
+  {
+   "hora": "01:41",
+   "unidad": "USS Bunker Hill",
+   "accion": "lanzar",
+   "blanco": "Centrales eléctricas de Bagdad",
+   "destino": null,
+   "ruta": null,
+   "texto": "Once minutos después, el crucero Bunker Hill y el destructor Paul F. Foster empiezan a lanzar Tomahawk desde el Golfo Pérsico. Esa noche disparan 9 buques en total.",
+   "misiles": 4
+  },
+  {
+   "hora": "02:00",
+   "unidad": "F-117A grupo comunicaciones Bagdad",
+   "accion": "mover",
+   "blanco": null,
+   "destino": [
+    33.32,
+    44.39
+   ],
+   "ruta": [
+    [
+     29.0,
+     42.6
+    ],
+    [
+     31.0,
+     43.4
+    ],
+    [
+     33.32,
+     44.39
+    ]
+   ],
+   "texto": "Los F-117A, que despegaron de Khamis Mushait poco después de la medianoche y se reabastecieron sobre Arabia Saudita, entran solos y sin luces en Irak. Los radares iraquíes no los detectan."
+  },
+  {
+   "hora": "02:12",
+   "unidad": "Pave Low Equipo Blanco",
+   "accion": "mover",
+   "blanco": null,
+   "destino": [
+    31.45,
+    42.55
+   ],
+   "ruta": [
+    [
+     30.9,
+     41.1
+    ],
+    [
+     31.3,
+     41.9
+    ],
+    [
+     31.45,
+     42.55
+    ]
+   ],
+   "texto": "Los helicópteros cruzan la frontera de Irak. Los Pave Low los llevan con GPS hasta un punto a unos 15 km de los radares y lo marcan con luces químicas; luego se retiran a esperar."
+  },
+  {
+   "hora": "02:38",
+   "unidad": "Apache Equipo Blanco",
+   "accion": "atacar",
+   "blanco": "Radar de alerta este (California)",
+   "destino": null,
+   "ruta": null,
+   "texto": "Con la orden \"Party in ten\" los Apache abren fuego desde unos 6 km con misiles Hellfire, luego con cohetes y cañón. Son los primeros disparos de la guerra, 22 minutos antes de la hora H."
+  },
+  {
+   "hora": "02:38",
+   "unidad": "Apache Equipo Rojo",
+   "accion": "atacar",
+   "blanco": "Radar de alerta oeste (Nebraska)",
+   "destino": null,
+   "ruta": null,
+   "texto": "El Equipo Rojo ataca el segundo radar al mismo tiempo para que ninguno pueda avisar a los demás. En unos cuatro minutos ambos sitios quedan destruidos y se abre un corredor de unos 30 km de ancho."
+  },
+  {
+   "hora": "02:42",
+   "unidad": "Apache Equipo Blanco",
+   "accion": "mensaje",
+   "blanco": null,
+   "destino": null,
+   "ruta": null,
+   "texto": "Los jefes de equipo transmiten las claves \"California AAA\" y \"Nebraska AAA\": blancos destruidos y sin bajas propias. Por el corredor abierto pasan después muchos aviones de la coalición."
+  },
+  {
+   "hora": "02:51",
+   "unidad": "F-117A grupo Nukhayb",
+   "accion": "atacar",
+   "blanco": "Centro de intercepción de Nukhayb",
+   "destino": null,
+   "ruta": null,
+   "texto": "El mayor Gregory Feest lanza una bomba GBU-27 contra el búnker del centro de intercepción de Nukhayb. Es la primera bomba de la guerra y corta el enlace entre los radares de la frontera y Bagdad (hora citada por una sola fuente)."
+  },
+  {
+   "hora": "03:00",
+   "unidad": "F-117A grupo comunicaciones Bagdad",
+   "accion": "atacar",
+   "blanco": "Central telefónica de Bagdad (AT&T)",
+   "destino": null,
+   "ruta": null,
+   "texto": "Hora H. Un F-117A acierta con una GBU-27 en la central telefónica de Bagdad (\"edificio AT&T\"); un minuto después el mayor Jerry Leatherman golpea el mismo edificio. Otro F-117A ataca la torre de comunicaciones de Al Khark."
+  },
+  {
+   "hora": "03:00",
+   "unidad": "Artillería antiaérea de Bagdad",
+   "accion": "mensaje",
+   "blanco": null,
+   "destino": null,
+   "ruta": null,
+   "texto": "Tras las primeras explosiones, miles de cañones antiaéreos disparan hacia el cielo de Bagdad, casi a ciegas porque no ven a los F-117A. Las imágenes del cielo iluminado se transmiten en vivo por televisión."
+  },
+  {
+   "hora": "03:03",
+   "unidad": "F-117A grupo defensa aérea Bagdad",
+   "accion": "atacar",
+   "blanco": "Sede de la Fuerza Aérea iraquí",
+   "destino": null,
+   "ruta": null,
+   "texto": "Otros F-117A atacan la sede de la Fuerza Aérea iraquí y cuarteles de sector de la defensa aérea en Bagdad. En la primera ola los F-117A logran 13 impactos en 17 intentos (minuto exacto aproximado)."
+  },
+  {
+   "hora": "03:06",
+   "unidad": "F-117A grupo defensa aérea Bagdad",
+   "accion": "atacar",
+   "blanco": "Centro de operaciones de Al Taji",
+   "destino": null,
+   "ruta": null,
+   "texto": "El mismo grupo ataca el centro de operaciones de Al Taji, al norte de Bagdad (minuto exacto aproximado)."
+  },
+  {
+   "hora": "03:06",
+   "unidad": null,
+   "accion": "mensaje",
+   "blanco": null,
+   "destino": null,
+   "ruta": null,
+   "texto": "Llegan los Tomahawk sobre Bagdad y golpean blancos de comunicaciones, electricidad y mando. El minuto exacto de llegada no está confirmado en las fuentes consultadas."
+  },
+  {
+   "hora": "03:10",
+   "unidad": "F-15C 58.º Escuadrón",
+   "accion": "atacar",
+   "blanco": "MiG-29 Mudaysis",
+   "destino": null,
+   "ruta": null,
+   "texto": "El AWACS detecta MiG-29 volando bajo dentro de Irak. El capitán Jon Kelk (escuadrilla Pennzoil) dispara un misil AIM-7 y obtiene el primer derribo aéreo de la guerra, cerca de Mudaysis (las fuentes dan entre 03:05 y 03:15)."
+  },
+  {
+   "hora": "03:15",
+   "unidad": null,
+   "accion": "mensaje",
+   "blanco": null,
+   "destino": null,
+   "ruta": [
+    [
+     30.5,
+     43.0
+    ],
+    [
+     32.2,
+     43.9
+    ],
+    [
+     33.3,
+     44.4
+    ]
+   ],
+   "texto": "Los señuelos sin piloto llegan sobre las defensas de Bagdad. En el radar parecen aviones de ataque, así que los operadores iraquíes encienden sus radares de misiles al máximo (hora aproximada)."
+  },
+  {
+   "hora": "03:18",
+   "unidad": "F-15C 58.º Escuadrón",
+   "accion": "atacar",
+   "blanco": "Mirage F1 oeste",
+   "destino": null,
+   "ruta": null,
+   "texto": "El capitán Rob Graeter (escuadrilla Citgo) derriba un Mirage F1 con un AIM-7 cerca de Mudaysis; un segundo Mirage se estrella contra el suelo durante el combate. Un EF-111A en la zona dijo que ese avión cayó persiguiéndolo (hora aproximada)."
+  },
+  {
+   "hora": "03:20",
+   "unidad": "F-15C 71.º Escuadrón",
+   "accion": "atacar",
+   "blanco": "Mirage F1 este",
+   "destino": null,
+   "ruta": null,
+   "texto": "Al sureste de Bagdad, el capitán Steve Tate (escuadrilla Quaker) identifica un Mirage F1 a unos 20 km y lo derriba con un AIM-7. Fue el primer derribo anunciado públicamente."
+  },
+  {
+   "hora": "03:25",
+   "unidad": "F-4G Wild Weasel",
+   "accion": "atacar",
+   "blanco": "Batería SA-3 Bagdad",
+   "destino": null,
+   "ruta": null,
+   "texto": "Los EF-111A interfieren los radares y, cuando estos se encienden contra los señuelos, los F-4G disparan misiles antirradar HARM. Esa noche la coalición disparó unos 200 HARM (hora aproximada)."
+  },
+  {
+   "hora": "03:30",
+   "unidad": "F-4G Wild Weasel",
+   "accion": "atacar",
+   "blanco": "Batería SA-2 Bagdad",
+   "destino": null,
+   "ruta": null,
+   "texto": "Siguen los disparos de HARM contra otros radares de misiles. Los operadores iraquíes aprenden pronto a apagar sus radares, lo que reduce la amenaza para los aviones que vienen detrás (hora aproximada)."
+  },
+  {
+   "hora": "03:50",
+   "unidad": "MiG-25PD Al Asad",
+   "accion": "atacar",
+   "blanco": "F/A-18C VFA-81",
+   "destino": null,
+   "ruta": null,
+   "texto": "Un MiG-25PD iraquí se acerca sin ser autorizado como blanco por el AWACS y dispara un misil R-40 contra el último avión de la formación de F/A-18C. Cae el avión del capitán de corbeta Scott Speicher, única pérdida de la coalición en esta fase (hora discutida)."
+  },
+  {
+   "hora": "04:15",
+   "unidad": "Apache Equipo Blanco",
+   "accion": "aterrizar",
+   "blanco": "Al Jouf",
+   "destino": [
+    29.785,
+    40.1
+   ],
+   "ruta": [
+    [
+     31.6,
+     42.5
+    ],
+    [
+     30.9,
+     41.1
+    ],
+    [
+     29.785,
+     40.1
+    ]
+   ],
+   "texto": "Los helicópteros de la Fuerza de Tarea Normandy regresan a Arabia Saudita sin pérdidas (hora de llegada aproximada)."
+  },
+  {
+   "hora": "04:45",
+   "unidad": "B-52G Senior Surprise",
+   "accion": "mover",
+   "blanco": null,
+   "destino": [
+    29.5,
+    40.0
+   ],
+   "ruta": [
+    [
+     27.0,
+     34.5
+    ],
+    [
+     28.5,
+     37.5
+    ],
+    [
+     29.5,
+     40.0
+    ]
+   ],
+   "texto": "Los siete B-52G que salieron de Luisiana el día anterior avanzan hacia su punto de lanzamiento en el oeste de Arabia Saudita. Lanzarán 35 misiles de crucero después de esta ventana, hacia las 06:00, contra centrales eléctricas de Mosul y comunicaciones (hora aproximada)."
+  },
+  {
+   "hora": "05:00",
+   "unidad": null,
+   "accion": "mensaje",
+   "blanco": null,
+   "destino": null,
+   "ruta": null,
+   "texto": "Fin de la primera fase. El sistema de defensa aérea iraquí quedó desorganizado: radares de frontera, centros de mando y comunicaciones dañados. En las primeras 24 horas la coalición voló más de 2.000 salidas."
+  },
+  {
+   "hora": "04:15",
+   "unidad": "Apache Equipo Rojo",
+   "accion": "aterrizar",
+   "blanco": "Al Jouf",
+   "destino": null,
+   "ruta": null,
+   "texto": "Apache Equipo Rojo regresa a Al Jouf."
+  },
+  {
+   "hora": "04:15",
+   "unidad": "Pave Low Equipo Blanco",
+   "accion": "aterrizar",
+   "blanco": "Al Jouf",
+   "destino": null,
+   "ruta": null,
+   "texto": "Pave Low Equipo Blanco regresa a Al Jouf."
+  },
+  {
+   "hora": "04:15",
+   "unidad": "Pave Low Equipo Rojo",
+   "accion": "aterrizar",
+   "blanco": "Al Jouf",
+   "destino": null,
+   "ruta": null,
+   "texto": "Pave Low Equipo Rojo regresa a Al Jouf."
+  },
+  {
+   "hora": "01:00",
+   "unidad": "Apache Equipo Blanco",
+   "accion": "despegar",
+   "blanco": null,
+   "destino": [
+    30.9,
+    41.1
+   ],
+   "ruta": null,
+   "texto": "Los Apache del Equipo Blanco despegan junto con sus Pave Low."
+  },
+  {
+   "hora": "01:06",
+   "unidad": "Pave Low Equipo Rojo",
+   "accion": "despegar",
+   "blanco": null,
+   "destino": [
+    30.9,
+    41.3
+   ],
+   "ruta": null,
+   "texto": "Los Pave Low del Equipo Rojo guían a sus Apache."
+  },
+  {
+   "hora": "02:12",
+   "unidad": "Apache Equipo Blanco",
+   "accion": "mover",
+   "blanco": null,
+   "destino": [
+    31.45,
+    42.45
+   ],
+   "ruta": null,
+   "texto": "Los Apache del Equipo Blanco siguen a sus Pave Low hasta el punto de ataque."
+  },
+  {
+   "hora": "02:12",
+   "unidad": "Apache Equipo Rojo",
+   "accion": "mover",
+   "blanco": null,
+   "destino": [
+    31.75,
+    41.5
+   ],
+   "ruta": null,
+   "texto": "El Equipo Rojo llega a su punto de ataque, frente al radar oeste."
+  }
+ ],
+ "resultado_real": {
+  "texto": "La apertura cumplió su objetivo principal: el sistema de defensa aérea iraquí quedó cegado y desorganizado desde las primeras horas, y la coalición obtuvo rápidamente el dominio del aire. Los radares de la frontera y el centro de Nukhayb cayeron antes de la hora H y varios centros de mando y comunicaciones de Bagdad fueron alcanzados. Sin embargo, la Oficina de Rendición de Cuentas del Gobierno de EE. UU. (GAO) concluyó después que los F-117A acertaron en 21 de sus 37 blancos de la primera noche y que no fueron los únicos responsables del colapso de la defensa iraquí. La coalición perdió un solo avión en esta fase.",
+  "perdidas_rojo": [
+   "1 F/A-18C del VFA-81 (USS Saratoga); murió el capitán de corbeta Michael Scott Speicher. Sus restos se hallaron en 2009."
+  ],
+  "perdidas_azul": [
+   "2 sitios de radar de alerta temprana en la frontera, destruidos por los Apache",
+   "1 MiG-29 derribado por el capitán Jon Kelk (F-15C)",
+   "1 Mirage F1EQ derribado por el capitán Rob Graeter (F-15C) y un segundo Mirage F1EQ estrellado durante el mismo combate",
+   "1 Mirage F1EQ derribado por el capitán Steve Tate (F-15C)",
+   "Numerosos radares de misiles atacados con HARM (cifra exacta de radares destruidos desconocida)"
+  ],
+  "danos": [
+   "Centro de intercepción de Nukhayb alcanzado por la primera bomba de la guerra",
+   "Central telefónica internacional de Bagdad (\"edificio AT&T\") alcanzada por al menos dos GBU-27",
+   "Torre de comunicaciones de Al Khark atacada",
+   "Primera ola de F-117A: 13 impactos en 17 intentos; segunda ola: 10 en 16",
+   "Según la GAO, solo 2 de 11 blancos de defensa aérea atacados por F-117A se confirmaron como totalmente destruidos"
+  ]
+ },
+ "incertidumbres": [
+  "No se pudo consultar directamente el Gulf War Air Power Survey (los servidores oficiales bloquearon la descarga); los datos vienen de otras fuentes oficiales y de prensa especializada que lo citan.",
+  "La composición de la Fuerza de Tarea Normandy varía: 8 Apache y 4 Pave Low (Ejército de EE. UU., Air Force Magazine), 9 Apache y 2 Pave Low más un UH-60 (Defense Media Network) o 9 Apache y 3 Pave Low (Cordesman).",
+  "El Equipo Rojo salió 6 minutos (Air Force Magazine) o 12 minutos (Defense Media Network) después del Equipo Blanco. Cruce de frontera: 'poco antes de las 02:00' o 02:12 según las fuentes.",
+  "No se conocen las coordenadas exactas de los dos radares; sus posiciones y qué equipo atacó cada uno son aproximaciones. El tipo de radar (se usa P-18) no está confirmado.",
+  "La hora de la primera bomba en Nukhayb (02:51) aparece en una sola fuente. La primera ola de F-117A despegó 'a las 0022' según una historia desclasificada de la USAF, sin aclarar si es hora local.",
+  "La hora de llegada de los Tomahawk a Bagdad no se confirmó; Cordesman indica que 54 Tomahawk acompañaron una ola posterior (H+3). El número de Tomahawk del primer día varía entre 'más de 100' y 122 según la fuente, y los blancos concretos de cada salva no se conocen.",
+  "Las horas de los derribos de Graeter y Tate y de los disparos de HARM son aproximadas. Una fuente sitúa el lanzamiento masivo de HARM sobre Bagdad a las 03:50.",
+  "La hora del derribo de Speicher está en discusión: una fuente da el despegue del MiG-25 a las 02:38 y el impacto a las 02:50; otras dan 03:50. La Armada atribuyó al principio la pérdida a un misil tierra-aire; el informe de la CIA de 2001 la atribuye a un MiG-25.",
+  "El derribo del Mirage F1 atribuido al EF-111A (Denton y Brandon) no es oficial y podría ser el mismo segundo Mirage de Graeter.",
+  "Los B-52G lanzaron sus misiles unas 14,5-15 horas después de despegar de Barksdale (06:36 hora de Luisiana del 16 de enero, aproximadamente las 15:36 de Bagdad), lo que sitúa el lanzamiento hacia las 06:00-06:30 de Bagdad, fuera de esta ventana; los misiles debían llegar a media mañana.",
+  "El número de aviones por grupo (F-4G, F-15C, cisternas, señuelos) está simplificado para el simulador; las posiciones de patrulla, órbitas del AWACS y cisternas son aproximadas.",
+  "Otras pérdidas de la coalición del 17 de enero (por ejemplo, aviones Tornado y un A-6E) ocurrieron más tarde ese día y no se incluyen."
+ ],
+ "fuentes": [
+  {
+   "titulo": "Apache Attack (Air Force Magazine, octubre 1991)",
+   "url": "https://www.airandspaceforces.com/article/1091apache/",
+   "nota": "Despegue desde Al Jouf a la 01:00, equipos Blanco y Rojo, guía con GPS y luces químicas, ataque hacia las 02:38, armamento, tanques extra, claves California/Nebraska."
+  },
+  {
+   "titulo": "Task Force Normandy heroes awarded long awaited Distinguished Flying Crosses (Ejército de EE. UU., 2025)",
+   "url": "https://www.army.mil/article/285589/task_force_normandy_heroes_awarded_long_awaited_distinguished_flying_crosses",
+   "nota": "8 AH-64 y 4 MH-53J, 27 Hellfire disparados, corredor de 20 millas, ataque 22 minutos antes de la hora H."
+  },
+  {
+   "titulo": "Task Force Normandy Fired the Opening Shots of Desert Storm (Defense Media Network)",
+   "url": "https://www.defensemedianetwork.com/stories/task-force-normandy-fired-the-opening-shots-of-desert-storm/",
+   "nota": "Jefes de equipo, orden 'Party in ten' a las 02:38, separación de unas 70 millas entre los radares, versión alternativa de la composición."
+  },
+  {
+   "titulo": "Gulf War: The Air War (Defense Media Network)",
+   "url": "https://defensemedianetwork.com/stories/gulf-war-the-air-war",
+   "nota": "Primera ola de F-117A, edificio AT&T a las 03:00, Leatherman, Al Khark, derribo de Kelk, misión de los B-52G y resultados de los CALCM."
+  },
+  {
+   "titulo": "A Strike by Stealth (Air Force Magazine, marzo 1992)",
+   "url": "https://www.airandspaceforces.com/article/0392stealth/",
+   "nota": "Despegue desde Khamis Mushait, reabastecimiento, ataque de Feest al centro de intercepción de Nukhayb, hora H 03:00."
+  },
+  {
+   "titulo": "Historia desclasificada de la USAF, 37.ª Ala de Caza Táctica (GulfLINK)",
+   "url": "https://gulflink.health.mil/declassdocs/af/19961101/110196_aacha_09.html",
+   "nota": "Primera ola de 10 F-117A (0022 horas), lista de blancos (Nukhayb, sedes de defensa aérea y Fuerza Aérea, Al Taji, centrales telefónicas) y resultados 13/17 y 10/16."
+  },
+  {
+   "titulo": "Desert Storm Chronology, US Navy (GulfLINK)",
+   "url": "https://gulflink.health.mil/histories/db/navy/usnavy_097.html",
+   "nota": "Primer Tomahawk del San Jacinto (Mar Rojo) entre 01:00 y 02:00 hora del Golfo, Bunker Hill en el Golfo, más de 100 Tomahawk desde 9 buques, pérdida del F/A-18 de Speicher."
+  },
+  {
+   "titulo": "H-Gram 058: Desert Storm (Naval History and Heritage Command)",
+   "url": "https://www.history.navy.mil/about-us/leadership/director/directors-corner/h-grams/h-gram-058.html",
+   "nota": "Hora 01:30 del primer Tomahawk y lanzamiento 11 minutos después desde el Golfo (Paul F. Foster y Bunker Hill). Consultado a través del extracto del buscador; la página no abrió directamente."
+  },
+  {
+   "titulo": "Operation Desert Storm: Evaluation of the Air Campaign (GAO/NSIAD-97-134)",
+   "url": "https://www.govinfo.gov/content/pkg/GAOREPORTS-NSIAD-97-134/html/GAOREPORTS-NSIAD-97-134.htm",
+   "nota": "Evaluación crítica: 21 de 37 blancos de F-117A alcanzados la primera noche, 2 de 11 blancos de defensa aérea totalmente destruidos."
+  },
+  {
+   "titulo": "Cordesman, The Lessons of Modern War: Gulf War, cap. 6 (CSIS, 1994)",
+   "url": "https://csis-website-prod.s3.amazonaws.com/s3fs-public/legacy_files/files/media/csis/pubs/941015lessonsgulfiv-chap06.pdf",
+   "nota": "Paquete de supresión de defensas sobre Bagdad (12 F-4G, 3 EF-111, 6 BQM-74, EA-6B, F/A-18 y A-7 con HARM, A-6 con señuelos), unos 200 HARM la primera noche, 54 Tomahawk en la segunda ola."
+  },
+  {
+   "titulo": "The Secret Squirrels (Air Force Magazine, abril 1994)",
+   "url": "https://www.airandspaceforces.com/article/0494squirrels/",
+   "nota": "7 B-52G, 39 misiles cargados y 35 lanzados, lanzamiento unas 14,5 h tras el despegue a unas 100 millas de la frontera, llegada prevista a media mañana."
+  },
+  {
+   "titulo": "Air engagements of the Gulf War (Wikipedia)",
+   "url": "https://en.wikipedia.org/wiki/Air_engagements_of_the_Gulf_War",
+   "nota": "Detalles de los derribos de Kelk, Graeter y Tate, episodio del EF-111A y relato del derribo de Speicher por el MiG-25PD."
+  },
+  {
+   "titulo": "Gulf War air campaign (Wikipedia)",
+   "url": "https://en.wikipedia.org/wiki/Gulf_War_air_campaign",
+   "nota": "Secuencia horaria general (02:38, 02:43, 03:00), 10 F-117A con escolta de 3 EF-111A, unos 3.000 cañones antiaéreos en Bagdad."
+  },
+  {
+   "titulo": "Scott Speicher (Wikipedia)",
+   "url": "https://en.wikipedia.org/wiki/Scott_Speicher",
+   "nota": "Lugar del derribo (Tulul ad Dulaym, unos 160 km al oeste de Bagdad), atribución al MiG-25 del 96.º Escuadrón, hallazgo de restos en 2009."
+  },
+  {
+   "titulo": "Coalition Air-to-Air Victories in Desert Storm (rjlee.org)",
+   "url": "https://rjlee.org/air/ds-aakill/By%20Engagement/",
+   "nota": "Escuadrillas, unidades y armas de los derribos del 17 de enero; aclaración sobre el segundo Mirage de Graeter y el EF-111A."
+  }
+ ],
+ "nacion_rojo": "coalicion",
+ "nacion_azul": "irak"
+}

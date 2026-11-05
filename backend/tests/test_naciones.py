@@ -33,7 +33,9 @@ def test_el_catalogo_cubre_todos_los_estados_de_america_ordenados_con_venezuela_
     assert resto == sorted(resto, key=sin_tildes)
     for n in naciones.NACIONES.values():
         assert re.fullmatch(r"[a-z_]+", n.id), n.id  # snake_case sin tildes
-        assert re.fullmatch(r"[A-Z]{2}", n.iso) and naciones.PAISES_AMERICA[n.iso] == n.nombre
+        assert re.fullmatch(r"[A-Z]{2}", n.iso)
+        if n not in naciones._HISTORICAS:  # los de otras regiones solo aparecen en las operaciones historicas
+            assert naciones.PAISES_AMERICA[n.iso] == n.nombre
     assert len({n.iso for n in naciones.NACIONES.values()}) == len(naciones.NACIONES)
     assert naciones.NACIONES["mexico"].capital == "Ciudad de México" and naciones.NACIONES["chile"].gentilicio == "chileno"
     # territorios sin estado propio: solo nombre en español para los datos geograficos

@@ -234,6 +234,10 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
           movilidad="fija", infraestructura="energia",
           armamento="Genera electricidad con gas o fueloil. Si se la daña, los radares fijos del bando pierden alcance "
                     "(trabajan con generadores de respaldo)"),
+    Clase("instalacion_nuclear", "Instalación nuclear", "base", "G", "IUEN--", 0, 0, 0, 0, _atk(0.0, 0.0, 0.0), 1.4, "",
+          movilidad="fija",
+          armamento="Reactor o centro de investigación nuclear: estructura de hormigón muy resistente. Blanco estratégico "
+                    "de algunas operaciones históricas (reproducción)"),
     Clase("hidroelectrica", "Central hidroelectrica", "base", "G", "IUED--", 0, 0, 0, 0, _atk(0.0, 0.0, 0.0), 1.6, "",
           movilidad="fija", infraestructura="energia",
           armamento="Presa y casa de maquinas: genera electricidad. Muy robusta. Si se la daña, los radares fijos del "

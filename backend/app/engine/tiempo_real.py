@@ -1298,7 +1298,8 @@ def _atacar(ctx: _Ctx, a: Unidad, orden: Orden, h: float) -> None:
         if a.tipo == "aerea":
             _esperar(a)
         return
-    visto = ctx.visible_para(d, a.bando)
+    # en la reproduccion de una operacion real los blancos se conocen de antemano (planificados)
+    visto = ctx.visible_para(d, a.bando) or bool(ctx.esc.historia_json)
     if not visto:
         ultimo = ctx.mundo.visto_en.get((a.bando, d.id), orden.emitida_seg if orden.emitida_seg is not None else ctx.t)
         if ctx.t - ultimo > CONTACTO_PERDIDO_S:
@@ -2002,7 +2003,7 @@ def _defensa_de_punto(ctx: _Ctx, h: float) -> None:
     if not misiles:
         return
     for b in ctx.lista:
-        dp = misiles_mod.DEFENSA_PUNTO.get(b.clase or "")
+        dp = misiles_mod.defensa_punto(b)
         if dp is None or b.estado != "activa" or b.tipo != "naval":
             continue
         cerca = sorted((geo.distancia_km(b.lat, b.lon, x.lat, x.lon), x.id, x) for x in misiles

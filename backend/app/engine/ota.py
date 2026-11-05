@@ -83,6 +83,11 @@ ARMAMENTO = {
     "BBU": ("GBU-12 (láser)", "bomba", True, 12), "BTK": ("NATAK", "bomba", False, 0),
     "JDM": ("GBU-31 JDAM", "bomba", True, 24),
     "CKH": ("Cañón", "helo", False, 2), "CKL": ("Cohetes", "helo", False, 6), "ALP": ("Ametralladoras laterales", "helo", False, 1),
+    # armas de las operaciones historicas (1981-1991, engine/historicas.py)
+    "M7S": ("AIM-7 Sparrow", "aa", True, 40), "PHX": ("AIM-54 Phoenix", "aa", True, 150),
+    "SHF": ("Shafrir 2", "aa", True, 5), "MAG": ("R550 Magic", "aa", True, 8), "S53": ("Super 530", "aa", True, 30),
+    "R23": ("R-23 (AA-7 Apex)", "aa", True, 35), "R40": ("R-40 (AA-6 Acrid)", "aa", True, 50), "R60": ("R-60 (AA-8 Aphid)", "aa", True, 8),
+    "SHR": ("AGM-45 Shrike (antirradiación)", "ar", True, 40), "G27": ("GBU-27 (láser)", "bomba", True, 12),
 }
 _ORIENTAL = {"aa": ["MAA", "MAB", "MAC", "MAD"], "sup": ["MA1", "MA2", "MA3", "MA4", "MA5", "BKR", "BOD", "BRK", "MA6"]}
 _OCCIDENTAL = {"aa": ["M120", "M9X", "MPB"], "sup": ["HRM", "JSW", "BGB", "BBU", "JDM", "BMK", "BKM", "HPN"]}
@@ -98,6 +103,13 @@ ARMAMENTO_POR_MODELO = {
     "mq9": ["HLF", "BBU"], "uav_armado": ["HLF", "BBU"],
     "helo_ataque": ["CKH", "CKL", "HLF"], "helo_transporte": ["CKH", "CKL", "ALP"],
     "mh60dap": ["CKH", "CKL", "HLF"], "ah6m": ["CKH", "CKL", "HLF"], "mh60m": ["ALP"], "mh6m": ["ALP"], "mh47g": ["ALP"],
+    # operaciones historicas: el armamento de la epoca
+    "super_etendard": ["EXO", "BMK"], "sp2h_neptune": [], "dagger": ["SHF", "BMK"], "sea_harrier": ["MPB", "BMK"],
+    "f16a": ["MPB", "BKM"], "f15a": ["M7S", "MPB"], "f15c": ["M7S", "MPB"], "e2c": [],
+    "f111f": ["BGB", "BMK"], "ef111a": [], "kc10": [], "a6e": ["BMK", "BBU", "HPN"], "a7e": ["HRM", "SHR", "BMK"],
+    "fa18a": ["M7S", "MPB", "HRM", "BMK"], "ea6b": [], "f14a": ["PHX", "M7S", "MPB"],
+    "mig23": ["R23", "R60"], "mig25": ["R40", "R60"], "mirage_f1": ["S53", "MAG", "EXO"],
+    "f117a": ["G27", "BGB"], "f4g": ["HRM", "SHR"], "ah64a": ["HLF", "CKL", "CKH"], "mh53j": ["ALP"],
 }
 # efecto del armamento en el ataque (multiplica la potencia de fuego del grupo)
 FACTOR_GUIADA = 1.15  # una bomba o un misil guiado contra un blanco fijo o de superficie

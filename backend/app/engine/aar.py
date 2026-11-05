@@ -119,6 +119,17 @@ def _minutos(efectos: str) -> int:
     return int(m.group(1)) if m else 0
 
 
+def _historia(escenario: Escenario, unidades: dict) -> dict | None:
+    h = escenario.historia
+    if not h:
+        return None
+    simulado = {b: {"destruidas": sorted(u.nombre for u in unidades.values() if u.bando == b and u.estado == "destruida"),
+                    "danadas": sorted(f"{u.nombre} ({u.fuerza:.0f} %)" for u in unidades.values()
+                                      if u.bando == b and u.estado != "destruida" and u.fuerza < 99.5 and u.tipo != "neutral")}
+                for b in ("rojo", "azul")}
+    return {**h, "simulado": simulado}
+
+
 def construir_informe(db: Session, escenario: Escenario) -> dict:
     """Vista completa (sin niebla de guerra) de todo lo ocurrido en el escenario."""
     unidades = {u.id: u for u in db.query(Unidad).filter(Unidad.escenario_id == escenario.id)}
@@ -209,6 +220,8 @@ def construir_informe(db: Session, escenario: Escenario) -> dict:
         # fuego amigo: la defensa aerea propia contra aeronaves propias con el IFF apagado (engine/iff.py)
         "fuego_amigo": [{"bando": e.bando_destino, "turno": e.turno, "descripcion": e.descripcion}
                         for e in eventos if e.tipo == "fuego_amigo"],
+        # reproduccion historica: lo que paso en la realidad y lo que resulto en el simulador (engine/historicas.py)
+        "historia": _historia(escenario, unidades),
         "objetivos": [
             state.serializar_objetivo(o, unidades)
             for o in db.query(Objetivo).filter(Objetivo.escenario_id == escenario.id).order_by(Objetivo.id)

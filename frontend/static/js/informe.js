@@ -142,6 +142,20 @@
           { texto: b, clase: "tag-" + b }, x.unidades, x.destruidas, x.combates_iniciados, x.combates_recibidos,
           x.fuerza_perdida, x.dano_infligido, x.ordenes_emitidas, x.ordenes_rechazadas,
         ]), [1, 2, 3, 4, 5, 6, 7, 8]));
+      const h = datos.historia;  // reproduccion historica: lo real junto a lo simulado (engine/historicas.py)
+      if (h) {
+        const titulo = (t) => Object.assign(document.createElement("h4"), { textContent: t });
+        const parrafo = (t, clase) => Object.assign(document.createElement("p"), { textContent: t, className: clase || "" });
+        cont.appendChild(titulo(`Lo que pasó en la realidad · ${h.fecha || ""}`));
+        const real = h.resultado_real || {};
+        cont.appendChild(parrafo(real.texto || ""));
+        const lista = (xs) => (xs && xs.length ? xs.join("; ") : "ninguna");
+        cont.appendChild(tabla(["Bando", "Pérdidas reales", "Destruidas en el simulador"],
+          ["rojo", "azul"].map((b) => [{ texto: b, clase: "tag-" + b }, lista(real[`perdidas_${b}`]),
+            lista(((h.simulado || {})[b] || {}).destruidas)])));
+        cont.appendChild(parrafo("El simulador reproduce la cronología real, pero el resultado de cada ataque lo calcula él: "
+          + "las diferencias con lo real son material de análisis. Las fuentes están en el informe imprimible.", "ayuda"));
+      }
       const pg = datos.perdidas_gastos;  // perdidas y gastos por bando (engine/gastos.py)
       if (pg) {
         const titulo = (t) => Object.assign(document.createElement("h4"), { textContent: t });

@@ -106,6 +106,8 @@ class EscenarioOut(BaseModel):
     fuego_automatico: bool = True
     enlace_datos: bool = False
     practica: bool = False  # ejercicio de practica: el alumno maneja el reloj
+    historica: bool = False  # reproduccion de una operacion real (engine/historicas.py): nadie da ordenes
+    historia: dict | None = None  # su ficha: fecha, resumen, resultado real, fuentes
     estado_mar: str = "calmo"  # engine/mar.py
     fuego_amigo: bool = False  # engine/iff.py
     ia_azul: bool = False

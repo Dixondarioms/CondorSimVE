@@ -59,7 +59,27 @@ _FICTICIAS = [
     Nacion("valdoria", "País Azul (ficticio)", "azul", "Capital Azul", ("#1F4E9C", "#FFFFFF", "#3FA34D"), "XV"),
     Nacion("ostrania", "País Rojo (ficticio)", "rojo", "Capital Roja", ("#B3202A", "#1A1A1A", "#F2C14E"), "XO"),
 ]
-NACIONES: dict[str, Nacion] = {n.id: n for n in _LISTA + _FICTICIAS}
+# Estados de otras regiones que aparecen en las operaciones historicas (engine/historicas.py). La coalicion de 1991
+# usa el codigo XC (rango X* de uso privado de ISO 3166).
+_HISTORICAS = [
+    Nacion("reino_unido", "Reino Unido", "británico", "Londres", ("#012169", "#FFFFFF", "#C8102E"), "GB"),
+    Nacion("israel", "Israel", "israelí", "Jerusalén", ("#FFFFFF", "#0038B8"), "IL"),
+    Nacion("irak", "Irak", "iraquí", "Bagdad", ("#CE1126", "#FFFFFF", "#000000"), "IQ"),
+    Nacion("libia", "Libia", "libio", "Trípoli", ("#239E46", "#FFFFFF"), "LY"),
+    Nacion("coalicion", "Coalición (1991)", "de la coalición", "-", ("#002868", "#FFFFFF", "#BF0A30"), "XC"),
+]
+
+
+def _sin_tildes(texto: str) -> str:
+    import unicodedata
+
+    return unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode().lower()
+
+
+# Venezuela primero; despues los paises reales en orden alfabetico; al final los ficticios y la coalicion
+_REALES = sorted(_LISTA[1:] + [n for n in _HISTORICAS if not n.iso.startswith("X")], key=lambda n: _sin_tildes(n.nombre))
+NACIONES: dict[str, Nacion] = {n.id: n for n in [_LISTA[0], *_REALES, *_FICTICIAS,
+                                                 *(n for n in _HISTORICAS if n.iso.startswith("X"))]}
 
 # Nombre en español de cada pais o territorio de America (ISO 3166-1 alfa-2), incluidos los que no son estados
 # soberanos (y por eso no estan en NACIONES): sirve para rotular datos geograficos como los aerodromos.

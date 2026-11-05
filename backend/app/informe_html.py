@@ -164,6 +164,36 @@ def _rubrica_html(rubrica: dict | None) -> str:
     return "".join(partes)
 
 
+def _lista(items) -> str:
+    return "<ul>" + "".join(f"<li>{e(x)}</li>" for x in items) + "</ul>" if items else "<p class='meta'>Ninguna.</p>"
+
+
+def _historia_html(h: dict | None) -> str:
+    """Reproduccion historica: lo que paso en la realidad junto a lo que resulto en el simulador, con las fuentes."""
+    if not h:
+        return ""
+    real = h.get("resultado_real") or {}
+    sim = h.get("simulado") or {}
+    filas = []
+    for b, campo in (("rojo", "perdidas_rojo"), ("azul", "perdidas_azul")):
+        filas.append(f"<tr><td>{_bando(b)}</td><td>{_lista(real.get(campo) or [])}</td>"
+                     f"<td>{_lista((sim.get(b) or {}).get('destruidas') or [])}"
+                     + (f"<p class='meta'>Dañadas: {e(', '.join(sim[b]['danadas']))}</p>" if (sim.get(b) or {}).get("danadas") else "")
+                     + "</td></tr>")
+    fuentes = "".join(f'<li><a href="{e(f.get("url", ""))}">{e(f.get("titulo", ""))}</a>'
+                      + (f" — {e(f['nota'])}" if f.get("nota") else "") + "</li>" for f in h.get("fuentes") or [])
+    dudas = h.get("incertidumbres") or []
+    return (f"<h2>Lo que pasó en la realidad</h2><p class='meta'>Reproducción histórica · {e(h.get('fecha', ''))}</p>"
+            f"<p>{e(real.get('texto', ''))}</p>"
+            + (f"<p><b>Daños reales:</b></p>{_lista(real.get('danos'))}" if real.get("danos") else "")
+            + "<table><thead><tr><th>Bando</th><th>Pérdidas reales</th><th>Destruidas en el simulador</th></tr></thead>"
+            f"<tbody>{''.join(filas)}</tbody></table>"
+            "<p class='meta'>El simulador reproduce la cronología real, pero el resultado de cada ataque y de cada defensa "
+            "lo calcula él: las diferencias con lo real son material de análisis.</p>"
+            + (f"<h3>Datos aproximados o discutidos</h3>{_lista(dudas)}" if dudas else "")
+            + (f"<h3>Fuentes</h3><ul>{fuentes}</ul>" if fuentes else ""))
+
+
 def render_html(informe: dict, rubrica: dict | None = None) -> str:
     esc = informe["escenario"]
     res = informe["resumen"]
@@ -212,6 +242,8 @@ def render_html(informe: dict, rubrica: dict | None = None) -> str:
         colateral_html = ("<h2>Daño colateral</h2>" + (f'<p class="meta">Penalización en el puntaje: {penal}</p>' if penal else "")
                           + "<ul>" + "".join(f'<li>{_bando(c["bando"])}: {e(c["descripcion"])}</li>' for c in colateral) + "</ul>")
 
+    historia_html = _historia_html(informe.get("historia"))
+
     fa = informe.get("fuego_amigo") or []
     fuego_amigo_html = ("<h2>Fuego amigo</h2><ul>" + "".join(f'<li>{_bando(c["bando"])}: {e(c["descripcion"])}</li>' for c in fa)
                         + "</ul>") if fa else ""
@@ -248,6 +280,7 @@ def render_html(informe: dict, rubrica: dict | None = None) -> str:
 <p class="meta"><b>{e(esc["nombre"])}</b> · estado {e(esc["estado"])} · turnos resueltos {max(esc["turno_actual"] - 1, 0)}
  · clima actual {e(esc["clima"])} · azar {"activado" if esc["azar"] else "desactivado"}
  · creado {e(esc["creado_en"][:16].replace("T", " "))} UTC</p>
+{historia_html}
 <h2>Resumen por bando</h2>{resumen_tabla}
 <h3>Fuerza perdida acumulada</h3>{_barras(res)}
 {colateral_html}

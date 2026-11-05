@@ -24,7 +24,10 @@ DISPARADORES = {"entra_area": "Una unidad entra a un área", "hora": "Llega una 
                 "destruida": "Se destruye una unidad", "objetivo": "Se cumple o falla un objetivo"}
 ACCIONES = {"mensaje": "Enviar un mensaje", "aparecer": "Hacer aparecer unidades", "clima": "Cambiar el clima",
             "puntos": "Dar o quitar puntos", "pausar": "Pausar el reloj", "lanzar": "Lanzar misiles",
-            "retirar": "Retirar un bando", "finalizar": "Terminar el ejercicio"}
+            "retirar": "Retirar un bando", "finalizar": "Terminar el ejercicio", "ordenar": "Dar una orden"}
+# ordenes que puede dar un evento (reproduccion de operaciones historicas, engine/historicas.py)
+ORDENES_PROGRAMADAS = ("mover", "atacar", "patrullar", "aterrizar", "despegar", "lanzar", "interferir")
+ESPERA_ATAQUE_S = 1800.0  # una orden de regreso espera a que termine el ataque en curso (hasta 30 minutos)
 BANDOS_FILTRO = ("cualquiera", "azul", "rojo", "neutral")
 MAX_REGLAS = 50
 MAX_ACCIONES = 6
@@ -104,6 +107,8 @@ def validar(reglas: list) -> list[str]:
                 errores.append(f"Regla {i}: para lanzar elija el lanzador, el blanco y de 1 a {MAX_MISILES} misiles.")
             elif t == "retirar" and a.get("bando") not in ("azul", "rojo"):
                 errores.append(f"Regla {i}: elija el bando que se retira.")
+            elif t == "ordenar":
+                errores += [f"Regla {i}: {e}" for e in _error_de_orden(a)]
     return errores
 
 
@@ -170,6 +175,7 @@ def evaluar(ctx) -> None:
     reglas = d["reglas"]
     if not reglas:
         return
+    cambio = _pendientes(ctx, d)
     m = ctx.mundo
     previo = m.eventos_dentro
     ahora = set()
@@ -179,7 +185,6 @@ def evaluar(ctx) -> None:
     if not m.eventos_listo:  # recien arrancado: lo que ya esta adentro no cuenta como entrada
         m.eventos_dentro, m.eventos_listo = ahora, True
         previo = ahora
-    cambio = False
     for r in reglas:
         if not r.get("activo", True) or (r.get("disparos", 0) and not r.get("repetir")):
             continue
@@ -191,7 +196,7 @@ def evaluar(ctx) -> None:
             r["disparos"] = r.get("disparos", 0) + 1
             cambio = True
     m.eventos_dentro = ahora
-    if cambio:
+    if cambio or d.get("pendientes"):
         guardar(ctx.esc, d)
         ctx.informe.cambios = True
 
@@ -227,6 +232,9 @@ def _actuar(ctx, d: dict, r: dict, quien) -> None:
             retirar(ctx, a["bando"])
         elif t == "finalizar":
             ctx.fin = f"{motivo}: el ejercicio terminó."
+        elif t == "ordenar":
+            if ordenar(ctx, a, motivo) == "espera":  # termina antes el ataque en curso
+                d.setdefault("pendientes", []).append({"accion": a, "motivo": motivo, "desde": ctx.t})
         elif t == "pausar":
             alerta = {"causa": "evento", "bando": "todos", "nivel": "aviso", "lat": None, "lon": None,
                       "texto": f"[{hora_del_dia(ctx.esc)}] {motivo}: el reloj se detiene.", "sim_segundos": ctx.t}
@@ -256,6 +264,86 @@ def aparecer(ctx, a: dict) -> list:
         ctx.lista.append(u)
         nuevas.append(u)
     return nuevas
+
+
+def _pendientes(ctx, d: dict) -> bool:
+    """Ordenes de regreso que esperaban el fin de un ataque: se dan cuando el ataque termino (o vencio la espera)."""
+    quedan, cambio = [], False
+    for p in d.get("pendientes") or []:
+        u = _unidad(ctx, p["accion"]["unidad"])
+        previa = ctx.orden_de(u) if u is not None else None
+        if u is not None and previa is not None and previa.tipo == "atacar" and ctx.t - p["desde"] < ESPERA_ATAQUE_S:
+            quedan.append(p)
+            continue
+        ordenar(ctx, {**p["accion"], "forzar": True}, p["motivo"])
+        cambio = True
+    if cambio:
+        d["pendientes"] = quedan
+        guardar(ctx.esc, d)
+    return cambio
+
+
+def _error_de_orden(a: dict) -> list[str]:
+    orden = a.get("orden")
+    if orden not in ORDENES_PROGRAMADAS:
+        return [f"orden no válida (posibles: {', '.join(ORDENES_PROGRAMADAS)})."]
+    if not str(a.get("unidad") or "").strip():
+        return ["elija la unidad que recibe la orden."]
+    if orden in ("atacar", "aterrizar", "lanzar") and not str(a.get("blanco") or "").strip():
+        return ["elija el blanco (o la base, para aterrizar)."]
+    if orden in ("mover", "patrullar", "interferir"):
+        puntos = a.get("waypoints") or []
+        if not puntos or not all(isinstance(p, (list, tuple)) and len(p) == 2 for p in puntos):
+            return ["marque la ruta (uno o más puntos)."]
+    if orden == "lanzar" and not 1 <= int(a.get("misiles") or 0) <= MAX_MISILES:
+        return [f"de 1 a {MAX_MISILES} misiles."]
+    return []
+
+
+def ordenar(ctx, a: dict, motivo: str) -> bool:
+    """Orden programada (cronologia de una operacion real): pasa por el motor como la de un alumno, pero sin exigir
+    que su bando vea al blanco (los blancos de una operacion planificada se conocen de antemano)."""
+    from app.engine import misiles
+    from app.engine.tiempo_real import aplicar_orden
+    from app.models.orden import Orden
+
+    u = _unidad(ctx, a["unidad"])
+    if u is None or u.estado != "activa":
+        ctx.evento("direccion", "instructor", f"{motivo}: {a['unidad']} ya no está en servicio; no se dio la orden.")
+        return False
+    tipo = a["orden"]
+    if tipo == "lanzar":
+        return lanzar(ctx, {"unidad": a["unidad"], "blanco": a["blanco"], "misiles": int(a.get("misiles") or 1)}, motivo)
+    blanco = _unidad(ctx, a.get("blanco") or "") if a.get("blanco") else None
+    if tipo in ("atacar", "aterrizar") and (blanco is None or blanco.estado != "activa"):
+        ctx.evento("direccion", "instructor", f"{motivo}: {a.get('blanco')} ya no está; {u.nombre} no recibió la orden.")
+        return False
+    if tipo == "despegar" and not u.en_tierra:
+        return False
+    previa = ctx.orden_de(u)
+    if (previa is not None and previa.tipo == "atacar" and tipo in ("mover", "aterrizar", "patrullar")
+            and not a.get("forzar")):
+        return "espera"
+    if a.get("carga"):  # la carga de armamento de la mision (engine/armas.py), sacada de su base si esta en tierra
+        from app.engine import armas as armas_mod
+
+        if armas_mod.aplica(u):
+            armas_mod.armar(u, a["carga"], ctx.unidades.get(u.base_id) if u.en_tierra and u.base_id else None)
+    detalle = misiles.codificar(int(a.get("misiles") or 1)) if tipo == "lanzar" else ""
+    puntos = [list(p) for p in (a.get("waypoints") or [])]
+    if tipo == "interferir" and puntos:
+        detalle = ""
+    orden = Orden(escenario_id=ctx.esc.id, unidad_id=u.id, tipo=tipo, waypoints_json=json.dumps(puntos),
+                  objetivo_unidad_id=blanco.id if blanco is not None else None, detalle=detalle,
+                  turno_emitida=ctx.esc.turno_actual)
+    ctx.db.add(orden)
+    ctx.db.flush()
+    if previa is not None and previa.id != orden.id:
+        ctx.terminar(previa, u, "Reemplazada por la orden siguiente de la cronología.", "cancelada")
+    aplicar_orden(ctx.db, ctx.esc, orden, u)
+    ctx.db.flush()
+    ctx.releer()
+    return True
 
 
 def retirar(ctx, bando: str) -> None:

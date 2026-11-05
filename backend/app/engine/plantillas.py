@@ -118,6 +118,8 @@ class Plantilla:
     doctrina: dict | None = None
     enlace_datos: bool = False  # imagen comun por enlace de datos (engine/enlace.py)
     practica: bool = False  # ejercicio de practica: el alumno maneja el reloj
+    # reproduccion de una operacion real (engine/historicas.py): {fecha, resumen, resultado_real, fuentes, ...}
+    historia: dict | None = None
     # TIEM: quien conduce cada bando, calendario D/H y Problema Militar Operativo de cada bando ({bando: contenido})
     conduce_azul: str = "alumnos"
     conduce_rojo: str = "alumnos"
@@ -460,6 +462,7 @@ def crear_desde_plantilla(db: Session, plantilla_id: str) -> Escenario:
                     nacion_azul=p.nacion_azul, nacion_rojo=p.nacion_rojo, ia_azul=p.ia_azul, ia_rojo=p.ia_rojo,
                     dia_noche=p.dia_noche, conduce_azul=p.conduce_azul, conduce_rojo=p.conduce_rojo, ia_nivel=p.ia_nivel,
                     enlace_datos=p.enlace_datos, practica=p.practica,
+                    historia_json=json.dumps(p.historia, ensure_ascii=False) if p.historia else None,
                     fecha_inicio=p.fecha_inicio, turno_h=p.turno_h, turno_final=p.turno_final,
                     fases_json=json.dumps(list(p.fases), ensure_ascii=False) if p.fases else None)
     if p.eventos_auto:
@@ -556,6 +559,7 @@ def plantilla_dict(p: Plantilla) -> dict:
         "nacion_rojo": p.nacion_rojo, "unidades": len(p.unidades), "objetivos": len(p.objetivos),
         "origen": p.origen, "con_estado": p.con_estado, "guardada_en": p.guardada_en,
         "ia_azul": p.ia_azul, "ia_rojo": p.ia_rojo, "dia_noche": p.dia_noche,
+        "historica": bool(p.historia), "fecha": (p.historia or {}).get("fecha"),
     }
 
 
@@ -665,7 +669,7 @@ def serializar_escenario(db: Session, esc: Escenario, nombre: str, descripcion: 
         "con_estado": bool(con_estado), "clima": esc.clima, "hora_inicio_min": esc.hora_inicio_min,
         "nacion_azul": esc.nacion_azul or "", "nacion_rojo": esc.nacion_rojo or "",
         "ia_azul": bool(esc.ia_azul), "ia_rojo": bool(esc.ia_rojo), "dia_noche": bool(esc.dia_noche),
-        "ia_nivel": esc.ia_nivel or "normal", "enlace_datos": bool(esc.enlace_datos), "practica": bool(esc.practica), "doctrina": json.loads(esc.doctrina_json) if esc.doctrina_json else None,
+        "ia_nivel": esc.ia_nivel or "normal", "enlace_datos": bool(esc.enlace_datos), "practica": bool(esc.practica), "historia": esc.historia, "doctrina": json.loads(esc.doctrina_json) if esc.doctrina_json else None,
         "conduce_azul": esc.conduce_azul or "alumnos", "conduce_rojo": esc.conduce_rojo or "alumnos",
         "fecha_inicio": esc.fecha_inicio, "turno_h": esc.turno_h, "turno_final": esc.turno_final,
         "fases": json.loads(esc.fases_json) if esc.fases_json else [], "pmo": problemas,
@@ -786,6 +790,7 @@ def desde_dict(datos: dict) -> Plantilla:
         doctrina=_doctrina(datos.get("doctrina")),
         enlace_datos=bool(datos.get("enlace_datos")),
         practica=bool(datos.get("practica")),
+        historia=datos.get("historia") if isinstance(datos.get("historia"), dict) else None,
     )
 
 

@@ -72,6 +72,9 @@ class Escenario(Base):
     enlace_datos: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     # ejercicio de practica: el alumno maneja el reloj (pone en marcha, detiene, cambia la velocidad), como en el Tutorial
     practica: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    # reproduccion historica (engine/historicas.py): ficha de la operacion real {fecha, resumen, resultado_real,
+    # fuentes, incertidumbres}. Con ella, nadie da ordenes: ambos bandos siguen la cronologia (eventos automaticos)
+    historia_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     # estado del mar (engine/mar.py): calmo | moderado | grueso | muy_grueso
     estado_mar: Mapped[str] = mapped_column(String(12), default="calmo", server_default="calmo")
     # fuego amigo e IFF (engine/iff.py): la defensa aerea propia con armas libres tira a las aeronaves con el IFF apagado
@@ -123,6 +126,20 @@ class Escenario(Base):
         from app.engine.trafico import zona_publica  # importacion tardia
 
         return zona_publica(self)
+
+    @property
+    def historica(self) -> bool:
+        """Reproduccion de una operacion real: los bandos siguen la cronologia y nadie da ordenes."""
+        return bool(self.historia_json)
+
+    @property
+    def historia(self) -> dict | None:
+        import json
+
+        try:
+            return json.loads(self.historia_json) if self.historia_json else None
+        except ValueError:
+            return None
 
     @property
     def pausa_auto(self) -> dict:

@@ -1,0 +1,733 @@
+{
+ "id": "historica_malvinas_sheffield_1982",
+ "nombre": "Ataque con Exocet al HMS Sheffield (Guerra de las Malvinas)",
+ "descripcion": "Un avión explorador Neptune de la Armada Argentina despegó de Río Grande de madrugada y localizó al grupo de batalla británico al sur y sureste de las islas. Con esos datos despegaron dos Super Étendard armados cada uno con un misil Exocet AM39; se reabastecieron de combustible en vuelo con un KC-130H de la Fuerza Aérea y volaron a muy baja altura hacia el blanco. A unos 40 millas del blanco subieron un momento, encendieron su radar, encontraron los buques y lanzaron los dos misiles a las 11:04. Uno alcanzó al destructor HMS Sheffield, que estaba de piquete radar al oeste de los portaaviones; el otro cayó al mar. Los dos aviones regresaron a Río Grande sin daños; el Sheffield se incendió, fue abandonado y se hundió el 10 de mayo mientras era remolcado. Reproducción histórica: las unidades siguen solas la cronología real (05:00 a 15:15, UTC-3 (hora oficial argentina, la que usan los informes de la Aviación Naval). Para pasar a la hora de los británicos (GMT/Zulu) se suman 3 horas: el at",
+ "origen": "codigo",
+ "clima": "despejado",
+ "hora_inicio_min": 300,
+ "nacion_azul": "reino_unido",
+ "nacion_rojo": "argentina",
+ "dia_noche": true,
+ "ia_azul": false,
+ "ia_rojo": false,
+ "fecha_inicio": "1982-05-04",
+ "unidades": [
+  {
+   "nombre": "Base Aeronaval Río Grande",
+   "bando": "rojo",
+   "clase": "base_aerea",
+   "lat": -53.7777,
+   "lon": -67.7494,
+   "modelo": "",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "Base Aérea Militar Río Gallegos",
+   "bando": "rojo",
+   "clase": "base_aerea",
+   "lat": -51.6089,
+   "lon": -69.3126,
+   "modelo": "",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "Neptune 2-P-112",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": -53.7777,
+   "lon": -67.7494,
+   "modelo": "sp2h_neptune",
+   "aeronaves": 1,
+   "en_tierra": true,
+   "base": "Base Aeronaval Río Grande",
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "Sección Super Étendard (3-A-202 y 3-A-203)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": -53.7777,
+   "lon": -67.7494,
+   "modelo": "super_etendard",
+   "aeronaves": 2,
+   "en_tierra": true,
+   "base": "Base Aeronaval Río Grande",
+   "perfil_vuelo": "rasante"
+  },
+  {
+   "nombre": "KC-130H TC-69",
+   "bando": "rojo",
+   "clase": "cisterna",
+   "lat": -51.6089,
+   "lon": -69.3126,
+   "modelo": "kc130j",
+   "aeronaves": 1,
+   "en_tierra": true,
+   "base": "Base Aérea Militar Río Gallegos",
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "Pareja Dagger (escolta del cisterna)",
+   "bando": "rojo",
+   "clase": "caza",
+   "lat": -53.7777,
+   "lon": -67.7494,
+   "modelo": "dagger",
+   "aeronaves": 2,
+   "en_tierra": true,
+   "base": "Base Aeronaval Río Grande",
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "Pareja Dagger (cobertura del Neptune)",
+   "bando": "rojo",
+   "clase": "caza",
+   "lat": -53.7777,
+   "lon": -67.7494,
+   "modelo": "dagger",
+   "aeronaves": 2,
+   "en_tierra": true,
+   "base": "Base Aeronaval Río Grande",
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "HMS Sheffield",
+   "bando": "azul",
+   "clase": "destructor",
+   "lat": -52.57,
+   "lon": -57.68,
+   "modelo": "type42",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "HMS Glasgow",
+   "bando": "azul",
+   "clase": "destructor",
+   "lat": -52.38,
+   "lon": -57.78,
+   "modelo": "type42",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "HMS Coventry",
+   "bando": "azul",
+   "clase": "destructor",
+   "lat": -52.2,
+   "lon": -57.85,
+   "modelo": "type42",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "HMS Hermes",
+   "bando": "azul",
+   "clase": "portaaviones",
+   "lat": -52.4,
+   "lon": -57.15,
+   "modelo": "hermes",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "HMS Invincible",
+   "bando": "azul",
+   "clase": "portaaviones",
+   "lat": -52.46,
+   "lon": -57.08,
+   "modelo": "invincible",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "HMS Arrow",
+   "bando": "azul",
+   "clase": "fragata",
+   "lat": -52.48,
+   "lon": -57.4,
+   "modelo": "type21",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "HMS Yarmouth",
+   "bando": "azul",
+   "clase": "fragata",
+   "lat": -52.55,
+   "lon": -57.45,
+   "modelo": "rothesay",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "HMS Alacrity",
+   "bando": "azul",
+   "clase": "fragata",
+   "lat": -52.33,
+   "lon": -57.42,
+   "modelo": "type21",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "Patrulla aérea Sea Harrier",
+   "bando": "azul",
+   "clase": "caza",
+   "lat": -52.4,
+   "lon": -57.9,
+   "modelo": "sea_harrier",
+   "aeronaves": 4,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  }
+ ],
+ "objetivos": [
+  {
+   "bando": "rojo",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar HMS Sheffield",
+   "puntos": 10,
+   "unidad": "HMS Sheffield"
+  }
+ ],
+ "eventos_auto": [
+  {
+   "id": "h01",
+   "nombre": "05:07 · El Neptune 2-P-112 despega de Río Grande para buscar a la fl",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "05:07"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "05:07 · El Neptune 2-P-112 despega de Río Grande para buscar a la flota británica al sur de las islas."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Neptune 2-P-112",
+     "orden": "mover",
+     "waypoints": [
+      [
+       -52.8,
+       -59.2
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h02",
+   "nombre": "07:50 · El Neptune detecta con su radar un buque al sureste de las M",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "07:50"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "07:50 · El Neptune detecta con su radar un buque al sureste de las Malvinas. Lo seguirá vigilando y volverá a verificar su posición a las 08:14 y 08:43."
+    }
+   ]
+  },
+  {
+   "id": "h03",
+   "nombre": "08:45 · El Neptune informa la posición del blanco: 52°41'S 57°41'W. ",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "08:45"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "08:45 · El Neptune informa la posición del blanco: 52°41'S 57°41'W. Con ese dato se prepara el ataque."
+    }
+   ]
+  },
+  {
+   "id": "h04",
+   "nombre": "08:45 · El avión cisterna KC-130H despega de Río Gallegos hacia el p",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "08:45"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "08:45 · El avión cisterna KC-130H despega de Río Gallegos hacia el punto de encuentro con los Super Étendard."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "KC-130H TC-69",
+     "orden": "mover",
+     "waypoints": [
+      [
+       -53.85,
+       -64.0
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h05",
+   "nombre": "09:45 · Despegan de Río Grande los Super Étendard de Bedacarratz y M",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "09:45"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "09:45 · Despegan de Río Grande los Super Étendard de Bedacarratz y Mayora, cada uno con un misil Exocet AM39, volando alto para ahorrar combustible."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Sección Super Étendard (3-A-202 y 3-A-203)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       -53.85,
+       -64.0
+      ]
+     ],
+     "carga": "antibuque"
+    }
+   ]
+  },
+  {
+   "id": "h06",
+   "nombre": "10:04 · Los Super Étendard se encuentran con el KC-130H y cargan com",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "10:04"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "10:04 · Los Super Étendard se encuentran con el KC-130H y cargan combustible en vuelo (unos 510 galones). Al terminar están a unas 245 millas náuticas del blanco."
+    }
+   ]
+  },
+  {
+   "id": "h07",
+   "nombre": "10:10 · El Neptune actualiza la información: tres buques en 52°33'S ",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "10:10"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "10:10 · El Neptune actualiza la información: tres buques en 52°33'S 57°40,5'W."
+    }
+   ]
+  },
+  {
+   "id": "h08",
+   "nombre": "10:15 · Tras reabastecerse, los Super Étendard bajan a muy baja altu",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "10:15"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "10:15 · Tras reabastecerse, los Super Étendard bajan a muy baja altura sobre el mar, en silencio de radio y con el radar apagado, para no ser detectados (hora aproximada)."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Sección Super Étendard (3-A-202 y 3-A-203)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       -52.55,
+       -58.4
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h09",
+   "nombre": "10:35 · El Neptune sube a unos 1.170 m, detecta un buque grande y do",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "10:35"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "10:35 · El Neptune sube a unos 1.170 m, detecta un buque grande y dos medianos, y pasa a los pilotos la posición, rumbo y velocidad del blanco."
+    }
+   ]
+  },
+  {
+   "id": "h10",
+   "nombre": "10:50 · A unas 40 millas del blanco los dos aviones suben un momento",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "10:50"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "10:50 · A unas 40 millas del blanco los dos aviones suben un momento, encienden el radar, encuentran los buques y vuelven a bajar (hora aproximada)."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Sección Super Étendard (3-A-202 y 3-A-203)",
+     "orden": "atacar",
+     "blanco": "HMS Sheffield"
+    }
+   ]
+  },
+  {
+   "id": "h11",
+   "nombre": "10:50 · El HMS Glasgow detecta a los dos aviones y la señal de su ra",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "10:50"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "10:50 · El HMS Glasgow detecta a los dos aviones y la señal de su radar, y da la alarma 'Handbrake' a toda la flota. El Sheffield no la recibe bien: su equipo de escucha estaba tapado por su propia transmisión satelital (hora aproximada)."
+    }
+   ]
+  },
+  {
+   "id": "h12",
+   "nombre": "10:55 · Desde el Invincible envían a los Sea Harrier a revisar los c",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "10:55"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "10:55 · Desde el Invincible envían a los Sea Harrier a revisar los contactos; no encuentran nada y la alerta se mantiene en 'amarillo' (hora aproximada)."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Patrulla aérea Sea Harrier",
+     "orden": "mover",
+     "waypoints": [
+      [
+       -52.5,
+       -58.3
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h13",
+   "nombre": "11:04 · Bedacarratz lanza su Exocet y Mayora lanza el suyo segundos ",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "11:04"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "11:04 · Bedacarratz lanza su Exocet y Mayora lanza el suyo segundos después, a unos 20-30 millas del blanco."
+    }
+   ]
+  },
+  {
+   "id": "h14",
+   "nombre": "11:06 · Un Exocet alcanza al Sheffield en el centro del costado dere",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "11:06"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "11:06 · Un Exocet alcanza al Sheffield en el centro del costado derecho, unos 2,4 m sobre el agua; se declara un incendio que no se puede controlar. El otro misil cae al mar cerca del HMS Yarmouth (hora aproximada)."
+    }
+   ]
+  },
+  {
+   "id": "h15",
+   "nombre": "11:06 · Los Super Étendard giran y regresan a baja altura hacia Río ",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "11:06"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "11:06 · Los Super Étendard giran y regresan a baja altura hacia Río Grande; no necesitan volver a reabastecerse (hora aproximada)."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Sección Super Étendard (3-A-202 y 3-A-203)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       -53.7777,
+       -67.7494
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h16",
+   "nombre": "11:20 · Por orden del Hermes, las fragatas Arrow y Yarmouth se acerc",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "11:20"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "11:20 · Por orden del Hermes, las fragatas Arrow y Yarmouth se acercan al Sheffield para combatir el fuego y rescatar a la tripulación (hora aproximada)."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "HMS Arrow",
+     "orden": "mover",
+     "waypoints": [
+      [
+       -52.565,
+       -57.67
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h17",
+   "nombre": "12:04 · El Neptune aterriza en Río Grande tras unas 7 horas de vuelo",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "12:04"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "12:04 · El Neptune aterriza en Río Grande tras unas 7 horas de vuelo."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Neptune 2-P-112",
+     "orden": "aterrizar",
+     "blanco": "Base Aeronaval Río Grande"
+    }
+   ]
+  },
+  {
+   "id": "h18",
+   "nombre": "12:10 · Los dos Super Étendard aterrizan en Río Grande sin daños.",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "12:10"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "12:10 · Los dos Super Étendard aterrizan en Río Grande sin daños."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Sección Super Étendard (3-A-202 y 3-A-203)",
+     "orden": "aterrizar",
+     "blanco": "Base Aeronaval Río Grande"
+    }
+   ]
+  },
+  {
+   "id": "h19",
+   "nombre": "15:00 · Con el fuego fuera de control, el comandante ordena abandona",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "15:00"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "15:00 · Con el fuego fuera de control, el comandante ordena abandonar el buque, unas cuatro horas después del impacto. La mayoría pasa al Arrow; otros al Yarmouth y en helicóptero al Hermes (hora aproximada)."
+    }
+   ]
+  },
+  {
+   "id": "fin",
+   "nombre": "15:15 · fin de la operación",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "15:15"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "15:15 · Fin de la operación. Compare en el Informe lo que resultó en el simulador con lo que pasó en la realidad."
+    },
+    {
+     "tipo": "retirar",
+     "bando": "rojo"
+    },
+    {
+     "tipo": "finalizar"
+    }
+   ]
+  }
+ ],
+ "historia": {
+  "fecha": "1982-05-04",
+  "zona_horaria": "UTC-3 (hora oficial argentina, la que usan los informes de la Aviación Naval). Para pasar a la hora de los británicos (GMT/Zulu) se suman 3 horas: el ataque de las 11:04 es 14:04 GMT.",
+  "resumen": "Un avión explorador Neptune de la Armada Argentina despegó de Río Grande de madrugada y localizó al grupo de batalla británico al sur y sureste de las islas. Con esos datos despegaron dos Super Étendard armados cada uno con un misil Exocet AM39; se reabastecieron de combustible en vuelo con un KC-130H de la Fuerza Aérea y volaron a muy baja altura hacia el blanco. A unos 40 millas del blanco subieron un momento, encendieron su radar, encontraron los buques y lanzaron los dos misiles a las 11:04. Uno alcanzó al destructor HMS Sheffield, que estaba de piquete radar al oeste de los portaaviones; el otro cayó al mar. Los dos aviones regresaron a Río Grande sin daños; el Sheffield se incendió, fue abandonado y se hundió el 10 de mayo mientras era remolcado.",
+  "contexto": "Desde el 1 de mayo la flota británica operaba al este de las Malvinas para recuperar las islas, y el 2 de mayo había sido hundido el crucero argentino General Belgrano. La Armada Argentina tenía solo cinco Super Étendard y cinco misiles Exocet AM39 utilizables, por lo que cada ataque se preparaba con un avión explorador que buscaba el blanco antes. Los británicos ponían destructores Type 42 por delante de los portaaviones, como 'piquetes' que vigilaban con radar el oeste, de donde venían los aviones argentinos.",
+  "resultado_real": {
+   "texto": "El ataque fue un éxito para la Aviación Naval Argentina: con dos misiles dejó fuera de combate a un destructor moderno sin perder ningún avión. El HMS Sheffield ardió varios días, fue remolcado por el Yarmouth para sacarlo de la zona de exclusión y se hundió el 10 de mayo de 1982 en 53°04'S 56°56'W. Fue el primer buque de la Marina Real hundido en combate desde la Segunda Guerra Mundial. La Armada Argentina instituyó el 4 de mayo como Día de la Aviación Naval.",
+   "perdidas_rojo": [],
+   "perdidas_azul": [
+    "HMS Sheffield (destructor Type 42), hundido el 10 de mayo mientras era remolcado",
+    "20 tripulantes muertos de 281"
+   ],
+   "danos": [
+    "Incendio general del Sheffield por el impacto del Exocet y el combustible del motor del misil",
+    "Entre 26 y 63 heridos según la fuente",
+    "Segundo Exocet cayó al mar sin daños, cerca del HMS Yarmouth"
+   ]
+  },
+  "incertidumbres": [
+   "Zona horaria: las fuentes argentinas usan hora argentina (UTC-3); las británicas usan GMT/Zulu. El Parlamento británico dio 'alrededor de las 11:00, 14:00 GMT'. Algunos relatos británicos dicen 'cerca de las 10', probablemente en hora local de las islas (UTC-4).",
+   "Hora del lanzamiento: 11:04 en la mayoría de las fuentes; una página oficial argentina dice 11:02. La hora del impacto (11:06) es una estimación según el tiempo de vuelo del misil.",
+   "Hora de despegue de los Super Étendard: 09:44 en una fuente y 09:45 en otras.",
+   "Aterrizajes: Wikipedia en inglés da 12:04 para los Super Étendard; Wikipedia en español da 12:04 para el Neptune y 12:10 para los Super Étendard.",
+   "Distancia de lanzamiento: entre 20 y 30 millas (32-48 km) según Wikipedia en inglés; unos 50 km según una carta argentina; Wikipedia en español dice que no se conoce con exactitud.",
+   "Altura a la que subieron los Super Étendard para usar el radar: unos 160 m según una fuente y 300 m según otra.",
+   "Punto de reabastecimiento: el informe de misión transcrito en falklandswar.org.uk dice '53 51 0 S, 54 60 0 W', que no es posible (60 minutos). Por la distancia declarada al blanco (245 millas náuticas) el punto correcto es casi seguro 53°51'S 64°00'W, que es el que se usa.",
+   "Posiciones de los buques británicos: solo se conoce el dato argentino del blanco (52°33'S 57°40,5'W) y que el Sheffield estaba unas 18 millas al oeste del grupo principal. Las demás posiciones son estimaciones razonables, no datos publicados.",
+   "Las horas de 10:15, 10:50, 10:55, 11:20 y 15:00 son aproximadas, deducidas de los relatos.",
+   "Los Dagger de escolta (capitanes Cimatti y Moreno) y un Learjet 35 de diversión de la Fuerza Aérea participaron, pero no se encontraron sus horas ni su base de salida. El Learjet no se incluye como unidad.",
+   "La versión inicial británica dijo que la cabeza de guerra del Exocet no explotó; una revisión del Ministerio de Defensa de 2015 concluyó que sí detonó.",
+   "Muertos y heridos: 20 muertos es la cifra más aceptada (alguna sección habla de 21); heridos entre 26 y 63.",
+   "Los datos numéricos de los modelos nuevos (velocidad, alcance, detección) son valores públicos de referencia redondeados, no cifras exactas de 1982."
+  ],
+  "fuentes": [
+   {
+    "titulo": "HMS Sheffield (D80) - Wikipedia (inglés)",
+    "url": "https://en.wikipedia.org/wiki/HMS_Sheffield_(D80)",
+    "nota": "Horas del Neptune (07:50, 08:14, 08:43, 10:35), despegue 09:45, reabastecimiento 10:00, lanzamiento 11:04, distancia, alarma del Glasgow, Sea Harrier, rescate, bajas, posición del hundimiento."
+   },
+   {
+    "titulo": "Hundimiento del HMS Sheffield - Wikipedia (español)",
+    "url": "https://es.wikipedia.org/wiki/Hundimiento_del_HMS_Sheffield",
+    "nota": "Horas en UTC-3: despegue del Neptune 05:07, KC-130H desde Río Gallegos 08:45, encuentro 10:04, datos 10:10, aterrizajes 12:04/12:10; Dagger, Learjet, composición de la flota."
+   },
+   {
+    "titulo": "Armada Argentina - 4 de mayo, Día de la Aviación Naval",
+    "url": "https://www.argentina.gob.ar/node/375532",
+    "nota": "Matrículas, tripulaciones y posición del blanco 52°33'S 57°40,5'W."
+   },
+   {
+    "titulo": "Armada Argentina - Super Étendard / ataque del 4 de mayo",
+    "url": "https://www.argentina.gob.ar/node/169368",
+    "nota": "Hora oficial argentina de 11:02 para el lanzamiento."
+   },
+   {
+    "titulo": "Falklands War - AM39 Mission Report (Sheffield), traducción de Santiago Aversa",
+    "url": "https://falklandswar.org.uk/misc.htm",
+    "nota": "Despegue 09:45 hora argentina, posición inicial del blanco a las 08:45, encuentro con el KC-130 a las 10:10, 510 galones, 245 millas al blanco."
+   },
+   {
+    "titulo": "Hansard, respuesta escrita del 9 de junio de 1986 (RN ships defence)",
+    "url": "https://api.parliament.uk/historic-hansard/written-answers/1986/jun/09/rn-ships-defence",
+    "nota": "Hora oficial británica (11:00 local, 14:00 GMT), Sheffield a 18 millas al oeste del grupo, interferencia del SCOT, primera detección por el Glasgow."
+   },
+   {
+    "titulo": "Operation Black Buck - Wikipedia (inglés)",
+    "url": "https://en.wikipedia.org/wiki/Operation_Black_Buck",
+    "nota": "Datos de la incursión Black Buck 1 para 'otras_acciones'."
+   }
+  ]
+ }
+}

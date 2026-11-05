@@ -84,6 +84,7 @@
         <span class="dato" id="h-calendario-caja" hidden><span class="sep">|</span> <b id="h-calendario" title="Calendario de la operación: día D, hora H y fase"></b></span>
         <span class="sep">|</span>
         <span class="dato">BANDO: <b id="h-bando" class="">-</b></span>
+        <span class="dato" id="h-historica" hidden><span class="sep">|</span> <b class="historica" title="Reproducción de una operación real: las unidades siguen la cronología y nadie da órdenes">REPRODUCCIÓN HISTÓRICA · <span id="h-historica-fecha"></span></b></span>
       </div>
       <div class="cab-der">
         <label class="sel-escenario" title="Escenario">
@@ -186,6 +187,13 @@
             <ol id="lista-pmi" class="lista-pmi"></ol>
           </section>
 
+          <section class="bloque" id="sec-historica" hidden>
+            <h2>Reproducción histórica</h2>
+            <p id="historica-resumen" class="ayuda"></p>
+            <p class="ayuda">Las unidades siguen solas la cronología real y nadie da órdenes: observe, use la hora y la velocidad
+              del reloj, y al final compare en el <b>Informe</b> con lo que pasó en la realidad. Los mensajes del director
+              explican cada fase.</p>
+          </section>
           <section class="bloque solo-alumno" id="sec-orden">
             <h2>Nueva orden <span id="orden-unidad" class="contador azul-suave"></span></h2>
             <div id="o-lote" class="lote" hidden>

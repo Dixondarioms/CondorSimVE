@@ -50,7 +50,19 @@ DEFENSA_PUNTO = {
     "patrullero": {"canales": 1, "km": 4.0, "pk": 0.3},
     "buque_desembarco": {"canales": 1, "km": 4.0, "pk": 0.3},
 }
+# buques de las operaciones historicas sin defensa de punto moderna (1982: sin cañones de tiro rapido; el Sea Dart y
+# el Sea Cat casi no podian con misiles rozaolas)
+DEFENSA_PUNTO_MODELO = {
+    "type42": {"canales": 1, "km": 6.0, "pk": 0.15}, "invincible": {"canales": 1, "km": 6.0, "pk": 0.15},
+    "type21": {"canales": 1, "km": 4.0, "pk": 0.1}, "rothesay": {"canales": 1, "km": 4.0, "pk": 0.1},
+    "hermes": {"canales": 1, "km": 4.0, "pk": 0.1},
+}
 CICLO_PUNTO_S = 10.0  # cada canal tira una vez por este tiempo
+
+
+def defensa_punto(buque) -> dict | None:
+    """Canales, alcance y probabilidad de la defensa de punto de ese buque (por su modelo o por su clase)."""
+    return DEFENSA_PUNTO_MODELO.get(getattr(buque, "modelo", "") or "") or DEFENSA_PUNTO.get(getattr(buque, "clase", "") or "")
 
 
 def codificar(misiles: int) -> str:

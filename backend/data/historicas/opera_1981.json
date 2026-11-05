@@ -1,0 +1,729 @@
+{
+ "id": "opera_1981",
+ "nombre": "Operación Ópera (Babilonia): ataque al reactor Osirak",
+ "fecha": "1981-06-07",
+ "zona_horaria": "Hora de Irak (UTC+3). En junio de 1981 Israel no tenía horario de verano (UTC+2), así que la hora israelí es una hora menos: despegue 15:55 en Israel = 16:55 en Irak.",
+ "hora_inicio": "16:40",
+ "hora_fin": "20:10",
+ "resumen": "La tarde del domingo 7 de junio de 1981, 8 aviones F-16A israelíes, cada uno con dos bombas Mk-84 de 900 kg, despegaron de la base de Etzion (Sinaí) escoltados por 6 F-15A. Volaron muy bajo (unos 45-90 m) cruzando el golfo de Aqaba y el norte de Arabia Saudita para no ser vistos por los radares, y entraron a Irak sin reabastecerse en vuelo. A unos 20 km del blanco subieron, se lanzaron en picada y soltaron las 16 bombas sobre el reactor Osirak (Tammuz 1), en Al Tuwaitha, al sureste de Bagdad, en menos de dos minutos. Las defensas iraquíes reaccionaron tarde y sin puntería. Todos los aviones regresaron a gran altura, cruzando Jordania, y aterrizaron en Etzion unas tres horas después del despegue.",
+ "contexto": "Irak construía con ayuda de Francia el reactor de investigación Osirak (Tammuz 1), que Israel consideraba un paso hacia el arma nuclear. Irak estaba en guerra con Irán desde 1980, y en septiembre de ese año dos F-4 iraníes ya habían atacado el mismo centro con poco daño. Israel planificó el ataque durante meses y lo hizo antes de que el reactor recibiera combustible nuclear, para no esparcir radiación. Jordania y Arabia Saudita no participaron: sus espacios aéreos solo fueron cruzados.",
+ "unidades": [
+  {
+   "nombre": "Base aérea de Etzion",
+   "bando": "rojo",
+   "clase": "base_aerea",
+   "modelo": null,
+   "aeronaves": 0,
+   "lat": 29.588,
+   "lon": 34.778,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Base israelí en el Sinaí, cerca de Eilat y Taba; hoy es el aeropuerto internacional de Taba (Egipto). Algunas fuentes la ubican por error en el Néguev. Cerca de la frontera iraquí esperaban helicópteros CH-53 de rescate, que el simulador no representa."
+  },
+  {
+   "nombre": "F-16A Grupo 1 (Raz)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "modelo": "f16a",
+   "aeronaves": 4,
+   "lat": 29.588,
+   "lon": 34.778,
+   "en_tierra_en": "Base aérea de Etzion",
+   "posicion_aproximada": false,
+   "nota": "Primer grupo de ataque, dirigido por el teniente coronel Zeev Raz, jefe de la misión. Cada avión: 2 bombas Mk-84, 2 misiles Sidewinder y 3 tanques de combustible externos. Escuadrones 110 y 117.",
+   "perfil": "rasante",
+   "carga": "ataque"
+  },
+  {
+   "nombre": "F-16A Grupo 2 (Nachumi)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "modelo": "f16a",
+   "aeronaves": 4,
+   "lat": 29.588,
+   "lon": 34.778,
+   "en_tierra_en": "Base aérea de Etzion",
+   "posicion_aproximada": false,
+   "nota": "Segundo grupo de ataque, dirigido por Amir Nachumi. Entre sus pilotos estaba Ilan Ramon (último en atacar, después astronauta). Mismo armamento que el Grupo 1.",
+   "perfil": "rasante",
+   "carga": "ataque"
+  },
+  {
+   "nombre": "F-15A Escolta",
+   "bando": "rojo",
+   "clase": "caza",
+   "modelo": "f15a",
+   "aeronaves": 6,
+   "lat": 29.588,
+   "lon": 34.778,
+   "en_tierra_en": "Base aérea de Etzion",
+   "posicion_aproximada": false,
+   "nota": "Protección contra cazas iraquíes. Según Wikipedia, 2 iban de escolta cercana y 4 se dispersaron sobre Irak como distracción y reserva. Aquí se agrupan en una sola unidad de 6. Una fuente (warhistory.org) habla de 8 F-15."
+  },
+  {
+   "nombre": "E-2C Hawkeye israelí",
+   "bando": "rojo",
+   "clase": "alerta_temprana",
+   "modelo": "e2c",
+   "aeronaves": 1,
+   "lat": 30.3,
+   "lon": 34.9,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Avión de alerta temprana y control mencionado por The Aviationist. Su posición durante la misión no se publica; se coloca sobre el sur de Israel como supuesto."
+  },
+  {
+   "nombre": "Reactor Osirak (Tammuz 1)",
+   "bando": "azul",
+   "clase": "instalacion_nuclear",
+   "modelo": null,
+   "aeronaves": 0,
+   "lat": 33.2033,
+   "lon": 44.5186,
+   "en_tierra_en": null,
+   "posicion_aproximada": false,
+   "nota": "Reactor de investigación de 40 MW de origen francés, dentro del Centro de Investigación Nuclear de Al Tuwaitha, unos 17 km al sureste de Bagdad, rodeado de altos muros de tierra. No existe una clase 'reactor': se propone crear la clase 'reactor_nuclear'; mientras tanto se representa como termoeléctrica (instalación que produce energía)."
+  },
+  {
+   "nombre": "Reactor Isis (Tammuz 2)",
+   "bando": "azul",
+   "clase": "instalacion_nuclear",
+   "modelo": null,
+   "aeronaves": 0,
+   "lat": 33.2045,
+   "lon": 44.5205,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Reactor pequeño vecino de Osirak. No fue dañado, igual que el laboratorio italiano de reprocesamiento. Sirve para mostrar la precisión del ataque."
+  },
+  {
+   "nombre": "Batería SA-6 Tuwaitha",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "modelo": "kub_sa6",
+   "aeronaves": 0,
+   "lat": 33.192,
+   "lon": 44.533,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Según el artículo de Wikipedia sobre el ataque iraní de 1980 (Operación Espada Ardiente), una sola batería SA-6 estaba unos 2 km al sureste del reactor. Dato no confirmado por fuentes oficiales."
+  },
+  {
+   "nombre": "Baterías Roland Tuwaitha",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "modelo": "roland2",
+   "aeronaves": 0,
+   "lat": 33.206,
+   "lon": 44.514,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "La misma fuente menciona 3 baterías Roland 2 (francesas) en triángulo alrededor del reactor, a unos 500 m. Dato dudoso: ninguna fuente sobre el ataque de 1981 las menciona."
+  },
+  {
+   "nombre": "Artillería 23 mm Tuwaitha",
+   "bando": "azul",
+   "clase": "artilleria_antiaerea",
+   "modelo": "zsu23_4",
+   "aeronaves": 0,
+   "lat": 33.21,
+   "lon": 44.522,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Las fuentes hablan de unas 40 posiciones de cañones de 23 mm y 57 mm guiados por radar alrededor del centro. Se representan con dos unidades; el modelo exacto (ZSU-23-4 o ZU-23-2) no está confirmado."
+  },
+  {
+   "nombre": "Artillería 57 mm Tuwaitha",
+   "bando": "azul",
+   "clase": "artilleria_antiaerea",
+   "modelo": "s60_57mm",
+   "aeronaves": 0,
+   "lat": 33.198,
+   "lon": 44.51,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Cañones de 57 mm (probablemente S-60 soviéticos). Posición supuesta dentro del anillo de defensa del centro."
+  },
+  {
+   "nombre": "Batería SA-2 Bagdad sur",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "modelo": "s75_sa2",
+   "aeronaves": 0,
+   "lat": 33.25,
+   "lon": 44.45,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Irak tenía misiles SA-2 en la defensa de Bagdad, y algunas fuentes los nombran entre las defensas del reactor. La ubicación exacta no se conoce: posición supuesta."
+  },
+  {
+   "nombre": "Batería SA-3 Bagdad sur",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "modelo": "s125m_sa3",
+   "aeronaves": 0,
+   "lat": 33.17,
+   "lon": 44.58,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Igual que el SA-2: tipo citado por fuentes secundarias, posición supuesta."
+  },
+  {
+   "nombre": "Radar de alerta Bagdad",
+   "bando": "azul",
+   "clase": "radar",
+   "modelo": "p18",
+   "aeronaves": 0,
+   "lat": 33.15,
+   "lon": 44.4,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Radar de vigilancia que representa la red de alerta de Bagdad. El tipo P-18 es un supuesto de la época. Según varias fuentes, los operadores habían apagado los radares para ir a cenar."
+  },
+  {
+   "nombre": "Base aérea Al Rashid",
+   "bando": "azul",
+   "clase": "base_aerea",
+   "modelo": null,
+   "aeronaves": 0,
+   "lat": 33.284,
+   "lon": 44.494,
+   "en_tierra_en": null,
+   "posicion_aproximada": true,
+   "nota": "Base aérea en el sureste de Bagdad, la más cercana al reactor. No hay prueba de que sus aviones intervinieran."
+  },
+  {
+   "nombre": "MiG-21 Al Rashid",
+   "bando": "azul",
+   "clase": "caza",
+   "modelo": "mig21",
+   "aeronaves": 4,
+   "lat": 33.284,
+   "lon": 44.494,
+   "en_tierra_en": "Base aérea Al Rashid",
+   "posicion_aproximada": true,
+   "nota": "Interceptores representativos de la defensa de Bagdad (Irak usaba MiG-21 y MiG-23). La cantidad y la base son supuestas. Ningún caza iraquí despegó contra el ataque."
+  }
+ ],
+ "blancos": [
+  {
+   "unidad": "Reactor Osirak (Tammuz 1)",
+   "por": "F-16A Grupo 1 (Raz)",
+   "arma": "Bombas Mk-84 de 900 kg (8 bombas, algunas con espoleta retardada)"
+  },
+  {
+   "unidad": "Reactor Osirak (Tammuz 1)",
+   "por": "F-16A Grupo 2 (Nachumi)",
+   "arma": "Bombas Mk-84 de 900 kg (8 bombas, algunas con espoleta retardada)"
+  }
+ ],
+ "cronologia": [
+  {
+   "hora": "16:40",
+   "unidad": null,
+   "accion": "mensaje",
+   "blanco": null,
+   "destino": null,
+   "ruta": null,
+   "texto": "Base de Etzion, domingo por la tarde. Los 14 aviones están listos. Para no perder combustible, a los F-16 se les llenan los tanques con los motores encendidos, algo poco usual. Las horas de este ejercicio están en hora de Irak."
+  },
+  {
+   "hora": "16:55",
+   "unidad": "F-16A Grupo 1 (Raz)",
+   "accion": "despegar",
+   "blanco": null,
+   "destino": [
+    31.0,
+    39.6
+   ],
+   "ruta": [
+    [
+     29.588,
+     34.778
+    ],
+    [
+     29.45,
+     35.05
+    ],
+    [
+     29.75,
+     36.6
+    ],
+    [
+     30.4,
+     38.3
+    ],
+    [
+     31.0,
+     39.6
+    ]
+   ],
+   "texto": "Despega el primer grupo de 4 F-16, muy cargados: dos bombas de 900 kg y tres tanques de combustible cada uno. Cruzan el golfo de Aqaba y entran al norte de Arabia Saudita volando muy bajo."
+  },
+  {
+   "hora": "16:56",
+   "unidad": "F-16A Grupo 2 (Nachumi)",
+   "accion": "despegar",
+   "blanco": null,
+   "destino": [
+    31.0,
+    39.6
+   ],
+   "ruta": [
+    [
+     29.588,
+     34.778
+    ],
+    [
+     29.45,
+     35.05
+    ],
+    [
+     29.75,
+     36.6
+    ],
+    [
+     30.4,
+     38.3
+    ],
+    [
+     31.0,
+     39.6
+    ]
+   ],
+   "texto": "Despega el segundo grupo de 4 F-16 y sigue la misma ruta baja. Los pilotos guardan silencio de radio; si alguien pregunta, se hacen pasar por aviones jordanos o sauditas."
+  },
+  {
+   "hora": "16:57",
+   "unidad": "F-15A Escolta",
+   "accion": "despegar",
+   "blanco": null,
+   "destino": [
+    31.0,
+    39.6
+   ],
+   "ruta": [
+    [
+     29.588,
+     34.778
+    ],
+    [
+     29.45,
+     35.05
+    ],
+    [
+     29.75,
+     36.6
+    ],
+    [
+     30.4,
+     38.3
+    ],
+    [
+     31.0,
+     39.6
+    ]
+   ],
+   "texto": "Despegan los 6 F-15 de escolta. Su tarea es proteger a los F-16 si aparecen cazas iraquíes."
+  },
+  {
+   "hora": "17:00",
+   "unidad": null,
+   "accion": "mensaje",
+   "blanco": null,
+   "destino": null,
+   "ruta": null,
+   "texto": "El rey Hussein de Jordania, de vacaciones en Aqaba, ve pasar los aviones y adivina que van hacia Irak. Ordena avisar a Bagdad, pero por una falla de comunicación el aviso nunca llega."
+  },
+  {
+   "hora": "17:50",
+   "unidad": "F-16A Grupo 1 (Raz)",
+   "accion": "mensaje",
+   "blanco": null,
+   "destino": null,
+   "ruta": null,
+   "texto": "Unos 55 minutos después del despegue, ya vacíos, los F-16 sueltan los tanques de combustible de las alas sobre el desierto saudita para ganar alcance, poco antes de entrar a Irak."
+  },
+  {
+   "hora": "17:50",
+   "unidad": "F-16A Grupo 1 (Raz)",
+   "accion": "mover",
+   "blanco": null,
+   "destino": [
+    33.1,
+    44.33
+   ],
+   "ruta": [
+    [
+     31.0,
+     39.6
+    ],
+    [
+     31.2,
+     41.0
+    ],
+    [
+     31.9,
+     42.2
+    ],
+    [
+     32.65,
+     43.65
+    ],
+    [
+     32.85,
+     44.2
+    ],
+    [
+     33.1,
+     44.33
+    ]
+   ],
+   "texto": "El Grupo 1 entra a Irak a unos 45-90 m de altura. Buscan como referencia una isla en un lago, difícil de ver porque las lluvias la habían cubierto. Cruzan el río Éufrates."
+  },
+  {
+   "hora": "17:51",
+   "unidad": "F-16A Grupo 2 (Nachumi)",
+   "accion": "mover",
+   "blanco": null,
+   "destino": [
+    33.1,
+    44.33
+   ],
+   "ruta": [
+    [
+     31.0,
+     39.6
+    ],
+    [
+     31.2,
+     41.0
+    ],
+    [
+     31.9,
+     42.2
+    ],
+    [
+     32.65,
+     43.65
+    ],
+    [
+     32.85,
+     44.2
+    ],
+    [
+     33.1,
+     44.33
+    ]
+   ],
+   "texto": "El Grupo 2 sigue al primero por la misma ruta baja. Ninguna defensa iraquí los enfrenta en la aproximación."
+  },
+  {
+   "hora": "17:52",
+   "unidad": "F-15A Escolta",
+   "accion": "mover",
+   "blanco": null,
+   "destino": [
+    33.15,
+    44.3
+   ],
+   "ruta": [
+    [
+     31.0,
+     39.6
+    ],
+    [
+     31.2,
+     41.0
+    ],
+    [
+     31.9,
+     42.2
+    ],
+    [
+     32.65,
+     43.65
+    ],
+    [
+     33.15,
+     44.3
+    ]
+   ],
+   "texto": "Los F-15 acompañan. A unos 80 km del blanco suben a unos 7.600 m para vigilar el cielo; parte de ellos se dispersa sobre Irak para distraer."
+  },
+  {
+   "hora": "18:35",
+   "unidad": "F-16A Grupo 1 (Raz)",
+   "accion": "atacar",
+   "blanco": "Reactor Osirak (Tammuz 1)",
+   "destino": null,
+   "ruta": null,
+   "texto": "A unos 20 km del reactor encienden la postcombustión, suben a unos 2.000 m y se lanzan en picada de 35 grados con el sol a la espalda. Sueltan las bombas desde unos 1.100 m, de a dos, cada 5 segundos."
+  },
+  {
+   "hora": "18:36",
+   "unidad": "F-16A Grupo 2 (Nachumi)",
+   "accion": "atacar",
+   "blanco": "Reactor Osirak (Tammuz 1)",
+   "destino": null,
+   "ruta": null,
+   "texto": "El segundo grupo ataca detrás del primero. En unos 80 segundos caen las 16 bombas; la mayoría entra en la cúpula y el reactor se derrumba."
+  },
+  {
+   "hora": "18:36",
+   "unidad": "Artillería 23 mm Tuwaitha",
+   "accion": "mensaje",
+   "blanco": null,
+   "destino": null,
+   "ruta": null,
+   "texto": "La artillería antiaérea abre fuego tarde, apuntando a mano y sin puntería. No alcanza a ningún avión; parte de sus disparos cae sobre las propias instalaciones iraquíes."
+  },
+  {
+   "hora": "18:37",
+   "unidad": "Batería SA-6 Tuwaitha",
+   "accion": "mensaje",
+   "blanco": null,
+   "destino": null,
+   "ruta": null,
+   "texto": "Los misiles no logran reaccionar a tiempo: según varias fuentes los operadores habían apagado los radares para cenar. Ningún misil alcanza a los aviones (las fuentes no coinciden en si llegó a dispararse alguno)."
+  },
+  {
+   "hora": "18:38",
+   "unidad": "F-16A Grupo 1 (Raz)",
+   "accion": "mover",
+   "blanco": null,
+   "destino": [
+    29.588,
+    34.778
+   ],
+   "ruta": [
+    [
+     33.2,
+     44.52
+    ],
+    [
+     33.0,
+     43.0
+    ],
+    [
+     32.4,
+     39.5
+    ],
+    [
+     31.4,
+     37.0
+    ],
+    [
+     30.2,
+     35.4
+    ],
+    [
+     29.588,
+     34.778
+    ]
+   ],
+   "texto": "Tras el ataque, los F-16 suben a más de 12.000 m para gastar menos combustible y vuelven en línea más directa, cruzando Irak y Jordania. Jordania no intenta detenerlos."
+  },
+  {
+   "hora": "18:38",
+   "unidad": "F-16A Grupo 2 (Nachumi)",
+   "accion": "mover",
+   "blanco": null,
+   "destino": [
+    29.588,
+    34.778
+   ],
+   "ruta": [
+    [
+     33.2,
+     44.52
+    ],
+    [
+     33.0,
+     43.0
+    ],
+    [
+     32.4,
+     39.5
+    ],
+    [
+     31.4,
+     37.0
+    ],
+    [
+     30.2,
+     35.4
+    ],
+    [
+     29.588,
+     34.778
+    ]
+   ],
+   "texto": "El Grupo 2 regresa por la misma ruta alta. Ilan Ramon, último en atacar, queda rezagado y no responde la radio por temor a un caza detrás; luego se reúne con el grupo."
+  },
+  {
+   "hora": "18:39",
+   "unidad": "F-15A Escolta",
+   "accion": "mover",
+   "blanco": null,
+   "destino": [
+    29.588,
+    34.778
+   ],
+   "ruta": [
+    [
+     33.15,
+     44.3
+    ],
+    [
+     33.0,
+     43.0
+    ],
+    [
+     32.4,
+     39.5
+    ],
+    [
+     31.4,
+     37.0
+    ],
+    [
+     30.2,
+     35.4
+    ],
+    [
+     29.588,
+     34.778
+    ]
+   ],
+   "texto": "Los F-15 cubren la retirada. Un F-15 y un F-16 se desvían a propósito de la ruta para confundir a cualquier interceptor."
+  },
+  {
+   "hora": "18:40",
+   "unidad": "MiG-21 Al Rashid",
+   "accion": "mensaje",
+   "blanco": null,
+   "destino": null,
+   "ruta": null,
+   "texto": "Ningún caza iraquí despega a perseguir a los atacantes. La sorpresa fue completa."
+  },
+  {
+   "hora": "20:03",
+   "unidad": "F-16A Grupo 1 (Raz)",
+   "accion": "aterrizar",
+   "blanco": null,
+   "destino": [
+    29.588,
+    34.778
+   ],
+   "ruta": null,
+   "texto": "El Grupo 1 aterriza en Etzion tras unas 3 horas y 10 minutos de vuelo. Un avión llega con el combustible casi agotado."
+  },
+  {
+   "hora": "20:05",
+   "unidad": "F-16A Grupo 2 (Nachumi)",
+   "accion": "aterrizar",
+   "blanco": null,
+   "destino": [
+    29.588,
+    34.778
+   ],
+   "ruta": null,
+   "texto": "Aterriza el Grupo 2. Los 8 F-16 regresaron sin daños."
+  },
+  {
+   "hora": "20:07",
+   "unidad": "F-15A Escolta",
+   "accion": "aterrizar",
+   "blanco": null,
+   "destino": [
+    29.588,
+    34.778
+   ],
+   "ruta": null,
+   "texto": "Aterrizan los F-15. Los 14 aviones volvieron sin pérdidas. Misión cumplida."
+  }
+ ],
+ "resultado_real": {
+  "texto": "El reactor Osirak quedó destruido antes de empezar a funcionar; se estimó que repararlo llevaría años y nunca fue reconstruido. Israel no perdió ningún avión ni sufrió daños. El reactor vecino Isis y el laboratorio italiano quedaron intactos. Saddam Hussein ordenó ejecutar al jefe de la zona de defensa aérea y encarcelar a otros oficiales; la ONU condenó el ataque (resolución 487).",
+  "perdidas_rojo": [
+   "Ninguna: los 14 aviones regresaron sin daños"
+  ],
+  "perdidas_azul": [
+   "Entre 0 y 10 militares iraquíes muertos según la fuente (algunos por el fuego de su propia artillería)",
+   "Un técnico civil francés muerto, el ingeniero Damien Chaussepied"
+  ],
+  "danos": [
+   "Reactor Osirak (Tammuz 1) destruido: entre 8 y 14 de las 16 bombas impactaron la cúpula, según la fuente",
+   "Algunas bombas con espoleta retardada explotaron después, para dificultar la reparación",
+   "Reactor Isis y laboratorio de reprocesamiento sin daños"
+  ]
+ },
+ "incertidumbres": [
+  "Horas: Air & Space Forces Magazine da despegue 15:55 hora israelí (16:55 en Irak), bombardeo 18:35 hora de Irak y aterrizaje poco después de las 19:00 hora israelí (unas 20:05 en Irak); The Aviationist da 15:55 y 17:35 sin aclarar la zona (coincide con hora israelí). Wikipedia en inglés mezcla 15:55 local con 12:55 GMT y 18:35 local con 14:35 GMT, lo cual es incoherente. Se usó UTC+3 para Irak y UTC+2 para Israel (sin horario de verano en 1981 según timeanddate).",
+  "Las horas intermedias (paso por Aqaba, lanzamiento de tanques, cruce del Éufrates, regreso) son estimadas a partir de distancias y velocidades; solo despegue, ataque y aterrizaje vienen de fuentes.",
+  "La ruta exacta no es pública: los puntos de paso son aproximados. Ida: golfo de Aqaba y norte de Arabia Saudita por el lado saudita de la frontera jordana (evitando radares jordanos al norte y un AWACS saudita al sur). Regreso: sobre Jordania a gran altura. El lago de referencia podría ser el lago Razazah, pero no está confirmado.",
+  "Número de F-15: la mayoría dice 6; warhistory.org dice 8. Algunas fuentes mencionan 2 F-16 adicionales de reserva que no participaron.",
+  "Bombas que impactaron: Wikipedia dice al menos 8, warhistory.org 12, Air & Space Forces 14 (las 2 fallidas fueron de Iftach Spector).",
+  "Muertos iraquíes: entre 0 y 10 según la fuente. El técnico francés muerto es dato común a todas.",
+  "Defensas iraquíes en Tuwaitha (1 batería SA-6, 3 Roland, unas 40 posiciones de cañones de 23 y 57 mm) vienen de Wikipedia sobre el ataque iraní de 1980, sin fuente primaria. La presencia de SA-2, SA-3 y MiG-21/MiG-23 cerca de Bagdad es lógica para la época pero no está documentada en detalle; sus posiciones en este dossier son supuestas.",
+  "Si las defensas dispararon misiles: The Aviationist habla de algunos lanzamientos que fallaron; warhistory.org y Air & Space dicen que no se disparó ningún misil. La historia de los radares apagados para cenar viene de relatos no oficiales.",
+  "Apoyo: The Aviationist menciona un E-2C Hawkeye y helicópteros CH-53 de rescate; otras fuentes no los nombran. Su posición es supuesta.",
+  "Misiles de los F-16: AIM-9L según Air & Space, AIM-9J según The Aviationist.",
+  "Las características numéricas de los modelos nuevos (velocidad, alcances, detección) son valores típicos públicos de cada sistema, redondeados, no datos de esta misión."
+ ],
+ "fuentes": [
+  {
+   "titulo": "Operation Opera - Wikipedia (inglés)",
+   "url": "https://en.wikipedia.org/wiki/Operation_Opera",
+   "nota": "Composición de la fuerza, pilotos, perfil de ataque (20 km, 2.100 m, picada de 35°), engaño por radio, rey Hussein, tanques lanzados, víctimas, coordenadas del reactor."
+  },
+  {
+   "titulo": "Air Strike at Osirak - Air & Space Forces Magazine (abril 2012)",
+   "url": "https://www.airandspaceforces.com/article/0412osirak/",
+   "nota": "Horas con zona horaria (15:55 Israel / 16:55 Irak, 18:35 Irak, aterrizaje ~19:00 Israel, 3 h 10 min), armamento y tanques, ruta en zigzag, alturas, 14 de 16 bombas, artilleros cenando, castigos en Irak."
+  },
+  {
+   "titulo": "Operation Opera: how 8 Israeli F-16s destroyed an Iraqi nuclear plant - The Aviationist",
+   "url": "https://theaviationist.com/2014/06/07/operation-opera-explained/",
+   "nota": "Escuadrones 110 y 117, E-2C y CH-53 de apoyo, 17:35 sobre el blanco, regreso a 12.000 m sobre Jordania, desvío de un F-15 y un F-16."
+  },
+  {
+   "titulo": "Opera in Baghdad - warhistory.org",
+   "url": "https://warhistory.org/ru/article/opera-in-baghdad?amp=1",
+   "nota": "Jefes de grupo (Raz y Nachumi), carga de combustible con motores encendidos, isla en el lago cubierta, ausencia de cazas y misiles, episodio de Ilan Ramon."
+  },
+  {
+   "titulo": "Operation Opera - warhistory.org",
+   "url": "https://warhistory.org/2018/05/26/31117/",
+   "nota": "12 de 16 bombas en el reactor, regreso a unos 42.000 pies, ningún misil ni caza iraquí."
+  },
+  {
+   "titulo": "Israel's Wars & Operations: Osirak - Jewish Virtual Library",
+   "url": "https://www.jewishvirtuallibrary.org/jsource/History/Osirak.html",
+   "nota": "Fuerza de 14 aviones desde Etzion, paso por Jordania, Arabia Saudita e Irak, sorpresa de las defensas, duración de 1 min 20 s."
+  },
+  {
+   "titulo": "Operation Scorch Sword - Wikipedia (inglés)",
+   "url": "https://en.wikipedia.org/wiki/Operation_Scorch_Sword",
+   "nota": "Defensas del reactor en 1980: batería SA-6 a 2 km al sureste, 3 Roland, 40 posiciones de cañones de 23 y 57 mm (dato sin fuente primaria)."
+  },
+  {
+   "titulo": "Operation Opera - f-16.net (relato de Ilan Ramon)",
+   "url": "https://www.f-16.net/varia_article12.html",
+   "nota": "Ruta por Eilat/Aqaba y la frontera saudita, altura de unos 150 pies, perfil de ataque y regreso a gran altura."
+  },
+  {
+   "titulo": "Operation Opera - Archivo del Ministerio de Defensa de Israel",
+   "url": "https://archives.mod.gov.il/sites/English/Exhibitions/Pages/Operation-Opera.aspx",
+   "nota": "Fecha, ubicación del reactor a 17 km al sureste de Bagdad, ausencia de pérdidas israelíes."
+  },
+  {
+   "titulo": "Cambios de hora en Israel, 1981 - timeanddate.com",
+   "url": "https://www.timeanddate.com/time/change/israel/holon?year=1981",
+   "nota": "Israel no aplicó horario de verano en 1981 (UTC+2). Consultado a través del buscador; la página directa negó el acceso."
+  }
+ ],
+ "nacion_rojo": "israel",
+ "nacion_azul": "irak"
+}

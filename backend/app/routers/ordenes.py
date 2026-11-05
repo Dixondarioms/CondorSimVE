@@ -39,6 +39,9 @@ def _en_decision(esc: Escenario) -> Escenario:
     """En tiempo real se dan ordenes en todo momento (tambien con el reloj detenido), salvo al finalizar."""
     if esc.estado == "finalizado":
         raise HTTPException(status_code=400, detail="El escenario ya finalizo")
+    if getattr(esc, "historia_json", None):
+        raise HTTPException(status_code=400, detail="Reproducción histórica: las unidades siguen la cronología real de la "
+                                                    "operación y no reciben órdenes. Observe y compare con lo que pasó.")
     return esc
 
 

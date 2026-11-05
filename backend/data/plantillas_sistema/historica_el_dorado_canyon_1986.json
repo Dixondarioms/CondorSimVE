@@ -1,0 +1,1534 @@
+{
+ "id": "historica_el_dorado_canyon_1986",
+ "nombre": "Operación El Dorado Canyon (ataque de EE. UU. a Libia)",
+ "descripcion": "En la madrugada del 15 de abril de 1986, EE. UU. atacó a la vez Trípoli y Bengasi. Dieciocho bombarderos F-111F que habían despegado de Inglaterra la tarde anterior, tras rodear Francia y España y reabastecerse en vuelo cuatro veces, atacaron el cuartel de Bab al-Azizia, el campamento de Sidi Bilal y la zona militar del aeropuerto de Trípoli. Al mismo tiempo, aviones de los portaaviones USS America y USS Coral Sea atacaron el cuartel de Jamahiriya en Bengasi y la base aérea de Benina. Aviones de perturbación (EF-111A, EA-6B) y aviones con misiles antirradar (A-7E, F/A-18A) neutralizaron los radares de los misiles libios. El ataque duró unos 12 minutos; EE. UU. perdió una F-111F con sus dos tripulantes. La reproducción empieza a las 00:30, con las F-111 ya en el Mediterráneo occidental, porque el vuelo completo desde Inglaterra (unas 6 horas y media de ida) sería demasiado largo para la clase. Reproducción histórica: las unidades siguen solas la cronología real (00:30 a 03:00, Hora loca",
+ "origen": "codigo",
+ "clima": "despejado",
+ "hora_inicio_min": 30,
+ "nacion_azul": "libia",
+ "nacion_rojo": "estados_unidos",
+ "dia_noche": true,
+ "ia_azul": false,
+ "ia_rojo": false,
+ "fecha_inicio": "1986-04-15",
+ "unidades": [
+  {
+   "nombre": "RAF Lakenheath",
+   "bando": "rojo",
+   "clase": "base_aerea",
+   "lat": 52.409,
+   "lon": 0.561,
+   "modelo": "",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "Remit (F-111F, Bab al-Azizia)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": 37.7,
+   "lon": 6.0,
+   "modelo": "f111f",
+   "aeronaves": 3,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": "rasante"
+  },
+  {
+   "nombre": "Elton (F-111F, Bab al-Azizia)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": 37.75,
+   "lon": 5.8,
+   "modelo": "f111f",
+   "aeronaves": 3,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": "rasante"
+  },
+  {
+   "nombre": "Karma (F-111F, Bab al-Azizia)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": 37.8,
+   "lon": 5.6,
+   "modelo": "f111f",
+   "aeronaves": 3,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": "rasante"
+  },
+  {
+   "nombre": "Jewel (F-111F, Sidi Bilal)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": 37.65,
+   "lon": 5.4,
+   "modelo": "f111f",
+   "aeronaves": 3,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": "rasante"
+  },
+  {
+   "nombre": "Puffy (F-111F, aeropuerto de Trípoli)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": 37.6,
+   "lon": 5.2,
+   "modelo": "f111f",
+   "aeronaves": 3,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": "rasante"
+  },
+  {
+   "nombre": "Lujac (F-111F, aeropuerto de Trípoli)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": 37.55,
+   "lon": 5.0,
+   "modelo": "f111f",
+   "aeronaves": 3,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": "rasante"
+  },
+  {
+   "nombre": "EF-111A Raven (perturbación Trípoli)",
+   "bando": "rojo",
+   "clase": "avion_ge",
+   "lat": 37.7,
+   "lon": 5.7,
+   "modelo": "ef111a",
+   "aeronaves": 4,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "Cisternas KC-10/KC-135",
+   "bando": "rojo",
+   "clase": "cisterna",
+   "lat": 37.9,
+   "lon": 6.5,
+   "modelo": "kc10",
+   "aeronaves": 8,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "USS America",
+   "bando": "rojo",
+   "clase": "portaaviones",
+   "lat": 34.0,
+   "lon": 18.6,
+   "modelo": "nimitz",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "USS Coral Sea",
+   "bando": "rojo",
+   "clase": "portaaviones",
+   "lat": 34.2,
+   "lon": 20.4,
+   "modelo": "nimitz",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "A-6E Intruder VA-34 (America)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": 34.0,
+   "lon": 18.6,
+   "modelo": "a6e",
+   "aeronaves": 6,
+   "en_tierra": true,
+   "base": "USS America",
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "A-6E Intruder VA-55 (Coral Sea)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": 34.2,
+   "lon": 20.4,
+   "modelo": "a6e",
+   "aeronaves": 8,
+   "en_tierra": true,
+   "base": "USS Coral Sea",
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "A-7E Corsair II (supresión Trípoli)",
+   "bando": "rojo",
+   "clase": "ataque",
+   "lat": 34.0,
+   "lon": 18.6,
+   "modelo": "a7e",
+   "aeronaves": 6,
+   "en_tierra": true,
+   "base": "USS America",
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "F/A-18A Hornet (supresión Bengasi)",
+   "bando": "rojo",
+   "clase": "caza",
+   "lat": 34.2,
+   "lon": 20.4,
+   "modelo": "fa18a",
+   "aeronaves": 6,
+   "en_tierra": true,
+   "base": "USS Coral Sea",
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "EA-6B Prowler (perturbación)",
+   "bando": "rojo",
+   "clase": "avion_ge",
+   "lat": 33.6,
+   "lon": 19.6,
+   "modelo": "ea6b",
+   "aeronaves": 4,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "E-2C Hawkeye (alerta temprana)",
+   "bando": "rojo",
+   "clase": "alerta_temprana",
+   "lat": 33.8,
+   "lon": 19.2,
+   "modelo": "e2c",
+   "aeronaves": 4,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "F-14A Tomcat (protección de la flota)",
+   "bando": "rojo",
+   "clase": "caza",
+   "lat": 33.5,
+   "lon": 18.0,
+   "modelo": "f14a",
+   "aeronaves": 4,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "Cuartel de Bab al-Azizia",
+   "bando": "azul",
+   "clase": "centro_comunicaciones",
+   "lat": 32.861,
+   "lon": 13.166,
+   "modelo": "",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "Aeropuerto de Trípoli (zona militar)",
+   "bando": "azul",
+   "clase": "base_aerea",
+   "lat": 32.664,
+   "lon": 13.159,
+   "modelo": "",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "Campamento de Murat Sidi Bilal",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 32.83,
+   "lon": 13.0,
+   "modelo": "",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "Cuartel de Jamahiriya (Bengasi)",
+   "bando": "azul",
+   "clase": "infanteria",
+   "lat": 32.1,
+   "lon": 20.08,
+   "modelo": "",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "Base aérea de Benina",
+   "bando": "azul",
+   "clase": "base_aerea",
+   "lat": 32.097,
+   "lon": 20.27,
+   "modelo": "",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "SA-2/SA-3 Trípoli",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "lat": 32.8,
+   "lon": 13.25,
+   "modelo": "s75_sa2",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "SA-6 Trípoli",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "lat": 32.75,
+   "lon": 13.05,
+   "modelo": "kub_sa6",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "SA-8 Trípoli",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "lat": 32.85,
+   "lon": 13.2,
+   "modelo": "osa_akm",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "Crotale Trípoli",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "lat": 32.68,
+   "lon": 13.18,
+   "modelo": "crotale",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "SA-2/SA-3/SA-6 Bengasi",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "lat": 32.05,
+   "lon": 20.15,
+   "modelo": "s75_sa2",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "SA-5 Sirte",
+   "bando": "azul",
+   "clase": "antiaerea",
+   "lat": 31.1,
+   "lon": 16.6,
+   "modelo": "s200",
+   "aeronaves": 1,
+   "en_tierra": false,
+   "base": null,
+   "perfil_vuelo": null
+  },
+  {
+   "nombre": "MiG-23 Benina",
+   "bando": "azul",
+   "clase": "caza",
+   "lat": 32.097,
+   "lon": 20.27,
+   "modelo": "mig23",
+   "aeronaves": 4,
+   "en_tierra": true,
+   "base": "Base aérea de Benina",
+   "perfil_vuelo": null
+  }
+ ],
+ "objetivos": [
+  {
+   "bando": "rojo",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar Cuartel de Bab al-Azizia",
+   "puntos": 10,
+   "unidad": "Cuartel de Bab al-Azizia"
+  },
+  {
+   "bando": "rojo",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar Campamento de Murat Sidi Bilal",
+   "puntos": 10,
+   "unidad": "Campamento de Murat Sidi Bilal"
+  },
+  {
+   "bando": "rojo",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar Aeropuerto de Trípoli (zona militar)",
+   "puntos": 10,
+   "unidad": "Aeropuerto de Trípoli (zona militar)"
+  },
+  {
+   "bando": "rojo",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar SA-2/SA-3 Trípoli",
+   "puntos": 10,
+   "unidad": "SA-2/SA-3 Trípoli"
+  },
+  {
+   "bando": "rojo",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar SA-6 Trípoli",
+   "puntos": 10,
+   "unidad": "SA-6 Trípoli"
+  },
+  {
+   "bando": "rojo",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar SA-2/SA-3/SA-6 Bengasi",
+   "puntos": 10,
+   "unidad": "SA-2/SA-3/SA-6 Bengasi"
+  },
+  {
+   "bando": "rojo",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar Cuartel de Jamahiriya (Bengasi)",
+   "puntos": 10,
+   "unidad": "Cuartel de Jamahiriya (Bengasi)"
+  },
+  {
+   "bando": "rojo",
+   "tipo": "neutralizar",
+   "nombre": "Neutralizar Base aérea de Benina",
+   "puntos": 10,
+   "unidad": "Base aérea de Benina"
+  }
+ ],
+ "eventos_auto": [
+  {
+   "id": "h01",
+   "nombre": "00:30 · Las 18 F-111F y las EF-111A llevan casi 5 horas de vuelo des",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "00:30"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "00:30 · Las 18 F-111F y las EF-111A llevan casi 5 horas de vuelo desde Inglaterra. Rodearon Francia y España por el Atlántico, cruzaron el estrecho de Gibraltar y vuelan en silencio de radio sobre el Mediterráneo occidental."
+    }
+   ]
+  },
+  {
+   "id": "h02",
+   "nombre": "00:40 · Último reabastecimiento en vuelo antes del ataque (el cuarto",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "00:40"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "00:40 · Último reabastecimiento en vuelo antes del ataque (el cuarto de la ida). Las cisternas se quedan esperando sobre el mar para el regreso. Hora y lugar aproximados."
+    }
+   ]
+  },
+  {
+   "id": "h03",
+   "nombre": "00:50 · Remit, la escuadrilla líder, rodea la punta de Túnez y baja ",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "00:50"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "00:50 · Remit, la escuadrilla líder, rodea la punta de Túnez y baja hacia Trípoli. Al acercarse a la costa vuela a menos de 150 metros para no ser vista por los radares."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Remit (F-111F, Bab al-Azizia)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       37.6,
+       8.5
+      ],
+      [
+       37.3,
+       11.0
+      ],
+      [
+       35.0,
+       11.9
+      ],
+      [
+       33.4,
+       12.7
+      ],
+      [
+       33.4,
+       12.7
+      ]
+     ],
+     "carga": "ataque"
+    }
+   ]
+  },
+  {
+   "id": "h04",
+   "nombre": "00:50 · Elton sigue a Remit hacia el cuartel de Bab al-Azizia.",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "00:50"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "00:50 · Elton sigue a Remit hacia el cuartel de Bab al-Azizia."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Elton (F-111F, Bab al-Azizia)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       37.6,
+       8.3
+      ],
+      [
+       37.3,
+       10.9
+      ],
+      [
+       35.0,
+       11.8
+      ],
+      [
+       33.4,
+       12.6
+      ],
+      [
+       32.9,
+       13.1
+      ]
+     ],
+     "carga": "ataque"
+    }
+   ]
+  },
+  {
+   "id": "h05",
+   "nombre": "00:50 · Karma, la tercera escuadrilla contra Bab al-Azizia, cierra l",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "00:50"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "00:50 · Karma, la tercera escuadrilla contra Bab al-Azizia, cierra la formación; llegará cuando las defensas ya estén alertadas."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Karma (F-111F, Bab al-Azizia)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       37.6,
+       8.1
+      ],
+      [
+       37.3,
+       10.8
+      ],
+      [
+       35.0,
+       11.7
+      ],
+      [
+       33.4,
+       12.5
+      ],
+      [
+       32.9,
+       13.1
+      ]
+     ],
+     "carga": "ataque"
+    }
+   ]
+  },
+  {
+   "id": "h06",
+   "nombre": "00:50 · Jewel se dirige al campamento de Sidi Bilal, en la costa al ",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "00:50"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "00:50 · Jewel se dirige al campamento de Sidi Bilal, en la costa al oeste de Trípoli."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Jewel (F-111F, Sidi Bilal)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       37.6,
+       8.0
+      ],
+      [
+       37.3,
+       10.7
+      ],
+      [
+       35.0,
+       11.6
+      ],
+      [
+       33.4,
+       12.4
+      ],
+      [
+       33.3697,
+       12.4319
+      ]
+     ],
+     "carga": "ataque"
+    }
+   ]
+  },
+  {
+   "id": "h07",
+   "nombre": "00:50 · Puffy entra a tierra al oeste de Trípoli y da un rodeo para ",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "00:50"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "00:50 · Puffy entra a tierra al oeste de Trípoli y da un rodeo para atacar el aeropuerto desde el sur, una dirección que los defensores no esperaban. Ruta aproximada."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Puffy (F-111F, aeropuerto de Trípoli)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       37.6,
+       7.8
+      ],
+      [
+       37.3,
+       10.6
+      ],
+      [
+       35.0,
+       11.5
+      ],
+      [
+       33.2,
+       12.4
+      ],
+      [
+       32.75,
+       12.8
+      ],
+      [
+       32.45,
+       13.0
+      ],
+      [
+       32.45,
+       13.0
+      ]
+     ],
+     "carga": "ataque"
+    }
+   ]
+  },
+  {
+   "id": "h08",
+   "nombre": "00:50 · Lujac sigue a Puffy por el mismo rodeo hacia el aeropuerto d",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "00:50"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "00:50 · Lujac sigue a Puffy por el mismo rodeo hacia el aeropuerto de Trípoli."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Lujac (F-111F, aeropuerto de Trípoli)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       37.6,
+       7.6
+      ],
+      [
+       37.3,
+       10.5
+      ],
+      [
+       35.0,
+       11.4
+      ],
+      [
+       33.2,
+       12.3
+      ],
+      [
+       32.75,
+       12.75
+      ],
+      [
+       32.45,
+       12.95
+      ],
+      [
+       32.45,
+       12.95
+      ]
+     ],
+     "carga": "ataque"
+    }
+   ]
+  },
+  {
+   "id": "h09",
+   "nombre": "01:00 · El USS America lanza seis A-6E Intruder contra el cuartel de",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "01:00"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "01:00 · El USS America lanza seis A-6E Intruder contra el cuartel de Jamahiriya en Bengasi. Un séptimo avión previsto se queda en cubierta."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "A-6E Intruder VA-34 (America)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       33.4,
+       19.4
+      ],
+      [
+       32.4,
+       19.9
+      ],
+      [
+       32.4,
+       19.9
+      ]
+     ],
+     "carga": "ataque"
+    }
+   ]
+  },
+  {
+   "id": "h10",
+   "nombre": "01:00 · Despegan del America seis A-7E con misiles antirradar; van h",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "01:00"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "01:00 · Despegan del America seis A-7E con misiles antirradar; van hacia Trípoli para proteger a las F-111 contra los misiles libios."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "A-7E Corsair II (supresión Trípoli)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       33.8,
+       16.0
+      ],
+      [
+       33.3,
+       14.0
+      ],
+      [
+       33.1,
+       13.4
+      ]
+     ],
+     "carga": "sead"
+    }
+   ]
+  },
+  {
+   "id": "h11",
+   "nombre": "01:00 · El USS Coral Sea lanza ocho A-6E contra la base aérea de Ben",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "01:00"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "01:00 · El USS Coral Sea lanza ocho A-6E contra la base aérea de Benina. Algunas fuentes dicen que lo hizo poco después del America."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "A-6E Intruder VA-55 (Coral Sea)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       33.4,
+       20.4
+      ],
+      [
+       32.5,
+       20.35
+      ],
+      [
+       32.5,
+       20.35
+      ]
+     ],
+     "carga": "ataque"
+    }
+   ]
+  },
+  {
+   "id": "h12",
+   "nombre": "01:00 · Despegan del Coral Sea seis F/A-18A Hornet con misiles antir",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "01:00"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "01:00 · Despegan del Coral Sea seis F/A-18A Hornet con misiles antirradar para proteger el ataque a Bengasi."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "F/A-18A Hornet (supresión Bengasi)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       33.4,
+       20.3
+      ],
+      [
+       32.4,
+       20.2
+      ]
+     ],
+     "carga": "sead"
+    }
+   ]
+  },
+  {
+   "id": "h13",
+   "nombre": "01:30 · Las EF-111A se colocan frente a la costa de Trípoli para ceg",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "01:30"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "01:30 · Las EF-111A se colocan frente a la costa de Trípoli para cegar los radares en el momento del ataque. Posición aproximada."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "EF-111A Raven (perturbación Trípoli)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       37.4,
+       9.0
+      ],
+      [
+       35.5,
+       11.8
+      ],
+      [
+       33.15,
+       13.1
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h14",
+   "nombre": "01:54 · Empieza la interferencia electrónica de las EF-111A frente a",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "01:54"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "01:54 · Empieza la interferencia electrónica de las EF-111A frente a Trípoli y de las EA-6B frente a Bengasi: las pantallas de los radares libios se llenan de ruido."
+    }
+   ]
+  },
+  {
+   "id": "h15",
+   "nombre": "01:56 · Los A-7E disparan 16 misiles HARM y 8 Shrike contra los rada",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "01:56"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "01:56 · Los A-7E disparan 16 misiles HARM y 8 Shrike contra los radares de los misiles de Trípoli. Ningún misil libio logra guiarse hacia los aviones. Minuto exacto aproximado."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "A-7E Corsair II (supresión Trípoli)",
+     "orden": "atacar",
+     "blanco": "SA-2/SA-3 Trípoli"
+    }
+   ]
+  },
+  {
+   "id": "h16",
+   "nombre": "01:56 · Los F/A-18A disparan misiles HARM contra los radares de defe",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "01:56"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "01:56 · Los F/A-18A disparan misiles HARM contra los radares de defensa de Bengasi. Minuto exacto aproximado."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "F/A-18A Hornet (supresión Bengasi)",
+     "orden": "atacar",
+     "blanco": "SA-2/SA-3/SA-6 Bengasi"
+    }
+   ]
+  },
+  {
+   "id": "h17",
+   "nombre": "02:00 · Empieza el ataque a Trípoli. Remit y Elton lanzan bombas gui",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:00"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:00 · Empieza el ataque a Trípoli. Remit y Elton lanzan bombas guiadas por láser sobre Bab al-Azizia, pero varias F-111 abortan por fallas del equipo o por las reglas (había que ver el blanco). Solo dos o tres aviones aciertan en el complejo."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Remit (F-111F, Bab al-Azizia)",
+     "orden": "atacar",
+     "blanco": "Cuartel de Bab al-Azizia"
+    }
+   ]
+  },
+  {
+   "id": "h18",
+   "nombre": "02:00 · Los A-6E del America bombardean el cuartel de Jamahiriya en ",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:00"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:00 · Los A-6E del America bombardean el cuartel de Jamahiriya en Bengasi: dañan el almacén donde se armaban aviones MiG y destruyen 4 cajas con MiG nuevos. Un SA-6 sigue a uno de los A-6, que logra esquivarlo."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "A-6E Intruder VA-34 (America)",
+     "orden": "atacar",
+     "blanco": "Cuartel de Jamahiriya (Bengasi)"
+    }
+   ]
+  },
+  {
+   "id": "h19",
+   "nombre": "02:00 · Seis A-6E del Coral Sea atacan Benina con bombas en racimo (",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:00"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:00 · Seis A-6E del Coral Sea atacan Benina con bombas en racimo (dos abortaron). Destruyen en tierra 3 o 4 MiG-23, 2 helicópteros Mi-8 y aviones de transporte. Ningún caza libio llegó a despegar."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "A-6E Intruder VA-55 (Coral Sea)",
+     "orden": "atacar",
+     "blanco": "Base aérea de Benina"
+    }
+   ]
+  },
+  {
+   "id": "h20",
+   "nombre": "02:02 · Jewel ataca el campamento de Sidi Bilal con bombas guiadas p",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:02"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:02 · Jewel ataca el campamento de Sidi Bilal con bombas guiadas por láser. Las fuentes no coinciden en cuántos aviones acertaron; el daño fue menor de lo esperado. Minuto aproximado."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Jewel (F-111F, Sidi Bilal)",
+     "orden": "atacar",
+     "blanco": "Campamento de Murat Sidi Bilal"
+    }
+   ]
+  },
+  {
+   "id": "h21",
+   "nombre": "02:04 · Karma 52 cae al mar frente a la costa de Trípoli mientras vu",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:04"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:04 · Karma 52 cae al mar frente a la costa de Trípoli mientras vuela bajo hacia el blanco. Mueren sus dos tripulantes, los capitanes Fernando Ribas-Dominicci y Paul Lorence. La causa (misil libio, fuego antiaéreo o choque con el agua) nunca se aclaró. Minuto aproximado."
+    }
+   ]
+  },
+  {
+   "id": "h22",
+   "nombre": "02:05 · Llegando desde el sur, Puffy lanza bombas frenadas sobre la ",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:05"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:05 · Llegando desde el sur, Puffy lanza bombas frenadas sobre la rampa militar del aeropuerto. La artillería antiaérea libia empieza a disparar, pero cuando los aviones ya pasaron. Minuto aproximado."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Puffy (F-111F, aeropuerto de Trípoli)",
+     "orden": "atacar",
+     "blanco": "Aeropuerto de Trípoli (zona militar)"
+    }
+   ]
+  },
+  {
+   "id": "h23",
+   "nombre": "02:06 · Lujac completa el ataque al aeropuerto: entre ambas escuadri",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:06"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:06 · Lujac completa el ataque al aeropuerto: entre ambas escuadrillas (5 aviones; uno abortó por falla de radar) destruyen al menos 2 aviones de transporte Il-76 y dañan otros. Minuto aproximado."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Lujac (F-111F, aeropuerto de Trípoli)",
+     "orden": "atacar",
+     "blanco": "Aeropuerto de Trípoli (zona militar)"
+    }
+   ]
+  },
+  {
+   "id": "h24",
+   "nombre": "02:12 · Termina el ataque, que duró unos 12 minutos. Todos los avion",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:12"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:12 · Termina el ataque, que duró unos 12 minutos. Todos los aviones salen al mar y las F-111 regresan hacia Gibraltar para reabastecerse; llegarán a Inglaterra hacia las 10:10 (una F-111 aterriza en Rota, España, por un motor recalentado)."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Remit (F-111F, Bab al-Azizia)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       33.5,
+       12.6
+      ],
+      [
+       35.5,
+       11.6
+      ],
+      [
+       37.3,
+       10.0
+      ],
+      [
+       36.5,
+       4.0
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h25",
+   "nombre": "02:12 · Elton sale hacia el norte, sobre el mar, rumbo a los cistern",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:12"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:12 · Elton sale hacia el norte, sobre el mar, rumbo a los cisternas."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Elton (F-111F, Bab al-Azizia)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       36.5,
+       4.0
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h26",
+   "nombre": "02:12 · Karma sale hacia el norte, sobre el mar, rumbo a los cistern",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:12"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:12 · Karma sale hacia el norte, sobre el mar, rumbo a los cisternas."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Karma (F-111F, Bab al-Azizia)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       36.5,
+       4.0
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h27",
+   "nombre": "02:12 · Jewel sale hacia el norte, sobre el mar, rumbo a los cistern",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:12"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:12 · Jewel sale hacia el norte, sobre el mar, rumbo a los cisternas."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Jewel (F-111F, Sidi Bilal)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       36.5,
+       4.0
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h28",
+   "nombre": "02:12 · Puffy sale hacia el norte, sobre el mar, rumbo a los cistern",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:12"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:12 · Puffy sale hacia el norte, sobre el mar, rumbo a los cisternas."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Puffy (F-111F, aeropuerto de Trípoli)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       36.5,
+       4.0
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h29",
+   "nombre": "02:12 · Lujac sale hacia el norte, sobre el mar, rumbo a los cistern",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:12"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:12 · Lujac sale hacia el norte, sobre el mar, rumbo a los cisternas."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "Lujac (F-111F, aeropuerto de Trípoli)",
+     "orden": "mover",
+     "waypoints": [
+      [
+       36.5,
+       4.0
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h30",
+   "nombre": "02:30 · A-6E Intruder VA-34 regresa a su portaaviones.",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:30"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:30 · A-6E Intruder VA-34 regresa a su portaaviones."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "A-6E Intruder VA-34 (America)",
+     "orden": "aterrizar",
+     "blanco": "USS America"
+    }
+   ]
+  },
+  {
+   "id": "h31",
+   "nombre": "02:30 · A-7E Corsair II regresa a su portaaviones.",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:30"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:30 · A-7E Corsair II regresa a su portaaviones."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "A-7E Corsair II (supresión Trípoli)",
+     "orden": "aterrizar",
+     "blanco": "USS America"
+    }
+   ]
+  },
+  {
+   "id": "h32",
+   "nombre": "02:30 · F/A-18A Hornet regresa a su portaaviones.",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:30"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:30 · F/A-18A Hornet regresa a su portaaviones."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "F/A-18A Hornet (supresión Bengasi)",
+     "orden": "aterrizar",
+     "blanco": "USS Coral Sea"
+    }
+   ]
+  },
+  {
+   "id": "h33",
+   "nombre": "02:53 · Todos los aviones de la Armada ya están de vuelta en el Amer",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "02:53"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "02:53 · Todos los aviones de la Armada ya están de vuelta en el America y el Coral Sea. EE. UU. espera la respuesta libia: ningún caza libio despegó durante el ataque."
+    },
+    {
+     "tipo": "ordenar",
+     "unidad": "A-6E Intruder VA-55 (Coral Sea)",
+     "orden": "aterrizar",
+     "blanco": "USS Coral Sea"
+    }
+   ]
+  },
+  {
+   "id": "fin",
+   "nombre": "03:00 · fin de la operación",
+   "activo": true,
+   "repetir": false,
+   "disparador": {
+    "tipo": "hora",
+    "hora": "03:00"
+   },
+   "acciones": [
+    {
+     "tipo": "mensaje",
+     "para": "todos",
+     "texto": "03:00 · Fin de la operación. Compare en el Informe lo que resultó en el simulador con lo que pasó en la realidad."
+    },
+    {
+     "tipo": "retirar",
+     "bando": "rojo"
+    },
+    {
+     "tipo": "finalizar"
+    }
+   ]
+  }
+ ],
+ "historia": {
+  "fecha": "1986-04-15",
+  "zona_horaria": "Hora local de Libia en abril de 1986 = UTC+2. Comprobación: el ataque a las 02:00 de Libia coincide con las 19:00 de Washington (UTC-5) y con las 00:00 GMT. El despegue de las F-111 desde Inglaterra (17:36 GMT del 14 de abril) equivale a las 19:36 hora de Libia del 14 de abril.",
+  "resumen": "En la madrugada del 15 de abril de 1986, EE. UU. atacó a la vez Trípoli y Bengasi. Dieciocho bombarderos F-111F que habían despegado de Inglaterra la tarde anterior, tras rodear Francia y España y reabastecerse en vuelo cuatro veces, atacaron el cuartel de Bab al-Azizia, el campamento de Sidi Bilal y la zona militar del aeropuerto de Trípoli. Al mismo tiempo, aviones de los portaaviones USS America y USS Coral Sea atacaron el cuartel de Jamahiriya en Bengasi y la base aérea de Benina. Aviones de perturbación (EF-111A, EA-6B) y aviones con misiles antirradar (A-7E, F/A-18A) neutralizaron los radares de los misiles libios. El ataque duró unos 12 minutos; EE. UU. perdió una F-111F con sus dos tripulantes. La reproducción empieza a las 00:30, con las F-111 ya en el Mediterráneo occidental, porque el vuelo completo desde Inglaterra (unas 6 horas y media de ida) sería demasiado largo para la clase.",
+  "contexto": "El 5 de abril de 1986 una bomba en la discoteca La Belle de Berlín Occidental, frecuentada por soldados estadounidenses, mató a dos de ellos y a una civil; EE. UU. atribuyó el atentado al gobierno libio de Muamar el Gadafi. Ya en marzo de 1986 había habido combates en el golfo de Sidra (operación Prairie Fire). Francia, España e Italia negaron el paso por su espacio aéreo, por lo que las F-111 tuvieron que dar la vuelta por el Atlántico y entrar por el estrecho de Gibraltar. Las cisternas despegaron de Mildenhall y Fairford a las 17:13 GMT (19:13 de Libia) y las F-111/EF-111 a las 17:36 GMT (19:36 de Libia) del 14 de abril; seis F-111 y un EF-111 de reserva regresaron tras el primer reabastecimiento.",
+  "resultado_real": {
+   "texto": "El ataque alcanzó los cinco blancos en unos 12 minutos, pero con muchas fallas: de las 18 F-111 solo una parte lanzó sus bombas (varias abortaron por fallas del equipo o por no ver el blanco). Gadafi sobrevivió en su refugio y una bomba desviada cayó en un barrio de Trípoli, cerca de la embajada de Francia. Al día siguiente Libia disparó dos misiles balísticos SS-1 (Scud) contra la isla italiana de Lampedusa, que cayeron al mar. El ataque no acabó con el terrorismo apoyado por Libia (en 1988 ocurrió el atentado de Lockerbie).",
+   "perdidas_rojo": [
+    "Una F-111F (Karma 52, número 70-2389) caída al mar frente a Trípoli; murieron sus dos tripulantes, los capitanes Fernando L. Ribas-Dominicci y Paul F. Lorence.",
+    "Libia afirmó haber derribado 3 aviones (hasta 12 según otras declaraciones), lo que nunca se comprobó."
+   ],
+   "perdidas_azul": [
+    "Entre 40 y 60 muertos en tierra según las fuentes (militares y civiles); Libia afirmó que murió una hija adoptiva de Gadafi, dato que se discute.",
+    "Al menos 2 aviones de transporte Il-76 destruidos en el aeropuerto de Trípoli (otras fuentes dicen 3 a 5) y varios dañados.",
+    "3 o 4 cazas MiG-23, 2 helicópteros Mi-8 y 1 o 2 aviones Fokker F27 destruidos en Benina.",
+    "4 cajas con MiG nuevos destruidas en el cuartel de Jamahiriya."
+   ],
+   "danos": [
+    "Cuartel de Bab al-Azizia: cráteres y ventanas rotas, pero ningún edificio principal derribado.",
+    "Aeropuerto de Trípoli: aviones de transporte destruidos y edificios dañados.",
+    "Campamento de Sidi Bilal: daños menores de lo esperado.",
+    "Cuartel de Jamahiriya (Bengasi): almacén de armado de MiG dañado.",
+    "Base de Benina: aviones y helicópteros destruidos en tierra.",
+    "Zona civil de Trípoli: una bomba fuera de blanco dañó casas y estuvo cerca de la embajada de Francia y de la residencia del embajador suizo."
+   ]
+  },
+  "incertidumbres": [
+   "La hora de inicio de la reproducción (00:30) se eligió para no reproducir las 5 primeras horas de vuelo desde Inglaterra. Las posiciones de las F-111, EF-111A y cisternas a las 00:30 son estimaciones a partir de la hora de despegue (19:36), la velocidad de crucero (hasta 450 nudos) y la hora del ataque (02:00).",
+   "La ruta exacta de entrada a Trípoli no se publicó; las fuentes solo dicen que rodearon la punta de Túnez, volaron a muy baja altura y que parte del grupo dio un rodeo por tierra para atacar desde el sur. Las rutas son aproximadas.",
+   "Hora de despegue de la Armada: Wikipedia dice 01:00 hora de Libia; la revista Time dice entre las 00:20 y las 01:20 (17:20 a 18:20 hora de Washington).",
+   "Los minutos exactos de cada ataque dentro de la ventana 02:00-02:12 y la hora de caída de Karma 52 no se conocen; se repartieron de forma razonable.",
+   "Causa de la pérdida de Karma 52: misil (posiblemente SA-5 o SA-2/SA-3), artillería antiaérea o choque con el mar por volar muy bajo. No hay prueba definitiva.",
+   "Las cifras de aviones varían entre fuentes: 28 o 29 cisternas; 4 o 5 EF-111A en la zona; número de F-14 en vuelo desconocido; Time habla de 14 EA-6B, mientras Wikipedia da 4.",
+   "Las cifras de aciertos en Bab al-Azizia y Sidi Bilal difieren entre fuentes (Wikipedia, Air & Space Forces y f-111.net no coinciden).",
+   "Asignación de escuadrillas: la mayoría de fuentes pone Remit, Elton y Karma contra Bab al-Azizia, Jewel contra Sidi Bilal y Puffy/Lujac contra el aeropuerto; Defense Media Network da otra distribución.",
+   "Posiciones de los portaaviones: solo se sabe que estaban en el Mediterráneo central, frente a la costa libia (America en el golfo de Sidra y Coral Sea al este); las coordenadas son estimadas.",
+   "Ubicación de las baterías antiaéreas libias: se conocen los totales en Trípoli (Wikipedia) pero no las coordenadas; se pusieron posiciones aproximadas alrededor de las ciudades. No se encontró el detalle de las baterías de Bengasi.",
+   "Los blancos (cuarteles, campamento) usan clases del simulador aproximadas: centro_comunicaciones para Bab al-Azizia e infanteria para Sidi Bilal y Jamahiriya.",
+   "Bajas libias: las cifras van de 40 a 60 muertos; la muerte de una hija de Gadafi es dudosa.",
+   "Los datos numéricos de los modelos nuevos (velocidad, alcance, detección, autonomía) son valores públicos aproximados y redondeados, no tomados de las fuentes citadas."
+  ],
+  "fuentes": [
+   {
+    "titulo": "1986 United States bombing of Libya (Wikipedia en inglés)",
+    "url": "https://en.wikipedia.org/wiki/1986_United_States_bombing_of_Libya",
+    "nota": "Horas en tiempo de Libia (01:00, 01:54, 02:00, 02:53, 10:10), tabla de aviones por blanco, armas, resultados, defensas libias en Trípoli, aborts y pérdidas."
+   },
+   {
+    "titulo": "El Dorado Canyon - Air & Space Forces Magazine (Walter J. Boyne, 1999)",
+    "url": "https://airandspaceforces.com/?p=3354",
+    "nota": "Despegue a las 17:36 GMT, nombres de escuadrillas (Remit, Elton, Karma, Jewel, Puffy, Lujac), regreso de las reservas, desvío a Rota, aviones de la Armada."
+   },
+   {
+    "titulo": "Mobility Operations: Global Reach and Operation El Dorado Canyon (The Mobility Forum)",
+    "url": "https://themobilityforum.net/2020/09/09/mobility-operations-global-reach-and-operation-el-dorado-canyon-the-1986-strike-on-libya/",
+    "nota": "Despegue de las cisternas a las 17:13 GMT, bases de los KC-10 y KC-135, 8 a 12 reabastecimientos por avión."
+   },
+   {
+    "titulo": "Operation Eldorado Canyon: Libya Under Air Attack in 1986 (Defense Media Network)",
+    "url": "https://defensemedianetwork.com/stories/operation-eldorado-canyon-libya-under-air-attack-in-1986",
+    "nota": "Número de cisternas (19 KC-10A y 10 KC-135), datos de Karma 52 (70-2389), posibles causas de la pérdida."
+   },
+   {
+    "titulo": "In the Dead of the Night (revista Time, 1986)",
+    "url": "https://time.com/archive/6706115/in-the-dead-of-the-night",
+    "nota": "Horas en tiempo de Washington, rodeo por Túnez, ataque desde el sur al aeropuerto, defensas libias, misiles SS-1 contra Lampedusa, daños."
+   },
+   {
+    "titulo": "The United States bombing of Libya (f-111.net)",
+    "url": "https://f-111.net/Page-13.html",
+    "nota": "Resultados por blanco, aborto por falla del radar de seguimiento del terreno, Il-76 destruidos, falta de reacción de cazas libios."
+   },
+   {
+    "titulo": "El Dorado Canyon: The 18-Hour Raid on Tripoli (MigFlug)",
+    "url": "https://migflug.com/afterburner/el-dorado-canyon-1986-libya-raid-f-111/",
+    "nota": "Ruta general por el Atlántico y Gibraltar, cuatro reabastecimientos a la ida, duración de unos 12 minutos sobre el blanco."
+   },
+   {
+    "titulo": "Action in the Gulf of Sidra (1986) (Wikipedia en inglés)",
+    "url": "https://en.wikipedia.org/wiki/Action_in_the_Gulf_of_Sidra_(1986)",
+    "nota": "Existencia de la batería SA-5 de Sirte, usada en marzo de 1986 (consultado solo a través del resumen del buscador)."
+   }
+  ]
+ }
+}

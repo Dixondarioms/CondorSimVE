@@ -758,6 +758,13 @@ def construir(salida: Path) -> None:
                      "civil, los campos de minas, la doctrina, el nivel del adversario y el enlace de datos. El <b>Tutorial del Cóndor</b> (2.11) "
                      "es un ejemplo completo.")]]],
                 colWidths=[6.5 * cm, ANCHO_TEXTO - 6.5 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += [P("<b>Operaciones históricas</b>: en <b>Desde plantilla…</b>, al final, el grupo de reproducciones de operaciones "
+            "reales: el ataque al HMS Sheffield (Malvinas, 1982), la Operación Ópera contra el reactor de Osirak (1981), El "
+            "Dorado Canyon contra Libia (1986) y la primera noche de Tormenta del Desierto (1991), con las unidades, los blancos "
+            "y la cronología de fuentes abiertas. Nadie da órdenes: las unidades siguen solas la cronología y los mensajes del "
+            "director explican cada fase. Termina solo a la hora real y el informe muestra «Lo que pasó en la realidad» junto a "
+            "lo que resultó en el simulador, con las fuentes. Se generan con tools/crear_operaciones_historicas.py a partir de "
+            "las fichas de backend/data/historicas.")]
     h += [H2("13.5 Cuentas y usuarios"),
           P("CONSOLA → <b>Usuarios</b>: crear cuentas, cambiar su repartición, restablecer contraseñas y aprobar las solicitudes "
             "de cuenta pendientes. Para que una cuenta vea un ejercicio, márquela en CONSOLA → Escenario → <b>Usuarios con "

@@ -512,6 +512,20 @@
         <p><b>Desembarcar</b>: elija el transporte y marque la ruta; el último punto es el lugar de desembarco, en tierra firme.</p>`,
     },
     {
+      id: "operaciones-historicas", seccion: "Dirección del ejercicio", titulo: "Operaciones históricas (reproducción)",
+      claves: "operaciones historicas reproduccion reconstruccion malvinas sheffield opera osirak el dorado canyon libia tormenta del desierto irak 1982 1981 1986 1991 historia",
+      texto: `<p>En <b>Desde plantilla…</b>, al final, el grupo <b>Operaciones históricas</b>: el ataque al HMS Sheffield
+        (Malvinas, 1982), la Operación Ópera contra el reactor de Osirak (1981), El Dorado Canyon contra Libia (1986) y la
+        primera noche de Tormenta del Desierto (1991). Cada una trae las unidades que se usaron, sus posiciones y sus blancos,
+        sacados de fuentes abiertas.</p>
+        <p>Es una <b>reproducción</b>: nadie da órdenes. Las unidades siguen solas la cronología real, hora por hora, y los
+        mensajes del director explican cada fase; las defensas reaccionan solas. El director pone en marcha el reloj y elige
+        la velocidad. A la hora en que terminó la operación real, el ejercicio termina solo.</p>
+        <p>El <b>Informe</b> muestra «Lo que pasó en la realidad»: el resultado y las pérdidas reales junto a lo que resultó en
+        el simulador, los datos aproximados o discutidos y las fuentes. El simulador calcula cada ataque y cada defensa: las
+        diferencias con lo real son material de análisis.</p>`,
+    },
+    {
       id: "paracaidistas", seccion: "Logística, ingenieros y transporte", titulo: "Paracaidistas (tropas aerotransportadas)",
       claves: "paracaidistas paracaidas aerotransportadas avion transporte c-130 hercules salto lanzamiento zona aerotransportado",
       texto: `<p><b>1. Embarcar</b>: el avión de transporte (C-130, Y-8…) debe estar <b>en tierra</b>, en una base. Elija la

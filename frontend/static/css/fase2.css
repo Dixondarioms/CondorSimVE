@@ -628,3 +628,8 @@ a.boton-enlace:hover { border-color: var(--azul); }
 .filtro-alertas button { flex: 0 0 auto; width: auto; }
 #alertas li.director { border-left: 3px solid #ffd166; background: rgba(255, 209, 102, .08); }
 .zonas-lista .fila > button, .ea-lista .fila > button { flex: 0 0 auto; width: auto; }
+
+/* reproduccion de una operacion real (engine/historicas.py): nadie da ordenes */
+.historica { color: #ffd166; letter-spacing: .04em; }
+body.modo-historico #sec-orden { display: none; }
+#plantilla-lista li.grupo-plantillas { display: block; font-weight: 700; color: #ffd166; border: 0; padding-top: 14px; }

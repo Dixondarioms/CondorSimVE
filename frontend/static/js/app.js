@@ -2687,6 +2687,15 @@
     // la hora (tambien en la tarjeta Estado del escenario) la pinta el reloj en vivo: actualizarReloj
     $("esc-hora").className = esc.dia_noche && periodo !== "dia" ? `periodo-${periodo}` : "";
     const cal = Logica.textoCalendario(esc.calendario);
+    // reproduccion de una operacion real: nadie da ordenes (engine/historicas.py)
+    $("h-historica").hidden = !esc.historica;
+    $("sec-historica").hidden = !esc.historica;
+    if (esc.historica) {
+      const h = esc.historia || {};
+      $("h-historica-fecha").textContent = h.fecha || "";
+      $("historica-resumen").textContent = h.resumen || "";
+    }
+    document.body.classList.toggle("modo-historico", !!esc.historica);
     $("h-calendario-caja").hidden = !cal;
     $("h-calendario").textContent = cal;
     $("esc-calendario-fila").hidden = !cal;
@@ -3833,7 +3842,15 @@
     limpiar(lista);
     let plantillas;
     try { plantillas = (await api("GET", "/api/plantillas")).plantillas; } catch (_) { return; }
+    // las operaciones historicas (solo se reproducen) van al final, en su propio grupo
+    plantillas = [...plantillas.filter((p) => !p.historica), ...plantillas.filter((p) => p.historica)];
+    let grupoHistorico = false;
     for (const p of plantillas) {
+      if (p.historica && !grupoHistorico) {
+        grupoHistorico = true;
+        lista.appendChild(Object.assign(document.createElement("li"), { className: "grupo-plantillas",
+          textContent: "Operaciones históricas (reproducción: las unidades siguen la cronología real y nadie da órdenes)" }));
+      }
       const li = document.createElement("li");
       const info = document.createElement("div");
       info.append(Object.assign(document.createElement("b"), { textContent: p.nombre }),
