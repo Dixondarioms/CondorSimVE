@@ -326,7 +326,8 @@ def construir(salida: Path) -> None:
               ["Minar, Barrer minas", "Minas navales (6.5)."],
               ["Interferir", "Guerra electrónica: degrada al enemigo en una zona."],
               ["Lanzar misiles", "Buques y baterías con misiles de crucero; lanzadores balísticos (6.4)."],
-              ["Embarcar / Desembarcar", "Tropas a bordo de un buque de desembarco o un helicóptero de transporte."],
+              ["Embarcar / Desembarcar", "Tropas a bordo de un buque de desembarco, un helicóptero o un avión de transporte."],
+              ["Lanzar paracaidistas", "Avión de transporte con paracaidistas a bordo: saltan sobre la zona elegida (8.3)."],
           ], [4.2 * cm, ANCHO_TEXTO - 4.2 * cm])]
     h += [H2("4.3 La cola de órdenes")]
     h += figura("cola", "Cola de órdenes con una orden en curso.", ancho=7.5 * cm)
@@ -594,7 +595,15 @@ def construir(salida: Path) -> None:
           P("<b>Embarcar</b>: la unidad sube a un buque de desembarco o a un helicóptero de transporte propio que esté a menos de "
             "3 km. A bordo viaja con el transporte, no se la ve ni ataca por separado y sufre la mitad del daño que reciba el "
             "transporte (se pierde si lo hunden o derriban). <b>Desembarcar</b>: elija el transporte y marque la ruta; el último "
-            "punto es el lugar de desembarco, en tierra firme."),
+            "punto es el lugar de desembarco, en tierra firme. Un avión de transporte desembarca solo en tierra, en la base."),
+          P("<b>Paracaidistas</b>: el avión de transporte (C-130, Y-8, C-390…) embarca a la unidad de paracaidistas <b>en "
+            "tierra</b>, en una base. Lleva 2 unidades por avión (el C-27J y el An-26, 1; el Il-76 y el A400M, 3). En vuelo, "
+            "orden <b>Lanzar paracaidistas</b> → clic en la zona de lanzamiento, en tierra firme (o clic derecho en el mapa → "
+            "«Lanzar paracaidistas aquí»). El avión vuela hasta allí y saltan a menos de 2 km: caen dispersos (hasta 1,5 km del "
+            "punto), pierden un poco de fuerza y tardan <b>20 minutos</b> en reagruparse antes de poder disparar. Después el "
+            "avión vuelve solo a la base más cercana. Las otras tropas a bordo no saltan: bajan al aterrizar."),
+          P("El avión es grande, lento y sin armas: escóltelo y evite la antiaérea, porque si lo derriban se pierden las tropas "
+            "a bordo. Con tormenta sobre la zona no se salta. El enemigo que ve el avión recibe la alerta del salto."),
           H2("8.4 Misiles de crucero"),
           P("Buques y baterías con misiles de crucero: orden <b>Lanzar misiles</b> sobre un blanco. La salva vuela sola (unos "
             "850 km/h) hacia donde estaba el blanco; la antiaérea y las patrullas enemigas pueden derribarla antes. Cada misil "

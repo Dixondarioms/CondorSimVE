@@ -89,13 +89,13 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         raise HTTPException(status_code=400, detail="Solo las aeronaves pueden aterrizar u orbitar sobre un punto: "
                                                     "las demás unidades patrullan un área")
     if unidad.en_tierra and unidad.espera_restante > 0 and payload.tipo in ("mover", "atacar", "patrullar", "interceptar",
-                                                                            "sonoboyas", "sonar", "minar"):
+                                                                            "sonoboyas", "sonar", "minar", "paracaidistas"):
         raise HTTPException(
             status_code=400,
             detail=f"En tierra: le falta {_falta_texto(esc, unidad)} para reabastecer y rearmar antes de despegar",
         )
     if (unidad.en_tierra and aeronaves_mod.apresto(unidad) == aeronaves_mod.MANTENIMIENTO
-            and payload.tipo in ("mover", "atacar", "patrullar", "interceptar", "sonoboyas", "sonar", "minar")):
+            and payload.tipo in ("mover", "atacar", "patrullar", "interceptar", "sonoboyas", "sonar", "minar", "paracaidistas")):
         raise HTTPException(status_code=400, detail="En mantenimiento: cambie su apresto (alerta) para que pueda despegar")
     if payload.permanente and (payload.tipo != "patrullar" or unidad.tipo != "aerea"):
         raise HTTPException(status_code=400, detail="La patrulla permanente (con relevo) es de las aeronaves que patrullan")
@@ -173,11 +173,23 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         if motivo:
             raise HTTPException(status_code=400, detail=motivo)
     elif payload.tipo == "desembarcar":
-        _validar_waypoints(payload.waypoints)
+        en_pista = transporte_mod.es_avion_transporte(unidad) and unidad.en_tierra  # desembarca donde esta
+        if not en_pista:
+            _validar_waypoints(payload.waypoints)
         todas = db.query(Unidad).filter(Unidad.escenario_id == esc.id, Unidad.bando == usuario.rol).all()
-        motivo = transporte_mod.error_de_desembarco(unidad, list(payload.waypoints[-1]), get_terreno(), todas)
+        punto = list(payload.waypoints[-1]) if payload.waypoints else [unidad.lat, unidad.lon]
+        motivo = transporte_mod.error_de_desembarco(unidad, punto, get_terreno(), todas)
         if motivo:
             raise HTTPException(status_code=400, detail=motivo)
+    elif payload.tipo == "paracaidistas":
+        _validar_waypoints(payload.waypoints)
+        todas = db.query(Unidad).filter(Unidad.escenario_id == esc.id, Unidad.bando == usuario.rol).all()
+        punto = list(payload.waypoints[-1])
+        motivo = transporte_mod.error_de_salto(unidad, punto, get_terreno(), todas)
+        if motivo:
+            raise HTTPException(status_code=400, detail=motivo)
+        if clima_mod.resolver(clima_mod.contexto(db, esc), punto[0], punto[1]) == "tormenta":
+            raise HTTPException(status_code=400, detail="Hay tormenta sobre la zona de lanzamiento: no se puede saltar")
     elif payload.tipo == "lanzar":
         if payload.objetivo_unidad_id is None:
             raise HTTPException(status_code=400, detail="Indique la unidad blanco de los misiles")
@@ -290,7 +302,7 @@ def _crear_orden(payload: schemas.OrdenCreate, esc: Escenario, db: Session, usua
         escenario_id=esc.id,
         unidad_id=unidad.id,
         tipo=payload.tipo,
-        waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir", "patrullar", "interferir", "desembarcar",
+        waypoints_json=json.dumps(payload.waypoints if payload.tipo in ("mover", "construir", "patrullar", "interferir", "desembarcar", "paracaidistas",
                                                                   "sonoboyas", "sonar", "minar", "barrer") else []),
         objetivo_unidad_id=payload.objetivo_unidad_id if payload.tipo in ("atacar", "apoyar", "aterrizar", "lanzar", "embarcar", "interceptar",
                                                                     "torpedo") else None,

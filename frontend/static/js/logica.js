@@ -70,9 +70,17 @@
   const esMisil = (u) => !!u && (u.clase === "misil_crucero" || u.clase === "torpedo"); // armas autoguiadas en recorrido
 
   // transporte de tropas (engine/transporte.py): buque de desembarco (3 unidades) y helicoptero de transporte (1 ligera)
-  const CAPACIDAD_TRANSPORTE = { buque_desembarco: 3, helicoptero_artillado: 1 };
+  const CAPACIDAD_TRANSPORTE = { buque_desembarco: 3, helicoptero_artillado: 1, avion_transporte: 2 };
+  const CAPACIDAD_MODELO = { c27j: 1, an26: 1, il76md: 3, a400m: 3 };  // por avion (engine/transporte.py)
   const RADIO_EMBARQUE_KM = 3;
   const esTransporte = (u) => !!u && (CAPACIDAD_TRANSPORTE[u.clase] || 0) > 0;
+  const esAvionTransporte = (u) => !!u && u.clase === "avion_transporte";
+  /** Unidades que lleva el transporte (el avion, segun su modelo y por cada avion del grupo). */
+  function capacidadTransporte(t) {
+    if (!t) return 0;
+    if (esAvionTransporte(t)) return (CAPACIDAD_MODELO[t.modelo] || CAPACIDAD_TRANSPORTE.avion_transporte) * Math.max(1, t.aeronaves || 1);
+    return CAPACIDAD_TRANSPORTE[t.clase] || 0;
+  }
   const embarcada = (u) => !!u && u.transporte_id !== null && u.transporte_id !== undefined;
   const aBordo = (t, unidades) => (unidades || []).filter((x) => x.transporte_id === t.id && x.estado === "activa");
   /** Transportes propios a los que `u` puede subir ahora (a <= 3 km, con plaza y del tipo adecuado). */
@@ -81,11 +89,24 @@
     const cl = claseDe ? claseDe(u) : null;
     const ligera = cl ? cl.movilidad === "ligera" : ["infanteria", "antiaerea_portatil", "ingenieros", "reconocimiento"].includes(u.clase);
     return (unidades || []).filter((t) => t.bando === u.bando && t.estado === "activa" && esTransporte(t)
-      && (t.clase !== "helicoptero_artillado" || ligera)
-      && aBordo(t, unidades).length < CAPACIDAD_TRANSPORTE[t.clase]
-      && distanciaKm(u.lat, u.lon, t.lat, t.lon) <= RADIO_EMBARQUE_KM)
-      .map((t) => ({ t, km: distanciaKm(u.lat, u.lon, t.lat, t.lon) }));
+      && ((t.clase !== "helicoptero_artillado" && !esAvionTransporte(t)) || ligera)
+      && (!esAvionTransporte(t) || t.en_tierra)  // el avion embarca en la base
+      && aBordo(t, unidades).length < capacidadTransporte(t)
+      && distanciaEmbarque(u, t, unidades) <= RADIO_EMBARQUE_KM)
+      .map((t) => ({ t, km: distanciaEmbarque(u, t, unidades) }));
   }
+  /** Distancia al transporte; al avion estacionado se sube en su base (engine/transporte.py). */
+  function distanciaEmbarque(u, t, unidades) {
+    const d = distanciaKm(u.lat, u.lon, t.lat, t.lon);
+    const base = esAvionTransporte(t) && t.en_tierra && t.base_id ? (unidades || []).find((x) => x.id === t.base_id) : null;
+    return base ? Math.min(d, distanciaKm(u.lat, u.lon, base.lat, base.lon)) : d;
+  }
+  /** Paracaidistas a bordo de `t` (los unicos que saltan). */
+  const paracaidistasABordo = (t, unidades) => (t ? aBordo(t, unidades).filter((x) => x.clase === "paracaidistas") : []);
+  /** El avion de transporte puede lanzar paracaidistas: lleva alguno a bordo. */
+  const puedeLanzarParacaidistas = (t, unidades) => esAvionTransporte(t) && paracaidistasABordo(t, unidades).length > 0;
+  /** Puede desembarcar: lleva tropas; el avion, solo en tierra (en vuelo lanza paracaidistas). */
+  const puedeDesembarcar = (t, unidades) => esTransporte(t) && aBordo(t, unidades).length > 0 && (!esAvionTransporte(t) || !!t.en_tierra);
   /** Base aerea o portaaviones: lanza, recibe y estaciona aeronaves. */
   const operaAeronaves = (u) => !!u && Object.prototype.hasOwnProperty.call(PLAZAS_AERONAVES, u.clase || "");
   const esPortaaviones = (u) => operaAeronaves(u) && u.tipo !== "base";
@@ -1452,7 +1473,8 @@
     esMisil, operaAeronaves, esPortaaviones, plazasDe, esEmbarcable, puedeOperarEn, modeloDespegaDe, puedeLanzarMisiles,
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
-    esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE,
+    esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE, esAvionTransporte, capacidadTransporte,
+    paracaidistasABordo, puedeLanzarParacaidistas, puedeDesembarcar,
     distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, APRESTOS, textoApresto, senalesUnidad, estimarRuta, textoPuntoRuta, rotulosTapados, anillosArmas, VELOCIDADES, AYUDA_VELOCIDAD, textoTramo, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,

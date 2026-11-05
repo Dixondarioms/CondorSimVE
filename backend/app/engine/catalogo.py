@@ -80,6 +80,10 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
     # ---- terrestres ----
     Clase("infanteria", "Infanteria", "terrestre", "G", "UCI---", 30, 10, 8, 300, _atk(1.0, 0.3, 0.4), 1.0,
           "compania", movilidad="ligera"),
+    Clase("paracaidistas", "Infantería paracaidista", "terrestre", "G", "UCIA--", 25, 10, 8, 250, _atk(1.05, 0.35, 0.4),
+          1.0, "compania", movilidad="ligera",
+          armamento="Infantería entrenada para el salto: embarca en un avión de transporte y se lanza en paracaídas sobre "
+                    "la zona elegida. Armas ligeras, morteros y misiles antitanque y antiaéreos portátiles; sin vehículos"),
     Clase("blindado", "Blindados", "terrestre", "G", "UCA---", 45, 15, 8, 250, _atk(1.25, 0.3, 0.9), 1.15,
           "compania"),
     Clase("artilleria", "Artilleria", "terrestre", "G", "UCFH--", 25, 30, 6, 200, _atk(1.3, 0.1, 1.0), 0.7,
@@ -150,6 +154,11 @@ CLASES: dict[str, Clase] = {c.id: c for c in [
           4000, _atk(0.0, 0.0, 0.0), 0.5, movilidad="aerea", solo_aereo=True, emisor=True,
           armamento="Radar aerotransportado de largo alcance: ve aeronaves en vuelo hasta 300 km por encima del relieve, "
                     "pero lo que esta en tierra solo de cerca. Emite (la escucha enemiga lo localiza). Sin armas"),
+    Clase("avion_transporte", "Avión de transporte (tropas y paracaidistas)", "aerea", "A", "MFC---", 550, 0, 20, 3800,
+          _atk(0.0, 0.0, 0.0), 0.45, movilidad="aerea", firma=1.5,
+          armamento="Sin armas. Embarca tropas ligeras en tierra (en una base) y las desembarca al aterrizar, o lanza "
+                    "paracaidistas sobre una zona (orden «Lanzar paracaidistas»). Grande y lento: blanco fácil para la "
+                    "antiaérea; necesita escolta"),
     Clase("cisterna", "Avion cisterna (reabastecimiento en vuelo)", "aerea", "A", "MFKB--", 800, 0, 30, 9000,
           _atk(0.0, 0.0, 0.0), 0.5, movilidad="aerea", suministra=("aerea",), nodo_movil_km=40.0, carga_max=100.0,
           armamento="Reabastece de combustible en vuelo (+40 %) a las aeronaves propias a <= 40 km de su orbita; recarga "
@@ -883,7 +892,7 @@ ILUSTRACION_CLASE = {
     "helicoptero_artillado": "helo_transporte.svg", "avion_ge": "avion_ge.svg",
     "dron_reconocimiento": "dron_reconocimiento.svg", "dron_ataque": "dron_armado.svg",
     "municion_merodeadora": "municion_merodeadora.svg", "misil_crucero": "crucero.svg",
-    "alerta_temprana": "e3g.svg", "cisterna": "kc135.svg",
+    "alerta_temprana": "e3g.svg", "cisterna": "kc135.svg", "avion_transporte": "ec130h.svg",
 }
 
 

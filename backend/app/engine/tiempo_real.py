@@ -97,7 +97,7 @@ DESPLIEGUE_POR_TURNO_S = 900.0  # tiempo quieta para disparar, por cada "turno d
 MISIONES_CONTINUAS = frozenset({"patrulla", "espera"})
 TIPOS_DE_ORDEN = ("mover", "atacar", "patrullar", "aterrizar", "despegar", "lanzar", "interferir", "construir",
                   "embarcar", "desembarcar", "apoyar", "rumbo", "interceptar", "torpedo", "sonoboyas", "sonar",
-                  "minar", "barrer")
+                  "minar", "barrer", "paracaidistas")
 TASA_GIRO_GPS = 3.0  # grados por segundo al virar por una orden de rumbo (viraje estandar del transito aereo)
 LEJOS_KM = 500.0  # punto de referencia por delante en el rumbo (la aeronave nunca llega: sigue el rumbo)
 TIEMPO_OBRA_S = {"vado": 1800.0, "puente": 3600.0}  # trabajo de los ingenieros en el sitio hasta que la obra queda lista
@@ -472,7 +472,8 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
     unidad.orden_id = orden.id
     en_alerta = unidad.en_tierra and orden.tipo == "interceptar"
     alerta_s = aeronaves_mod.despegue_s(unidad)
-    if unidad.en_tierra and orden.tipo in ("mover", "patrullar", "atacar", "interceptar", "sonoboyas", "sonar", "minar"):
+    if unidad.en_tierra and orden.tipo in ("mover", "patrullar", "atacar", "interceptar", "sonoboyas", "sonar", "minar",
+                                           "paracaidistas"):
         if armas_mod.aplica(unidad) and not armas_mod.tiene_carga(unidad):  # sale con la carga de su modelo
             armas_mod.armar(unidad, None, db.get(Unidad, unidad.base_id) if unidad.base_id else None)
         unidad.espera_hasta = None
@@ -511,6 +512,20 @@ def aplicar_orden(db: Session, esc: Escenario, orden: Orden, unidad: Unidad) -> 
     elif orden.tipo == "embarcar":
         _poner_ruta(unidad, None)
         orden.resultado = f"[{hora}] Embarcando: a bordo a las {hora_del_dia(esc, esc.sim_segundos + EMBARQUE_S)}."
+    elif orden.tipo == "desembarcar" and transporte_mod.es_avion_transporte(unidad) and unidad.en_tierra:
+        # el avion de transporte en la base: las tropas bajan donde esta
+        todas = db.query(Unidad).filter(Unidad.escenario_id == esc.id).all()
+        bajadas = transporte_mod.bajar(unidad, list(transporte_mod.punto_de_embarque(unidad, todas)), todas)
+        orden.estado = "resuelta"
+        orden.resultado = f"[{hora}] Desembarcó en la base a {', '.join(x.nombre for x in bajadas) or 'nadie'}."
+        db.add(Evento(escenario_id=esc.id, turno=esc.turno_actual, sim_segundos=esc.sim_segundos, tipo="logistica",
+                      bando_destino=unidad.bando, descripcion=orden.resultado))
+        unidad.orden_id = None
+    elif orden.tipo == "paracaidistas":
+        punto = orden.waypoints[-1]
+        _poner_ruta(unidad, [list(w) for w in orden.waypoints])
+        unidad.mision, unidad.mision_lat, unidad.mision_lon = "", None, None
+        orden.resultado = f"[{hora}] Vuela a la zona de lanzamiento ({punto[0]:.3f}, {punto[1]:.3f})."
     elif orden.tipo == "desembarcar":
         punto = orden.waypoints[-1]
         ruta = [list(w) for w in orden.waypoints]
@@ -713,6 +728,8 @@ def _subpaso(ctx: _Ctx, h: float) -> None:
             _embarcar(ctx, u, orden)
         elif orden is not None and orden.tipo == "desembarcar":
             _desembarcar(ctx, u, orden, h)
+        elif orden is not None and orden.tipo == "paracaidistas":
+            _saltar(ctx, u, orden, h)
         elif orden is not None and orden.tipo == "apoyar":
             _apoyar(ctx, u, orden, h)
         elif orden is not None and orden.tipo == "rumbo":
@@ -1817,6 +1834,46 @@ def _desembarcar(ctx: _Ctx, t: Unidad, orden: Orden, h: float) -> None:
             faltan = geo.distancia_km(t.lat, t.lon, punto[0], punto[1])
             ctx.terminar(orden, t, f"No pudo acercarse lo suficiente al punto de desembarco (queda a {faltan:.0f} km): "
                                    "elija un punto en la costa.")
+
+
+def _saltar(ctx: _Ctx, t: Unidad, orden: Orden, h: float) -> None:
+    """El avion de transporte vuela a la zona de lanzamiento y, a RADIO_SALTO_KM o menos, saltan los paracaidistas
+    (engine/transporte.py); despues regresa a la base mas cercana."""
+    punto = orden.waypoints[-1]
+    if t.ruta:
+        mov = _avanzar(ctx, t, t.ruta, h)
+        _poner_ruta(t, t.ruta[mov.alcanzados:])
+    if geo.distancia_km(t.lat, t.lon, punto[0], punto[1]) > transporte_mod.RADIO_SALTO_KM:
+        if not t.ruta_json:
+            _poner_ruta(t, [punto])
+        return
+    base = aeronaves_mod.base_mas_cercana(t, ctx.lista)
+    if clima_mod.resolver(ctx.clima, punto[0], punto[1]) == "tormenta":
+        texto = f"{t.nombre}: tormenta sobre la zona de lanzamiento, el salto se suspendió."
+        if base is not None:
+            _regresar(ctx, t, orden, base, "regreso: salto suspendido", texto + f" Regresa a {base.nombre}.")
+        else:
+            ctx.terminar(orden, t, texto, "cancelada")
+            _esperar(t)
+        return
+    saltaron = transporte_mod.saltar(t, punto, ctx.lista, ctx.esc.semilla or 0)
+    for x in saltaron:
+        x.recarga_hasta = ctx.t + transporte_mod.REAGRUPAR_S  # se reagrupan antes de combatir
+        ctx.mundo.movio_en[x.id] = ctx.t
+    nombres = ", ".join(x.nombre for x in saltaron)
+    texto = f"{t.nombre} lanzó en paracaídas a {nombres} sobre ({punto[0]:.3f}, {punto[1]:.3f}): se reagrupan en {transporte_mod.REAGRUPAR_S / 60:.0f} min."
+    ctx.terminar(orden, t, texto)
+    ctx.evento("logistica", t.bando, texto, punto[0], punto[1])
+    for bando in ("azul", "rojo"):  # el enemigo que ve al avion ve el salto
+        if bando != t.bando and ctx.visible_para(t, bando):
+            aviso = f"Paracaidistas enemigos saltan cerca de ({punto[0]:.3f}, {punto[1]:.3f})."
+            ctx.evento("contacto", bando, aviso, punto[0], punto[1])
+            ctx.alerta("contacto", bando, aviso, punto[0], punto[1], "critica")
+    ctx.informe.cambios = True
+    if base is not None:
+        _regresar(ctx, t, None, base, "regreso tras el salto", f"{t.nombre} regresa a {base.nombre} tras el salto.")
+    else:
+        _esperar(t)
 
 
 def _apoyar(ctx: _Ctx, a: Unidad, orden: Orden, h: float) -> None:

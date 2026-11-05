@@ -843,14 +843,14 @@
       dibujarPatrulla();
       return;
     }
-    if (esAlumno() && ["sonoboyas", "sonar", "minar", "barrer"].includes(app.modoOrden) && app.unidadOrden) {
+    if (esAlumno() && ["sonoboyas", "sonar", "minar", "barrer", "paracaidistas"].includes(app.modoOrden) && app.unidadOrden) {
       app.puntoAsw = [lat, lng];
       const g = app.capas.preview;
       g.clearLayers();
       const u = app.porId.get(app.unidadOrden);
       if (u) L.polyline([[u.lat, u.lon], app.puntoAsw], { color: "#ffd166", weight: 3, dashArray: "9 7", interactive: false }).addTo(g);
-      const radio = { sonar: 12, sonoboyas: 14, minar: 3, barrer: 3 }[app.modoOrden];
-      L.circle(app.puntoAsw, { radius: radio * 1000, color: app.modoOrden === "minar" ? "#ef476f" : "#48cae4", weight: 1.5, dashArray: "4 5", fillOpacity: 0.06, interactive: false }).addTo(g);
+      const radio = { sonar: 12, sonoboyas: 14, minar: 3, barrer: 3, paracaidistas: 2 }[app.modoOrden];
+      L.circle(app.puntoAsw, { radius: radio * 1000, color: app.modoOrden === "minar" ? "#ef476f" : app.modoOrden === "paracaidistas" ? "#ffd166" : "#48cae4", weight: 1.5, dashArray: "4 5", fillOpacity: 0.06, interactive: false }).addTo(g);
       if (app.data) actualizarNuevaOrden(app.data);
       return;
     }
@@ -1073,6 +1073,7 @@
       if (Logica.esAvionAsw(u, app.catalogo)) ops.push({ texto: "Sembrar sonoboyas aquí", accion: () => ordenRapida({ unidad_id: u.id, tipo: "sonoboyas", waypoints: punto }, `${u.nombre}: Sonoboyas`) });
       if (Logica.esHeloAsw(u, app.catalogo)) ops.push({ texto: "Calar el sonar aquí", accion: () => ordenRapida({ unidad_id: u.id, tipo: "sonar", waypoints: punto }, `${u.nombre}: Sonar de inmersión`) });
       if (Logica.siembraMinas(u, app.catalogo)) ops.push({ texto: "Sembrar minas aquí", accion: () => ordenRapida({ unidad_id: u.id, tipo: "minar", waypoints: punto }, `${u.nombre}: Minar`) });
+      if (Logica.puedeLanzarParacaidistas(u, app.data ? app.data.unidades : [])) ops.push({ texto: "Lanzar paracaidistas aquí", accion: () => ordenRapida({ unidad_id: u.id, tipo: "paracaidistas", waypoints: punto }, `${u.nombre}: Paracaidistas`) });
       if (Logica.barreMinas(u)) ops.push({ texto: "Barrer minas aquí", accion: () => ordenRapida({ unidad_id: u.id, tipo: "barrer", waypoints: punto }, `${u.nombre}: Barrer minas`) });
     }
     ops.push({ texto: "Centrar el mapa aquí", accion: () => app.map.panTo([lat, lng]) });
@@ -2260,9 +2261,12 @@
     if (app.modoOrden === "interceptar" && !intercepta) app.modoOrden = "mover";
     const transportes = u ? Logica.transportesCercanos(u, data.unidades, claseDe) : [];
     const puedeEmbarcar = transportes.length > 0;
-    const puedeDesembarcar = !!u && Logica.esTransporte(u) && Logica.aBordo(u, data.unidades).length > 0;
+    const puedeDesembarcar = !!u && Logica.puedeDesembarcar(u, data.unidades);
+    const saltan = !!u && Logica.puedeLanzarParacaidistas(u, data.unidades);
     $("modo-embarcar").hidden = !puedeEmbarcar;
     $("modo-desembarcar").hidden = !puedeDesembarcar;
+    $("modo-paracaidistas").hidden = !saltan;
+    if (app.modoOrden === "paracaidistas" && !saltan) app.modoOrden = "mover";
     if (app.modoOrden === "embarcar" && !puedeEmbarcar) app.modoOrden = "mover";
     if (app.modoOrden === "desembarcar" && !puedeDesembarcar) app.modoOrden = "mover";
     if (app.modoOrden === "patrullar" && !patrulla) app.modoOrden = "mover";
@@ -2275,7 +2279,8 @@
     $("orden-unidad").textContent = u ? u.nombre : "elija una unidad";
     $("btn-emitir").disabled = !u || data.escenario.estado === "finalizado";
     document.querySelectorAll(".modos button").forEach((b) => b.classList.toggle("activo", b.dataset.modo === app.modoOrden));
-    $("o-mover").hidden = app.modoOrden !== "mover" && app.modoOrden !== "desembarcar";
+    const desembarcaEnBase = app.modoOrden === "desembarcar" && !!u && Logica.esAvionTransporte(u) && !!u.en_tierra;
+    $("o-mover").hidden = app.modoOrden !== "mover" && (app.modoOrden !== "desembarcar" || desembarcaEnBase);
     const conTramos = app.modoOrden === "mover" && !!(u && u.velocidad_actual) && !app.lote.size;
     $("o-tramo-fila").hidden = !conTramos;
     $("o-tramo-perfil-fila").hidden = !(u && u.tipo === "aerea");  // la altura es de las aeronaves
@@ -2288,7 +2293,7 @@
     if (app.modoOrden === "rumbo") dibujarRumbo();
     $("o-interceptar").hidden = app.modoOrden !== "interceptar";
     $("o-torpedo").hidden = app.modoOrden !== "torpedo";
-    const conPunto = ["sonoboyas", "sonar", "minar", "barrer"].includes(app.modoOrden);
+    const conPunto = ["sonoboyas", "sonar", "minar", "barrer", "paracaidistas"].includes(app.modoOrden);
     $("o-asw").hidden = !conPunto;
     if (conPunto) {
       $("o-asw-ayuda").textContent = {
@@ -2296,6 +2301,7 @@
         sonar: "Haga clic en el mapa: el helicóptero vuela hasta allí, queda en vuelo estacionario y escucha con el sonar calado a 12 km mientras mantenga la orden.",
         minar: "Haga clic en el mapa donde sembrar: la unidad va hasta allí y siembra un campo de 20 minas en 3 km (un buque tarda media hora; un avión, una pasada). Las minas no distinguen bandos.",
         barrer: "Haga clic en el campo de minas: el cazaminas va hasta allí y lo limpia (unas 5 minas por hora).",
+        paracaidistas: `Haga clic en la zona de lanzamiento, en tierra firme: el avión vuela hasta allí y saltan ${Logica.paracaidistasABordo(u, data.unidades).map((x) => x.nombre).join(", ") || "los paracaidistas"}. Caen dispersos (hasta 1,5 km), pierden algo de fuerza en el salto y tardan 20 minutos en reagruparse antes de combatir. Después el avión vuelve a la base. Con tormenta no se salta; escóltelo, porque la antiaérea lo derriba con las tropas a bordo.`,
       }[app.modoOrden];
       $("o-asw-punto").textContent = app.puntoAsw ? `Punto: ${app.puntoAsw[0].toFixed(3)}, ${app.puntoAsw[1].toFixed(3)}.` : "Aún no eligió el punto.";
     }
@@ -2309,17 +2315,17 @@
         : `A ${Math.round(elegida.km)} km: llega y aterriza en ${Situacion.duracion(elegida.km / Math.max(1, u.velocidad_kmh || 1))}.`
             + (elegida.alcanzaCombustible ? "" : ` Necesita ~${Math.round(elegida.combustibleNecesario)} % de combustible y tiene ${Math.round(u.combustible)} %.`);
     }
-    $("o-objetivo-box").hidden = ["mover", "construir", "patrullar", "aterrizar", "interferir", "embarcar", "desembarcar", "rumbo"].includes(app.modoOrden);
+    $("o-objetivo-box").hidden = ["mover", "construir", "patrullar", "aterrizar", "interferir", "embarcar", "desembarcar", "rumbo", "paracaidistas"].includes(app.modoOrden);
     $("o-lanzar").hidden = app.modoOrden !== "lanzar";
     $("o-embarcar").hidden = app.modoOrden !== "embarcar";
     $("o-desembarcar").hidden = app.modoOrden !== "desembarcar";
     if (app.modoOrden === "embarcar" && u) {
-      llenarSelect($("o-transporte"), transportes.map((x) => [x.t.id, `${x.t.nombre} · ${x.km.toFixed(1)} km · ${Logica.aBordo(x.t, data.unidades).length}/${Logica.CAPACIDAD_TRANSPORTE[x.t.clase]} a bordo`]));
+      llenarSelect($("o-transporte"), transportes.map((x) => [x.t.id, `${x.t.nombre} · ${x.km.toFixed(1)} km · ${Logica.aBordo(x.t, data.unidades).length}/${Logica.capacidadTransporte(x.t)} a bordo`]));
       $("o-embarcar-info").textContent = "La unidad tarda 10 minutos en subir; después viaja a bordo con el transporte.";
     }
     if (app.modoOrden === "desembarcar" && u) {
       const carga = Logica.aBordo(u, data.unidades).map((x) => x.nombre).join(", ");
-      $("o-desembarcar-info").textContent = `A bordo: ${carga}. ${app.waypoints.length ? `Punto de desembarco: ${app.waypoints[app.waypoints.length - 1].map((v) => v.toFixed(3)).join(", ")}.` : "Marque la ruta y el punto de desembarco en el mapa."}`;
+      $("o-desembarcar-info").textContent = desembarcaEnBase ? `A bordo: ${carga}. Bajan aquí mismo, en la base.` : `A bordo: ${carga}. ${app.waypoints.length ? `Punto de desembarco: ${app.waypoints[app.waypoints.length - 1].map((v) => v.toFixed(3)).join(", ")}.` : "Marque la ruta y el punto de desembarco en el mapa."}`;
     }
     if (["atacar", "apoyar", "lanzar", "interceptar", "torpedo"].includes(app.modoOrden)) {
       const lista = Logica.objetivosDisponibles(data.unidades, app.usuario.rol, app.modoOrden, app.unidadOrden);
@@ -2421,8 +2427,9 @@
         cuerpo.tramos = tramos.map((t) => ({ velocidad: t.velocidad || null, perfil: t.perfil || null }));
       }
     } else if (app.modoOrden === "desembarcar") {
-      if (!app.waypoints.length) return toast("Marque en el mapa la ruta y el punto de desembarco (el último).");
-      cuerpo.waypoints = app.waypoints;
+      const enBase = Logica.esAvionTransporte(u) && u.en_tierra;  // el avion desembarca donde esta
+      if (!enBase && !app.waypoints.length) return toast("Marque en el mapa la ruta y el punto de desembarco (el último).");
+      cuerpo.waypoints = enBase ? [] : app.waypoints;
     } else if (app.modoOrden === "embarcar") {
       const t = parseInt($("o-transporte").value, 10);
       if (!t) return toast("Elija el transporte.");
@@ -2449,7 +2456,7 @@
       if (!app.obraSitio) return toast("Haga clic en el mapa, sobre el río, donde quiere construir.");
       cuerpo.detalle = $("o-obra").value;
       cuerpo.waypoints = [app.obraSitio];
-    } else if (["sonoboyas", "sonar", "minar", "barrer"].includes(app.modoOrden)) {
+    } else if (["sonoboyas", "sonar", "minar", "barrer", "paracaidistas"].includes(app.modoOrden)) {
       if (!app.puntoAsw) return toast("Haga clic en el mapa en el punto elegido.");
       cuerpo.waypoints = [app.puntoAsw];
     } else if (app.modoOrden === "lanzar") {
@@ -2497,7 +2504,8 @@
     const nombreObj = obj ? obj.nombre : `#${o.objetivo_unidad_id}`;
     if (o.tipo === "mover") return `Mover (${o.waypoints.length} waypoint${o.waypoints.length === 1 ? "" : "s"})`;
     if (o.tipo === "embarcar") return `Embarcar en ${nombreObj}`;
-    if (o.tipo === "desembarcar") return `Desembarcar en (${o.waypoints[o.waypoints.length - 1][0].toFixed(2)}, ${o.waypoints[o.waypoints.length - 1][1].toFixed(2)})`;
+    if (o.tipo === "desembarcar") return o.waypoints.length ? `Desembarcar en (${o.waypoints[o.waypoints.length - 1][0].toFixed(2)}, ${o.waypoints[o.waypoints.length - 1][1].toFixed(2)})` : "Desembarcar en la base";
+    if (o.tipo === "paracaidistas") return `Lanzar paracaidistas en (${o.waypoints[0][0].toFixed(2)}, ${o.waypoints[0][1].toFixed(2)})`;
     if (o.tipo === "construir") return `Construir ${o.detalle || "obra"}`;
     if (o.tipo === "rumbo") return Logica.textoRumbo(o.detalle);
     if (o.tipo === "interceptar") return Logica.textoIntercepcion(o.detalle, nombreObj);
