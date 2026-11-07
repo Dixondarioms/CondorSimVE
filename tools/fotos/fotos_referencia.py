@@ -187,9 +187,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from busquedas_ampliado import BUSQUEDAS, RENOVAR  # noqa: E402
 from busquedas_armas import ARMAS  # noqa: E402
 
-for _i, _consultas in RENOVAR.items():
-    UNIDADES = [u if u[1] != _i else (u[0], u[1], _consultas[0], _consultas) for u in UNIDADES]
-UNIDADES += [("modelos", _i, _consultas[0], _consultas) for _i, _consultas in BUSQUEDAS.items()]
+UNIDADES += [("modelos", _i, _consultas[0], _consultas) for _i, _consultas in BUSQUEDAS.items() if _i not in RENOVAR]
+for _i, _consultas in RENOVAR.items():  # busquedas nuevas para modelos que cambiaron o no tenian foto propia
+    if any(u[1] == _i for u in UNIDADES):
+        UNIDADES = [u if u[1] != _i else (u[0], u[1], _consultas[0], _consultas) for u in UNIDADES]
+    else:
+        UNIDADES.append(("modelos", _i, _consultas[0], _consultas))
 # armas (backend/app/engine/fichas_armas.py): seccion "armas", archivo ref_arma_<id>.jpg
 UNIDADES += [("armas", _i, _consultas[0], _consultas) for _i, _consultas in ARMAS.items()]
 SECCIONES = ("modelos", "clases", "armas")
