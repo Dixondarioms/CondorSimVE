@@ -120,6 +120,10 @@
   const esAeronave = (m) => !!m && !m.misil && (!m.tipo || m.tipo === "aerea");
   const modeloDespegaDe = (m, base) => esAeronave(m) && (!esPortaaviones(base) || !!m.embarcable);
 
+  /** Familia de modelos que se elige con el catalogo de fotos para una clase: aerea, naval o terrestre (null para
+   * las bases, la infraestructura y los misiles en vuelo, que no tienen modelos que elegir). */
+  const familiaDeModelos = (clase) => (!clase || clase.misil || !["aerea", "naval", "terrestre"].includes(clase.tipo) ? null : clase.tipo);
+
   /** Filtro del selector de aeronaves: texto (nombre, pais, fabricante o funcion, sin acentos) y clase. */
   function filtrarModelos(modelos, texto, clase) {
     const q = String(texto || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -1544,7 +1548,7 @@
     nacionDe, etiquetaBandoNacion, filtrarUnidades, textoObjetivo, avanceObjetivo, ETIQUETA_OBJETIVO, CAPACIDAD_BASE, RADIO_ATERRIZAJE_KM, estacionadasEn, plazasLibres, opcionesDeAterrizaje, situacionDeVuelo,
     modeloDe, rotuloModelo, aeronavesOperativas, basesAereasPropias, detalleDespegue, textoDespegue,
     aeronavesComprometidas, baseEnEscenario, nombreCortoBase, FUERZA_MINIMA_BASE, modoAerodromo, colorAerodromo, ZOOM_AEROPUERTOS, ZOOM_ICONOS_AERODROMO,
-    esMisil, operaAeronaves, esPortaaviones, plazasDe, esEmbarcable, puedeOperarEn, modeloDespegaDe, puedeLanzarMisiles,
+    esMisil, operaAeronaves, esPortaaviones, plazasDe, esEmbarcable, puedeOperarEn, modeloDespegaDe, puedeLanzarMisiles, familiaDeModelos,
     esAeronave, filtrarModelos,
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE, esAvionTransporte, capacidadTransporte,

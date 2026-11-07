@@ -683,6 +683,7 @@
               <img id="u-modelo-foto" alt="" width="72" height="52" hidden>
               <div><b id="u-modelo-nombre">Elija la aeronave</b><small id="u-modelo-grupo"></small></div>
               <button id="btn-elegir-modelo" type="button" class="secundario mini">Elegir aeronave…</button>
+              <button id="btn-quitar-modelo" type="button" class="secundario mini" hidden title="Usar los valores de la clase">Sin modelo</button>
             </div>
             <label id="u-tipo-fila" class="mini" hidden>Modelo<select id="u-tipo"></select></label>
             <div id="u-pista-fila" hidden>
@@ -1421,7 +1422,7 @@
         <label class="mini" id="aer-base-fila">Base de origen<select id="aer-base"></select></label>
             <p id="aer-nota-base" class="ayuda" hidden>Desde un portaaviones solo despegan helicópteros, drones y cazas embarcados.</p>
             <p id="aer-nota-pista" class="nota" hidden></p>
-        <label class="mini">Aeronaves en el grupo<select id="aer-cantidad"></select></label>
+        <label class="mini" id="aer-cantidad-fila">Aeronaves en el grupo<select id="aer-cantidad"></select></label>
         <label class="mini" id="aer-indicativo-fila">Indicativo (opcional)<input id="aer-indicativo" maxlength="40" placeholder="Ej. Halcón 1"></label>
         <label class="mini" id="aer-carga-fila">Carga de armamento (por aeronave)<select id="aer-carga"></select></label>
         <div id="aer-carga-armas" class="aer-carga-armas"></div>

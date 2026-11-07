@@ -349,16 +349,16 @@
   function aplicarDefectosClase() {
     const c = app.catalogo && app.catalogo.clases.find((x) => x.id === $("u-clase").value);
     if (!c) return;
-    // aeronaves: el modelo se elige con fotos (dialogo); el resto, de una lista con los tipos del catalogo propio
+    // aeronaves, buques y unidades terrestres: el modelo se elige con fotos y su ficha (dialogo de aviacion.js)
     const aerea = c.tipo === "aerea" && !c.misil;
     const elegido = app.modeloUnidad && modeloPorId(app.modeloUnidad.modelo);
-    if (!aerea || (elegido && elegido.clase !== c.id)) app.modeloUnidad = null;
-    $("u-aeronave-fila").hidden = !aerea;
-    const tipos = (app.catalogo.modelos || []).filter((m) => m.clase === c.id);
-    $("u-tipo-fila").hidden = aerea || !tipos.length;
-    if (!aerea) llenarSelect($("u-tipo"), [["", `Sin elegir (valores de la clase ${c.nombre.toLowerCase()})`], ...tipos.map((m) => [m.id, `${m.nombre} · ${m.pais}`])]);
-    const tipo = !aerea && $("u-tipo").value ? modeloPorId($("u-tipo").value) : null;
-    const ref = (aerea && app.modeloUnidad && modeloPorId(app.modeloUnidad.modelo)) || tipo || c;
+    if (elegido && elegido.clase !== c.id) app.modeloUnidad = null;
+    const familia = Logica.familiaDeModelos(c);
+    const hayModelos = familia && (app.catalogo.modelos || []).some((m) => m.tipo === familia && !m.misil);
+    $("u-aeronave-fila").hidden = !hayModelos;
+    $("u-tipo-fila").hidden = true; // la lista vieja de tipos quedo reemplazada por el catalogo con fotos
+    $("btn-elegir-modelo").textContent = aerea ? "Elegir aeronave…" : familia === "naval" ? "Elegir buque…" : "Elegir modelo…";
+    const ref = (app.modeloUnidad && modeloPorId(app.modeloUnidad.modelo)) || c;
     $("u-velocidad").value = ref.velocidad_kmh;
     $("u-alcance").value = ref.alcance_km;
     $("u-deteccion").value = ref.deteccion_km;
@@ -383,11 +383,16 @@
     foto.hidden = !m;
     if (m) { foto.src = m.foto; foto.alt = m.nombre; }
     const clase = app.catalogo && app.catalogo.clases.find((x) => x.id === $("u-clase").value);
-    $("u-modelo-nombre").textContent = m ? m.nombre : "Elija la aeronave";
-    $("u-modelo-grupo").textContent = m ? `Grupo de ${app.modeloUnidad.aeronaves} aeronave${app.modeloUnidad.aeronaves === 1 ? "" : "s"}` : `Sin elegir: valores de la clase ${clase ? clase.nombre.toLowerCase() : ""}`;
+    const aerea = !!clase && clase.tipo === "aerea";
+    $("u-modelo-nombre").textContent = m ? m.nombre : aerea ? "Elija la aeronave" : clase && clase.tipo === "naval" ? "Elija el buque" : "Elija el modelo";
+    $("u-modelo-grupo").textContent = m ? (aerea ? `Grupo de ${app.modeloUnidad.aeronaves} aeronave${app.modeloUnidad.aeronaves === 1 ? "" : "s"}` : `${m.fabricante || ""} · ${m.pais || ""}`)
+      : `Sin elegir: valores de la clase ${clase ? clase.nombre.toLowerCase() : ""}`;
+    $("btn-quitar-modelo").hidden = !m;
   }
+  $("btn-quitar-modelo").addEventListener("click", () => { app.modeloUnidad = null; aplicarDefectosClase(); });
   $("btn-elegir-modelo").addEventListener("click", async () => {
-    const elegido = await app.aviacion.elegirModelo(app.modeloUnidad);
+    const clase = app.catalogo && app.catalogo.clases.find((x) => x.id === $("u-clase").value);
+    const elegido = await app.aviacion.elegirModelo(app.modeloUnidad, Logica.familiaDeModelos(clase) || "aerea", clase ? clase.id : "");
     if (elegido) {
       const m = modeloPorId(elegido.modelo);
       if (m && m.clase !== $("u-clase").value) $("u-clase").value = m.clase; // el modelo define la clase
@@ -815,7 +820,7 @@
         await api("POST", rutaEsc("/unidades"), {
           nombre, bando: $("u-bando").value, clase: $("u-clase").value, echelon: $("u-escalon").value,
           modelo: app.modeloUnidad ? app.modeloUnidad.modelo : ($("u-tipo-fila").hidden ? undefined : $("u-tipo").value || undefined),
-          aeronaves: app.modeloUnidad ? app.modeloUnidad.aeronaves : undefined,
+          aeronaves: app.modeloUnidad && app.modeloUnidad.aeronaves ? app.modeloUnidad.aeronaves : undefined,
           lat, lon: lng, fuerza: num("u-fuerza") ?? 100, velocidad_kmh: num("u-velocidad"),
           alcance_km: num("u-alcance"), deteccion_km: num("u-deteccion"), autonomia_km: num("u-autonomia"),
           personal: num("u-personal") === undefined ? undefined : Math.round(num("u-personal")),

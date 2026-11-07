@@ -475,6 +475,27 @@ def consola(n: Nav) -> None:
     n.pestana("fuerzas")
 
 
+def catalogo_unidades(n: Nav) -> None:
+    """Agregar unidad: el catalogo con fotos y ficha para elegir un buque y un modelo terrestre (como las aeronaves)."""
+    n.pestana("consola")
+    n.js("(() => { const d = document.getElementById('u-clase').closest('details'); d.open = true;"
+         " d.scrollIntoView({block: 'start'}); })()")
+    for clase, nombre in (("fragata", "elegir_buque"), ("blindado", "elegir_terrestre")):
+        n.js(f"(() => {{ const s = document.getElementById('u-clase'); s.value = '{clase}'; s.dispatchEvent(new Event('change')); }})()")
+        n.pausa(0.8)
+        n.clic("#btn-elegir-modelo")
+        n.pausa(2.5)
+        n.js("document.querySelectorAll('#aer-tarjetas img').forEach((i) => { i.loading = 'eager'; })")
+        for _ in range(20):  # que carguen las fotos de las primeras tarjetas
+            n.pausa(1)
+            if n.js("[...document.querySelectorAll('#aer-tarjetas img')].slice(0, 12).every((i) => i.complete && i.naturalWidth > 0)"):
+                break
+        print('   fotos cargadas:', n.js("[...document.querySelectorAll('#aer-tarjetas img')].slice(0, 12).map((i) => i.complete && i.naturalWidth > 0)"))
+        guardar(n, nombre, n.rect("#dlg-aeronaves"), margen=2)
+        n.cerrar_dialogos()
+    n.pestana("fuerzas")
+
+
 def capas(n: Nav) -> None:
     guardar(n, "capas", tarjeta(n, "Capas"))
     n.js("document.getElementById('panel-der').scrollTop = 0")
@@ -643,7 +664,7 @@ def fichas_armas(n: Nav) -> None:
 
 
 ORDEN = [acceso, pantalla, cabecera, panel_unidad, fichas_armas, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, eventos_auto, asw, salvas, minas, balisticos, doctrina, misiones,
-         situacion, tiem, consola, capas, graficos, mapas, ayuda, tutorial, recorrido, informe, en_marcha, bando, videowall]
+         situacion, tiem, consola, catalogo_unidades, capas, graficos, mapas, ayuda, tutorial, recorrido, informe, en_marcha, bando, videowall]
 
 
 def main() -> int:

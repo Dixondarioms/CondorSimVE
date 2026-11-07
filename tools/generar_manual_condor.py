@@ -789,11 +789,14 @@ def construir(salida: Path) -> None:
     h += [Table([[figura("consola", "Pestaña CONSOLA.", ancho=5.6 * cm, alto_max=13 * cm, celda=True),
                   [Bul(["<b>Nuevo</b> o <b>Desde plantilla…</b> (arriba) crea el escenario; <b>Guardar como plantilla…</b> guarda el "
                         "actual para reutilizarlo.",
-                        "En CONSOLA: <b>Agregar unidad</b> (con el buscador del catálogo), <b>Objetivos y puntaje</b>, <b>Editar el "
+                        "En CONSOLA: <b>Agregar unidad</b> (con el catálogo de fotos y fichas para elegir la aeronave, el buque "
+                        "o el modelo terrestre: Figura «Elegir buque»), <b>Objetivos y puntaje</b>, <b>Editar el "
                         "escenario</b>, meteorología por zonas, calendario de la operación, identidad nacional, apresto y personal "
                         "de cada bando.",
                         "CONSOLA → <b>Escenario</b> → <b>Usuarios con acceso</b>: marque las cuentas que entran a este ejercicio."])]]],
                 colWidths=[5.9 * cm, ANCHO_TEXTO - 5.9 * cm], style=[("VALIGN", (0, 0), (-1, -1), "TOP")])]
+    h += figura("elegir_buque", "Elegir buque: al agregar una unidad naval, el catálogo con la foto, la ficha y las armas de "
+                "cada modelo (lo mismo para aeronaves y unidades terrestres).")
     h += [H2("13.2 Conducir el ejercicio"),
           Bul(["Abajo: <b>PONER EN MARCHA / DETENER EL RELOJ</b>, la velocidad y <b>+1 h</b>.",
                "CONSOLA → <b>Reloj y configuración</b>: qué causas detienen el reloj solas (pausa automática), clima y hora.",

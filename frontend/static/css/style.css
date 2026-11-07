@@ -764,3 +764,5 @@ summary.neutral, h4.neutral { color: #7bd389; }
 .arma-datos dd { margin: 0; font-size: 13px; }
 .arma-desc { margin: 8px 0 4px; }
 @media (max-width: 520px) { .arma-datos { grid-template-columns: 1fr; } }
+.tarjeta-modelo .armas-tarjeta { margin: 6px 0; }
+.tarjeta-modelo .armas-tarjeta .arma-mini { width: 76px; }

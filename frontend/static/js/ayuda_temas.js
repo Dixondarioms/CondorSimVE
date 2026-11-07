@@ -76,14 +76,19 @@
     },
     {
       id: "catalogo", seccion: "Primeros pasos", titulo: "El catálogo: aeronaves, vehículos y buques",
-      claves: "catalogo ficha modelo aeronave avion helicoptero dron tanque blindado artilleria buque fragata submarino portaaviones foto pais fabricante tucano entrenador sf-260 marchetti bombardero",
+      claves: "catalogo ficha modelo aeronave avion helicoptero dron tanque blindado artilleria buque fragata submarino portaaviones foto pais fabricante tucano entrenador sf-260 marchetti bombardero agregar unidad elegir buque elegir modelo",
       texto: `<p>Cada unidad puede ser un <b>modelo real</b> con su ficha: foto de referencia, fabricante, país, función,
         armamento, velocidad, alcance, detección y efectividad contra aire, tierra y mar. El catálogo trae más de 330 modelos
         de las fuerzas armadas del mundo: cazas (F-16, Su-30, Rafale, Gripen, Kfir, J-20, Su-30MKI…), ataque y entrenamiento
         (A-29 Super Tucano, AT-27 Tucano, K-8W, SF-260, Hawk, T-6, PC-7…), bombarderos, patrulla marítima, alerta temprana,
         cisternas, transporte, helicópteros, drones, misiles, tanques, artillería, defensa antiaérea, radares y buques.</p>
         <p>La ficha se ve al pasar el cursor sobre una unidad en el mapa y en <b>Unidad seleccionada</b>. Al despegar aeronaves o
-        al agregar una unidad, el buscador encuentra el modelo por nombre, país o fabricante. Las cifras son didácticas:
+        al agregar una unidad, el buscador encuentra el modelo por nombre, país o fabricante.</p>
+        <p>En CONSOLA → <b>Agregar unidad</b>, después de elegir la clase, el botón <b>Elegir aeronave…</b>, <b>Elegir
+        buque…</b> o <b>Elegir modelo…</b> abre el catálogo con fotos: cada tarjeta trae la ficha del modelo (velocidad,
+        alcance de armas, detección, autonomía, efectividad, armamento con la foto de cada arma) y se puede filtrar por clase
+        o buscar. Al elegir un modelo de otra clase, la unidad cambia a esa clase; <b>Sin modelo</b> vuelve a los valores de
+        la clase. Las cifras son didácticas:
         sirven para comparar plataformas entre sí, no son datos oficiales.</p>`,
     },
     {

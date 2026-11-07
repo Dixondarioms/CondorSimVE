@@ -18,7 +18,7 @@
     };
     const limpiar = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
 
-    let modoActual = null; // { tipo: "despegue" | "modelo", alConfirmar }
+    let modoActual = null; // { tipo: "despegue" | "modelo", alConfirmar, familia: "aerea" | "naval" | "terrestre" }
     let elegido = null; // id del modelo marcado en el selector
 
     const modelos = () => (ctx.catalogo() && ctx.catalogo().modelos) || [];
@@ -47,19 +47,31 @@
         if (e.target === b && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); marcar(m.id); }
       });
       const foto = el("img");
-      foto.src = m.foto;
+      foto.src = m.foto || "/static/fotos/crucero.svg";
       foto.alt = m.nombre;
       foto.loading = "lazy";
       const cuerpo = el("div", "cuerpo");
-      cuerpo.append(el("h4", "", m.nombre), el("small", "", `${m.fabricante} · ${m.pais}`), el("p", "funcion", m.funcion));
+      cuerpo.append(el("h4", "", m.nombre), el("small", "", `${m.fabricante || ""} · ${m.pais || ""}`), el("p", "funcion", m.funcion || ""));
       const specs = el("dl", "specs");
       const f = m.ficha;
-      for (const [k, v] of [
+      const aerea = !m.tipo || m.tipo === "aerea";
+      const naval = m.tipo === "naval";
+      for (const [k, v] of aerea ? [
         ["Velocidad", f ? `${f.crucero_kt} kt en ruta` : `${m.velocidad_kmh} km/h`],
         ["Alcance de armas", `${Math.round(m.alcance_km / 1.852)} NM`],
         ["Detección", `${Math.round(m.deteccion_km / 1.852)} NM`],
         [f ? "Radio de acción" : "Autonomía", f ? `${f.radio_nm} NM` : `${m.autonomia_km} km`],
         ...(f ? [["Despegue", f.despegue_m ? `${f.despegue_m} m de pista` : "vertical"], ["Roles", f.roles.join(" · ")]] : []),
+      ] : naval ? [
+        ["Velocidad", `${Math.round(m.velocidad_kmh / 1.852)} nudos`],
+        ["Alcance de armas", `${Math.round(m.alcance_km / 1.852)} NM`],
+        ["Detección", `${Math.round(m.deteccion_km / 1.852)} NM`],
+        ["Autonomía", `${Math.round(m.autonomia_km / 1.852)} NM`],
+      ] : [
+        ["Velocidad", `${m.velocidad_kmh} km/h`],
+        ["Alcance de armas", `${m.alcance_km} km`],
+        ["Detección", `${m.deteccion_km} km`],
+        ["Autonomía", `${m.autonomia_km} km`],
       ]) {
         const d = el("div");
         d.append(el("dt", "", k), el("dd", "", v));
@@ -68,18 +80,29 @@
       cuerpo.appendChild(specs);
       const ataque = el("div", "ataques");
       ataque.append(barraAtaque("Vs aire", m.ataque_vs.aerea), barraAtaque("Vs tierra", m.ataque_vs.terrestre), barraAtaque("Vs mar", m.ataque_vs.naval));
-      cuerpo.append(ataque, el("p", "arma", m.armamento), el("p", "desc", m.descripcion));
-      const c = m.credito;
+      cuerpo.append(ataque, el("p", "arma", m.armamento || ""));
+      // fotos chicas de sus armas (clic: la ficha del arma, static/js/fichas_armas.js)
+      const armas = window.FichasArmas
+        ? FichasArmas.tira(Logica.fichasDeUnidad({ modelo: m.id, clase: m.clase, tipo: m.tipo }, ctx.catalogo())) : "";
+      if (armas) {
+        const tira = el("div", "armas-tarjeta");
+        tira.innerHTML = armas;
+        cuerpo.appendChild(tira);
+      }
+      cuerpo.appendChild(el("p", "desc", m.descripcion || ""));
+      const c = m.credito || {};
       const credito = el("small", "credito");
-      credito.append(m.foto.endsWith(".svg") ? "Imagen: " : c.obra ? `Foto de referencia (${c.obra}): ` : "Foto: ");
-      const enlace = el("a", "", `${c.autor}, ${c.licencia}`);
-      enlace.href = c.pagina;
-      enlace.target = "_blank";
-      enlace.rel = "noopener noreferrer";
-      enlace.addEventListener("click", (e) => e.stopPropagation());
-      credito.appendChild(enlace);
+      credito.append(!m.foto || m.foto.endsWith(".svg") ? "Imagen: " : c.obra ? `Foto de referencia (${c.obra}): ` : "Foto: ");
+      if (c.autor) {
+        const enlace = el("a", "", `${c.autor}, ${c.licencia || ""}`);
+        if (c.pagina) enlace.href = c.pagina;
+        enlace.target = "_blank";
+        enlace.rel = "noopener noreferrer";
+        enlace.addEventListener("click", (e) => e.stopPropagation());
+        credito.appendChild(enlace);
+      }
       cuerpo.appendChild(credito);
-      const usar = el("button", "primario usar-modelo", "Usar esta aeronave");
+      const usar = el("button", "primario usar-modelo", aerea ? "Usar esta aeronave" : naval ? "Usar este buque" : "Usar este modelo");
       usar.type = "button";
       usar.title = modoActual && modoActual.tipo === "despegue"
         ? "Despega en el acto, desde la base y con la cantidad elegidas abajo" : "Usa este modelo para la unidad";
@@ -103,7 +126,9 @@
       limpiar(tarjetas);
       const base = baseElegida();
       const despegue = modoActual && modoActual.tipo === "despegue";
-      const todos = modelos().filter((m) => (despegue ? Logica.modeloDespegaDe(m, base) : Logica.esAeronave(m)));
+      const familia = (modoActual && modoActual.familia) || "aerea";
+      const todos = modelos().filter((m) => (despegue ? Logica.modeloDespegaDe(m, base)
+        : familia === "aerea" ? Logica.esAeronave(m) : m.tipo === familia && !m.misil));
       llenarFiltroClase(todos);
       const posibles = Logica.filtrarModelos(todos, $("aer-buscar").value, $("aer-filtro-clase").value);
       const lista = despegue ? posibles.filter((m) => Logica.entraEnPista(m, base)) : posibles;
@@ -170,10 +195,17 @@
       const m = modelos().find((x) => x.id === elegido);
       const n = parseInt($("aer-cantidad").value, 10) || 1;
       const conf = $("aer-confirmar");
-      if (!m) { $("aer-resumen").textContent = "Elija un modelo de aeronave."; conf.disabled = true; return; }
+      if (!m) {
+        const fam = modoActual && modoActual.familia;
+        $("aer-resumen").textContent = fam === "naval" ? "Elija un buque o un submarino." : fam === "terrestre" ? "Elija un modelo." : "Elija un modelo de aeronave.";
+        conf.disabled = true;
+        return;
+      }
       conf.disabled = false;
       if (modoActual.tipo === "modelo") {
-        $("aer-resumen").textContent = `${m.corto} ×${n}: los valores de alcance, detección y autonomía del formulario se ajustan al modelo.`;
+        $("aer-resumen").textContent = modoActual.familia && modoActual.familia !== "aerea"
+          ? `${m.nombre}: la clase, la velocidad, el alcance, la detección y la autonomía del formulario se ajustan al modelo.`
+          : `${m.corto} ×${n}: los valores de alcance, detección y autonomía del formulario se ajustan al modelo.`;
         return;
       }
       const rol = ctx.usuario().rol;
@@ -204,13 +236,18 @@
       sel.value = String(Math.min(actual || 4, topes().max_grupo));
     }
 
-    function abrirDialogo({ tipo, titulo, ayuda, textoConfirmar, bases, modeloInicial, cantidadInicial, alConfirmar }) {
-      modoActual = { tipo, alConfirmar };
+    function abrirDialogo({ tipo, titulo, ayuda, textoConfirmar, bases, modeloInicial, cantidadInicial, alConfirmar,
+      familia = "aerea", claseInicial = "" }) {
+      modoActual = { tipo, alConfirmar, familia };
       $("aer-titulo").textContent = titulo;
       $("aer-ayuda").textContent = ayuda;
       $("aer-confirmar").textContent = textoConfirmar;
       llenarCantidad(cantidadInicial);
       const despegue = tipo === "despegue";
+      $("aer-cantidad-fila").hidden = familia !== "aerea";
+      $("aer-buscar").placeholder = familia === "naval" ? "Buscar por nombre, país o fabricante (ej. Lupo, Rusia, Navantia)"
+        : familia === "terrestre" ? "Buscar por nombre, país o fabricante (ej. T-72, Buk, Estados Unidos)"
+          : "Buscar por nombre, país o fabricante (ej. Tucano, Rusia, Embraer)";
       $("aer-base-fila").hidden = !despegue;
       $("aer-indicativo-fila").hidden = !despegue;
       if (despegue) {
@@ -222,6 +259,10 @@
       }
       $("aer-buscar").value = "";
       $("aer-filtro-clase").value = "";
+      if (claseInicial) { // abre filtrado por la clase elegida en el formulario (se puede ver «Todas»)
+        llenarTarjetas();
+        $("aer-filtro-clase").value = claseInicial;
+      }
       llenarTarjetas();
       marcar((modeloInicial && modeloInicial.modelo) || null);
       if (!$("dlg-aeronaves").open) $("dlg-aeronaves").showModal();
@@ -250,17 +291,20 @@
       });
     }
 
-    /** Instructor: elegir un modelo (y tamano) para la unidad que va a ubicar; devuelve {modelo, aeronaves} o null. */
-    function elegirModelo(actual) {
+    const TITULO_FAMILIA = { aerea: "Elegir aeronave", naval: "Elegir buque o submarino", terrestre: "Elegir modelo de unidad terrestre" };
+
+    /** Instructor: elegir un modelo (y tamano) para la unidad que va a ubicar; devuelve {modelo, aeronaves} o null.
+     * `familia`: aerea (con cantidad), naval o terrestre; `clase`: la del formulario, para abrir filtrado por ella. */
+    function elegirModelo(actual, familia = "aerea", clase = "") {
       return new Promise((resolver) => {
         let resuelto = false;
         const fin = (v) => { if (!resuelto) { resuelto = true; resolver(v); } };
         $("dlg-aeronaves").addEventListener("close", () => fin(null), { once: true });
         abrirDialogo({
-          tipo: "modelo", titulo: "Elegir aeronave",
-          ayuda: "El modelo define la foto, la velocidad, el alcance, la detección, la autonomía y la efectividad de la unidad.",
+          tipo: "modelo", titulo: TITULO_FAMILIA[familia] || TITULO_FAMILIA.aerea, familia, claseInicial: familia === "aerea" ? "" : clase,
+          ayuda: "El modelo define la foto, la velocidad, el alcance, la detección, la autonomía, el armamento y la efectividad de la unidad.",
           textoConfirmar: "Usar este modelo", modeloInicial: { modelo: actual && actual.modelo }, cantidadInicial: (actual && actual.aeronaves) || 4,
-          alConfirmar: async () => fin({ modelo: elegido, aeronaves: parseInt($("aer-cantidad").value, 10) }),
+          alConfirmar: async () => fin({ modelo: elegido, aeronaves: familia === "aerea" ? parseInt($("aer-cantidad").value, 10) : undefined }),
         });
       });
     }

@@ -52,6 +52,15 @@ test("fichasDeCarga y filasFichaArma", () => {
   assert.deepEqual(L.filasFichaArma(null), []);
 });
 
+test("familiaDeModelos: que catalogo de fotos abre cada clase al agregar una unidad", () => {
+  assert.equal(L.familiaDeModelos({ tipo: "aerea" }), "aerea");
+  assert.equal(L.familiaDeModelos({ tipo: "naval" }), "naval");
+  assert.equal(L.familiaDeModelos({ tipo: "terrestre" }), "terrestre");
+  assert.equal(L.familiaDeModelos({ tipo: "aerea", misil: true }), null); // misiles en vuelo: sin modelo que elegir
+  assert.equal(L.familiaDeModelos({ tipo: "base" }), null);
+  assert.equal(L.familiaDeModelos(null), null);
+});
+
 test("puedeLanzarMisiles: el misil del modelo manda sobre el de su clase", () => {
   const cat = { misiles_lanzador: { modelos: { molniya: "moskit", type052d: "yj18" }, sin_misiles: ["type42", "u209"] } };
   const fragata = { lanza_misiles: true };
