@@ -200,8 +200,8 @@ def construir(salida: Path) -> None:
             "detectan y combaten mientras corre el reloj, y las órdenes se cumplen en el acto, sin esperar al fin de un turno. "
             "Se enfrentan dos bandos, <b>Azul</b> y <b>Rojo</b>; cada bando es un Estado Mayor en el que cada persona entra con "
             "la cuenta de su repartición y ordena solo las unidades que le corresponden."),
-          P("El simulador trae un catálogo de cerca de 200 modelos reales (aviones, helicópteros, drones, misiles, vehículos, "
-            "defensa antiaérea, radares y buques de muchos ejércitos), cada uno con su ficha y foto de referencia, y mapas "
+          P(f"El simulador trae un catálogo de {len(catalogo.MODELOS)} modelos reales (aviones, helicópteros, drones, misiles, "
+            "vehículos, defensa antiaérea, radares y buques de las fuerzas armadas del mundo), cada uno con su ficha y foto de referencia, y mapas "
             "propios que funcionan sin internet: Venezuela con detalle, el continente americano, el mundo entero y un teatro "
             "ficticio para ejercicios sin geografía real."),
           H2("1.2 Quién hace qué"),

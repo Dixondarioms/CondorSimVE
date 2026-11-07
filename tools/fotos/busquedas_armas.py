@@ -76,6 +76,19 @@ ARMAS = {
     "s60": ["S-60 57 mm", "S-60 anti-aircraft gun", "AZP S-60"],
     # misil balistico
     "9m723": ["9M723 missile", "Iskander missile", "Iskander-M missile"],
+    # armas de las aeronaves de las fuerzas aereas del mundo
+    "pl8": ["PL-8 missile", "PL-8 air-to-air missile", "Python 3 missile"],
+    "r37": ["R-37M missile", "R-37 missile", "R-33 missile"],
+    "derby": ["Derby missile Rafael", "Rafael Derby", "I-Derby ER"],
+    "jassm": ["AGM-158 JASSM", "JASSM missile", "AGM-158 Joint Air-to-Surface Standoff Missile"],
+    "kh101": ["Kh-101 missile", "Kh-101 cruise missile", "Kh-555 missile"],
+    "cj20": ["CJ-20 cruise missile", "KD-20 missile", "CJ-10 cruise missile"],
+    "shturm": ["9M114 Shturm", "Shturm missile", "9M114 Kokon"],
+    "hj10": ["HJ-10 missile", "AKD-10 missile", "Z-10 missiles"],
+    "helina": ["Helina missile", "Dhruvastra missile", "Nag missile helicopter"],
+    "mokopa": ["Mokopa missile", "ZT-6 Mokopa", "Denel Mokopa"],
+    "ar1": ["AR-1 missile CASC", "AR-1 air-to-ground missile", "CH-4 drone missile"],
+    "sadid": ["Sadid-1 missile", "Sadid missile", "Shahed 129 missile"],
     # buques: misiles, cañones y antiaereos
     "kowsar": ["Kowsar missile", "Kosar anti-ship missile", "C-701 missile"],
     "mk8_114": ["4.5 inch Mark 8 naval gun", "4.5 inch Mk 8 gun", "Mark 8 4.5 inch gun turret"],

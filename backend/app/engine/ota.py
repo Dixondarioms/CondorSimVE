@@ -96,9 +96,17 @@ ARMAMENTO = {
     "FAB": ("FAB-500 (500 kg)", "bomba", False, 0),
     "TOW": ("BGM-71 TOW", "as", True, 4), "ATK": ("9M120 Ataka", "as", True, 6), "VKR": ("9K121 Vikhr", "as", True, 8),
     "UMT": ("L-UMTAS", "as", True, 8), "MAM": ("MAM-L", "as", True, 8), "BA7": ("Blue Arrow 7 (BA-7)", "as", True, 8),
+    # armas de las aeronaves de las fuerzas aereas del mundo (catalogo_ampliado, 2026-11)
+    "P8": ("PL-8", "aa", True, 15), "R37": ("R-37M", "aa", True, 200), "DRB": ("Derby", "aa", True, 50),
+    "BRA": ("BrahMos-A (antibuque)", "ab", True, 290), "JAS": ("AGM-158 JASSM", "as", True, 370),
+    # misiles de crucero de bombarderos: alcance de juego limitado a 500 km porque su impacto es inmediato (el real,
+    # de 1 500 a 2 500 km, figura en su ficha)
+    "K101": ("Kh-101 (crucero)", "as", True, 500), "CJ20": ("CJ-20 (crucero)", "as", True, 500),
+    "SHT": ("9M114 Shturm", "as", True, 5), "HJ10": ("HJ-10", "as", True, 8), "HEL": ("Helina", "as", True, 7),
+    "MOK": ("ZT-6 Mokopa", "as", True, 10), "AR1": ("AR-1", "as", True, 8), "SAD": ("Sadid-1", "as", True, 6),
 }
 # misiles antitanque de helicopteros y drones: van en la carga de ataque junto al cañon y los cohetes (engine/armas.py)
-ANTITANQUE = ("HLF", "TOW", "ATK", "VKR", "UMT", "MAM", "BA7")
+ANTITANQUE = ("HLF", "TOW", "ATK", "VKR", "UMT", "MAM", "BA7", "SHT", "HJ10", "HEL", "MOK", "AR1", "SAD")
 _ORIENTAL = {"aa": ["MAA", "MAB", "MAC", "MAD"], "sup": ["MA1", "MA2", "MA3", "MA4", "MA5", "BKR", "BOD", "BRK", "MA6"]}
 _OCCIDENTAL = {"aa": ["M120", "M9X", "MPB"], "sup": ["HRM", "JSW", "BGB", "BBU", "JDM", "BMK", "BKM", "HPN"]}
 ARMAMENTO_POR_MODELO = {
@@ -139,6 +147,25 @@ ARMAMENTO_POR_MODELO = {
     "uh60l": ["ALP"], "ch47f": ["ALP"], "bell212": ["ALP"], "bell412": ["ALP"], "as532": ["ALP"], "h225m": ["ALP"],
     "as332": ["ALP"], "uh1h": ["ALP"], "mi26": [], "mi171sh": ["ALP", "CKL"], "mi8amtsh": ["ALP", "CKL"],
     "tb2": ["MAM"], "akinci": ["MAM"], "mq1": ["HLF"], "wingloong2": ["BA7"],
+    # aeronaves de las fuerzas aereas del mundo (catalogo_ampliado, 2026-11)
+    "f4e": ["M7S", "MPB", "MAV", "BBU", "BMK"], "fa18cd": ["M120", "M9X", "HRM", "HPN", "MAV", "BBU", "JDM"],
+    "f35c": ["M120", "M9X", "JDM", "JSW", "BBU"], "j7": ["P8", "FAB"], "j11b": ["P12", "P8"],
+    "j16": ["P15", "P10", "C80", "MA3"], "j20": ["P15", "P10"], "mig31": ["R37", "MAA", "MAD"],
+    "su30mki": ["MAA", "MAB", "MAD", "MA1", "MA2", "MA3", "MA5", "BRA", "BKR", "FAB"], "tejas": ["DRB", "MAD", "FAB"],
+    "kf21": ["MTR", "M120", "IRT", "BBU", "JDM"], "f2": ["M7S", "MPB", "JDM", "BMK"], "mirage5": ["MAG", "EXO", "BMK"],
+    "fa50": ["MPB", "MAV", "JDM", "BMK"], "tornado": ["SCL", "HRM", "BBU", "MPB"],
+    "av8b": ["M120", "MPB", "MAV", "BBU", "JDM", "BMK"], "su24": ["MA1", "MA2", "MA3", "BKR", "FAB", "R60"],
+    "hawk": ["MPB", "BMK"], "m346": ["MPB", "BBU", "BMK"], "l15": ["P8"], "alphajet": ["MAG", "BMK"],
+    "mb339": ["MAG", "BMK"], "l159": ["MPB", "BMK"], "pampa": ["BMK"], "sf260": ["CKL"],
+    "t6": [], "pc7": [], "pc9": [], "pc21": [], "kt1": [], "t38": [],
+    "b2": ["JDM", "BKM", "JAS"], "tu95": ["K101"], "tu160": ["K101"], "h6k": ["CJ20"], "jh7": ["C80", "MA3", "FAB"],
+    "p1": ["HPN", "MAV", "TOR"], "il38": ["TOR"], "atr72mp": ["TOR"],
+    "mi24v": ["SHT", "CKL", "CKH"], "z10": ["HJ10"], "lch": ["HEL", "CKL"],
+    "rooivalk": ["MOK", "CKL"], "a129": ["TOW", "CKL", "CKH"],
+    "mv22": ["ALP"], "aw139": [], "aw109": ["ALP"], "aw101": ["TOR"], "h125": ["ALP", "CKL"],
+    "h145m": ["CKL", "ALP"], "bell206": [], "mh60r": ["TOR", "HLF"], "ch53e": ["ALP"], "uh1y": ["ALP", "CKL"],
+    "wildcat": ["TOR"], "ka27": ["TOR"], "z9": [], "z20": [], "dhruv": [],
+    "ch4": ["AR1"], "tb3": ["MAM"], "anka": ["MAM"], "shahed129": ["SAD"], "mq1c": ["HLF"],
 }
 # efecto del armamento en el ataque (multiplica la potencia de fuego del grupo)
 FACTOR_GUIADA = 1.15  # una bomba o un misil guiado contra un blanco fijo o de superficie

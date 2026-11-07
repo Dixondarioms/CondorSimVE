@@ -56,7 +56,7 @@ def lanza(u) -> bool:
 PK_MISIL = {"crucero": 0.85, "kalibr": 0.85, "brahmos": 0.85, "exocet": 0.8, "harpoon": 0.8, "oniks": 0.8, "kh35": 0.8,
             "nsm": 0.85, "yj18": 0.85, "yj83": 0.8, "moskit": 0.8, "otomat": 0.8, "granit": 0.8}
 PK_POR_DEFECTO = 0.8
-MISIL_DEL_ARMA = {"HPN": "harpoon", "EXO": "exocet", "MA6": "kh35"}  # antibuque de las aeronaves (engine/armas.py)
+MISIL_DEL_ARMA = {"HPN": "harpoon", "EXO": "exocet", "MA6": "kh35", "BRA": "brahmos"}  # antibuque de las aeronaves (engine/armas.py)
 # defensa de punto de los buques: canales de tiro simultaneos, alcance (km), probabilidad por disparo y ciclo (s)
 DEFENSA_PUNTO = {
     "destructor": {"canales": 4, "km": 12.0, "pk": 0.5},

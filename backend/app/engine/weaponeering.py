@@ -53,6 +53,9 @@ EQUIVALENTE = {
     "TOW": ("MK-81", 0.2, True, 4, 40), "ATK": ("MK-81", 0.25, True, 4, 40), "VKR": ("MK-81", 0.25, True, 4, 40),
     "UMT": ("MK-81", 0.25, True, 4, 40), "MAM": ("MK-81", 0.2, True, 4, 40),
     "BA7": ("MK-81", 0.25, True, 4, 40),
+    "JAS": ("MK-84", 1.0, True, 2, 365), "K101": ("MK-84", 1.0, True, 1, 365), "CJ20": ("MK-84", 1.0, True, 1, 365),
+    "SHT": ("MK-81", 0.25, True, 4, 40), "HJ10": ("MK-81", 0.25, True, 4, 40), "HEL": ("MK-81", 0.25, True, 4, 40),
+    "MOK": ("MK-81", 0.25, True, 4, 40), "AR1": ("MK-81", 0.25, True, 4, 40), "SAD": ("MK-81", 0.2, True, 2, 40),
 }
 # area de cada DMPI (m2) y DMPI por blanco
 AREA_DMPI_M2 = {"aviones": 6000.0, "antiaerea": 200.0, "radar": 400.0}

@@ -10,6 +10,14 @@ import re
 # (clase, patron sobre el nombre, modelo); el primero que coincide gana
 REGLAS = [
     ("ataque", r"super\s*tucano|\ba-29\b|emb-314", "a29"),
+    ("ataque", r"\bsf[-.\s]?260|marchetti", "sf260"),
+    ("ataque", r"\bhawk\b", "hawk"),
+    ("ataque", r"texan|\bt-6\b", "t6"),
+    ("ataque", r"\bpc-7\b", "pc7"),
+    ("ataque", r"\bpc-21\b", "pc21"),
+    ("ataque", r"pampa|ia-63", "pampa"),
+    ("ataque", r"harrier|av-8", "av8b"),
+    ("ataque", r"tornado", "tornado"),
     ("ataque", r"\ba-37\b|dragonfly", "a37"),
     ("ataque", r"\bov-10\b|bronco", "ov10"),
     ("ataque", r"\bat-27\b|tucano|emb-312", "at27"),

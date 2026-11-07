@@ -392,6 +392,37 @@ _FICHAS = [
        "Inercial, GLONASS y óptica al final; maniobra en vuelo", "Hasta 500 km (Iskander-E: 280 km)",
        "Mach 6 a 7", "480 a 700 kg", "3 800 kg",
        "Misil cuasi balístico que maniobra para esquivar la defensa antimisil; dos por lanzador."),
+    # ------------------------------------------------- armas de las aeronaves de las fuerzas aereas del mundo
+    _f("pl8", "PL-8", AA + " de corto alcance", "China", "CAAA (Luoyang)", "Infrarrojo de todo aspecto",
+       "Hasta 15 km", "Mach 2,5", "11 kg", "115 kg", "Versión china del Python 3 israelí; arma de los J-7, J-11 y L-15."),
+    _f("r37", "R-37M (AA-13 Axehead)", AA + " de muy largo alcance", "Rusia", "Vympel (KTRV)",
+       "Inercial con enlace de datos y radar activo", "Hasta 300 km", "Mach 6", "60 kg", "510 kg",
+       "Misil del MiG-31BM y del Su-35 contra aviones de alerta temprana y cisternas lejanos."),
+    _f("derby", "Derby", AA + " de alcance medio", "Israel", "Rafael", "Radar activo", "Hasta 50 km", "Mach 4",
+       "23 kg", "118 kg", "Misil «dispara y olvida» derivado del Python; del Tejas, del Kfir y de la batería Spyder."),
+    _f("jassm", "AGM-158 JASSM", "Misil de crucero aire-superficie furtivo", "Estados Unidos", "Lockheed Martin",
+       "Inercial, GPS e infrarrojo por imagen", "370 km (JASSM-ER: 925 km)", "Subsónico", "450 kg, penetrante",
+       "1 020 kg", "Misil furtivo de largo alcance del B-2, el B-1B y los cazas de Estados Unidos."),
+    _f("kh101", "Kh-101", "Misil de crucero aire-superficie", "Rusia", "Raduga",
+       "Inercial, GLONASS, perfil del terreno y óptica al final", "Hasta 2 500 km", "Unos 700 km/h",
+       "400 kg", "2 400 kg", "Misil de crucero furtivo de los bombarderos Tu-95MS y Tu-160."),
+    _f("cj20", "CJ-20 (KD-20)", "Misil de crucero aire-superficie", "China", "CASIC",
+       "Inercial, satélite Beidou y perfil del terreno", "Hasta 1 500 km", "Subsónico", "—", "—",
+       "Misil de crucero del bombardero H-6K."),
+    _f("shturm", "9M114 Shturm (AT-6 Spiral)", "Misil antitanque", "Unión Soviética / Rusia", "KBM Kolomna",
+       "Por radio, semiautomática", "Hasta 5 km", "Unos 400 m/s", "5,3 kg, carga hueca", "31,4 kg (con tubo)",
+       "Misil antitanque de los Mi-24V y Mi-35."),
+    _f("hj10", "HJ-10 (AKD-10)", "Misil antitanque", "China", "Norinco / CASC", "Láser semiactivo", "Hasta 8 km",
+       "—", "Carga hueca en tándem", "—", "Misil antitanque del helicóptero Z-10; la versión AKD-10 va en drones."),
+    _f("helina", "Helina (Dhruvastra)", "Misil antitanque", "India", "DRDO / Bharat Dynamics",
+       "Infrarrojo por imagen (dispara y olvida)", "Hasta 7 km", "—", "8 kg, carga hueca en tándem", "43 kg",
+       "Misil antitanque de los helicópteros Prachand y Rudra."),
+    _f("mokopa", "ZT-6 Mokopa", "Misil antitanque", "Sudáfrica", "Denel Dynamics", "Láser semiactivo",
+       "Hasta 10 km", "—", "Carga hueca en tándem", "49,8 kg", "Misil antitanque del helicóptero Rooivalk."),
+    _f("ar1", "AR-1", AS + " ligero", "China", "CASC", "Láser semiactivo e inercial", "Hasta 8 km", "—",
+       "10 kg", "45 kg", "Misil de los drones chinos CH-3 y CH-4."),
+    _f("sadid", "Sadid-1", AS + " ligero", "Irán", "Industria de defensa de Irán",
+       "Electroóptica (dispara y olvida)", "Hasta 6 km", "—", "—", "—", "Misil del dron iraní Shahed-129."),
     # ---------------------------------------------------------- misiles de buques que antes lanzaban el Tomahawk
     _f("yj18", "YJ-18", AB + " y de ataque a tierra", "China", "CASIC", "Inercial, satélite Beidou y radar activo",
        "Unos 540 km", "Subsónico; Mach 3 en los últimos 40 km", "Unos 300 kg", "—",
@@ -582,6 +613,8 @@ DE_OTA = {
     "MIC": "mica", "MTR": "meteor", "IRT": "iris_t", "P15": "pl15", "P10": "pl10", "P12": "pl12", "SCL": "scalp",
     "C80": "c802", "FAB": "fab500", "MAV": "agm65", "K22": "kh22", "TOW": "tow", "ATK": "ataka", "VKR": "vikhr",
     "MAM": "mam_l", "UMT": "umtas", "BA7": "ba7",
+    "P8": "pl8", "R37": "r37", "DRB": "derby", "BRA": "brahmos", "JAS": "jassm", "K101": "kh101", "CJ20": "cj20",
+    "SHT": "shturm", "HJ10": "hj10", "HEL": "helina", "MOK": "mokopa", "AR1": "ar1", "SAD": "sadid",
     # cañon, cohetes y ametralladoras: los occidentales (ver OTA_POR_MODELO y ORIENTAL)
     "CKH": "m230", "CKL": "hydra70", "ALP": "m134",
 }
@@ -592,6 +625,7 @@ OTA_POR_MODELO = {
     "ah1z": {"CKH": "m197"}, "ah1w": {"CKH": "m197"}, "t129": {"CKH": "m197", "CKL": "cirit"},
     "tiger": {"CKH": "30m781"}, "ah6m": {"CKH": "m134"},
     "ataque_ligero": {"CKL": "hydra70"},  # K-8W: lanzador belga de 70 mm adaptado por la AMB
+    "ch53e": {"ALP": "m2hb"},  # ametralladoras de 12,7 mm
 }
 # arma de un sistema antiaereo (defensa_aerea.SISTEMAS[...].armas, id) -> ficha
 DE_DA = {

@@ -25,7 +25,8 @@ TIPOS = {"aa": "aire-aire", "as": "aire-superficie", "ar": "antirradiación", "a
          "helo": "cañón o cohetes", "torp": "torpedo"}
 PK = {"M120": 0.6, "MAA": 0.55, "MAB": 0.45, "MAC": 0.4, "M9X": 0.75, "MAD": 0.7, "MPA": 0.65, "MPB": 0.6,
       "HRM": 0.65, "MA3": 0.6, "HPN": 0.75, "EXO": 0.75, "MA6": 0.7, "MA2": 0.7,
-      "MIC": 0.65, "MTR": 0.7, "IRT": 0.75, "P15": 0.65, "P10": 0.75, "P12": 0.55, "C80": 0.7, "K22": 0.6}
+      "MIC": 0.65, "MTR": 0.7, "IRT": 0.75, "P15": 0.65, "P10": 0.75, "P12": 0.55, "C80": 0.7, "K22": 0.6,
+      "P8": 0.6, "R37": 0.6, "DRB": 0.6, "BRA": 0.8}
 PK_TIPO = {"aa": 0.6, "as": 0.7, "ar": 0.6, "ab": 0.75, "bomba": 0.4, "helo": 0.3, "torp": 0.7}
 PK_GUIADA = 0.8  # bombas guiadas (laser, TV, GPS)
 EXISTENCIAS = {"aa": 160, "as": 80, "ar": 40, "ab": 40, "bomba": 300, "helo": 400, "torp": 40}
@@ -34,7 +35,8 @@ ALCANCE_BOMBA_KM = 3.0  # una bomba se suelta casi encima del blanco (las guiada
 NOMBRES_CARGA = {"aire_aire": "Aire-aire", "ataque": "Ataque", "antibuque": "Antibuque", "sead": "SEAD (antirradiación)",
                  "antisubmarina": "Antisubmarina (torpedos)", "reconocimiento": "Reconocimiento"}
 CANTIDAD = {"aa_largo": 4, "aa_corto": 2, "as": 2, "ar": 2, "ab": 2, "CKH": 6, "CKL": 4, "ALP": 6, "HLF": 4,
-            "TOW": 4, "ATK": 4, "VKR": 4, "UMT": 4, "MAM": 4, "BA7": 4}
+            "TOW": 4, "ATK": 4, "VKR": 4, "UMT": 4, "MAM": 4, "BA7": 4,
+            "SHT": 4, "HJ10": 4, "HEL": 4, "MOK": 4, "AR1": 4, "SAD": 2}
 
 
 def _arma(codigo: str) -> tuple | None:
