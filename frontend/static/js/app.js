@@ -354,10 +354,12 @@
     const elegido = app.modeloUnidad && modeloPorId(app.modeloUnidad.modelo);
     if (elegido && elegido.clase !== c.id) app.modeloUnidad = null;
     const familia = Logica.familiaDeModelos(c);
-    const hayModelos = familia && (app.catalogo.modelos || []).some((m) => m.tipo === familia && !m.misil);
+    // militar y civil van por separado: un avion comercial solo elige entre aviones comerciales
+    const civilDe = (id) => !!(app.catalogo.clases.find((x) => x.id === id) || {}).civil;
+    const hayModelos = familia && (app.catalogo.modelos || []).some((m) => Logica.modelosDeFamilia(m, familia) && civilDe(m.clase) === !!c.civil);
     $("u-aeronave-fila").hidden = !hayModelos;
     $("u-tipo-fila").hidden = true; // la lista vieja de tipos quedo reemplazada por el catalogo con fotos
-    $("btn-elegir-modelo").textContent = aerea ? "Elegir aeronave…" : familia === "naval" ? "Elegir buque…" : "Elegir modelo…";
+    $("btn-elegir-modelo").textContent = c.civil ? "Elegir modelo…" : aerea ? "Elegir aeronave…" : familia === "naval" ? "Elegir buque…" : "Elegir modelo…";
     const ref = (app.modeloUnidad && modeloPorId(app.modeloUnidad.modelo)) || c;
     $("u-velocidad").value = ref.velocidad_kmh;
     $("u-alcance").value = ref.alcance_km;
@@ -385,7 +387,7 @@
     const clase = app.catalogo && app.catalogo.clases.find((x) => x.id === $("u-clase").value);
     const aerea = !!clase && clase.tipo === "aerea";
     $("u-modelo-nombre").textContent = m ? m.nombre : aerea ? "Elija la aeronave" : clase && clase.tipo === "naval" ? "Elija el buque" : "Elija el modelo";
-    $("u-modelo-grupo").textContent = m ? (aerea ? `Grupo de ${app.modeloUnidad.aeronaves} aeronave${app.modeloUnidad.aeronaves === 1 ? "" : "s"}` : `${m.fabricante || ""} · ${m.pais || ""}`)
+    $("u-modelo-grupo").textContent = m ? (aerea && !clase.civil ? `Grupo de ${app.modeloUnidad.aeronaves} aeronave${app.modeloUnidad.aeronaves === 1 ? "" : "s"}` : `${m.fabricante || ""} · ${m.pais || ""}`)
       : `Sin elegir: valores de la clase ${clase ? clase.nombre.toLowerCase() : ""}`;
     $("btn-quitar-modelo").hidden = !m;
   }

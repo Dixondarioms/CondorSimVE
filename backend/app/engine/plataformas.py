@@ -115,7 +115,8 @@ _POR_CLASE = {
 def ficha_de_modelo(modelo) -> Ficha | None:
     """La ficha del modelo (FICHAS, o la que cargo el instructor para un tipo propio) o una derivada de su clase y
     de sus valores de juego (velocidad, autonomia)."""
-    if modelo is None or catalogo.CLASES[modelo.clase].tipo != "aerea" or catalogo.CLASES[modelo.clase].misil:
+    clase = catalogo.CLASES[modelo.clase] if modelo is not None else None
+    if clase is None or clase.tipo != "aerea" or clase.misil or clase.civil:  # los aviones comerciales no tienen ficha
         return None
     if modelo.id in FICHAS:
         return FICHAS[modelo.id]

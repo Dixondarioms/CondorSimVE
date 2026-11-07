@@ -25,6 +25,22 @@
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
       "pagina": "https://commons.wikimedia.org/wiki/File:An_A-29_Super_Tucano_conducts_a_ferry_flight_to_Edwards_Air_Force_Base,_California,_August_18,_2024.jpg"
     },
+    "a320neo": {
+      "foto": "/static/fotos/ref_a320neo.jpg",
+      "obra": "IndiGo VT-IJB A320neo Mumbai Apr22 R16 05934",
+      "autor": "This Photo was taken by Timothy A. Gonsalves. Feel free to use my photos, but please mention me...",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:IndiGo_VT-IJB_A320neo_Mumbai_Apr22_R16_05934.jpg"
+    },
+    "a330": {
+      "foto": "/static/fotos/ref_a330.jpg",
+      "obra": "PK-GPQ Garuda Indonesia Airbus A330-243 - cn 1410, landing on Schiphol, pic-2",
+      "autor": "Alf van Beem",
+      "licencia": "CC0",
+      "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:PK-GPQ_Garuda_Indonesia_Airbus_A330-243_-_cn_1410,_landing_on_Schiphol,_pic-2.JPG"
+    },
     "a330mrtt": {
       "foto": "/static/fotos/ref_a330mrtt.jpg",
       "obra": "Airbus A330 Voyager MRTT 4 (53787105844)",
@@ -32,6 +48,22 @@
       "licencia": "CC BY 2.0",
       "url_licencia": "https://creativecommons.org/licenses/by/2.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:Airbus_A330_Voyager_MRTT_4_(53787105844).jpg"
+    },
+    "a340": {
+      "foto": "/static/fotos/ref_a340.jpg",
+      "obra": "Thai airways a340-600 hs-tna takeoff arp",
+      "autor": "Adrian Pingstone (Arpingstone)",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Thai_airways_a340-600_hs-tna_takeoff_arp.jpg"
+    },
+    "a350": {
+      "foto": "/static/fotos/ref_a350.jpg",
+      "obra": "Airbus A350-900 Maiden Flight (Landing)",
+      "autor": "Duch.seb",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Airbus_A350-900_Maiden_Flight_(Landing).JPG"
     },
     "a37": {
       "foto": "/static/fotos/ref_a37.jpg",
@@ -225,6 +257,14 @@
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:19334_Hongdu_K-8W_Karakorum_Bangladesh_-_Air_Force_VGHS.jpg"
     },
+    "atr72": {
+      "foto": "/static/fotos/ref_atr72.jpg",
+      "obra": "ATR 72-600 in flight",
+      "autor": "ATR Aircraft",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:ATR_72-600_in_flight.jpg"
+    },
     "av8b": {
       "foto": "/static/fotos/ref_av8b.jpg",
       "obra": "AV-8B II Harrier, 5-10-26 at MCAS Cherry Point",
@@ -280,6 +320,46 @@
       "licencia": "Public domain",
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
       "pagina": "https://commons.wikimedia.org/wiki/File:A_Boeing_B-52H_Stratofortress_in_flight_over_the_Persian_Gulf_(190521-F-XN348-9173).jpg"
+    },
+    "b737max": {
+      "foto": "/static/fotos/ref_b737max.jpg",
+      "obra": "CN-RHI AIRCRAFT Boeing 737 MAX 8 -2",
+      "autor": "Sg1959",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:CN-RHI_AIRCRAFT_Boeing_737_MAX_8_-2.jpg"
+    },
+    "b737ng": {
+      "foto": "/static/fotos/ref_b737ng.jpg",
+      "obra": "Copa Airlines, Boeing 737-800, HP-1716CMP (16358942981)",
+      "autor": "BriYYZ from Toronto, Canada",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Copa_Airlines,_Boeing_737-800,_HP-1716CMP_(16358942981).jpg"
+    },
+    "b747f": {
+      "foto": "/static/fotos/ref_b747f.jpg",
+      "obra": "Cathay Pacific Cargo Boeing 747-8F B-LJH landing at Taoyuan February 2026",
+      "autor": "4300streetcar",
+      "licencia": "CC BY 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Cathay_Pacific_Cargo_Boeing_747-8F_B-LJH_landing_at_Taoyuan_February_2026.jpg"
+    },
+    "b777": {
+      "foto": "/static/fotos/ref_b777.jpg",
+      "obra": "Air Canada Boeing 777-333ER",
+      "autor": "self-made",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Air_Canada_Boeing_777-333ER.jpg"
+    },
+    "b787": {
+      "foto": "/static/fotos/ref_b787.jpg",
+      "obra": "Biman Bangladesh Airlines Boeing 787 Dreamliner 2",
+      "autor": "Jubair Bin Iqbal",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Biman_Bangladesh_Airlines_Boeing_787_Dreamliner_2.jpg"
     },
     "bal_e": {
       "foto": "/static/fotos/ref_bal_e.jpg",
@@ -600,6 +680,14 @@
       "licencia": "CC BY-SA 4.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:HAL_Dhruv_ALH.jpg"
+    },
+    "e190": {
+      "foto": "/static/fotos/ref_e190.jpg",
+      "obra": "Widerøe, LN-WEA, Embraer E190-E2 @ HEL",
+      "autor": "Valentin Hintikka from Finland",
+      "licencia": "CC BY 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Wider%C3%B8e,_LN-WEA,_Embraer_E190-E2_@_HEL.jpg"
     },
     "e2c": {
       "foto": "/static/fotos/ref_e2c.jpg",
@@ -1489,6 +1577,14 @@
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:Aermacchi_MB339_Fuselage_-_Frecce_Tricolori_-_GT_-_2023-06-09.jpg"
     },
+    "md83": {
+      "foto": "/static/fotos/ref_md83.jpg",
+      "obra": "EX-80017 - McDonnell Douglas MD-83 - Tez Jet Airlines - 53634 - VGHS",
+      "autor": "Md Shaifuzzaman Ayon",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:EX-80017_-_McDonnell_Douglas_MD-83_-_Tez_Jet_Airlines_-_53634_-_VGHS.jpg"
+    },
     "merodeadora": {
       "foto": "/static/fotos/ref_merodeadora.jpg",
       "obra": "IAI Harop PAS 2013 01",
@@ -1936,6 +2032,14 @@
       "licencia": "Public domain",
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
       "pagina": "https://commons.wikimedia.org/wiki/File:Prophet_system_on_M-ATV.jpg"
+    },
+    "q400": {
+      "foto": "/static/fotos/ref_q400.jpg",
+      "obra": "Alaska Airlines Bombardier Dash 8 Q400",
+      "autor": "Ron Clausen",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Alaska_Airlines_Bombardier_Dash_8_Q400.jpg"
     },
     "rafale": {
       "foto": "/static/fotos/ref_rafale.jpg",

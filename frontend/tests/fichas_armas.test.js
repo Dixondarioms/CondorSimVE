@@ -61,6 +61,14 @@ test("familiaDeModelos: que catalogo de fotos abre cada clase al agregar una uni
   assert.equal(L.familiaDeModelos(null), null);
 });
 
+test("modelosDeFamilia: aeronaves, buques o terrestres, nunca misiles", () => {
+  assert.equal(L.modelosDeFamilia({ tipo: "aerea", clase: "caza" }, "aerea"), true);
+  assert.equal(L.modelosDeFamilia({ tipo: "aerea", clase: "misil_crucero", misil: true }, "aerea"), false);
+  assert.equal(L.modelosDeFamilia({ tipo: "naval", clase: "fragata" }, "aerea"), false);
+  assert.equal(L.modelosDeFamilia({ tipo: "naval", clase: "fragata" }, "naval"), true);
+  assert.equal(L.modelosDeFamilia(null, "naval"), false);
+});
+
 test("puedeLanzarMisiles: el misil del modelo manda sobre el de su clase", () => {
   const cat = { misiles_lanzador: { modelos: { molniya: "moskit", type052d: "yj18" }, sin_misiles: ["type42", "u209"] } };
   const fragata = { lanza_misiles: true };

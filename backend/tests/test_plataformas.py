@@ -13,7 +13,7 @@ def test_cada_aeronave_tiene_su_ficha_con_roles_conocidos():
     for m in catalogo.MODELOS.values():
         c = catalogo.CLASES[m.clase]
         f = plataformas.ficha_de_modelo(m)
-        if c.tipo != "aerea" or c.misil:
+        if c.tipo != "aerea" or c.misil or c.civil:  # los aviones comerciales no tienen ficha militar
             assert f is None
             continue
         assert f is not None and f.roles and set(f.roles) <= set(plataformas.ROLES), m.id

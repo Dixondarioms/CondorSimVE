@@ -14,6 +14,7 @@ El bando «neutral» tambien sirve para las fuerzas de un pais que no participa 
 from __future__ import annotations
 
 import json
+import zlib
 import math
 import random
 
@@ -131,6 +132,10 @@ def _nueva(esc, tipo: str, rng: random.Random, terreno, al_borde: bool = False):
                lat=inicio[0], lon=inicio[1], fuerza=100.0, velocidad_kmh=clase.velocidad_kmh, alcance_km=0.0,
                deteccion_km=0.0, autonomia_km=clase.autonomia_km, combustible=100.0, municion=0.0,
                sidc=catalogo.generar_sidc("neutral", clase), estado="activa", echelon="")
+    if tipo == "aviones":  # un avion comercial real del catalogo (por su nombre: no consume el generador al azar)
+        civiles = sorted(m.id for m in catalogo.MODELOS.values() if m.clase == clase.id)
+        if civiles:
+            u.modelo = civiles[zlib.crc32(nombre.encode("utf-8")) % len(civiles)]
     u.ruta_json = json.dumps([[round(p[0], 5), round(p[1], 5)] for p in ruta])
     u.rumbo = _rumbo(inicio, ruta[0])
     return u

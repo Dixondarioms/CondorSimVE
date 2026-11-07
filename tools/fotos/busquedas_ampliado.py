@@ -268,6 +268,20 @@ BUSQUEDAS = {
     "eitan": ["IAI Eitan", "Heron TP", "IAI Heron TP"],
     "rq7": ["RQ-7 Shadow", "RQ-7B Shadow UAV"],
     "forpost": ["Forpost UAV", "Forpost drone", "IAI Searcher II"],
+    # aviones comerciales (trafico civil)
+    "a320neo": ["Airbus A320neo flight", "Airbus A320neo landing", "A320neo"],
+    "b737ng": ["Boeing 737-800 Copa Airlines", "Boeing 737-800 landing", "Boeing 737-800 flight"],
+    "b737max": ["Boeing 737 MAX 8 flight", "Boeing 737 MAX 8 landing", "737 MAX 8"],
+    "e190": ["Conviasa Embraer E190", "Embraer E190 landing", "Embraer 190 flight"],
+    "atr72": ["ATR 72-600 landing", "ATR 72-600 flight", "ATR 72-600"],
+    "q400": ["Bombardier Dash 8 Q400 landing", "Dash 8-400 flight", "Q400 aircraft"],
+    "md83": ["McDonnell Douglas MD-83 landing", "MD-83 Laser Airlines", "MD-83 flight"],
+    "a330": ["Airbus A330-200 landing", "Airbus A330-200 flight", "A330-200"],
+    "a340": ["Conviasa Airbus A340-600", "Airbus A340-600 landing", "A340-600 flight"],
+    "a350": ["Airbus A350-900 landing", "Airbus A350-900 flight", "A350-900"],
+    "b777": ["Boeing 777-300ER landing", "Boeing 777-300ER flight", "777-300ER"],
+    "b787": ["Boeing 787-9 landing", "Boeing 787-9 Dreamliner flight", "787-9 Dreamliner"],
+    "b747f": ["Boeing 747-8F landing", "Boeing 747-8F flight", "747-8 Freighter"],
 }
 
 # modelos de siempre que cambiaron de identidad (su foto anterior era de otra aeronave)
