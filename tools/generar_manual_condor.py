@@ -23,7 +23,7 @@ from reportlab.lib.units import cm  # noqa: E402
 from reportlab.platypus import Image, KeepTogether, PageBreak, Paragraph, Spacer, Table, TableStyle  # noqa: E402
 from reportlab.platypus.tableofcontents import TableOfContents  # noqa: E402
 
-from app.engine import catalogo  # noqa: E402  (generar_manual ya agrega backend/ a la ruta)
+from app.engine import catalogo, fichas_armas  # noqa: E402  (generar_manual ya agrega backend/ a la ruta)
 from crear_ejercicio_tutorial import PRACTICAS as PRACTICAS_TUTORIAL  # noqa: E402  (la misma lista que el ejercicio)
 
 from reportlab.pdfbase import pdfmetrics  # noqa: E402
@@ -80,6 +80,55 @@ def tabla_catalogo() -> list:
         filas = [[m.nombre, m.pais or "-", m.funcion or "-"] for m in sorted(modelos, key=lambda m: m.nombre)]
         h += [Paragraph(f"{nombre} ({len(modelos)})", S["h3"]),
               Tbl(["Modelo", "País", "Función"], filas, [6.2 * cm, 3.4 * cm, ANCHO_TEXTO - 9.6 * cm], tam=8.2)]
+    return h
+
+
+# grupos del anexo de armas (por el comienzo del tipo de cada ficha)
+GRUPOS_ARMAS = [("Misiles aire-aire", ("Misil aire-aire",)),
+                ("Misiles aire-superficie, antibuque y antirradiación", ("Misil aire-superficie", "Misil antibuque",
+                                                                         "Misil antirradiación", "Misil de crucero aire")),
+                ("Bombas", ("Bomba",)),
+                ("Misiles antitanque y municiones livianas", ("Misil antitanque", "Munición guiada")),
+                ("Cañones, cohetes y ametralladoras de aeronaves", ("Cañón", "Cohetes", "Ametralladora")),
+                ("Defensa antiaérea", None),  # las armas de los sistemas antiaereos que no salieron antes
+                ("Misiles de crucero y antibuque de buques y baterías", ("Misil de crucero",)),
+                ("Torpedos y misiles balísticos", ("Torpedo", "Misil balístico"))]
+
+
+def tabla_armas() -> list:
+    """Anexo: cada arma con su foto chica, tipo, origen, guía y alcance (engine/fichas_armas.py)."""
+    publicas = fichas_armas.publico()["fichas"]
+    antiaereas = set(fichas_armas.DE_DA.values()) | {i for ids in fichas_armas.POR_MODELO.values() for i in ids}
+    vistas, h = set(), []
+    for titulo, prefijos in GRUPOS_ARMAS:
+        filas = []
+        for f in publicas.values():
+            if f["id"] in vistas or not (f["id"] in antiaereas if prefijos is None else f["tipo"].startswith(prefijos)):
+                continue
+            # los cañones antiaereos van con la defensa antiaerea, no con las aeronaves
+            if titulo.startswith("Cañones") and f["id"] in antiaereas:
+                continue
+            vistas.add(f["id"])
+            ruta = RAIZ / "frontend" / f["foto"].lstrip("/") if f["foto"] else None
+            if ruta and ruta.is_file():
+                im = Image(str(ruta))
+                im.drawWidth, im.drawHeight = 2.7 * cm, 2.7 * cm * im.imageHeight / im.imageWidth
+            else:
+                im = Paragraph("<i>sin foto libre</i>", S["celda"])
+            filas.append([im, Paragraph(f"<b>{f['nombre']}</b><br/>{f['tipo']}", S["celda"]),
+                          Paragraph(f"{f['pais']}<br/>{f['fabricante']}", S["celda"]),
+                          Paragraph(f"{f['guia']}. <b>Alcance:</b> {f['alcance']}", S["celda"])])
+        if not filas:
+            continue
+        t = Table([[Paragraph(f"<b>{c}</b>", S["celda"]) for c in ("Foto", "Arma", "Origen", "Guía y alcance")]] + filas,
+                  colWidths=[3.0 * cm, 4.4 * cm, 3.6 * cm, ANCHO_TEXTO - 11.0 * cm], repeatRows=1)
+        t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), CLARO), ("GRID", (0, 0), (-1, -1), 0.4, LINEA),
+                               ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("TOPPADDING", (0, 0), (-1, -1), 3),
+                               ("BOTTOMPADDING", (0, 0), (-1, -1), 3)]))
+        # el Spacer evita que titulos_con_su_figura junte el titulo con la tabla larga (dejaria paginas casi vacias)
+        h += [Paragraph(f"{titulo} ({len(filas)})", S["h3"]), Spacer(1, 1), t]
+    sueltas = [f for f in publicas.values() if f["id"] not in vistas]
+    assert not sueltas, [f["id"] for f in sueltas]  # toda ficha cae en algun grupo
     return h
 
 
@@ -369,6 +418,13 @@ def construir(salida: Path) -> None:
             "reales (un misil por aeronave, o la mitad de las bombas) y se tira con el arma que sirve contra ese blanco y desde "
             "su alcance; el daño sale de la misma tabla de combate. Las armas salen de las <b>existencias</b> de la base o del "
             "pañol del portaaviones, que el director puede cambiar en el panel de abajo.")]
+    h += [P("<b>Fotos y fichas de las armas.</b> En «Armamento y notas» del panel de abajo, cada equipo muestra la foto chica "
+            "de sus armas: la carga de la aeronave (o lo que puede llevar su modelo), los misiles y cañones de una batería "
+            "antiaérea, el misil y el torpedo de un buque o un submarino. Con un <b>clic</b> en una foto se abre la ficha del "
+            "arma, con la foto grande, su tipo, país y fabricante, guía, alcance, velocidad, ojiva o calibre y peso. En la "
+            "ventana de despegue, debajo de la carga elegida, también aparecen sus armas. Todas están en el <b>Anexo B</b>.")]
+    h += figura("armas_panel", "Fotos de las armas de un helicóptero en «Armamento y notas» (clic: ficha completa).")
+    h += figura("ficha_arma", "Ficha de un arma: foto real de Wikimedia Commons y sus características.", ancho=11 * cm)
     h += figura("carga_panel", "Panel de abajo de un grupo con su carga: cada arma con su alcance, su probabilidad de impacto y "
                 "lo que le queda.")
     h += [H2("5.2 Patrullar, aterrizar y el combustible"),
@@ -793,7 +849,12 @@ def construir(salida: Path) -> None:
     h += [P(f"Los {len(catalogo.MODELOS)} modelos del catálogo del Cóndor, agrupados por clase de unidad. Cada uno tiene su ficha "
             "con foto de referencia, armamento y capacidades, que se ve en el simulador.")]
     h += tabla_catalogo()
-    h += H1("Anexo B. Glosario")
+    h += H1("Anexo B. Catálogo de armas")
+    h += [P(f"Las {len(fichas_armas.FICHAS)} armas que usan las aeronaves, la defensa antiaérea, los buques, los submarinos y las "
+            "baterías del Cóndor, con su foto real (Wikimedia Commons, licencia libre) y datos públicos de referencia. En el "
+            "simulador, el alcance y la probabilidad de impacto de cada arma son los de la tabla del panel de abajo.")]
+    h += tabla_armas()
+    h += H1("Anexo C. Glosario")
     h += [Tbl(["Término", "Significado"], [
         ["APP-6", "Norma de simbología militar; alternativa a las miniaturas en el mapa."],
         ["CAP", "Patrulla aérea de combate: aeronaves que orbitan una zona para interceptar."],

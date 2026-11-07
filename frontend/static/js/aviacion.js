@@ -143,12 +143,22 @@
       elegido = id;
       llenarSelectCarga($("aer-carga"), Logica.opcionesDeCarga(ctx.catalogo(), id));
       $("aer-carga-fila").hidden = modoActual.tipo !== "despegue" || !$("aer-carga").options.length;
+      fotosCarga();
       document.querySelectorAll("#aer-tarjetas .tarjeta-modelo").forEach((t) => {
         const sel = t.dataset.modelo === id;
         t.classList.toggle("sel", sel);
         t.setAttribute("aria-checked", sel ? "true" : "false");
       });
       actualizarResumen();
+    }
+
+    /** Fotos chicas de las armas de la carga elegida (clic: la ficha grande, engine/fichas_armas.py). */
+    function fotosCarga() {
+      const caja = $("aer-carga-armas");
+      const cat = ctx.catalogo();
+      const armas = !$("aer-carga-fila").hidden && cat && cat.cargas && (cat.cargas[elegido] || {})[$("aer-carga").value];
+      const fichas = armas ? Logica.fichasDeCarga(cat, elegido, armas) : [];
+      caja.innerHTML = fichas.length && window.FichasArmas ? FichasArmas.tira({ titulo: "Armas de la carga (clic: ficha)", fichas }) : "";
     }
 
     function llenarSelectCarga(sel, opciones) {
@@ -257,6 +267,7 @@
 
     function conectarDialogo() {
       $("aer-cantidad").addEventListener("change", actualizarResumen);
+      $("aer-carga").addEventListener("change", fotosCarga);
       $("aer-base").addEventListener("change", () => { llenarTarjetas(); marcar(elegido); });
       $("aer-buscar").addEventListener("input", () => { llenarTarjetas(); marcar(elegido); });
       $("aer-filtro-clase").addEventListener("change", () => { llenarTarjetas(); marcar(elegido); });

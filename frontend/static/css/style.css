@@ -742,3 +742,25 @@ summary.neutral, h4.neutral { color: #7bd389; }
 .ea-lista li .fila { margin-top: 4px; gap: 6px; align-items: center; }
 .ea-acciones li { display: flex; justify-content: space-between; gap: 6px; padding: 2px 0; }
 .ea-editor { border: 1px solid rgba(255, 255, 255, 0.12); padding: 6px; }
+
+/* fotos de las armas (static/js/fichas_armas.js, engine/fichas_armas.py) */
+.armas-fotos { margin: 6px 0 2px; }
+.armas-tira { display: flex; flex-wrap: wrap; gap: 6px; }
+.armas-tira .arma-mini { display: flex; flex-direction: column; align-items: stretch; flex: 0 0 auto; width: 84px; padding: 2px; margin: 0;
+  background: var(--panel-2); border: 1px solid var(--borde); border-radius: var(--radio); color: var(--texto); cursor: pointer; }
+.arma-mini:hover, .arma-mini:focus-visible { border-color: var(--azul); }
+.arma-mini img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 2px; display: block; }
+.arma-sinfoto { display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 9; font-size: 9px;
+  color: var(--texto-sec); border: 1px dashed var(--borde); border-radius: 2px; }
+.arma-nombre { font-size: 9.5px; line-height: 1.2; margin-top: 2px; text-align: center; overflow-wrap: anywhere; }
+.aer-carga-armas { grid-column: 1 / -1; }
+.dlg-arma { width: min(640px, calc(100vw - 32px)); }
+.dlg-arma .arma-foto { margin: 0 0 8px; }
+.dlg-arma .arma-foto img { width: 100%; border-radius: var(--radio); display: block; }
+.dlg-arma figcaption { font-size: 10.5px; color: var(--texto-sec); margin-top: 3px; }
+.dlg-arma figcaption a { color: var(--azul); }
+.arma-datos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 14px; margin: 6px 0; }
+.arma-datos dt { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--texto-sec); }
+.arma-datos dd { margin: 0; font-size: 13px; }
+.arma-desc { margin: 8px 0 4px; }
+@media (max-width: 520px) { .arma-datos { grid-template-columns: 1fr; } }

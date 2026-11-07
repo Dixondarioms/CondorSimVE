@@ -527,6 +527,51 @@
     });
   }
 
+  /** Ficha de un codigo de armamento de la OTA en un modelo de aeronave (catalogo.fichas_armas,
+   * engine/fichas_armas.py): el cañon, los cohetes y las ametralladoras cambian segun el modelo. */
+  function fichaDeCodigo(cat, codigo, modeloId) {
+    const fa = cat && cat.fichas_armas;
+    if (!fa) return null;
+    const id = ((fa.ota_modelo || {})[modeloId] || {})[codigo] || (fa.de_ota || {})[codigo];
+    return (id && fa.fichas && fa.fichas[id]) || null;
+  }
+
+  const _unicasFichas = (lista) => lista.filter((f, i) => f && lista.findIndex((g) => g && g.id === f.id) === i);
+
+  /** Fichas de las armas de una carga ({codigo: cantidad}) de ese modelo, sin repetir. */
+  function fichasDeCarga(cat, modeloId, armas) {
+    return _unicasFichas(Object.keys(armas || {}).map((c) => fichaDeCodigo(cat, c, modeloId)));
+  }
+
+  /**
+   * Armas de una unidad para la tira de fotos del panel: las de su carga (aeronave cargada); si no, las que puede
+   * llevar su modelo, las del sistema antiaereo, el misil que lanza o las de su clase (torpedo, balistico).
+   * Devuelve {titulo, fichas} o null.
+   */
+  function fichasDeUnidad(u, cat) {
+    const fa = cat && cat.fichas_armas;
+    if (!fa || !u || (fa.sin_fichas || []).includes(u.clase)) return null;
+    const quedan = u.armamento && u.armamento.quedan;
+    if (quedan && Object.keys(quedan).length) {
+      const fichas = fichasDeCarga(cat, u.modelo, quedan);
+      if (fichas.length) return { titulo: "Armas de su carga", fichas };
+    }
+    const ids = (u.modelo && (fa.por_modelo || {})[u.modelo]) || (fa.por_clase || {})[u.clase] || [];
+    const fichas = _unicasFichas(ids.map((i) => (fa.fichas || {})[i]));
+    if (!fichas.length) return null;
+    const aerea = u.tipo === "aerea" && !esMisil(u) && u.clase !== "torpedo";
+    const da = !!(u.modelo && cat.sistemas_da && cat.sistemas_da[u.modelo]);
+    return { titulo: aerea ? "Armas que puede llevar" : da ? "Armas del sistema" : "Armas", fichas };
+  }
+
+  /** Filas de la ficha grande de un arma: [[«Tipo», «Misil aire-aire…»], ...] (sin los datos que faltan). */
+  function filasFichaArma(f) {
+    if (!f) return [];
+    return [["Tipo", f.tipo], ["País", f.pais], ["Fabricante", f.fabricante], ["Guía", f.guia], ["Alcance", f.alcance],
+      ["Velocidad", f.velocidad], ["Ojiva o calibre", f.ojiva], ["Peso", f.peso]]
+      .filter(([, v]) => v && v !== "—");
+  }
+
   /** Eventos automaticos del director (engine/eventos_auto.py) en palabras: «cuando … → …». */
   const BANDO_TXT = { azul: "Azul", rojo: "Rojo", neutral: "Neutral", todos: "todos", cualquiera: "cualquier bando" };
   function textoAccionAuto(a) {
@@ -1494,7 +1539,7 @@
     misilesDisponibles, textoMisil, MAX_MISILES_SALVA, MUNICION_POR_MISIL, PISTA_INOPERATIVA, PARTES_BASE, textoPartesBase,
     esTransporte, embarcada, aBordo, transportesCercanos, CAPACIDAD_TRANSPORTE, esAvionTransporte, capacidadTransporte,
     paracaidistasABordo, puedeLanzarParacaidistas, puedeDesembarcar,
-    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, APRESTOS, textoApresto, senalesUnidad, estimarRuta, textoPuntoRuta, rotulosTapados, anillosArmas, VELOCIDADES, AYUDA_VELOCIDAD, textoTramo, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
+    distanciaKm, destinoPorRumbo, rumboObjetivo, textoRumbo, siembraMinas, barreMinas, textoDefensaPunto, esAvionAsw, esHeloAsw, alcanceTorpedo, PROFUNDIDADES, APRESTOS, textoApresto, senalesUnidad, estimarRuta, textoPuntoRuta, rotulosTapados, anillosArmas, VELOCIDADES, AYUDA_VELOCIDAD, textoTramo, textoReglaAuto, textoAccionAuto, opcionesDeCarga, cargaParaRol, textoCarga, detalleArmas, fichaDeCodigo, fichasDeCarga, fichasDeUnidad, filasFichaArma, interceptable, ACCIONES_INTERCEPCION, FASES_INTERCEPCION, textoIntercepcion, textoEstimacionIntercepcion, etiquetaCanal, canalesDe, resumenEntrega, TIPOS_GRAFICO, latLngsDe, puedeBorrarGrafico,
     BANDOS, esBando, pct, fechaUtc, segundosRestantes, formatoTiempo, objetivosDisponibles,
     unidadesConOrdenes, etiquetaClima, textoListos, trayectorias, movimientosDelTurno, puntoEnRuta, lineasCombate, describirCombate,
     turnosReproducibles, RAMAS, ramaDe, agruparPorRama, horaSimulada, textoHora, efectosClima, visibilidadPct,

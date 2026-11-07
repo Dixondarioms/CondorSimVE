@@ -77,7 +77,7 @@ def test_el_manifiesto_del_repositorio_es_valido():
 
 
 def test_la_herramienta_cubre_aeronaves_buques_y_clases_terrestres(herramienta):
-    claves = {(s, c) for s, c, _, _ in herramienta.UNIDADES}
+    claves = {(s, c) for s, c, _, _ in herramienta.UNIDADES if s != "armas"}  # las armas: test_fichas_armas.py
     # los que tienen ilustracion o ya la cambiaron por una foto de referencia (los del catalogo propio no van)
     sin_foto_real = {("modelos", m.id) for m in catalogo.MODELOS.values() if not m.id.startswith("u_")
                      and (m.foto.endswith(".svg") or m.foto.startswith("/static/fotos/ref_"))}

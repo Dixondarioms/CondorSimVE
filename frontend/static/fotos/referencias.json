@@ -1867,5 +1867,439 @@
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:TB2015ExhibitionP1-58.jpg"
     }
+  },
+  "armas": {
+    "2a42": {
+      "foto": "/static/fotos/ref_arma_2a42.jpg",
+      "obra": "Autocanon 2A42 on the Mi28N heli",
+      "autor": "Allocer",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Autocanon_2A42_on_the_Mi28N_heli.JPG"
+    },
+    "3m9": {
+      "foto": "/static/fotos/ref_arma_3m9.jpg",
+      "obra": "Soviet made Iraqi SA-6b Gainful",
+      "autor": "SSGT Cherie A. Thurlby, U.S. Air Force",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Soviet_made_Iraqi_SA-6b_Gainful.JPEG"
+    },
+    "5v21": {
+      "foto": "/static/fotos/ref_arma_5v21.jpg",
+      "obra": "Eesti Lennundusmuuseum 2022 08",
+      "autor": "VargaA",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Eesti_Lennundusmuuseum_2022_08.jpg"
+    },
+    "5v27": {
+      "foto": "/static/fotos/ref_arma_5v27.jpg",
+      "obra": "S-125 dual missile launcher trailer Gatow 2022",
+      "autor": "Boevaya mashina",
+      "licencia": "CC BY-SA 3.0 de",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:S-125_dual_missile_launcher_trailer_Gatow_2022.jpg"
+    },
+    "9m723": {
+      "foto": "/static/fotos/ref_arma_9m723.jpg",
+      "obra": "9T250-1 Iskander-M",
+      "autor": "Boevaya mashina",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:9T250-1_Iskander-M.JPG"
+    },
+    "agm114": {
+      "foto": "/static/fotos/ref_arma_agm114.jpg",
+      "obra": "AGM-114 Hellfire hung on a Predator drone",
+      "autor": "TSGT Scott Reed, U.S. Air Force",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:AGM-114_Hellfire_hung_on_a_Predator_drone.JPEG"
+    },
+    "agm154": {
+      "foto": "/static/fotos/ref_arma_agm154.jpg",
+      "obra": "U.S.NAVY AGM-154 JSOW",
+      "autor": "Hunini",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:U.S.NAVY_AGM-154_JSOW.JPG"
+    },
+    "agm45": {
+      "foto": "/static/fotos/ref_arma_agm45.jpg",
+      "obra": "AGM-45 Shrike",
+      "autor": "Desconocido",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:AGM-45_Shrike.jpg"
+    },
+    "agm65": {
+      "foto": "/static/fotos/ref_arma_agm65.jpg",
+      "obra": "AGM-65 Maverick MG 1382",
+      "autor": "Rama",
+      "licencia": "CC BY-SA 2.0 fr",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0/fr/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:AGM-65_Maverick_MG_1382.jpg"
+    },
+    "agm88": {
+      "foto": "/static/fotos/ref_arma_agm88.jpg",
+      "obra": "AGM-88 HARM on F-4G (cropped)",
+      "autor": "SSGT. SCOTT STEWART",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:AGM-88_HARM_on_F-4G_(cropped).jpg"
+    },
+    "aim120": {
+      "foto": "/static/fotos/ref_arma_aim120.jpg",
+      "obra": "AIM-120A AMRAAM AAM",
+      "autor": "Cliff",
+      "licencia": "CC BY 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:AIM-120A_AMRAAM_AAM.jpg"
+    },
+    "aim54": {
+      "foto": "/static/fotos/ref_arma_aim54.jpg",
+      "obra": "AIM-54A (left) on F-14 at NAS Pax 1984",
+      "autor": "Don S. Montgomery, USN",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:AIM-54A_(left)_on_F-14_at_NAS_Pax_1984.JPEG"
+    },
+    "aim7": {
+      "foto": "/static/fotos/ref_arma_aim7.jpg",
+      "obra": "Raytheon AIM-7 Sparrow (50118496193)",
+      "autor": "Hugh Llewelyn from Keynsham, UK",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Raytheon_AIM-7_Sparrow_(50118496193).jpg"
+    },
+    "aim9l": {
+      "foto": "/static/fotos/ref_arma_aim9l.jpg",
+      "obra": "AIM 9L Sidewinder (modified) copy",
+      "autor": "David Monniaux modified by FOX 52",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:AIM_9L_Sidewinder_(modified)_copy.jpg"
+    },
+    "ataka": {
+      "foto": "/static/fotos/ref_arma_ataka.jpg",
+      "obra": "9M120 Ataka (2)",
+      "autor": "Mike1979 Russia",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:9M120_Ataka_(2).jpg"
+    },
+    "c802": {
+      "foto": "/static/fotos/ref_arma_c802.jpg",
+      "obra": "YJ-83J Missile 20170902",
+      "autor": "Tyg728",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:YJ-83J_Missile_20170902.jpg"
+    },
+    "fab500": {
+      "foto": "/static/fotos/ref_arma_fab500.jpg",
+      "obra": "Bomb FAB-500 M54 2008 G1",
+      "autor": "George Chernilevsky",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Bomb_FAB-500_M54_2008_G1.jpg"
+    },
+    "gbu10": {
+      "foto": "/static/fotos/ref_arma_gbu10.jpg",
+      "obra": "GBU-48 Enhanced Paveway II Bomb at ADAS 2018",
+      "autor": "Rhk111",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:GBU-48_Enhanced_Paveway_II_Bomb_at_ADAS_2018.jpg"
+    },
+    "gbu31": {
+      "foto": "/static/fotos/ref_arma_gbu31.jpg",
+      "obra": "JDAM Joint Direct Attack Munition (GBU-31) Guidance-INS GPS Mk-84 Warhead (52578877821)",
+      "autor": "Tomás Del Coro from Fabulous Las Vegas, Nevada, USA",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:JDAM_Joint_Direct_Attack_Munition_(GBU-31)_Guidance-INS_GPS_Mk-84_Warhead_(52578877821).jpg"
+    },
+    "gsh23": {
+      "foto": "/static/fotos/ref_arma_gsh23.jpg",
+      "obra": "Gryazev-Shipunov GSh-23 autocannon - Αεροπορικό πυροβόλο (27033204805)",
+      "autor": "Dimitris Kamaras",
+      "licencia": "CC BY 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Gryazev-Shipunov_GSh-23_autocannon_-_%CE%91%CE%B5%CF%81%CE%BF%CF%80%CE%BF%CF%81%CE%B9%CE%BA%CF%8C_%CF%80%CF%85%CF%81%CE%BF%CE%B2%CF%8C%CE%BB%CE%BF_(27033204805).jpg"
+    },
+    "hydra70": {
+      "foto": "/static/fotos/ref_arma_hydra70.jpg",
+      "obra": "Hydra 70 M261",
+      "autor": "User:Dammit",
+      "licencia": "CC BY-SA 2.5 nl",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.5/nl/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Hydra_70_M261.jpeg"
+    },
+    "iris_t": {
+      "foto": "/static/fotos/ref_arma_iris_t.jpg",
+      "obra": "IRIS-T air-to-air-missile",
+      "autor": "Photo taken 2005-07-16 in Koblenz by Owly K",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "pagina": "https://commons.wikimedia.org/wiki/File:IRIS-T_air-to-air-missile.jpg"
+    },
+    "kab500kr": {
+      "foto": "/static/fotos/ref_arma_kab500kr.jpg",
+      "obra": "KAB-500Kr ARMIA 2018",
+      "autor": "Boevaya mashina",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:KAB-500Kr_ARMIA_2018.jpg"
+    },
+    "kh22": {
+      "foto": "/static/fotos/ref_arma_kh22.jpg",
+      "obra": "Kh-22 memorial near MKB Raduga",
+      "autor": "Apetrov09703",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Kh-22_memorial_near_MKB_Raduga.jpg"
+    },
+    "kh29l": {
+      "foto": "/static/fotos/ref_arma_kh29l.jpg",
+      "obra": "Kh-29L (1)",
+      "autor": "KGyST",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Kh-29L_(1).jpg"
+    },
+    "kh31a": {
+      "foto": "/static/fotos/ref_arma_kh31a.jpg",
+      "obra": "Kh-31 Armia-2018 2",
+      "autor": "Boevaya mashina",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Kh-31_Armia-2018_2.jpg"
+    },
+    "kh59me": {
+      "foto": "/static/fotos/ref_arma_kh59me.jpg",
+      "obra": "Х-59МЭ",
+      "autor": "Xchgall",
+      "licencia": "CC0",
+      "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:%D0%A5-59%D0%9C%D0%AD.JPG"
+    },
+    "m134": {
+      "foto": "/static/fotos/ref_arma_m134.jpg",
+      "obra": "Karabin maszynowy M134 Minigun na MSPO 2021",
+      "autor": "Narodowe Centrum Badań i Rozwoju",
+      "licencia": "CC BY 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Karabin_maszynowy_M134_Minigun_na_MSPO_2021.jpg"
+    },
+    "m197": {
+      "foto": "/static/fotos/ref_arma_m197.jpg",
+      "obra": "JGSDF AH-1S(73479) M197 electric cannon left front view at Camp Akeno November 4, 2018",
+      "autor": "Hunini",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:JGSDF_AH-1S(73479)_M197_electric_cannon_left_front_view_at_Camp_Akeno_November_4,_2018.jpg"
+    },
+    "m230": {
+      "foto": "/static/fotos/ref_arma_m230.jpg",
+      "obra": "Apache Gun (M230 Chain Gun)",
+      "autor": "Jonathan Mallard",
+      "licencia": "CC BY 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Apache_Gun_(M230_Chain_Gun).jpg"
+    },
+    "mam_l": {
+      "foto": "/static/fotos/ref_arma_mam_l.jpg",
+      "obra": "Roketsan MAM-L Mini Akıllı Mühimmat, Teknofest 2019",
+      "autor": "Kingbjelica",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Roketsan_MAM-L_Mini_Ak%C4%B1ll%C4%B1_M%C3%BChimmat,_Teknofest_2019.jpg"
+    },
+    "meteor": {
+      "foto": "/static/fotos/ref_arma_meteor.jpg",
+      "obra": "ILA 2008 PD 446",
+      "autor": "ILA-boy",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:ILA_2008_PD_446.JPG"
+    },
+    "mica": {
+      "foto": "/static/fotos/ref_arma_mica.jpg",
+      "obra": "MICA P6230072",
+      "autor": "Captainm",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "pagina": "https://commons.wikimedia.org/wiki/File:MICA_P6230072.JPG"
+    },
+    "mk54": {
+      "foto": "/static/fotos/ref_arma_mk54.jpg",
+      "obra": "Mark 54 torpedo spill exercise 201210-N-GR586-1175",
+      "autor": "Seaman Benjamin Ringers",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Mark_54_torpedo_spill_exercise_201210-N-GR586-1175.JPG"
+    },
+    "mk82": {
+      "foto": "/static/fotos/ref_arma_mk82.jpg",
+      "obra": "Mk. 81, Mk. 82 Bombs freigestellt",
+      "autor": "Mk._81,_Mk._82_Bombs_(2834533691).jpg: Cliff from I now live in Arlington, VA (Outside...",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Mk._81,_Mk._82_Bombs_freigestellt.jpg"
+    },
+    "mk84": {
+      "foto": "/static/fotos/ref_arma_mk84.jpg",
+      "obra": "Mk-84 xxl",
+      "autor": "Desconocido",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Mk-84_xxl.jpg"
+    },
+    "pl10": {
+      "foto": "/static/fotos/ref_arma_pl10.jpg",
+      "obra": "PL-10 Air-to-air missile 20250921",
+      "autor": "颐园居",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:PL-10_Air-to-air_missile_20250921.jpg"
+    },
+    "pl15": {
+      "foto": "/static/fotos/ref_arma_pl15.jpg",
+      "obra": "PL-15 20250921",
+      "autor": "颐园居",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:PL-15_20250921.jpg"
+    },
+    "python4": {
+      "foto": "/static/fotos/ref_arma_python4.jpg",
+      "obra": "Rafael Python 4",
+      "autor": "KGyST",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Rafael_Python_4.jpg"
+    },
+    "r23": {
+      "foto": "/static/fotos/ref_arma_r23.jpg",
+      "obra": "Missile R-23R 2008 G1",
+      "autor": "George Chernilevsky",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Missile_R-23R_2008_G1.jpg"
+    },
+    "r27er": {
+      "foto": "/static/fotos/ref_arma_r27er.jpg",
+      "obra": "Artem R-27 missile family, Kyiv, 2019",
+      "autor": "Zinnsoldat",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Artem_R-27_missile_family,_Kyiv,_2019.jpg"
+    },
+    "r27et": {
+      "foto": "/static/fotos/ref_arma_r27et.jpg",
+      "obra": "R-27T medium-to-long-range air-to-air missile in Park Patriot 02",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:R-27T_medium-to-long-range_air-to-air_missile_in_Park_Patriot_02.jpg"
+    },
+    "r440": {
+      "foto": "/static/fotos/ref_arma_r440.jpg",
+      "obra": "Crotale missile launchers DSC00866",
+      "autor": "Desconocido",
+      "licencia": "CC BY-SA 1.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/1.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Crotale_missile_launchers_DSC00866.jpg"
+    },
+    "r550": {
+      "foto": "/static/fotos/ref_arma_r550.jpg",
+      "obra": "Matra Magic II missile",
+      "autor": "Vishak Pillai",
+      "licencia": "CC BY 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Matra_Magic_II_missile.JPG"
+    },
+    "r60": {
+      "foto": "/static/fotos/ref_arma_r60.jpg",
+      "obra": "R-60 short-range air-to-air missile in Park Patriot 02",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:R-60_short-range_air-to-air_missile_in_Park_Patriot_02.jpg"
+    },
+    "r73": {
+      "foto": "/static/fotos/ref_arma_r73.jpg",
+      "obra": "R-73 HuAF",
+      "autor": "KGyST",
+      "licencia": "CC BY 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:R-73_HuAF.jpg"
+    },
+    "r77": {
+      "foto": "/static/fotos/ref_arma_r77.jpg",
+      "obra": "Vympel-R-77-maks2009",
+      "autor": "Allocer",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Vympel-R-77-maks2009.jpg"
+    },
+    "roland": {
+      "foto": "/static/fotos/ref_arma_roland.jpg",
+      "obra": "Roland 2018",
+      "autor": "SysM Rol",
+      "licencia": "CC0",
+      "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Roland_2018.jpg"
+    },
+    "s60": {
+      "foto": "/static/fotos/ref_arma_s60.jpg",
+      "obra": "57-mm-Flak S-60",
+      "autor": "Billyhill",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:57-mm-Flak_S-60.jpg"
+    },
+    "s8": {
+      "foto": "/static/fotos/ref_arma_s8.jpg",
+      "obra": "S-8 unguided missile in Park Patriot 01",
+      "autor": "Vitaly V. Kuzmin",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:S-8_unguided_missile_in_Park_Patriot_01.jpg"
+    },
+    "scalp": {
+      "foto": "/static/fotos/ref_arma_scalp.jpg",
+      "obra": "London RAF Museum Hendon Storm Shadow 03",
+      "autor": "[[User:Ad Meskens|Ad Meskens You are free to use this picture for any purpose as long as you...",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:London_RAF_Museum_Hendon_Storm_Shadow_03.jpg"
+    },
+    "super530": {
+      "foto": "/static/fotos/ref_arma_super530.jpg",
+      "obra": "MATRA 530 (4892761750)",
+      "autor": "André Gustavo Stumpf from Brasília, Brasil",
+      "licencia": "CC BY 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:MATRA_530_(4892761750).jpg"
+    },
+    "v750": {
+      "foto": "/static/fotos/ref_arma_v750.jpg",
+      "obra": "V-750 Surface to Air Missile (11016244003)",
+      "autor": "Alan Wilson from Stilton, Peterborough, Cambs, UK",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:V-750_Surface_to_Air_Missile_(11016244003).jpg"
+    },
+    "vikhr": {
+      "foto": "/static/fotos/ref_arma_vikhr.jpg",
+      "obra": "Vikhr-1 mockup at ARMY-2022b",
+      "autor": "Boevaya mashina",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Vikhr-1_mockup_at_ARMY-2022b.JPG"
+    }
   }
 }

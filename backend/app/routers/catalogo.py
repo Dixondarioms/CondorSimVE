@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 
 from app import auth, schemas, state
-from app.engine import armas, asw, catalogo, clima, misiones, ota
+from app.engine import armas, asw, catalogo, clima, fichas_armas, misiones, ota
 from app.engine import minas as minas_lib
 from app.engine import misiles as misiles_lib
 from app.engine import defensa_aerea
@@ -36,6 +36,8 @@ def obtener_catalogo(_: Usuario = Depends(auth.usuario_actual)):
         "asw": {"aviones": sorted(asw.ASW_AVIONES), "helos": sorted(asw.ASW_HELOS), "torpedo_km": asw.ALCANCE_TORPEDO_KM,
                 "sonar_km": asw.SONAR_KM, "sonar_inmersion_km": asw.SONAR_INMERSION_KM, "boya_km": asw.BOYA_RADIO_KM},
         "sistemas_da": {k: defensa_aerea.sistema_dict(v) for k, v in defensa_aerea.SISTEMAS.items()},
+        # fichas de las armas con su foto real y que armas usa cada modelo y cada clase (engine/fichas_armas.py)
+        "fichas_armas": fichas_armas.publico(),
     }
 
 

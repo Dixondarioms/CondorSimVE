@@ -1938,6 +1938,16 @@
       + (filas || '<tr><td colspan="5">Sin armas (reconocimiento)</td></tr>') + "</tbody></table>";
   }
 
+  /** Fotos chicas de las armas de la carga elegida al despegar (panel de ordenes). */
+  function fotosCargaOrden(u, visible) {
+    const caja = $("o-carga-armas");
+    const cargas = visible && app.catalogo && app.catalogo.cargas ? app.catalogo.cargas[u.modelo] || {} : {};
+    const armas = cargas[$("o-carga").value];
+    const fichas = armas ? Logica.fichasDeCarga(app.catalogo, u.modelo, armas) : [];
+    caja.hidden = !fichas.length;
+    caja.innerHTML = fichas.length ? FichasArmas.tira({ titulo: "Armas de la carga (clic: ficha)", fichas }) : "";
+  }
+
   /** Existencias de armas de una base o un buque; el director las puede cambiar. */
   function tablaExistencias(u, oculto) {
     const ex = !oculto && u.existencias_armas;
@@ -2089,7 +2099,8 @@
         + `${dato("Autonomía", u.autonomia_km === null ? "?" : Logica.medida(medidas, "distancia", u.autonomia_km))}`)
       + (u.personal_inicial ? dato("Personal", `${u.personal_actual} de ${u.personal_inicial} efectivos`) : "")
       + `${extra.join("")}</dl>` + efectividad;
-    const armamento = (da ? `<table class="tabla-armas"><thead><tr><th>Arma</th><th>Alcance</th><th>Altura</th><th>Prob.</th>`
+    const armamento = FichasArmas.tira(Logica.fichasDeUnidad(u, app.catalogo))
+      + (da ? `<table class="tabla-armas"><thead><tr><th>Arma</th><th>Alcance</th><th>Altura</th><th>Prob.</th>`
         + `${oculto ? "" : '<th title="Listos en los lanzadores / capacidad (+ reserva para recargar)">Listos</th>'}</tr></thead><tbody>`
         + da.armas.map((a) => `<tr title="${escapar(`${a.tipo} · ${a.categoria} · ${a.salva} · recarga ${a.recarga}`)}"><td>${escapar(a.nombre)}</td>`
           + `<td>${escapar(a.alcance)}</td><td>${escapar(a.altura)}</td><td>${escapar(a.pk)}</td>`
@@ -2251,6 +2262,7 @@
       if (sel.dataset.modelo !== u.modelo) { llenarSelect(sel, opcionesCarga); sel.dataset.modelo = u.modelo || ""; }
       if (actual && opcionesCarga.some(([v]) => v === actual) && document.activeElement !== sel) sel.value = actual;
     }
+    fotosCargaOrden(u, opcionesCarga.length >= 2);
     // guerra antisubmarina (engine/asw.py)
     const torpedo = Logica.alcanceTorpedo(u, app.catalogo) > 0;
     const boyas = Logica.esAvionAsw(u, app.catalogo);
@@ -2419,6 +2431,7 @@
   });
   $("o-lote-limpiar").addEventListener("click", () => { app.lote.clear(); if (app.data) { actualizarNuevaOrden(app.data); renderOOBSeleccion(); marcarSeleccionEnMapa(); } });
   $("o-objetivo").addEventListener("change", () => { if (app.data) actualizarNuevaOrden(app.data); });
+  $("o-carga").addEventListener("change", () => { const u = app.porId.get(app.seleccion); if (u) fotosCargaOrden(u, true); });
   $("o-parte").addEventListener("change", () => { if (app.data) actualizarNuevaOrden(app.data); });
   $("o-patrulla-area").addEventListener("change", () => { app.capas.preview.clearLayers(); if (app.data) actualizarNuevaOrden(app.data); dibujarPatrulla(); });
 
@@ -3337,6 +3350,7 @@
       },
     });
     app.videowall.conectar();
+    FichasArmas.iniciar(() => app.catalogo);
     app.aviacion = Aviacion.crear({
       map: () => app.map, api, toast, rutaEsc, usuario: () => app.usuario, catalogo: () => app.catalogo,
       datos: () => app.data, escenarioId: () => app.escenarioId, capa: app.capas.bases_ven, naciones: () => app.naciones,

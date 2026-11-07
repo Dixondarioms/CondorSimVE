@@ -608,7 +608,27 @@ def videowall(n: Nav) -> None:
     n.tecla("Escape", 27)
 
 
-ORDEN = [acceso, pantalla, cabecera, panel_unidad, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, eventos_auto, asw, salvas, minas, balisticos, doctrina, misiones,
+def fichas_armas(n: Nav) -> None:
+    """Fotos de las armas en el panel de abajo (un helicóptero y una batería antiaérea) y la ficha grande de un arma."""
+    unidades = n.js(f"fetch('/api/escenarios/{ESCENARIO}').then((r) => r.json()).then((e) => e.unidades)")
+    activas = [x for x in unidades if x.get("estado") == "activa"]
+    for nombre_captura, modelos in (("armas_panel", ("helo_ataque", "ah64e", "mq9", "uav_armado")),
+                                    ("armas_panel_da", ("s300vm", "buk_m2e", "pechora_2m"))):
+        u = next((x for m in modelos for x in activas if x.get("modelo") == m), None)
+        if u is None:
+            print(f"   {nombre_captura}: no hay unidad de {modelos}")
+            continue
+        n.elegir(u["nombre"])
+        n.pausa(3)
+        guardar(n, nombre_captura, n.rect("#panel-unidad"), margen=0)
+        if nombre_captura == "armas_panel":
+            n.clic(".pu-notas .arma-mini")
+            n.pausa(2.5)
+            guardar(n, "ficha_arma", n.rect("#dlg-arma"), margen=2)
+            n.cerrar_dialogos()
+
+
+ORDEN = [acceso, pantalla, cabecera, panel_unidad, fichas_armas, orden_batalla, pliegues, reloj, despegue, orden_mover, interceptar, zonas, carga, trafico, sistemas, eventos_auto, asw, salvas, minas, balisticos, doctrina, misiones,
          situacion, tiem, consola, capas, graficos, mapas, ayuda, tutorial, recorrido, informe, en_marcha, bando, videowall]
 
 

@@ -185,10 +185,14 @@ UNIDADES = [
 # catalogo ampliado del Condor (backend/app/engine/catalogo_ampliado.py) y modelos que cambiaron de identidad
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from busquedas_ampliado import BUSQUEDAS, RENOVAR  # noqa: E402
+from busquedas_armas import ARMAS  # noqa: E402
 
 for _i, _consultas in RENOVAR.items():
     UNIDADES = [u if u[1] != _i else (u[0], u[1], _consultas[0], _consultas) for u in UNIDADES]
 UNIDADES += [("modelos", _i, _consultas[0], _consultas) for _i, _consultas in BUSQUEDAS.items()]
+# armas (backend/app/engine/fichas_armas.py): seccion "armas", archivo ref_arma_<id>.jpg
+UNIDADES += [("armas", _i, _consultas[0], _consultas) for _i, _consultas in ARMAS.items()]
+SECCIONES = ("modelos", "clases", "armas")
 POR_CLAVE = {clave: (seccion, que, busquedas) for seccion, clave, que, busquedas in UNIDADES}
 
 
@@ -419,8 +423,8 @@ def bajar_imagen(c: dict) -> Image.Image:
     return img
 
 
-def guardar_foto(clave: str, c: dict, img: Image.Image | None = None) -> str:
-    nombre = f"ref_{clave}.jpg"
+def guardar_foto(clave: str, c: dict, img: Image.Image | None = None, seccion: str = "modelos") -> str:
+    nombre = f"ref_arma_{clave}.jpg" if seccion == "armas" else f"ref_{clave}.jpg"
     publicar(img or bajar_imagen(c), nombre)
     return f"/static/fotos/{nombre}"
 
@@ -447,13 +451,13 @@ def elegir_automatica(clave: str, busquedas: list[str]) -> tuple[dict | None, Im
 def leer_manifiesto() -> dict:
     if MANIFIESTO.is_file():
         datos = json.loads(MANIFIESTO.read_text(encoding="utf-8"))
-        return {"modelos": datos.get("modelos") or {}, "clases": datos.get("clases") or {}}
-    return {"modelos": {}, "clases": {}}
+        return {s: datos.get(s) or {} for s in SECCIONES}
+    return {s: {} for s in SECCIONES}
 
 
 def escribir_manifiesto(m: dict) -> None:
     datos = {"_comentario": "Generado por tools/fotos/fotos_referencia.py: fotos de referencia de Wikimedia Commons.",
-             "modelos": dict(sorted(m["modelos"].items())), "clases": dict(sorted(m["clases"].items()))}
+             **{s: dict(sorted((m.get(s) or {}).items())) for s in SECCIONES}}
     MANIFIESTO.write_text(json.dumps(datos, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
@@ -464,7 +468,7 @@ def _md(texto: str) -> str:
 def escribir_creditos(m: dict) -> None:
     filas = ["| Archivo | Unidad | Obra | Autor | Licencia | Origen |", "|---|---|---|---|---|---|"]
     for seccion, clave, que, _ in UNIDADES:
-        e = m[seccion].get(clave)
+        e = (m.get(seccion) or {}).get(clave)
         if e:
             filas.append(f"| `{Path(e['foto']).name}` | `{clave}` · {que} | {_md(e['obra'])} | {_md(e['autor'])} | "
                          f"[{_md(e['licencia'])}]({e['url_licencia']}) | {e['pagina']} |")
@@ -569,7 +573,7 @@ def main() -> int:
                     print(f"  {clave}: ninguna candidata paso el control de calidad")
                     faltan.append(clave)
                     continue
-                foto = guardar_foto(clave, c, img)
+                foto = guardar_foto(clave, c, img, seccion)
                 m[seccion][clave] = {"foto": foto, "obra": c["obra"], "autor": c["autor"], "licencia": c["licencia"],
                                      "url_licencia": c["url_licencia"], "pagina": c["pagina"]}
                 print(f"  {clave}: {c['obra']} ({c['autor']}, {c['licencia']})")
@@ -582,7 +586,7 @@ def main() -> int:
                     faltan.append(clave)
                     continue
                 c = candidatas[clave][n - 1]
-            foto = guardar_foto(clave, c)
+            foto = guardar_foto(clave, c, seccion=seccion)
         except OSError as e:
             print(f"  {clave}: no se pudo descargar ({e})")
             faltan.append(clave)

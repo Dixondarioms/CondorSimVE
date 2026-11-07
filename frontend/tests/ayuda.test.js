@@ -18,6 +18,7 @@ test("el buscador responde preguntas escritas con palabras comunes", () => {
   assert.equal(primero("interferir los radares enemigos"), "ge");
   assert.equal(primero("pausa automática"), "pausa-auto");
   assert.equal(primero("el reloj no avanza"), "reloj-quieto");
+  assert.equal(primero("la foto del hellfire"), "fichas-armas");
   assert.deepEqual(T.buscar("", {}), []);
 });
 

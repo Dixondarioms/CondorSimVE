@@ -266,6 +266,21 @@
         puede cambiar y guardar.</p>`,
     },
     {
+      id: "fichas-armas", seccion: "Aviación", titulo: "Fotos y fichas de las armas",
+      claves: "foto fotos ficha fichas arma armas misil misiles bomba bombas cohetes cañon cañones torpedo hellfire amraam sidewinder igla stinger caracteristicas datos alcance peso ojiva guia fabricante pais wikimedia",
+      texto: `<p>En el panel de abajo, en <b>«Armamento y notas»</b>, cada equipo muestra la <b>foto chica de sus armas</b>:
+        <ul><li>una aeronave, las de su <b>carga</b> (o, si no tiene carga, las que puede llevar su modelo);</li>
+        <li>una batería antiaérea, los misiles y cañones de su sistema;</li>
+        <li>un buque, un submarino o una batería costera, el misil que lanza y su torpedo;</li>
+        <li>un torpedo o un misil balístico en vuelo, el suyo.</li></ul>
+        <p>Haga <b>clic en una foto</b> para abrir la <b>ficha</b> del arma: foto grande, tipo, país y fabricante, guía,
+        alcance, velocidad, ojiva o calibre, peso y una descripción breve. Al despegar un grupo (y en la Nueva orden de una
+        aeronave en tierra), debajo de la carga elegida aparecen también las fotos de sus armas.</p>
+        <p>Las fotos son reales, de Wikimedia Commons con licencia libre (el autor figura al pie). Los datos son públicos y de
+        referencia: en el juego valen el alcance y la probabilidad de impacto de la tabla del panel. Las armas que se repiten
+        (por ejemplo el AIM-120 de un caza y el del NASAMS) tienen la misma ficha.</p>`,
+    },
+    {
       id: "patrulla", seccion: "Aviación", titulo: "Patrullar, aterrizar y el combustible",
       claves: "patrulla permanente relevo relevar patrulla patrullar cap orbitar interceptar aterrizar regreso base combustible bingo winchester reabastecer rearmar 2 horas plazas",
       texto: `<p><b>Patrullar</b>: la aeronave vuela a la zona, orbita (gasta cerca de 8 % de combustible por hora) e intercepta a

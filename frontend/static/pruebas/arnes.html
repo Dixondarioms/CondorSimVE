@@ -274,6 +274,7 @@
               <p id="o-interferencia-info" class="ayuda preview"></p>
             </div>
             <label class="mini" id="o-carga-fila" hidden title="La aeronave está en tierra: sale con esta carga, que toma de las existencias de su base">Carga de armamento al despegar<select id="o-carga"></select></label>
+            <div id="o-carga-armas" class="aer-carga-armas" hidden></div>
             <div id="o-objetivo-box" hidden>
               <select id="o-objetivo" aria-label="Objetivo"></select>
               <p id="o-objetivo-ayuda" class="ayuda"></p>
@@ -1423,6 +1424,7 @@
         <label class="mini">Aeronaves en el grupo<select id="aer-cantidad"></select></label>
         <label class="mini" id="aer-indicativo-fila">Indicativo (opcional)<input id="aer-indicativo" maxlength="40" placeholder="Ej. Halcón 1"></label>
         <label class="mini" id="aer-carga-fila">Carga de armamento (por aeronave)<select id="aer-carga"></select></label>
+        <div id="aer-carga-armas" class="aer-carga-armas"></div>
       </div>
       <p id="aer-resumen" class="ayuda preview"></p>
       <div class="fila">
@@ -1456,6 +1458,11 @@
       <button>Cerrar</button>
     </form>
   </dialog>
+  <dialog id="dlg-arma" class="dlg-arma" aria-labelledby="arma-titulo">
+    <h3 id="arma-titulo">Arma</h3>
+    <div id="arma-cuerpo"></div>
+    <div class="fila"><button type="button" id="arma-cerrar" class="secundario">Cerrar</button></div>
+  </dialog>
   <div id="toast" hidden></div>
 
   <script src="/static/vendor/leaflet/leaflet.js"></script>
@@ -1468,6 +1475,7 @@
   <script src="/static/js/modelo3d.js"></script>
   <script src="/static/js/miniaturas.js"></script>
   <script src="/static/js/aerodromos.js"></script>
+  <script src="/static/js/fichas_armas.js"></script>
   <script src="/static/js/aviacion.js"></script>
   <script src="/static/js/misiones.js"></script>
   <script src="/static/js/pmi.js"></script>

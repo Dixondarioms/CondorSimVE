@@ -88,7 +88,17 @@ ARMAMENTO = {
     "SHF": ("Shafrir 2", "aa", True, 5), "MAG": ("R550 Magic", "aa", True, 8), "S53": ("Super 530", "aa", True, 30),
     "R23": ("R-23 (AA-7 Apex)", "aa", True, 35), "R40": ("R-40 (AA-6 Acrid)", "aa", True, 50), "R60": ("R-60 (AA-8 Aphid)", "aa", True, 8),
     "SHR": ("AGM-45 Shrike (antirradiación)", "ar", True, 40), "G27": ("GBU-27 (láser)", "bomba", True, 12),
+    # armas reales de los modelos del catalogo ampliado (engine/catalogo_ampliado.py; fichas en engine/fichas_armas.py)
+    "MIC": ("MICA", "aa", True, 60), "MTR": ("Meteor", "aa", True, 120), "IRT": ("IRIS-T", "aa", True, 25),
+    "P15": ("PL-15", "aa", True, 145), "P10": ("PL-10", "aa", True, 20), "P12": ("PL-12 (SD-10)", "aa", True, 70),
+    "SCL": ("Storm Shadow / SCALP", "as", True, 250), "MAV": ("AGM-65 Maverick", "as", True, 22),
+    "C80": ("C-802 (antibuque)", "ab", True, 120), "K22": ("Kh-22 (antibuque)", "ab", True, 400),
+    "FAB": ("FAB-500 (500 kg)", "bomba", False, 0),
+    "TOW": ("BGM-71 TOW", "as", True, 4), "ATK": ("9M120 Ataka", "as", True, 6), "VKR": ("9K121 Vikhr", "as", True, 8),
+    "UMT": ("L-UMTAS", "as", True, 8), "MAM": ("MAM-L", "as", True, 8), "BA7": ("Blue Arrow 7 (BA-7)", "as", True, 8),
 }
+# misiles antitanque de helicopteros y drones: van en la carga de ataque junto al cañon y los cohetes (engine/armas.py)
+ANTITANQUE = ("HLF", "TOW", "ATK", "VKR", "UMT", "MAM", "BA7")
 _ORIENTAL = {"aa": ["MAA", "MAB", "MAC", "MAD"], "sup": ["MA1", "MA2", "MA3", "MA4", "MA5", "BKR", "BOD", "BRK", "MA6"]}
 _OCCIDENTAL = {"aa": ["M120", "M9X", "MPB"], "sup": ["HRM", "JSW", "BGB", "BBU", "JDM", "BMK", "BKM", "HPN"]}
 ARMAMENTO_POR_MODELO = {
@@ -101,7 +111,7 @@ ARMAMENTO_POR_MODELO = {
     "ea18g": ["M120", "HRM"], "b1b": ["JDM", "BMK", "BKM", "JSW", "HPN"], "p8a": ["JDM", "BMK", "HPN", "TOR"], "p3c": ["HPN", "BMK", "TOR"],
     "nh90": ["TOR", "HLF"],
     "mq9": ["HLF", "BBU"], "uav_armado": ["HLF", "BBU"],
-    "helo_ataque": ["CKH", "CKL", "HLF"], "helo_transporte": ["CKH", "CKL", "ALP"],
+    "helo_ataque": ["CKH", "CKL", "ATK"], "helo_transporte": ["CKH", "CKL", "ALP"],  # Mi-35M: misil antitanque 9M120 Ataka
     "mh60dap": ["CKH", "CKL", "HLF"], "ah6m": ["CKH", "CKL", "HLF"], "mh60m": ["ALP"], "mh6m": ["ALP"], "mh47g": ["ALP"],
     # operaciones historicas: el armamento de la epoca
     "super_etendard": ["EXO", "BMK"], "sp2h_neptune": [], "dagger": ["SHF", "BMK"], "sea_harrier": ["MPB", "BMK"],
@@ -110,6 +120,25 @@ ARMAMENTO_POR_MODELO = {
     "fa18a": ["M7S", "MPB", "HRM", "BMK"], "ea6b": [], "f14a": ["PHX", "M7S", "MPB"],
     "mig23": ["R23", "R60"], "mig25": ["R40", "R60"], "mirage_f1": ["S53", "MAG", "EXO"],
     "f117a": ["G27", "BGB"], "f4g": ["HRM", "SHR"], "ah64a": ["HLF", "CKL", "CKH"], "mh53j": ["ALP"],
+    # catalogo ampliado: el armamento real de cada modelo (antes tomaban el de su clase, occidental)
+    "f16_b70": ["M120", "M9X", "JDM", "BBU", "HRM", "HPN"], "kfir": ["MPA", "BBU", "BMK"],
+    "mirage2000": ["MIC", "MAG", "BBU", "BMK"], "rafale": ["MTR", "MIC", "SCL", "BBU", "EXO"],
+    "gripen": ["MTR", "M120", "IRT", "BBU"], "typhoon": ["MTR", "M120", "IRT", "SCL", "BBU"],
+    "f15e": ["M120", "M9X", "JDM", "BBU", "BGB", "BKM"], "f5e": ["MPB", "BMK"], "mig21": ["R60", "FAB"],
+    "mig29": ["MAA", "MAB", "MAD", "MA1", "FAB"], "su27": ["MAB", "MAC", "MAD", "FAB"],
+    "su35": ["MAA", "MAB", "MAD", "MA5", "MA2", "MA3", "BKR", "FAB"], "su57": ["MAA", "MAD", "MA5", "BKR"],
+    "j10c": ["P15", "P10"], "jf17": ["P12", "P15", "C80", "BMK"], "su33": ["MAB", "MAC", "MAD", "FAB"],
+    "j15": ["P15", "P12", "P10", "C80"],
+    "at27": ["BMK"], "a29": ["BBU", "BMK"], "a37": ["BMK"], "ov10": ["BMK"], "l39": ["FAB"],
+    "yak130": ["MAD", "BKR", "FAB"], "su25": ["MA1", "MA4", "FAB", "R60"], "a10": ["MAV", "BBU", "JDM", "BMK", "MPB"],
+    "su34": ["MAA", "MAD", "MA1", "MA4", "MA5", "MA2", "MA3", "BKR", "BRK", "FAB"], "b52h": ["JDM", "BMK", "BKM"],
+    "tu22m3": ["K22", "FAB"],
+    "ah64e": ["HLF", "CKL", "CKH"], "ah1z": ["HLF", "CKL", "CKH"], "ah1w": ["TOW", "HLF", "CKL", "CKH"],
+    "mi28ne": ["ATK", "CKL", "CKH"], "ka52": ["VKR", "ATK", "CKL", "CKH"], "t129": ["UMT", "CKL", "CKH"],
+    "tiger": ["HLF", "CKL", "CKH"],
+    "uh60l": ["ALP"], "ch47f": ["ALP"], "bell212": ["ALP"], "bell412": ["ALP"], "as532": ["ALP"], "h225m": ["ALP"],
+    "as332": ["ALP"], "uh1h": ["ALP"], "mi26": [], "mi171sh": ["ALP", "CKL"], "mi8amtsh": ["ALP", "CKL"],
+    "tb2": ["MAM"], "akinci": ["MAM"], "mq1": ["HLF"], "wingloong2": ["BA7"],
 }
 # efecto del armamento en el ataque (multiplica la potencia de fuego del grupo)
 FACTOR_GUIADA = 1.15  # una bomba o un misil guiado contra un blanco fijo o de superficie
