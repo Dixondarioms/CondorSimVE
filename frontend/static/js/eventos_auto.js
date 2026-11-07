@@ -35,7 +35,7 @@
       const nombres = [...new Set(data.unidades.filter((u) => u.estado === "activa").map((u) => u.nombre))].sort((a, b) => a.localeCompare(b, "es"));
       opciones($("ea-unidad"), nombres.map((n) => [n, n]));
       opciones($("ea-unidad-area"), [["", "Cualquier unidad"], ...nombres.map((n) => [n, n])]);
-      const lanzadores = [...new Set(data.unidades.filter((u) => Logica.puedeLanzarMisiles(u, clasePorId.get(u.clase)))
+      const lanzadores = [...new Set(data.unidades.filter((u) => Logica.puedeLanzarMisiles(u, clasePorId.get(u.clase), ctx.catalogo()))
         .map((u) => u.nombre))].sort((a, b) => a.localeCompare(b, "es"));
       opciones($("ea-la-unidad"), lanzadores.length ? lanzadores.map((n) => [n, n]) : [["", "No hay lanzadores de misiles"]]);
       opciones($("ea-la-blanco"), nombres.map((n) => [n, n]));

@@ -126,8 +126,18 @@
     return (modelos || []).filter((m) => (!clase || m.clase === clase) && (!q || `${m.nombre} ${m.corto} ${m.pais} ${m.fabricante} ${m.funcion}`
       .toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)));
   }
-  const puedeLanzarMisiles = (u, clase) => !!u && u.estado === "activa"
-    && (u.clase === "lanzador_balistico" || (clase ? !!clase.lanza_misiles : LANZAN_MISILES.includes(u.clase || "")));
+  /** Puede lanzar misiles: los balisticos, o los de crucero de su modelo o su clase (catalogo.misiles_lanzador,
+   * engine/misiles.py: hay corbetas que lanzan aunque su clase no, y buques de clase lanzadora que no tienen). */
+  function puedeLanzarMisiles(u, clase, cat) {
+    if (!u || u.estado !== "activa") return false;
+    if (u.clase === "lanzador_balistico") return true;
+    const ml = cat && cat.misiles_lanzador;
+    if (ml && u.modelo) {
+      if ((ml.sin_misiles || []).includes(u.modelo)) return false;
+      if ((ml.modelos || {})[u.modelo]) return true;
+    }
+    return clase ? !!clase.lanza_misiles : LANZAN_MISILES.includes(u.clase || "");
+  }
   /** Misiles que la municion del lanzador permite en una salva (0 a 4). */
   const misilesDisponibles = (u) => Math.max(0, Math.min(MAX_MISILES_SALVA, Math.floor(((u && u.municion) || 0) / MUNICION_POR_MISIL)));
 

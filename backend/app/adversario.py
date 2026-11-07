@@ -413,7 +413,7 @@ class _Turno:
     # ---------------------------------------------------------------- tierra
     def terrestre(self, u):
         clase = catalogo.obtener(u.clase, u.tipo)
-        if clase.lanza_misiles and self.salva(u):
+        if misiles_mod.lanza(u) and self.salva(u):
             return
         if balisticos_mod.lanza(u):
             self.balistico(u)  # en posicion: solo lanza
@@ -518,7 +518,7 @@ class _Turno:
         clase = catalogo.obtener(u.clase, u.tipo)
         if clase.carga_max and clase.nodo_movil_km:  # buque logistico: como un convoy, hacia los buques que lo necesitan
             return self.convoy(u)
-        if clase.lanza_misiles and self.salva(u):
+        if misiles_mod.lanza(u) and self.salva(u):
             return
         blanco = self.mejor_blanco(u, u.alcance_km)
         if blanco and u.municion > 0 and self.ordenar(u, tipo="atacar", objetivo_unidad_id=blanco.id):

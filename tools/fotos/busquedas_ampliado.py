@@ -180,6 +180,12 @@ BUSQUEDAS = {
     "wasp": ["Wasp class amphibious assault ship underway", "USS Wasp LHD-1"],
     "mistral_bpc": ["Mistral class amphibious assault ship", "Dixmude L9015", "Tonnerre L9014"],
     "ivan_gren": ["Ivan Gren landing ship", "Ivan Gren", "Pyotr Morgunov"],
+    # misiles reales de buques (engine/misiles.py, MISIL_DEL_LANZADOR)
+    "yj18": ["YJ-18 missile", "YJ-18 anti-ship missile", "YJ-18A"],
+    "yj83": ["YJ-83J Missile", "YJ-83 missile", "C-802A missile"],
+    "moskit": ["P-270 Moskit missile", "Moskit missile", "3M80 Moskit"],
+    "otomat": ["Otomat missile", "Otomat Mk2", "Teseo missile"],
+    "granit": ["P-700 Granit missile", "P-700 Granit", "SS-N-19 Shipwreck"],
 }
 
 # modelos de siempre que cambiaron de identidad (su foto anterior era de otra aeronave)

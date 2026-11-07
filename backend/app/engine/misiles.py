@@ -34,12 +34,27 @@ MOTIVO_SIN_ORDENES = "Un misil en vuelo no admite ordenes."
 MISIL_DEL_LANZADOR = {
     "grigorovich": "kalibr", "buyan_m": "kalibr", "kilo636": "kalibr",
     "bastion_p": "oniks", "bal_e": "kh35", "nsm_cds": "nsm",
-    "fremm": "exocet", "scorpene": "exocet", "tamandare": "exocet",
+    "fremm": "exocet", "scorpene": "exocet", "tamandare": "exocet", "type21": "exocet",
+    "type052d": "yj18", "type054a": "yj83", "sovremenny": "moskit", "molniya": "moskit", "lupo": "otomat",
+    "kuznetsov": "granit",
 }
+# modelos de una clase que lanza misiles pero que en la realidad no los tienen (solo cañones, antiaereos o torpedos)
+SIN_MISILES = frozenset({"type42", "rothesay", "u209", "type212"})
+
+
+def lanza(u) -> bool:
+    """La unidad puede lanzar misiles de crucero o antibuque: los de su modelo (aunque su clase no los lance, como las
+    corbetas lanzamisiles o el Kuznetsov) o los de su clase, salvo los modelos que no los tienen."""
+    modelo = getattr(u, "modelo", "") or ""
+    if modelo in SIN_MISILES:
+        return False
+    if modelo in MISIL_DEL_LANZADOR:
+        return True
+    return bool(catalogo.obtener(getattr(u, "clase", None), getattr(u, "tipo", "")).lanza_misiles)
 
 
 PK_MISIL = {"crucero": 0.85, "kalibr": 0.85, "brahmos": 0.85, "exocet": 0.8, "harpoon": 0.8, "oniks": 0.8, "kh35": 0.8,
-            "nsm": 0.85}
+            "nsm": 0.85, "yj18": 0.85, "yj83": 0.8, "moskit": 0.8, "otomat": 0.8, "granit": 0.8}
 PK_POR_DEFECTO = 0.8
 MISIL_DEL_ARMA = {"HPN": "harpoon", "EXO": "exocet", "MA6": "kh35"}  # antibuque de las aeronaves (engine/armas.py)
 # defensa de punto de los buques: canales de tiro simultaneos, alcance (km), probabilidad por disparo y ciclo (s)
@@ -99,7 +114,7 @@ def blanco_valido(blanco) -> bool:
 def error_de_lanzamiento(lanzador, blanco, misiles: int | None) -> str | None:
     """Motivo por el que `lanzador` no puede lanzar esa salva contra `blanco` (None si puede)."""
     clase = catalogo.obtener(lanzador.clase, lanzador.tipo)
-    if not clase.lanza_misiles:
+    if not lanza(lanzador):
         return "Esta unidad no puede lanzar misiles de crucero."
     if lanzador.estado != "activa":
         return "El lanzador no esta activo."

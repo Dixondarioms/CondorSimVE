@@ -56,7 +56,7 @@ def test_armas_de_cada_equipo():
     assert "agm114" in fichas_armas.de_modelo("ah64e") and "m230" in fichas_armas.de_modelo("ah64e")
     assert fichas_armas.de_modelo("ka52")[:2] == ["vikhr", "ataka"] and "2a42" in fichas_armas.de_modelo("ka52")
     assert fichas_armas.de_modelo("s400") == ["48n6", "9m96"]
-    assert fichas_armas.de_modelo("kilo636") == ["kalibr", "mk48"]
+    assert fichas_armas.de_modelo("kilo636") == ["kalibr", "tt53"]
     assert fichas_armas.de_modelo("bastion_p") == ["oniks"]
     assert fichas_armas.de_modelo("harpoon") == ["harpoon"]
     assert fichas_armas.de_modelo("s75_sa2") == ["v750"]
@@ -129,3 +129,37 @@ def test_el_manifiesto_de_armas_es_valido():
     for id_, e in (datos.get("armas") or {}).items():
         assert id_ in fichas_armas.FICHAS, id_
         assert catalogo._referencia_valida(e, id_, catalogo.RUTA_FOTOS), id_
+
+
+def test_buques_tanques_y_artilleria_con_sus_armas_reales():
+    assert fichas_armas.de_modelo("type052d") == ["yj18", "ak130", "hq9"]
+    assert fichas_armas.de_modelo("lupo") == ["otomat", "oto127", "aspide"]  # Mariscal Sucre de la Armada
+    assert fichas_armas.de_modelo("type42") == ["mk8_114", "sea_dart"]  # sin misil antibuque (1982)
+    assert fichas_armas.de_modelo("u209") == ["sst4"]  # Sábalo: solo torpedos
+    assert fichas_armas.de_modelo("molniya")[0] == "moskit" and fichas_armas.de_modelo("kuznetsov") == ["granit"]
+    assert fichas_armas.de_modelo("t72b1") == ["2a46", "9m119"] and fichas_armas.de_modelo("himars") == ["gmlrs", "atacms"]
+    for modelo, ids in fichas_armas.ARMAS_PROPIAS.items():
+        assert modelo in catalogo.MODELOS, modelo
+        assert all(i in fichas_armas.FICHAS for i in ids), modelo
+    # ningun buque ni submarino lanza el Tomahawk salvo los de Estados Unidos
+    for m in catalogo.MODELOS.values():
+        if "tomahawk" in fichas_armas.de_modelo(m.id):
+            assert m.pais == "Estados Unidos", m.id
+
+
+def test_que_misil_lanza_cada_buque(monkeypatch):
+    from types import SimpleNamespace as U
+    for modelo, clase, lanza, misil in (("type052d", "destructor", True, "yj18"), ("molniya", "patrullero", True, "moskit"),
+                                        ("buyan_m", "patrullero", True, "kalibr"), ("lupo", "fragata", True, "otomat"),
+                                        ("type42", "destructor", False, None), ("u209", "submarino", False, None),
+                                        ("guaicamacuto", "patrullero", False, None), ("arleigh_burke", "destructor", True, "crucero")):
+        u = U(modelo=modelo, clase=clase, tipo="naval")
+        assert misiles.lanza(u) is lanza, modelo
+        if lanza:
+            assert misiles.modelo_misil(u).id == misil, modelo
+    blanco = U(estado="activa", bando="rojo", tipo="naval", lat=10.1, lon=-66.0, en_tierra=False)
+    sheffield = U(modelo="type42", clase="destructor", tipo="naval", estado="activa", bando="azul", lat=10.0, lon=-66.0,
+                  municion=100.0, despliegue_restante=0)
+    assert misiles.error_de_lanzamiento(sheffield, blanco, 1) == "Esta unidad no puede lanzar misiles de crucero."
+    tarantul = U(**{**vars(sheffield), "modelo": "molniya", "clase": "patrullero"})
+    assert misiles.error_de_lanzamiento(tarantul, blanco, 2) is None

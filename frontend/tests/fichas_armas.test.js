@@ -51,3 +51,15 @@ test("fichasDeCarga y filasFichaArma", () => {
   assert.ok(!filas.some(([k]) => k === "Peso")); // los datos que faltan («—») no se muestran
   assert.deepEqual(L.filasFichaArma(null), []);
 });
+
+test("puedeLanzarMisiles: el misil del modelo manda sobre el de su clase", () => {
+  const cat = { misiles_lanzador: { modelos: { molniya: "moskit", type052d: "yj18" }, sin_misiles: ["type42", "u209"] } };
+  const fragata = { lanza_misiles: true };
+  const patrullero = { lanza_misiles: false };
+  const u = (modelo, clase) => ({ estado: "activa", modelo, clase });
+  assert.equal(L.puedeLanzarMisiles(u("molniya", "patrullero"), patrullero, cat), true); // corbeta lanzamisiles
+  assert.equal(L.puedeLanzarMisiles(u("guaicamacuto", "patrullero"), patrullero, cat), false);
+  assert.equal(L.puedeLanzarMisiles(u("type42", "destructor"), fragata, cat), false); // sin misil antibuque
+  assert.equal(L.puedeLanzarMisiles(u("arleigh_burke", "destructor"), fragata, cat), true);
+  assert.equal(L.puedeLanzarMisiles(u("type42", "destructor"), fragata), true); // sin catalogo: la clase
+});

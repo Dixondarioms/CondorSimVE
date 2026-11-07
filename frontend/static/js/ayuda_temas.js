@@ -267,11 +267,12 @@
     },
     {
       id: "fichas-armas", seccion: "Aviación", titulo: "Fotos y fichas de las armas",
-      claves: "foto fotos ficha fichas arma armas misil misiles bomba bombas cohetes cañon cañones torpedo hellfire amraam sidewinder igla stinger caracteristicas datos alcance peso ojiva guia fabricante pais wikimedia",
+      claves: "foto fotos ficha fichas arma armas misil misiles bomba bombas cohetes cañon cañones torpedo tanque artilleria obus ametralladora hellfire amraam sidewinder igla stinger caracteristicas datos alcance peso ojiva guia fabricante pais wikimedia",
       texto: `<p>En el panel de abajo, en <b>«Armamento y notas»</b>, cada equipo muestra la <b>foto chica de sus armas</b>:
         <ul><li>una aeronave, las de su <b>carga</b> (o, si no tiene carga, las que puede llevar su modelo);</li>
         <li>una batería antiaérea, los misiles y cañones de su sistema;</li>
-        <li>un buque, un submarino o una batería costera, el misil que lanza y su torpedo;</li>
+        <li>un buque, un submarino o una batería costera, el misil que lanza, sus cañones, sus misiles antiaéreos y su torpedo;</li>
+        <li>un tanque, un vehículo o una pieza de artillería, su cañón, sus misiles, sus ametralladoras o sus cohetes;</li>
         <li>un torpedo o un misil balístico en vuelo, el suyo.</li></ul>
         <p>Haga <b>clic en una foto</b> para abrir la <b>ficha</b> del arma: foto grande, tipo, país y fabricante, guía,
         alcance, velocidad, ojiva o calibre, peso y una descripción breve. Al despegar un grupo (y en la Nueva orden de una
@@ -557,10 +558,15 @@
     },
     {
       id: "misiles-crucero", seccion: "Logística, ingenieros y transporte", titulo: "Misiles de crucero",
-      claves: "misil misiles crucero lanzar salva lanzador bateria buque",
+      claves: "misil misiles crucero antibuque lanzar salva lanzador bateria buque corbeta otomat moskit kalibr exocet yj-18 tomahawk",
       texto: `<p>Buques y baterías con misiles de crucero: orden <b>Lanzar misiles</b> sobre un blanco. La salva vuela sola
-        (unos 850 km/h) hacia donde estaba el blanco; la antiaérea y las patrullas enemigas pueden derribarla antes. Cada misil
-        gasta el 25 % de la munición del lanzador.</p>`,
+        hacia donde estaba el blanco; la antiaérea y las patrullas enemigas pueden derribarla antes. Cada misil
+        gasta el 25 % de la munición del lanzador.</p>
+        <p>Cada buque lanza <b>su misil real</b>, con su alcance y su velocidad: la fragata Lupo (Mariscal Sucre) el Otomat,
+        las Grigorovich y las Buyan-M el Kalibr, el Sovremenny y la corbeta Tarantul el Moskit, el Tipo 052D el YJ-18, la
+        Tipo 054A el YJ-83, las FREMM, Tamandaré y Scorpène el Exocet, el Kuznetsov el Granit y los buques de Estados Unidos
+        el Tomahawk. Los que en la realidad no tienen misiles antibuque (Type 42, Rothesay, submarinos Tipo 209 y 212A) no
+        pueden lanzar: usan sus cañones o sus torpedos. El misil de cada uno se ve en «Armamento y notas».</p>`,
     },
     // ------------------------------------------------------------------ guerra electrónica
     {

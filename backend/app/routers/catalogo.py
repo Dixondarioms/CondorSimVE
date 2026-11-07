@@ -32,6 +32,8 @@ def obtener_catalogo(_: Usuario = Depends(auth.usuario_actual)):
                   "radio_km": minas_lib.RADIO_KM, "minas": minas_lib.MINAS_POR_CAMPO},
         # defensa de punto de los buques contra los misiles (engine/misiles.py)
         "defensa_punto": misiles_lib.DEFENSA_PUNTO,
+        # que misil lanza cada modelo (aunque su clase no lance) y que modelos no lanzan aunque su clase si
+        "misiles_lanzador": {"modelos": misiles_lib.MISIL_DEL_LANZADOR, "sin_misiles": sorted(misiles_lib.SIN_MISILES)},
         # guerra antisubmarina (engine/asw.py): quien siembra sonoboyas, quien cala sonar y el alcance de los torpedos
         "asw": {"aviones": sorted(asw.ASW_AVIONES), "helos": sorted(asw.ASW_HELOS), "torpedo_km": asw.ALCANCE_TORPEDO_KM,
                 "sonar_km": asw.SONAR_KM, "sonar_inmersion_km": asw.SONAR_INMERSION_KM, "boya_km": asw.BOYA_RADIO_KM},

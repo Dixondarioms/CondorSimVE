@@ -1106,7 +1106,7 @@
           ops.push({ texto: `Torpedo contra ${x.nombre}`, accion: () => ordenRapida({ unidad_id: u.id, tipo: "torpedo", objetivo_unidad_id: x.id }, `${u.nombre}: Torpedo`) });
         }
         const misiles = Math.min(2, Logica.misilesDisponibles(u));
-        if (Logica.puedeLanzarMisiles(u, claseDe(u)) && misiles > 0) {
+        if (Logica.puedeLanzarMisiles(u, claseDe(u), app.catalogo) && misiles > 0) {
           ops.push({ texto: `Lanzar ${misiles} misil(es) contra ${x.nombre}`, accion: () => ordenRapida({ unidad_id: u.id, tipo: "lanzar", objetivo_unidad_id: x.id, misiles }, `${u.nombre}: Lanzar misiles`) });
         }
       } else if (x.bando === u.bando && u.tipo === "aerea" && !u.en_tierra && Logica.operaAeronaves(x) && Logica.puedeOperarEn(u, x)) {
@@ -2011,7 +2011,7 @@
       extra.push(`<div class="ancho-completo"><dt>Daño por partes</dt><dd>${escapar(Logica.textoPartesBase(u))}${(u.dano_pista || 0) >= Logica.PISTA_INOPERATIVA ? " · <b>pista inoperativa</b>" : ""}</dd></div>`);
       extra.push(dato("Refugios reforzados", `${u.refugios || 0} (protegen a los primeros ${u.refugios || 0} grupos estacionados; ${abordo.length} a bordo)`));
     }
-    if (cl && cl.lanza_misiles && !oculto) extra.push(dato("Misiles de crucero", `${Logica.misilesDisponibles(u)} listos (25 % de munición cada uno)`));
+    if (Logica.puedeLanzarMisiles({ ...u, estado: "activa" }, cl, app.catalogo) && u.clase !== "lanzador_balistico" && !oculto) extra.push(dato("Misiles de crucero", `${Logica.misilesDisponibles(u)} listos (25 % de munición cada uno)`));
     if (u.enlace != null && !oculto) extra.push(dato("Enlace de datos", u.enlace ? "en la red: su bando ve lo que detecta"
       : "sin enlace: su bando no ve lo que detecta (lejos de la red, interferida o sin comunicaciones)"));
     if (u.contramedidas && !oculto) extra.push(dato(u.contramedidas.nombre, `${u.contramedidas.quedan} de ${u.contramedidas.maximo} (cada una baja 30 % la probabilidad de un misil)`));
@@ -2250,7 +2250,7 @@
     $("modo-rumbo").hidden = !puedeAterrizar;
     const interfiere = Logica.puedeInterferir(u, cl);
     $("modo-interferir").hidden = !interfiere;
-    const lanza = Logica.puedeLanzarMisiles(u, cl);
+    const lanza = Logica.puedeLanzarMisiles(u, cl, app.catalogo);
     $("modo-lanzar").hidden = !lanza;
     // una aeronave en tierra sale con la carga elegida (engine/armas.py); se toma de las existencias de su base
     const conCarga = !!u && u.tipo === "aerea" && u.en_tierra && ["mover", "patrullar", "atacar", "interceptar"].includes(app.modoOrden);

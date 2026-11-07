@@ -83,32 +83,45 @@ def tabla_catalogo() -> list:
     return h
 
 
-# grupos del anexo de armas (por el comienzo del tipo de cada ficha)
-GRUPOS_ARMAS = [("Misiles aire-aire", ("Misil aire-aire",)),
-                ("Misiles aire-superficie, antibuque y antirradiación", ("Misil aire-superficie", "Misil antibuque",
-                                                                         "Misil antirradiación", "Misil de crucero aire")),
-                ("Bombas", ("Bomba",)),
-                ("Misiles antitanque y municiones livianas", ("Misil antitanque", "Munición guiada")),
-                ("Cañones, cohetes y ametralladoras de aeronaves", ("Cañón", "Cohetes", "Ametralladora")),
-                ("Defensa antiaérea", None),  # las armas de los sistemas antiaereos que no salieron antes
-                ("Misiles de crucero y antibuque de buques y baterías", ("Misil de crucero",)),
-                ("Torpedos y misiles balísticos", ("Torpedo", "Misil balístico"))]
+def _grupos_armas() -> list[tuple[str, list[str]]]:
+    """Grupos del anexo de armas segun quien las usa (aeronaves, antiaerea, buques, tropas), en orden."""
+    publicas = fichas_armas.publico()
+    tipo = {i: f["tipo"] for i, f in publicas["fichas"].items()}
+    clase_de = {m.id: catalogo.CLASES[m.clase] for m in catalogo.MODELOS.values()}
+    aereas = set(publicas["de_ota"].values()) | {f for d in publicas["ota_modelo"].values() for f in d.values()}
+    antiaereas = set(fichas_armas.DE_DA.values()) | {i for ids in fichas_armas.POR_MODELO.values() for i in ids}
+    navales, terrestres = set(fichas_armas.DE_MISIL.values()) | {"mk48", "mk54"}, {"9m723"}
+    for m, ids in publicas["por_modelo"].items():
+        destino = {"naval": navales, "terrestre": terrestres}.get(clase_de[m].tipo)
+        if destino is not None and m not in fichas_armas.POR_MODELO:
+            destino.update(i for i in ids if i not in antiaereas)
+    vistas: set[str] = set()
+
+    def tomar(candidatas, condicion=lambda i: True) -> list[str]:
+        ids = [i for i in publicas["fichas"] if i in candidatas and i not in vistas and condicion(i)]
+        vistas.update(ids)
+        return ids
+
+    grupos = [("Aeronaves: misiles aire-aire", tomar(aereas, lambda i: tipo[i].startswith("Misil aire-aire"))),
+              ("Aeronaves: bombas", tomar(aereas, lambda i: tipo[i].startswith("Bomba"))),
+              ("Aeronaves: misiles aire-superficie, antibuque, antirradiación y antitanque",
+               tomar(aereas, lambda i: tipo[i].startswith(("Misil", "Munición", "Torpedo")))),
+              ("Aeronaves: cañones, cohetes y ametralladoras", tomar(aereas)),
+              ("Defensa antiaérea", tomar(antiaereas)),
+              ("Buques y submarinos: misiles, cañones y torpedos", tomar(navales)),
+              ("Tanques, vehículos, artillería y misiles balísticos", tomar(terrestres))]
+    sueltas = [i for i in publicas["fichas"] if i not in vistas]
+    assert not sueltas, sueltas  # toda ficha cae en algun grupo
+    return grupos
 
 
 def tabla_armas() -> list:
     """Anexo: cada arma con su foto chica, tipo, origen, guía y alcance (engine/fichas_armas.py)."""
     publicas = fichas_armas.publico()["fichas"]
-    antiaereas = set(fichas_armas.DE_DA.values()) | {i for ids in fichas_armas.POR_MODELO.values() for i in ids}
-    vistas, h = set(), []
-    for titulo, prefijos in GRUPOS_ARMAS:
+    h = []
+    for titulo, ids in _grupos_armas():
         filas = []
-        for f in publicas.values():
-            if f["id"] in vistas or not (f["id"] in antiaereas if prefijos is None else f["tipo"].startswith(prefijos)):
-                continue
-            # los cañones antiaereos van con la defensa antiaerea, no con las aeronaves
-            if titulo.startswith("Cañones") and f["id"] in antiaereas:
-                continue
-            vistas.add(f["id"])
+        for f in (publicas[i] for i in ids):
             ruta = RAIZ / "frontend" / f["foto"].lstrip("/") if f["foto"] else None
             if ruta and ruta.is_file():
                 im = Image(str(ruta))
@@ -127,8 +140,6 @@ def tabla_armas() -> list:
                                ("BOTTOMPADDING", (0, 0), (-1, -1), 3)]))
         # el Spacer evita que titulos_con_su_figura junte el titulo con la tabla larga (dejaria paginas casi vacias)
         h += [Paragraph(f"{titulo} ({len(filas)})", S["h3"]), Spacer(1, 1), t]
-    sueltas = [f for f in publicas.values() if f["id"] not in vistas]
-    assert not sueltas, [f["id"] for f in sueltas]  # toda ficha cae en algun grupo
     return h
 
 
@@ -420,10 +431,13 @@ def construir(salida: Path) -> None:
             "pañol del portaaviones, que el director puede cambiar en el panel de abajo.")]
     h += [P("<b>Fotos y fichas de las armas.</b> En «Armamento y notas» del panel de abajo, cada equipo muestra la foto chica "
             "de sus armas: la carga de la aeronave (o lo que puede llevar su modelo), los misiles y cañones de una batería "
-            "antiaérea, el misil y el torpedo de un buque o un submarino. Con un <b>clic</b> en una foto se abre la ficha del "
+            "antiaérea, el misil, los cañones, los misiles antiaéreos y el torpedo de un buque o un submarino, y el cañón, los "
+            "misiles o los cohetes de un tanque, un vehículo o una pieza de artillería. Con un <b>clic</b> en una foto se abre la ficha del "
             "arma, con la foto grande, su tipo, país y fabricante, guía, alcance, velocidad, ojiva o calibre y peso. En la "
             "ventana de despegue, debajo de la carga elegida, también aparecen sus armas. Todas están en el <b>Anexo B</b>.")]
     h += figura("armas_panel", "Fotos de las armas de un helicóptero en «Armamento y notas» (clic: ficha completa).")
+    h += figura("armas_panel_buque", "Armas de la fragata Mariscal Sucre (Lupo): misil Otomat, cañón de 127 mm y misil "
+                "antiaéreo Aspide.")
     h += figura("ficha_arma", "Ficha de un arma: foto real de Wikimedia Commons y sus características.", ancho=11 * cm)
     h += figura("carga_panel", "Panel de abajo de un grupo con su carga: cada arma con su alcance, su probabilidad de impacto y "
                 "lo que le queda.")
@@ -662,9 +676,14 @@ def construir(salida: Path) -> None:
           P("El avión es grande, lento y sin armas: escóltelo y evite la antiaérea, porque si lo derriban se pierden las tropas "
             "a bordo. Con tormenta sobre la zona no se salta. El enemigo que ve el avión recibe la alerta del salto."),
           H2("8.4 Misiles de crucero"),
-          P("Buques y baterías con misiles de crucero: orden <b>Lanzar misiles</b> sobre un blanco. La salva vuela sola (unos "
-            "850 km/h) hacia donde estaba el blanco; la antiaérea y las patrullas enemigas pueden derribarla antes. Cada misil "
-            "gasta el 25 % de la munición del lanzador.")]
+          P("Buques y baterías con misiles de crucero: orden <b>Lanzar misiles</b> sobre un blanco. La salva vuela sola "
+            "hacia donde estaba el blanco; la antiaérea y las patrullas enemigas pueden derribarla antes. Cada misil "
+            "gasta el 25 % de la munición del lanzador."),
+          P("Cada buque lanza <b>su misil real</b>, con su alcance y su velocidad: la fragata Lupo (Mariscal Sucre) el Otomat, "
+            "las Grigorovich y las Buyan-M el Kalibr, el Sovremenny y la corbeta Tarantul el Moskit, el Tipo 052D el YJ-18, la "
+            "Tipo 054A el YJ-83, las FREMM, Tamandaré y Scorpène el Exocet, el Kuznetsov el Granit y los buques de Estados "
+            "Unidos el Tomahawk. Los que en la realidad no tienen misiles antibuque (Type 42, Rothesay, submarinos Tipo 209 y "
+            "212A) no pueden lanzar: usan sus cañones o sus torpedos.")]
 
     # ---------------------------------------------------------------- 9 guerra electronica
     h += [H2("8.5 Reabastecimiento en el mar"),

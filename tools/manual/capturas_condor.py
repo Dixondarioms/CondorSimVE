@@ -608,13 +608,27 @@ def videowall(n: Nav) -> None:
     n.tecla("Escape", 27)
 
 
+# unidades de ejemplo para las capturas de armas cuando el ejercicio no las tiene (solo en la COPIA de la base)
+CREAR_PARA_CAPTURA = {
+    "armas_panel_buque": {"nombre": "Fragata Mariscal Sucre (captura)", "bando": "azul", "tipo": "naval",
+                          "clase": "fragata", "modelo": "lupo", "lat": 11.2, "lon": -64.2},
+    "armas_panel_tierra": {"nombre": "Batallón de tanques T-72B1 (captura)", "bando": "azul", "tipo": "terrestre",
+                           "clase": "blindado", "modelo": "t72b1", "lat": GURI[0] + 0.1, "lon": GURI[1] + 0.1},
+}
+
+
 def fichas_armas(n: Nav) -> None:
     """Fotos de las armas en el panel de abajo (un helicóptero y una batería antiaérea) y la ficha grande de un arma."""
     unidades = n.js(f"fetch('/api/escenarios/{ESCENARIO}').then((r) => r.json()).then((e) => e.unidades)")
     activas = [x for x in unidades if x.get("estado") == "activa"]
     for nombre_captura, modelos in (("armas_panel", ("helo_ataque", "ah64e", "mq9", "uav_armado")),
-                                    ("armas_panel_da", ("s300vm", "buk_m2e", "pechora_2m"))):
+                                    ("armas_panel_da", ("s300vm", "buk_m2e", "pechora_2m")),
+                                    ("armas_panel_buque", ("lupo", "guaiqueri", "guaicamacuto", "fremm", "grigorovich")),
+                                    ("armas_panel_tierra", ("t72b1", "scorpion90", "bm30", "msta_s", "bmp3"))):
         u = next((x for m in modelos for x in activas if x.get("modelo") == m), None)
+        if u is None and nombre_captura in CREAR_PARA_CAPTURA:  # en la COPIA: se crea una de ejemplo
+            u = _post(n, "/unidades", CREAR_PARA_CAPTURA[nombre_captura])
+            n.pausa(2)
         if u is None:
             print(f"   {nombre_captura}: no hay unidad de {modelos}")
             continue
