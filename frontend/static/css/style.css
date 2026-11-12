@@ -766,3 +766,19 @@ summary.neutral, h4.neutral { color: #7bd389; }
 @media (max-width: 520px) { .arma-datos { grid-template-columns: 1fr; } }
 .tarjeta-modelo .armas-tarjeta { margin: 6px 0; }
 .tarjeta-modelo .armas-tarjeta .arma-mini { width: 76px; }
+
+/* ---------- tablets (pantalla táctil, android/LEEME_ANDROID.md): más mapa, botones para el dedo y el panel de
+   abajo sin palabras cortadas ---------- */
+@media (pointer: coarse) and (max-width: 1400px) {
+  :root { --ancho-izq: 260px; --ancho-der: 220px; }
+  button, select, input[type="text"], input[type="number"], input[type="search"] { min-height: 36px; }
+  .oob-item { padding-top: 9px; padding-bottom: 9px; }
+  .pu-datos .det-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pu-datos dt { overflow-wrap: normal; word-break: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .leaflet-touch .leaflet-bar a { width: 40px; height: 40px; line-height: 40px; }
+}
+@media (pointer: coarse) and (max-width: 1200px) {
+  .pu-cuerpo { overflow-y: auto; grid-template-columns: 140px minmax(0, 1fr) minmax(0, 1.2fr); }
+  .pu-col { min-width: 0; }
+  .pu-notas { display: block; grid-column: 2 / -1; } /* «Armamento y notas» (fotos de las armas) también en tablet */
+}

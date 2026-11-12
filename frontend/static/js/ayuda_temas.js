@@ -574,6 +574,19 @@
         el Tomahawk. Los que en la realidad no tienen misiles antibuque (Type 42, Rothesay, submarinos Tipo 209 y 212A) no
         pueden lanzar: usan sus cañones o sus torpedos. El misil de cada uno se ve en «Armamento y notas».</p>`,
     },
+    {
+      id: "tablet", seccion: "Primeros pasos", titulo: "Cóndor en una tablet Android",
+      claves: "tablet android instalar celular movil termux sin pc sin internet app pantalla de inicio tactil",
+      texto: `<p>El Cóndor completo (servidor, mapas, satélite y base de datos) puede funcionar dentro de una
+        <b>tablet Android</b>, sin la PC y sin internet. En la PC se arma el paquete con
+        <code>tools\empaquetar_android.py</code> (lleva una copia de la base: los mismos ejercicios y cuentas) y en la
+        tablet se instala una vez con la aplicación gratuita <b>Termux</b>; los pasos están en
+        <code>android/LEEME_ANDROID.md</code>.</p>
+        <p>Después, el widget <b>Condor</b> de la pantalla de inicio arranca el simulador y lo abre en el navegador; con
+        «Agregar a la pantalla de inicio» queda como una aplicación a pantalla completa. La pantalla se adapta al tacto:
+        botones más grandes, más mapa y el panel de abajo completo. La tablet también puede ser el servidor del aula por
+        wifi (<code>CONDOR_RED=1 condor</code>).</p>`,
+    },
     // ------------------------------------------------------------------ guerra electrónica
     {
       id: "ge", seccion: "Guerra electrónica", titulo: "Interferencia y escucha",
