@@ -31,6 +31,7 @@ EXCLUIR_NOMBRES = {"__pycache__", "venv", "respaldos", "tests", "pruebas", "maqu
 EXCLUIR_SUFIJOS = {".pyc", ".db", ".db-wal", ".db-shm", ".log", ".bak"}
 YA_COMPRIMIDOS = {".jpg", ".jpeg", ".png", ".webp", ".webm", ".mp4", ".zip", ".gz", ".z", ".pbf", ".mbtiles"}
 TEXTO_LF = {".sh"}  # bash en Android: saltos de linea LF aunque el archivo se haya editado en Windows
+CRLF, LF = bytes([13, 10]), bytes([10])
 
 
 def archivos() -> list[Path]:
@@ -57,7 +58,7 @@ def agregar(z: zipfile.ZipFile, f: Path, nombre: str) -> None:
         info = zipfile.ZipInfo(nombre)
         info.external_attr = 0o755 << 16  # ejecutable
         info.compress_type = zipfile.ZIP_DEFLATED
-        z.writestr(info, f.read_bytes().replace(b"\r\n", b"\n"))
+        z.writestr(info, f.read_bytes().replace(CRLF, LF))
     else:
         metodo = zipfile.ZIP_STORED if f.suffix.lower() in YA_COMPRIMIDOS else zipfile.ZIP_DEFLATED
         z.write(f, nombre, compress_type=metodo)
@@ -99,6 +100,9 @@ def main() -> int:
     args = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")
     r = armar(Path(args.salida), not args.sin_base)
+    # junto al paquete, el script que lo instala sin descomprimirlo a mano (android/instalar_desde_zip.sh)
+    lado = Path(args.salida).parent / "instalar_desde_zip.sh"
+    lado.write_bytes((RAIZ / "android" / "instalar_desde_zip.sh").read_bytes().replace(CRLF, LF))
     print(f"{args.salida}: {r['archivos']} archivos, {r['mb']} MB ({r['zip_mb']} MB comprimido)"
           f"{'' if args.sin_base else ', con una copia de la base de esta PC'}")
     return 0

@@ -1,11 +1,13 @@
-# Paquetes de Python del Cóndor en una tablet Android (Termux). Igual que backend/requirements.txt, menos lo que no
-# se usa en la tablet: PostgreSQL (psycopg), las pruebas (pytest, httpx) y los aceleradores de uvicorn[standard], que
-# habria que compilar. websockets va aparte porque uvicorn sin [standard] no lo trae (el mapa en vivo lo necesita).
+# Paquetes de Python del Cóndor en una tablet Android (Termux). Termux trae Python 3.14, más nuevo que el de la PC:
+# por eso van versiones más recientes que backend/requirements.txt (las de la PC no compilan en 3.14; estas pasan las
+# pruebas del Cóndor con Python 3.14). Faltan, a propósito, PostgreSQL (psycopg), las pruebas (pytest, httpx), los
+# certificados del aula (cryptography) y los aceleradores de uvicorn[standard], que habría que compilar. websockets va
+# aparte porque uvicorn sin [standard] no lo trae (el mapa en vivo lo necesita).
 # Pillow viene del paquete python-pillow de Termux (ver instalar_condor.sh).
-fastapi==0.115.0
-uvicorn==0.30.6
-websockets>=12
-sqlalchemy==2.0.35
-alembic>=1.13.3
-pydantic==2.9.2
-python-multipart==0.0.9
+fastapi==0.129.2
+uvicorn==0.39.0
+websockets==17.4
+sqlalchemy==2.0.57
+alembic==1.20.1
+pydantic==2.12.5
+python-multipart==0.0.33

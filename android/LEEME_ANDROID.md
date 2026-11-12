@@ -25,6 +25,13 @@ Desde **F-Droid** (https://f-droid.org; la versión de Termux de Play Store est�
 
 ## 3. Copiar el paquete
 
+**Forma corta:** copie a **Descargas** de la tablet `Condor_Android.zip` y `instalar_desde_zip.sh` (los dos quedan en
+`dist`), abra Termux y escriba `termux-setup-storage` y luego `bash ~/storage/downloads/instalar_desde_zip.sh`:
+descomprime e instala todo solo (y deja el registro en Descargas/condor_instalacion.log). Si usa esta forma, salte al
+paso 5.
+
+**Forma manual:**
+
 Pase `Condor_Android.zip` a la carpeta **Descargas** de la tablet (cable USB, pendrive con adaptador OTG o tarjeta) y
 **descomprímalo ahí** con el administrador de archivos: queda la carpeta `Descargas/Condor_Android`. Si el
 administrador de archivos no puede (son muchos archivos), descomprímalo desde Termux después de

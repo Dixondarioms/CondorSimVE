@@ -23,11 +23,18 @@ if [ ! -f "$ORIGEN/backend/app/main.py" ]; then
 fi
 
 echo "-- 1/4 Paquetes de Termux (Python, imágenes y compiladores)..."
-pkg update -y
-pkg install -y python python-pip python-pillow rust binutils clang make curl
+# sin preguntas: si un archivo de configuracion cambio, se queda el nuevo del paquete
+export DEBIAN_FRONTEND=noninteractive
+APT_OPC=(-y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confnew)
+apt-get update
+apt-get "${APT_OPC[@]}" upgrade
+apt-get "${APT_OPC[@]}" install python python-pip python-pillow rust binutils clang make curl
 
 echo "-- 2/4 Copiando el Cóndor (mapas incluidos; puede tardar unos minutos)..."
 mkdir -p "$DESTINO"
+if [ "$(cd "$ORIGEN" && pwd -P)" = "$(cd "$DESTINO" && pwd -P)" ]; then
+    echo "   (ya está en $DESTINO: no hace falta copiar)"
+else
 BASE_PREVIA=""
 if [ -f "$DESTINO/backend/simulador_fenix.db" ]; then
     BASE_PREVIA="$DESTINO/backend/simulador_fenix.db.conservada"
@@ -37,6 +44,7 @@ fi
 cp -rf "$ORIGEN/backend" "$ORIGEN/frontend" "$ORIGEN/android" "$DESTINO/"
 if [ -n "$BASE_PREVIA" ]; then
     mv -f "$BASE_PREVIA" "$DESTINO/backend/simulador_fenix.db"
+fi
 fi
 chmod +x "$DESTINO"/android/*.sh
 
@@ -52,12 +60,13 @@ export DISABLE_SQLALCHEMY_CEXT=1
 ./venv/bin/python -m pip install -r android/requirements-android.txt
 
 echo "-- 4/4 Acceso directo «Cóndor» y comandos..."
-mkdir -p "$HOME/.shortcuts" "$HOME/bin"
+mkdir -p "$HOME/.shortcuts"
 cp -f android/condor.sh "$HOME/.shortcuts/Condor"
 cp -f android/detener.sh "$HOME/.shortcuts/Detener Condor"
 chmod +x "$HOME/.shortcuts/Condor" "$HOME/.shortcuts/Detener Condor"
-ln -sf "$DESTINO/android/condor.sh" "$HOME/bin/condor"
-ln -sf "$DESTINO/android/detener.sh" "$HOME/bin/detener-condor"
+# los comandos van en $PREFIX/bin, que Termux siempre revisa (~/bin no está en su PATH)
+ln -sf "$DESTINO/android/condor.sh" "$PREFIX/bin/condor"
+ln -sf "$DESTINO/android/detener.sh" "$PREFIX/bin/detener-condor"
 
 echo
 echo "Listo. Para abrir el Cóndor:"
