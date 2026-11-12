@@ -217,6 +217,14 @@
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
       "pagina": "https://commons.wikimedia.org/wiki/File:USS_Arleigh_Burke_(DDG_51)_steams_through_the_Mediterranean_Sea.jpg"
     },
+    "arrastrero": {
+      "foto": "/static/fotos/ref_arrastrero.jpg",
+      "obra": "Brixham Trawler BM482 off Berry Head",
+      "autor": "Partonez",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Brixham_Trawler_BM482_off_Berry_Head.jpg"
+    },
     "as332": {
       "foto": "/static/fotos/ref_as332.jpg",
       "obra": "Kuwait AS332, Super Puma, helicopter",
@@ -264,6 +272,14 @@
       "licencia": "CC BY-SA 2.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:ATR_72-600_in_flight.jpg"
+    },
+    "atunero": {
+      "foto": "/static/fotos/ref_atunero.jpg",
+      "obra": "French tuna purse seiner",
+      "autor": "Jose Cort",
+      "licencia": "Public domain",
+      "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+      "pagina": "https://commons.wikimedia.org/wiki/File:French_tuna_purse_seiner.jpg"
     },
     "av8b": {
       "foto": "/static/fotos/ref_av8b.jpg",
@@ -585,6 +601,14 @@
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:Buque_de_desembarque_tipo_LST_clase_Capana_-_T-63_Goajira.JPG"
     },
+    "carga_general": {
+      "foto": "/static/fotos/ref_carga_general.jpg",
+      "obra": "General cargo ship 'Resilient Africa' (IMO 9257204) at the anchorage of the Port of Haifa, Israel - 2023-09-29 (DSC0354 - DSC0377; vignetting removal; G'MIC Median Blend (23 images) except for sea, Tone Enhance).guetzli",
+      "autor": "DmitTrix",
+      "licencia": "CC BY 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:General_cargo_ship_%27Resilient_Africa%27_(IMO_9257204)_at_the_anchorage_of_the_Port_of_Haifa,_Israel_-_2023-09-29_(DSC0354_-_DSC0377;_vignetting_removal;_G%27MIC_Median_Blend_(23_images)_except_for_sea,_Tone_Enhance).guetzli.jpg"
+    },
     "caza_embarcado": {
       "foto": "/static/fotos/ref_caza_embarcado.jpg",
       "obra": "Rafale M of Flottile 12F in flight 2014",
@@ -633,6 +657,22 @@
       "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:CASA_CN-235_of_Royal_Moroccan_Air_Force.JPG"
     },
+    "contenedores_feeder": {
+      "foto": "/static/fotos/ref_contenedores_feeder.jpg",
+      "obra": "BF Fortaleza (IMO 9130432) River Thames 2020",
+      "autor": "Niels Johannes",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:BF_Fortaleza_(IMO_9130432)_River_Thames_2020.jpg"
+    },
+    "contenedores_np": {
+      "foto": "/static/fotos/ref_contenedores_np.jpg",
+      "obra": "S Santiago (ship, 2006)",
+      "autor": "Andrew Bowden from London, United Kingdon",
+      "licencia": "CC BY-SA 2.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:S_Santiago_(ship,_2006).jpg"
+    },
     "crotale": {
       "foto": "/static/fotos/ref_crotale.jpg",
       "obra": "Crotale system",
@@ -648,6 +688,14 @@
       "licencia": "CC BY 2.0",
       "url_licencia": "https://creativecommons.org/licenses/by/2.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:BGM-109_Tomahawk_Ship-launched_Cruise_Missile_underview.jpg"
+    },
+    "crucero_turistico": {
+      "foto": "/static/fotos/ref_crucero_turistico.jpg",
+      "obra": "Vision of The Seas cruise ship by Royal Caribbean International, in Alaska",
+      "autor": "Matthew T Rader",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Vision_of_The_Seas_cruise_ship_by_Royal_Caribbean_International,_in_Alaska.jpg"
     },
     "d30": {
       "foto": "/static/fotos/ref_d30.jpg",
@@ -961,6 +1009,14 @@
       "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:KAI_FA-50_Fighting_Eagle_of_ROK_AirForce_(cropped).jpg"
     },
+    "ferry": {
+      "foto": "/static/fotos/ref_ferry.jpg",
+      "obra": "Terminal de Conferry",
+      "autor": "Jujovar2010",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Terminal_de_Conferry.JPG"
+    },
     "fmtv": {
       "foto": "/static/fotos/ref_fmtv.jpg",
       "obra": "Oshkosh FMTV trucks of Israel Defense Forces",
@@ -1016,6 +1072,14 @@
       "licencia": "CC BY-SA 2.0",
       "url_licencia": "https://creativecommons.org/licenses/by-sa/2.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:Globaleye_(53063401861).jpg"
+    },
+    "granelero": {
+      "foto": "/static/fotos/ref_granelero.jpg",
+      "obra": "Bulk carrier Sea Smile at the Kwinana Bulk Terminal, June 2022 01",
+      "autor": "Calistemon",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Bulk_carrier_Sea_Smile_at_the_Kwinana_Bulk_Terminal,_June_2022_01.jpg"
     },
     "grigorovich": {
       "foto": "/static/fotos/ref_grigorovich.jpg",
@@ -1593,6 +1657,14 @@
       "url_licencia": "https://creativecommons.org/licenses/by/4.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:IAI_Harop_PAS_2013_01.jpg"
     },
+    "metanero": {
+      "foto": "/static/fotos/ref_metanero.jpg",
+      "obra": "Shahamah LNG carrier",
+      "autor": "青空白帆",
+      "licencia": "CC BY 2.1 jp",
+      "url_licencia": "https://creativecommons.org/licenses/by/2.1/jp/deed.en",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Shahamah_LNG_carrier.jpg"
+    },
     "mh47g": {
       "foto": "/static/fotos/ref_mh47g.jpg",
       "obra": "Boeing CH-47 Chinook 13 (53788175406)",
@@ -1953,6 +2025,14 @@
       "url_licencia": "https://commons.wikimedia.org/wiki/Commons:Licensing",
       "pagina": "https://commons.wikimedia.org/wiki/File:P-8A_Poseidon_Executes_Training_Flight_(9341127).jpg"
     },
+    "palangrero": {
+      "foto": "/static/fotos/ref_palangrero.jpg",
+      "obra": "Longliner Argenova-XXI",
+      "autor": "GeSHaFish",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Longliner_Argenova-XXI.jpg"
+    },
     "pampa": {
       "foto": "/static/fotos/ref_pampa.jpg",
       "obra": "IA-63 Pampa Ejercicio Integrador 2018",
@@ -2009,6 +2089,30 @@
       "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
       "pagina": "https://commons.wikimedia.org/wiki/File:Pechora-2M_-_missile_launcher_1.jpg"
     },
+    "penero": {
+      "foto": "/static/fotos/ref_penero.jpg",
+      "obra": "Peñero en Bahia de Juan Griego, Venezuela",
+      "autor": "Wilfredor",
+      "licencia": "CC BY-SA 3.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Pe%C3%B1ero_en_Bahia_de_Juan_Griego,_Venezuela.jpg"
+    },
+    "petrolero_aframax": {
+      "foto": "/static/fotos/ref_petrolero_aframax.jpg",
+      "obra": "Brosen luckylady gdansk",
+      "autor": "Brosen",
+      "licencia": "CC BY 2.5",
+      "url_licencia": "https://creativecommons.org/licenses/by/2.5",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Brosen_luckylady_gdansk.jpg"
+    },
+    "petrolero_vlcc": {
+      "foto": "/static/fotos/ref_petrolero_vlcc.jpg",
+      "obra": "VLCC Esso Wilhelmshaven",
+      "autor": "Murgatroyd49",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:VLCC_Esso_Wilhelmshaven.jpg"
+    },
     "peykaap": {
       "foto": "/static/fotos/ref_peykaap.jpg",
       "obra": "Chitgar Naval Exhibition - Peykaap III",
@@ -2064,6 +2168,14 @@
       "licencia": "CC0",
       "url_licencia": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
       "pagina": "https://commons.wikimedia.org/wiki/File:20190206_RC-135_Rivet_Joint_Kadena_AB-25.jpg"
+    },
+    "ro_ro": {
+      "foto": "/static/fotos/ref_ro_ro.jpg",
+      "obra": "Car carrier MEDITERRANEAN SEA en mer (2)",
+      "autor": "Farid mernissi",
+      "licencia": "CC BY-SA 4.0",
+      "url_licencia": "https://creativecommons.org/licenses/by-sa/4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Car_carrier_MEDITERRANEAN_SEA_en_mer_(2).jpg"
     },
     "roland2": {
       "foto": "/static/fotos/ref_roland2.jpg",

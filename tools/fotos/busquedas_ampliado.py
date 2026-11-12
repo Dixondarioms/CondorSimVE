@@ -282,6 +282,21 @@ BUSQUEDAS = {
     "b777": ["Boeing 777-300ER landing", "Boeing 777-300ER flight", "777-300ER"],
     "b787": ["Boeing 787-9 landing", "Boeing 787-9 Dreamliner flight", "787-9 Dreamliner"],
     "b747f": ["Boeing 747-8F landing", "Boeing 747-8F flight", "747-8 Freighter"],
+    # buques mercantes y pesqueros (trafico civil)
+    "contenedores_np": ["Neopanamax container ship at sea", "container ship underway", "large container ship at sea"],
+    "contenedores_feeder": ["feeder container ship", "small container ship underway", "container feeder vessel"],
+    "petrolero_vlcc": ["VLCC tanker at sea", "very large crude carrier underway", "VLCC oil tanker"],
+    "petrolero_aframax": ["Aframax tanker at sea", "Aframax tanker underway", "Aframax oil tanker"],
+    "granelero": ["Panamax bulk carrier at sea", "bulk carrier underway", "bulk carrier ship"],
+    "metanero": ["LNG carrier at sea", "LNG carrier underway", "LNG tanker"],
+    "carga_general": ["general cargo ship at sea", "general cargo ship underway", "multipurpose cargo ship"],
+    "ro_ro": ["car carrier ship at sea", "ro-ro car carrier underway", "vehicle carrier ship"],
+    "ferry": ["Conferry Margarita", "ro-pax ferry at sea", "passenger car ferry underway"],
+    "crucero_turistico": ["cruise ship at sea Caribbean", "cruise ship underway", "cruise ship at sea"],
+    "arrastrero": ["fishing trawler at sea", "stern trawler underway", "fishing trawler"],
+    "atunero": ["tuna purse seiner", "purse seiner fishing vessel", "tuna seiner at sea"],
+    "palangrero": ["longliner fishing vessel", "longline fishing boat at sea", "tuna longliner"],
+    "penero": ["Venezuela pescadores lancha", "artisanal fishing boat Caribbean", "pirogue fishing boat outboard"],
 }
 
 # modelos de siempre que cambiaron de identidad (su foto anterior era de otra aeronave)
