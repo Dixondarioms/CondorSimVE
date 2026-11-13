@@ -80,7 +80,8 @@ de la tablet se conserva (no se reemplaza por la de la PC). Para usar la de la P
 - **Se cierra al apagar la pantalla**: en Ajustes de Android → Aplicaciones → Termux → Batería, elija **Sin
   restricciones**.
 - **El widget «Condor» no hace nada (Xiaomi, Redmi, POCO)**: el sistema no deja arrancar a Termux:Widget. En Ajustes →
-  Aplicaciones → **Termux:Widget** y luego en **Termux**, active **Inicio automático**. En Termux active también
+  Aplicaciones → **Autoencendido en segundo plano** (en tablets más viejas: **Inicio automático**), active
+  **Termux** y **Termux:Widget**. En Termux active también
   **Mostrar sobre otras apps** y, en Otros permisos, **Mostrar ventanas emergentes mientras se ejecuta en segundo
   plano** (para que pueda abrir el navegador).
 - **El ícono del Cóndor en Chrome dice «No se puede acceder a este sitio»**: el servidor no está corriendo (por ejemplo,
