@@ -108,6 +108,7 @@
           <span class="etiqueta" id="reloj-etiqueta">TIEMPO REAL:</span>
           <b id="reloj-valor">--:--</b>
         </div>
+        <button id="btn-pantallas" class="solo-director secundario" type="button" title="Abrir la pantalla de una repartición (o la vista completa) en una ventana nueva del navegador">Pantallas…</button>
         <button id="btn-videowall" class="solo-control secundario" type="button" title="Centro de operaciones: mapa a pantalla completa sin paneles (tecla V)">Videowall</button>
         <button id="btn-ayuda" class="secundario btn-ayuda" type="button" title="Ayuda: cómo funciona el Cóndor y recorrido guiado (tecla F1)"><span aria-hidden="true">?</span> Ayuda</button>
         <button id="btn-informe" class="secundario" type="button">Informe</button>
@@ -534,6 +535,7 @@
                 <option value="rojo">Bando Rojo</option>
               </select>
             </label>
+            <button id="btn-pantallas-consola" type="button" class="solo-director" title="Abrir la pantalla de una repartición en una ventana nueva del navegador">Abrir pantalla en ventana nueva…</button>
           </details>
 
           <details id="sec-trafico">
@@ -1387,6 +1389,33 @@
       <div class="fila">
         <button type="button" id="gp-cancelar" class="secundario">Cancelar</button>
         <button type="submit" id="gp-guardar" class="primario">Guardar plantilla</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="dlg-pantallas" aria-labelledby="pan-titulo">
+    <form id="pan-form" method="dialog">
+      <h3 id="pan-titulo">Abrir una pantalla en una ventana nueva</h3>
+      <p class="ayuda">Cada ventana se conecta con su propia perspectiva, así que puede tener varias abiertas a la vez
+        (una por repartición) sin pisarse ni interferir con esta. En <b>solo lectura</b> la ventana muestra lo que esa
+        repartición ve; si le da órdenes, además emite desde ella (para eso el bando debe estar a cargo del instructor,
+        en CONSOLA → Dirección).</p>
+      <div class="grid">
+        <label class="mini">Bando
+          <select id="pan-bando">
+            <option value="azul">Bando Azul</option>
+            <option value="rojo">Bando Rojo</option>
+            <option value="completa">Vista completa (consola del director)</option>
+          </select>
+        </label>
+        <label class="mini" id="pan-fila-puesto">Repartición
+          <select id="pan-puesto"></select>
+        </label>
+      </div>
+      <label class="chk" id="pan-fila-emitir"><input type="checkbox" id="pan-emitir"><span>Esa ventana puede emitir órdenes como la repartición (si no, queda en solo lectura)</span></label>
+      <p id="pan-aviso" class="ayuda advertencia" hidden></p>
+      <div class="fila">
+        <button type="button" id="pan-cancelar" class="secundario">Cancelar</button>
+        <button type="button" id="pan-abrir" class="primario">Abrir ventana</button>
       </div>
     </form>
   </dialog>

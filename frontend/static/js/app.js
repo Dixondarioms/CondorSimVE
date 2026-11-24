@@ -44,6 +44,8 @@
   async function api(metodo, ruta, cuerpo, silencioso = false) {
     const cabeceras = { "Content-Type": "application/json" };
     if (app.conduce) cabeceras["X-Conduce-Bando"] = app.conduce; // instructor conduciendo un bando
+    if (app.conduce && app.pantalla) cabeceras["X-Conduce-Puesto"] = app.pantalla.puesto; // ... desde esa reparticion
+    if (soloLectura()) cabeceras["X-Solo-Lectura"] = "1"; // la ventana de esa reparticion abierta en solo lectura no escribe nada
     const resp = await fetch(ruta, {
       method: metodo,
       headers: cabeceras,
@@ -97,7 +99,14 @@
   const esAlumno = () => !!app.usuario && esBando(app.usuario.rol);
   /** Puesto del alumno dentro de su bando (los demas roles no tienen restricciones por puesto). */
   const puestoActual = () => (esAlumno() ? Logica.puestoDe(app.usuario.puesto).id : "comandante");
-  const puedeFuncion = (f) => !esAlumno() || Logica.puestoPuede(puestoActual(), f);
+  /** Ventana abierta como la pantalla de una reparticion desde la PC del director (selector de pantallas):
+   *  {bando, puesto, emitir}. La ventana se comporta como un alumno de ese bando, pero sigue siendo el director. */
+  const enPantalla = () => !!app.pantalla;
+  /** Esa pantalla en solo lectura: muestra todo lo de la reparticion pero no emite ordenes. */
+  const soloLectura = () => !!app.pantalla && !app.pantalla.emitir;
+  const puedeFuncion = (f) => !soloLectura() && (!esAlumno() || Logica.puestoPuede(puestoActual(), f));
+  /** Sigue siendo la ventanilla del director (su consola, o una pantalla suya abierta como reparticion). */
+  const esVentanaDirector = () => esInstructor() || enPantalla();
   /** Bando cuya perspectiva se muestra (null = vista completa). */
   const bandoVista = () => {
     const v = app.data ? app.data.vista : null;
@@ -120,6 +129,7 @@
 
   function mostrarLogin() {
     app.conduce = null;
+    app.pantalla = null;
     app.usuarioReal = null;
     cerrarWs();
     clearInterval(app.relojTimer);
@@ -279,6 +289,8 @@
     $("mp-nombre").textContent = app.usuario.username;
     $("mp-rol").textContent = esBando(rol) ? `${rol} · ${Logica.etiquetaPuesto(puestoActual())}` : rol;
     document.querySelectorAll(".solo-instructor").forEach((e) => (e.hidden = rol !== "instructor"));
+    // los controles del director se ocultan en la pantalla de una reparticion, salvo el selector de pantallas
+    document.querySelectorAll(".solo-director").forEach((e) => (e.hidden = !esVentanaDirector()));
     document.querySelectorAll(".solo-alumno").forEach((e) => (e.hidden = !esBando(rol)));
     document.querySelectorAll(".solo-control").forEach((e) => (e.hidden = !(rol === "instructor" || rol === "observador")));
     document.querySelectorAll(".solo-dibuja").forEach((e) => (e.hidden = !(rol === "instructor" || esBando(rol))));
@@ -286,7 +298,7 @@
     const puesto = Logica.puestoDe(puestoActual());
     $("puesto-nombre").textContent = Logica.etiquetaPuesto(puesto.id);
     $("puesto-desc").textContent = puesto.descripcion;
-    $("sec-orden").hidden = !esBando(rol) || !puesto.funciones.some((f) => f !== "listo");
+    $("sec-orden").hidden = !esBando(rol) || soloLectura() || !puesto.funciones.some((f) => f !== "listo");
     $("sec-aviacion").hidden = !esBando(rol) || !puedeFuncion("despegar");
     if (app.chat) app.chat.configurarRol();
     activarPestana("fuerzas");
@@ -1689,7 +1701,7 @@
   function alternarEnLote(id) {
     const u = app.porId.get(id);
     if (!u || !esAlumno() || u.bando !== app.usuario.rol || u.estado !== "activa" || u.tipo === "base") return false;
-    if (!Logica.puestoPuede(puestoActual(), Logica.funcionDeOrden(u, null, claseDe(u)))) return false;
+    if (!puedeFuncion(Logica.funcionDeOrden(u, null, claseDe(u)))) return false;
     if (!app.unidadOrden) { seleccionar(id, "lista"); return true; }
     if (id === app.unidadOrden) return true;
     if (app.lote.has(id)) app.lote.delete(id); else app.lote.add(id);
@@ -1713,7 +1725,7 @@
         objetivo.value = String(id);
       } else if (propia && Logica.operaAeronaves(u)) {
         app.baseSeleccionada = id;
-      } else if (propia && u.estado === "activa" && u.tipo !== "base" && Logica.puestoPuede(puestoActual(), Logica.funcionDeOrden(u, null, claseDe(u)))) {
+      } else if (propia && u.estado === "activa" && u.tipo !== "base" && puedeFuncion(Logica.funcionDeOrden(u, null, claseDe(u)))) {
         if (app.unidadOrden !== id) { app.unidadOrden = id; app.lote.clear(); app.waypoints = []; app.obraSitio = null; app.patrullaPunto = null; app.interferenciaPunto = null; dibujarWaypoints(); if (app.modoOrden === "construir") dibujarSitioObra(); }
       }
     } else if (esInstructor() && u) {
@@ -2203,7 +2215,7 @@
   /** Puede encender/apagar el radar o liberar/retener el fuego de esta unidad (instructor, o el puesto que la conduce). */
   function puedeDefensa(u) {
     if (esInstructor()) return true;
-    return esAlumno() && u.bando === app.usuario.rol && Logica.puestoPuede(puestoActual(), Logica.funcionDeOrden(u, "defensa", claseDe(u)));
+    return esAlumno() && u.bando === app.usuario.rol && puedeFuncion(Logica.funcionDeOrden(u, "defensa", claseDe(u)));
   }
 
   // ---------- aviacion: envio de grupos de caza ----------
@@ -2804,9 +2816,9 @@
       el.querySelector(".rotulo-bando").textContent = nombreDeBando(bando).toUpperCase();
     }
     // el reloj lo maneja el director; en un ensayo del TIEM, tambien el Comandante y el JEM del bando que ensaya; en un
-    // ejercicio de practica (como el Tutorial), el alumno
-    const manejaReloj = esInstructor() || (esAlumno() && !!esc.practica)
-      || (esAlumno() && !!esc.ensayo_de && esc.ensayo_bando === app.usuario.rol && puedeFuncion("listo"));
+    // ejercicio de practica (como el Tutorial), el alumno. Una ventana en solo lectura nunca (ni sus atajos de teclado).
+    const manejaReloj = !soloLectura() && (esInstructor() || (esAlumno() && !!esc.practica)
+      || (esAlumno() && !!esc.ensayo_de && esc.ensayo_bando === app.usuario.rol && puedeFuncion("listo")));
     $("controles-reloj").hidden = !manejaReloj;
     if (manejaReloj) {
       const enMarcha = esc.estado === "activo";
@@ -3159,6 +3171,7 @@
   }
   $("btn-difundir-radar").addEventListener("click", () => {
     if (!app.data) return;
+    if (soloLectura()) return toast("Esta ventana está en solo lectura: no envía mensajes.");
     const esc = app.data.escenario;
     const texto = Situacion.mensajeRadar(app.data.sensores || [], esc.turno_actual, horaDelTurno(esc.turno_actual),
       (id) => { const c = claseDe({ clase: id }); return c ? c.nombre : id; });
@@ -3346,7 +3359,7 @@
       alDibujar: (b) => { app.dibujando = b; },
     });
     app.graficos.conectar(app.map);
-    app.chat = Chat.crear({ enviar: enviarWs, usuario: () => app.usuario, toast });
+    app.chat = Chat.crear({ enviar: enviarWs, usuario: () => app.usuario, toast, soloLectura });
     app.chat.conectar();
     app.chat.configurarRol();
     app.videowall = Videowall.crear({
@@ -3606,15 +3619,19 @@
     }
   }
 
-  /** ?modo=videowall&escenario=ID&vista=azul|rojo|completa (se aplica una sola vez, tras iniciar sesion) */
+  /** ?escenario=ID&vista=azul|rojo|completa[&puesto=comandante|jem|a1|a2|a3|a3da|a4|ce][&emitir=1][&modo=videowall]
+   *  Se aplica tras iniciar sesion (y cada vez que se vuelve a entrar, para que la ventana de una reparticion se
+   *  reabra igual). El encuadre ?lat=&lon=&zoom= es solo del primer estado. */
   function aplicarParametrosUrl() {
-    const u = app.urlInicial;
+    const u = Videowall.parametrosDeUrl();
     app.urlInicial = { lugar: u.lugar }; // el encuadre se aplica al llegar el primer estado
     if (u.escenario && [...$("escenario").options].some((o) => o.value === String(u.escenario))) {
       $("escenario").value = String(u.escenario);
       cambiarEscenario();
     }
-    if (u.vista && esInstructor()) {
+    if (esBando(u.vista) && u.puesto && esInstructor()) {
+      aplicarPantalla(u.vista, u.puesto, u.emitir, { silencio: true }); // ventana de una reparticion
+    } else if (u.vista && esInstructor()) {
       $("cfg-vista").value = u.vista;
       $("cfg-vista").dispatchEvent(new Event("change"));
     }
@@ -3636,7 +3653,8 @@
     ws.onopen = () => {
       $("estado-conexion").className = "conexion on";
       $("estado-conexion").title = "conectado";
-      if ((esInstructor() || app.conduce) && app.vista !== "completa") ws.send(JSON.stringify({ vista: app.vista }));
+      // la perspectiva de una reparticion (o "ver como") se manda tambien al reconectar: cada ventana tiene la suya
+      if (app.vista && app.vista !== "completa") ws.send(JSON.stringify({ vista: app.vista }));
       app.wsAlive = setInterval(() => ws.readyState === 1 && ws.send("ping"), 25000);
     };
     ws.onmessage = (ev) => {
@@ -3671,6 +3689,9 @@
   }
 
   function cambiarEscenario() {
+    const pantalla = app.pantalla;
+    // la ventana de una reparticion conserva su perspectiva: se quita y se vuelve a aplicar con el escenario nuevo
+    if (pantalla) dejarDeConducir(false);
     const v = $("escenario").value;
     app.escenarioId = v ? parseInt(v, 10) : null;
     app.encuadrado = false;
@@ -3693,6 +3714,7 @@
     limpiarCapasVivas();
     conectar();
     if (esInstructor() && app.escenarioId) enSilencio(cargarAsignados());
+    if (pantalla) aplicarPantalla(pantalla.bando, pantalla.puesto, pantalla.emitir, { silencio: true });
   }
 
   // ---------- consola del instructor: usuarios ----------
@@ -4033,25 +4055,41 @@
     enSilencio(api("PATCH", rutaEsc("/config"), cuerpo).then(() => toast("Calendario aplicado", true)));
   });
 
-  // ---------- el instructor conduce un bando (conduccion "instructor") ----------
-  /** Entra como comandante del bando: ve su niebla de guerra y da sus ordenes; las herramientas del instructor se
-   * ocultan hasta volver. El servidor lo admite solo si el escenario le encarga ese bando. */
-  function conducirBando(bando) {
+  // ---------- la PC del director: pantalla de una reparticion (y conduccion de un bando) ----------
+  /** La ventana pasa a mostrarse como el bando/puesto elegidos: la misma interfaz que ve esa reparticion (su niebla
+   * de guerra, sus herramientas y las ordenes de su area); las del instructor se ocultan hasta volver. Si `emitir`
+   * es falso es solo lectura: la ventana no manda ninguna orden. El servidor solo la acepta si el escenario encarga
+   * ese bando al instructor. */
+  function aplicarPantalla(bando, puesto, emitir, { silencio = false } = {}) {
     app.usuarioReal = app.usuarioReal || app.usuario;
-    app.conduce = bando;
-    app.usuario = { ...app.usuarioReal, rol: bando, puesto: "comandante" };
+    app.pantalla = { bando, puesto, emitir };
+    app.conduce = emitir ? bando : null;
+    app.usuario = { ...app.usuarioReal, rol: bando, puesto };
     app.vista = bando;
     if (app.ws && app.ws.readyState === 1) app.ws.send(JSON.stringify({ vista: bando }));
     document.body.classList.add("conduciendo");
     $("barra-conduce").hidden = false;
-    $("barra-conduce-texto").textContent = `Usted conduce el bando ${bando === "azul" ? "Azul" : "Rojo"} (Comandante)`;
+    const nb = bando === "azul" ? "Azul" : "Rojo";
+    $("barra-conduce-texto").textContent = emitir
+      ? `Usted conduce el bando ${nb} (${Logica.etiquetaPuesto(puesto)})`
+      : `Pantalla de ${Logica.etiquetaPuesto(puesto)} del bando ${nb} · solo lectura`;
     aplicarRol();
-    toast(`Conduce el bando ${bando === "azul" ? "Azul" : "Rojo"}: sus órdenes salen como las del comandante del bando.`, true);
+    if (!silencio) {
+      toast(emitir
+        ? `Conduce el bando ${nb} como ${Logica.etiquetaPuesto(puesto)}: sus órdenes salen desde esa repartición.`
+        : `Viendo la pantalla de ${Logica.etiquetaPuesto(puesto)} del bando ${nb} (solo lectura).`, true);
+    }
+  }
+
+  /** Entra como comandante del bando (botones «Conducir Azul / Conducir Rojo»). */
+  function conducirBando(bando) {
+    aplicarPantalla(bando, "comandante", true);
   }
 
   function dejarDeConducir(avisar = true) {
-    if (!app.conduce) return;
+    if (!app.pantalla && !app.conduce) return;
     app.conduce = null;
+    app.pantalla = null;
     app.usuario = app.usuarioReal;
     app.usuarioReal = null;
     app.vista = "completa";
@@ -4062,12 +4100,13 @@
     if (avisar) toast("De vuelta a la consola del instructor.", true);
   }
 
-  /** Si el escenario deja de encargarle el bando al instructor, vuelve a la consola. */
+  /** Si el escenario deja de encargarle el bando al instructor, la ventana de esa reparticion sigue abierta pero
+   * pasa a solo lectura (en vez de perder la perspectiva y volver a la consola). */
   function revisarConduccion(esc) {
-    if (app.conduce && esc && esc[`conduccion_${app.conduce}`] !== "instructor") {
-      dejarDeConducir(false);
-      toast("El bando ya no está a cargo del instructor: volvió a la consola.");
-    }
+    if (!app.pantalla || !app.pantalla.emitir || !esc) return;
+    if (esc[`conduccion_${app.pantalla.bando}`] === "instructor") return;
+    aplicarPantalla(app.pantalla.bando, app.pantalla.puesto, false, { silencio: true });
+    toast("El bando ya no está a cargo del instructor: esta ventana pasa a solo lectura.");
   }
   $("btn-conducir-azul").addEventListener("click", () => conducirBando("azul"));
   $("btn-conducir-rojo").addEventListener("click", () => conducirBando("rojo"));
@@ -4169,6 +4208,57 @@
     const chk = document.querySelector('[data-capa="niebla"]');
     chk.checked = app.vista !== "completa";
     alternarCapa("niebla", chk.checked);
+  });
+
+  // ---------- selector de pantallas: la PC del director abre la ventana de una reparticion ----------
+  /** Aviso si la ventana no va a poder emitir porque ese bando no esta a cargo del instructor. */
+  function actualizarAvisoPantallas() {
+    const bando = $("pan-bando").value;
+    const completa = bando === "completa";
+    $("pan-fila-puesto").hidden = completa;
+    $("pan-fila-emitir").hidden = completa;
+    const aviso = $("pan-aviso");
+    const esc = app.data && app.data.escenario;
+    const quien = esc && esc[`conduccion_${bando}`];
+    aviso.hidden = completa || !$("pan-emitir").checked || !quien || quien === "instructor";
+    if (!aviso.hidden) {
+      aviso.textContent = `El bando ${bando === "azul" ? "Azul" : "Rojo"} está a cargo de `
+        + `${quien === "ia" ? "el adversario automático" : "los alumnos"}: sin cambiarlo en CONSOLA → Dirección, `
+        + "la ventana se abrirá en solo lectura.";
+    }
+  }
+
+  function mostrarDlgPantallas() {
+    if (esBando(app.vista)) $("pan-bando").value = app.vista;
+    llenarSelect($("pan-puesto"), Logica.PUESTOS.map((p) => [p.id, `${p.sigla} · ${p.nombre}`]));
+    actualizarAvisoPantallas();
+    $("dlg-pantallas").showModal();
+  }
+
+  $("pan-bando").addEventListener("change", actualizarAvisoPantallas);
+  $("pan-emitir").addEventListener("change", actualizarAvisoPantallas);
+  $("pan-cancelar").addEventListener("click", () => $("dlg-pantallas").close());
+  $("btn-pantallas").addEventListener("click", mostrarDlgPantallas);
+  $("btn-pantallas-consola").addEventListener("click", mostrarDlgPantallas);
+  // Enter en el dialogo abre la ventana igual que el boton
+  $("pan-form").addEventListener("submit", (e) => { e.preventDefault(); $("pan-abrir").click(); });
+
+  $("pan-abrir").addEventListener("click", () => {
+    if (!app.escenarioId) { toast("Elija primero un escenario en la cabecera."); return; }
+    const bando = $("pan-bando").value;
+    const q = new URLSearchParams();
+    q.set("escenario", String(app.escenarioId));
+    if (bando !== "completa") {
+      const esc = app.data && app.data.escenario;
+      const quien = esc && esc[`conduccion_${bando}`];
+      const emitir = $("pan-emitir").checked && (!quien || quien === "instructor");
+      q.set("vista", bando);
+      q.set("puesto", $("pan-puesto").value);
+      if (emitir) q.set("emitir", "1");
+    }
+    const w = window.open(`${location.pathname}?${q.toString()}`, "_blank", "width=1500,height=900");
+    if (!w) { toast("El navegador bloqueó la ventana nueva: permita las ventanas emergentes de este sitio."); return; }
+    $("dlg-pantallas").close();
   });
 
   $("btn-modo-agregar").addEventListener("click", () => {

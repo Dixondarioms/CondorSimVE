@@ -75,6 +75,10 @@
         o.textContent = texto;
         sel.appendChild(o);
       }
+      // la pantalla de una reparticion en solo lectura muestra los mensajes pero no escribe
+      const ro = !!(ctx.soloLectura && ctx.soloLectura());
+      $("chat-form").querySelectorAll("select, input, button").forEach((e) => (e.disabled = ro));
+      $("chat-texto").placeholder = ro ? "Solo lectura: no envía mensajes" : "Mensaje…";
     }
 
     /** Solo el instructor conoce la configuracion del enlace (el servidor no se la envia a los demas). */
@@ -96,6 +100,7 @@
         e.preventDefault();
         const texto = $("chat-texto").value.trim();
         if (!texto) return;
+        if (ctx.soloLectura && ctx.soloLectura()) return ctx.toast("Esta ventana está en solo lectura: no envía mensajes.");
         if (!ctx.enviar({ tipo: "chat", canal: $("chat-canal").value, texto })) return ctx.toast("Sin conexión con el servidor: el mensaje no se envió.");
         $("chat-texto").value = "";
       });

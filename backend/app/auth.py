@@ -224,14 +224,19 @@ def requiere_roles(*roles: str):
 
 
 CABECERA_CONDUCE = "X-Conduce-Bando"
+# La reparticion desde la que conduce (ventana de pantallas del director): sin ella es el Comandante.
+CABECERA_PUESTO = "X-Conduce-Puesto"
+# Ventana del director abierta en solo lectura (pantalla de una reparticion): no escribe nada.
+CABECERA_SOLO_LECTURA = "X-Solo-Lectura"
 
 
 @dataclass(frozen=True)
 class InstructorConductor:
     """El instructor dando ordenes por un bando que el escenario le encarga conducir (conduccion "instructor").
 
-    Se comporta como un alumno de ese bando con todas las funciones (Comandante): el resto del codigo usa `rol`,
-    `puesto`, `id` y `username` igual que con un alumno."""
+    Se comporta como un alumno de ese bando en la reparticion `puesto` (Comandante por defecto, o la que pide la
+    cabecera X-Conduce-Puesto: asi la PC del director puede operar como cualquier reparticion). El resto del codigo
+    usa `rol`, `puesto`, `id` y `username` igual que con un alumno."""
 
     id: int
     username: str
@@ -243,14 +248,15 @@ class InstructorConductor:
 def conductor(escenario_id: int, request: Request, db: Session = Depends(get_db),
               usuario: Usuario = Depends(usuario_actual)):
     """Quien da ordenes por un bando: el alumno, por el suyo, o el instructor, por el bando que indica en la cabecera
-    X-Conduce-Bando cuando el escenario se lo encarga."""
+    X-Conduce-Bando cuando el escenario se lo encarga (y desde la reparticion que fija X-Conduce-Puesto)."""
     if usuario.rol in puestos.BANDOS:
         return usuario
     bando = request.headers.get(CABECERA_CONDUCE, "")
     if usuario.rol == "instructor" and bando in puestos.BANDOS:
         esc = db.get(Escenario, escenario_id)
         if esc is not None and esc.conduccion(bando) == "instructor":
-            return InstructorConductor(id=usuario.id, username=usuario.username, rol=bando)
+            return InstructorConductor(id=usuario.id, username=usuario.username, rol=bando,
+                                       puesto=puestos.normalizar(request.headers.get(CABECERA_PUESTO)))
         raise HTTPException(status_code=403, detail=f"El bando {bando} no esta a cargo del instructor en este escenario")
     raise HTTPException(status_code=403, detail="No autorizado para esta accion")
 

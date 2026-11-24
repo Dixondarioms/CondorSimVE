@@ -196,7 +196,7 @@ Sirve para revisar la interfaz tras un cambio. Regenérelo si cambia `index.html
 
 | Rol | Ve | Puede |
 |---|---|---|
-| `instructor` | Todo (sin niebla); puede "ver como" un bando | Todo: escenarios, unidades, turnos, clima, eventos, ajustes, usuarios, asignaciones, informe |
+| `instructor` | Todo (sin niebla); puede "ver como" un bando y abrir la pantalla de cualquier repartición en otra ventana (*Pantallas…*) | Todo: escenarios, unidades, turnos, clima, eventos, ajustes, usuarios, asignaciones, informe |
 | `azul` / `rojo` | Sus unidades + enemigas detectadas + últimos contactos | Emitir/cancelar órdenes, marcar "listo"; informe solo al finalizar |
 | `observador` | Todo | Solo lectura (incluye el informe) |
 
@@ -1010,6 +1010,21 @@ plantilla…» (marcada como *Guardada por un instructor*), se instancia igual q
   `?modo=videowall&escenario=ID&vista=azul|rojo|completa`. Los paneles colapsan por completo, el mapa ocupa el
   100 % de la pantalla (pantalla completa; se adapta a varias pantallas o cambios de tamaño) y un HUD muestra
   turno, hora, reloj, estado de los bandos y las últimas alertas. `Esc` sale.
+- **Pantallas por repartición (PC del director):** el botón *Pantallas…* de la cabecera (y *Consola → Abrir pantalla
+  en ventana nueva…*) abre un diálogo para elegir **bando** (Azul, Rojo o vista completa) y **repartición** (CMDTE,
+  JEM, A-1, A-2, A-3, A-3 D/A, A-4 o C-E) y lanzar esa pantalla en una **ventana nueva del navegador**. Cada ventana
+  tiene su propia conexión y su propia perspectiva (niebla del bando elegido), así que se pueden tener varias a la
+  vez, una por repartición, sin pisarse con la consola del director ni entre sí. Dos modos: **solo lectura** —muestra
+  exactamente lo que ve esa repartición (orden de batalla, herramientas y unidades de su área) pero no emite nada:
+  la ventana manda la cabecera `X-Solo-Lectura` y el servidor rechaza con 403 todo lo que no sea leer (salvo entrar,
+  salir o cambiar la clave); además oculta los controles del reloj y no envía mensajes de chat— u **órdenes**: la ventana emite como esa
+  repartición con `X-Conduce-Bando` + `X-Conduce-Puesto`, y para eso el bando debe estar a cargo del instructor en
+  *Consola → Dirección* (si no, el diálogo lo avisa y la ventana se abre en solo lectura). La URL es el contrato:
+  `/?escenario=ID&vista=azul|rojo&puesto=comandante|jem|a1|a2|a3|a3da|a4|ce[&emitir=1]`, así que un enlace directo reabre la misma pantalla al
+  recargar o volver a entrar. Dentro de la ventana se puede cambiar de escenario sin perder la perspectiva, y si el
+  bando deja de estar a cargo del instructor la ventana pasa sola a solo lectura en lugar de cerrarse.
+  `Videowall.parametrosDeUrl`, `aplicarPantalla` (`frontend/static/js/app.js`), `auth.conductor`
+  (`backend/app/auth.py`) y `solo_lectura` (`backend/app/main.py`). Pruebas: `backend/tests/test_pantallas.py`.
 
 ## Herramientas de dirección del ejercicio
 

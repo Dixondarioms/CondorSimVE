@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import auth as auth_mod
@@ -56,6 +56,23 @@ async def lifespan(_: FastAPI):
 
 # La aplicacion se sirve desde el mismo origen que el frontend: no se habilita CORS.
 app = FastAPI(title="Simulador de Conduccion Militar (estilo Fenix)", lifespan=lifespan)
+
+
+# Metodos que solo leen: una ventana en solo lectura puede usarlos.
+_METODOS_DE_LECTURA = {"GET", "HEAD", "OPTIONS"}
+
+
+# Se declara antes que cabeceras_de_seguridad para que su respuesta 403 tambien lleve esas cabeceras.
+@app.middleware("http")
+async def solo_lectura(request: Request, call_next):
+    """Una ventana abierta en solo lectura (pantalla de una reparticion desde la PC del director, cabecera
+    X-Solo-Lectura) no escribe nada en el ejercicio, aunque quien pida sea el director: se rechaza cualquier metodo
+    que no sea de lectura. Entrar, salir o cambiar la clave (/api/auth/) no tocan el ejercicio y se permiten.
+    Es un resguardo contra errores del director, no un limite de seguridad: el director puede todo desde su consola."""
+    if (request.headers.get(auth_mod.CABECERA_SOLO_LECTURA) and request.method not in _METODOS_DE_LECTURA
+            and not request.url.path.startswith("/api/auth/")):
+        return JSONResponse(status_code=403, content={"detail": "Esta ventana esta en solo lectura"})
+    return await call_next(request)
 
 
 @app.middleware("http")

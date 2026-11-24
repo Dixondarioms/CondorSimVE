@@ -639,6 +639,16 @@
       texto: `<p>El botón <b>Videowall</b> (o la tecla <b>V</b>) muestra el mapa a pantalla completa, sin paneles, para un proyector o
         un centro de operaciones. Con <b>Esc</b> se vuelve.</p>`,
     },
+    {
+      id: "pantallas", seccion: "El mapa", titulo: "Pantallas por repartición (PC del director)",
+      claves: "pantallas ventana nueva reparticion comandante jem a1 a2 a3 a4 ce solo lectura director varias pantallas",
+      texto: `<p>El botón <b>Pantallas…</b> de la cabecera (solo el director) abre en una <b>ventana nueva</b> la pantalla de una
+        repartición de Azul o Rojo, o la vista completa. Cada ventana muestra lo que ve esa repartición, con la niebla de
+        guerra de su bando; se pueden tener varias abiertas a la vez.</p>
+        <p>En <b>solo lectura</b> la ventana no cambia nada del ejercicio: no da órdenes, no maneja el reloj ni envía
+        mensajes. Si marca que <b>puede emitir órdenes</b>, la ventana ordena como esa repartición; para eso el bando debe
+        estar a cargo del instructor en <b>CONSOLA → Dirección</b>.</p>`,
+    },
     // ------------------------------------------------------------------ TIEM
     {
       id: "tiem", seccion: "Estado Mayor (TIEM)", titulo: "Trabajo de Estado Mayor (pestaña TIEM)",

@@ -54,7 +54,8 @@ class ArchivoIn(BaseModel):
 def autor(escenario_id: int, request: Request, db: Session = Depends(get_db),
           usuario: Usuario = Depends(auth.usuario_actual)):
     """Quien escribe: el instructor (sin cabecera de conduccion, puede todo) o quien conduce un bando (alumno o
-    instructor con X-Conduce-Bando, ver auth.conductor)."""
+    instructor con X-Conduce-Bando, ver auth.conductor). Las ventanas en solo lectura no llegan hasta aca: las frena
+    main.solo_lectura."""
     if usuario.rol == "instructor" and not request.headers.get(auth.CABECERA_CONDUCE):
         return usuario
     return auth.conductor(escenario_id, request, db, usuario)
